@@ -28,9 +28,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				Description="copy /y &quot;$(TargetPath)&quot; &quot;d:\program files\autodesk\3ds max 9\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;d:\program files\autodesk\3ds max 9\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
-				Outputs="&quot;d:\program files\autodesk\3ds max 9\plugins\$(TargetName).dle&quot;"
+				Description="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
+				Outputs="C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -53,7 +53,7 @@
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="kwxport.h"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4996"
 			/>
@@ -233,6 +233,14 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rmxfguid.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rmxftmpl.h"
 				>
 			</File>
 		</Filter>

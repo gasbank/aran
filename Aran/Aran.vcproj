@@ -183,6 +183,22 @@
 			>
 		</File>
 		<File
+			RelativePath=".\Character.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Character.h"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterInterface.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterInterface.h"
+			>
+		</File>
+		<File
 			RelativePath=".\InputMan.cpp"
 			>
 		</File>

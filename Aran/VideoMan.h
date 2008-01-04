@@ -24,9 +24,13 @@
 #include "InputMan.h"
 #include "ModelReader.h"
 
+
+
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
 #endif
+
+class Character;
 
 struct MY_COLOR_VERTEX
 {
@@ -106,6 +110,7 @@ private:
 	ModelReader mrMan;
 	ModelReader gamebryo, middlesnake;
 	ModelReader highpoly;
+	ModelReader mrRocky;
 
 	ModelReader* pDrawingModel; // indicates drawing model at editor
 	
@@ -117,6 +122,8 @@ private:
 	BOOL isOkayToDestruct; // resolves multithread issue
 
 	ARN_CAMERA mainCamera;
+
+	Character* pCharacter;
 
 public:
 	VideoMan();
@@ -146,9 +153,9 @@ public:
 	BOOL PauseMainLoop();
 	BOOL ResumeMainLoop();
 	int Draw();
-	HRESULT RenderModel(ModelReader* pMR, D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel1(ModelReader* pMR, D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel2(ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel(ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel1(ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel2(ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
 	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = NULL);
 	void Close();
 
@@ -166,7 +173,8 @@ public:
 	HRESULT SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );
 
 
-	void SetInputMan(InputMan* inputMan);
+	void AttachInputMan(InputMan* inputMan);
+	void AttachCharacter(Character* character);
 	InputMan* GetInputMan();
 
 	void SetWindowSize(int w, int h);

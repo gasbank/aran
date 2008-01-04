@@ -10,9 +10,12 @@
 #include "Aran.h"
 #include "VideoMan.h"
 #include "InputMan.h"
+#include "Character.h"
 
 VideoMan videoMan;
 InputMan inputMan;
+Character character;		// player character
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 //int main()
@@ -20,7 +23,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// TODO: Entry Point
 	std::cout << _T("Starting Aran...") << std::endl;
 
-	videoMan.SetInputMan(&inputMan);
+	inputMan.AttachCharacterInterface( &character );
+	videoMan.AttachInputMan( &inputMan );
+	videoMan.AttachCharacter( &character );
+	
 	HRESULT hr;
 
 	hr = videoMan.InitWindow(_T("Aran"), MsgProc, 1024, 768);
@@ -118,24 +124,14 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFOCUS:
 		videoMan.ResumeMainLoop();
 		break;
-	case WM_KEYUP:
+	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case VK_UP:
-			videoMan.MoveCamera(0.0f, 0.0f, -1.0f);
-			break;
-		case VK_DOWN:
-			videoMan.MoveCamera(0.0f, 0.0f, 1.0f);
-			break;
-		case VK_LEFT:
-			//videoMan.ChangeInTestVB(D3DCOLOR_XRGB(255, 255, 255));
-			//videoMan.ToggleLeftPattern();
-			break;
-		case VK_RIGHT:
-			//videoMan.ChangeInTestVB(D3DCOLOR_XRGB(255, 255, 0));
-			//videoMan.ToggleRightPattern();
-			videoMan.lpAnimationController->AdvanceTime(0.2f, NULL);
-			break;
+		case VK_UP: inputMan.WalkCharacterForward(); break;
+		case VK_DOWN: inputMan.WalkCharacterBackward(); break;
+		case VK_LEFT: inputMan.TurnCharacterLeft(); break;
+		case VK_RIGHT: inputMan.TurnCharacterRight(); break;
+
 		case VK_ESCAPE:
 			videoMan.Close();
 			PostQuitMessage(0);

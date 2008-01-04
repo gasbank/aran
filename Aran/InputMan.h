@@ -5,6 +5,10 @@
 
 typedef int BOOL;
 
+#include <d3dx9.h>
+
+class CharacterInterface;
+
 struct Point2Int 
 {
 	int x, y;
@@ -19,6 +23,8 @@ private:
 	Point2Int mouseCurPos;
 	Point2Int mouseDownPos;
 	Point2Int mouseUpPos;
+
+	CharacterInterface* charInterface;
 	
 public:
 	InputMan(void);
@@ -43,4 +49,15 @@ public:
 	Point2Int GetMouseCurPos() { return this->mouseCurPos; }
 	Point2Int GetMouseDownPos() { return this->mouseDownPos; }
 	Point2Int GetMouseUpPos() { return this->mouseUpPos; }
+
+
+	// Player character
+	void AttachCharacterInterface( CharacterInterface* charInterface ) { this->charInterface = charInterface; }
+
+	// Player character control
+	void WalkCharacterForward( float amount = 1.0f );
+	void WalkCharacterBackward( float amount = 1.0f );
+	void TurnCharacterLeft( float amount = D3DXToRadian( 10 ) );
+	void TurnCharacterRight( float amount = D3DXToRadian( 10 ) );
+	const D3DXMATRIX* GetFinalTransform() const;
 };

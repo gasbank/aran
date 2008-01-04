@@ -119,6 +119,7 @@ class ModelReader
 private:
 	TCHAR szFileName[256];
 
+	BOOL initialized;
 	
 	LPDIRECT3DDEVICE9 lpDev;
 	LPDIRECT3DVERTEXBUFFER9 lpVB;
@@ -176,6 +177,7 @@ private:
 	std::vector<SkeletonNode> skeletonNode;
 	//std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSet;
 	LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimationSet;
+	std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSetList;
 
 	std::vector<ArnNodeHeader> nodeHeaders;
 	int nodeTypeCounter[32];
@@ -236,8 +238,11 @@ public:
 	// connect interconnection pointers of this->hierarchy using array index reference
 	int BuildBoneHierarchyByMeshIndex(int meshIndex);
 
-	//
-	HRESULT BuildKeyframedAnimationSetOfSkeletonNodeIndex(int skeletonNodeIndex);
+	
+	// keyframeEndIndex means there the last frame;
+	// i.e. default argument will build animation set of entire frames
+	HRESULT BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeletonNodeIndex, int keyFrameStartIndex = 0, int keyFrameEndIndex = -1);
+
 	static int AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray,
 		UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize,
 		D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation,
@@ -268,7 +273,7 @@ public:
 	D3DLIGHT9 GetLight(int i) const;
 	
 	EXPORT_VERSION GetExportVersion() const;
-	LPD3DXKEYFRAMEDANIMATIONSET GetKeyframedAnimationSet() const;
+	LPD3DXKEYFRAMEDANIMATIONSET GetKeyframedAnimationSet( int animSetIndex = 0 ) const;
 	MyFrame* GetFrameRootByMeshIndex(int meshIndex);
 	MyFrame* GetFrameBySkeletonName(const char* skelName); // for testing
 
@@ -292,6 +297,8 @@ public:
 	const TCHAR* GetFileNameOnly();
 
 	ARN_NDD_CAMERA_CHUNK* GetFirstCamera();
+
+	BOOL IsInitialized() const;
 
 };
 

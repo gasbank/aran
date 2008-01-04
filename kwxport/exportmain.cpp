@@ -2,9 +2,10 @@
 #include "resource.h"
 
 #include <d3dx9xof.h>
-//#include <rmxftmpl.h>
-//#include <rmxfguid.h>
 #include <d3dx9mesh.h>
+
+#include "rmxftmpl.h"
+#include "rmxfguid.h"
 
 #include <dbghelp.h>
 #include <hold.h>
@@ -143,7 +144,7 @@ void GetAnimationRanges(std::string const & b, T & cont)
 			e = (char *)strchr(x, ';');
 			if (!e) goto done;
 			wt = std::string(x, e);
-			ar.timeStretch = strtod(wt.c_str(), (char **)&x);
+			ar.timeStretch = (float)strtod(wt.c_str(), (char **)&x);
 			x = e+1;
 			cont.push_back(ar);
 		}
@@ -1243,7 +1244,7 @@ dont_include:
 							for (int i = 0; i < 8; ++i) {
 								int x = remap.GetNew(oix, i);
 								if (x == -1) break;
-								assert(x < numVertices && x >= 0);
+								assert(x < (int)numVertices && x >= 0);
 								skinIndices.push_back(x);
 								skinWeights.push_back(ow);
 							}
@@ -1678,7 +1679,7 @@ store:
 				CComPtr<ID3DXFileSaveData> anim(0), temp(0);
 				CHECK( save->AddDataObject(DXFILEOBJ_AnimTicksPerSecond, "fps", 0, 4, &dwd, &temp) );
 				dwd /= GetFrameRate();
-				DWORD outTime = dwd * ar.timeStretch;
+				DWORD outTime = (DWORD)(dwd * ar.timeStretch);
 				if (outTime < 0) outTime = 0;
 				temp = 0;
 				CHECK( save->AddDataObject(TID_D3DRMAnimationSet, ar.name.c_str(), 0, 0, 0, &animSet) );
@@ -1777,11 +1778,13 @@ store:
 					append(foo, (DWORD)scaleAnim.size());
 					append(foo, scaleAnim);
 					CHECK( anim->AddDataObject(TID_D3DRMAnimationKey, "scale", 0, foo.size(), &foo[0], &temp) );
+					
 					temp = 0;
 					foo.clear();
 					append(foo, (DWORD)2); // position animation
 					append(foo, (DWORD)posAnim.size());
 					append(foo, posAnim);
+					
 					CHECK( anim->AddDataObject(TID_D3DRMAnimationKey, "pos", 0, foo.size(), &foo[0], &temp) );
 				}
 		}

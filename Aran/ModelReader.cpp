@@ -11,12 +11,13 @@ static inline BOOL almostEqualFloat3(float* floatArray1, float* floatArray2);
 static inline BOOL almostEqualFloat4(float* floatArray1, float* floatArray2);
 
 
+
 ModelReader::ModelReader(void)
 :lpVB(NULL), fvf(0), materialReference(NULL), totalFaceCount(0),
 hLoadingWnd(NULL), lpMeshes(NULL), lpSkinnedMeshes(NULL), notIndTotalMeshCount(0), indTotalMeshCount(0),
 lpKeyframedAnimationSet(NULL), lpDev(NULL), lpAnimationController(NULL), skinnedMeshCount(0), hierarchySize(0),
 notIndVertTotalSize(0), indVertTotalSize(0), lightCount(0), nodeCount(0), exportVersion(EV_UNDEFINED),
-useLocalAC(FALSE)
+useLocalAC(FALSE), initialized(FALSE)
 {
 	ZeroMemory(this->szFileName, sizeof(this->szFileName));
 	ZeroMemory(this->nodeTypeCounter, sizeof(this->nodeTypeCounter));
@@ -31,7 +32,7 @@ ModelReader::ModelReader(LPDIRECT3DDEVICE9 lpDev, DWORD fvf)
 hLoadingWnd(NULL), lpMeshes(NULL), lpSkinnedMeshes(NULL), notIndTotalMeshCount(0), indTotalMeshCount(0),
 lpKeyframedAnimationSet(NULL), lpDev(NULL), lpAnimationController(NULL), skinnedMeshCount(0), hierarchySize(0),
 notIndVertTotalSize(0), indVertTotalSize(0), lightCount(0), nodeCount(0), exportVersion(EV_UNDEFINED),
-useLocalAC(FALSE)
+useLocalAC(FALSE), initialized(FALSE)
 {
 	this->lpDev = lpDev;
 	this->fvf = fvf;
@@ -49,6 +50,8 @@ ModelReader::~ModelReader(void)
 	SAFE_RELEASE(this->lpVB);
 
 	int i;
+
+
 	for (i = 0; i < (int)this->materialReference.size(); i++)
 	{
 		SAFE_DELETE_ARRAY(materialReference[i]);
@@ -97,7 +100,12 @@ ModelReader::~ModelReader(void)
 	this->lpSkinnedMeshesSkinInfo.resize(0);
 
 
+	// Deallocate animation sets
 	SAFE_RELEASE(this->lpKeyframedAnimationSet);
+	for (i = 0; i < (int)this->lpKeyframedAnimationSetList.size(); i++)
+	{
+		SAFE_RELEASE(this->lpKeyframedAnimationSetList[i]);
+	}
 
 	if (this->useLocalAC)
 	{
@@ -1143,8 +1151,11 @@ SkeletonNode* ModelReader::GetSkeletonNodePointer(int index)
 }
 
 
-HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex(int skeletonNodeIndex)
+HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeletonNodeIndex, int keyframeStartIndex, int keyframeEndIndex )
 {
+	
+	ASSERTCHECK( keyframeStartIndex >= 0 );
+
 	SkeletonNode* currentSkeleton = &this->skeletonNode[skeletonNodeIndex];
 	size_t s;
 	HRESULT hr;
@@ -1160,44 +1171,76 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex(int skeletonN
 	// Create animation set if null
 	// (this animation set is dedicated to keyframed animation of bone structure)
 	//
+	LPD3DXKEYFRAMEDANIMATIONSET lpKfAnimSet = NULL; // temp animset
 	if (this->lpKeyframedAnimationSet == NULL)
 	{
 		/*std::tstring animationSetName(_T("Default Animation Set Of "));
 		animationSetName = animationSetName + this->szFileName;*/
 		std::string animSetName = currentSkeleton->associatedMeshName;
 		animSetName += "-Animation";
-		hr = D3DXCreateKeyframedAnimationSet(animSetName.c_str(), ticksPerSecond, D3DXPLAY_LOOP, totalBoneCount, 0, NULL, &this->lpKeyframedAnimationSet);
+
+		static char animSetNameChar[128];
+		sprintf_s( animSetNameChar, 128, "%s-Animation-%d", currentSkeleton->associatedMeshName, (int)this->lpKeyframedAnimationSetList.size() );
+		
+		hr = D3DXCreateKeyframedAnimationSet(animSetNameChar, ticksPerSecond, D3DXPLAY_LOOP, totalBoneCount, 0, NULL, &lpKfAnimSet);
 		if (hr != D3D_OK)
 			return hr;
 	}
+
+	int entireKeyframesCount = (int)currentSkeleton->bones[0].keys.size(); // assume all bones have the same amount of keyframes...
+	int registeringKeyframesCount = entireKeyframesCount;
+
+	ASSERTCHECK( entireKeyframesCount >= keyframeEndIndex );
+	if ( keyframeStartIndex != 0 || keyframeEndIndex != -1 )
+	{
+		// called by explicit animset frame range
+		registeringKeyframesCount = keyframeEndIndex - keyframeStartIndex + 1;
+	}
+	else
+	{
+		// default animset frame range: entire
+		keyframeEndIndex = registeringKeyframesCount - 1;
+	}
+	ASSERTCHECK( keyframeEndIndex >= keyframeStartIndex);
+
+	
+
+	static TCHAR debugString[512];
+	_stprintf_s( debugString, sizeof( debugString ), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
+	OutputDebugString( debugString );
+
 	for (s = 0; s < currentSkeleton->bones.size(); s++)
 	{
 		Bone* currentBone = &currentSkeleton->bones[s];
 
-		this->AllocateAsAnimationSetFormat((int)currentBone->keys.size(), &currentBone->keys[0],
+		this->AllocateAsAnimationSetFormat(registeringKeyframesCount, &currentBone->keys[keyframeStartIndex],
 			&currentBone->scaleKeysSize, &currentBone->rotationKeysSize, &currentBone->translationKeysSize,
 			&currentBone->scaleKeys, &currentBone->rotationKeys, &currentBone->translationKeys, TRUE);
 		
 		DWORD animIndex = 0;
 
-		hr = this->lpKeyframedAnimationSet->RegisterAnimationSRTKeys(currentBone->nameFixed,
+		hr = lpKfAnimSet->RegisterAnimationSRTKeys(currentBone->nameFixed,
 			currentBone->scaleKeysSize, currentBone->rotationKeysSize, currentBone->translationKeysSize,
 			currentBone->scaleKeys, currentBone->rotationKeys, currentBone->translationKeys,
 			&animIndex);
-
+		
 		SAFE_DELETE_ARRAY(currentBone->scaleKeys);
 		SAFE_DELETE_ARRAY(currentBone->translationKeys);
 		SAFE_DELETE_ARRAY(currentBone->rotationKeys);
 
-		static TCHAR debugString[512];
-		_stprintf_s(debugString, sizeof(debugString), _T("Registered animation key index: %d\n"), animIndex);
 		
+		_stprintf_s(debugString, sizeof(debugString), _T("    - Registered animation key index: %d\n"), animIndex);
 		OutputDebugString(debugString);
 
 		
 		if (hr != D3D_OK)
 			return hr;
 	}
+
+	// animset has all matrices corresponding to each bone transformation
+	this->lpKeyframedAnimationSetList.push_back( lpKfAnimSet );
+
+
 	return 0;
 }
 
@@ -1523,9 +1566,9 @@ EXPORT_VERSION ModelReader::GetExportVersion() const
 {
 	return this->exportVersion;
 }
-LPD3DXKEYFRAMEDANIMATIONSET ModelReader::GetKeyframedAnimationSet() const
+LPD3DXKEYFRAMEDANIMATIONSET ModelReader::GetKeyframedAnimationSet(int animSetIndex) const
 {
-	return this->lpKeyframedAnimationSet;
+	return this->lpKeyframedAnimationSetList[animSetIndex];
 }
 MyFrame* ModelReader::GetFrameBySkeletonName(const char* skelName)
 {
@@ -1688,7 +1731,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 			V_OKAY( D3DXCreateAnimationController(
 				this->indTotalMeshCount + this->notIndTotalMeshCount, /* MaxNumMatrices */
 				1, /* MaxNumAnimationSets */
-				1, /* MaxNumTracks */
+				2, /* MaxNumTracks */
 				10, /* MaxNumEvents */
 				&this->lpAnimationController
 				) );
@@ -1815,30 +1858,39 @@ e_NoGeneralMeshAnim:
 		ASSERTCHECK(meshIndex >= 0);
 		V_OKAY(this->BuildBlendedMeshByMeshIndex(meshIndex));
 		V_OKAY(this->BuildBoneHierarchyByMeshIndex(meshIndex));
-		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex(i));
+		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 48, 60 ));
+		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 100, 200 ));
 	}
 
 	if (skeletonNodeSize > 0)
 	{
-		V_OKAY(this->lpAnimationController->RegisterAnimationSet(this->GetKeyframedAnimationSet()));
+		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(0) ) );
+		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(1) ) );
 
 		LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
 		
 
-		V_OKAY(this->lpAnimationController->GetAnimationSet(animSetNum, &lpAnimSetTemp));
+		// First Track ...
+		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
+		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 0, lpAnimSetTemp ) );
+		V_OKAY( this->lpAnimationController->SetTrackWeight( 0, 0.5f ) );
+		V_OKAY( this->lpAnimationController->SetTrackSpeed( 0, 2.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackPosition( 0, 0.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackEnable( 0, TRUE ) );
 
+		SAFE_RELEASE( lpAnimSetTemp )
 
-		/*V_OKAY(this->lpAnimationController->SetTrackAnimationSet(0, lpAnimSetTemp));
-		V_OKAY(this->lpAnimationController->SetTrackEnable(0, TRUE));
-		V_OKAY(this->lpAnimationController->SetTrackWeight(0, 1.0f));
-		V_OKAY(this->lpAnimationController->SetTrackSpeed(0, 3.0f));
-		V_OKAY(this->lpAnimationController->SetTrackPosition(0, 0.0f));*/
+		animSetNum++;
 
-		V_OKAY(this->lpAnimationController->SetTrackAnimationSet(animSetNum, lpAnimSetTemp));
-		V_OKAY(this->lpAnimationController->SetTrackEnable(animSetNum, TRUE));
-		V_OKAY(this->lpAnimationController->SetTrackWeight(animSetNum, 1.0f));
-		V_OKAY(this->lpAnimationController->SetTrackSpeed(animSetNum, 3.0f));
-		V_OKAY(this->lpAnimationController->SetTrackPosition(animSetNum, 0.0f));
+		// Second Track...
+		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
+		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 1, lpAnimSetTemp ) );
+		V_OKAY( this->lpAnimationController->SetTrackWeight( 1, 0.5f ) );
+		V_OKAY( this->lpAnimationController->SetTrackSpeed( 1, 3.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackPosition( 1, 0.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackEnable( 1, FALSE ) );
+
+		SAFE_RELEASE(lpAnimSetTemp);
 
 
 		MyFrame* frameRoot = NULL;
@@ -1851,9 +1903,11 @@ e_NoGeneralMeshAnim:
 			V_OKAY(D3DXFrameRegisterNamedMatrices(frameRoot, this->lpAnimationController));
 		}
 
-		SAFE_RELEASE(lpAnimSetTemp);
+		
 		frameRoot = NULL;
 	}
+
+	this->initialized = TRUE;
 
 	return S_OK;
 }
@@ -1868,7 +1922,10 @@ size_t ModelReader::GetArnNodeHeadersSize()
 }
 HRESULT ModelReader::AdvanceTime(float timeDelta)
 {
-	return this->lpAnimationController->AdvanceTime(timeDelta, NULL);
+	if (this->initialized)
+		return this->lpAnimationController->AdvanceTime(timeDelta, NULL);
+	else
+		return E_FAIL;
 }
 const D3DXMATRIX* ModelReader::GetAnimMatControlledByAC(int meshIndex)
 {
@@ -1897,6 +1954,10 @@ ARN_NDD_CAMERA_CHUNK* ModelReader::GetFirstCamera()
 	}
 }
 
+BOOL ModelReader::IsInitialized() const
+{
+	return this->initialized;
+}
 
 
 
