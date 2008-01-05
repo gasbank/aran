@@ -3,11 +3,14 @@
 
 #pragma once
 
+
 typedef int BOOL;
 
-#include <d3dx9.h>
+//#include <d3dx9.h>
 
 class CharacterInterface;
+struct IDirectInput8;
+struct IDirectInputDevice8;
 
 struct Point2Int 
 {
@@ -25,10 +28,16 @@ private:
 	Point2Int mouseUpPos;
 
 	CharacterInterface* charInterface;
+
+	IDirectInput8*						lpDInput8;
+	IDirectInputDevice8*				lpDInputDevKeyboard;
 	
 public:
 	InputMan(void);
 	~InputMan(void);
+
+	HRESULT Initialize( HINSTANCE hInst, HWND hwnd );
+	HRESULT AcquireKeyboard();
 
 	void SetClicked(BOOL b) { this->isClicked = b; }
 	void SetRClicked(BOOL b) { this->isRClicked = b; }
@@ -62,4 +71,6 @@ public:
 	const D3DXMATRIX* GetFinalTransform() const;
 
 	void StopCharacterWalking();
+
+	HRESULT WINAPI ProcessKeyboardInput();
 };

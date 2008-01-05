@@ -2,10 +2,9 @@
 #include "resource.h"
 
 #include <d3dx9xof.h>
-#include <d3dx9mesh.h>
-
 #include "rmxftmpl.h"
 #include "rmxfguid.h"
+#include <d3dx9mesh.h>
 
 #include <dbghelp.h>
 #include <hold.h>
@@ -431,7 +430,7 @@ TCHAR* mapSlotNames[] = {
 
 		void WriteXFile(IGameScene * ig, TCHAR const * name);
 		template<typename T> void ExportNode(IGameScene * ig, IGameNode * node, T * root);
-		void WriteGeometry(IGameScene *ig, IGameObject *obj, ID3DXFileSaveData *frame, IGameNode *node);
+		void WriteGeometry(IGameScene * ig, IGameNode * node, IGameObject * obj, ID3DXFileSaveData * frame);
 		void WriteGeometry2(IGameScene * ig, IGameNode * node, IGameObject * obj, ID3DXFileSaveData * frame);
 		static DWORD VertexAdd(std::vector<FatVert> & vec, std::vector<std::pair<float, DWORD> > & acc, FatVert const & fv);
 		void ExportAnimations(ID3DXFileSaveObject * save);
@@ -626,20 +625,16 @@ TCHAR* mapSlotNames[] = {
 		size_t n = vec.size();
 		size_t i = 0;
 		std::pair<float, DWORD> p(fv.pos.x, 0);
-		std::pair<float, DWORD>* base = NULL;
-
+		std::pair<float, DWORD> * base = 0;
 		if (acc.size() > 0) {
-			std::pair<float, DWORD>* low = &acc[0];
-			std::pair<float, DWORD>* high = low+acc.size();
+			std::pair<float, DWORD> * low = &acc[0], * high = low+acc.size();
 			base = low;
 			for (;;) {
-				std::pair<float, DWORD> * mid = low + (high-low)/2; // get the middle of low-high range of 'acc'
-				if (mid == low) { // mid and low point to the same
-					i = mid-&acc[0]; // set i to the mid's index and break the infinite for loop
+				std::pair<float, DWORD> * mid = low + (high-low)/2;
+				if (mid == low) {
+					i = mid-&acc[0];
 					break;
 				}
-
-				// make range narrower by comparing x value(.first) of mid and p
 				if (mid->first < p.first) {
 					low = mid;
 				}
@@ -648,8 +643,6 @@ TCHAR* mapSlotNames[] = {
 				}
 			}
 		}
-
-
 		for (; i < n; ++i) {
 			if (vec[base[i].second].pos.x > fv.pos.x) {
 				//  no need searching more
@@ -660,19 +653,13 @@ TCHAR* mapSlotNames[] = {
 				return base[i].second;
 			}
 		}
-
-		p.second = (DWORD)vec.size(); // set p.second to current vec's size
-
-
+		p.second = (DWORD)vec.size();
 #if !defined(NDEBUG)
-		// check for duplicated vertex (should not exist)
 		size_t nv = vec.size();
 		for (size_t i = 0; i < nv; ++i) {
 			assert( memcmp(&fv, &vec[i], sizeof(FatVert)) );
 		}
 #endif
-
-
 		acc.push_back(p);
 		std::inplace_merge(&acc[0], &acc[acc.size()-1], &acc[0]+acc.size());
 		vec.push_back(fv);
@@ -773,7 +760,7 @@ TCHAR* mapSlotNames[] = {
 	void IGameExporter::WriteGeometry2(IGameScene * ig, IGameNode * node, IGameObject * obj, ID3DXFileSaveData * frame)
 	{
 		__try {
-			WriteGeometry(ig, obj, frame, node);
+			WriteGeometry(ig, node, obj, frame);
 		}
 		__except(MiniDumpHandler(GetExceptionInformation())) {
 			throw "The exporter crashed during export.\n\n"
@@ -795,7 +782,7 @@ TCHAR* mapSlotNames[] = {
 		return buf;
 	}
 
-	void IGameExporter::WriteGeometry(IGameScene *ig, IGameObject *obj, ID3DXFileSaveData *frame, IGameNode *node)
+	void IGameExporter::WriteGeometry(IGameScene * ig, IGameNode * node, IGameObject * obj, ID3DXFileSaveData * frame)
 	{
 		bool exportNormal = exportNormal_;
 		bool exportTangent = exportTangent_;
@@ -848,10 +835,8 @@ TCHAR* mapSlotNames[] = {
 		std::vector<DWORD> indices;
 		indices.resize(numFaces * 3);
 		FatVert fv;
-
-
-		std::vector<FatVert> fatVerts; // optimized fat vertices data
-		std::vector<std::pair<float, DWORD> > accel; // needed to optimizing fat vertices data
+		std::vector<FatVert> fatVerts;
+		std::vector<std::pair<float, DWORD> > accel;
 
 		//  don't export texture coordinates that aren't available
 		Tab<int> mapNums = gm->GetActiveMapChannelNum();
@@ -875,10 +860,6 @@ TCHAR* mapSlotNames[] = {
 		std::vector<std::pair<IGameMaterial *, bool> > materials;
 		int maxIx = -1;
 		std::vector<bool> includeFace;
-		int myVertexCount = 0;
-
-
-
 		for (int i = 0; i < (int)numFaces; ++i) {
 			FaceEx * fex = gm->GetFace(i);
 			IGameMaterial * imat = gm->GetMaterialFromFace(fex);
@@ -904,9 +885,6 @@ TCHAR* mapSlotNames[] = {
 				goto dont_include;
 			}
 			materialIndices.push_back((DWORD)materials.size()-1);
-
-
-
 got_mat:
 			for (int j = 0; j < 3; ++j) {
 				memset(&fv, 0, sizeof(fv));
@@ -914,11 +892,8 @@ got_mat:
 				fv.pos = gm->GetVertex(fex->vert[j], false) * scale * worldToNode;
 				GlobalMirror(fv.pos);
 #if !defined(NDEBUG)
-				DebugPrint("(%d) v %.2f,%.2f,%.2f\n", myVertexCount++, fv.pos.x, fv.pos.y, fv.pos.z);
+				DebugPrint("v %.2f,%.2f,%.2f\n", fv.pos.x, fv.pos.y, fv.pos.z);
 #endif
-
-
-
 				//  additional fields for each vertex based on options
 				if (exportNormal) {
 					fv.normal = TransformVector(normalMat, gm->GetNormal(fex->norm[j], false));
@@ -927,18 +902,12 @@ got_mat:
 #endif
 					GlobalMirror(fv.normal);
 				}
-
-
-
 				if (exportTangent) {
 					fv.tangent = TransformVector(normalMat, gm->GetTangent(fex->norm[j], 1));
 					fv.binormal = TransformVector(normalMat, gm->GetBinormal(fex->norm[j], 1));
 					GlobalMirror(fv.tangent);
 					GlobalMirror(fv.binormal);
 				}
-
-
-
 				for (int q = 0; q < exportUv; ++q) {
 					DWORD index[3] = {0, 0, 0};
 					gm->GetMapFaceIndex(mapNums[q], i, index);
@@ -949,9 +918,6 @@ got_mat:
 						fv.uv[q].y = 1.0f - fv.uv[q].y;
 					}
 				}
-
-
-
 				if (exportColor) {
 					int nColor = gm->GetNumberOfColorVerts();
 					int nAlpha = gm->GetNumberOfAlphaVerts();
@@ -967,9 +933,6 @@ got_mat:
 					}
 					fv.color = color;
 				}
-
-
-
 				indices[numFacesUsed * 3 + j] = VertexAdd(fatVerts, accel, fv);
 			}
 			++numFacesUsed;
@@ -1017,10 +980,7 @@ dont_include:
 		//  Calculate mapping from old vertex index to new vertex indices
 		Remap remap;
 		if (fatVerts.size() > 0) {
-			FatVert* fvp = &fatVerts[0];
-			FatVert* base = fvp;
-			FatVert* end = fvp + fatVerts.size();
-
+			FatVert * fvp = &fatVerts[0], * base = fvp, * end = fvp + fatVerts.size();
 			int mo = -1;
 			while (fvp < end) {
 				if (mo < fvp->origVert) {
@@ -1225,7 +1185,8 @@ dont_include:
 			CHECK( stored->AddDataObject(DXFILEOBJ_XSkinMeshHeader, 0, 0, 12, &h, &skinHeader) );
 
 			//  write an XSkinInfo for each bone that affects the mesh
-			for (std::map<IGameNode *, int>::iterator ptr = boneIndices.begin(), end = boneIndices.end(); ptr != end; ++ptr) {
+			for (std::map<IGameNode *, int>::iterator ptr = boneIndices.begin(), end = boneIndices.end();
+				ptr != end; ++ptr) {
 					IGameNode * bone = (*ptr).first;
 					std::vector<char> skinData;
 					std::string s(convert_name(bone->GetName()));
@@ -1778,13 +1739,11 @@ store:
 					append(foo, (DWORD)scaleAnim.size());
 					append(foo, scaleAnim);
 					CHECK( anim->AddDataObject(TID_D3DRMAnimationKey, "scale", 0, foo.size(), &foo[0], &temp) );
-					
 					temp = 0;
 					foo.clear();
 					append(foo, (DWORD)2); // position animation
 					append(foo, (DWORD)posAnim.size());
 					append(foo, posAnim);
-					
 					CHECK( anim->AddDataObject(TID_D3DRMAnimationKey, "pos", 0, foo.size(), &foo[0], &temp) );
 				}
 		}
@@ -2112,7 +2071,7 @@ store:
 				SetWindowFont(btn, font_, false);
 				::SetWindowLong(btn, GWL_ID, IDC_ANIMATIONS);
 				animationParentProc_ = (WNDPROC)::GetWindowLongPtr(i.frame, GWL_WNDPROC);
-				::SetWindowLongPtr(i.frame, GWL_WNDPROC, (LONG_PTR)&AnimationWndProc);
+				::SetWindowLongPtr(i.frame, GWL_WNDPROC, (LONG)(LONG_PTR)&AnimationWndProc);
 				std::vector<AnimationRange> vec;
 				GetAnimationRanges(b, vec);
 				LVITEM lvi;
@@ -2264,167 +2223,153 @@ store:
 		HWND parent = ::FindWindowEx(hWndDlg, 0, WC_BUTTON, "Animation");
 		HWND list = ::GetDlgItem(parent, IDC_ANIMATIONS);
 		char buf[512];
-
-		switch (msg)
-		{
-		case WM_INITDIALOG:
-			gex = (IGameExporter *)lParam;
-			::SetWindowLongPtr(hWndDlg, GWL_USERDATA, lParam);
-			Visit(*gex, MakeControlsVisitor(hWndDlg, gex));
-			::SetWindowTextInt(::GetDlgItem(hWndDlg, IDC_FRAMERATE), GetFrameRate());
-			::SetDlgItemText(hWndDlg, IDC_CREDITS, "Oh kW X-port by Jon Watte; built " __DATE__ "\nhttp://kwxport.sourceforge.net/");
-			return TRUE;
-		case WM_CLOSE:
-			::EndDialog(hWndDlg, 1);
-			return TRUE;
-		case WM_NOTIFY:
-			{
-				NMHDR const * nmh = (NMHDR const *)lParam;
-				if (nmh->idFrom == IDC_ANIMATIONS)
-				{
-					switch (nmh->code)
-					{
-					case LVN_ITEMACTIVATE:
-						{
-							NMITEMACTIVATE const * nmi = (NMITEMACTIVATE const *)nmh;
-							selectedAnimation_ = nmi->iItem;
-							buf[511] = 0;
-							ListView_GetItemText(list, selectedAnimation_, 0, buf, 511);
-							::SetWindowText(::GetDlgItem(parent, IDC_ANIMATIONNAME), buf);
-							ListView_GetItemText(list, selectedAnimation_, 1, buf, 511);
-							::SetWindowText(::GetDlgItem(parent, IDC_FIRSTFRAME), buf);
-							ListView_GetItemText(list, selectedAnimation_, 2, buf, 511);
-							::SetWindowText(::GetDlgItem(parent, IDC_NUMFRAMES), buf);
-							ListView_GetItemText(list, selectedAnimation_, 3, buf, 511);
-							::SetWindowText(::GetDlgItem(parent, IDC_STRETCHTIME), buf);
-						}
-						break;
-					default:
-						break;
-					}
-				}
+		switch (msg) {
+	case WM_INITDIALOG:
+		gex = (IGameExporter *)lParam;
+		::SetWindowLongPtr(hWndDlg, GWL_USERDATA, (LONG)lParam);
+		Visit(*gex, MakeControlsVisitor(hWndDlg, gex));
+		::SetWindowTextInt(::GetDlgItem(hWndDlg, IDC_FRAMERATE), GetFrameRate());
+		::SetDlgItemText(hWndDlg, IDC_CREDITS, 
+			"kW X-port by Jon Watte; built " __DATE__ 
+			"\nhttp://kwxport.sourceforge.net/");
+		return TRUE;
+	case WM_CLOSE:
+		::EndDialog(hWndDlg, 1);
+		return TRUE;
+	case WM_NOTIFY: {
+		NMHDR const * nmh = (NMHDR const *)lParam;
+		if (nmh->idFrom == IDC_ANIMATIONS) {
+			switch (nmh->code) {
+	case LVN_ITEMACTIVATE: {
+		NMITEMACTIVATE const * nmi = (NMITEMACTIVATE const *)nmh;
+		selectedAnimation_ = nmi->iItem;
+		buf[511] = 0;
+		ListView_GetItemText(list, selectedAnimation_, 0, buf, 511);
+		::SetWindowText(::GetDlgItem(parent, IDC_ANIMATIONNAME), buf);
+		ListView_GetItemText(list, selectedAnimation_, 1, buf, 511);
+		::SetWindowText(::GetDlgItem(parent, IDC_FIRSTFRAME), buf);
+		ListView_GetItemText(list, selectedAnimation_, 2, buf, 511);
+		::SetWindowText(::GetDlgItem(parent, IDC_NUMFRAMES), buf);
+		ListView_GetItemText(list, selectedAnimation_, 3, buf, 511);
+		::SetWindowText(::GetDlgItem(parent, IDC_STRETCHTIME), buf);
+						   }
+						   break;
+	default:
+		break;
 			}
-			break;
-		case WM_COMMAND:
-			switch (LOWORD(wParam))
-			{
-			case IDB_ADD:
-				{
-					Settings s;
-					if (!Visit(s, GetSettingsVisitor(hWndDlg))) {
-						::MessageBox(hWndDlg, "Please enter valid data before continuing.", "kW X-port", MB_OK);
-						return 0;
+		}
 					}
-					s.animationName_ = convert_name(s.animationName_.c_str());
-					LVITEM lvi;
-					lvi.mask = LVIF_TEXT;
-					lvi.iItem = 0;
-					lvi.iSubItem = 0;
-					lvi.pszText = (LPSTR)s.animationName_.c_str();
-					HWND parent = ::FindWindowEx(hWndDlg, 0, WC_BUTTON, "Animation");
-					HWND list = ::GetDlgItem(parent, IDC_ANIMATIONS);
-					INT itm = ::SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&lvi);
-					if (itm >= 0)
-					{
-						char b[40];
-						sprintf(b, "%d", s.firstFrame_);
-						lvi.mask = LVIF_TEXT;
-						lvi.iItem = itm;
-						lvi.iSubItem = 1;
-						lvi.pszText = b;
-						::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-						sprintf(b, "%d", s.numFrames_);
-						lvi.mask = LVIF_TEXT;
-						lvi.iItem = itm;
-						lvi.iSubItem = 2;
-						lvi.pszText = b;
-						::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-						sprintf(b, "%g", s.timeStretch_);
-						lvi.mask = LVIF_TEXT;
-						lvi.iItem = itm;
-						lvi.iSubItem = 3;
-						lvi.pszText = b;
-						::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-					}
-					selectedAnimation_ = ListView_GetSelectionMark(list);
-				}
-				break;
-			case IDB_UPDATE:
-				{
-					selectedAnimation_ = ListView_GetSelectionMark(list);
-					if (selectedAnimation_ < 0 || selectedAnimation_ >= ListView_GetItemCount(list))
-					{
-						::MessageBox(hWndDlg, "Please select an animation first.", "kW X-port", MB_OK);
-						return 0;
-					}
-					Settings s;
-					if (!Visit(s, GetSettingsVisitor(hWndDlg)))
-					{
-						::MessageBox(hWndDlg, "Please enter valid data before continuing.", "kW X-port", MB_OK);
-						return 0;
-					}
-					s.animationName_ = convert_name(s.animationName_.c_str());
-					LVITEM lvi;
-					lvi.mask = LVIF_TEXT;
-					lvi.iItem = selectedAnimation_;
-					lvi.iSubItem = 0;
-					lvi.pszText = (LPSTR)s.animationName_.c_str();
-					HWND parent = ::FindWindowEx(hWndDlg, 0, WC_BUTTON, "Animation");
-					HWND list = ::GetDlgItem(parent, IDC_ANIMATIONS);
-					::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-					char b[40];
-					sprintf(b, "%d", s.firstFrame_);
-					lvi.mask = LVIF_TEXT;
-					lvi.iItem = selectedAnimation_;
-					lvi.iSubItem = 1;
-					lvi.pszText = b;
-					::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-					sprintf(b, "%d", s.numFrames_);
-					lvi.mask = LVIF_TEXT;
-					lvi.iItem = selectedAnimation_;
-					lvi.iSubItem = 2;
-					lvi.pszText = b;
-					::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-					sprintf(b, "%g", s.timeStretch_);
-					lvi.mask = LVIF_TEXT;
-					lvi.iItem = selectedAnimation_;
-					lvi.iSubItem = 3;
-					lvi.pszText = b;
-					::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
-				}
-				break;
-			case IDB_REMOVE:
-				{
-					selectedAnimation_ = ListView_GetSelectionMark(list);
-					if (selectedAnimation_ < 0 || selectedAnimation_ >= ListView_GetItemCount(list))
-					{
-						::MessageBox(hWndDlg, "Please select an animation first.", "kW X-port", MB_OK);
-						return 0;
-					}
-					ListView_DeleteItem(list, selectedAnimation_);
-					selectedAnimation_ = -1;
-				}
-				break;
-			case IDOK:
-				{
-					GetSettingsVisitor gsv(hWndDlg);
-					if (!Visit(*gex, gsv))
-					{
-						::MessageBox(hWndDlg, (std::string("The field '") + gsv.lastItemName_ + "' contains an invalid value.").c_str(), "kW X-port", MB_OK);
-					}
-					else
-					{
-						::EndDialog(hWndDlg, 0);
-					}
-				}
-				break;
-			case IDCANCEL:
-				::EndDialog(hWndDlg, 1);
-				break;
-			}
-			return FALSE;
-		default:
-			return FALSE;
+					break;
+	case WM_COMMAND:
+		switch (LOWORD(wParam)) {
+	case IDB_ADD: {
+		Settings s;
+		if (!Visit(s, GetSettingsVisitor(hWndDlg))) {
+			::MessageBox(hWndDlg, "Please enter valid data before continuing.", "kW X-port", MB_OK);
+			return 0;
+		}
+		s.animationName_ = convert_name(s.animationName_.c_str());
+		LVITEM lvi;
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = 0;
+		lvi.iSubItem = 0;
+		lvi.pszText = (LPSTR)s.animationName_.c_str();
+		HWND parent = ::FindWindowEx(hWndDlg, 0, WC_BUTTON, "Animation");
+		HWND list = ::GetDlgItem(parent, IDC_ANIMATIONS);
+		INT itm = (INT)::SendMessage(list, LVM_INSERTITEM, 0, (LPARAM)&lvi);
+		if (itm >= 0) {
+			char b[40];
+			sprintf(b, "%d", s.firstFrame_);
+			lvi.mask = LVIF_TEXT;
+			lvi.iItem = itm;
+			lvi.iSubItem = 1;
+			lvi.pszText = b;
+			::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+			sprintf(b, "%d", s.numFrames_);
+			lvi.mask = LVIF_TEXT;
+			lvi.iItem = itm;
+			lvi.iSubItem = 2;
+			lvi.pszText = b;
+			::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+			sprintf(b, "%g", s.timeStretch_);
+			lvi.mask = LVIF_TEXT;
+			lvi.iItem = itm;
+			lvi.iSubItem = 3;
+			lvi.pszText = b;
+			::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+		}
+		selectedAnimation_ = ListView_GetSelectionMark(list);
+				  }
+				  break;
+	case IDB_UPDATE: {
+		selectedAnimation_ = ListView_GetSelectionMark(list);
+		if (selectedAnimation_ < 0 || selectedAnimation_ >= ListView_GetItemCount(list)) {
+			::MessageBox(hWndDlg, "Please select an animation first.", "kW X-port", MB_OK);
+			return 0;
+		}
+		Settings s;
+		if (!Visit(s, GetSettingsVisitor(hWndDlg))) {
+			::MessageBox(hWndDlg, "Please enter valid data before continuing.", "kW X-port", MB_OK);
+			return 0;
+		}
+		s.animationName_ = convert_name(s.animationName_.c_str());
+		LVITEM lvi;
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = selectedAnimation_;
+		lvi.iSubItem = 0;
+		lvi.pszText = (LPSTR)s.animationName_.c_str();
+		HWND parent = ::FindWindowEx(hWndDlg, 0, WC_BUTTON, "Animation");
+		HWND list = ::GetDlgItem(parent, IDC_ANIMATIONS);
+		::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+		char b[40];
+		sprintf(b, "%d", s.firstFrame_);
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = selectedAnimation_;
+		lvi.iSubItem = 1;
+		lvi.pszText = b;
+		::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+		sprintf(b, "%d", s.numFrames_);
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = selectedAnimation_;
+		lvi.iSubItem = 2;
+		lvi.pszText = b;
+		::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+		sprintf(b, "%g", s.timeStretch_);
+		lvi.mask = LVIF_TEXT;
+		lvi.iItem = selectedAnimation_;
+		lvi.iSubItem = 3;
+		lvi.pszText = b;
+		::SendMessage(list, LVM_SETITEM, 0, (LPARAM)&lvi);
+					 }
+					 break;
+	case IDB_REMOVE: {
+		selectedAnimation_ = ListView_GetSelectionMark(list);
+		if (selectedAnimation_ < 0 || selectedAnimation_ >= ListView_GetItemCount(list)) {
+			::MessageBox(hWndDlg, "Please select an animation first.", "kW X-port", MB_OK);
+			return 0;
+		}
+		ListView_DeleteItem(list, selectedAnimation_);
+		selectedAnimation_ = -1;
+					 }
+					 break;
+	case IDOK: {
+		GetSettingsVisitor gsv(hWndDlg);
+		if (!Visit(*gex, gsv)) {
+			::MessageBox(hWndDlg, (std::string("The field '") + gsv.lastItemName_ + 
+				"' contains an invalid value.").c_str(), "kW X-port", MB_OK);
+		}
+		else {
+			::EndDialog(hWndDlg, 0);
+		}
+			   }
+			   break;
+	case IDCANCEL:
+		::EndDialog(hWndDlg, 1);
+		break;
+		}
+		return FALSE;
+	default:
+		return FALSE;
 		}
 		return FALSE;
 	}
@@ -2512,13 +2457,12 @@ store:
 		bool success = true;
 		Settings old = *this;
 		LoadSettings();
-		if (!suppressPrompts)
-		{
-			if (::DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), 0, SettingsProc, (LPARAM)this))
-			{
-				//  restore previous settings
-				*static_cast<Settings *>(this) = old;
-				return true;
+		if (!suppressPrompts) {
+			if (::DialogBoxParam(hInstance, MAKEINTRESOURCE(IDD_SETTINGS), 0, SettingsProc, 
+				(LPARAM)this)) {
+					//  restore previous settings
+					*static_cast<Settings *>(this) = old;
+					return true;
 			}
 		}
 

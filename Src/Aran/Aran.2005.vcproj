@@ -43,6 +43,7 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="3"
+				UsePrecompiledHeader="1"
 				WarningLevel="3"
 				WarnAsError="false"
 				Detect64BitPortabilityProblems="false"
@@ -60,10 +61,11 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
-				SubSystem="0"
-				TargetMachine="0"
+				SubSystem="2"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"

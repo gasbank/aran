@@ -22,9 +22,12 @@ public:
 	virtual void ChangeOrientation( float dx, float dy, float dz ) /* radian */;
 	virtual const D3DXMATRIX* GetFinalTransform() const;
 	
-	virtual CharacterAnimationState GetCharacterAnimationState() { return this->animState; }
-	virtual void SetCharacterAnimationStateNext(CharacterAnimationState cas);
+
 	virtual void SetCharacterAnimationState(CharacterAnimationState cas);
+	virtual void SetCharacterAnimationStateNext(CharacterAnimationState cas);
+
+	virtual CharacterAnimationState GetCharacterAnimationState() { return this->animState; }
+	virtual CharacterAnimationState GetCharacterAnimationStateNext() { return this->animStateNext; }
 	
 	HRESULT RegisterCharacterAnimationCallback( CharacterAnimationState cas, CharacterAnimationCallback* pCAC );
 	HRESULT UnregisterCharacterAnimationCallback( CharacterAnimationState cas );

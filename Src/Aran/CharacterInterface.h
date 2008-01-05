@@ -27,9 +27,11 @@ public:
 	virtual void ChangeTranslation( float dx, float dy, float dz ) = 0;		// position
 	virtual void ChangeOrientation( float dx, float dy, float dz ) = 0;		// rotation
 	virtual const D3DXMATRIX* GetFinalTransform() const = 0;
-	virtual void SetCharacterAnimationStateNext(CharacterAnimationState cas) = 0;
+	
 	virtual void SetCharacterAnimationState(CharacterAnimationState cas) = 0;
+	virtual void SetCharacterAnimationStateNext(CharacterAnimationState cas) = 0;
 	virtual CharacterAnimationState GetCharacterAnimationState() = 0;
+	virtual CharacterAnimationState GetCharacterAnimationStateNext() = 0;
 
 
 	

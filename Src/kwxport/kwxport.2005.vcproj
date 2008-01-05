@@ -236,6 +236,14 @@
 				RelativePath=".\resource.h"
 				>
 			</File>
+			<File
+				RelativePath=".\rmxfguid.h"
+				>
+			</File>
+			<File
+				RelativePath=".\rmxftmpl.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

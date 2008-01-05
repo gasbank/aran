@@ -1,6 +1,8 @@
 // Aran.cpp
 // 2007 Geoyeob Kim
 // 프로젝트 메인 엔트리
+#include "stdafx.h"
+
 #ifndef WM_MOUSEWHEEL
 #define WM_MOUSEWHEEL 0x020A
 #endif
@@ -29,18 +31,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// TODO: Entry Point
 	std::cout << _T("Starting Aran...") << std::endl;
 
-	character.Initialize();
-	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
-	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
-	
-
-	inputMan.AttachCharacterInterface( &character );
-	videoMan.AttachInputMan( &inputMan );
-	videoMan.AttachCharacter( &character );
-
-	//character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
-
-
 	
 	HRESULT hr;
 
@@ -49,6 +39,20 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Window Initialization Error"), hr);
 	}
+
+	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+
+	character.Initialize();
+	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
+	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
+
+
+	inputMan.AttachCharacterInterface( &character );
+	videoMan.AttachInputMan( &inputMan );
+	videoMan.AttachCharacter( &character );
+
+	//character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
+
 
 	
 	hr = videoMan.InitD3D();
@@ -103,6 +107,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Window Showing Error"), hr);
 	}
 
+	inputMan.AcquireKeyboard();
+
+	//
+	// Starting main loop...
+	//
 	hr = videoMan.StartMainLoop();
 	if (FAILED(hr))
 	{
@@ -139,26 +148,10 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFOCUS:
 		videoMan.ResumeMainLoop();
 		break;
-	case WM_KEYUP:
-		inputMan.StopCharacterWalking();
-
-		break;
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case VK_UP:
-			inputMan.WalkCharacterForward();
-			break;
-		case VK_DOWN:
-			inputMan.WalkCharacterBackward();
-			break;
-		case VK_LEFT:
-			inputMan.TurnCharacterLeft();
-			break;
-		case VK_RIGHT:
-			inputMan.TurnCharacterRight();
-			break;
-
+		
 		case VK_ESCAPE:
 			videoMan.Close();
 			PostQuitMessage(0);

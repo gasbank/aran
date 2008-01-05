@@ -5,6 +5,9 @@
 
 Character::Character(void)
 {
+	this->animState = CharacterInterface::CAS_LOITER;
+	this->animStateNext = CharacterInterface::CAS_UNDEFINED;
+
 	this->translation = D3DXVECTOR3( 0.0f, 0.0f, 0.0f );
 	this->scale = D3DXVECTOR3( 0.05f, 0.05f, 0.05f );
 	this->rotation = D3DXQUATERNION( 0.0f, 0.0f, 0.0f, 0.0f );
@@ -67,7 +70,10 @@ const D3DXMATRIX* Character::GetFinalTransform() const
 void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS )
 {
 	if ( nextCAS == this->animState )
-		OutputDebugStringA( " ? State modification duplicated(i.e. Next state == Current state) ... Forced callback called! " );
+	{
+		//DXTRACE_MSG( _T( "State modification duplicated" ) );
+	}
+
 	this->animStateNext = nextCAS;
 	
 	if (this->callbacks[nextCAS])
@@ -127,7 +133,7 @@ ModelReader* Character::GetModelReader()
 
 void Character::Initialize()
 {
-	this->animState = CAS_INVISIBLE;
+	this->animState = CAS_LOITER;
 	this->animStateWeight = 1.0f;
 	this->animStateNext = CAS_UNDEFINED;
 

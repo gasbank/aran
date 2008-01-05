@@ -54,7 +54,7 @@ struct ARN_CAMERA
 class VideoMan
 {
 private:
-	InputMan* inputMan;
+	InputMan* pInputMan;
 
 	TCHAR szClassName[64];
 	WNDCLASS wndClass;
@@ -164,7 +164,7 @@ public:
 	void ToggleLeftPattern();
 	void ToggleRightPattern();
 
-	HWND GetHandle();
+	HWND GetWindowHandle();
 	LPDIRECT3DDEVICE9 GetDev();
 
 	static void SetSimpleColoredMaterial(D3DMATERIAL9* material, D3DXCOLOR color);
