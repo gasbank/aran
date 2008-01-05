@@ -1,0 +1,44 @@
+[Directories]
+Animations=.\sceneassets\animations
+Archives=.\archives
+AutoBackup=.\autoback
+BitmapProxies=.\proxies
+Downloads=.\downloads
+Export=.\export
+Expressions=.\express
+Images=.\sceneassets\images
+Import=.\import
+Materials=.\materiallibraries
+MaxStart=.\scenes
+Photometric=.\sceneassets\photometric
+Previews=.\previews
+ProjectFolder=F:\max
+RenderAssets=.\sceneassets\renderassets
+RenderOutput=.\renderoutput
+RenderPresets=.\renderpresets
+Scenes=.\scenes
+Sounds=.\sceneassets\sounds
+VideoPost=.\vpost
+[XReferenceDirs]
+Dir1=.\scenes
+[BitmapDirs]
+Dir1=C:\Program Files\Autodesk\3ds Max 9\Maps
+Dir2=C:\Program Files\Autodesk\3ds Max 9\Maps\fx
+Dir3=.\downloads
+Dir4=C:\Program Files\Autodesk\3ds Max 9\sceneassets\photometric
+Dir5=C:\Program Files\Autodesk\3ds Max 9\maps\ArchMat
+Dir6=C:\Program Files\Autodesk\3ds Max 9\maps\Backgrounds
+Dir7=C:\Program Files\Autodesk\3ds Max 9\maps\Brick
+Dir8=C:\Program Files\Autodesk\3ds Max 9\maps\Concrete
+Dir9=C:\Program Files\Autodesk\3ds Max 9\maps\Fabric
+Dir10=C:\Program Files\Autodesk\3ds Max 9\maps\Ground
+Dir11=C:\Program Files\Autodesk\3ds Max 9\maps\HDRs
+Dir12=C:\Program Files\Autodesk\3ds Max 9\maps\Lights
+Dir13=C:\Program Files\Autodesk\3ds Max 9\maps\Metal
+Dir14=C:\Program Files\Autodesk\3ds Max 9\maps\Misc
+Dir15=C:\Program Files\Autodesk\3ds Max 9\maps\Organics
+Dir16=C:\Program Files\Autodesk\3ds Max 9\maps\Reflection
+Dir17=C:\Program Files\Autodesk\3ds Max 9\maps\Skies
+Dir18=C:\Program Files\Autodesk\3ds Max 9\maps\Space
+Dir19=C:\Program Files\Autodesk\3ds Max 9\maps\Stones
+Dir20=C:\Program Files\Autodesk\3ds Max 9\maps\Wood
