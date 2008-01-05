@@ -396,7 +396,7 @@ void CArnView::OnBnClickedBtnChangeGroupName()
 	CString cstr;
 	m_editSelGroupName.GetWindowText(cstr);
 	grp.pszHeader = (LPTSTR)cstr.GetString();
-	grp.cchHeader = _tcslen(grp.pszHeader);
+	grp.cchHeader = (int)_tcslen(grp.pszHeader);
 
 	m_listAnim.SetRedraw(FALSE);
 	//m_listAnim.RemoveGroup(m_iSelAnimGroupID);
@@ -425,7 +425,7 @@ void CArnView::OnBnClickedBtnSplitAnim()
 	CString cstr;
 	cstr.Format(_T("Group %d"), grp.iGroupId);
 	grp.pszHeader = (LPTSTR)cstr.GetString(); //_T("Group 0");
-	grp.cchHeader = _tcslen(grp.pszHeader);
+	grp.cchHeader = (int)_tcslen(grp.pszHeader);
 	
 	m_listAnim.SetRedraw(FALSE);
 	m_listAnim.InsertGroup(grp.iGroupId, &grp);

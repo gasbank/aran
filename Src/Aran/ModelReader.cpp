@@ -1858,8 +1858,11 @@ e_NoGeneralMeshAnim:
 		ASSERTCHECK(meshIndex >= 0);
 		V_OKAY(this->BuildBlendedMeshByMeshIndex(meshIndex));
 		V_OKAY(this->BuildBoneHierarchyByMeshIndex(meshIndex));
+		
+		//V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i ));
+		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 0, 30 ));
 		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 48, 60 ));
-		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 100, 200 ));
+		
 	}
 
 	if (skeletonNodeSize > 0)
@@ -1870,11 +1873,11 @@ e_NoGeneralMeshAnim:
 		LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
 		
 
-		// First Track ...
+		// First Track ... (Loiter)
 		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
 		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 0, lpAnimSetTemp ) );
-		V_OKAY( this->lpAnimationController->SetTrackWeight( 0, 0.5f ) );
-		V_OKAY( this->lpAnimationController->SetTrackSpeed( 0, 2.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackWeight( 0, 1.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackSpeed( 0, 3.5f ) );
 		V_OKAY( this->lpAnimationController->SetTrackPosition( 0, 0.0f ) );
 		V_OKAY( this->lpAnimationController->SetTrackEnable( 0, TRUE ) );
 
@@ -1882,11 +1885,11 @@ e_NoGeneralMeshAnim:
 
 		animSetNum++;
 
-		// Second Track...
+		// Second Track... (Walking)
 		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
 		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 1, lpAnimSetTemp ) );
-		V_OKAY( this->lpAnimationController->SetTrackWeight( 1, 0.5f ) );
-		V_OKAY( this->lpAnimationController->SetTrackSpeed( 1, 3.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackWeight( 1, 0.0f ) );
+		V_OKAY( this->lpAnimationController->SetTrackSpeed( 1, 3.5f ) );
 		V_OKAY( this->lpAnimationController->SetTrackPosition( 1, 0.0f ) );
 		V_OKAY( this->lpAnimationController->SetTrackEnable( 1, FALSE ) );
 
@@ -1934,7 +1937,7 @@ const D3DXMATRIX* ModelReader::GetAnimMatControlledByAC(int meshIndex)
 const TCHAR* ModelReader::GetFileNameOnly()
 {
 	int i = 0;
-	for (i = _tcslen(szFileName)-1; i >= 0; i--)
+	for (i = (int)_tcslen(szFileName)-1; i >= 0; i--)
 	{
 		if (szFileName[i] == _T('\\'))
 			break;

@@ -60,4 +60,6 @@ public:
 	void TurnCharacterLeft( float amount = D3DXToRadian( 10 ) );
 	void TurnCharacterRight( float amount = D3DXToRadian( 10 ) );
 	const D3DXMATRIX* GetFinalTransform() const;
+
+	void StopCharacterWalking();
 };

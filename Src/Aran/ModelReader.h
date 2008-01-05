@@ -300,6 +300,9 @@ public:
 
 	BOOL IsInitialized() const;
 
+	LPD3DXANIMATIONCONTROLLER GetAnimationController() { return this->lpAnimationController; }
+
 };
+
 
 

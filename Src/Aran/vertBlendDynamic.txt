@@ -208,7 +208,7 @@ technique VertexBlendingTech
 
         vertexShader = compile vs_2_0 main();
 
-        //Sampler[0] = <S0>;
+        Sampler[0] = <S0>;
 
         
 

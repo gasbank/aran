@@ -9,8 +9,8 @@
 
 
 #define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = x)) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
-#define GLOBAL_TEXTURE_FILE_PATH			"e:\\tex\\"
-#define GLOBAL_ARN_FILE_PATH				"e:\\max\\export\\"
+#define GLOBAL_TEXTURE_FILE_PATH			"..\\..\\Textures\\"					//"e:\\tex\\"
+#define GLOBAL_ARN_FILE_PATH				"..\\..\\MaxAssets\\export\\"			//"e:\\max\\export\\"
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
 #endif

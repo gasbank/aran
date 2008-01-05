@@ -4,59 +4,40 @@
 
 #include "CharacterInterface.h"
 
+class CharacterAnimationCallback;
+class ModelReader;
+
 class Character:
 	public CharacterInterface
 {
 public:
 	Character(void);
-	Character(D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation)
-	{
-		this->translation = translation;
-		this->scale = scale;
-		this->rotation = rotation;
-		this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
-		this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
-
-		D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
-	}
+	Character(D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation);
 	~Character(void);
 
-	virtual void ChangeTranslation( float dx, float dy, float dz )
+	void Initialize();
+
+	virtual void ChangeTranslationToLookAtDirection( float amount );
+	virtual void ChangeTranslation( float dx, float dy, float dz );
+	virtual void ChangeOrientation( float dx, float dy, float dz ) /* radian */;
+	virtual const D3DXMATRIX* GetFinalTransform() const;
+	
+	virtual CharacterAnimationState GetCharacterAnimationState() { return this->animState; }
+	virtual void SetCharacterAnimationStateNext(CharacterAnimationState cas);
+	virtual void SetCharacterAnimationState(CharacterAnimationState cas);
+	
+	HRESULT RegisterCharacterAnimationCallback( CharacterAnimationState cas, CharacterAnimationCallback* pCAC );
+	HRESULT UnregisterCharacterAnimationCallback( CharacterAnimationState cas );
+
+	HRESULT AttachModelReader( ModelReader* pMR );
+	ModelReader* GetModelReader();
+	float GetAnimStateWeight() const { return this->animStateWeight; }
+	void SetAnimStateWeight( float f )
 	{
-		D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
-		translation += this->lookAt;
-		/*translation.x += dx;
-		translation.y += dy;
-		translation.z += dz;*/
-		D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+		if ( f < 0.0f )
+			f = 0.0f;
 
-	}
-	virtual void ChangeOrientation( float dx, float dy, float dz ) /* radian */
-	{
-		D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
-
-		D3DXMATRIX matRot[4]; // x, y, z, x*y*z
-		D3DXMatrixRotationX( &matRot[0], dx );
-		D3DXMatrixRotationY( &matRot[1], dy );
-		D3DXMatrixRotationZ( &matRot[2], dz );
-		D3DXMATRIX matRotOriginal;
-		D3DXMatrixRotationQuaternion( &matRotOriginal, &this->rotation );
-
-		matRot[3] = matRot[0] * matRot[1] * matRot[2];
-		D3DXVec3Transform( &this->outLookAt, &this->lookAt, &matRot[3] );
-		this->lookAt.x = this->outLookAt.x;
-		this->lookAt.y = this->outLookAt.y;
-		this->lookAt.z = this->outLookAt.z;
-
-		matRot[3] *= matRotOriginal;
-		D3DXQuaternionRotationMatrix( &rotation, &matRot[3] );
-		D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
-
-		
-	}
-	virtual const D3DXMATRIX* GetFinalTransform() const
-	{
-		return &finalTransform;
+		this->animStateWeight = f;
 	}
 
 private:
@@ -67,6 +48,24 @@ private:
 	D3DXVECTOR3 lookAt; // character's eye(font) direction
 	D3DXVECTOR4 outLookAt;
 	
+	
+	CharacterAnimationCallback* callbacks[CAS_SIZE];
 
+	//           current weight            next weight
+	//                1.0f                     0.0f
+	// TRANSITION!--->  --->  --->
+	//                0.9f                     0.1f
+	//                ...                      ...
+	//                0.1f                     0.9f
+	//                0.0f                     1.0f;
+	// STATE SWAP(SHIFT)! ---> ---> --->
+	//                1.0f(next state)         0.0f(current state or whatever);
+	//
+	CharacterAnimationState animState;		// current anim state
+	float animStateWeight;					// current anim state weight
+	CharacterAnimationState animStateNext;	// next anim state
+	
+
+	ModelReader* pMR; // attached model reader
 
 };

@@ -10,12 +10,18 @@
 #include "Aran.h"
 #include "VideoMan.h"
 #include "InputMan.h"
+
+#include "CharacterInterface.h"
 #include "Character.h"
+#include "WalkCallback.h"
+#include "LoiterCallback.h"
 
 VideoMan videoMan;
 InputMan inputMan;
 Character character;		// player character
 
+static WalkCallback g_walkCallback;
+static LoiterCallback g_loiterCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 //int main()
@@ -23,9 +29,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// TODO: Entry Point
 	std::cout << _T("Starting Aran...") << std::endl;
 
+	character.Initialize();
+	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
+	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
+	
+
 	inputMan.AttachCharacterInterface( &character );
 	videoMan.AttachInputMan( &inputMan );
 	videoMan.AttachCharacter( &character );
+
+	//character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
+
+
 	
 	HRESULT hr;
 
@@ -124,13 +139,25 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_SETFOCUS:
 		videoMan.ResumeMainLoop();
 		break;
+	case WM_KEYUP:
+		inputMan.StopCharacterWalking();
+
+		break;
 	case WM_KEYDOWN:
 		switch (wParam)
 		{
-		case VK_UP: inputMan.WalkCharacterForward(); break;
-		case VK_DOWN: inputMan.WalkCharacterBackward(); break;
-		case VK_LEFT: inputMan.TurnCharacterLeft(); break;
-		case VK_RIGHT: inputMan.TurnCharacterRight(); break;
+		case VK_UP:
+			inputMan.WalkCharacterForward();
+			break;
+		case VK_DOWN:
+			inputMan.WalkCharacterBackward();
+			break;
+		case VK_LEFT:
+			inputMan.TurnCharacterLeft();
+			break;
+		case VK_RIGHT:
+			inputMan.TurnCharacterRight();
+			break;
 
 		case VK_ESCAPE:
 			videoMan.Close();
