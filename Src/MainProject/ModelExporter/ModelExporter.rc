@@ -1,0 +1,124 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#include "afxres.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// Korean resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
+#ifdef _WIN32
+LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
+#pragma code_page(949)
+#endif //_WIN32
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#include ""afxres.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_SETTINGS_DIALOG DIALOGEX 0, 0, 304, 233
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
+EXSTYLE WS_EX_APPWINDOW
+CAPTION "Export Settings"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,180,210,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,240,210,50,14
+    CONTROL         "NDT_MESH1: Uncompressed (automatically optimized while runtime)",IDC_NDT_MESH1,
+                    "Button",BS_AUTORADIOBUTTON,24,24,232,10
+    CONTROL         "NDT_MESH2: Condensed using index buffer method",IDC_NDT_MESH2,
+                    "Button",BS_AUTORADIOBUTTON,24,42,182,10
+    LTEXT           "Static",IDC_SELECTED_NDT_MESH,24,78,252,8
+    GROUPBOX        "Mesh",IDC_STATIC,6,6,288,96
+    GROUPBOX        "Animation",IDC_STATIC,6,108,288,96
+    CONTROL         "NDT_ANIM1: Fat-type",IDC_NDT_ANIM1,"Button",BS_AUTORADIOBUTTON,24,126,87,10
+    CONTROL         "NDT_ANIM2: Condensed type",IDC_NDT_ANIM2,"Button",BS_AUTORADIOBUTTON,24,144,112,10
+    LTEXT           "Static",IDC_SELECTED_NDT_ANIM,24,162,252,8
+    RTEXT           "Start Frame",IDC_SELECTED_NDT_ANIM2,12,180,48,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDIT_START_FRAME,66,180,48,12,ES_AUTOHSCROLL
+    RTEXT           "End Frame",IDC_SELECTED_NDT_ANIM3,120,180,48,12,SS_CENTERIMAGE
+    EDITTEXT        IDC_EDIT_END_FRAME,174,180,48,12,ES_AUTOHSCROLL
+    LTEXT           "8888",IDC_STATIC_TICKS,258,180,24,12,SS_CENTERIMAGE
+    LTEXT           "Ticks:",IDC_STATIC_TICKS2,234,180,18,12,SS_CENTERIMAGE
+    CONTROL         "NDT_MESH3: Skin integrated if possible, or NDT_MESH2",IDC_NDT_MESH3,
+                    "Button",BS_AUTORADIOBUTTON,24,60,258,10
+END
+
+IDD_PROGRESS_DIALOG DIALOGEX 0, 0, 218, 14
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION
+CAPTION "Please Wait"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    CONTROL         "",IDC_PROGRESS_BAR,"msctls_progress32",PBS_SMOOTH | WS_BORDER,0,0,218,14
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO 
+BEGIN
+    IDD_SETTINGS_DIALOG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 297
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 226
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+#endif    // Korean resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 9.00
+# Visual Studio 2005
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kwxport", "kwxport.vcproj", "{28B57BE5-E17D-4480-8378-18EFACC74E18}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "kwx-installer", "..\kwx-installer\kwx-installer.vdproj", "{6F4A4527-8E0E-435A-90FC-86572E459731}"
+	ProjectSection(ProjectDependencies) = postProject
+		{28B57BE5-E17D-4480-8378-18EFACC74E18} = {28B57BE5-E17D-4480-8378-18EFACC74E18}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{28B57BE5-E17D-4480-8378-18EFACC74E18}.Debug|Win32.ActiveCfg = Debug|Win32
+		{28B57BE5-E17D-4480-8378-18EFACC74E18}.Debug|Win32.Build.0 = Debug|Win32
+		{28B57BE5-E17D-4480-8378-18EFACC74E18}.Release|Win32.ActiveCfg = Release|Win32
+		{28B57BE5-E17D-4480-8378-18EFACC74E18}.Release|Win32.Build.0 = Release|Win32
+		{6F4A4527-8E0E-435A-90FC-86572E459731}.Debug|Win32.ActiveCfg = Debug
+		{6F4A4527-8E0E-435A-90FC-86572E459731}.Release|Win32.ActiveCfg = Release
+		{6F4A4527-8E0E-435A-90FC-86572E459731}.Release|Win32.Build.0 = Release
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
