@@ -23,7 +23,7 @@
 
 #include "InputMan.h"
 #include "ModelReader.h"
-
+#include "DungeonInterface.h"
 
 
 #ifndef SAFE_RELEASE
@@ -52,6 +52,7 @@ struct ARN_CAMERA
 
 
 class VideoMan
+	: public DungeonInterface
 {
 private:
 	InputMan* pInputMan;
@@ -111,6 +112,8 @@ private:
 	ModelReader gamebryo, middlesnake;
 	ModelReader highpoly;
 	ModelReader mrRocky;
+	ModelReader mrDungeon;		// Dungeon(level) test
+	D3DXVECTOR3 dungeonTranslation;
 
 	ModelReader* pDrawingModel; // indicates drawing model at editor
 	
@@ -187,6 +190,7 @@ public:
 	void SetDrawingModelAtEditor(ModelReader* pMR);
 	HRESULT SetCurrentFrameIndex(int idx);
 
+	virtual void ScrollBy( D3DXVECTOR3* dScroll );
 	//LRESULT CALLBACK LoadingDialogProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 };

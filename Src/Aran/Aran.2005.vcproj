@@ -268,11 +268,31 @@
 				>
 			</File>
 			<File
+				RelativePath=".\UndefinedCallback.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UndefinedCallback.h"
+				>
+			</File>
+			<File
 				RelativePath=".\WalkCallback.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\WalkCallback.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Dungeon"
+			>
+			<File
+				RelativePath=".\DungeonInterface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DungeonInterface.h"
 				>
 			</File>
 		</Filter>

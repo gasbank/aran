@@ -12,6 +12,15 @@ WalkCallback::~WalkCallback(void)
 
 
 
+void WalkCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ )
+{
+	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
+	lpAC->SetTrackPosition( 0, 0.0f );
+
+	if ( pResultData != NULL )
+		*(int*)pResultData = 0;
+}
+
 void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */ )
 {
 
@@ -29,6 +38,7 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 
 		lpAC->SetTrackEnable( 0, FALSE );
 		lpAC->SetTrackPosition( 0, 0.0f );
+
 		return;
 	}
 
@@ -53,7 +63,7 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 
 		this->GetCharacter()->SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
 		this->GetCharacter()->SetAnimStateWeight( 1.0f ); // current; Next weight will be automatically calculated during runtime
-		this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_UNDEFINED );
+		this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_WALKING );
 	}
 
 	

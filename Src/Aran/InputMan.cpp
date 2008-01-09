@@ -14,7 +14,7 @@
 
 #include "InputMan.h"
 #include "CharacterInterface.h"
-
+#include "DungeonInterface.h"
 
 InputMan::InputMan(void)
 {
@@ -33,33 +33,33 @@ InputMan::~InputMan(void)
 
 void InputMan::WalkCharacterForward( float amount /*= 1.0f */ )
 {
-	this->charInterface->ChangeTranslationToLookAtDirection( amount );
-	this->charInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_WALKING );
+	this->pCharInterface->ChangeTranslationToLookAtDirection( amount );
+	this->pCharInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_WALKING );
 }
 
 void InputMan::WalkCharacterBackward( float amount /*= 1.0f */ )
 {
-	this->charInterface->ChangeTranslationToLookAtDirection( -amount );
+	this->pCharInterface->ChangeTranslationToLookAtDirection( -amount );
 }
 
 void InputMan::TurnCharacterLeft( float amount /*= D3DXToRadian( 10 ) */ )
 {
-	this->charInterface->ChangeOrientation( 0.0f, 0.0f, amount );
+	this->pCharInterface->ChangeOrientation( 0.0f, 0.0f, amount );
 }
 
 void InputMan::TurnCharacterRight( float amount /*= D3DXToRadian( 10 ) */ )
 {
-	this->charInterface->ChangeOrientation( 0.0f, 0.0f, -amount );
+	this->pCharInterface->ChangeOrientation( 0.0f, 0.0f, -amount );
 }
 
 const D3DXMATRIX* InputMan::GetFinalTransform() const
 {
-	return this->charInterface->GetFinalTransform();
+	return this->pCharInterface->GetFinalTransform();
 }
 
 void InputMan::StopCharacterWalking()
 {
-	this->charInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_LOITER );
+	this->pCharInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_LOITER );
 }
 
 HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
@@ -109,28 +109,37 @@ HRESULT WINAPI InputMan::ProcessKeyboardInput()
 		return hr;
 	}
 
+
+	//////////////////////////////////////////////////////////////////////////
+	// Character Movement
+	//////////////////////////////////////////////////////////////////////////
 	BOOL directionalKeyPressed = FALSE;
+	float walkSpeed = 0.2f;
+	float turnSpeed = D3DXToRadian( 5 );
+	if ( KEYDOWN( buffer, DIK_LSHIFT ) )
+	{
+		walkSpeed += 0.2f;
+		turnSpeed += D3DXToRadian( 5 );
+	}
 	if ( KEYDOWN( buffer, DIK_UP ) )
 	{
-		this->WalkCharacterForward();
+		this->WalkCharacterForward( walkSpeed );
 		directionalKeyPressed = TRUE;
 	}
-
-	if ( KEYDOWN( buffer, DIK_DOWN ) )
+	else if ( KEYDOWN( buffer, DIK_DOWN ) )
 	{
-		this->WalkCharacterBackward();
+		this->WalkCharacterBackward( walkSpeed );
 		directionalKeyPressed = TRUE;
 	}
 
 	if ( KEYDOWN( buffer, DIK_LEFT ) )
 	{
-		this->TurnCharacterLeft();
+		this->TurnCharacterLeft( turnSpeed );
 		directionalKeyPressed = TRUE;
 	}
-
-	if ( KEYDOWN( buffer, DIK_RIGHT ) )
+	else if ( KEYDOWN( buffer, DIK_RIGHT ) )
 	{
-		this->TurnCharacterRight();
+		this->TurnCharacterRight( turnSpeed );
 		directionalKeyPressed = TRUE;
 	}
 
@@ -140,6 +149,38 @@ HRESULT WINAPI InputMan::ProcessKeyboardInput()
 	}
 	
 
+	//////////////////////////////////////////////////////////////////////////
+	// Dungeon Scroll
+	//////////////////////////////////////////////////////////////////////////
+	D3DXVECTOR3 dScroll( 0.0f, 0.0f, 0.0f );
+	float scrollSpeed = 1.0f;
+	if ( KEYDOWN( buffer, DIK_W ) )
+	{
+		dScroll.y -= scrollSpeed;
+		this->DungeonScrollBy( &dScroll );
+	}
+	else if ( KEYDOWN( buffer, DIK_S ) )
+	{
+		dScroll.y += scrollSpeed;
+		this->DungeonScrollBy( &dScroll );
+	}
+
+	if ( KEYDOWN( buffer, DIK_A ) )
+	{
+		dScroll.x += scrollSpeed;
+		this->DungeonScrollBy( &dScroll );
+	}
+	else if ( KEYDOWN( buffer, DIK_D ) )
+	{
+		dScroll.x -= scrollSpeed;
+		this->DungeonScrollBy( &dScroll );
+	}
+
+
+
+	//////////////////////////////////////////////////////////////////////////
+	// Test
+	//////////////////////////////////////////////////////////////////////////
 	if ( KEYDOWN( buffer, DIK_NUMPAD0 ) )
 	{
 		OutputDebugString( _T( " . Numpad 0 pressed\n" ) );
@@ -154,4 +195,9 @@ HRESULT WINAPI InputMan::ProcessKeyboardInput()
 	}
 
 	return hr;
+}
+
+void InputMan::DungeonScrollBy( D3DXVECTOR3* pDScroll )
+{
+	this->pDungeonInterface->ScrollBy( pDScroll );
 }

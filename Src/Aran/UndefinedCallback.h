@@ -1,12 +1,12 @@
 #pragma once
 #include "characteranimationcallback.h"
 
-class LoiterCallback :
+class UndefinedCallback :
 	public CharacterAnimationCallback
 {
 public:
-	LoiterCallback(void);
-	~LoiterCallback(void);
+	UndefinedCallback(void);
+	~UndefinedCallback(void);
 
 	virtual void DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ );
 	virtual void DoCallback( void* pData /* in */, void* pResultData /* out */ );

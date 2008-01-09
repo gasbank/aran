@@ -15,8 +15,11 @@
 
 #include "CharacterInterface.h"
 #include "Character.h"
-#include "WalkCallback.h"
+
+#include "UndefinedCallback.h"
 #include "LoiterCallback.h"
+#include "WalkCallback.h"
+
 
 VideoMan videoMan;
 InputMan inputMan;
@@ -24,6 +27,7 @@ Character character;		// player character
 
 static WalkCallback g_walkCallback;
 static LoiterCallback g_loiterCallback;
+static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 //int main()
@@ -43,6 +47,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
 
 	character.Initialize();
+	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
 	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
 	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
 
@@ -50,6 +55,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	inputMan.AttachCharacterInterface( &character );
 	videoMan.AttachInputMan( &inputMan );
 	videoMan.AttachCharacter( &character );
+
+	inputMan.AttachDungeonInterface( &videoMan );
 
 	//character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
 

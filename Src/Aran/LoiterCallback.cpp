@@ -11,6 +11,14 @@ LoiterCallback::~LoiterCallback(void)
 }
 
 
+void LoiterCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ )
+{
+	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
+	lpAC->SetTrackPosition( 1, 0.0f );
+
+	if ( pResultData != NULL )
+		*(int*)pResultData = 0;
+}
 
 void LoiterCallback::DoCallback( void* pData /* in */, void* pResultData /* out */ )
 {
@@ -30,6 +38,7 @@ void LoiterCallback::DoCallback( void* pData /* in */, void* pResultData /* out 
 		
 		lpAC->SetTrackEnable( 1, FALSE );
 		lpAC->SetTrackPosition( 1, 0.0f );
+		
 		return;
 	}
 
@@ -52,7 +61,7 @@ void LoiterCallback::DoCallback( void* pData /* in */, void* pResultData /* out 
 		// shifting next state to current space
 		this->GetCharacter()->SetCharacterAnimationState( CharacterInterface::CAS_LOITER );
 		this->GetCharacter()->SetAnimStateWeight( 1.0f );
-		this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_UNDEFINED );
+		this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_LOITER );
 	}
 
 
@@ -75,3 +84,4 @@ void LoiterCallback::DoUnregisterCallback()
 {
 
 }
+

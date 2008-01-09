@@ -9,6 +9,13 @@ CharacterAnimationCallback::~CharacterAnimationCallback(void)
 {
 }
 
+
+void CharacterAnimationCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ )
+{
+	if ( pResultData != NULL )
+		*(int*)pResultData = 0;
+}
+
 void CharacterAnimationCallback::DoCallback( void* pData /* in */, void* pResultData /* out */ )
 {
 	if ( pResultData != NULL )

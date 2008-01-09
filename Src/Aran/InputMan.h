@@ -11,6 +11,7 @@ typedef int BOOL;
 class CharacterInterface;
 struct IDirectInput8;
 struct IDirectInputDevice8;
+class DungeonInterface;
 
 struct Point2Int 
 {
@@ -27,7 +28,8 @@ private:
 	Point2Int mouseDownPos;
 	Point2Int mouseUpPos;
 
-	CharacterInterface* charInterface;
+	CharacterInterface* pCharInterface;
+	DungeonInterface* pDungeonInterface;
 
 	IDirectInput8*						lpDInput8;
 	IDirectInputDevice8*				lpDInputDevKeyboard;
@@ -61,16 +63,20 @@ public:
 
 
 	// Player character
-	void AttachCharacterInterface( CharacterInterface* charInterface ) { this->charInterface = charInterface; }
+	void AttachCharacterInterface( CharacterInterface* pCharInterface ) { this->pCharInterface = pCharInterface; }
 
 	// Player character control
-	void WalkCharacterForward( float amount = 1.0f );
-	void WalkCharacterBackward( float amount = 1.0f );
-	void TurnCharacterLeft( float amount = D3DXToRadian( 10 ) );
-	void TurnCharacterRight( float amount = D3DXToRadian( 10 ) );
+	void WalkCharacterForward( float amount = 0.2f );
+	void WalkCharacterBackward( float amount = 0.2f );
+	void TurnCharacterLeft( float amount = D3DXToRadian( 5 ) );
+	void TurnCharacterRight( float amount = D3DXToRadian( 5 ) );
 	const D3DXMATRIX* GetFinalTransform() const;
 
 	void StopCharacterWalking();
+
+	// Dungeon
+	void AttachDungeonInterface( DungeonInterface* pDungeonInterface ) { this->pDungeonInterface = pDungeonInterface; }
+	void DungeonScrollBy( D3DXVECTOR3* pDScroll );
 
 	HRESULT WINAPI ProcessKeyboardInput();
 };

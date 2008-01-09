@@ -69,9 +69,11 @@ const D3DXMATRIX* Character::GetFinalTransform() const
 
 void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS )
 {
-	if ( nextCAS == this->animState )
+	if ( nextCAS != this->animStateNext )
 	{
-		//DXTRACE_MSG( _T( "State modification duplicated" ) );
+		// State changed first time
+		if (this->callbacks[nextCAS])
+			this->callbacks[nextCAS]->DoCallbackFirstTimeOnly( (void*)( this->GetModelReader()->GetAnimationController() ), NULL );
 	}
 
 	this->animStateNext = nextCAS;
