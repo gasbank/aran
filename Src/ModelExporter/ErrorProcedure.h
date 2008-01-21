@@ -1,6 +1,6 @@
 #pragma once
 #include <tchar.h>
-#include "igameerror.h"
+#include "IGame/igameerror.h"
 
 class ErrorProcedure : public IGameErrorCallBack
 {

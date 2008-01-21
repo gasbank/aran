@@ -2,10 +2,10 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ModelEditor"
-	ProjectGUID="{9481D72C-4598-4AE5-A982-A046EABC3F84}"
-	RootNamespace="ModelEditor"
-	Keyword="MFCProj"
+	Name="Video"
+	ProjectGUID="{39DC6C58-98C4-46ED-B6A8-693A97E119AC}"
+	RootNamespace="Video"
+	Keyword="Win32Proj"
 	>
 	<Platforms>
 		<Platform
@@ -19,8 +19,7 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			UseOfMFC="2"
+			ConfigurationType="4"
 			CharacterSet="1"
 			>
 			<Tool
@@ -37,14 +36,11 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="_DEBUG"
-				MkTypLibCompatible="false"
-				ValidateParameters="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -58,27 +54,15 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_DEBUG"
-				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				UseLibraryDependencyInputs="true"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib"
-				LinkIncremental="2"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -90,12 +74,6 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -103,8 +81,7 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			UseOfMFC="2"
+			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -122,14 +99,10 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-				PreprocessorDefinitions="NDEBUG"
-				MkTypLibCompatible="false"
-				ValidateParameters="false"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
-				MinimalRebuild="false"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
@@ -141,27 +114,15 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="NDEBUG"
-				Culture="1033"
-				AdditionalIncludeDirectories="$(IntDir)"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				LinkIncremental="1"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -171,12 +132,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -192,31 +147,31 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\AnimSliderCtrl.cpp"
+				RelativePath=".\Character.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ArnView.cpp"
+				RelativePath=".\CharacterAnimationCallback.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\DirectXStatic.cpp"
+				RelativePath=".\CharacterInterface.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\MainFrm.cpp"
+				RelativePath=".\DungeonInterface.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditor.cpp"
+				RelativePath=".\InputMan.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditorDoc.cpp"
+				RelativePath=".\LoiterCallback.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditorView.cpp"
+				RelativePath=".\ModelReader.cpp"
 				>
 			</File>
 			<File
@@ -239,6 +194,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\VideoMan.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -246,39 +205,43 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\AnimSliderCtrl.h"
+				RelativePath=".\Character.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ArnView.h"
+				RelativePath=".\CharacterAnimationCallback.h"
 				>
 			</File>
 			<File
-				RelativePath=".\DirectXStatic.h"
+				RelativePath=".\CharacterInterface.h"
 				>
 			</File>
 			<File
-				RelativePath=".\MainFrm.h"
+				RelativePath=".\DungeonInterface.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditor.h"
+				RelativePath=".\InputMan.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditorDoc.h"
+				RelativePath=".\LoiterCallback.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelEditorView.h"
+				RelativePath=".\Macros.h"
 				>
 			</File>
 			<File
-				RelativePath=".\Resource.h"
+				RelativePath=".\ModelReader.h"
 				>
 			</File>
 			<File
 				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoMan.h"
 				>
 			</File>
 		</Filter>
@@ -287,42 +250,6 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-			<File
-				RelativePath=".\res\bitmap1.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\blue1616.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\green1616.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ModelEditor.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelEditor.rc"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ModelEditor.rc2"
-				>
-			</File>
-			<File
-				RelativePath=".\res\ModelEditorDoc.ico"
-				>
-			</File>
-			<File
-				RelativePath=".\res\red1616.bmp"
-				>
-			</File>
-			<File
-				RelativePath=".\res\Toolbar.bmp"
-				>
-			</File>
 		</Filter>
 		<File
 			RelativePath=".\ReadMe.txt"
@@ -330,9 +257,5 @@
 		</File>
 	</Files>
 	<Globals>
-		<Global
-			Name="RESOURCE_FILE"
-			Value="ModelEditor.rc"
-		/>
 	</Globals>
 </VisualStudioProject>

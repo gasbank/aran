@@ -46,14 +46,14 @@
 #include "hold.h"
 
 // Max SDK APIs (IGame)
-#include "IGame.h"
-#include "IGameObject.h"
-#include "IGameProperty.h"
-#include "IGameControl.h"
-#include "IGameModifier.h"
-#include "IConversionManager.h"
-#include "IGameError.h"
-#include "IGameFX.h"
+#include "IGame/IGame.h"
+#include "IGame/IGameObject.h"
+#include "IGame/IGameProperty.h"
+#include "IGame/IGameControl.h"
+#include "IGame/IGameModifier.h"
+#include "IGame/IConversionManager.h"
+#include "IGame/IGameError.h"
+#include "IGame/IGameFX.h"
 
 
 
