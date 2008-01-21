@@ -167,10 +167,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\LoiterCallback.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ModelReader.cpp"
 				>
 			</File>
@@ -222,10 +218,6 @@
 			</File>
 			<File
 				RelativePath=".\InputMan.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoiterCallback.h"
 				>
 			</File>
 			<File

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../Aran/ModelReader.h"
+#include "../Video/ModelReader.h"
 
 class CModelEditorDoc : public CDocument
 {

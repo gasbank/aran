@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "WalkCallback.h"
-#include "Character.h"
+#include "../Video/Character.h"
 
 WalkCallback::WalkCallback(void)
 {

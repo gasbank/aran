@@ -68,8 +68,9 @@
 			<Tool
 				Name="VCLinkerTool"
 				UseLibraryDependencyInputs="true"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib"
+				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib Video.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../Debug"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"

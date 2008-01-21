@@ -2,10 +2,16 @@
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Aran", "Aran\Aran.2005.vcproj", "{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}"
+	ProjectSection(ProjectDependencies) = postProject
+		{39DC6C58-98C4-46ED-B6A8-693A97E119AC} = {39DC6C58-98C4-46ED-B6A8-693A97E119AC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "kwxport", "kwxport\kwxport.2005.vcproj", "{28B57BE5-E17D-4480-8378-18EFACC74E18}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelEditor", "ModelEditor\ModelEditor.2005.vcproj", "{9481D72C-4598-4AE5-A982-A046EABC3F84}"
+	ProjectSection(ProjectDependencies) = postProject
+		{39DC6C58-98C4-46ED-B6A8-693A97E119AC} = {39DC6C58-98C4-46ED-B6A8-693A97E119AC}
+	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelExporter", "ModelExporter\ModelExporter.2005.vcproj", "{29033CC9-13D2-46B8-B54F-D8A2BF2FD5D9}"
 EndProject

@@ -10,11 +10,8 @@
 #include <iostream>
 
 #include "Aran.h"
-#include "VideoMan.h"
-#include "InputMan.h"
 
-#include "CharacterInterface.h"
-#include "Character.h"
+
 
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"

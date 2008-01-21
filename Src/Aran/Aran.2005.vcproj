@@ -60,8 +60,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib video.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../Debug"
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"
@@ -181,38 +182,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Input"
-			>
-			<File
-				RelativePath=".\InputMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\InputMan.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Video"
-			>
-			<File
-				RelativePath=".\ModelReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelReader.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoMan.h"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="Shader"
 			>
 			<File
@@ -236,30 +205,6 @@
 			Name="Character"
 			>
 			<File
-				RelativePath=".\Character.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Character.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.h"
-				>
-			</File>
-			<File
 				RelativePath=".\LoiterCallback.cpp"
 				>
 			</File>
@@ -281,18 +226,6 @@
 			</File>
 			<File
 				RelativePath=".\WalkCallback.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Dungeon"
-			>
-			<File
-				RelativePath=".\DungeonInterface.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DungeonInterface.h"
 				>
 			</File>
 		</Filter>
