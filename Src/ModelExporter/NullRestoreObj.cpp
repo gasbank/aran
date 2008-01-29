@@ -1,4 +1,5 @@
-#include "Main.h"
+
+#include "stdafx.h"
 #include "NullRestoreObj.h"
 
 NullRestoreObj::NullRestoreObj(void)

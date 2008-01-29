@@ -16,10 +16,10 @@
 #include <dxerr9.h>
 
 // custom macros
-#include "../Video/Macros.h"
+#include "../VideoLib/Macros.h"
 
-#include "../Video/VideoMan.h"
-#include "../Video/InputMan.h"
+#include "../VideoLib/VideoMan.h"
+#include "../VideoLib/InputMan.h"
 
-#include "../Video/CharacterInterface.h"
-#include "../Video/Character.h"
+#include "../VideoLib/CharacterInterface.h"
+#include "../VideoLib/Character.h"

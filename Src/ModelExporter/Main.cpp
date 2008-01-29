@@ -1,6 +1,7 @@
 // Main.cpp
 // 2007 Geoyeob Kim
 //
+#include "stdafx.h"
 #include "Main.h"
 #include "ModelExporter.h"
 #include "ModelExporterClassDesc.h"

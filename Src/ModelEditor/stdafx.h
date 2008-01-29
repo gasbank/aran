@@ -79,6 +79,6 @@
 #include <dxerr9.h>
 #include <string>
 // custom macros
-#include "../Video/Macros.h"
+#include "../VideoLib/Macros.h"
 
 

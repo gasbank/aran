@@ -15,7 +15,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelEditor", "ModelEditor\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelExporter", "ModelExporter\ModelExporter.2005.vcproj", "{29033CC9-13D2-46B8-B54F-D8A2BF2FD5D9}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Video", "Video\Video.vcproj", "{39DC6C58-98C4-46ED-B6A8-693A97E119AC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VideoLib", "VideoLib\VideoLib.vcproj", "{39DC6C58-98C4-46ED-B6A8-693A97E119AC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

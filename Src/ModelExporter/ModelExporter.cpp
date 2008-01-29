@@ -3,13 +3,13 @@
 //
 
 
-#include "Main.h"
+#include "stdafx.h"
 #include "ModelExporter.h"
 #include "ErrorProcedure.h"
 #include "NullRestoreObj.h"
 #include "resource.h"
 
-#include "../Video/Macros.h"
+#include "../VideoLib/Macros.h"
 
 // Define this if want additional dump information
 #define EXPORT_DEBUG

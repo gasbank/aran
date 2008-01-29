@@ -1,7 +1,7 @@
 // ModelExporterClassDesc.cpp
 // 2007 Geoyeob Kim
 //
-#include "Main.h"
+#include "stdafx.h"
 #include "ModelExporterClassDesc.h"
 
 extern HINSTANCE g_hInstance; // declared at Main.cpp

@@ -1,7 +1,7 @@
 // ErrorProcedure.cpp
 // 2007 Geoyeob Kim
 //
-#include "Main.h"
+#include "stdafx.h"
 #include "ErrorProcedure.h"
 
 ErrorProcedure::ErrorProcedure(void)

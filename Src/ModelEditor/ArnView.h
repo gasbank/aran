@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Video/VideoMan.h"
+#include "../VideoLib/VideoMan.h"
 #include "DirectXStatic.h"
 #include "afxcmn.h"
 #include "afxwin.h"
