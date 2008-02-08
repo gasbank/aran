@@ -30,9 +30,9 @@
 
 //
 // TODO: Specify 3ds Max version which this plugin applied to.
-//
+// -----> Check Project Properties
 //#define MODEL_EXPORTER_FOR_MAX_9
-#define MODEL_EXPORTER_FOR_MAX_2008
+//#define MODEL_EXPORTER_FOR_MAX_2008
 
 
 // C++

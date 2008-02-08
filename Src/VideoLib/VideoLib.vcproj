@@ -40,11 +40,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="..\..\Dxsdk\Include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile="$(IntDir)\$(TargetName)_$(ConfigurationName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -61,6 +63,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).lib"
+				AdditionalLibraryDirectories="..\..\Dxsdk\Lib\x86"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -103,12 +106,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="2"
 				EnableFiberSafeOptimizations="false"
 				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="..\..\Dxsdk\Include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderFile="$(IntDir)\$(TargetName)_$(ConfigurationName).pch"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
@@ -125,6 +130,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).lib"
+				AdditionalLibraryDirectories="..\..\Dxsdk\Lib\x86"
 			/>
 			<Tool
 				Name="VCALinkTool"
