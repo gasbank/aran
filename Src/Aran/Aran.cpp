@@ -1,16 +1,8 @@
 // Aran.cpp
 // 2007 Geoyeob Kim
-// 프로젝트 메인 엔트리
+
 #include "stdafx.h"
-
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x020A
-#endif
-
-#include <iostream>
-
 #include "Aran.h"
-
 
 
 #include "UndefinedCallback.h"
@@ -18,20 +10,19 @@
 #include "WalkCallback.h"
 
 
+LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
 InputMan inputMan;
 Character character;		// player character
+ResourceMan resMan;
 
 static WalkCallback g_walkCallback;
 static LoiterCallback g_loiterCallback;
 static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
-//int main()
 {
-	// TODO: Entry Point
-	std::cout << _T("Starting Aran...") << std::endl;
-
+	_LogWrite( "WinMain() Start ...!!", LOG_OKAY );
 	
 	HRESULT hr;
 
@@ -40,6 +31,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Window Initialization Error"), hr);
 	}
+
+	resMan.registerModel( ResourceMan::BOX1, _T( "box1.arn" ) );
+	resMan.registerModel( ResourceMan::BOX2, _T( "box2.arn" ) );
 
 	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
 
@@ -53,11 +47,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	videoMan.AttachInputMan( &inputMan );
 	videoMan.AttachCharacter( &character );
 
-	inputMan.AttachDungeonInterface( &videoMan );
+	//inputMan.AttachDungeonInterface( &videoMan );
 
-	//character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
-
-
+	character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
 	
 	hr = videoMan.InitD3D();
 	if (FAILED(hr))
@@ -122,7 +114,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Main Loop Failure"), hr);
 	}
 
-	std::cout << _T("Terminating Aran...") << std::endl;
+	if (logManager.GetFailCount() != 0)
+	{
+		MessageBox(NULL, _T("One or more errors logged!"), _T("Check Log File"), MB_ICONEXCLAMATION);
+	}
 
 	return 0;
 }
@@ -198,6 +193,10 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
 
 		break;
+
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x020A
+#endif
 	case WM_MOUSEWHEEL:
 		{
 			short zDelta = (short)HIWORD(wParam);

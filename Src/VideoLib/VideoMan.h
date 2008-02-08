@@ -10,21 +10,11 @@
 
 #pragma once
 
-// defined at Project Properties of VS2005
-//#define D3D_DEBUG_INFO
-
-#include <windows.h>
-#include <commctrl.h>
-//#include "resource.h"
-
-#include <tchar.h>
-#include <d3dx9.h>
-#include <DxErr.h>
 
 #include "InputMan.h"
 #include "ModelReader.h"
 #include "DungeonInterface.h"
-
+#include "Singleton.h"
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
@@ -51,8 +41,7 @@ struct ARN_CAMERA
 };
 
 
-class VideoMan
-	: public DungeonInterface
+class VideoMan : public Singleton<VideoMan>
 {
 private:
 	InputMan* pInputMan;

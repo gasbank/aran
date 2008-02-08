@@ -302,6 +302,9 @@ public:
 
 	LPD3DXANIMATIONCONTROLLER GetAnimationController() { return this->lpAnimationController; }
 
+	void clearMembers();
+
+	void SetFileName( const TCHAR* fileName );
 };
 
 

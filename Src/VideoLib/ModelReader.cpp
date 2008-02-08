@@ -13,12 +13,9 @@ static inline BOOL almostEqualFloat4(float* floatArray1, float* floatArray2);
 
 
 ModelReader::ModelReader(void)
-:lpVB(NULL), fvf(0), materialReference(NULL), totalFaceCount(0),
-hLoadingWnd(NULL), lpMeshes(NULL), lpSkinnedMeshes(NULL), notIndTotalMeshCount(0), indTotalMeshCount(0),
-lpKeyframedAnimationSet(NULL), lpDev(NULL), lpAnimationController(NULL), skinnedMeshCount(0), hierarchySize(0),
-notIndVertTotalSize(0), indVertTotalSize(0), lightCount(0), nodeCount(0), exportVersion(EV_UNDEFINED),
-useLocalAC(FALSE), initialized(FALSE)
 {
+	clearMembers();
+
 	ZeroMemory(this->szFileName, sizeof(this->szFileName));
 	ZeroMemory(this->nodeTypeCounter, sizeof(this->nodeTypeCounter));
 
@@ -28,12 +25,9 @@ useLocalAC(FALSE), initialized(FALSE)
 }
 
 ModelReader::ModelReader(LPDIRECT3DDEVICE9 lpDev, DWORD fvf)
-:lpVB(NULL), fvf(0), materialReference(NULL), totalFaceCount(0),
-hLoadingWnd(NULL), lpMeshes(NULL), lpSkinnedMeshes(NULL), notIndTotalMeshCount(0), indTotalMeshCount(0),
-lpKeyframedAnimationSet(NULL), lpDev(NULL), lpAnimationController(NULL), skinnedMeshCount(0), hierarchySize(0),
-notIndVertTotalSize(0), indVertTotalSize(0), lightCount(0), nodeCount(0), exportVersion(EV_UNDEFINED),
-useLocalAC(FALSE), initialized(FALSE)
 {
+	clearMembers();
+
 	this->lpDev = lpDev;
 	this->fvf = fvf;
 
@@ -45,6 +39,33 @@ useLocalAC(FALSE), initialized(FALSE)
 	ZeroMemory(&this->frame, sizeof(frame));
 }
 
+void ModelReader::clearMembers()
+{
+	lpVB					= NULL;
+	fvf						= 0;
+	totalFaceCount			= 0;
+	hLoadingWnd				= NULL;
+	lpMeshes				= NULL;
+	notIndTotalMeshCount	= 0;
+	indTotalMeshCount		= 0;
+	lpKeyframedAnimationSet	= NULL;
+	lpDev					= NULL;
+	lpAnimationController	= NULL;
+	skinnedMeshCount		= 0;
+	hierarchySize			= 0;
+	notIndVertTotalSize		= 0;
+	indVertTotalSize		= 0;
+	lightCount				= 0;
+	nodeCount				= 0;
+	exportVersion			= EV_UNDEFINED;
+	useLocalAC				= FALSE;
+	initialized				= FALSE;
+	szFileName[0]			= _T('\0');
+}
+void ModelReader::SetFileName( const TCHAR* fileName )
+{
+	_tcscpy_s( this->szFileName, sizeof( this->szFileName ), fileName );
+}
 ModelReader::~ModelReader(void)
 {
 	SAFE_RELEASE(this->lpVB);
@@ -1663,6 +1684,9 @@ int ModelReader::GetMeshIndexBySkeletonIndex(int skelIndex) const
 	const SkeletonNode* sn = &this->skeletonNode[skelIndex];
 
 	int i;
+
+
+	ASSERTCHECK( this->indTotalMeshCount > 0 );
 	for (i = 0; i < this->indTotalMeshCount; i++)
 	{
 		const std::string* meshName = &this->indMeshNames[i];
@@ -1703,14 +1727,31 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 	this->SetDev(lpDev);
 	this->SetFVF(fvf);
 	
+	if ( _tcslen( szFileName ) == 0 )
+	{
+		int size = this->Read(fileName);
+		_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), fileName );
+		std::tstring globalPathFileName(_T(GLOBAL_ARN_FILE_PATH));
+		globalPathFileName += fileName;
+		if (size < 0)
+		{
+			size = this->Read(globalPathFileName.c_str());
+			_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), globalPathFileName.c_str() );
+		}
+		if (size < 0)
+			return E_FAIL;
+	}
+	else
+	{
+		int size = this->Read(szFileName);
+		std::tstring globalPathFileName(_T(GLOBAL_ARN_FILE_PATH));
+		globalPathFileName += szFileName;
+		if (size < 0)
+			size = this->Read(globalPathFileName.c_str());
+		if (size < 0)
+			return E_FAIL;
 
-	int size = this->Read(fileName);
-	std::tstring globalPathFileName(_T(GLOBAL_ARN_FILE_PATH));
-	globalPathFileName += fileName;
-	if (size < 0)
-		size = this->Read(globalPathFileName.c_str());
-	if (size < 0)
-		return E_FAIL;
+	}
 
 	// if lpAC is null, this means the model use its own (local) AC
 	if (lpAC == NULL)

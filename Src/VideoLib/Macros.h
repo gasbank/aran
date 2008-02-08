@@ -9,7 +9,7 @@
 
 #include <tchar.h>
 
-#define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = x)) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
+#define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
 #define GLOBAL_TEXTURE_FILE_PATH			"..\\..\\Textures\\"					//"e:\\tex\\"
 #define GLOBAL_ARN_FILE_PATH				"..\\..\\MaxAssets\\export\\"			//"e:\\max\\export\\"
 #ifndef SAFE_RELEASE
@@ -33,9 +33,7 @@ namespace std {
 }
 
 
-#ifndef DEBUG
-#define ASSERTCHECK(x)
-#else
+#if defined(DEBUG) | defined(_DEBUG)
 #define ASSERTCHECK(x) \
 	if (! (x)) \
 { \
@@ -49,6 +47,8 @@ namespace std {
 	MessageBoxA(NULL, fileName.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
 	return E_FAIL; \
 }
+#else
+#define ASSERTCHECK(x)
 #endif
 
 

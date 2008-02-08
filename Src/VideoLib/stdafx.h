@@ -16,10 +16,13 @@
 // TODO: reference additional headers your program requires here
 
 #include <windows.h>
+#include <commctrl.h>
 
+#include <assert.h>
 #include <d3dx9.h>
 #include <DxErr.h>
 #include <string>
 
 #include "Macros.h"
+#include "Singleton.h"
 
