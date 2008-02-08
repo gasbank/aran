@@ -7,6 +7,7 @@
 #include "ModelReader.h"
 
 #define COMPARE_EPSILON 1e-4
+static inline BOOL almostEqualFloat3(D3DXVECTOR3* pV1, D3DXVECTOR3* pV2);
 static inline BOOL almostEqualFloat3(float* floatArray1, float* floatArray2);
 static inline BOOL almostEqualFloat4(float* floatArray1, float* floatArray2);
 
@@ -1309,10 +1310,11 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 
 		for ( i = 1; i < (int)(*pScaleSize) + 1; i++ )
 		{
-			D3DXVECTOR3* pV3a = &((*ppScale)[i-1].Value);
-			D3DXVECTOR3* pV3b = &((*ppScale)[i  ].Value);
+			D3DXVECTOR3* pV3a = &( (*ppScale)[i-1].Value );
+			D3DXVECTOR3* pV3b = &( (*ppScale)[i  ].Value );
 
-			if ( almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
+			// TODO release 실행 파일에서 문제 발생하는 지점
+			if ( FALSE && almostEqualFloat3( pV3a, pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
@@ -1339,7 +1341,8 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 			D3DXVECTOR3* pV3a = &((*ppTranslation)[i-1].Value);
 			D3DXVECTOR3* pV3b = &((*ppTranslation)[i  ].Value);
 
-			if ( almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
+			// TODO release 실행 파일에서 문제 발생하는 지점
+			if ( FALSE && almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
@@ -1366,7 +1369,8 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 			D3DXQUATERNION* pV4a = &((*ppRotation)[i-1].Value);
 			D3DXQUATERNION* pV4b = &((*ppRotation)[i  ].Value);
 
-			if ( almostEqualFloat4( (float*)pV4a, (float*)pV4b ) == TRUE )
+			// TODO release 실행 파일에서 문제 발생하는 지점
+			if ( FALSE && almostEqualFloat4( (float*)pV4a, (float*)pV4b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
@@ -2019,6 +2023,13 @@ BOOL ModelReader::IsInitialized() const
 // Static Global Functions
 //////////////////////////////////////////////////////////////////////////
 
+
+static inline BOOL almostEqualFloat3(D3DXVECTOR3* pV1, D3DXVECTOR3* pV2)
+{
+	return ( fabsf( pV1->x - pV2->x ) < COMPARE_EPSILON )
+		&& ( fabsf( pV1->y - pV2->y ) < COMPARE_EPSILON )
+		&& ( fabsf( pV1->z - pV2->z ) < COMPARE_EPSILON );
+}
 
 static inline BOOL almostEqualFloat3(float* floatArray1, float* floatArray2)
 {
