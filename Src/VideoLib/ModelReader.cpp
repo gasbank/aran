@@ -1266,7 +1266,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 	return 0;
 }
 
-
+// TODO 이 함수 어떻게 좀 해 봅시다....-_-
 int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray, UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize, D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation, BOOL removeDuplicates)
 {
 	ASSERTCHECK( sourceArraySize >= 1 );
@@ -1308,13 +1308,13 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 	{
 		int dupStartIndex = -1;
 
-		for ( i = 1; i < (int)(*pScaleSize) + 1; i++ )
+		for ( i = 1; i < (int)(*pScaleSize); i++ )
 		{
 			D3DXVECTOR3* pV3a = &( (*ppScale)[i-1].Value );
 			D3DXVECTOR3* pV3b = &( (*ppScale)[i  ].Value );
 
 			// TODO release 실행 파일에서 문제 발생하는 지점
-			if ( FALSE && almostEqualFloat3( pV3a, pV3b ) == TRUE )
+			if ( almostEqualFloat3( pV3a, pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
@@ -1336,13 +1336,13 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 
 		dupStartIndex = -1;
 
-		for ( i = 1; i < (int)(*pTranslationSize) + 1; i++ )
+		for ( i = 1; i < (int)(*pTranslationSize); i++ )
 		{
 			D3DXVECTOR3* pV3a = &((*ppTranslation)[i-1].Value);
 			D3DXVECTOR3* pV3b = &((*ppTranslation)[i  ].Value);
 
 			// TODO release 실행 파일에서 문제 발생하는 지점
-			if ( FALSE && almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
+			if ( almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
@@ -1364,13 +1364,13 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 
 		dupStartIndex = -1;
 
-		for ( i = 1; i < (int)(*pRotationSize) + 1; i++ )
+		for ( i = 1; i < (int)(*pRotationSize); i++ )
 		{
 			D3DXQUATERNION* pV4a = &((*ppRotation)[i-1].Value);
 			D3DXQUATERNION* pV4b = &((*ppRotation)[i  ].Value);
 
 			// TODO release 실행 파일에서 문제 발생하는 지점
-			if ( FALSE && almostEqualFloat4( (float*)pV4a, (float*)pV4b ) == TRUE )
+			if ( almostEqualFloat4( (float*)pV4a, (float*)pV4b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
 				{
