@@ -16,6 +16,8 @@
 #include "DungeonInterface.h"
 #include "Singleton.h"
 
+#include <list>
+
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
 #endif
@@ -40,6 +42,7 @@ struct ARN_CAMERA
 	float farClip, nearClip;
 };
 
+class RenderLayer;
 
 class VideoMan : public Singleton<VideoMan>
 {
@@ -115,7 +118,9 @@ private:
 
 	ARN_CAMERA mainCamera;
 
-	Character* pCharacter;
+	
+
+	std::list<RenderLayer*> m_renderLayers;
 
 public:
 	VideoMan();
@@ -145,9 +150,9 @@ public:
 	BOOL PauseMainLoop();
 	BOOL ResumeMainLoop();
 	int Draw();
-	HRESULT RenderModel(ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel1(ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel2(ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel1(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel2(const ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
 	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = NULL);
 	void Close();
 
@@ -166,7 +171,7 @@ public:
 
 
 	void AttachInputMan(InputMan* inputMan);
-	void AttachCharacter(Character* character);
+
 	InputMan* GetInputMan();
 
 	void SetWindowSize(int w, int h);
@@ -182,6 +187,20 @@ public:
 	virtual void ScrollBy( D3DXVECTOR3* dScroll );
 	//LRESULT CALLBACK LoadingDialogProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
+
+	size_t registerRenderLayer(RenderLayer* pRL);
+	BOOL unregisterRenderLayerAt( unsigned int ui );
+	size_t unregisterAllRenderLayers();
+	RenderLayer* getRenderLayerAt(unsigned int ui);
+
+	const ARN_CAMERA* getMainCamera() const { return &mainCamera; }
+	const void getScreenInfo(int& width, int& height) { width = screenWidth; height = screenHeight; }
+
+	const D3DXMATRIX* getModelArcBallRotation() const { return &modelArcBallRotation; }
+	const LPD3DXFONT getDefaultFont() const { return lpFont; }
+
+
+	void setWorldViewProjection( const D3DXMATRIX& matWorld, const D3DXMATRIX& matView, const D3DXMATRIX& matProj );
 };
 
 

@@ -32,8 +32,8 @@ public:
 	HRESULT RegisterCharacterAnimationCallback( CharacterAnimationState cas, CharacterAnimationCallback* pCAC );
 	HRESULT UnregisterCharacterAnimationCallback( CharacterAnimationState cas );
 
-	HRESULT AttachModelReader( ModelReader* pMR );
-	ModelReader* GetModelReader();
+	HRESULT AttachModelReader( const ModelReader* pMR );
+	const ModelReader* GetModelReader() const;
 	float GetAnimStateWeight() const { return this->animStateWeight; }
 	void SetAnimStateWeight( float f )
 	{
@@ -69,6 +69,6 @@ private:
 	CharacterAnimationState animStateNext;	// next anim state
 	
 
-	ModelReader* pMR; // attached model reader
+	const ModelReader* pMR; // attached model reader
 
 };

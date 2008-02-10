@@ -2,16 +2,25 @@
 #include "ResourceMan.h"
 #include "../VideoLib/VideoMan.h"
 
+IMPLEMENT_SINGLETON(ResourceMan);
+
+#ifndef _LogWrite
+#define _LogWrite(a,b)
+#endif
+
 ResourceMan::ResourceMan(void)
 {
 }
 
 ResourceMan::~ResourceMan(void)
 {
+	unregisterAllModels();
 }
 
 HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
 {
+	static TCHAR logMessage[512];
+
 	ModelMap::iterator it = m_models.find( id );
 	ModelMap::iterator itEnd = m_models.end();
 
@@ -20,11 +29,16 @@ HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
 		ModelReader* pModelReader = new ModelReader();
 		pModelReader->SetFileName( modelFileName );
 		m_models.insert( ModelMap::value_type( id, pModelReader ) );
+		
+		_stprintf_s( logMessage, sizeof( logMessage ), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		_LogWrite( logMessage, LOG_OKAY );
 		return S_OK;
 	}
 	else
 	{
 		// already exist...
+		_stprintf_s( logMessage, sizeof( logMessage ), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		_LogWrite( logMessage, LOG_FAIL );
 		return E_FAIL;
 	}
 }
@@ -46,6 +60,8 @@ HRESULT ResourceMan::unregisterModel( MODELID id )
 	}
 }
 
+
+
 int ResourceMan::initializeAll()
 {	
 	ModelMap::iterator it = m_models.begin();
@@ -63,18 +79,51 @@ int ResourceMan::initializeAll()
 				ARN_VDD::ARN_VDD_FVF,
 				NULL,
 				NULL,
-				NULL );
+				NULL
+				);
 			if ( FAILED( hr ) )
 			{
-				_LogWrite( "Model Loading Error!", LOG_FAIL );
+				_LogWrite( _T( "Model Loading Error!" ), LOG_FAIL );
 				return -1;
 			}
 			else
 			{
+				pMR->AdvanceTime( 0.001f );
 				++initedCount;
 			}
 			
 		}
 	}
+	_LogWrite( _T( "Model Initialization" ), LOG_OKAY );
 	return S_OK;
+}
+
+HRESULT ResourceMan::unregisterAllModels()
+{
+	while ( m_models.size() )
+	{
+		ModelMap::iterator it = m_models.begin();
+		ModelReader* pMR = it->second;
+		if ( pMR->IsInitialized() )
+		{
+			SAFE_DELETE( pMR );
+			m_models.erase(it);
+		}
+	}
+	return S_OK;
+}
+
+const ModelReader* ResourceMan::getModel( MODELID id ) const
+{
+	ModelMap::const_iterator it = m_models.find( id );
+	ModelMap::const_iterator itEnd = m_models.end();
+
+	if ( it != itEnd )
+	{
+		return it->second;
+	}
+	else
+	{
+		return NULL; // not exist!
+	}
 }

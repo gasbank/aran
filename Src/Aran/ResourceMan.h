@@ -1,7 +1,11 @@
 #pragma once
 
+#include <map>
+#include "../VideoLib/Singleton.h"
 
-class ResourceMan
+class ModelReader;
+
+class ResourceMan : public Singleton<ResourceMan>
 {
 public:
 	ResourceMan(void);
@@ -10,17 +14,26 @@ public:
 
 	enum MODELID
 	{
+		POOLC,
 		MAN,
-		DUNGEON,
+		DUN,
+		BIGHOUSE,
+		MOMA,
+		
+
+		BOX0,
 		BOX1,
 		BOX2,
 		BOX3,
+		BOXSKIN,
 
 		MODEL_COUNT,
 	};
 	HRESULT registerModel( MODELID id, const TCHAR* modelFileName );
 	HRESULT unregisterModel( MODELID id );
 	int initializeAll();
+	HRESULT unregisterAllModels();
+	const ModelReader* getModel( MODELID id ) const;
 
 private:
 	typedef std::map<MODELID, ModelReader*> ModelMap;

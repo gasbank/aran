@@ -22,15 +22,16 @@ public:
 	LOGMANAGER(char* filename);
 	LOGMANAGER(char* filename, bool bAppend);
 
-	void NewLog(char* sourcefilename, char* funcname, int line, char* message, bool bOkay);
-	void NewLog(char* message, bool bOkay);
-	void NewLog(char* message);
+	void NewLog(char* sourcefilename, char* funcname, int line, TCHAR* message, bool bOkay);
+	void NewLog(TCHAR* message, bool bOkay);
+	void NewLog(TCHAR* message);
 	int GetFailCount() { return failCount; };
 
 private:
 	int okayCount;
 	int failCount;
-	std::ofstream fout;
+	//std::ofstream fout;
+	std::wofstream fout;
 };
 
 #ifndef _LogWrite

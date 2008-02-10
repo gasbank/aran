@@ -26,7 +26,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				CommandLine=""
+				Description="Copy resources to working directory..."
+				CommandLine="CopyResourcesToWorking.bat"
+				Outputs="..\..\Working\"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -111,6 +113,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				Description="Copy resources to working directory..."
+				CommandLine="CopyResourcesToWorking.bat"
+				Outputs="..\..\Working\"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -239,8 +244,24 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="RenderLayer"
+			>
+			<File
+				RelativePath=".\DefaultRenderLayer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DefaultRenderLayer.h"
+				>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\Aran.rc"
+			>
+		</File>
+		<File
+			RelativePath=".\CopyResourcesToWorking.bat"
 			>
 		</File>
 		<File

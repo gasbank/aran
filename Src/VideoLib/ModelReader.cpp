@@ -65,7 +65,7 @@ void ModelReader::clearMembers()
 }
 void ModelReader::SetFileName( const TCHAR* fileName )
 {
-	_tcscpy_s( this->szFileName, sizeof( this->szFileName ), fileName );
+	_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), fileName );
 }
 ModelReader::~ModelReader(void)
 {
@@ -485,6 +485,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 
 	// initialize mesh interface
 	HRESULT hr = 0;
+	ASSERTCHECK( this->lpDev );
 	hr = D3DXCreateMeshFVF(
 		numFaces,
 		curMeshVertCount,
@@ -1167,7 +1168,7 @@ LPD3DXSKININFO ModelReader::GetSkinInfoPointer(int i) const
 {
 	return this->lpSkinnedMeshesSkinInfo[i];
 }
-SkeletonNode* ModelReader::GetSkeletonNodePointer(int index)
+const SkeletonNode* ModelReader::GetSkeletonNodePointer(int index) const
 {
 	return &(this->skeletonNode[index]);
 }
@@ -1266,7 +1267,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 	return 0;
 }
 
-// TODO 이 함수 어떻게 좀 해 봅시다....-_-
+
 int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray, UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize, D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation, BOOL removeDuplicates)
 {
 	ASSERTCHECK( sourceArraySize >= 1 );
@@ -1313,7 +1314,6 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 			D3DXVECTOR3* pV3a = &( (*ppScale)[i-1].Value );
 			D3DXVECTOR3* pV3b = &( (*ppScale)[i  ].Value );
 
-			// TODO release 실행 파일에서 문제 발생하는 지점
 			if ( almostEqualFloat3( pV3a, pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
@@ -1341,7 +1341,6 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 			D3DXVECTOR3* pV3a = &((*ppTranslation)[i-1].Value);
 			D3DXVECTOR3* pV3b = &((*ppTranslation)[i  ].Value);
 
-			// TODO release 실행 파일에서 문제 발생하는 지점
 			if ( almostEqualFloat3( (float*)pV3a, (float*)pV3b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
@@ -1369,7 +1368,6 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 			D3DXQUATERNION* pV4a = &((*ppRotation)[i-1].Value);
 			D3DXQUATERNION* pV4b = &((*ppRotation)[i  ].Value);
 
-			// TODO release 실행 파일에서 문제 발생하는 지점
 			if ( almostEqualFloat4( (float*)pV4a, (float*)pV4b ) == TRUE )
 			{
 				if ( dupStartIndex == -1)
@@ -1395,103 +1393,6 @@ int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* so
 	return 0;
 }
 
-//int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray, UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize, D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation)
-//{
-//	*ppScale = new D3DXKEY_VECTOR3[sourceArraySize];
-//	*ppRotation = new D3DXKEY_QUATERNION[sourceArraySize];
-//	*ppTranslation = new D3DXKEY_VECTOR3[sourceArraySize];
-//
-//	int i;
-//	const float timeIntervalInSeconds = 1.0f;
-//
-//	RST_DATA* animQuatDataStaticFrame = &sourceArray[0];
-//
-//	D3DXMATRIX matRotation, matInverseRotation, matTranslation, matInverseTranslation, matScaling, matInverseScaling;
-//	D3DXMATRIX matOriginalRotation, matOriginalTranslation, matOriginalScaling;
-//
-//	D3DXMatrixScaling(&matOriginalScaling, animQuatDataStaticFrame->sx, animQuatDataStaticFrame->sy, animQuatDataStaticFrame->sz);
-//	D3DXMatrixInverse(&matInverseScaling, NULL, &matOriginalScaling);
-//
-//	D3DXMatrixTranslation(&matOriginalTranslation, animQuatDataStaticFrame->tx, animQuatDataStaticFrame->ty, animQuatDataStaticFrame->tz);
-//	D3DXMatrixInverse(&matInverseTranslation, NULL, &matOriginalTranslation);
-//
-//
-//	D3DXQUATERNION d3dOriginalQuat(animQuatDataStaticFrame->x, animQuatDataStaticFrame->y, animQuatDataStaticFrame->z, animQuatDataStaticFrame->w);		
-//	D3DXQUATERNION d3dOriginalQuatInverse;
-//
-//	D3DXQuaternionInverse(&d3dOriginalQuatInverse, &d3dOriginalQuat);
-//	D3DXMatrixRotationQuaternion(&matInverseRotation, &d3dOriginalQuatInverse);
-//
-//
-//	for (i = 0; i < (int)sourceArraySize; i++)
-//	{
-//		RST_DATA* animQuatData = &sourceArray[i];
-//
-//
-//		// set current frame's RST data to matrices, respectively
-//		// - ROTATION; convert quaternion to rotation matrix
-//		D3DXQUATERNION d3dQuat(animQuatData->x, animQuatData->y, animQuatData->z, animQuatData->w);
-//		D3DXMatrixRotationQuaternion(&matRotation, &d3dQuat);
-//		// - SCALING
-//		D3DXMatrixScaling(&matScaling, animQuatData->sx, animQuatData->sy, animQuatData->sz);
-//		// - TRANSLATION
-//		D3DXMatrixTranslation(&matTranslation, animQuatData->tx, animQuatData->ty, animQuatData->tz);
-//
-//		// set static frame's RST data to matrices with its inverses, respectively
-//		// - ROTATION
-//
-//
-//		//D3DXMatrixRotationQuaternion(&matOriginalRotation, &d3dOriginalQuat);
-//		//D3DXMatrixInverse(&matInverseRotation, NULL, &matOriginalRotation);
-//		
-//
-//		D3DXMATRIX matQuat/*, matQuat*/;
-//		D3DXQUATERNION qMul;
-//		D3DXQuaternionMultiply(&qMul, &d3dOriginalQuatInverse, &d3dQuat);
-//		D3DXMatrixRotationQuaternion(&matQuat, &qMul);
-//		/*D3DXMatrixInverse(&matQuatInverse, NULL, &matQuat);*/
-//
-//		// - SCALING
-//		
-//		// - TRANSLATION
-//
-//		// transform for the RST keyframe animation
-//		D3DXMATRIX matFinalTransform = matInverseTranslation * matInverseScaling * matQuat * matScaling * matTranslation;
-//		//D3DXMATRIX matFinalTransform = matInverseTranslation * matInverseScaling * matQuatInverse * matQuat * matScaling * matTranslation;
-//
-//
-//
-//
-//		D3DXVECTOR3 vScale, vTrans;
-//		D3DXQUATERNION qRot;
-//		D3DXMatrixDecompose(&vScale, &qRot, &vTrans, &matFinalTransform);
-//
-//
-//		/*vScale.x = animQuatData->sx / animQuatDataStaticFrame->sx;
-//		vScale.y = animQuatData->sy / animQuatDataStaticFrame->sy;
-//		vScale.z = animQuatData->sz / animQuatDataStaticFrame->sz;
-//
-//		vTrans.x = animQuatData->tx - animQuatDataStaticFrame->tx;
-//		vTrans.y = animQuatData->ty - animQuatDataStaticFrame->ty;
-//		vTrans.z = animQuatData->tz - animQuatDataStaticFrame->tz;*/
-//		
-//
-//		
-//		(*ppScale)[i].Value = vScale; //D3DXVECTOR3(animQuatData->sx, animQuatData->sy, animQuatData->sz);
-//		(*ppRotation)[i].Value = qMul; //D3DXQUATERNION(animQuatData->x, animQuatData->y, animQuatData->z, animQuatData->w);
-//		(*ppTranslation)[i].Value = vTrans; //D3DXVECTOR3(animQuatData->tx - animQuatDataStaticFrame->tx, animQuatData->ty - animQuatDataStaticFrame->ty, animQuatData->tz - animQuatDataStaticFrame->tz);
-//
-//		(*ppScale)[i].Time = i * timeIntervalInSeconds;
-//		(*ppRotation)[i].Time = i * timeIntervalInSeconds;
-//		(*ppTranslation)[i].Time = i * timeIntervalInSeconds;
-//	}
-//
-//	*pScaleSize = sourceArraySize;
-//	*pRotationSize = sourceArraySize;
-//	*pTranslationSize = sourceArraySize;
-//
-//	return 0;
-//}
 void ModelReader::UpdateBoneCombinedMatrixByMeshIndex(int meshIndex)
 {
 	MyFrame* frameRoot = this->GetFrameRootByMeshIndex(meshIndex);
@@ -1521,7 +1422,10 @@ int ModelReader::GetVBLength() const
 }
 LPDIRECT3DTEXTURE9 ModelReader::GetTexture(int referenceIndex) const
 {
-	return this->textureList[referenceIndex];
+	if ( this->textureList.size() > (size_t)referenceIndex )
+		return this->textureList[referenceIndex];
+	else
+		return NULL;
 }
 const D3DMATERIAL9* ModelReader::GetMaterial(int referenceIndex) const
 {
@@ -1664,10 +1568,10 @@ D3DXMATRIX* ModelReader::GetCombinedMatrixByBoneName( const char* boneName )
 	}
 	return NULL;
 }
-D3DXMATRIX* ModelReader::GetTransformationMatrixByBoneName( const char* boneName )
+const D3DXMATRIX* ModelReader::GetTransformationMatrixByBoneName( const char* boneName ) const
 {
 	size_t s;
-	MyFrame* mf = NULL;
+	const MyFrame* mf = NULL;
 	for (s = 0; s < this->hierarchy.size(); s++)
 	{
 		if (strcmp(this->hierarchy[s].nameFixed, boneName) == 0)
@@ -1721,7 +1625,10 @@ int ModelReader::GetSkeletonIndexByMeshIndex(int meshIndex) const
 HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadingWnd, const TCHAR* fileName, LPD3DXANIMATIONCONTROLLER lpAC, const BOOL initAC )
 {
 	std::tstring debugOutput(_T(" - Initialize ARN File: "));
-	debugOutput += fileName;
+	if ( fileName && _tcslen( fileName ) )
+		debugOutput += fileName;
+	else
+		debugOutput += this->szFileName;
 	debugOutput += _T('\n');
 	OutputDebugString(debugOutput.c_str());
 
@@ -1904,16 +1811,16 @@ e_NoGeneralMeshAnim:
 		V_OKAY(this->BuildBlendedMeshByMeshIndex(meshIndex));
 		V_OKAY(this->BuildBoneHierarchyByMeshIndex(meshIndex));
 		
-		//V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i ));
-		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 0, 30 ));
-		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 48, 60 ));
+		V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i ));
+		//V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 0, 30 ));
+		//V_OKAY(this->BuildKeyframedAnimationSetOfSkeletonNodeIndex( i, 48, 60 ));
 		
 	}
 
 	if (skeletonNodeSize > 0)
 	{
 		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(0) ) );
-		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(1) ) );
+		//V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(1) ) );
 
 		LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
 		
@@ -1928,17 +1835,17 @@ e_NoGeneralMeshAnim:
 
 		SAFE_RELEASE( lpAnimSetTemp )
 
-		animSetNum++;
+		//animSetNum++;
 
-		// Second Track... (Walking)
-		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
-		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 1, lpAnimSetTemp ) );
-		V_OKAY( this->lpAnimationController->SetTrackWeight( 1, 0.0f ) );
-		V_OKAY( this->lpAnimationController->SetTrackSpeed( 1, 3.5f ) );
-		V_OKAY( this->lpAnimationController->SetTrackPosition( 1, 0.0f ) );
-		V_OKAY( this->lpAnimationController->SetTrackEnable( 1, FALSE ) );
+		//// Second Track... (Walking)
+		//V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
+		//V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 1, lpAnimSetTemp ) );
+		//V_OKAY( this->lpAnimationController->SetTrackWeight( 1, 0.0f ) );
+		//V_OKAY( this->lpAnimationController->SetTrackSpeed( 1, 3.5f ) );
+		//V_OKAY( this->lpAnimationController->SetTrackPosition( 1, 0.0f ) );
+		//V_OKAY( this->lpAnimationController->SetTrackEnable( 1, FALSE ) );
 
-		SAFE_RELEASE(lpAnimSetTemp);
+		//SAFE_RELEASE(lpAnimSetTemp);
 
 
 		MyFrame* frameRoot = NULL;
@@ -1948,6 +1855,9 @@ e_NoGeneralMeshAnim:
 			int meshIndex = this->GetMeshIndexBySkeletonIndex(i);
 			ASSERTCHECK(meshIndex >= 0);
 			frameRoot = this->GetFrameRootByMeshIndex(meshIndex);
+			
+			ASSERTCHECK( frameRoot );
+
 			V_OKAY(D3DXFrameRegisterNamedMatrices(frameRoot, this->lpAnimationController));
 		}
 
@@ -1968,14 +1878,14 @@ size_t ModelReader::GetArnNodeHeadersSize()
 {
 	return this->nodeHeaders.size();
 }
-HRESULT ModelReader::AdvanceTime(float timeDelta)
+HRESULT ModelReader::AdvanceTime(float timeDelta) const
 {
 	if (this->initialized)
 		return this->lpAnimationController->AdvanceTime(timeDelta, NULL);
 	else
 		return E_FAIL;
 }
-const D3DXMATRIX* ModelReader::GetAnimMatControlledByAC(int meshIndex)
+const D3DXMATRIX* ModelReader::GetAnimMatControlledByAC(int meshIndex) const
 {
 	return (const D3DXMATRIX*)&this->animMatControlledByAC[meshIndex];
 }

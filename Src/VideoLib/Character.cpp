@@ -5,11 +5,12 @@
 
 Character::Character(void)
 {
+	this->pMR = NULL;
 	this->animState = CharacterInterface::CAS_LOITER;
 	this->animStateNext = CharacterInterface::CAS_UNDEFINED;
 
 	this->translation = D3DXVECTOR3( 0.0f, 0.0f, 0.0f );
-	this->scale = D3DXVECTOR3( 0.05f, 0.05f, 0.05f );
+	this->scale = D3DXVECTOR3( 1.0f, 1.0f, 1.0f );
 	this->rotation = D3DXQUATERNION( 0.0f, 0.0f, 0.0f, 0.0f );
 	this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
 	this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
@@ -18,6 +19,7 @@ Character::Character(void)
 
 Character::Character( D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation )
 {
+	this->pMR = NULL;
 	this->translation = translation;
 	this->scale = scale;
 	this->rotation = rotation;
@@ -73,7 +75,7 @@ void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS 
 	{
 		// State changed first time
 		if (this->callbacks[nextCAS])
-			this->callbacks[nextCAS]->DoCallbackFirstTimeOnly( (void*)( this->GetModelReader()->GetAnimationController() ), NULL );
+			this->callbacks[nextCAS]->DoCallbackFirstTimeOnly( (void*)( this->pMR->GetAnimationController() ), NULL );
 	}
 
 	this->animStateNext = nextCAS;
@@ -114,8 +116,10 @@ void Character::ChangeTranslationToLookAtDirection( float amount )
 
 }
 
-HRESULT Character::AttachModelReader( ModelReader* pMR )
+HRESULT Character::AttachModelReader( const ModelReader* pMR )
 {
+	ASSERTCHECK( pMR );
+
 	if ( this->pMR != NULL )
 	{
 		OutputDebugStringA( " ! You should detach model reader before attach new one\n" );
@@ -128,7 +132,7 @@ HRESULT Character::AttachModelReader( ModelReader* pMR )
 	}
 }
 
-ModelReader* Character::GetModelReader()
+const ModelReader* Character::GetModelReader() const
 {
 	return pMR;
 }

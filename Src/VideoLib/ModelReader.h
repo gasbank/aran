@@ -14,25 +14,6 @@
 #include "../ModelExporter/types.h"
 
 
-
-
-//// Material & Texture Definition
-//struct Custom_Material
-//{
-//	std::string matName;
-//	D3DMATERIAL9 d3dMat;
-//	std::string texFileName;
-//};
-//
-//// Vertex Data Definition(VDD) struct for ARN format
-//struct MY_COLOR_VERTEX_NORMAL
-//{
-//	FLOAT x, y, z;
-//	D3DVECTOR normal;
-//	DWORD color;
-//	FLOAT u, v;
-//};
-
 class MY_CUSTOM_MESH_VERTEX
 {
 public:
@@ -280,19 +261,19 @@ public:
 	LPD3DXMESH GetMeshPointer(int i) const;
 	LPD3DXMESH GetSkinnedMeshPointer(int i) const;
 	LPD3DXSKININFO GetSkinInfoPointer(int i) const;
-	SkeletonNode* GetSkeletonNodePointer(int index);
+	const SkeletonNode* GetSkeletonNodePointer(int index) const;
 	size_t GetSkeletonNodeSize() const;
 	int GetMeshIndexBySkeletonIndex(int skelIndex) const;
 	int GetSkeletonIndexByMeshIndex(int meshIndex) const;
 
-	D3DXMATRIX* GetTransformationMatrixByBoneName( const char* boneName );
+	const D3DXMATRIX* GetTransformationMatrixByBoneName( const char* boneName ) const;
 	D3DXMATRIX* GetCombinedMatrixByBoneName( const char* boneName );
 
 	ArnNodeHeader GetArnNodeHeader(int idx);
 	size_t GetArnNodeHeadersSize();
 
-	HRESULT AdvanceTime(float timeDelta); // redirection to AC
-	const D3DXMATRIX* GetAnimMatControlledByAC(int meshIndex);
+	HRESULT AdvanceTime(float timeDelta) const; // redirection to AC
+	const D3DXMATRIX* GetAnimMatControlledByAC(int meshIndex) const;
 
 	const TCHAR* GetFileNameOnly();
 
@@ -300,7 +281,7 @@ public:
 
 	BOOL IsInitialized() const;
 
-	LPD3DXANIMATIONCONTROLLER GetAnimationController() { return this->lpAnimationController; }
+	const LPD3DXANIMATIONCONTROLLER GetAnimationController() const { return this->lpAnimationController; }
 
 	void clearMembers();
 

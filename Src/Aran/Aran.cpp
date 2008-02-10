@@ -8,12 +8,12 @@
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
-
+#include "DefaultRenderLayer.h"
 
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
 InputMan inputMan;
-Character character;		// player character
+Character* character;		// player character
 ResourceMan resMan;
 
 static WalkCallback g_walkCallback;
@@ -22,34 +22,49 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	_LogWrite( "WinMain() Start ...!!", LOG_OKAY );
+	_LogWrite( _T( "WinMain() Start ...!!" ), LOG_OKAY );
 	
 	HRESULT hr;
 
 	hr = videoMan.InitWindow(_T("Aran"), MsgProc, 1024, 768);
 	if (FAILED(hr))
 	{
+		_LogWrite( _T("Window Initialization Error"), LOG_OKAY );
 		return DXTRACE_ERR_MSGBOX(_T("Window Initialization Error"), hr);
 	}
+	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+	//////////////////////////////////////////////////////////////////////////
+	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
+	//////////////////////////////////////////////////////////////////////////
 
+
+
+	resMan.registerModel( ResourceMan::BOX0, _T( "box0.arn" ) );
 	resMan.registerModel( ResourceMan::BOX1, _T( "box1.arn" ) );
 	resMan.registerModel( ResourceMan::BOX2, _T( "box2.arn" ) );
+	resMan.registerModel( ResourceMan::BOX3, _T( "box3.arn" ) );
+	resMan.registerModel( ResourceMan::BIGHOUSE, _T( "bighouse.arn" ) );
+	resMan.registerModel( ResourceMan::MAN, _T( "man.arn" ) );
+	resMan.registerModel( ResourceMan::DUN, _T( "dun.arn" ) );
+	//resMan.registerModel( ResourceMan::MOMA, _T( "moma.arn" ) );
+	resMan.registerModel( ResourceMan::BOXSKIN, _T( "boxskin.arn" ) );
+	
+	character = new Character();
+	DefaultRenderLayer* pDefaultRenderLayer = new DefaultRenderLayer(character);
 
-	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+	character->Initialize();
+	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
+	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
+	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
+	
 
-	character.Initialize();
-	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
-	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
-	character.RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
-
-
-	inputMan.AttachCharacterInterface( &character );
+	inputMan.AttachCharacterInterface( character );
 	videoMan.AttachInputMan( &inputMan );
-	videoMan.AttachCharacter( &character );
+
 
 	//inputMan.AttachDungeonInterface( &videoMan );
 
-	character.SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
+	character->SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
 	
 	hr = videoMan.InitD3D();
 	if (FAILED(hr))
@@ -57,7 +72,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
 
-	V_OKAY(videoMan.InitAnimationController());
+	V_OKAY( videoMan.InitAnimationController() );
+	V_OKAY( resMan.initializeAll() );
+	character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );
+	videoMan.registerRenderLayer( pDefaultRenderLayer );
 
 	hr = videoMan.InitCustomMesh();
 	if (FAILED(hr))
@@ -113,6 +131,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Main Loop Failure"), hr);
 	}
+
+	delete character;
 
 	if (logManager.GetFailCount() != 0)
 	{

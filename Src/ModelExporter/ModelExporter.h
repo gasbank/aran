@@ -149,7 +149,8 @@ public:
 
 	int ExportNDD_Camera(IGameNode* node);
 	int ExportLight(IGameNode* node, IGameObject* obj);
-	
+
+	BoneHierarchy* findBoneHierarchyByNode(IGameNode* node);
 	int BuildNDD_BoneHierarchy(IGameNode* node);
 	
 

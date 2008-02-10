@@ -71,12 +71,12 @@ const TCHAR* ModelExporter::Ext(int n)
 
 const TCHAR* ModelExporter::LongDesc()
 {
-	return _T("Aran Model Exporter (2007)");
+	return _T("Aran Model Exporter");
 }
 
 const TCHAR* ModelExporter::ShortDesc() 
 {
-	return _T("Aran Model Exporter");
+	return _T("AAA Aran");
 }
 
 const TCHAR* ModelExporter::AuthorName()
@@ -842,6 +842,8 @@ int ModelExporter::BuildNDD_BoneHierarchy(IGameNode* node)
 {
 	if ( g_ndtMesh == NDT_MESH3 )
 		return -2;
+	else if ( findBoneHierarchyByNode( node ) )
+		return 0; // Already exist
 
 	BoneHierarchy bh(node->GetName(), -1, -1, false);
 
@@ -862,6 +864,14 @@ int ModelExporter::BuildNDD_BoneHierarchy(IGameNode* node)
 
 		TCHAR* boneParentName = boneParent->GetName();
 		size_t parentIndex = this->FindBoneIndexByName(boneParent->GetName());
+
+		// Parent bone should be available from this point
+		if ( parentIndex >= this->boneHierarchy.size() )
+		{
+			// parent bone is not available... just call recursively
+			return BuildNDD_BoneHierarchy( boneParent );
+		}
+
 		BoneHierarchy* parent = &this->boneHierarchy[parentIndex];
 		if (parent->firstChild == -1)
 		{
@@ -890,7 +900,7 @@ size_t ModelExporter::FindBoneIndexByName(const char* boneName)
 			return s;
 		}
 	}
-	return -1;
+	return s;
 }
 size_t ModelExporter::FindLastSiblingBoneIndexByIndex(size_t idx)
 {
@@ -1314,12 +1324,12 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 		TCHAR* matName = NULL;
 		TCHAR* matClassName = NULL;
 
-		DebugPrint(_T("Face #%d - MatID: %d"), i, faceEx->matID);
+		//DebugPrint(_T("Face #%d - MatID: %d"), i, faceEx->matID);
 
 		int matID = -1;
 		if (igmat != NULL)
 		{
-			DebugPrint(_T(" (has material info: %s"), igmat->GetMaterialName());
+			//DebugPrint(_T(" (has material info: %s"), igmat->GetMaterialName());
 
 			matName = igmat->GetMaterialName();
 			matClassName = igmat->GetMaterialClass();
@@ -1332,13 +1342,13 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 
 				IGameTextureMap* igtm = igmat->GetIGameTextureMap(0);
 				TCHAR* textureFileName = igtm->GetBitmapFileName();
-				DebugPrint(_T(", %s)\n"), textureFileName);
+				//DebugPrint(_T(", %s)\n"), textureFileName);
 				cm.strTexFileName = textureFileName;
 				igtm = NULL;
 			}
 			else
 			{
-				DebugPrint(_T(")\n"));
+				//DebugPrint(_T(")\n"));
 			}
 
 			// insert to material list
@@ -1420,7 +1430,7 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 		}
 		else
 		{
-			DebugPrint(_T("\n"));
+			//DebugPrint(_T("\n"));
 		}
 
 		// three vertices per face
@@ -1717,6 +1727,10 @@ HRESULT ModelExporter::ExportNDD_SkinningData(IGameNode* meshNodeToBeSkinned)
 		for (j = 0; j < numberOfBonesInfluencing; j++)
 		{
 			IGameNode* boneNode = igs->GetIGameBone(i, j);
+			TCHAR* boneNodeName = boneNode->GetName();
+			
+			BuildNDD_BoneHierarchy( boneNode );
+			
 			ptr = boneIndices.find(boneNode); // check for existing this bone node
 			if (ptr != boneIndices.end())
 			{
@@ -2227,6 +2241,17 @@ IGameScene* ModelExporter::GetGame() const
 	return this->game;
 }
 
+BoneHierarchy* ModelExporter::findBoneHierarchyByNode( IGameNode* node )
+{
+	std::vector<BoneHierarchy>::iterator it = this->boneHierarchy.begin();
+	std::vector<BoneHierarchy>::iterator itEnd = this->boneHierarchy.end();
+	for ( ; it != itEnd; ++it )
+	{
+		if ( _tcscmp( it->boneName, node->GetName() ) == 0 )
+			return &*it;
+	}
+	return NULL;
+}
 
 
 

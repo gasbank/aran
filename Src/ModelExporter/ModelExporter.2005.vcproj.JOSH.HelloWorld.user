@@ -65,7 +65,7 @@
 			Name="Debug_Max2008|Win32"
 			>
 			<DebugSettings
-				Command=""
+				Command="C:\Program Files\Autodesk\3ds Max 2008\3dsmax.exe"
 				WorkingDirectory=""
 				CommandArguments=""
 				Attach="false"

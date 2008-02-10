@@ -18,11 +18,11 @@ LOGMANAGER::LOGMANAGER()
 	fout.open("d3dlog.txt");
 	if (!fout)
 	{
-		std::cout << "Log file failed\n";
+		std::cout << _T( "Log file failed" ) << std::endl;
 	}
 	else
 	{
-		NewLog("Start log file");
+		NewLog( _T( "Start log file" ) );
 	}
 }
 
@@ -30,8 +30,8 @@ LOGMANAGER::~LOGMANAGER()
 {
 	if (fout)
 	{
-		NewLog("Close log file");
-		fout << "CNTS : " << okayCount << " Okays, " << failCount << " Fails\n";
+		NewLog( _T( "Close log file" ) );
+		fout << _T( "CNTS : " ) << okayCount << _T( " Okays, " ) << failCount << _T( " Fails" ) << std::endl;
 		fout.close();
 	}
 }
@@ -44,12 +44,12 @@ LOGMANAGER::LOGMANAGER(char *filename, bool bAppend)
 	fout.open(filename, bAppend ? std::ios_base::app : std::ios_base::out);
 	if (!fout)
 	{
-		std::cout << "Log file failed\n";
+		std::cout << _T( "Log file failed" ) << std::endl;
 	}
 	else
 	{
-		if (bAppend) NewLog("Start log file (Append)");
-		else NewLog("Start log file");
+		if (bAppend) NewLog( _T( "Start log file (Append)" ) );
+		else NewLog( _T( "Start log file" ) );
 	}
 }
 
@@ -58,33 +58,33 @@ LOGMANAGER::LOGMANAGER(char *filename)
 	LOGMANAGER(filename, false);
 }
 
-void LOGMANAGER::NewLog(char* message)
+void LOGMANAGER::NewLog(TCHAR* message)
 {
 	NewLog(message, LOG_OKAY);
 }
 
-void LOGMANAGER::NewLog(char* message, bool bOkay)
+void LOGMANAGER::NewLog(TCHAR* message, bool bOkay)
 {
 	//fout << "-----------------------------------------------------------------------------------------------------------\n";
 	fout << "***********\n";
 	if (!bOkay)
 	{
-		fout << "MSG  : [FAILURE] " << message << std::endl;
+		fout << _T( "MSG  : [FAILURE] " ) << message << std::endl;
 		failCount++;
 	}
 	else
 	{
-		fout << "MSG  : [OKAY] " << message << std::endl;
+		fout << _T( "MSG  : [OKAY] " ) << message << std::endl;
 		okayCount++;
 	}
 }
 
-void LOGMANAGER::NewLog(char* sourcefilename, char* funcname, int line, char* message, bool bOkay)
+void LOGMANAGER::NewLog(char* sourcefilename, char* funcname, int line, TCHAR* message, bool bOkay)
 {
 	NewLog(message, bOkay);
 	
-	fout << "FILE : " << sourcefilename << " (" << line << ")\n";
-	fout << "FUNC : " << funcname << std::endl;
+	fout << _T( "FILE : " ) << sourcefilename << " (" << line << ")" << std::endl;
+	fout << _T( "FUNC : " ) << funcname << std::endl;
 }
 
 

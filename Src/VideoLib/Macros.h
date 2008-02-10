@@ -42,7 +42,7 @@ namespace std {
 	std::string fileName(__FILE__); \
 	fileName += "("; \
 	fileName += lineNumber; \
-	fileName += ")\nFollowing statement is NOT TRUE;\n"; \
+	fileName += ")\nFollowing statement is NOT TRUE or NULL;\n"; \
 	fileName += #x; \
 	MessageBoxA(NULL, fileName.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
 	return E_FAIL; \

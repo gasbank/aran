@@ -30,7 +30,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -111,7 +111,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -278,7 +278,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -349,106 +349,114 @@
 	<References>
 	</References>
 	<Files>
-		<File
-			RelativePath=".\ErrorProcedure.cpp"
+		<Filter
+			Name="Header"
 			>
-		</File>
-		<File
-			RelativePath=".\ErrorProcedure.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Main.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Main.h"
-			>
-			<FileConfiguration
-				Name="Debug_Max9|Win32"
+			<File
+				RelativePath=".\ErrorProcedure.h"
 				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_Max2008|Win32"
+			</File>
+			<File
+				RelativePath=".\Main.h"
 				>
-				<Tool
-					Name="VCCLCompilerTool"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\ModelExporter.cpp"
+				<FileConfiguration
+					Name="Debug_Max9|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_Max2008|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ModelExporter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporterClassDesc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NullRestoreObj.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Remap.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\types.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Source"
 			>
-		</File>
+			<File
+				RelativePath=".\ErrorProcedure.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Main.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporterClassDesc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NullRestoreObj.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Remap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\stdafx.cpp"
+				>
+				<FileConfiguration
+					Name="Debug_Max9|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="Debug_Max2008|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+		</Filter>
 		<File
 			RelativePath=".\ModelExporter.def"
 			>
 		</File>
 		<File
-			RelativePath=".\ModelExporter.h"
-			>
-		</File>
-		<File
 			RelativePath=".\ModelExporter.rc"
-			>
-		</File>
-		<File
-			RelativePath=".\ModelExporterClassDesc.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ModelExporterClassDesc.h"
-			>
-		</File>
-		<File
-			RelativePath=".\NullRestoreObj.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\NullRestoreObj.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Remap.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Remap.h"
-			>
-		</File>
-		<File
-			RelativePath=".\resource.h"
-			>
-		</File>
-		<File
-			RelativePath=".\stdafx.cpp"
-			>
-			<FileConfiguration
-				Name="Debug_Max9|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Debug_Max2008|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\stdafx.h"
-			>
-		</File>
-		<File
-			RelativePath=".\types.h"
 			>
 		</File>
 	</Files>
