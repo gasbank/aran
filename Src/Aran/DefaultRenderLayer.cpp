@@ -118,14 +118,14 @@ HRESULT DefaultRenderLayer::render()
 
 	SetRect( &rc, 50, 50, 0, 0 );
 	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Umhahahah....a~~~~") );
-	m_pVideoMan->getDefaultFont()->DrawText(	NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
 	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Current State: %d"), m_pChar->GetCharacterAnimationState() );
 	SetRect( &rc, 50, 80, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText(	NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Next State: %d"), m_pChar->GetCharacterAnimationStateNext() );
 	SetRect( &rc, 50, 110, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText(	NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

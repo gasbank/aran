@@ -11,6 +11,7 @@
 
 #include "../VideoLib/Macros.h"
 
+
 // Define this if want additional dump information
 #define EXPORT_DEBUG
 
@@ -63,7 +64,7 @@ ModelExporter::~ModelExporter(void)
 {
 }
 
-#pragma region /* 3ds Max 9 Interfaces */
+
 const TCHAR* ModelExporter::Ext(int n)
 {
 	return _T("ARN");
@@ -76,7 +77,7 @@ const TCHAR* ModelExporter::LongDesc()
 
 const TCHAR* ModelExporter::ShortDesc() 
 {
-	return _T("AAA Aran");
+	return _T("Aran");
 }
 
 const TCHAR* ModelExporter::AuthorName()
@@ -117,7 +118,6 @@ BOOL ModelExporter::SupportsOptions(int ext, DWORD options)
 }
 
 
-#pragma endregion
 
 
 
@@ -171,9 +171,6 @@ int	ModelExporter::DoExport(const TCHAR* name, ExpInterface* ei, Interface* i, B
 
 	// D3D Coordinates conversion
 	cm->SetCoordSystem(IGameConversionManager::IGAME_D3D);
-	//cm->SetCoordSystem(IGameConversionManager::IGAME_MAX);
-
-
 
 	this->coreFrame = this->coreInterface->GetTime();
 
@@ -1278,11 +1275,10 @@ e_Exit:
 int ModelExporter::ExportMeshARN20(IGameNode* node)
 {
 	IGameObject* obj = node->GetIGameObject();
-	IGameMesh* igm = static_cast<IGameMesh*>(obj);
+	IGameMesh* igm = (IGameMesh*)obj;
 	IGameSkin* igs = obj->IsObjectSkinned() ? obj->GetIGameSkin() : NULL;
 	static char buffer[4096];
 	
-
 	igm->SetCreateOptimizedNormalList();
 
 	if ( !igm->InitializeData() )
@@ -1293,6 +1289,7 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 	}
 
 	//DWORD numFacesUsed = 0;
+	const DWORD numV = igm->GetNumberOfVerts();
 	const DWORD numFaces = igm->GetNumberOfFaces();
 
 	if (numFaces <= 0)
@@ -1310,6 +1307,7 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 	std::vector<FULL_VERTEX> condensedVertices;
 	std::vector<std::pair<float, DWORD>> condensedVerticesAcc; // help for speed-up optimization of vertices
 	std::vector<ARN_MTD> materialList;
+
 
 
 	
@@ -1729,6 +1727,7 @@ HRESULT ModelExporter::ExportNDD_SkinningData(IGameNode* meshNodeToBeSkinned)
 			IGameNode* boneNode = igs->GetIGameBone(i, j);
 			TCHAR* boneNodeName = boneNode->GetName();
 			
+			// TODO should be here?
 			BuildNDD_BoneHierarchy( boneNode );
 			
 			ptr = boneIndices.find(boneNode); // check for existing this bone node

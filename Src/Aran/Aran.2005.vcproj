@@ -27,7 +27,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Copy resources to working directory..."
-				CommandLine="CopyResourcesToWorking.bat"
+				CommandLine="CopyResourcesToWorking.bat&#x0D;&#x0A;"
 				Outputs="..\..\Working\"
 			/>
 			<Tool
@@ -114,8 +114,8 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Copy resources to working directory..."
-				CommandLine="CopyResourcesToWorking.bat"
-				Outputs="..\..\Working\"
+				CommandLine="CopyResourcesToWorking.bat&#x0D;&#x0A;"
+				Outputs="..\..\Working\a.txt"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"

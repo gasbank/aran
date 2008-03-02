@@ -37,8 +37,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
 	//////////////////////////////////////////////////////////////////////////
 
-
-
 	resMan.registerModel( ResourceMan::BOX0, _T( "box0.arn" ) );
 	resMan.registerModel( ResourceMan::BOX1, _T( "box1.arn" ) );
 	resMan.registerModel( ResourceMan::BOX2, _T( "box2.arn" ) );
