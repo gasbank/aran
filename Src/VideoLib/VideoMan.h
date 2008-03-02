@@ -156,7 +156,7 @@ public:
 	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = NULL);
 	void Close();
 
-	void MoveCamera(float dx, float dy, float dz);
+	void MoveMainCameraEye(float dx, float dy, float dz);
 	void ChangeInTestVB(D3DCOLOR color);
 	void ToggleLeftPattern();
 	void ToggleRightPattern();

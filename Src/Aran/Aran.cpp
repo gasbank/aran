@@ -46,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	resMan.registerModel( ResourceMan::DUN, _T( "dun.arn" ) );
 	//resMan.registerModel( ResourceMan::MOMA, _T( "moma.arn" ) );
 	resMan.registerModel( ResourceMan::BOXSKIN, _T( "boxskin.arn" ) );
+	resMan.registerModel( ResourceMan::POOLC, _T( "poolc.arn" ) );
 	
 	character = new Character();
 	DefaultRenderLayer* pDefaultRenderLayer = new DefaultRenderLayer(character);
@@ -220,11 +221,12 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 			short zDelta = (short)HIWORD(wParam);
 			if (zDelta > 0)
 			{
-				videoMan.MoveCamera(0.0f, 0.0f, 2.0f);
+				videoMan.MoveMainCameraEye(0.0f, 0.0f, 2.0f);
 			}
 			else
 			{
-				videoMan.MoveCamera(0.0f, 0.0f, -2.0f);
+				videoMan.MoveMainCameraEye(0.0f, 0.0f, -2.0f);
+
 			}
 		}
 		break;

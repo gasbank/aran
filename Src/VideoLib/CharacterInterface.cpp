@@ -3,8 +3,12 @@
 
 CharacterInterface::CharacterInterface(void)
 {
+
 }
 
 CharacterInterface::~CharacterInterface(void)
 {
 }
+
+
+

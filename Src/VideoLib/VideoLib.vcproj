@@ -47,6 +47,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderFile="$(IntDir)\$(TargetName)_$(ConfigurationName).pch"
+				ProgramDataBaseFileName="$(IntDir)\vc80.pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
@@ -62,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				OutputFile="$(OutDir)\$(ProjectName)_$(ConfigurationName).lib"
+				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).lib"
 				AdditionalLibraryDirectories="..\..\Dxsdk\Lib\x86"
 			/>
 			<Tool
