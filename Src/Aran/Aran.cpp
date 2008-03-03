@@ -22,6 +22,9 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	// Copy external resources to working directory
+	system("CopyResourcesToWorking.bat");
+
 	_LogWrite( _T( "WinMain() Start ...!!" ), LOG_OKAY );
 	
 	HRESULT hr;
