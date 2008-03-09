@@ -1,5 +1,4 @@
 #pragma once
-#include <tchar.h>
 #include "IGame/igameerror.h"
 
 class ErrorProcedure : public IGameErrorCallBack

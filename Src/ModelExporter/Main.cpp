@@ -1,20 +1,18 @@
 // Main.cpp
 // 2007 Geoyeob Kim
-//
 #include "stdafx.h"
 #include "Main.h"
-#include "ModelExporter.h"
-#include "ModelExporterClassDesc.h"
-
-
+#include "ModelExporterClassDesc.h"			// classic
+#include "ModelExporter2ClassDesc.h"		// new version
 
 HINSTANCE g_hInstance;
 ModelExporterClassDesc modelExporterClassDesc;
+ModelExporter2ClassDesc modelExporter2ClassDesc;
 
 
 ClassDesc2* GetModelExporterClassDesc()
 {
-	return &modelExporterClassDesc;
+	return &modelExporter2ClassDesc;
 }
 
 __declspec(dllexport) const TCHAR* LibDescription()
@@ -56,9 +54,6 @@ __declspec(dllexport) ULONG CanAutoDefer()
 
 LRESULT __declspec(dllexport) __stdcall PluginCommit()
 {
-	// called when installer is done committing installation
-	//::ShellExecute(0, "open", "..\\d3dx_30\\DirectX End User EULA.txt", 0, 0, SW_SHOW);
-	//::ShellExecute(0, "open", "http://www.mindcontrol.org/~hplus/graphics/kwxport.html", 0, 0, SW_SHOW);
 	return 0;
 }
 

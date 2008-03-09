@@ -1,5 +1,7 @@
 #pragma once
 
+// from kW Exporter source code
+
 class Remap
 {
 public:

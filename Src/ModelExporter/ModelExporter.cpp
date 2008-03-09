@@ -8,7 +8,6 @@
 #include "ErrorProcedure.h"
 #include "NullRestoreObj.h"
 #include "resource.h"
-
 #include "../VideoLib/Macros.h"
 
 
@@ -267,15 +266,16 @@ HRESULT ModelExporter::StartExporting()
 	for (i = 0; i < this->rootMaterialCount; i++)
 	{
 		DebugPrint(_T(" - RootMaterial INDEX: %d, Name: %s\n"), i, ig->GetRootMaterial(i)->GetMaterialName());
-		this->PrintChildMaterialInfo(ig->GetRootMaterial(i), 1);
+		AranUtil::PrintChildMaterialInfo(ig->GetRootMaterial(i), 1);
 	}
 
 	// progress bar range setting
 	SendMessage( g_hProgressBar, PBM_SETRANGE, 0, MAKELPARAM(0, ig->GetTotalNodeCount()) );
 
+
 	int topLevelNodeCount = ig->GetTopLevelNodeCount();
 	for (i = 0; i < topLevelNodeCount; i++)
-	{
+	{	
 		IGameNode* node = ig->GetTopLevelNode(i);
 		this->ExportNode(node);
 	}
@@ -552,7 +552,7 @@ int ModelExporter::ExportMeshARN30( IGameNode* node )
 			ZeroMemory( &fv, sizeof( fv ) );
 			fv.origVert = faceEx->vert[j]; // vert id
 
-			fv.pos = ModelExporter::TransformVector4(
+			fv.pos = AranUtil::TransformVector4(
 				node->GetWorldTM().Inverse(),
 				Point4( igm->GetVertex( faceEx->vert[j], false ), 1.0f )
 				);
@@ -1079,8 +1079,8 @@ int ModelExporter::ExportNDD_Camera( IGameNode* node )
 	Point3 upVector( 0.0f, 1.0f, 0.0f );
 	Point3 lookAtVector( 0.0f, 0.0f, -1.0f );
 
-	Point3 upVectorTrans = TransformVector(GMatrix(rotMat), upVector);
-	Point3 lookAtVectorTrans = TransformVector(GMatrix(rotMat), lookAtVector);
+	Point3 upVectorTrans = AranUtil::TransformVector(GMatrix(rotMat), upVector);
+	Point3 lookAtVectorTrans = AranUtil::TransformVector(GMatrix(rotMat), lookAtVector);
 	
 	//
 	// Look out for axis swizzling and z-mirroring !!!!!!!!
@@ -1446,7 +1446,7 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 			/*GMatrix localTM = node->GetLocalTM();
 			GMatrix objectTM = node->GetObjectTM();
 			GMatrix worldTM = node->GetWorldTM();*/
-			fv.pos = ModelExporter::TransformVector4(node->GetWorldTM().Inverse(), Point4(igm->GetVertex(faceEx->vert[j], false), 1.0f)); // * this->maxToDx;
+			fv.pos = AranUtil::TransformVector4(node->GetWorldTM().Inverse(), Point4(igm->GetVertex(faceEx->vert[j], false), 1.0f)); // * this->maxToDx;
 			fv.normal = igm->GetNormal(faceEx->norm[j], false);
 			//////////////////////////////////////////////////////////////////////////
 
@@ -1456,6 +1456,10 @@ int ModelExporter::ExportMeshARN20(IGameNode* node)
 
 			fv.uvw.x = texCoord.x;
 			fv.uvw.y = texCoord.y;
+
+			DebugPrint(
+				_T( "(%.2f,%.2f,%.2f), (%.2f,%.2f,%.2f), (%.2f,%.2f,%.2f)\n" ),
+				fv.pos.x, fv.pos.y, fv.pos.z, fv.normal.x, fv.normal.y, fv.normal.z, fv.uvw.x, fv.uvw.y, 0.0f);
 
 			indices[i * 3 + j] = this->AddCondensedVertex(condensedVertices, condensedVerticesAcc, fv);
 
@@ -2096,7 +2100,7 @@ int ModelExporter::ExportMeshARN10(IGameNode* node)
 			/*GMatrix localTM = node->GetLocalTM();
 			GMatrix objectTM = node->GetObjectTM();
 			GMatrix worldTM = node->GetWorldTM();*/
-			fvf.vertex = ModelExporter::TransformVector4(node->GetWorldTM().Inverse(), Point4(igm->GetVertex(face->vert[j], false), 1.0f)); // * this->maxToDx;
+			fvf.vertex = AranUtil::TransformVector4(node->GetWorldTM().Inverse(), Point4(igm->GetVertex(face->vert[j], false), 1.0f)); // * this->maxToDx;
 			fvf.normal = igm->GetNormal(face->norm[j], false);
 			//////////////////////////////////////////////////////////////////////////
 
@@ -2182,59 +2186,6 @@ int ModelExporter::ExportMeshARN10(IGameNode* node)
 }
 
 
-Point3 ModelExporter::TransformVector(GMatrix const& gm, Point3 const& p)
-{
-	float out[3];
-	float const* v = &p.x;
-	GRow const* m = gm.GetAddr();
-	int i, j;
-	for (i = 0; i < 3; i++)
-	{
-		float o = 0;
-		for (j = 0; j < 3; j++)
-		{
-			o += m[j][i] * v[j];
-		}
-		out[i] = o;
-	}
-	return (Point3&)out;
-}
-Point3 ModelExporter::TransformVector4(GMatrix const& gm, Point4 const& p)
-{
-	float out[3];
-	float const* v = &p.x;
-	GRow const* m = gm.GetAddr();
-	int i, j;
-	for (i = 0; i < 3; i++)
-	{
-		float o = 0;
-		for (j = 0; j < 4; j++)
-		{
-			o += m[j][i] * v[j];
-		}
-		out[i] = o;
-	}
-	return out;
-}
-int ModelExporter::Point3ToIntColor(Point3& p3)
-{
-	return (int)(255 * p3.x) + ((int)(255 * p3.y) << 8) + ((int)(255 * p3.z) << 16);
-}
-
-void ModelExporter::PrintChildMaterialInfo(IGameMaterial *igm, int depth)
-{
-	int i, j;
-	if (igm->GetSubMaterialCount() == 0) return;
-	for (i = 0; i < igm->GetSubMaterialCount(); i++)
-	{
-		for (j = 0; j < depth; j++)
-			DebugPrint(_T("   "));
-
-		DebugPrint(_T("ChildMaterial INDEX: %d, Name: %s, ID: %d\n"), i, igm->GetSubMaterial(i)->GetMaterialName(), igm->GetMaterialID(i));
-		this->PrintChildMaterialInfo(igm->GetSubMaterial(i), depth + 1);
-	}
-	return;
-}
 IGameScene* ModelExporter::GetGame() const
 {
 	return this->game;
@@ -2254,6 +2205,63 @@ BoneHierarchy* ModelExporter::findBoneHierarchyByNode( IGameNode* node )
 
 
 
+namespace AranUtil
+{
+
+	Point3 TransformVector(GMatrix const& gm, Point3 const& p)
+	{
+		float out[3];
+		float const* v = &p.x;
+		GRow const* m = gm.GetAddr();
+		int i, j;
+		for (i = 0; i < 3; i++)
+		{
+			float o = 0;
+			for (j = 0; j < 3; j++)
+			{
+				o += m[j][i] * v[j];
+			}
+			out[i] = o;
+		}
+		return (Point3&)out;
+	}
+	Point3 TransformVector4(GMatrix const& gm, Point4 const& p)
+	{
+		float out[3];
+		float const* v = &p.x;
+		GRow const* m = gm.GetAddr();
+		int i, j;
+		for (i = 0; i < 3; i++)
+		{
+			float o = 0;
+			for (j = 0; j < 4; j++)
+			{
+				o += m[j][i] * v[j];
+			}
+			out[i] = o;
+		}
+		return out;
+	}
+	int Point3ToIntColor(Point3& p3)
+	{
+		return (int)(255 * p3.x) + ((int)(255 * p3.y) << 8) + ((int)(255 * p3.z) << 16);
+	}
+
+	void PrintChildMaterialInfo(IGameMaterial *igm, int depth)
+	{
+		int i, j;
+		if (igm->GetSubMaterialCount() == 0) return;
+		for (i = 0; i < igm->GetSubMaterialCount(); i++)
+		{
+			for (j = 0; j < depth; j++)
+				DebugPrint(_T("   "));
+
+			DebugPrint(_T("ChildMaterial INDEX: %d, Name: %s, ID: %d\n"), i, igm->GetSubMaterial(i)->GetMaterialName(), igm->GetMaterialID(i));
+			PrintChildMaterialInfo(igm->GetSubMaterial(i), depth + 1);
+		}
+		return;
+	}
+}
 
 
 

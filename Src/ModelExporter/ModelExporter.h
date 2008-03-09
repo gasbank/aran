@@ -24,7 +24,8 @@ struct Custom_FVF
 };
 
 
-struct FULL_VERTEX {
+struct FULL_VERTEX
+{
 	int origVert;
 	Point3 pos;
 	Point3 normal;
@@ -162,11 +163,6 @@ public:
 
 	
 
-	void PrintChildMaterialInfo(IGameMaterial* igm, int depth);
-
-	static Point3 TransformVector(GMatrix const& gm, Point3 const& p);
-	static Point3 TransformVector4(GMatrix const& gm, Point4 const& p);
-	static int Point3ToIntColor(Point3& p3);
 	
 
 	DWORD AddCondensedVertex(std::vector<FULL_VERTEX>& vec, std::vector<std::pair<float, DWORD> >& acc, FULL_VERTEX const& fv);
@@ -174,3 +170,12 @@ public:
 	IGameScene* GetGame() const;
 	
 };
+
+namespace AranUtil
+{
+	void PrintChildMaterialInfo(IGameMaterial* igm, int depth);
+	Point3 TransformVector(GMatrix const& gm, Point3 const& p);
+	Point3 TransformVector4(GMatrix const& gm, Point4 const& p);
+	int Point3ToIntColor(Point3& p3);
+
+}

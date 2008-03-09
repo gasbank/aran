@@ -30,7 +30,7 @@
 
 //
 // TODO: Specify 3ds Max version which this plugin applied to.
-// -----> Check Project Properties
+// -----> Check Project Properties! Do not define here!
 //#define MODEL_EXPORTER_FOR_MAX_9
 //#define MODEL_EXPORTER_FOR_MAX_2008
 
@@ -38,36 +38,33 @@
 // C++
 #include <iostream>
 #include <iomanip>
+#include <list>
 #include <vector>
 #include <map>
 #include <string>
 #include <algorithm>
 
-
+#include <crtdbg.h>
 // Windows APIs
 //#include <afxwin.h>
-#include <windows.h>
-#include <tchar.h>
-#include <dbghelp.h>
-
-
+//#include <windows.h>
 
 // DirectX SDK APIs (November 2007)
-#include <d3dx9xof.h>
+//#include <d3dx9xof.h>
 //#include <rmxfguid.h>
-#include <d3dx9mesh.h>
+//#include <d3dx9mesh.h>
 
 // Max SDK APIs (General)
-#include "coreexp.h"
-#include "Max.h"
-#include "istdplug.h"
-#include "iparamb2.h"
-#include "iparamm2.h"
-#include "decomp.h"
-#include "utilapi.h"
-#include "IDxMaterial.h"
-#include "quat.h"
-#include "hold.h"
+//#include "coreexp.h"
+//#include "Max.h"
+//#include "istdplug.h"
+//#include "iparamb2.h"
+//#include "iparamm2.h"
+//#include "decomp.h"
+//#include "utilapi.h"
+//#include "IDxMaterial.h"
+//#include "quat.h"
+//#include "hold.h"
 
 // Max SDK APIs (IGame)
 #include "IGame/IGame.h"
@@ -80,6 +77,8 @@
 #include "IGame/IGameFX.h"
 
 
+#include "types2.h"
+#include "../VideoLib/Singleton.h"
 
 #pragma comment(lib, "igame.lib")
 #pragma comment(lib, "core.lib")
@@ -100,3 +99,7 @@
 #pragma comment(lib, "bmm.lib")
 
 
+
+#ifndef SAFE_DELETE
+#define SAFE_DELETE(x) if(x) { delete x; x = 0; }
+#endif

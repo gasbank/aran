@@ -74,7 +74,7 @@ private:
 	LPD3DXSKININFO lpSkinInfo;
 	D3DXMESHCONTAINER meshContainer;
 	D3DXFRAME frame1, frame2; // bones
-public:	
+
 	LPD3DXANIMATIONCONTROLLER lpAnimationController;
 private:
 	LPD3DXKEYFRAMEDANIMATIONSET lpDefaultAnimationSet;

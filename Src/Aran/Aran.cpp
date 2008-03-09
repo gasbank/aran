@@ -22,8 +22,10 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+#ifdef _DEBUG
 	// Copy external resources to working directory
-	system("CopyResourcesToWorking.bat");
+	system( "CopyResourcesToWorking.bat" );
+#endif
 
 	_LogWrite( _T( "WinMain() Start ...!!" ), LOG_OKAY );
 	
@@ -48,7 +50,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	resMan.registerModel( ResourceMan::MAN, _T( "man.arn" ) );
 	resMan.registerModel( ResourceMan::DUN, _T( "dun.arn" ) );
 	//resMan.registerModel( ResourceMan::MOMA, _T( "moma.arn" ) );
-	resMan.registerModel( ResourceMan::BOXSKIN, _T( "boxskin.arn" ) );
+	//resMan.registerModel( ResourceMan::BOXSKIN, _T( "boxskin.arn" ) );
 	resMan.registerModel( ResourceMan::POOLC, _T( "poolc.arn" ) );
 	
 	character = new Character();

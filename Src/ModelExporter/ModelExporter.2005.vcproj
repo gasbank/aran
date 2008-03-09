@@ -350,10 +350,18 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Header"
+			Name="Source"
 			>
 			<File
+				RelativePath=".\ErrorProcedure.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ErrorProcedure.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Main.cpp"
 				>
 			</File>
 			<File
@@ -375,11 +383,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ModelExporter.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelExporterClassDesc.h"
+				RelativePath=".\NullRestoreObj.cpp"
 				>
 			</File>
 			<File
@@ -387,47 +391,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Remap.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\types.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Source"
-			>
-			<File
-				RelativePath=".\ErrorProcedure.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Main.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelExporter.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelExporterClassDesc.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NullRestoreObj.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Remap.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Remap.h"
 				>
 			</File>
 			<File
@@ -450,13 +418,161 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\stdafx.h"
+				>
+			</File>
+			<Filter
+				Name="Misc"
+				>
+				<File
+					RelativePath=".\ModelExporter.def"
+					>
+				</File>
+				<File
+					RelativePath=".\ModelExporter.rc"
+					>
+				</File>
+				<File
+					RelativePath=".\resource.h"
+					>
+				</File>
+				<File
+					RelativePath=".\types.h"
+					>
+				</File>
+				<File
+					RelativePath=".\types2.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\types2.h"
+					>
+				</File>
+			</Filter>
+		</Filter>
+		<Filter
+			Name="ModelExporter"
+			>
+			<File
+				RelativePath=".\ModelExporter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporterClassDesc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporterClassDesc.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="ModelExporter2"
+			>
+			<File
+				RelativePath=".\ArNodeFactory.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArNodeFactory.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MaterialExporter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MaterialExporter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MeshExporter.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MeshExporter.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter2ClassDesc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelExporter2ClassDesc.h"
+				>
+			</File>
+			<Filter
+				Name="Objects"
+				>
+				<File
+					RelativePath=".\ArCamera.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArCamera.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArLight.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArLight.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArMaterial.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArMaterial.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArMesh.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArObject.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArObject.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
-			RelativePath=".\ModelExporter.def"
+			RelativePath=".\NodeExporter.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\ModelExporter.rc"
+			RelativePath=".\NodeExporter.h"
 			>
 		</File>
 	</Files>

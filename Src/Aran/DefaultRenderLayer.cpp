@@ -96,30 +96,9 @@ HRESULT DefaultRenderLayer::render()
 	resMan.getModel( ResourceMan::BOXSKIN )->AdvanceTime( 0.1f );*/
 
 
-	//////////////////////////////////////////////////////////////////////////
-	// Dungeon(Level)
-	//////////////////////////////////////////////////////////////////////////
-	//D3DXMatrixTranslation(
-	//	&matTranslation,
-	//	m_pVideoMan->dungeonTranslation.x,
-	//	m_pVideoMan->dungeonTranslation.y,
-	//	m_pVideoMan->dungeonTranslation.z
-	//	);
-	//D3DXMatrixScaling( &matScaling, 0.3f, 0.3f, 0.3f );
-	////m_pVideoMan->RenderModel( &m_pVideoMan->mrMan, &(matScaling * m_pVideoMan->modelArcBallRotation * matTranslation) );
-	//m_pVideoMan->RenderModel( &m_pVideoMan->mrDungeon, &(matTranslation * matScaling) );
-	//m_pVideoMan->mrDungeon.AdvanceTime( 0.1f );
-
-
-
 	D3DXMatrixTranslation(&matTranslation, 0.0f, 0.0f, 100.0f);
 	m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::BIGHOUSE ), &matTranslation); // House background
 	resMan.getModel( ResourceMan::BIGHOUSE )->AdvanceTime( 0.1f );
-
-
-
-	// Animation Controller
-	//m_pVideoMan->lpAnimationController->AdvanceTime(0.1f, NULL);
 
 
 	//////////////////////////////////////////////////////////////////////////
@@ -143,6 +122,4 @@ HRESULT DefaultRenderLayer::render()
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	return S_OK;
-
-
 }
