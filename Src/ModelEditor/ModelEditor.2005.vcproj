@@ -73,7 +73,7 @@
 				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib VideoLib_$(ConfigurationName).lib"
 				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\$(ConfigurationName)&quot;;..\..\Dxsdk\Lib\x86"
+				AdditionalLibraryDirectories="..\..\Working;..\..\Dxsdk\Lib\x86"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
