@@ -2,15 +2,15 @@
 @echo off
 
 echo Prerequisites...
-xcopy ..\Prerequisites\*.* . /D /Y
+xcopy ..\..\Prerequisites\*.* . /D /Y
 
 echo Textures...
-xcopy ..\Textures\*.* Textures\ /D /Y
+xcopy ..\..\Textures\*.* Textures\ /D /Y
 
 echo Shaders...
-xcopy ..\Src\Shaders\*.* Shaders\ /D /Y
+xcopy ..\Shaders\*.* Shaders\ /D /Y
 
 echo Models...
-xcopy ..\MaxAssets\Export\*.* Models\ /D /Y
+xcopy ..\..\MaxAssets\Export\*.* Models\ /D /Y
 
 pause

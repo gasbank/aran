@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="kwxport"
 	ProjectGUID="{28B57BE5-E17D-4480-8378-18EFACC74E18}"
 	RootNamespace="kwxport"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -29,7 +30,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -73,6 +74,8 @@
 				ModuleDefinitionFile="kwxport.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -92,9 +95,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -115,7 +115,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX2008PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -158,6 +158,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -179,9 +181,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -199,7 +198,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -243,6 +242,8 @@
 				ModuleDefinitionFile="kwxport.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -264,9 +265,6 @@
 				Name="VCAppVerifierTool"
 			/>
 			<Tool
-				Name="VCWebDeploymentTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -285,7 +283,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
 				Outputs="&quot;$(MAX9PATH)\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
@@ -328,6 +326,8 @@
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -347,9 +347,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
