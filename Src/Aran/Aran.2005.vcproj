@@ -66,7 +66,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib VideoLib_$(ConfigurationName).lib"
+				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib VideoLib_$(ConfigurationName).lib"
 				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\Working"
@@ -257,6 +257,10 @@
 		</Filter>
 		<File
 			RelativePath=".\Aran.rc"
+			>
+		</File>
+		<File
+			RelativePath=".\CopyResourcesToWorking.bat"
 			>
 		</File>
 		<File

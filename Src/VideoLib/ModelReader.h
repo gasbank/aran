@@ -6,31 +6,10 @@
 #include <vector>
 
 #include <tchar.h>
-
-#include <d3dx9.h>
 #include <DxErr.h>
-
+#include "Structs.h"
 #include "Macros.h"
 #include "../ModelExporter/types.h"
-
-
-class MY_CUSTOM_MESH_VERTEX
-{
-public:
-	MY_CUSTOM_MESH_VERTEX() {}
-	MY_CUSTOM_MESH_VERTEX(float x, float y, float z, float nx, float ny, float nz, float u, float v)
-	{
-		this->x = x; this->y = y; this->z = z;
-		this->nx = nx; this->ny = ny; this->nz = nz;
-		this->u = u; this->v = v;
-	}
-
-	float x, y, z, nx, ny, nz, u, v;
-	
-
-
-	static const DWORD MY_CUSTOM_MESH_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
-};
 
 struct RST_DATA
 {
@@ -98,7 +77,7 @@ public:
 class ModelReader
 {
 private:
-	TCHAR szFileName[256];
+	TCHAR szFileName[64];
 
 	BOOL initialized;
 	

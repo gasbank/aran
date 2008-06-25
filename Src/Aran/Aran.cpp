@@ -1,18 +1,15 @@
 // Aran.cpp
-// 2007 Geoyeob Kim
-
+// 2007, 2008 Geoyeob Kim (gasbank@gmail.com)
 #include "stdafx.h"
 #include "Aran.h"
-
-
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
 #include "DefaultRenderLayer.h"
-
+#include "../VideoLib/load_arn.h"
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
-InputMan inputMan;
+//InputMan inputMan;
 Character* character;		// player character
 ResourceMan resMan;
 
@@ -22,52 +19,42 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);
+	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
 	// Copy external resources to working directory
-	system( "CopyResourcesToWorking.bat" );
+	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0)
+	{
+		_LogWrite(_T("Copy Resources Error"), LOG_FAIL);
+		return DXTRACE_ERR_MSGBOX(_T("Copy Resources Error"), hr);
+	}
 #endif
-
-	_LogWrite( _T( "WinMain() Start ...!!" ), LOG_OKAY );
-	
-	HRESULT hr;
-
-	hr = videoMan.InitWindow(_T("Aran"), MsgProc, 1024, 768);
+	int screenX = 1024;
+	int screenY = 768;
+	hr = videoMan.InitWindow(_T("Aran"), MsgProc, screenX, screenY);
 	if (FAILED(hr))
 	{
-		_LogWrite( _T("Window Initialization Error"), LOG_OKAY );
+		_LogWrite( _T("Window Initialization Error"), LOG_FAIL);
 		return DXTRACE_ERR_MSGBOX(_T("Window Initialization Error"), hr);
 	}
-	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+
+	//inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+
 	//////////////////////////////////////////////////////////////////////////
 	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
 	//////////////////////////////////////////////////////////////////////////
+	ArnMeshOb* mesh = new ArnMeshOb;
+	load_arn("models/gus.arn", mesh);
+	free(mesh->raw);
+	delete mesh;
 
-	resMan.registerModel( ResourceMan::BOX0, _T( "box0.arn" ) );
-	resMan.registerModel( ResourceMan::BOX1, _T( "box1.arn" ) );
-	resMan.registerModel( ResourceMan::BOX2, _T( "box2.arn" ) );
-	resMan.registerModel( ResourceMan::BOX3, _T( "box3.arn" ) );
-	resMan.registerModel( ResourceMan::BIGHOUSE, _T( "bighouse.arn" ) );
-	resMan.registerModel( ResourceMan::MAN, _T( "man.arn" ) );
-	resMan.registerModel( ResourceMan::DUN, _T( "dun.arn" ) );
-	//resMan.registerModel( ResourceMan::MOMA, _T( "moma.arn" ) );
-	//resMan.registerModel( ResourceMan::BOXSKIN, _T( "boxskin.arn" ) );
-	resMan.registerModel( ResourceMan::POOLC, _T( "poolc.arn" ) );
-	
-	character = new Character();
-	DefaultRenderLayer* pDefaultRenderLayer = new DefaultRenderLayer(character);
+	std::auto_ptr<Character> character(new Character());
+	DefaultRenderLayer* pDefaultRenderLayer = new DefaultRenderLayer(character.get());
 
 	character->Initialize();
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_LOITER, &g_loiterCallback );
-	
-
-	inputMan.AttachCharacterInterface( character );
-	videoMan.AttachInputMan( &inputMan );
-
-
-	//inputMan.AttachDungeonInterface( &videoMan );
-
 	character->SetCharacterAnimationState( CharacterInterface::CAS_WALKING );
 	
 	hr = videoMan.InitD3D();
@@ -76,11 +63,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
 
+	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
 	V_OKAY( videoMan.InitAnimationController() );
-	V_OKAY( resMan.initializeAll() );
-	character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );
+	//V_OKAY( resMan.initializeAll() );
+	//character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );
 	videoMan.registerRenderLayer( pDefaultRenderLayer );
 
+	hr = S_OK;
 	hr = videoMan.InitCustomMesh();
 	if (FAILED(hr))
 	{
@@ -125,7 +114,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Window Showing Error"), hr);
 	}
 
-	inputMan.AcquireKeyboard();
+	//inputMan.AcquireKeyboard();
 
 	//
 	// Starting main loop...
@@ -136,13 +125,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Main Loop Failure"), hr);
 	}
 
-	delete character;
+	//delete character;
 
 	if (logManager.GetFailCount() != 0)
 	{
 		MessageBox(NULL, _T("One or more errors logged!"), _T("Check Log File"), MB_ICONEXCLAMATION);
 	}
-
+	//videoMan.Close();
 	return 0;
 }
 
@@ -160,10 +149,10 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	switch (msg)
 	{
 	case WM_DESTROY:
+		PostQuitMessage(WM_QUIT);
 		break;
 	case WM_CLOSE:
-		videoMan.Close();
-		PostQuitMessage(0);
+		
 		break;
 	case WM_KILLFOCUS:
 		videoMan.PauseMainLoop();
@@ -176,65 +165,65 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
 		
 		case VK_ESCAPE:
-			videoMan.Close();
-			PostQuitMessage(0);
+			PostQuitMessage(WM_QUIT);
+			
 			break;
 		}
 		break;
 	case WM_PAINT:
 		
 		break;
-
-		// ArcBall rotation
-	case WM_MOUSEMOVE:
-		inputMan.SetMouseCurPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-		break;
-	case WM_LBUTTONUP:
-		inputMan.SetMouseUpPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-
-		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
-		OutputDebugString(debugMessage);
-		break;
-	case WM_LBUTTONDOWN:
-		inputMan.SetMouseDownPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-
-		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
-		OutputDebugString(debugMessage);
-		break;
-	case WM_RBUTTONUP:
-		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-
-		break;
-	case WM_RBUTTONDOWN:
-		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-
-		break;
-
-#ifndef WM_MOUSEWHEEL
-#define WM_MOUSEWHEEL 0x020A
-#endif
-	case WM_MOUSEWHEEL:
-		{
-			short zDelta = (short)HIWORD(wParam);
-			if (zDelta > 0)
-			{
-				videoMan.MoveMainCameraEye(0.0f, 0.0f, 2.0f);
-			}
-			else
-			{
-				videoMan.MoveMainCameraEye(0.0f, 0.0f, -2.0f);
-
-			}
-		}
-		break;
+//
+//		// ArcBall rotation
+//	case WM_MOUSEMOVE:
+//		inputMan.SetMouseCurPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+//		break;
+//	case WM_LBUTTONUP:
+//		inputMan.SetMouseUpPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+//
+//		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
+//		OutputDebugString(debugMessage);
+//		break;
+//	case WM_LBUTTONDOWN:
+//		inputMan.SetMouseDownPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+//
+//		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
+//		OutputDebugString(debugMessage);
+//		break;
+//	case WM_RBUTTONUP:
+//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+//
+//		break;
+//	case WM_RBUTTONDOWN:
+//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+//
+//		break;
+//
+//#ifndef WM_MOUSEWHEEL
+//#define WM_MOUSEWHEEL 0x020A
+//#endif
+//	case WM_MOUSEWHEEL:
+//		{
+//			short zDelta = (short)HIWORD(wParam);
+//			if (zDelta > 0)
+//			{
+//				videoMan.MoveMainCameraEye(0.0f, 0.0f, 2.0f);
+//			}
+//			else
+//			{
+//				videoMan.MoveMainCameraEye(0.0f, 0.0f, -2.0f);
+//
+//			}
+//		}
+//		break;
 	default:
 
 		break;

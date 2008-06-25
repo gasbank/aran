@@ -48,57 +48,28 @@ HRESULT DefaultRenderLayer::render()
 
 	const ResourceMan& resMan = ResourceMan::getSingleton();
 	
-	// Rendering using Fixed Shader with animations [ARN format]
-	//D3DXMatrixTranslation(&matTranslation, 0.0f, 10.0f, 0.0f);
-	//m_pVideoMan->RenderModel( resMan.getModel( ResourceMan::BOX1 ), &(matTranslation * *m_pVideoMan->getModelArcBallRotation() ));
-	//D3DXMatrixTranslation(&matTranslation, 0.0f, 0.0f, 10.0f);
-	//m_pVideoMan->RenderModel( resMan.getModel( ResourceMan::BOX1 ), &(matTranslation * *m_pVideoMan->getModelArcBallRotation() ));
-	//resMan.getModel( ResourceMan::BOX1 )->AdvanceTime(0.1f);
+	//// Hero Character
+	//D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
+	//D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
+	//m_pVideoMan->RenderModel(
+	//	resMan.getModel( ResourceMan::MAN ),
+	//	&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
+	//	);
+	//resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
 
+	//// PoolC 3D Logo
+	//D3DXMatrixTranslation(&matTranslation, 0.0f, 10.0f, -20.0f );
+	//D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
+	//D3DXMatrixRotationX( &matRotation, D3DXToRadian(60));
+	//m_pVideoMan->RenderModel(
+	//	resMan.getModel( ResourceMan::POOLC ),
+	//	&( matScaling * matRotation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() * matTranslation)
+	//	);
+	//resMan.getModel( ResourceMan::POOLC )->AdvanceTime( 0.1f );
 
-	// Hero Character
-	D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
-	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
-	m_pVideoMan->RenderModel(
-		resMan.getModel( ResourceMan::MAN ),
-		&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
-		);
-	resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
-
-	// PoolC 3D Logo
-	D3DXMatrixTranslation(&matTranslation, 0.0f, 10.0f, -20.0f );
-	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
-	D3DXMatrixRotationX( &matRotation, D3DXToRadian(60));
-	m_pVideoMan->RenderModel(
-		resMan.getModel( ResourceMan::POOLC ),
-		&( matScaling * matRotation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() * matTranslation)
-		);
-	resMan.getModel( ResourceMan::POOLC )->AdvanceTime( 0.1f );
-
-
-
-	// Moma Lenguin
-	/*D3DXMatrixTranslation(&matTranslation, 5.0f, 0.0f, 0.0f );
-	D3DXMatrixScaling( &matScaling, 0.001f, 0.001f, 0.001f );
-	m_pVideoMan->RenderModel(
-		resMan.getModel( ResourceMan::MOMA ),
-		&( matScaling * matTranslation * *m_pVideoMan->getModelArcBallRotation() )
-		);
-	resMan.getModel( ResourceMan::MOMA )->AdvanceTime( 0.1f );*/
-
-	// Box Skinning Object
-	/*D3DXMatrixTranslation(&matTranslation, 5.0f, 0.0f, 0.0f );
-	D3DXMatrixScaling( &matScaling, 0.3f, 0.3f, 0.3f );
-	m_pVideoMan->RenderModel(
-		resMan.getModel( ResourceMan::BOXSKIN ),
-		&( matScaling * matTranslation * *m_pVideoMan->getModelArcBallRotation() )
-		);
-	resMan.getModel( ResourceMan::BOXSKIN )->AdvanceTime( 0.1f );*/
-
-
-	D3DXMatrixTranslation(&matTranslation, 0.0f, 0.0f, 100.0f);
-	m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::BIGHOUSE ), &matTranslation); // House background
-	resMan.getModel( ResourceMan::BIGHOUSE )->AdvanceTime( 0.1f );
+	//D3DXMatrixTranslation(&matTranslation, 0.0f, 0.0f, 100.0f);
+	//m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::BIGHOUSE ), &matTranslation); // House background
+	//resMan.getModel( ResourceMan::BIGHOUSE )->AdvanceTime( 0.1f );
 
 
 	//////////////////////////////////////////////////////////////////////////

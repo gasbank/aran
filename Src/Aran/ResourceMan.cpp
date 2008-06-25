@@ -19,7 +19,7 @@ ResourceMan::~ResourceMan(void)
 
 HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
 {
-	static TCHAR logMessage[512];
+	TCHAR logMessage[128];
 
 	ModelMap::iterator it = m_models.find( id );
 	ModelMap::iterator itEnd = m_models.end();
@@ -29,15 +29,15 @@ HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
 		ModelReader* pModelReader = new ModelReader();
 		pModelReader->SetFileName( modelFileName );
 		m_models.insert( ModelMap::value_type( id, pModelReader ) );
-		
-		_stprintf_s( logMessage, sizeof( logMessage ), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+
+		_stprintf_s( logMessage, sizeof( logMessage ) / sizeof(TCHAR), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
 		_LogWrite( logMessage, LOG_OKAY );
 		return S_OK;
 	}
 	else
 	{
 		// already exist...
-		_stprintf_s( logMessage, sizeof( logMessage ), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		_stprintf_s( logMessage, sizeof( logMessage ) / sizeof(TCHAR), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
 		_LogWrite( logMessage, LOG_FAIL );
 		return E_FAIL;
 	}
@@ -104,11 +104,8 @@ HRESULT ResourceMan::unregisterAllModels()
 	{
 		ModelMap::iterator it = m_models.begin();
 		ModelReader* pMR = it->second;
-		if ( pMR->IsInitialized() )
-		{
-			SAFE_DELETE( pMR );
-			m_models.erase(it);
-		}
+		SAFE_DELETE( pMR );
+		m_models.erase(it);
 	}
 	return S_OK;
 }
