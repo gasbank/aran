@@ -71,6 +71,9 @@ const D3DXMATRIX* Character::GetFinalTransform() const
 
 void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS )
 {
+	if (nextCAS >= CAS_SIZE)
+		throw new std::runtime_error("Animation callback not defined");
+
 	if ( nextCAS != this->animStateNext )
 	{
 		// State changed first time
@@ -82,7 +85,6 @@ void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS 
 	
 	if (this->callbacks[nextCAS])
 		this->callbacks[nextCAS]->DoCallback( (void*)( this->GetModelReader()->GetAnimationController() ), NULL );
-
 }
 
 HRESULT Character::RegisterCharacterAnimationCallback( CharacterAnimationState cas, CharacterAnimationCallback* pCAC )

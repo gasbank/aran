@@ -1063,8 +1063,8 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		
 	}
 	DWORD maxVertexInfluence, numBoneCombinations;
-	LPD3DXBUFFER lpBoneCombinations;
-	LPD3DXMESH lpSkinnedMesh;
+	LPD3DXBUFFER lpBoneCombinations = NULL;
+	LPD3DXMESH lpSkinnedMesh = NULL;
 
 	LPD3DXMESH lpTempMesh = this->lpMeshes[meshIndex];
 	HRESULT hr;
@@ -1228,9 +1228,11 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 
 	
 
-	static TCHAR debugString[512];
-	_stprintf_s( debugString, sizeof( debugString ), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
+	TCHAR debugString[512];
+	_stprintf_s( debugString, sizeof(debugString)/sizeof(TCHAR), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
 	OutputDebugString( debugString );
+	if (lpKfAnimSet == NULL)
+		throw new std::runtime_error("Animation set is null");
 
 	for (s = 0; s < currentSkeleton->bones.size(); s++)
 	{
@@ -1252,7 +1254,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 		SAFE_DELETE_ARRAY(currentBone->rotationKeys);
 
 		
-		_stprintf_s(debugString, sizeof(debugString), _T("    - Registered animation key index: %d\n"), animIndex);
+		_stprintf_s(debugString, sizeof(debugString)/sizeof(TCHAR), _T("    - Registered animation key index: %d\n"), animIndex);
 		OutputDebugString(debugString);
 
 		
@@ -1791,12 +1793,15 @@ e_NoGeneralMeshAnim:
 	if (initAC == TRUE)
 	{
 		// Unregister all animation sets (at editor)
-		LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
+		LPD3DXANIMATIONSET lpAnimSetTemp2 = NULL;
 		for (i = 0; i < animSetNum; i++)
 		{
-			V_OKAY(this->lpAnimationController->GetAnimationSet(i, &lpAnimSetTemp));
-			V_OKAY(this->lpAnimationController->UnregisterAnimationSet(lpAnimSetTemp));
-			SAFE_RELEASE(lpAnimSetTemp);
+			V_OKAY(this->lpAnimationController->GetAnimationSet(i, &lpAnimSetTemp2));
+			if (lpAnimSetTemp2)
+			{
+				V_OKAY(this->lpAnimationController->UnregisterAnimationSet(lpAnimSetTemp2));
+				SAFE_RELEASE(lpAnimSetTemp2);
+			}
 		}
 
 		animSetNum = 0; // set anim set count to zero
@@ -1822,18 +1827,18 @@ e_NoGeneralMeshAnim:
 		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(0) ) );
 		//V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(1) ) );
 
-		LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
+		LPD3DXANIMATIONSET lpAnimSetTemp2 = NULL;
 		
 
 		// First Track ... (Loiter)
-		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp ) );
-		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 0, lpAnimSetTemp ) );
+		V_OKAY( this->lpAnimationController->GetAnimationSet( animSetNum, &lpAnimSetTemp2 ) );
+		V_OKAY( this->lpAnimationController->SetTrackAnimationSet( 0, lpAnimSetTemp2 ) );
 		V_OKAY( this->lpAnimationController->SetTrackWeight( 0, 1.0f ) );
 		V_OKAY( this->lpAnimationController->SetTrackSpeed( 0, 3.5f ) );
 		V_OKAY( this->lpAnimationController->SetTrackPosition( 0, 0.0f ) );
 		V_OKAY( this->lpAnimationController->SetTrackEnable( 0, TRUE ) );
 
-		SAFE_RELEASE( lpAnimSetTemp )
+		SAFE_RELEASE( lpAnimSetTemp2 )
 
 		//animSetNum++;
 

@@ -39,12 +39,12 @@ namespace std {
 { \
 	char lineNumber[8]; \
 	_itoa_s(__LINE__, lineNumber, 10); \
-	std::string fileName(__FILE__); \
-	fileName += "("; \
-	fileName += lineNumber; \
-	fileName += ")\nFollowing statement is NOT TRUE or NULL;\n"; \
-	fileName += #x; \
-	MessageBoxA(NULL, fileName.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
+	std::string ___file___Name___(__FILE__); \
+	___file___Name___ += "("; \
+	___file___Name___ += lineNumber; \
+	___file___Name___ += ")\nFollowing statement is NOT TRUE or NULL;\n"; \
+	___file___Name___ += #x; \
+	MessageBoxA(NULL, ___file___Name___.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
 	return E_FAIL; \
 }
 #else

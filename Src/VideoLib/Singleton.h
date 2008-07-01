@@ -13,7 +13,16 @@ public:
    ~Singleton( void )
         {  assert( s_instance );  s_instance = 0;  }
     static T& getSingleton( void )
-        {  assert( s_instance );  return ( *s_instance );  }
+	{
+		if (s_instance)
+		{
+			return ( *s_instance );
+		}
+		else
+		{
+			throw new std::runtime_error("Singleton dereferencing failure");
+		}
+	}
     static T* getSingletonPtr( void )
         {  return ( s_instance );  }
 };

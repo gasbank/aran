@@ -6,11 +6,9 @@
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
 #include "DefaultRenderLayer.h"
-#include "../VideoLib/load_arn.h"
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
 //InputMan inputMan;
-Character* character;		// player character
 ResourceMan resMan;
 
 static WalkCallback g_walkCallback;
@@ -43,14 +41,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	//////////////////////////////////////////////////////////////////////////
 	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
 	//////////////////////////////////////////////////////////////////////////
-	ArnMeshOb* mesh = new ArnMeshOb;
-	load_arn("models/gus.arn", mesh);
-	free(mesh->raw);
-	delete mesh;
-
 	std::auto_ptr<Character> character(new Character());
-	DefaultRenderLayer* pDefaultRenderLayer = new DefaultRenderLayer(character.get());
-
 	character->Initialize();
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
@@ -62,12 +53,22 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
-
+	
 	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
 	V_OKAY( videoMan.InitAnimationController() );
 	//V_OKAY( resMan.initializeAll() );
 	//character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );
-	videoMan.registerRenderLayer( pDefaultRenderLayer );
+	try
+	{
+		videoMan.registerRenderLayer(new DefaultRenderLayer(character.get()));
+		videoMan.registerRenderLayer(new BoxRenderLayer());
+	}
+	catch (const std::runtime_error& e)
+	{
+		MessageBoxA(videoMan.GetWindowHandle(), e.what(), "Exception Caught", MB_ICONERROR | MB_OK);
+		return -100;
+	}
+	
 
 	hr = S_OK;
 	hr = videoMan.InitCustomMesh();
@@ -82,11 +83,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Model Loading Error"), hr);
 	}
 
-	hr = videoMan.InitShader();
+	/*hr = videoMan.InitShader();
 	if (FAILED(hr))
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Shader Initialization Error"), hr);
-	}
+	}*/
 
 	V_OKAY(videoMan.InitFont());
 
@@ -131,7 +132,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		MessageBox(NULL, _T("One or more errors logged!"), _T("Check Log File"), MB_ICONEXCLAMATION);
 	}
-	//videoMan.Close();
 	return 0;
 }
 

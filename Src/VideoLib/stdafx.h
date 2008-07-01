@@ -11,8 +11,6 @@
 
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 
-
-
 // TODO: reference additional headers your program requires here
 
 #include <windows.h>
@@ -25,4 +23,9 @@
 
 #include "Macros.h"
 #include "Singleton.h"
+#include "Structs.h"
 
+//
+//// Using VSTS Source annotations support
+//#include <codeanalysis/sourceannotations.h>
+//using namespace vc_attributes;

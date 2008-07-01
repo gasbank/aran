@@ -143,7 +143,7 @@ public:
 	HRESULT InitModels();
 	
 	
-	
+	D3DMATERIAL9* getDefaultMaterial() { return &defaultMaterial; }
 
 	HRESULT Show();
 	HRESULT StartMainLoop();
@@ -163,8 +163,6 @@ public:
 
 	HWND GetWindowHandle();
 	LPDIRECT3DDEVICE9 GetDev();
-
-	static void SetSimpleColoredMaterial(D3DMATERIAL9* material, D3DXCOLOR color);
 
 	HRESULT SetCamera(float x, float y, float z);
 	HRESULT SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );
@@ -206,7 +204,7 @@ public:
 
 
 
-
+void SetSimpleColoredMaterial(D3DMATERIAL9* material, D3DXCOLOR color);
 
 
 
