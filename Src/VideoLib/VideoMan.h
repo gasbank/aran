@@ -142,7 +142,7 @@ public:
 
 	HRESULT InitModels();
 	
-	
+	const D3DXMATRIX* getArcballResult() const { return &modelArcBallRotation; }
 	D3DMATERIAL9* getDefaultMaterial() { return &defaultMaterial; }
 
 	HRESULT Show();

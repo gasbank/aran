@@ -4,6 +4,7 @@
 #include "../VideoLib/load_arn.h"
 #include "../VideoLib/arn2.h"
 #include "../VideoLib/ArnMesh.h"
+#include "../VideoLib/ArnMaterial.h"
 
 DefaultRenderLayer::DefaultRenderLayer(Character* pChar)
 {
@@ -101,6 +102,7 @@ HRESULT DefaultRenderLayer::render()
 HRESULT BoxRenderLayer::render()
 {
 	ASSERTCHECK( m_lpDev );
+	LPDIRECT3DDEVICE9 dev = VideoMan::getSingleton().GetDev();
 	// World
 	D3DXMatrixIdentity(&m_matWorld);
 	// View
@@ -124,25 +126,58 @@ HRESULT BoxRenderLayer::render()
 
 	D3DXMATRIX transform;
 	D3DXMatrixIdentity(&transform);
-	VideoMan::getSingleton().GetDev()->SetTransform(D3DTS_WORLD, &transform);
+	dev->SetTransform(D3DTS_WORLD, &transform);
 	
-	VideoMan::getSingleton().GetDev()->SetFVF(ARNVERTEX_FVF);
-	VideoMan::getSingleton().GetDev()->SetMaterial(VideoMan::getSingleton().getDefaultMaterial());
-	D3DXMatrixRotationYawPitchRoll(&transform, D3DX_PI*0.8f, D3DX_PI/6, 0.0f);
-	VideoMan::getSingleton().GetDev()->SetTransform(D3DTS_WORLD, &transform);
-	size_t i;
+	//dev->SetFVF(ARNVERTEX_FVF);
+	//dev->SetMaterial(VideoMan::getSingleton().getDefaultMaterial());
+	//D3DXMatrixRotationYawPitchRoll(&transform, D3DX_PI*0.8f, D3DX_PI/6, 0.0f);
+	
+	D3DXMATRIX flip;
+	flip.m[0][0] = 1; flip.m[0][1] = 0; flip.m[0][2] = 0; flip.m[0][3] = 0; 
+	flip.m[1][0] = 0; flip.m[1][1] = 1; flip.m[1][2] = 0; flip.m[1][3] = 0; 
+	flip.m[2][0] = 0; flip.m[2][1] = 0; flip.m[2][2] = -1; flip.m[2][3] = 0; 
+	flip.m[3][0] = 0; flip.m[3][1] = 0; flip.m[3][2] = 0; flip.m[3][3] = 1; 
+	
+	D3DXMATRIX yRot;
+	D3DXMatrixRotationY(&yRot, D3DX_PI);
+
+	D3DXMATRIX change = flip * yRot;
+	//dev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+	unsigned int i, j;
 	for (i = 0; i < m_objects.size(); ++i)
 	{
-		ArnMesh* mesh = dynamic_cast<ArnMesh*>(m_objects[i]);
-		if (mesh)
+		if (m_objects[i]->getType() == ANT_MESH)
 		{
-			mesh->getD3DMesh()->DrawSubset(0);
+			ArnMesh* mesh = (ArnMesh*)m_objects[i];
+			D3DXMatrixIdentity(&transform);
+			ArnNode* parNode = mesh->getParent();
+			while (parNode != NULL)
+			{
+				transform = *parNode->getLocalTransform() * transform;
+				parNode = parNode->getParent();
+			}
+			transform = *mesh->getLocalTransform() * transform;
+
+			
+			/*D3DXVECTOR3* scalingVec = (D3DXVECTOR3*)mesh->getOb().hdr->scl;
+			D3DXVECTOR3* translationVec = (D3DXVECTOR3*)mesh->getOb().hdr->loc;
+			D3DXQUATERNION* rotQuat = (D3DXQUATERNION*)mesh->getOb().hdr->rotQuat;
+			D3DXMatrixTransformation(&transform, NULL, NULL, scalingVec, NULL, rotQuat, translationVec);
+			*/
+			transform = transform * *VideoMan::getSingleton().getArcballResult();
+			dev->SetTransform(D3DTS_WORLD, &transform);
+
+			for (j = 0; j < mesh->getOb().hdr->materialCount; ++j)
+			{
+				unsigned int maIndex = mesh->getOb().attrToMaterialMap[j];
+				ArnMaterial* ma = dynamic_cast<ArnMaterial*>(m_objects[maIndex]);
+				dev->SetMaterial(&ma->getOb().hdr->d3dMaterial);
+				mesh->getD3DMesh()->DrawSubset(j);
+			}
 		}
 	}
-
-	D3DXMatrixIdentity(&transform);
-	
-	VideoMan::getSingleton().GetDev()->SetTransform(D3DTS_WORLD, &transform);
+	dev->SetTransform(D3DTS_WORLD, &transform);
 	//m_testMesh->DrawSubset(0);
 
 	RECT rc;

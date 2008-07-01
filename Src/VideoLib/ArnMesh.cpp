@@ -1,8 +1,8 @@
 #include "StdAfx.h"
 #include "ArnMesh.h"
 
-ArnMesh::ArnMesh(void)
-: m_d3dMesh(NULL)
+ArnMesh::ArnMesh()
+: ArnNode(ANT_MESH), m_d3dMesh(NULL)
 {
 }
 

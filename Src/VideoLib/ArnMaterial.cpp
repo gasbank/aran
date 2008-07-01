@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArnMaterial.h"
 
-ArnMaterial::ArnMaterial(void)
+ArnMaterial::ArnMaterial()
+: ArnObject(ANT_MATERIAL)
 {
 }
 

@@ -67,7 +67,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).lib"
-				AdditionalLibraryDirectories="..\..\Dxsdk\Lib\x86"
+				AdditionalLibraryDirectories=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -211,7 +211,6 @@
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
-					ExcludedFromBuild="true"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

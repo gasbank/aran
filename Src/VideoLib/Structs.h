@@ -41,22 +41,32 @@ struct ArnMeshObHdr
 {
 	ArnNodeType type;
 	char name[64];
+	char parName[64]; // parent name
+	
+	float localTf[4][4];
 	float loc[3];
 	float scl[3];
 	float rot[3];
-	int vertexCount;
-	int faceCount;
+	float rotQuat[4];
+	unsigned int materialCount;
+	unsigned int vertexCount;
+	unsigned int faceCount;
 };
 struct ArnMeshOb
 {
 	ArnMeshObHdr* hdr;
+	DWORD* attrToMaterialMap;
 	ArnVertex* vertex;
 	unsigned short (*faces)[3];
+	DWORD* attr;
 };
 struct ArnCameraObHdr
 {
 	ArnNodeType type;
 	char name[64];
+	char parName[64]; // parent name
+
+	float localTf[4][4];
 	float loc[3];
 	float rot[3];
 	int camType;		// 0: perspective, 1: orthogonal
@@ -72,6 +82,10 @@ struct ArnLightObHdr
 {
 	ArnNodeType type;
 	char name[64];
+	char parName[64]; // parent name
+
+	float localTf[4][4];
+
 };
 struct ArnLightOb
 {

@@ -8,7 +8,7 @@
 #include "DefaultRenderLayer.h"
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
-//InputMan inputMan;
+InputMan inputMan;
 ResourceMan resMan;
 
 static WalkCallback g_walkCallback;
@@ -36,8 +36,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Window Initialization Error"), hr);
 	}
 
-	//inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
-
+	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
+	videoMan.AttachInputMan(&inputMan);
 	//////////////////////////////////////////////////////////////////////////
 	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
 	//////////////////////////////////////////////////////////////////////////
@@ -115,7 +115,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Window Showing Error"), hr);
 	}
 
-	//inputMan.AcquireKeyboard();
+	inputMan.AcquireKeyboard();
 
 	//
 	// Starting main loop...
@@ -173,57 +173,57 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		
 		break;
-//
-//		// ArcBall rotation
-//	case WM_MOUSEMOVE:
-//		inputMan.SetMouseCurPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-//		break;
-//	case WM_LBUTTONUP:
-//		inputMan.SetMouseUpPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-//
-//		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
-//		OutputDebugString(debugMessage);
-//		break;
-//	case WM_LBUTTONDOWN:
-//		inputMan.SetMouseDownPos((int)LOWORD(lParam), (int)HIWORD(lParam));
-//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-//
-//		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
-//		OutputDebugString(debugMessage);
-//		break;
-//	case WM_RBUTTONUP:
-//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-//
-//		break;
-//	case WM_RBUTTONDOWN:
-//		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
-//		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
-//
-//		break;
-//
-//#ifndef WM_MOUSEWHEEL
-//#define WM_MOUSEWHEEL 0x020A
-//#endif
-//	case WM_MOUSEWHEEL:
-//		{
-//			short zDelta = (short)HIWORD(wParam);
-//			if (zDelta > 0)
-//			{
-//				videoMan.MoveMainCameraEye(0.0f, 0.0f, 2.0f);
-//			}
-//			else
-//			{
-//				videoMan.MoveMainCameraEye(0.0f, 0.0f, -2.0f);
-//
-//			}
-//		}
-//		break;
+
+		// ArcBall rotation
+	case WM_MOUSEMOVE:
+		inputMan.SetMouseCurPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+		break;
+	case WM_LBUTTONUP:
+		inputMan.SetMouseUpPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+
+		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
+		OutputDebugString(debugMessage);
+		break;
+	case WM_LBUTTONDOWN:
+		inputMan.SetMouseDownPos((int)LOWORD(lParam), (int)HIWORD(lParam));
+		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+
+		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
+		OutputDebugString(debugMessage);
+		break;
+	case WM_RBUTTONUP:
+		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+
+		break;
+	case WM_RBUTTONDOWN:
+		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
+		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
+
+		break;
+
+#ifndef WM_MOUSEWHEEL
+#define WM_MOUSEWHEEL 0x020A
+#endif
+	case WM_MOUSEWHEEL:
+		{
+			short zDelta = (short)HIWORD(wParam);
+			if (zDelta > 0)
+			{
+				videoMan.MoveMainCameraEye(0.0f, 0.0f, 2.0f);
+			}
+			else
+			{
+				videoMan.MoveMainCameraEye(0.0f, 0.0f, -2.0f);
+
+			}
+		}
+		break;
 	default:
 
 		break;

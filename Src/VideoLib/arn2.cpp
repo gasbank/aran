@@ -23,11 +23,10 @@ HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN ArnMeshOb* ob, OUT LPD3DXMES
 	memcpy(ind, ob->faces, ob->hdr->faceCount * 3 * sizeof(WORD));
 	(*mesh)->UnlockIndexBuffer();
 
-	/*DWORD* attributeBuffer = NULL;
-	this->lpCustomMesh->LockAttributeBuffer(0, &attributeBuffer);
-	int i;
-	attributeBuffer[ 0] = 1;
-	this->lpCustomMesh->UnlockAttributeBuffer();*/
+	DWORD* attrBuf = NULL;
+	(*mesh)->LockAttributeBuffer(0, &attrBuf);
+	memcpy(attrBuf, ob->attr, ob->hdr->faceCount * sizeof(DWORD));
+	(*mesh)->UnlockAttributeBuffer();
 
 	return S_OK;
 }

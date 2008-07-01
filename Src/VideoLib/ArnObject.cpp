@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArnObject.h"
 
-ArnObject::ArnObject(void)
+ArnObject::ArnObject(ArnNodeType type)
+: m_type(type)
 {
 }
 

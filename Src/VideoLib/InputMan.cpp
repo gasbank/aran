@@ -80,7 +80,7 @@ HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
 
 HRESULT InputMan::AcquireKeyboard()
 {
-	HRESULT hr;
+	//HRESULT hr;
 
 	//
 	// Acquire() should be called after calling ShowWindow() or UpdateWindow() --- maybe?
@@ -88,9 +88,13 @@ HRESULT InputMan::AcquireKeyboard()
 	// any Visual Studio debugger's breakpoints since it keeps from acquire keyboard access
 	// by unfocusing debugee(Aran Project)
 	//
-	V_OKAY( hr = this->lpDInputDevKeyboard->Acquire() );
+	//V_OKAY( hr = this->lpDInputDevKeyboard->Acquire() );
+	while (FAILED(this->lpDInputDevKeyboard->Acquire()))
+	{
 
-	return hr;
+	}
+
+	return S_OK;
 }
 
 
@@ -144,7 +148,7 @@ HRESULT WINAPI InputMan::ProcessKeyboardInput()
 
 	if ( directionalKeyPressed == FALSE )
 	{
-		this->StopCharacterWalking();
+		//this->StopCharacterWalking();
 	}
 	
 

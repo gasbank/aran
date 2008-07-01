@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArnCamera.h"
 
-ArnCamera::ArnCamera(void)
+ArnCamera::ArnCamera()
+: ArnNode(ANT_CAMERA)
 {
 }
 

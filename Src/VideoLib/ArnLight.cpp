@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArnLight.h"
 
-ArnLight::ArnLight(void)
+ArnLight::ArnLight()
+: ArnNode(ANT_LIGHT)
 {
 }
 

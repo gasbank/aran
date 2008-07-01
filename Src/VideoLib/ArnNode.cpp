@@ -1,7 +1,8 @@
 #include "StdAfx.h"
 #include "ArnNode.h"
 
-ArnNode::ArnNode(void)
+ArnNode::ArnNode(ArnNodeType type)
+: ArnObject(type), m_parent(NULL)
 {
 }
 

@@ -18,10 +18,14 @@ static int parse_mesh_data(char* arn_data, ArnMeshOb* mesh_ob)
 		return -1;
 	mesh_ob->hdr = (ArnMeshObHdr*)arn_data;
 	pos += sizeof(ArnMeshObHdr);
+	mesh_ob->attrToMaterialMap = (DWORD*)&arn_data[pos];
+	pos += sizeof(DWORD) * mesh_ob->hdr->materialCount;
 	mesh_ob->vertex = (ArnVertex*)&arn_data[pos];
 	pos += sizeof(ArnVertex) * mesh_ob->hdr->vertexCount;
 	mesh_ob->faces = (unsigned short(*)[3])&arn_data[pos];
 	pos += sizeof(unsigned short) * 3 * mesh_ob->hdr->faceCount;
+	mesh_ob->attr = (DWORD*)&arn_data[pos];
+	pos += sizeof(DWORD) * mesh_ob->hdr->faceCount;
 	return pos;
 }
 static int parse_camera_data(char* arn_data, ArnCameraOb* cam_ob)
@@ -128,7 +132,30 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 	}
 	if (f_size != pos)
 		throw std::runtime_error("File loading inconsistency");
-	else
-		return 0;
+
+	size_t i, j;
+	for (i = 0; i < objects.size(); ++i)
+	{
+		if (objects[i]->getType() == ANT_MESH)
+		{
+			ArnMesh* mesh = (ArnMesh*)objects[i];
+			const char* parName = mesh->getOb().hdr->parName;
+			if (strlen(parName))
+			{
+				ArnNode* node = NULL;
+				for (j = 0; j < objects.size(); ++j)
+				{
+					const char* obName = objects[j]->getName();
+					if (strcmp(obName, parName) == 0)
+					{
+						ASSERTCHECK(objects[i]->getType() != ANT_MATERIAL);
+						mesh->setParent((ArnNode*)objects[j]);
+						break;
+					}
+				}
+			}
+		}
+	}
+	return 0;
 }
 
