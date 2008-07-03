@@ -23,6 +23,7 @@
 #endif
 
 class Character;
+class ArnCamera;
 
 struct MY_COLOR_VERTEX
 {
@@ -40,6 +41,7 @@ struct ARN_CAMERA
 
 	D3DXVECTOR3 eye, at, up;
 	float farClip, nearClip;
+	float angle; // in radian
 };
 
 class RenderLayer;
@@ -166,7 +168,7 @@ public:
 
 	HRESULT SetCamera(float x, float y, float z);
 	HRESULT SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );
-
+	HRESULT SetCamera(ArnCamera& arnCam);
 
 	void AttachInputMan(InputMan* inputMan);
 

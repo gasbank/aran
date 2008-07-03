@@ -102,25 +102,26 @@ HRESULT DefaultRenderLayer::render()
 HRESULT BoxRenderLayer::render()
 {
 	ASSERTCHECK( m_lpDev );
-	LPDIRECT3DDEVICE9 dev = VideoMan::getSingleton().GetDev();
+	VideoMan& videoMan = VideoMan::getSingleton();
+	LPDIRECT3DDEVICE9 dev = videoMan.GetDev();
 	// World
 	D3DXMatrixIdentity(&m_matWorld);
 	// View
 	D3DXMatrixLookAtLH(
 		&m_matView,
-		&m_pVideoMan->getMainCamera()->eye,		// the camera position
-		&m_pVideoMan->getMainCamera()->at,		// the look-at position
-		&m_pVideoMan->getMainCamera()->up		// the up direction
+		&videoMan.getMainCamera()->eye,		// the camera position
+		&videoMan.getMainCamera()->at,		// the look-at position
+		&videoMan.getMainCamera()->up		// the up direction
 		);
 	// Projection
 	int screenWidth, screenHeight;
-	m_pVideoMan->getScreenInfo( screenWidth, screenHeight );
+	videoMan.getScreenInfo( screenWidth, screenHeight );
 	D3DXMatrixPerspectiveFovLH(
 		&m_matProjection,
-		D3DXToRadian(45),
+		videoMan.getMainCamera()->angle,
 		(float)screenWidth / (float)screenHeight,
-		1.0f,
-		1000.0f
+		videoMan.getMainCamera()->nearClip,
+		videoMan.getMainCamera()->farClip
 		);
 	m_pVideoMan->setWorldViewProjection(m_matWorld, m_matView, m_matProjection);
 
@@ -190,11 +191,13 @@ HRESULT BoxRenderLayer::render()
 BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(NULL)
 {
+	VideoMan& videoMan = VideoMan::getSingleton();
 	if (FAILED(load_arn("models/gus2.arn", m_objects)))
 	{
 		DebugBreak();
 	}
 	size_t i;
+	ArnCamera* arnCam = NULL;
 	for (i = 0; i < m_objects.size(); ++i)
 	{
 		ArnMesh* mesh = dynamic_cast<ArnMesh*>(m_objects[i]);
@@ -202,9 +205,18 @@ BoxRenderLayer::BoxRenderLayer()
 		{
 			arn_build_mesh(VideoMan::getSingleton().GetDev(), &mesh->getOb(), &mesh->getD3DMesh());
 		}
+		if (!arnCam && m_objects[i]->getType() == ANT_CAMERA)
+		{
+			arnCam = reinterpret_cast<ArnCamera*>(m_objects[i]);
+		}
 	}
 	m_testMesh = newTestPlaneMesh(2.0f, 4.0f, 20, 10);
-	VideoMan::getSingleton().GetDev()->SetRenderState(D3DRS_LIGHTING, TRUE);
+	videoMan.GetDev()->SetRenderState(D3DRS_LIGHTING, TRUE);
+
+	if (arnCam)
+	{
+		videoMan.SetCamera(*arnCam);
+	}
 }
 
 BoxRenderLayer::~BoxRenderLayer()
