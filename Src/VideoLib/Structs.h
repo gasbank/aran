@@ -27,6 +27,7 @@ enum ArnNodeType
 	ANT_CAMERA = 0x20,
 	ANT_LIGHT = 0x30,
 	ANT_MATERIAL = 0x40,
+	ANT_IPO = 0x50,
 	ANT_FORCE_DWORD = 0x7fffffff,
 };
 enum
@@ -102,6 +103,32 @@ struct ArnMaterialOb
 {
 	ArnMaterialObHdr* hdr;
 };
+
+
+
+struct ArnCurve
+{
+	enum CurveType { CONSTANT, LINEAR, BEZIER };
+	char name[64];
+	unsigned int pointCount;
+	CurveType type;
+	float* data;
+};
+
+struct ArnIpoObHdr
+{
+	static const ArnNodeType type = ANT_IPO;
+	char name[64];
+	unsigned int curveCount;
+};
+
+struct ArnIpoOb
+{
+	ArnIpoObHdr* hdr;
+	ArnCurve* curves;
+};
+
+
 
 
 #endif // #ifndef __STRUCTS_H_
