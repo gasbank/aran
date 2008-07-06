@@ -193,14 +193,22 @@
 	</References>
 	<Files>
 		<Filter
-			Name="Entry Point"
+			Name="Misc"
 			>
 			<File
-				RelativePath=".\Aran.cpp"
+				RelativePath=".\Aran.rc"
 				>
 			</File>
 			<File
-				RelativePath=".\Aran.h"
+				RelativePath=".\CopyResourcesToWorking.bat"
+				>
+			</File>
+			<File
+				RelativePath=".\icon1.ico"
+				>
+			</File>
+			<File
+				RelativePath=".\readme.txt"
 				>
 			</File>
 		</Filter>
@@ -223,6 +231,30 @@
 		<Filter
 			Name="Character"
 			>
+			<File
+				RelativePath=".\Character.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Character.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CharacterAnimationCallback.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CharacterAnimationCallback.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CharacterInterface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CharacterInterface.h"
+				>
+			</File>
 			<File
 				RelativePath=".\LoiterCallback.cpp"
 				>
@@ -260,8 +292,64 @@
 				>
 			</File>
 		</Filter>
+		<Filter
+			Name="Arn"
+			>
+			<File
+				RelativePath=".\ArnCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnCamera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnLight.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnLight.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMaterial.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMaterial.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMesh.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnNode.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnNode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnObject.h"
+				>
+			</File>
+		</Filter>
 		<File
-			RelativePath=".\Aran.rc"
+			RelativePath=".\Aran.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Aran.h"
 			>
 		</File>
 		<File
@@ -273,91 +361,11 @@
 			>
 		</File>
 		<File
-			RelativePath=".\ArnCamera.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnCamera.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnLight.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnLight.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMaterial.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMaterial.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMesh.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMesh.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnNode.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnNode.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnObject.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnObject.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Character.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Character.h"
-			>
-		</File>
-		<File
-			RelativePath=".\CharacterAnimationCallback.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\CharacterAnimationCallback.h"
-			>
-		</File>
-		<File
-			RelativePath=".\CharacterInterface.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\CharacterInterface.h"
-			>
-		</File>
-		<File
-			RelativePath=".\CopyResourcesToWorking.bat"
-			>
-		</File>
-		<File
 			RelativePath=".\DungeonInterface.cpp"
 			>
 		</File>
 		<File
 			RelativePath=".\DungeonInterface.h"
-			>
-		</File>
-		<File
-			RelativePath=".\icon1.ico"
 			>
 		</File>
 		<File
@@ -394,10 +402,6 @@
 		</File>
 		<File
 			RelativePath=".\ModelReader.h"
-			>
-		</File>
-		<File
-			RelativePath=".\readme.txt"
 			>
 		</File>
 		<File
