@@ -1,6 +1,6 @@
 #include "StdAfx.h"
 #include "ResourceMan.h"
-#include "../VideoLib/VideoMan.h"
+#include "VideoMan.h"
 
 IMPLEMENT_SINGLETON(ResourceMan);
 

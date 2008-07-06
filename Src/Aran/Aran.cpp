@@ -6,6 +6,10 @@
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
 #include "DefaultRenderLayer.h"
+#include "VideoMan.h"
+#include "ResourceMan.h"
+#include "Character.h"
+
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
 InputMan inputMan;

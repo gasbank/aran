@@ -1,7 +1,7 @@
 #pragma once
 
 #include <map>
-#include "../VideoLib/Singleton.h"
+#include "Singleton.h"
 
 class ModelReader;
 

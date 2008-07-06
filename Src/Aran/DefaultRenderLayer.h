@@ -1,6 +1,6 @@
 #pragma once
-#include "../videolib/renderlayer.h"
-#include "../VideoLib/Structs.h"
+#include "renderlayer.h"
+#include "Structs.h"
 #include <vector>
 
 class Character;

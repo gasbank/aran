@@ -17,7 +17,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="../../Working"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
@@ -49,12 +49,12 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				BufferSecurityCheck="true"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile="$(IntDir)\$(TargetName)_$(ConfigurationName).pch"
 				WarningLevel="3"
 				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 				EnablePREfast="false"
 			/>
 			<Tool
@@ -68,10 +68,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib dinput8.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib VideoLib_$(ConfigurationName).lib"
-				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).exe"
+				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib dinput8.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				OutputFile="$(OutDir)/$(ProjectName).exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\Working"
+				AdditionalLibraryDirectories=""
 				GenerateDebugInformation="true"
 				AssemblyDebug="1"
 				SubSystem="2"
@@ -265,11 +265,115 @@
 			>
 		</File>
 		<File
+			RelativePath=".\arn2.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\arn2.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnCamera.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnCamera.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnLight.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnLight.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMaterial.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMaterial.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMesh.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMesh.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnNode.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnNode.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnObject.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnObject.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Character.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Character.h"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterAnimationCallback.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterAnimationCallback.h"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterInterface.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\CharacterInterface.h"
+			>
+		</File>
+		<File
 			RelativePath=".\CopyResourcesToWorking.bat"
 			>
 		</File>
 		<File
+			RelativePath=".\DungeonInterface.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\DungeonInterface.h"
+			>
+		</File>
+		<File
 			RelativePath=".\icon1.ico"
+			>
+		</File>
+		<File
+			RelativePath=".\InputMan.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\InputMan.h"
+			>
+		</File>
+		<File
+			RelativePath=".\load_arn.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\load_arn.h"
 			>
 		</File>
 		<File
@@ -285,7 +389,23 @@
 			>
 		</File>
 		<File
+			RelativePath=".\ModelReader.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ModelReader.h"
+			>
+		</File>
+		<File
 			RelativePath=".\readme.txt"
+			>
+		</File>
+		<File
+			RelativePath=".\RenderLayer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\RenderLayer.h"
 			>
 		</File>
 		<File
@@ -298,6 +418,10 @@
 		</File>
 		<File
 			RelativePath=".\ResourceMan.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Singleton.h"
 			>
 		</File>
 		<File
@@ -322,6 +446,18 @@
 		</File>
 		<File
 			RelativePath=".\stdafx.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Structs.h"
+			>
+		</File>
+		<File
+			RelativePath=".\VideoMan.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\VideoMan.h"
 			>
 		</File>
 	</Files>

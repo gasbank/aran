@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "LoiterCallback.h"
-#include "../VideoLib/Character.h"
+#include "Character.h"
 
 LoiterCallback::LoiterCallback(void)
 {

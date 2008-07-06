@@ -1,35 +1,26 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <CommCtrl.h>
 
 #include <iostream>
 #include <string>
-
-// standard C library
 #include <stdlib.h>
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
 #include <assert.h>
-
-#include <d3dx9.h>
-#include <dxerr9.h>
-
-// standard C++ library
 #include <map>
 #include <fstream>
 
-// custom macros
-#include "../VideoLib/Macros.h"
+#include <d3dx9.h>
+#include <dxerr9.h>
+#define DIRECTINPUT_VERSION 0x0800
+#include <dinput.h>
+#include <dinputd.h>
 
-#include "../VideoLib/VideoMan.h"
-#include "../VideoLib/InputMan.h"
+#include "Macros.h"
 
-#include "../VideoLib/CharacterInterface.h"
-#include "../VideoLib/Character.h"
-
-#include "../VideoLib/Singleton.h"
+#include "Singleton.h"
 #include "Log.h"
-
-#include "ResourceMan.h"
-
+#include "Structs.h"

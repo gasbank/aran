@@ -1,10 +1,12 @@
 #include "StdAfx.h"
 #include "DefaultRenderLayer.h"
-#include "../VideoLib/VideoMan.h"
-#include "../VideoLib/load_arn.h"
-#include "../VideoLib/arn2.h"
-#include "../VideoLib/ArnMesh.h"
-#include "../VideoLib/ArnMaterial.h"
+#include "VideoMan.h"
+#include "load_arn.h"
+#include "arn2.h"
+#include "ArnMesh.h"
+#include "ArnMaterial.h"
+#include "ResourceMan.h"
+#include "Character.h"
 
 DefaultRenderLayer::DefaultRenderLayer(Character* pChar)
 {

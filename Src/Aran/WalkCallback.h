@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../VideoLib/CharacterAnimationCallback.h"
+#include "CharacterAnimationCallback.h"
 
 class WalkCallback
 	: public CharacterAnimationCallback
