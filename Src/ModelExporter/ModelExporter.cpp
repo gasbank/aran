@@ -1796,9 +1796,12 @@ HRESULT ModelExporter::ExportNDD_SkinningData(IGameNode* meshNodeToBeSkinned)
 	for (ptr = boneIndices.begin(), end = boneIndices.end(); ptr != end; ptr++)
 	{
 		IGameNode* boneNode = ptr->first;
-
-
+		int boneNdt = NDT_BONE;
+		int boneChunkSize = 0;
+		this->fout.write((char*)&boneNdt, sizeof(int));
 		this->fout.write(boneNode->GetName(), (int)strlen(boneNode->GetName()) + 1); // write Bone Name
+		this->fout.write((char*)&boneChunkSize, sizeof(int)); // reserve for chuck size
+
 		GMatrix boneInitTM = boneNode->GetWorldTM();
 		//boneInitTM = boneInitTM * this->maxToDx;
 

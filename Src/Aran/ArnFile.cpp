@@ -62,6 +62,10 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeAnim1();
 		node_chunk_parser_func = parse_nodeAnim1;
 		break;
+	case NDT_BONE:
+		nodeBase = new BoneData();
+		node_chunk_parser_func = parse_nodeBone;
+		break;
 	default: // unidentified node, maybe corrupted or unsupported; skip the node
 		nodeBase = new NodeUnidentified();
 		node_chunk_parser_func = parse_nodeUnidentified;
@@ -128,20 +132,28 @@ void parse_nodeSkeleton( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_boneCount				= file_read_uint(abf);
 	if (node->m_boneCount > 0)
 	{
-		node->m_bones				= new BoneData[node->m_boneCount];
+		node->m_bones				= new NodeBase*[node->m_boneCount];
 		unsigned int i;
 		for (i = 0; i < node->m_boneCount; ++i)
 		{
-			node->m_bones[i].m_boneName			= file_read_string(abf);
-			node->m_bones[i].m_offsetMatrix		= file_read<D3DMATRIX>(abf);
-			node->m_bones[i].m_infVertexCount	= file_read_uint(abf);
-			node->m_bones[i].m_vertexIndices	= file_read_uint_array(abf, node->m_bones[i].m_infVertexCount);
-			node->m_bones[i].m_weights			= file_read<float>(abf, node->m_bones[i].m_infVertexCount);
-			parse_node(abf, node->m_bones[i].m_nodeAnim1);
+			parse_node(abf, node->m_bones[i]);
+			BoneData* boneNode = (BoneData*)node->m_bones[i];
+			parse_node(abf, boneNode->m_nodeAnim1);
 		}
 	}
 	else
 		throw MyError(MEE_SKELETON_BONES_ERROR);
+}
+
+void parse_nodeBone( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_BONE);
+	BoneData* node = (BoneData*)nodeBase;
+
+	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
+	node->m_infVertexCount	= file_read_uint(abf);
+	node->m_vertexIndices	= file_read_uint_array(abf, node->m_infVertexCount);
+	node->m_weights			= file_read<float>(abf, node->m_infVertexCount);
 }
 
 void parse_nodeHierarchy( ArnBinaryFile& abf, NodeBase*& nodeBase )

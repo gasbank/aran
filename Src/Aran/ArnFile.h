@@ -36,9 +36,8 @@ struct NodeAnim1 : public NodeBase
 	RST_DATA* m_rstKeys;
 };
 
-struct BoneData
+struct BoneData : public NodeBase
 {
-	char* m_boneName;
 	D3DMATRIX* m_offsetMatrix;
 	unsigned int m_infVertexCount; // influencing vertex count
 	unsigned int* m_vertexIndices;
@@ -55,8 +54,9 @@ struct NodeSkeleton : public NodeBase
 	~NodeSkeleton() { delete [] m_bones; }
 	char* m_associatedMeshName;
 	unsigned int m_maxWeightsPerVertex;
+
 	unsigned int m_boneCount;
-	BoneData* m_bones;
+	NodeBase** m_bones; // Bone Data node
 };
 
 struct MyFrameData
@@ -114,6 +114,7 @@ void parse_nodeHierarchy(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeLight(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeCamera(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeBone(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 

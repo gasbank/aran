@@ -270,7 +270,12 @@ int ModelReader::ParseNDD_Skeleton(int nodeHeaderIndex)
 	for (j = 0; j < bonesCount; j++)
 	{
 		//Bone bone;
+		NODE_DATA_TYPE boneNdt = NDT_UNKNOWN;
+		int boneChunkSize = -1;
+		this->fin.read((char*)&boneNdt, sizeof(int));
+		assert(boneNdt == NDT_BONE);
 		this->fin.getline(skelNode.bones[j].nameFixed, sizeof(skelNode.bones[j].nameFixed), '\0');
+		this->fin.read((char*)&boneChunkSize, sizeof(int));
 		this->fin.read((char*)skelNode.bones[j].offsetMatrix.m, 4*4*sizeof(float));
 		this->fin.read((char*)&skelNode.bones[j].influencingVertexCount, sizeof(size_t));
 		skelNode.bones[j].indices.resize(skelNode.bones[j].influencingVertexCount);
