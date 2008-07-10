@@ -19,7 +19,10 @@ struct NodeMesh2 : public NodeBase
 	unsigned int m_materialCount;
 	ARN_MTD_Data* m_mtds;
 
-	NodeBase* m_nodeAnim1; // TODO: Anim1 node --- should be reorganized!
+	// TODO: Anim1 node follows at the very end of this node
+	// which is not included in total node count at top level field!
+	// ---> should be reorganized!
+	NodeBase* m_nodeAnim1;
 };
 
 struct NodeAnim1 : public NodeBase
@@ -36,7 +39,10 @@ struct BoneData
 	unsigned int* m_vertexIndices;
 	float* m_weights;
 	
-	NodeBase* m_nodeAnim1; // TODO: Anim1 node --- should be reorganized!
+	// TODO: Anim1 node follows at the very end of this node
+	// which is not included in total node count at top level field!
+	// ---> should be reorganized!
+	NodeBase* m_nodeAnim1;
 };
 
 struct NodeSkeleton : public NodeBase
