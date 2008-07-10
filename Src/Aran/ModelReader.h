@@ -75,7 +75,7 @@ private:
 	LPD3DXANIMATIONCONTROLLER lpAnimationController;
 
 	int notIndVertTotalSize; // Vertex buffer size in bytes (not indexed)
-	int indVertTotalSize; // Vertex buffer size in bytes (indexed); cumultive value through all this->lpMeshes's VB
+	int indVertTotalSize; // Vertex buffer size in bytes (indexed); cumulative value through all this->lpMeshes's VB
 
 	int lightCount;
 
