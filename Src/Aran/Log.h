@@ -22,7 +22,7 @@ public:
 	LOGMANAGER(char* filename);
 	LOGMANAGER(char* filename, bool bAppend);
 
-	void NewLog(char* sourcefilename, char* funcname, int line, TCHAR* message, bool bOkay);
+	void NewLog(TCHAR* sourcefilename, TCHAR* funcname, int line, TCHAR* message, bool bOkay);
 	void NewLog(TCHAR* message, bool bOkay);
 	void NewLog(TCHAR* message);
 	int GetFailCount() { return failCount; };
@@ -32,9 +32,15 @@ private:
 	int failCount;
 	//std::ofstream fout;
 	std::wofstream fout;
+
+	TCHAR debugBuf[256];
 };
 
+#define QUOTEME(x) #x
+
 #ifndef _LogWrite
-#define _LogWrite(___msg,___okay) \
-	LOGMANAGER::getSingleton().NewLog(__FILE__, __FUNCTION__, __LINE__, ___msg, ___okay)
+#define _LogWrite(___msg,___okay)															\
+{																							\
+	LOGMANAGER::getSingleton().NewLog(_T(__FILE__), _T(__FUNCTION__), __LINE__, ___msg, ___okay);	\
+}
 #endif

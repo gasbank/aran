@@ -30,14 +30,15 @@ HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
 		pModelReader->SetFileName( modelFileName );
 		m_models.insert( ModelMap::value_type( id, pModelReader ) );
 
-		_stprintf_s( logMessage, sizeof( logMessage ) / sizeof(TCHAR), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
 		_LogWrite( logMessage, LOG_OKAY );
+		
 		return S_OK;
 	}
 	else
 	{
 		// already exist...
-		_stprintf_s( logMessage, sizeof( logMessage ) / sizeof(TCHAR), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
 		_LogWrite( logMessage, LOG_FAIL );
 		return E_FAIL;
 	}

@@ -79,12 +79,15 @@ void LOGMANAGER::NewLog(TCHAR* message, bool bOkay)
 	}
 }
 
-void LOGMANAGER::NewLog(char* sourcefilename, char* funcname, int line, TCHAR* message, bool bOkay)
+void LOGMANAGER::NewLog(TCHAR* sourcefilename, TCHAR* funcname, int line, TCHAR* message, bool bOkay)
 {
 	NewLog(message, bOkay);
 	
 	fout << _T( "FILE : " ) << sourcefilename << " (" << line << ")" << std::endl;
 	fout << _T( "FUNC : " ) << funcname << std::endl;
+
+	_stprintf_s(debugBuf, TCHARSIZE(debugBuf), _T("%s(%d) : %s\n"), sourcefilename, line, message);
+	OutputDebugString(debugBuf);
 }
 
 

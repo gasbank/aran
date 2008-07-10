@@ -7,6 +7,11 @@ struct NodeBase
 	unsigned int m_nodeChunkSize;
 };
 
+struct NodeUnidentified : public NodeBase
+{
+	int m_dummy;
+};
+
 struct NodeMesh2 : public NodeBase
 {
 	~NodeMesh2() { delete [] m_mtds; }
@@ -102,6 +107,7 @@ void load_arnfile(const char* fileName, ArnFileData& afd);
 void release_arnfile(ArnFileData& afd);
 
 void parse_node(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeUnidentified(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeSkeleton(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeHierarchy(ArnBinaryFile& abf, NodeBase*& nodeBase);

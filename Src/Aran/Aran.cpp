@@ -29,7 +29,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
 	// Copy external resources to working directory
-	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0)
+	if (system( "../Src/Aran/CopyResourcesToWorking.bat" ) != 0)
 	{
 		_LogWrite(_T("Copy Resources Error"), LOG_FAIL);
 		return DXTRACE_ERR_MSGBOX(_T("Copy Resources Error"), hr);
@@ -186,7 +186,7 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
 		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
 
-		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
+		_stprintf_s(debugMessage, TCHARSIZE(debugMessage), _T("Mouse Up: (%d, %d)\n"), inputMan.GetMouseUpPos().x, inputMan.GetMouseUpPos().y);
 		OutputDebugString(debugMessage);
 		break;
 	case WM_LBUTTONDOWN:
@@ -194,7 +194,7 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		inputMan.SetClicked((LOWORD(wParam) & MK_LBUTTON) ? TRUE : FALSE);
 		inputMan.SetRClicked((LOWORD(wParam) & MK_RBUTTON) ? TRUE : FALSE);
 
-		_stprintf_s(debugMessage, sizeof(debugMessage)/sizeof(TCHAR), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
+		_stprintf_s(debugMessage, TCHARSIZE(debugMessage), _T("Mouse Down: (%d, %d)\n"), inputMan.GetMouseDownPos().x, inputMan.GetMouseDownPos().y);
 		OutputDebugString(debugMessage);
 		break;
 	case WM_RBUTTONUP:

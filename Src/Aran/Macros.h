@@ -32,6 +32,8 @@ namespace std {
 #endif
 }
 
+#define TCHARSIZE(x) (sizeof(x)/sizeof(TCHAR))
+
 
 #if defined(DEBUG) | defined(_DEBUG)
 #define ASSERTCHECK(x) \

@@ -1229,7 +1229,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 	
 
 	TCHAR debugString[512];
-	_stprintf_s( debugString, sizeof(debugString)/sizeof(TCHAR), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
+	_stprintf_s( debugString, TCHARSIZE(debugString), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
 	OutputDebugString( debugString );
 	if (lpKfAnimSet == NULL)
 		throw new std::runtime_error("Animation set is null");
@@ -1254,7 +1254,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 		SAFE_DELETE_ARRAY(currentBone->rotationKeys);
 
 		
-		_stprintf_s(debugString, sizeof(debugString)/sizeof(TCHAR), _T("    - Registered animation key index: %d\n"), animIndex);
+		_stprintf_s(debugString, TCHARSIZE(debugString), _T("    - Registered animation key index: %d\n"), animIndex);
 		OutputDebugString(debugString);
 
 		

@@ -94,8 +94,9 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeAnim1();
 		node_chunk_parser_func = parse_nodeAnim1;
 		break;
-	default:
-		throw MyError(LEE_UNSUPPORTED_NODE);
+	default: // unidentified node, maybe corrupted or unsupported; skip the node
+		nodeBase = new NodeUnidentified();
+		node_chunk_parser_func = parse_nodeUnidentified;
 	}
 
 	nodeBase->m_ndt = ndt;
@@ -109,6 +110,13 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	else
 		throw MyError(LEE_UNDEFINED_ERROR);
 }
+
+void parse_nodeUnidentified( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	file_read<char>(abf, nodeBase->m_nodeChunkSize); // skip the whole chunk data
+	_LogWrite(_T("WARNING: Unidentified node detected and skipped while parsing!"), LOG_OKAY);
+}
+
 
 void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
