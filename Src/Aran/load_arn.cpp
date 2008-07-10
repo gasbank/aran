@@ -4,7 +4,6 @@
  */
 #include "stdafx.h"
 #include "load_arn.h"
-#include "Structs.h"
 #include "ArnMesh.h"
 #include "ArnCamera.h"
 #include "ArnLight.h"

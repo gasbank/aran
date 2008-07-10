@@ -78,7 +78,7 @@
 
 
 #include "types2.h"
-#include "../VideoLib/Singleton.h"
+#include "../Aran/Singleton.h"
 
 #pragma comment(lib, "igame.lib")
 #pragma comment(lib, "core.lib")
@@ -103,3 +103,8 @@
 #ifndef SAFE_DELETE
 #define SAFE_DELETE(x) if(x) { delete x; x = 0; }
 #endif
+
+#include <d3d9.h>
+#include <d3dx9.h>
+
+#include "../Aran/Structs.h"

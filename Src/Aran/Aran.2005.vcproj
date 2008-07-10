@@ -27,9 +27,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				Description="Copy resources to working directory..."
-				CommandLine="CopyResourcesToWorking.bat&#x0D;&#x0A;"
-				Outputs="..\..\Working\"
+				Description=""
+				CommandLine=""
+				Outputs=""
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -345,6 +345,14 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\Animation.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Animation.h"
+			>
+		</File>
+		<File
 			RelativePath=".\Aran.cpp"
 			>
 		</File>
@@ -358,6 +366,14 @@
 		</File>
 		<File
 			RelativePath=".\arn2.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnFile.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnFile.h"
 			>
 		</File>
 		<File

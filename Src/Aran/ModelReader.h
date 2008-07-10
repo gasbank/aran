@@ -1,22 +1,6 @@
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <vector>
 
-#include <tchar.h>
-#include <DxErr.h>
-#include "Structs.h"
-#include "Macros.h"
-#include "../ModelExporter/types.h"
-
-struct RST_DATA
-{
-	float x, y, z, w; // rotation
-	float sx, sy, sz; // scaling
-	float tx, ty, tz; // translation
-};
 
 // Hierarchy info
 class MyFrame : public D3DXFRAME

@@ -8,7 +8,7 @@
 #include "ErrorProcedure.h"
 #include "NullRestoreObj.h"
 #include "resource.h"
-#include "../VideoLib/Macros.h"
+#include "../Aran/Macros.h"
 
 
 // Define this if want additional dump information

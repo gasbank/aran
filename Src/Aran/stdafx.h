@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <map>
 #include <fstream>
+#include <vector>
 
 #include <d3dx9.h>
 #include <dxerr9.h>

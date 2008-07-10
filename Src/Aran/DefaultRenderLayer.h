@@ -1,7 +1,5 @@
 #pragma once
 #include "renderlayer.h"
-#include "Structs.h"
-#include <vector>
 
 class Character;
 class ArnObject;

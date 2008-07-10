@@ -20,7 +20,7 @@ __declspec(dllexport) const TCHAR* LibDescription()
 #ifdef MODEL_EXPORTER_FOR_MAX_9
 	return _T("Aran Model Exporter for 3ds Max 9");
 #elif defined MODEL_EXPORTER_FOR_MAX_2008
-	return _T("Aran Model Exporter for 3ds Max 2008");
+	return _T("Aran Model Exporter for 3ds Max 2008 (Development Version)");
 #endif
 
 }

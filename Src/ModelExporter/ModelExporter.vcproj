@@ -28,9 +28,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				Description="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
-				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
-				Outputs="&quot;C:\Program Files\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
+				Description="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
+				CommandLine="copy /y &quot;$(TargetPath)&quot; &quot;C:\Program Files (x86)\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;&#x0D;&#x0A;"
+				Outputs="&quot;C:\Program Files (x86)\Autodesk\3ds Max 2008\plugins\$(TargetName).dle&quot;"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -44,13 +44,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Autodesk\3ds Max 9 sdk\maxsdk\include&quot;;&quot;C:\Program Files\Autodesk\3ds Max 9 sdk\maxsdk\include\igame&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODELEXPORTER_EXPORTS"
+				AdditionalIncludeDirectories="../../maxsdk2008/include"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODELEXPORTER_EXPORTS;MODEL_EXPORTER_FOR_MAX_2008"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="1"
-				PrecompiledHeaderThrough="Main.h"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="stdafx.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
@@ -67,7 +67,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="0"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\Autodesk\3ds Max 9 sdk\maxsdk\lib&quot;"
+				AdditionalLibraryDirectories="../../maxsdk2008/lib"
 				ModuleDefinitionFile="ModelExporter.def"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -177,6 +177,62 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\ArCamera.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArCamera.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArLight.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArLight.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArMaterial.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArMaterial.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArMesh.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArMesh.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArNode.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArNode.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArNodeFactory.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArNodeFactory.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArObject.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArObject.h"
+			>
+		</File>
+		<File
 			RelativePath=".\ErrorProcedure.cpp"
 			>
 		</File>
@@ -190,6 +246,22 @@
 		</File>
 		<File
 			RelativePath=".\Main.h"
+			>
+		</File>
+		<File
+			RelativePath=".\MaterialExporter.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\MaterialExporter.h"
+			>
+		</File>
+		<File
+			RelativePath=".\MeshExporter.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\MeshExporter.h"
 			>
 		</File>
 		<File
@@ -209,11 +281,35 @@
 			>
 		</File>
 		<File
+			RelativePath=".\ModelExporter2.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ModelExporter2.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ModelExporter2ClassDesc.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ModelExporter2ClassDesc.h"
+			>
+		</File>
+		<File
 			RelativePath=".\ModelExporterClassDesc.cpp"
 			>
 		</File>
 		<File
 			RelativePath=".\ModelExporterClassDesc.h"
+			>
+		</File>
+		<File
+			RelativePath=".\NodeExporter.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\NodeExporter.h"
 			>
 		</File>
 		<File
@@ -237,11 +333,31 @@
 			>
 		</File>
 		<File
+			RelativePath=".\stdafx.cpp"
+			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
+				/>
+			</FileConfiguration>
+		</File>
+		<File
 			RelativePath=".\stdafx.h"
 			>
 		</File>
 		<File
 			RelativePath=".\types.h"
+			>
+		</File>
+		<File
+			RelativePath=".\types2.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\types2.h"
 			>
 		</File>
 	</Files>

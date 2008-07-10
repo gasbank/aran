@@ -9,6 +9,7 @@
 #include "VideoMan.h"
 #include "ResourceMan.h"
 #include "Character.h"
+#include "ArnFile.h"
 
 LOGMANAGER logManager;		// singleton
 VideoMan videoMan;
@@ -21,6 +22,9 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	ArnFileData arnFileData;
+	load_arnfile("models/man.arn", arnFileData);
+	release_arnfile(arnFileData);
 	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
@@ -57,21 +61,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
-	
+
+
 	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
 	V_OKAY( videoMan.InitAnimationController() );
-	//V_OKAY( resMan.initializeAll() );
+	V_OKAY( resMan.initializeAll() );
 	//character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );
-	try
-	{
-		videoMan.registerRenderLayer(new DefaultRenderLayer(character.get()));
-		videoMan.registerRenderLayer(new BoxRenderLayer());
-	}
-	catch (const std::runtime_error& e)
-	{
-		MessageBoxA(videoMan.GetWindowHandle(), e.what(), "Exception Caught", MB_ICONERROR | MB_OK);
-		return -100;
-	}
+	videoMan.registerRenderLayer(new DefaultRenderLayer(character.get()));
+	videoMan.registerRenderLayer(new BoxRenderLayer());
 	
 
 	hr = S_OK;
@@ -87,11 +84,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Model Loading Error"), hr);
 	}
 
-	/*hr = videoMan.InitShader();
+	hr = videoMan.InitShader();
 	if (FAILED(hr))
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Shader Initialization Error"), hr);
-	}*/
+	}
 
 	V_OKAY(videoMan.InitFont());
 

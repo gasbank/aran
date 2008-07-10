@@ -52,14 +52,15 @@ HRESULT DefaultRenderLayer::render()
 
 	const ResourceMan& resMan = ResourceMan::getSingleton();
 	
-	//// Hero Character
-	//D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
-	//D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
-	//m_pVideoMan->RenderModel(
-	//	resMan.getModel( ResourceMan::MAN ),
-	//	&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
-	//	);
-	//resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
+	// Hero Character
+	m_pVideoMan->GetDev()->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
+	D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
+	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
+	m_pVideoMan->RenderModel(
+		resMan.getModel( ResourceMan::MAN ),
+		&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
+		);
+	resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
 
 	//// PoolC 3D Logo
 	//D3DXMatrixTranslation(&matTranslation, 0.0f, 10.0f, -20.0f );

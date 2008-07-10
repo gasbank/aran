@@ -1270,7 +1270,9 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 }
 
 
-int ModelReader::AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray, UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize, D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation, BOOL removeDuplicates)
+int ModelReader::AllocateAsAnimationSetFormat(
+	UINT sourceArraySize, RST_DATA* sourceArray, UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize,
+	D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation, BOOL removeDuplicates)
 {
 	ASSERTCHECK( sourceArraySize >= 1 );
 
