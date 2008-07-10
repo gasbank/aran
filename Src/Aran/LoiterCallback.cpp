@@ -16,7 +16,7 @@ void LoiterCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResul
 	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
 	lpAC->SetTrackPosition( 1, 0.0f );
 
-	if ( pResultData != NULL )
+	if ( pResultData != 0 )
 		*(int*)pResultData = 0;
 }
 
@@ -76,7 +76,7 @@ void LoiterCallback::DoCallback( void* pData /* in */, void* pResultData /* out 
 	this->GetCharacter()->SetAnimStateWeight( 1.0f );
 	this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_UNDEFINED );*/
 
-	if ( pResultData != NULL )
+	if ( pResultData != 0 )
 		*(int*)pResultData = 0;
 }
 

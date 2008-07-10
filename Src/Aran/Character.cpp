@@ -5,7 +5,7 @@
 
 Character::Character(void)
 {
-	this->pMR = NULL;
+	this->pMR = 0;
 	this->animState = CharacterInterface::CAS_LOITER;
 	this->animStateNext = CharacterInterface::CAS_UNDEFINED;
 
@@ -14,19 +14,19 @@ Character::Character(void)
 	this->rotation = D3DXQUATERNION( 0.0f, 0.0f, 0.0f, 0.0f );
 	this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
 	this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
-	D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+	D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 }
 
 Character::Character( D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation )
 {
-	this->pMR = NULL;
+	this->pMR = 0;
 	this->translation = translation;
 	this->scale = scale;
 	this->rotation = rotation;
 	this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
 	this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
 
-	D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+	D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 }
 Character::~Character(void)
 {
@@ -39,7 +39,7 @@ void Character::ChangeTranslation( float dx, float dy, float dz )
 	translation.x += dx;
 	translation.y += dy;
 	translation.z += dz;
-	D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+	D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 }
 
 void Character::ChangeOrientation( float dx, float dy, float dz ) /* radian */
@@ -61,7 +61,7 @@ void Character::ChangeOrientation( float dx, float dy, float dz ) /* radian */
 
 	matRot[3] *= matRotOriginal;
 	D3DXQuaternionRotationMatrix( &rotation, &matRot[3] );
-	D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+	D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 }
 
 const D3DXMATRIX* Character::GetFinalTransform() const
@@ -78,18 +78,18 @@ void Character::SetCharacterAnimationStateNext( CharacterAnimationState nextCAS 
 	{
 		// State changed first time
 		if (this->callbacks[nextCAS])
-			this->callbacks[nextCAS]->DoCallbackFirstTimeOnly( (void*)( this->pMR->GetAnimationController() ), NULL );
+			this->callbacks[nextCAS]->DoCallbackFirstTimeOnly( (void*)( this->pMR->GetAnimationController() ), 0 );
 	}
 
 	this->animStateNext = nextCAS;
 	
 	if (this->callbacks[nextCAS])
-		this->callbacks[nextCAS]->DoCallback( (void*)( this->GetModelReader()->GetAnimationController() ), NULL );
+		this->callbacks[nextCAS]->DoCallback( (void*)( this->GetModelReader()->GetAnimationController() ), 0 );
 }
 
 HRESULT Character::RegisterCharacterAnimationCallback( CharacterAnimationState cas, CharacterAnimationCallback* pCAC )
 {
-	if ( this->callbacks[cas] != NULL )
+	if ( this->callbacks[cas] != 0 )
 		return E_FAIL; // already defined
 	this->callbacks[cas] = pCAC;
 	pCAC->AttachCharacter( this );
@@ -99,12 +99,12 @@ HRESULT Character::RegisterCharacterAnimationCallback( CharacterAnimationState c
 
 HRESULT Character::UnregisterCharacterAnimationCallback( CharacterAnimationState cas )
 {
-	if ( this->callbacks[cas] != NULL )
+	if ( this->callbacks[cas] != 0 )
 		return E_FAIL; // already defined
 	else
 	{
 		this->callbacks[cas]->DoUnregisterCallback();
-		this->callbacks[cas] = NULL;
+		this->callbacks[cas] = 0;
 		return S_OK;
 	}
 }
@@ -113,7 +113,7 @@ void Character::ChangeTranslationToLookAtDirection( float amount )
 {
 	D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
 	translation += this->lookAt * amount;
-	D3DXMatrixTransformation( &this->finalTransform, NULL, NULL, &this->scale, NULL, &this->rotation, &this->translation );
+	D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 
 
 }
@@ -122,7 +122,7 @@ HRESULT Character::AttachModelReader( const ModelReader* pMR )
 {
 	ASSERTCHECK( pMR );
 
-	if ( this->pMR != NULL )
+	if ( this->pMR != 0 )
 	{
 		OutputDebugStringA( " ! You should detach model reader before attach new one\n" );
 		return E_FAIL;

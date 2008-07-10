@@ -3,10 +3,10 @@
 class ArnObject
 {
 public:
-	ArnObject(ArnNodeType type);
+	ArnObject(NODE_DATA_TYPE type);
 	virtual ~ArnObject(void);
-	ArnNodeType getType() { return m_type; }
+	NODE_DATA_TYPE getType() { return m_type; }
 	virtual const char* getName() const = 0;
 private:
-	const ArnNodeType m_type;
+	const NODE_DATA_TYPE m_type;
 };

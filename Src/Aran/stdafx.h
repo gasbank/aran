@@ -16,12 +16,13 @@
 
 #include <d3dx9.h>
 #include <dxerr9.h>
-#define DIRECTINPUT_VERSION 0x0800
-#include <dinput.h>
-#include <dinputd.h>
+
+typedef std::string STRING;
 
 #include "Macros.h"
 
 #include "Singleton.h"
 #include "Log.h"
 #include "Structs.h"
+#include "MyError.h"
+

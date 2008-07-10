@@ -1,7 +1,46 @@
 // Structs.h
-// 2008 Geoyeob Kim (gasbank@gmail.com)
+// 2007, 2008 Geoyeob Kim (gasbank@gmail.com)
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
+
+enum
+{
+	ARNVERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL
+};
+
+enum EXPORT_VERSION
+{
+	EV_UNDEFINED,
+	EV_ARN10,
+	EV_ARN11,
+	EV_ARN20,
+	EV_FORCE_DWORD = 0x7fffffff,
+};
+
+enum NODE_DATA_TYPE // or NDD_DATA_TYPE
+{
+	NDT_UNKNOWN,
+	// ARN20 or before
+	NDT_MESH1,
+	NDT_MESH2,
+	NDT_LIGHT,
+	NDT_SKELETON,
+	NDT_HIERARCHY,
+	NDT_ANIM1,
+	NDT_ANIM2,
+	NDT_MESH3,
+	NDT_CAMERA,
+	// ARN21 or later
+	NDT_MESH4		= 0x10,
+	NDT_CAMERA2		= 0x20,
+	NDT_LIGHT2		= 0x30,
+	NDT_MATERIAL	= 0x40,
+	NDT_IPO			= 0x50,
+	NDT_CONTAINER	= 0x60,
+	NDT_FORCE_DWORD = 0x7fffffff,
+};
+
+//////////////////////////////////////////////////////////////////////////
 
 class MY_CUSTOM_MESH_VERTEX
 {
@@ -17,28 +56,15 @@ public:
 	static const DWORD MY_CUSTOM_MESH_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
 };
 
-//////////////////////////////////////////////////////////////////////////
 
-enum ArnNodeType
-{
-	ANT_MESH = 0x10,
-	ANT_CAMERA = 0x20,
-	ANT_LIGHT = 0x30,
-	ANT_MATERIAL = 0x40,
-	ANT_IPO = 0x50,
-	ANT_FORCE_DWORD = 0x7fffffff,
-};
-enum
-{
-	ARNVERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL
-};
+
 struct ArnVertex
 {
 	float x, y, z, nx, ny, nz;
 };
 struct ArnMeshObHdr
 {
-	ArnNodeType type;
+	NODE_DATA_TYPE type;
 	char name[64];
 	char parName[64]; // parent name
 	
@@ -61,7 +87,7 @@ struct ArnMeshOb
 };
 struct ArnCameraObHdr
 {
-	ArnNodeType type;
+	NODE_DATA_TYPE type;
 	char name[64];
 	char parName[64]; // parent name
 
@@ -79,7 +105,7 @@ struct ArnCameraOb
 };
 struct ArnLightObHdr
 {
-	ArnNodeType type;
+	NODE_DATA_TYPE type;
 	char name[64];
 	char parName[64]; // parent name
 
@@ -93,7 +119,7 @@ struct ArnLightOb
 };
 struct ArnMaterialObHdr
 {
-	ArnNodeType type;
+	NODE_DATA_TYPE type;
 	char name[64];
 	D3DMATERIAL9 d3dMaterial;
 };
@@ -115,7 +141,7 @@ struct ArnCurve
 
 struct ArnIpoObHdr
 {
-	static const ArnNodeType type = ANT_IPO;
+	static const NODE_DATA_TYPE type = NDT_IPO;
 	char name[64];
 	unsigned int curveCount;
 };
@@ -127,43 +153,6 @@ struct ArnIpoOb
 };
 
 
-
-
-// types.h
-// 2007 Geoyeob Kim
-//
-// This file is shared between Aran and ModelExporter C++ Projects at VS2005 Solution.
-// Should have dependency on d3dx9.h but NOT have on any 3ds Max related headers
-// since Aran game engine itself must not rely on 3ds Max.
-//
-
-//////////////////////////////////////////////////////////////////////////
-// Enumerations
-//////////////////////////////////////////////////////////////////////////
-
-enum EXPORT_VERSION
-{
-	EV_UNDEFINED,
-	EV_ARN10,
-	EV_ARN11,
-	EV_ARN20,
-	EV_FORCE_DWORD = 0x7fffffff,
-};
-
-enum NODE_DATA_TYPE // or NDD_DATA_TYPE
-{
-	NDT_UNKNOWN,
-	NDT_MESH1,
-	NDT_MESH2,
-	NDT_LIGHT,
-	NDT_SKELETON,
-	NDT_HIERARCHY,
-	NDT_ANIM1,
-	NDT_ANIM2,
-	NDT_MESH3,
-	NDT_CAMERA,
-	NDT_FORCE_DWORD = 0x7fffffff,
-};
 
 
 
@@ -248,12 +237,12 @@ typedef struct tagARN_VDD_S
 } ARN_VDD_S;
 
 // Material & Texture Definition (MTD) for ARN format
-// (std::string should be converted to null-terminated char[])
+// (STRING should be converted to 0-terminated char[])
 typedef struct tagARN_MTD
 {
-	std::string strMatName;
+	STRING strMatName;
 	D3DMATERIAL9 d3dMat;
-	std::string strTexFileName;
+	STRING strTexFileName;
 } ARN_MTD;
 
 struct ARN_MTD_Data
@@ -341,7 +330,7 @@ typedef struct tagARN_NDD_CAMERA_CHUNK
 struct ArnNodeHeader
 {
 	NODE_DATA_TYPE ndt;
-	std::string uniqueName; // std::string is Multibyte format
+	STRING uniqueName; // STRING is Multibyte format
 	DWORD chunkSize;
 	DWORD chunkStartPos;
 };

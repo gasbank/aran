@@ -10,8 +10,9 @@
 #include "ResourceMan.h"
 #include "Character.h"
 #include "ArnFile.h"
+#include "ArnSceneGraph.h"
 
-LOGMANAGER logManager;		// singleton
+LOGMANAGER logManager;
 VideoMan videoMan;
 InputMan inputMan;
 ResourceMan resMan;
@@ -22,14 +23,11 @@ static UndefinedCallback g_undefinedCallback;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
-	ArnFileData arnFileData;
-	load_arnfile("models/man.arn", arnFileData);
-	release_arnfile(arnFileData);
 	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
 	// Copy external resources to working directory
-	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0)
+	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0) // use of '/' instead '\\' cause error
 	{
 		_LogWrite(_T("Copy Resources Error"), LOG_FAIL);
 		return DXTRACE_ERR_MSGBOX(_T("Copy Resources Error"), hr);
@@ -46,9 +44,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
 	videoMan.AttachInputMan(&inputMan);
-	//////////////////////////////////////////////////////////////////////////
-	// Breakpoints above this line is NOT RECOMMANDED (DirectInput problem)
-	//////////////////////////////////////////////////////////////////////////
+
 	std::auto_ptr<Character> character(new Character());
 	character->Initialize();
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
@@ -61,6 +57,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
+
+	ArnFileData arnFileData;
+	load_arnfile("models/man.arn", arnFileData);
+	ArnSceneGraph arnSG(arnFileData);
+	release_arnfile(arnFileData);
 
 
 	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
@@ -124,15 +125,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	hr = videoMan.StartMainLoop();
 	if (FAILED(hr))
 	{
-		return DXTRACE_ERR_MSGBOX(_T("Main Loop Failure"), hr);
+		//return DXTRACE_ERR_MSGBOX(_T("Main Loop Failure"), hr);
 	}
 
 	//delete character;
 
 	if (logManager.GetFailCount() != 0)
 	{
-		MessageBox(NULL, _T("One or more errors logged!"), _T("Check Log File"), MB_ICONEXCLAMATION);
+		MessageBox(0, _T("One or more errors logged!"), _T("Check Log File"), MB_ICONEXCLAMATION);
 	}
+	
 	return 0;
 }
 

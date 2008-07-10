@@ -17,7 +17,7 @@ void WalkCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultD
 	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
 	lpAC->SetTrackPosition( 0, 0.0f );
 
-	if ( pResultData != NULL )
+	if ( pResultData != 0 )
 		*(int*)pResultData = 0;
 }
 
@@ -67,7 +67,7 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 	}
 
 	
-	if ( pResultData != NULL )
+	if ( pResultData != 0 )
 		*(int*)pResultData = 0;
 }
 

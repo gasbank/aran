@@ -2,7 +2,7 @@
 #include "ArnMaterial.h"
 
 ArnMaterial::ArnMaterial()
-: ArnObject(ANT_MATERIAL)
+: ArnObject(NDT_MATERIAL)
 {
 }
 

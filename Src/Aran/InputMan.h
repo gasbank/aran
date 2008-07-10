@@ -27,8 +27,8 @@ private:
 	CharacterInterface* pCharInterface;
 	DungeonInterface* pDungeonInterface;
 
-	IDirectInput8*						lpDInput8;
-	IDirectInputDevice8*				lpDInputDevKeyboard;
+	/*IDirectInput8*						lpDInput8;
+	IDirectInputDevice8*				lpDInputDevKeyboard;*/
 	
 public:
 	InputMan(void);

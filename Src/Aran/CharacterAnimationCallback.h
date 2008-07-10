@@ -1,10 +1,5 @@
 #pragma once
 
-
-#ifndef NULL
-#define NULL 0
-#endif
-
 class Character;
 
 class CharacterAnimationCallback

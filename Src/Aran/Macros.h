@@ -13,15 +13,15 @@
 #define GLOBAL_TEXTURE_FILE_PATH			"Textures\\"
 #define GLOBAL_ARN_FILE_PATH				"Models\\"
 #ifndef SAFE_RELEASE
-#define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
+#define SAFE_RELEASE(p) if((p)!=0) { (p)->Release(); (p) = 0; }
 #endif
 
 #ifndef SAFE_DELETE_ARRAY
-#define SAFE_DELETE_ARRAY(p) if((p)!=NULL) { delete [] (p); (p) = NULL; }
+#define SAFE_DELETE_ARRAY(p) if((p)!=0) { delete [] (p); (p) = 0; }
 #endif
 
 #ifndef SAFE_DELETE
-#define SAFE_DELETE(p) if((p)!=NULL) { delete (p); (p) = NULL; }
+#define SAFE_DELETE(p) if((p)!=0) { delete (p); (p) = 0; }
 #endif
 
 namespace std {
@@ -41,12 +41,12 @@ namespace std {
 { \
 	char lineNumber[8]; \
 	_itoa_s(__LINE__, lineNumber, 10); \
-	std::string ___file___Name___(__FILE__); \
+	STRING ___file___Name___(__FILE__); \
 	___file___Name___ += "("; \
 	___file___Name___ += lineNumber; \
-	___file___Name___ += ")\nFollowing statement is NOT TRUE or NULL;\n"; \
+	___file___Name___ += ")\nFollowing statement is NOT TRUE or 0;\n"; \
 	___file___Name___ += #x; \
-	MessageBoxA(NULL, ___file___Name___.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
+	MessageBoxA(0, ___file___Name___.c_str(), "ASSERTION ERROR!", MB_OK | MB_ICONERROR); \
 	return E_FAIL; \
 }
 #else

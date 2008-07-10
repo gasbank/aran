@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="ArnCamera" Collapsed="true">
+    <Position X="3.25" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAAAAgAAAAEAAAAAAAAAAAAAIABAAAAAEAAAAAAA=</HashCode>
+      <FileName>ArnCamera.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnLight" Collapsed="true">
+    <Position X="7.75" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAIAAABAgAAAAAAAAEAAAAAAAAAAABAAAAAEAAAAAAA=</HashCode>
+      <FileName>ArnLight.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnMaterial" Collapsed="true">
+    <Position X="10" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAgAAAAAgAAAAIAAAAAAAAAAAAAAABAAAAAEAAAAAAA=</HashCode>
+      <FileName>ArnMaterial.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnMesh" Collapsed="true">
+    <Position X="5.5" Y="3.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>IAICAAAAgAAAAAAAAAAAAAAIAAAAABAAAgAEAAAAAAA=</HashCode>
+      <FileName>ArnMesh.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnNode" Collapsed="true">
+    <Position X="5.5" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAIAAAAAAACAAAAAAAAAABAAAAAAIAIAAAAAAABAAAA=</HashCode>
+      <FileName>ArnNode.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnObject" Collapsed="true">
+    <Position X="6.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAIAAAAAAAAAAAEAAAAAAAAQAAAAAAAAAEAAAAAgA=</HashCode>
+      <FileName>ArnObject.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="ArnSceneGraph" Collapsed="true">
+    <Position X="12.5" Y="1" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAIAAAAAAAAAAAAAAQAAAAAAAAAAAAAEAAAAAAAAEA=</HashCode>
+      <FileName>ArnSceneGraph.h</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Font Name="Tahoma" Size="8.25" />
+</ClassDiagram>

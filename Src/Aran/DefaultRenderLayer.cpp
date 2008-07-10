@@ -2,7 +2,6 @@
 #include "DefaultRenderLayer.h"
 #include "VideoMan.h"
 #include "load_arn.h"
-#include "arn2.h"
 #include "ArnMesh.h"
 #include "ArnMaterial.h"
 #include "ResourceMan.h"
@@ -84,15 +83,15 @@ HRESULT DefaultRenderLayer::render()
 	RECT rc;
 
 	SetRect( &rc, 50, 50, 0, 0 );
-	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Umhahahah....a~~~~") );
-	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Umhahahah....a~~~~") );
+	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
-	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Current State: %d"), m_pChar->GetCharacterAnimationState() );
+	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Current State: %d"), m_pChar->GetCharacterAnimationState() );
 	SetRect( &rc, 50, 80, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
-	_stprintf_s( debugBuffer, sizeof( debugBuffer ) / sizeof( TCHAR ), _T("Next State: %d"), m_pChar->GetCharacterAnimationStateNext() );
+	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Next State: %d"), m_pChar->GetCharacterAnimationStateNext() );
 	SetRect( &rc, 50, 110, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText( NULL, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
+	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,12 +150,12 @@ HRESULT BoxRenderLayer::render()
 	unsigned int i, j;
 	for (i = 0; i < m_objects.size(); ++i)
 	{
-		if (m_objects[i]->getType() == ANT_MESH)
+		if (m_objects[i]->getType() == NDT_MESH4)
 		{
 			ArnMesh* mesh = (ArnMesh*)m_objects[i];
 			D3DXMatrixIdentity(&transform);
 			ArnNode* parNode = mesh->getParent();
-			while (parNode != NULL)
+			while (parNode != 0)
 			{
 				transform = *parNode->getLocalTransform() * transform;
 				parNode = parNode->getParent();
@@ -167,7 +166,7 @@ HRESULT BoxRenderLayer::render()
 			/*D3DXVECTOR3* scalingVec = (D3DXVECTOR3*)mesh->getOb().hdr->scl;
 			D3DXVECTOR3* translationVec = (D3DXVECTOR3*)mesh->getOb().hdr->loc;
 			D3DXQUATERNION* rotQuat = (D3DXQUATERNION*)mesh->getOb().hdr->rotQuat;
-			D3DXMatrixTransformation(&transform, NULL, NULL, scalingVec, NULL, rotQuat, translationVec);
+			D3DXMatrixTransformation(&transform, 0, 0, scalingVec, 0, rotQuat, translationVec);
 			*/
 			transform = transform * *VideoMan::getSingleton().getArcballResult();
 			dev->SetTransform(D3DTS_WORLD, &transform);
@@ -177,7 +176,7 @@ HRESULT BoxRenderLayer::render()
 				unsigned int maIndex = mesh->getOb().attrToMaterialMap[j];
 				ArnMaterial* ma = dynamic_cast<ArnMaterial*>(m_objects[maIndex]);
 				dev->SetMaterial(&ma->getOb().hdr->d3dMaterial);
-				mesh->getD3DMesh()->DrawSubset(j);
+				mesh->getD3DXMesh()->DrawSubset(j);
 			}
 		}
 	}
@@ -186,13 +185,13 @@ HRESULT BoxRenderLayer::render()
 
 	RECT rc;
 	SetRect(&rc, 600, 20, 0, 0);
-	_stprintf_s( m_debugBuffer, sizeof( m_debugBuffer ) / sizeof( TCHAR ), _T("BoxRenderLayer") );
-	m_pVideoMan->getDefaultFont()->DrawText( NULL, m_debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 1.0f, 1.0f ) );
+	_stprintf_s( m_debugBuffer, TCHARSIZE(m_debugBuffer), _T("BoxRenderLayer") );
+	m_pVideoMan->getDefaultFont()->DrawText( 0, m_debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 1.0f, 1.0f ) );
 	return S_OK;
 }
 
 BoxRenderLayer::BoxRenderLayer()
-: m_testMesh(NULL)
+: m_testMesh(0)
 {
 	VideoMan& videoMan = VideoMan::getSingleton();
 	if (FAILED(load_arn("models/gus2.arn", m_objects)))
@@ -200,15 +199,17 @@ BoxRenderLayer::BoxRenderLayer()
 		DebugBreak();
 	}
 	size_t i;
-	ArnCamera* arnCam = NULL;
+	ArnCamera* arnCam = 0;
 	for (i = 0; i < m_objects.size(); ++i)
 	{
 		ArnMesh* mesh = dynamic_cast<ArnMesh*>(m_objects[i]);
 		if (mesh)
 		{
-			arn_build_mesh(VideoMan::getSingleton().GetDev(), &mesh->getOb(), &mesh->getD3DMesh());
+			LPD3DXMESH d3dxMesh;
+			arn_build_mesh(VideoMan::getSingleton().GetDev(), &mesh->getOb(), &d3dxMesh);
+			mesh->setD3DXMesh(d3dxMesh);
 		}
-		if (!arnCam && m_objects[i]->getType() == ANT_CAMERA)
+		if (!arnCam && m_objects[i]->getType() == NDT_CAMERA)
 		{
 			arnCam = reinterpret_cast<ArnCamera*>(m_objects[i]);
 		}
@@ -235,12 +236,12 @@ BoxRenderLayer::~BoxRenderLayer()
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight)
 {	
-	ArnVertex* v = NULL;
+	ArnVertex* v = 0;
 	WORD* ind = 0;
 	int faceCount = segWidth * segHeight * 2;
 	int vertexCount = (segWidth+1) * (segHeight+1);
 	HRESULT hr = S_OK;
-	LPD3DXMESH mesh = NULL;
+	LPD3DXMESH mesh = 0;
 	hr = D3DXCreateMeshFVF(faceCount, vertexCount, D3DXMESH_MANAGED, ARNVERTEX_FVF, VideoMan::getSingleton().GetDev(), &mesh);
 	if (FAILED(hr))
 		throw new std::runtime_error("D3DXCreateMeshFVF() error");

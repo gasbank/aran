@@ -42,16 +42,16 @@ ModelReader::ModelReader(LPDIRECT3DDEVICE9 lpDev, DWORD fvf)
 
 void ModelReader::clearMembers()
 {
-	lpVB					= NULL;
+	lpVB					= 0;
 	fvf						= 0;
 	totalFaceCount			= 0;
-	hLoadingWnd				= NULL;
-	lpMeshes				= NULL;
+	hLoadingWnd				= 0;
+	lpMeshes				= 0;
 	notIndTotalMeshCount	= 0;
 	indTotalMeshCount		= 0;
-	lpKeyframedAnimationSet	= NULL;
-	lpDev					= NULL;
-	lpAnimationController	= NULL;
+	lpKeyframedAnimationSet	= 0;
+	lpDev					= 0;
+	lpAnimationController	= 0;
 	skinnedMeshCount		= 0;
 	hierarchySize			= 0;
 	notIndVertTotalSize		= 0;
@@ -65,7 +65,7 @@ void ModelReader::clearMembers()
 }
 void ModelReader::SetFileName( const TCHAR* fileName )
 {
-	_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), fileName );
+	_tcscpy_s( this->szFileName, TCHARSIZE(this->szFileName), fileName );
 }
 ModelReader::~ModelReader(void)
 {
@@ -99,14 +99,14 @@ ModelReader::~ModelReader(void)
 	{
 		SAFE_RELEASE(this->textureList[i]);
 	}
-	if (this->lpMeshes != NULL)
+	if (this->lpMeshes != 0)
 	{
 		for (i = 0; i < this->indTotalMeshCount; i++)
 		{
 			SAFE_RELEASE(this->lpMeshes[i]);
 		}
 		delete [] this->lpMeshes;
-		this->lpMeshes = NULL;
+		this->lpMeshes = 0;
 	}
 
 	for (i = 0; i < (int)this->lpSkinnedMeshes.size(); i++)
@@ -195,14 +195,14 @@ int ModelReader::BuildTopLevelNodeList()
 	else
 	{
 		this->exportVersion = EV_UNDEFINED;
-		MessageBox(NULL, this->szFileName, _T("File Descriptor Error"), MB_OK | MB_ICONERROR);
+		MessageBox(0, this->szFileName, _T("File Descriptor Error"), MB_OK | MB_ICONERROR);
 		return -1;
 	}
 
 	this->fin.read((char*)&this->nodeCount, sizeof(int)); // read node(NDD) count
 	if (this->nodeCount <= 0)
 	{
-		MessageBox(NULL, _T("Node count field error."), _T("Error"), MB_OK | MB_ICONERROR);
+		MessageBox(0, _T("Node count field error."), _T("Error"), MB_OK | MB_ICONERROR);
 		return -2;
 	}
 
@@ -411,7 +411,7 @@ int ModelReader::ParseNDD_Mesh1(int nodeHeaderIndex)
 				}
 				else
 				{
-					lpTex = NULL;
+					lpTex = 0;
 				}
 				
 				this->textureList.push_back(lpTex);
@@ -424,8 +424,8 @@ int ModelReader::ParseNDD_Mesh1(int nodeHeaderIndex)
 				// check for the texture file sharing directory
 				// cut the file name only and concatenate with global texture file path
 				int getLastDirectoryDelimiter = (int)mtd.strTexFileName.find_last_of("\\") + 1;
-				std::string fileNameOnly((char*)&mtd.strTexFileName.c_str()[getLastDirectoryDelimiter]);
-				std::string textureFileSharingDirectory(GLOBAL_TEXTURE_FILE_PATH); // texture file sharing directory (Global)
+				STRING fileNameOnly((char*)&mtd.strTexFileName.c_str()[getLastDirectoryDelimiter]);
+				STRING textureFileSharingDirectory(GLOBAL_TEXTURE_FILE_PATH); // texture file sharing directory (Global)
 				textureFileSharingDirectory.append(fileNameOnly);
 				
 				fileAttr = GetFileAttributesA( textureFileSharingDirectory.c_str() );
@@ -437,22 +437,22 @@ int ModelReader::ParseNDD_Mesh1(int nodeHeaderIndex)
 					}
 					else
 					{
-						lpTex = NULL;
+						lpTex = 0;
 					}
 					this->textureList.push_back(lpTex);
 				}
 				else
 				{
 					// TODO: Error message verbosity setting
-					//MessageBoxA(NULL, mtd.strTexFileName.c_str(), "Texture file does not exist; continuing happily :(", MB_OK | MB_ICONERROR);
-					this->textureList.push_back(NULL);
+					//MessageBoxA(0, mtd.strTexFileName.c_str(), "Texture file does not exist; continuing happily :(", MB_OK | MB_ICONERROR);
+					this->textureList.push_back(0);
 				}
 			}
 		}
 		else
 		{
 			// no texture
-			this->textureList.push_back(NULL);
+			this->textureList.push_back(0);
 		}
 
 	} // for (i = 0; i < curMaterialCount; i++)
@@ -502,7 +502,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 	//////////////////////////////////////////////////////////////////////////
 	// Setup Index buffer
 	//////////////////////////////////////////////////////////////////////////
-	WORD* ind = NULL;
+	WORD* ind = 0;
 	this->lpMeshes[workingMeshIndex]->LockIndexBuffer(0, (void**)&ind);
 	std::vector<int> ind32(numFaces*3);// = new int[numFaces*3];
 	this->fin.read((char*)&ind32[0], sizeof(int) * numFaces * 3);
@@ -513,7 +513,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 		if ((ind32[i] & 0xffff0000) != 0)
 		{
 			// overflow
-			MessageBox(NULL, _T("Indices should be 16-bit range"), _T("Error"), MB_OK | MB_ICONERROR);
+			MessageBox(0, _T("Indices should be 16-bit range"), _T("Error"), MB_OK | MB_ICONERROR);
 			return -200;
 		}
 		else
@@ -523,13 +523,13 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 	}
 
 	this->lpMeshes[workingMeshIndex]->UnlockIndexBuffer();
-	ind = NULL;
+	ind = 0;
 
 	//////////////////////////////////////////////////////////////////////////
 	// Setup Vertex Buffer
 	//////////////////////////////////////////////////////////////////////////
 	this->indVertTotalSize += curMeshVertCount;
-	ARN_VDD* vdd = NULL;
+	ARN_VDD* vdd = 0;
 	this->lpMeshes[workingMeshIndex]->LockVertexBuffer(0, (void**)&vdd);
 
 	this->fin.seekg(vertexPos, std::ios_base::beg);
@@ -538,7 +538,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 
 
 	this->lpMeshes[workingMeshIndex]->UnlockVertexBuffer();
-	vdd = NULL;
+	vdd = 0;
 
 
 	//
@@ -569,7 +569,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 	//////////////////////////////////////////////////////////////////////////
 	// Setup Attribute Buffer
 	//////////////////////////////////////////////////////////////////////////
-	DWORD* attributeBuffer = NULL;
+	DWORD* attributeBuffer = 0;
 	this->lpMeshes[this->indTotalMeshCount]->LockAttributeBuffer(0, &attributeBuffer);
 
 	for (i = 0; i < numFaces; i++)
@@ -577,7 +577,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 		attributeBuffer[i] = mref[i];
 	}
 	this->lpMeshes[this->indTotalMeshCount]->UnlockAttributeBuffer();
-	attributeBuffer = NULL;
+	attributeBuffer = 0;
 
 	this->indMeshNames.push_back(this->nodeHeaders[nodeHeaderIndex].uniqueName);
 	this->indTotalMeshCount++;
@@ -622,8 +622,8 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 				// check for the texture file sharing directory
 				// cut the file name only and concatenate with global texture file path
 				int getLastDirectoryDelimiter = (int)mtd.strTexFileName.find_last_of("\\") + 1;
-				std::string fileNameOnly((char*)&mtd.strTexFileName.c_str()[getLastDirectoryDelimiter]);
-				std::string textureFileSharingDirectory(GLOBAL_TEXTURE_FILE_PATH); // texture file sharing directory (Global)
+				STRING fileNameOnly((char*)&mtd.strTexFileName.c_str()[getLastDirectoryDelimiter]);
+				STRING textureFileSharingDirectory(GLOBAL_TEXTURE_FILE_PATH); // texture file sharing directory (Global)
 				textureFileSharingDirectory.append(fileNameOnly);
 				
 				fileAttr = GetFileAttributesA(textureFileSharingDirectory.c_str());
@@ -636,8 +636,8 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 				else
 				{
 					// TODO: Error message verbosity
-					//MessageBoxA(NULL, mtd.strTexFileName.c_str(), "Texture file does not exist; continuing happily :(", MB_OK | MB_ICONERROR);
-					this->textureList.push_back(NULL);
+					//MessageBoxA(0, mtd.strTexFileName.c_str(), "Texture file does not exist; continuing happily :(", MB_OK | MB_ICONERROR);
+					this->textureList.push_back(0);
 				}
 			}
 
@@ -646,7 +646,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 		else
 		{
 			// no texture
-			this->textureList.push_back(NULL);
+			this->textureList.push_back(0);
 		}
 
 	} // for (i = 0; i < curMaterialCount; i++)
@@ -658,7 +658,7 @@ int ModelReader::ParseNDD_Mesh2(int nodeHeaderIndex)
 	//////////////////////////////////////////////////////////////////////////
 
 	// read anim data(rotation-scaling-translation)
-	// Check animation descriptor (NOT NULL-TERMINATED!!!)
+	// Check animation descriptor (NOT 0-TERMINATED!!!)
 
 	/*this->fin.read(buf, 4);
 	buf[4] = '\0';
@@ -741,7 +741,7 @@ int ModelReader::Read(const TCHAR *fileName)
 {
 	_tcscpy_s(this->szFileName, fileName);
 
-	if (this->hLoadingWnd != NULL)
+	if (this->hLoadingWnd != 0)
 	{
 		SendMessage(this->hLoadingWnd, WM_USER+1, 1, 2);
 		//PostMessage(this->hLoadingWnd, WM_PAINT, 0, 0);
@@ -770,7 +770,7 @@ int ModelReader::Read(const TCHAR *fileName)
 	}
 	else
 	{
-		this->lpMeshes = NULL;
+		this->lpMeshes = 0;
 	}
 
 	//int notIndVertTotalSize = 0; 
@@ -805,11 +805,11 @@ int ModelReader::Read(const TCHAR *fileName)
 		{
 		case NDT_MESH1:
 			this->ParseNDD_Mesh1(i);
-			this->ParseNDD_Anim(NDT_MESH1, NULL); // child NDD structure
+			this->ParseNDD_Anim(NDT_MESH1, 0); // child NDD structure
 			break;
 		case NDT_MESH2:
 			this->ParseNDD_Mesh2(i);
-			this->ParseNDD_Anim(NDT_MESH2, NULL); // child NDD structure
+			this->ParseNDD_Anim(NDT_MESH2, 0); // child NDD structure
 			break;
 		case NDT_SKELETON:
 			this->ParseNDD_Skeleton(i);
@@ -824,7 +824,7 @@ int ModelReader::Read(const TCHAR *fileName)
 			this->ParseNDD_Camera( i );
 			break;
 		default:
-			MessageBoxA( NULL, "Unsupported or not implemented node detected!", "Warning", MB_OK | MB_ICONEXCLAMATION );
+			MessageBoxA( 0, "Unsupported or not implemented node detected!", "Warning", MB_OK | MB_ICONEXCLAMATION );
 			break;
 		}
 
@@ -835,11 +835,11 @@ int ModelReader::Read(const TCHAR *fileName)
 	// Setup Vertex Buffer for not indexed meshes
 	//////////////////////////////////////////////////////////////////////////
 	SAFE_RELEASE(this->lpVB);
-	if (this->notIndVertTotalSize > 0 && this->lpDev != NULL /* in case 'edit' mode */)
+	if (this->notIndVertTotalSize > 0 && this->lpDev != 0 /* in case 'edit' mode */)
 	{
-		V_OKAY(this->lpDev->CreateVertexBuffer(this->notIndVertTotalSize, D3DUSAGE_WRITEONLY, this->fvf, D3DPOOL_MANAGED, &this->lpVB, NULL));
+		V_OKAY(this->lpDev->CreateVertexBuffer(this->notIndVertTotalSize, D3DUSAGE_WRITEONLY, this->fvf, D3DPOOL_MANAGED, &this->lpVB, 0));
 		
-		char* vertices = NULL;
+		char* vertices = 0;
 		int verticesPointerOffset = 0;
 		V_OKAY(this->lpVB->Lock(0, 0, (void**)&vertices, 0));
 
@@ -881,7 +881,7 @@ int ModelReader::Read(const TCHAR *fileName)
 			if (this->exportVersion == EV_ARN10 || this->exportVersion == EV_ARN11)
 			{
 				int pIntAllocSize = this->materialCount[i];
-				int* pIntAlloc = NULL;
+				int* pIntAlloc = 0;
 				if (pIntAllocSize > 0)
 				{
 					pIntAlloc = new int[pIntAllocSize];
@@ -901,7 +901,7 @@ int ModelReader::Read(const TCHAR *fileName)
 				}
 				else
 				{
-					pIntAlloc = NULL;
+					pIntAlloc = 0;
 					this->materialReferenceFast.push_back(pIntAlloc);
 				}
 				/*this->materialReferenceFast.push_back(pIntAlloc);
@@ -974,7 +974,7 @@ int ModelReader::BuildBoneHierarchyByMeshIndex(int meshIndex)
 		size_t siblingIndex = currentBone->sibling;
 		if (siblingIndex == -1)
 		{
-			currentBone->pFrameSibling = NULL;
+			currentBone->pFrameSibling = 0;
 		}
 		else
 		{
@@ -984,13 +984,13 @@ int ModelReader::BuildBoneHierarchyByMeshIndex(int meshIndex)
 		size_t firstChildIndex = currentBone->firstChild;
 		if (firstChildIndex == -1)
 		{
-			currentBone->pFrameFirstChild = NULL;
+			currentBone->pFrameFirstChild = 0;
 		}
 		else
 		{
 			currentBone->pFrameFirstChild = &this->hierarchy[firstChildIndex];
 		}
-		currentBone->pMeshContainer = NULL;
+		currentBone->pMeshContainer = 0;
 		currentBone->Name = currentBone->nameFixed;
 	}
 	return 0;
@@ -1012,14 +1012,14 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 	}
 	SkeletonNode* currentSkeleton = &this->skeletonNode[i];
 	
-	LPD3DXSKININFO lpSkinInfo = NULL;
+	LPD3DXSKININFO lpSkinInfo = 0;
 	int vertCount = this->lpMeshes[meshIndex]->GetNumVertices();
 	size_t boneCount = currentSkeleton->bones.size();
 
 
 	if (FAILED(D3DXCreateSkinInfoFVF(vertCount, MY_CUSTOM_MESH_VERTEX::MY_CUSTOM_MESH_VERTEX_FVF, (int)boneCount, &lpSkinInfo)))
 	{
-		MessageBox(NULL, _T("D3DXCreateSkinInfoFVF() failed."), _T("Error"), MB_OK | MB_ICONERROR);
+		MessageBox(0, _T("D3DXCreateSkinInfoFVF() failed."), _T("Error"), MB_OK | MB_ICONERROR);
 		return E_FAIL;
 	}
 
@@ -1063,8 +1063,8 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		
 	}
 	DWORD maxVertexInfluence, numBoneCombinations;
-	LPD3DXBUFFER lpBoneCombinations = NULL;
-	LPD3DXMESH lpSkinnedMesh = NULL;
+	LPD3DXBUFFER lpBoneCombinations = 0;
+	LPD3DXMESH lpSkinnedMesh = 0;
 
 	LPD3DXMESH lpTempMesh = this->lpMeshes[meshIndex];
 	HRESULT hr;
@@ -1074,7 +1074,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 
 
 	DWORD* pNewAdjacency = new DWORD[lpTempMesh->GetNumFaces() * 3];
-	if( NULL == pNewAdjacency )
+	if( 0 == pNewAdjacency )
 	{
 		hr = E_OUTOFMEMORY;
 		goto e_Exit;
@@ -1083,7 +1083,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 	if( FAILED(hr) )
 		goto e_Exit;
 
-	//V_OKAY(lpTempMesh->OptimizeInplace(D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE, pNewAdjacency, NULL, NULL, NULL));
+	//V_OKAY(lpTempMesh->OptimizeInplace(D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE, pNewAdjacency, 0, 0, 0));
 
 	
 	hr = lpSkinInfo->ConvertToIndexedBlendedMesh(
@@ -1091,9 +1091,9 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE | D3DXMESH_MANAGED, // D3DXMESHOPT_ATTRSORT | D3DXMESHOPT_VERTEXCACHE | 
 		(DWORD)boneCount,
 		pNewAdjacency,
-		NULL,
-		NULL,
-		NULL,
+		0,
+		0,
+		0,
 		&maxVertexInfluence,
 		&numBoneCombinations,
 		&lpBoneCombinations,
@@ -1101,7 +1101,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		);
 	if (FAILED(hr))
 	{
-		MessageBox(NULL, _T("Convert failed"), _T("Error"), MB_OK | MB_ICONERROR);
+		MessageBox(0, _T("Convert failed"), _T("Error"), MB_OK | MB_ICONERROR);
 		goto e_Exit;
 	}
 	D3DXBONECOMBINATION* boneComb = (D3DXBONECOMBINATION*)lpBoneCombinations->GetBufferPointer();
@@ -1131,7 +1131,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 	// Debug Testing... (Change specific vertex value)
 	//
 
-	//LPDIRECT3DVERTEXBUFFER9 lpTempVB = NULL;
+	//LPDIRECT3DVERTEXBUFFER9 lpTempVB = 0;
 	//lpSkinnedMesh->GetVertexBuffer(&lpTempVB);
 	//struct SKINNED_MESH_VERT
 	//{
@@ -1142,7 +1142,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 	//	float color;
 	//	float u, v;
 	//};
-	//SKINNED_MESH_VERT* skinnedVert = NULL;
+	//SKINNED_MESH_VERT* skinnedVert = 0;
 	//lpTempVB->Lock(0, 0, (void**)&skinnedVert, 0);
 
 	//skinnedVert[85].x = -50.0f;
@@ -1191,21 +1191,21 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 	}
 
 	//
-	// Create animation set if null
+	// Create animation set if 0
 	// (this animation set is dedicated to keyframed animation of bone structure)
 	//
-	LPD3DXKEYFRAMEDANIMATIONSET lpKfAnimSet = NULL; // temp animset
-	if (this->lpKeyframedAnimationSet == NULL)
+	LPD3DXKEYFRAMEDANIMATIONSET lpKfAnimSet = 0; // temp animset
+	if (this->lpKeyframedAnimationSet == 0)
 	{
 		/*std::tstring animationSetName(_T("Default Animation Set Of "));
 		animationSetName = animationSetName + this->szFileName;*/
-		std::string animSetName = currentSkeleton->associatedMeshName;
+		STRING animSetName = currentSkeleton->associatedMeshName;
 		animSetName += "-Animation";
 
 		static char animSetNameChar[128];
 		sprintf_s( animSetNameChar, 128, "%s-Animation-%d", currentSkeleton->associatedMeshName, (int)this->lpKeyframedAnimationSetList.size() );
 		
-		hr = D3DXCreateKeyframedAnimationSet(animSetNameChar, ticksPerSecond, D3DXPLAY_LOOP, totalBoneCount, 0, NULL, &lpKfAnimSet);
+		hr = D3DXCreateKeyframedAnimationSet(animSetNameChar, ticksPerSecond, D3DXPLAY_LOOP, totalBoneCount, 0, 0, &lpKfAnimSet);
 		if (hr != D3D_OK)
 			return hr;
 	}
@@ -1231,8 +1231,8 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 	TCHAR debugString[512];
 	_stprintf_s( debugString, TCHARSIZE(debugString), _T(" - Animation Set build by keyframe range: %d to %d\n"), keyframeStartIndex, keyframeEndIndex );
 	OutputDebugString( debugString );
-	if (lpKfAnimSet == NULL)
-		throw new std::runtime_error("Animation set is null");
+	if (lpKfAnimSet == 0)
+		throw new std::runtime_error("Animation set is 0");
 
 	for (s = 0; s < currentSkeleton->bones.size(); s++)
 	{
@@ -1409,10 +1409,10 @@ void ModelReader::UpdateBoneCombinedMatrixRecursive(MyFrame* startFrame, D3DXMAT
 {
 	startFrame->combinedMatrix = startFrame->TransformationMatrix * parentCombinedTransform;
 
-	if (startFrame->pFrameSibling != NULL)
+	if (startFrame->pFrameSibling != 0)
 		this->UpdateBoneCombinedMatrixRecursive((MyFrame*)startFrame->pFrameSibling, parentCombinedTransform);
 
-	if (startFrame->pFrameFirstChild != NULL)
+	if (startFrame->pFrameFirstChild != 0)
 		this->UpdateBoneCombinedMatrixRecursive((MyFrame*)startFrame->pFrameFirstChild, startFrame->combinedMatrix);
 }
 LPD3DXMESH ModelReader::GetMeshPointer(int i) const
@@ -1429,7 +1429,7 @@ LPDIRECT3DTEXTURE9 ModelReader::GetTexture(int referenceIndex) const
 	if ( this->textureList.size() > (size_t)referenceIndex )
 		return this->textureList[referenceIndex];
 	else
-		return NULL;
+		return 0;
 }
 const D3DMATERIAL9* ModelReader::GetMaterial(int referenceIndex) const
 {
@@ -1447,7 +1447,7 @@ int ModelReader::GetMaterialReference(int meshIndex, int faceIndex) const
 }
 int ModelReader::GetMaterialReferenceFast(int meshIndex, int materialIndex) const
 {
-	while (this->materialReferenceFast[meshIndex] == NULL)
+	while (this->materialReferenceFast[meshIndex] == 0)
 	{
 		if (meshIndex == 0)
 			return 0;
@@ -1483,7 +1483,7 @@ int ModelReader::GetAnimQuatSize(int meshIndex) const
 RST_DATA* ModelReader::GetAnimQuat(int meshIndex) const
 {
 	if (meshIndex >= (int)this->animQuat.size())
-		return NULL;
+		return 0;
 	else
 		return this->animQuat[meshIndex];
 }
@@ -1515,7 +1515,7 @@ MyFrame* ModelReader::GetFrameBySkeletonName(const char* skelName)
 			return f;
 		}
 	}
-	return NULL;
+	return 0;
 }
 MyFrame* ModelReader::GetFrameRootByMeshIndex(int meshIndex)
 {
@@ -1528,7 +1528,7 @@ MyFrame* ModelReader::GetFrameRootByMeshIndex(int meshIndex)
 		}
 	}
 	if (s >= this->skeletonNode.size())
-		return NULL;
+		return 0;
 
 	size_t skeletonIndex = s;
 
@@ -1560,7 +1560,7 @@ search_again:
 		}
 	}
 
-	return NULL;
+	return 0;
 }
 D3DXMATRIX* ModelReader::GetCombinedMatrixByBoneName( const char* boneName )
 {
@@ -1570,12 +1570,12 @@ D3DXMATRIX* ModelReader::GetCombinedMatrixByBoneName( const char* boneName )
 		if (strcmp(this->hierarchy[s].nameFixed, boneName) == 0)
 			return &this->hierarchy[s].combinedMatrix;
 	}
-	return NULL;
+	return 0;
 }
 const D3DXMATRIX* ModelReader::GetTransformationMatrixByBoneName( const char* boneName ) const
 {
 	size_t s;
-	const MyFrame* mf = NULL;
+	const MyFrame* mf = 0;
 	for (s = 0; s < this->hierarchy.size(); s++)
 	{
 		if (strcmp(this->hierarchy[s].nameFixed, boneName) == 0)
@@ -1585,7 +1585,7 @@ const D3DXMATRIX* ModelReader::GetTransformationMatrixByBoneName( const char* bo
 			
 		}
 	}
-	return NULL;
+	return 0;
 }
 size_t ModelReader::GetSkeletonNodeSize() const
 {
@@ -1601,7 +1601,7 @@ int ModelReader::GetMeshIndexBySkeletonIndex(int skelIndex) const
 	ASSERTCHECK( this->indTotalMeshCount > 0 );
 	for (i = 0; i < this->indTotalMeshCount; i++)
 	{
-		const std::string* meshName = &this->indMeshNames[i];
+		const STRING* meshName = &this->indMeshNames[i];
 		if (strcmp(meshName->c_str(), sn->associatedMeshName) == 0)
 		{
 			return i;
@@ -1611,7 +1611,7 @@ int ModelReader::GetMeshIndexBySkeletonIndex(int skelIndex) const
 }
 int ModelReader::GetSkeletonIndexByMeshIndex(int meshIndex) const
 {
-	const std::string* meshName = &this->indMeshNames[meshIndex];
+	const STRING* meshName = &this->indMeshNames[meshIndex];
 	int i;
 	for (i = 0; i < (int)this->skeletonNode.size(); i++)
 	{
@@ -1626,7 +1626,8 @@ int ModelReader::GetSkeletonIndexByMeshIndex(int meshIndex) const
 
 
 
-HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadingWnd, const TCHAR* fileName, LPD3DXANIMATIONCONTROLLER lpAC, const BOOL initAC )
+HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf,
+								HWND hLoadingWnd, const TCHAR* fileName, LPD3DXANIMATIONCONTROLLER lpAC, const BOOL initAC )
 {
 	std::tstring debugOutput(_T(" - Initialize ARN File: "));
 	if ( fileName && _tcslen( fileName ) )
@@ -1645,13 +1646,13 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 	if ( _tcslen( szFileName ) == 0 )
 	{
 		int size = this->Read(fileName);
-		_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), fileName );
+		_tcscpy_s( this->szFileName, TCHARSIZE(this->szFileName), fileName );
 		std::tstring globalPathFileName(_T(GLOBAL_ARN_FILE_PATH));
 		globalPathFileName += fileName;
 		if (size < 0)
 		{
 			size = this->Read(globalPathFileName.c_str());
-			_tcscpy_s( this->szFileName, sizeof( this->szFileName ) / sizeof( TCHAR ), globalPathFileName.c_str() );
+			_tcscpy_s( this->szFileName, TCHARSIZE(this->szFileName), globalPathFileName.c_str() );
 		}
 		if (size < 0)
 			return E_FAIL;
@@ -1668,8 +1669,8 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 
 	}
 
-	// if lpAC is null, this means the model use its own (local) AC
-	if (lpAC == NULL)
+	// if lpAC is 0, this means the model use its own (local) AC
+	if (lpAC == 0)
 	{
 		// TODO: optimized max counts in AC
 		if (this->skeletonNode.size() > 0)
@@ -1703,8 +1704,8 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 	//////////////////////////////////////////////////////////////////////////
 	// General mesh animation loading (single animation set first)
 	//////////////////////////////////////////////////////////////////////////
-	LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimSet = NULL;
-	LPD3DXANIMATIONSET lpAnimSetTemp = NULL;
+	LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimSet = 0;
+	LPD3DXANIMATIONSET lpAnimSetTemp = 0;
 	int ticksPerSecond = 1;
 
 	int generalMeshCount = -1;
@@ -1722,7 +1723,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 	}
 
 	hr = D3DXCreateKeyframedAnimationSet("Default General Mesh Anim Set", ticksPerSecond, D3DXPLAY_LOOP,
-		generalMeshCount, 0, NULL, &lpKeyframedAnimationSet);
+		generalMeshCount, 0, 0, &lpKeyframedAnimationSet);
 	if (FAILED(hr))
 		goto e_NoGeneralMeshAnim;
 
@@ -1736,7 +1737,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 		UINT scaleKeysCount = keysCount;
 		UINT rotationKeysCount = keysCount;
 		UINT translationKeysCount = keysCount;
-		std::string keysName;
+		STRING keysName;
 		if ( this->exportVersion == EV_ARN10 || this->exportVersion == EV_ARN11 )
 		{
 			keysName = this->notIndMeshNames[i] + "-DefaultKeys";
@@ -1746,9 +1747,9 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 			keysName = this->indMeshNames[i] + "-DefaultKeys";
 		}
 
-		LPD3DXKEY_VECTOR3 scaleKeys = NULL; //new D3DXKEY_VECTOR3[keysCount];
-		LPD3DXKEY_QUATERNION rotationKeys = NULL; //new D3DXKEY_QUATERNION[keysCount];
-		LPD3DXKEY_VECTOR3 translationKeys = NULL; //new D3DXKEY_VECTOR3[keysCount];
+		LPD3DXKEY_VECTOR3 scaleKeys = 0; //new D3DXKEY_VECTOR3[keysCount];
+		LPD3DXKEY_QUATERNION rotationKeys = 0; //new D3DXKEY_QUATERNION[keysCount];
+		LPD3DXKEY_VECTOR3 translationKeys = 0; //new D3DXKEY_VECTOR3[keysCount];
 
 		this->AllocateAsAnimationSetFormat(keysCount, this->animQuat[i],
 			&scaleKeysCount, &rotationKeysCount, &translationKeysCount,
@@ -1764,7 +1765,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf, HWND hLoadi
 		SAFE_DELETE_ARRAY(rotationKeys);
 		SAFE_DELETE_ARRAY(translationKeys);
 
-		V_OKAY(this->lpAnimationController->RegisterAnimationOutput(keysName.c_str(), &this->animMatControlledByAC[i], NULL, NULL, NULL));
+		V_OKAY(this->lpAnimationController->RegisterAnimationOutput(keysName.c_str(), &this->animMatControlledByAC[i], 0, 0, 0));
 	}
 	
 	this->lpAnimationController->RegisterAnimationSet(lpKeyframedAnimationSet);
@@ -1795,7 +1796,7 @@ e_NoGeneralMeshAnim:
 	if (initAC == TRUE)
 	{
 		// Unregister all animation sets (at editor)
-		LPD3DXANIMATIONSET lpAnimSetTemp2 = NULL;
+		LPD3DXANIMATIONSET lpAnimSetTemp2 = 0;
 		for (i = 0; i < animSetNum; i++)
 		{
 			V_OKAY(this->lpAnimationController->GetAnimationSet(i, &lpAnimSetTemp2));
@@ -1829,7 +1830,7 @@ e_NoGeneralMeshAnim:
 		V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(0) ) );
 		//V_OKAY( this->lpAnimationController->RegisterAnimationSet( this->GetKeyframedAnimationSet(1) ) );
 
-		LPD3DXANIMATIONSET lpAnimSetTemp2 = NULL;
+		LPD3DXANIMATIONSET lpAnimSetTemp2 = 0;
 		
 
 		// First Track ... (Loiter)
@@ -1855,7 +1856,7 @@ e_NoGeneralMeshAnim:
 		//SAFE_RELEASE(lpAnimSetTemp);
 
 
-		MyFrame* frameRoot = NULL;
+		MyFrame* frameRoot = 0;
 
 		for (i = 0; i < (int)this->GetSkeletonNodeSize(); i++)
 		{
@@ -1869,7 +1870,7 @@ e_NoGeneralMeshAnim:
 		}
 
 		
-		frameRoot = NULL;
+		frameRoot = 0;
 	}
 
 	this->initialized = TRUE;
@@ -1888,7 +1889,7 @@ size_t ModelReader::GetArnNodeHeadersSize()
 HRESULT ModelReader::AdvanceTime(float timeDelta) const
 {
 	if (this->initialized)
-		return this->lpAnimationController->AdvanceTime(timeDelta, NULL);
+		return this->lpAnimationController->AdvanceTime(timeDelta, 0);
 	else
 		return E_FAIL;
 }
@@ -1915,7 +1916,7 @@ ARN_NDD_CAMERA_CHUNK* ModelReader::GetFirstCamera()
 	}
 	else
 	{
-		return NULL;
+		return 0;
 	}
 }
 

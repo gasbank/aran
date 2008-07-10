@@ -12,9 +12,9 @@
 static int parse_mesh_data(char* arn_data, ArnMeshOb* mesh_ob)
 {
 	int pos = 0;
-	ArnNodeType type = *(ArnNodeType*)&arn_data[pos];
-	if (type != ANT_MESH)
-		return -1;
+	NODE_DATA_TYPE type = *(NODE_DATA_TYPE*)&arn_data[pos];
+	if (type != NDT_MESH4)
+		throw MyError(MEE_RTTI_INCONSISTENCY);
 	mesh_ob->hdr = (ArnMeshObHdr*)arn_data;
 	pos += sizeof(ArnMeshObHdr);
 	mesh_ob->attrToMaterialMap = (DWORD*)&arn_data[pos];
@@ -30,8 +30,8 @@ static int parse_mesh_data(char* arn_data, ArnMeshOb* mesh_ob)
 static int parse_camera_data(char* arn_data, ArnCameraOb* cam_ob)
 {
 	int pos = 0;
-	ArnNodeType type = *(ArnNodeType*)&arn_data[pos];
-	if (type != ANT_CAMERA)
+	NODE_DATA_TYPE type = *(NODE_DATA_TYPE*)&arn_data[pos];
+	if (type != NDT_CAMERA2)
 		return -1;
 	cam_ob->hdr = (ArnCameraObHdr*)&arn_data[pos];
 	pos += sizeof(ArnCameraObHdr);
@@ -40,8 +40,8 @@ static int parse_camera_data(char* arn_data, ArnCameraOb* cam_ob)
 static int parse_light_data(char* arn_data, ArnLightOb* light_ob)
 {
 	int pos = 0;
-	ArnNodeType type = *(ArnNodeType*)&arn_data[pos];
-	if (type != ANT_LIGHT)
+	NODE_DATA_TYPE type = *(NODE_DATA_TYPE*)&arn_data[pos];
+	if (type != NDT_LIGHT2)
 		return -1;
 	light_ob->hdr = (ArnLightObHdr*)&arn_data[pos];
 	pos += sizeof(ArnLightObHdr);
@@ -52,8 +52,8 @@ static int parse_light_data(char* arn_data, ArnLightOb* light_ob)
 static int parse_material_data(char* arn_data, ArnMaterialOb* material_ob)
 {
 	int pos = 0;
-	ArnNodeType type = *(ArnNodeType*)&arn_data[pos];
-	if (type != ANT_MATERIAL)
+	NODE_DATA_TYPE type = *(NODE_DATA_TYPE*)&arn_data[pos];
+	if (type != NDT_MATERIAL)
 		return -1;
 	material_ob->hdr = (ArnMaterialObHdr*)&arn_data[pos];
 	pos += sizeof(ArnMaterialObHdr);
@@ -79,10 +79,10 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 	pos = 0;
 	while (true)
 	{
-		ArnNodeType type = *(ArnNodeType*)&arn_data[pos];
-		if (type == ANT_MESH)
+		NODE_DATA_TYPE type = *(NODE_DATA_TYPE*)&arn_data[pos];
+		if (type == NDT_MESH4)
 		{
-			ArnMesh* mesh = new ArnMesh;
+			ArnMesh* mesh = new ArnMesh(type);
 			ret = parse_mesh_data(arn_data+pos, &mesh->getOb());
 			objects.push_back(mesh);
 			if (ret <= 0)
@@ -91,7 +91,7 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 				pos += ret;
 			++n;
 		}
-		else if (type == ANT_CAMERA)
+		else if (type == NDT_CAMERA2)
 		{
 			ArnCamera* cam = new ArnCamera;
 			ret = parse_camera_data(arn_data+pos, &cam->getOb());
@@ -102,7 +102,7 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 				pos += ret;
 			++n;
 		}
-		else if (type == ANT_LIGHT)
+		else if (type == NDT_LIGHT2)
 		{
 			ArnLight* light = new ArnLight;
 			ret = parse_light_data(arn_data+pos, &light->getOb());
@@ -113,7 +113,7 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 				pos += ret;
 			++n;
 		}
-		else if (type == ANT_MATERIAL)
+		else if (type == NDT_MATERIAL)
 		{
 			ArnMaterial* material = new ArnMaterial;
 			ret = parse_material_data(arn_data+pos, &material->getOb());
@@ -137,19 +137,19 @@ int load_arn(const char* filename, std::vector<ArnObject*>& objects)
 	size_t i, j;
 	for (i = 0; i < objects.size(); ++i)
 	{
-		if (objects[i]->getType() == ANT_MESH)
+		if (objects[i]->getType() == NDT_MESH4)
 		{
 			ArnMesh* mesh = (ArnMesh*)objects[i];
 			const char* parName = mesh->getOb().hdr->parName;
 			if (strlen(parName))
 			{
-				ArnNode* node = NULL;
+				ArnNode* node = 0;
 				for (j = 0; j < objects.size(); ++j)
 				{
 					const char* obName = objects[j]->getName();
 					if (strcmp(obName, parName) == 0)
 					{
-						ASSERTCHECK(objects[i]->getType() != ANT_MATERIAL);
+						ASSERTCHECK(objects[i]->getType() != NDT_MATERIAL);
 						mesh->setParent((ArnNode*)objects[j]);
 						break;
 					}

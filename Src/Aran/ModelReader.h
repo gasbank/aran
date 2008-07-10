@@ -23,15 +23,15 @@ struct Bone
 {
 	Bone()
 	{
-		translationKeys = scaleKeys = NULL;
-		rotationKeys = NULL;
+		translationKeys = scaleKeys = 0;
+		rotationKeys = 0;
 		translationKeysSize = scaleKeysSize = rotationKeysSize = 0;
 	}
 	~Bone()
 	{
-		if (translationKeys != NULL) { delete [] translationKeys; translationKeys = NULL; translationKeysSize = 0; }
-		if (rotationKeys != NULL) { delete [] rotationKeys; rotationKeys = NULL; rotationKeysSize = 0; }
-		if (scaleKeys != NULL) { delete [] scaleKeys; scaleKeys = NULL; scaleKeysSize = 0; }
+		if (translationKeys != 0) { delete [] translationKeys; translationKeys = 0; translationKeysSize = 0; }
+		if (rotationKeys != 0) { delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0; }
+		if (scaleKeys != 0) { delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0; }
 	}
 	char					nameFixed[128];
 	D3DXMATRIX				offsetMatrix;
@@ -57,6 +57,7 @@ struct SkeletonNode
 	std::vector<Bone>	bones;
 };
 
+//////////////////////////////////////////////////////////////////////////
 
 class ModelReader
 {
@@ -185,10 +186,10 @@ private:
 	std::vector<D3DLIGHT9>			lights;
 	HWND							hLoadingWnd;
 	EXPORT_VERSION					exportVersion; // ARN10, ARN11, ARN20, ...
-	std::vector<std::string>		notIndMeshNames;
+	std::vector<STRING>		notIndMeshNames;
 
 	// for ARN2x format
-	std::vector<std::string>		indMeshNames;
+	std::vector<STRING>		indMeshNames;
 	LPD3DXMESH*						lpMeshes;
 	std::vector<LPD3DXMESH>			lpSkinnedMeshes;
 	std::vector<LPD3DXSKININFO>		lpSkinnedMeshesSkinInfo;

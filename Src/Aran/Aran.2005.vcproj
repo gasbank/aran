@@ -361,11 +361,23 @@
 			>
 		</File>
 		<File
-			RelativePath=".\arn2.cpp"
+			RelativePath=".\Arn.cd"
 			>
 		</File>
 		<File
-			RelativePath=".\arn2.h"
+			RelativePath=".\ArnAnim1.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnAnim1.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnContainer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnContainer.h"
 			>
 		</File>
 		<File
@@ -374,6 +386,38 @@
 		</File>
 		<File
 			RelativePath=".\ArnFile.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnHierarchy.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnHierarchy.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnNodeFactory.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnNodeFactory.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnSceneGraph.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnSceneGraph.h"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnSkeleton.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnSkeleton.h"
 			>
 		</File>
 		<File
@@ -418,6 +462,10 @@
 		</File>
 		<File
 			RelativePath=".\ModelReader.h"
+			>
+		</File>
+		<File
+			RelativePath=".\MyError.h"
 			>
 		</File>
 		<File

@@ -19,7 +19,7 @@
 #include <list>
 
 #ifndef SAFE_RELEASE
-#define SAFE_RELEASE(p) if((p)!=NULL) { (p)->Release(); (p) = NULL; }
+#define SAFE_RELEASE(p) if((p)!=0) { (p)->Release(); (p) = 0; }
 #endif
 
 class Character;
@@ -152,10 +152,10 @@ public:
 	BOOL PauseMainLoop();
 	BOOL ResumeMainLoop();
 	int Draw();
-	HRESULT RenderModel(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel1(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT RenderModel2(const ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = NULL);
-	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = NULL);
+	HRESULT RenderModel(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = 0);
+	HRESULT RenderModel1(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = 0);
+	HRESULT RenderModel2(const ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = 0);
+	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = 0);
 	void Close();
 
 	void MoveMainCameraEye(float dx, float dy, float dz);

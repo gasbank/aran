@@ -62,10 +62,10 @@ void InputMan::StopCharacterWalking()
 HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
 {
 	HRESULT hr = S_OK;
-	//ASSERTCHECK( this->lpDInput8 == NULL && this->lpDInputDevKeyboard == NULL );
+	//ASSERTCHECK( this->lpDInput8 == 0 && this->lpDInputDevKeyboard == 0 );
 
-	//V_OKAY( hr = DirectInput8Create( hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&this->lpDInput8, NULL ) );
-	//V_OKAY( hr = this->lpDInput8->CreateDevice( GUID_SysKeyboard, &this->lpDInputDevKeyboard, NULL ) );
+	//V_OKAY( hr = DirectInput8Create( hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&this->lpDInput8, 0 ) );
+	//V_OKAY( hr = this->lpDInput8->CreateDevice( GUID_SysKeyboard, &this->lpDInputDevKeyboard, 0 ) );
 	//V_OKAY( hr = this->lpDInputDevKeyboard->SetDataFormat( &c_dfDIKeyboard ) );
 	//V_OKAY( hr = this->lpDInputDevKeyboard->SetCooperativeLevel( hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) );
 

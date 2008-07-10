@@ -1,38 +1,6 @@
 #include "StdAfx.h"
 #include "ArnFile.h"
 
-enum LoadErrorEnum
-{
-	LEE_FILEDESCRIPTOR_CORRUPTED,
-	LEE_TERMINALSTRING_CORRUPTED,
-	LEE_UNSUPPORTED_NODE,
-	LEE_UNDEFINED_ERROR,
-	LEE_SKELETON_BONES_ERROR,
-	LEE_HIERARCHY_FRAMES_ERROR,
-	LEE_BOOL_DATA_PARSE,
-};
-
-class MyError
-{
-public:
-	MyError(LoadErrorEnum lee)
-	{
-		switch (lee)
-		{
-		case LEE_FILEDESCRIPTOR_CORRUPTED:	m_str = "File descriptor in ARN file is corrupted";
-		case LEE_TERMINALSTRING_CORRUPTED:	m_str = "Terminal string in ARN file is corrupted";
-		case LEE_UNDEFINED_ERROR:			m_str = "Undefined error occurred!";
-		case LEE_UNSUPPORTED_NODE:			m_str = "Unsupported or not implemented node detected; skip this node...";
-		case LEE_SKELETON_BONES_ERROR:		m_str = "Skeleton node's bone count error";
-		case LEE_HIERARCHY_FRAMES_ERROR:	m_str = "Hierarchy node's MyFrame count error";
-		case LEE_BOOL_DATA_PARSE:			m_str = "Error while parsing BOOL data type from ARN file";
-		default:							m_str = "<Should not see me!>";
-		}
-	}
-private:
-	char* m_str;
-};
-
 
 void load_arnfile( const char* fileName, ArnFileData& afd )
 {
@@ -44,7 +12,7 @@ void load_arnfile( const char* fileName, ArnFileData& afd )
 	if (!(afd.m_fileDescriptor[0] == 'A'
 		&& afd.m_fileDescriptor[1] == 'R'
 		&& afd.m_fileDescriptor[2] == 'N'))
-		throw MyError(LEE_FILEDESCRIPTOR_CORRUPTED);
+		throw MyError(MEE_FILEDESCRIPTOR_CORRUPTED);
 
 	afd.m_nodeCount = file_read_uint(afd.m_file);
 
@@ -57,7 +25,7 @@ void load_arnfile( const char* fileName, ArnFileData& afd )
 	
 	afd.m_terminalDescriptor = file_read_string(afd.m_file);
 	if (strcmp(afd.m_terminalDescriptor, "TERM") != 0)
-		throw MyError(LEE_TERMINALSTRING_CORRUPTED);
+		throw MyError(MEE_TERMINALSTRING_CORRUPTED);
 }
 
 void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -69,7 +37,7 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	switch (ndt)
 	{
 	case NDT_MESH1:
-		throw MyError(LEE_UNSUPPORTED_NODE);
+		throw MyError(MEE_UNSUPPORTED_NODE);
 	case NDT_MESH2:
 		nodeBase = new NodeMesh2();
 		node_chunk_parser_func = parse_nodeMesh2;
@@ -108,7 +76,7 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		node_chunk_parser_func(abf, nodeBase);
 	}
 	else
-		throw MyError(LEE_UNDEFINED_ERROR);
+		throw MyError(MEE_UNDEFINED_ERROR);
 }
 
 void parse_nodeUnidentified( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -173,7 +141,7 @@ void parse_nodeSkeleton( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		}
 	}
 	else
-		throw MyError(LEE_SKELETON_BONES_ERROR);
+		throw MyError(MEE_SKELETON_BONES_ERROR);
 }
 
 void parse_nodeHierarchy( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -195,7 +163,7 @@ void parse_nodeHierarchy( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		}
 	}
 	else
-		throw MyError(LEE_HIERARCHY_FRAMES_ERROR);
+		throw MyError(MEE_HIERARCHY_FRAMES_ERROR);
 	
 }
 
@@ -259,5 +227,5 @@ unsigned int	file_read_uint(ArnBinaryFile& file) { unsigned int ui = *(unsigned 
 unsigned int*	file_read_uint_array(ArnBinaryFile& file, unsigned int count) { unsigned int* uia = (unsigned int*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(unsigned int) * count; return uia; }
 int				file_read_int(ArnBinaryFile& file) { int i = *(int*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(int); return i; }
 float			file_read_float(ArnBinaryFile& file) { float f = *(float*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(float); return f; }
-BOOL			file_read_BOOL(ArnBinaryFile& file) { BOOL b = *(BOOL*)(file.m_data + file.m_curPos); if (b == TRUE || b == FALSE) { file.m_curPos += sizeof(BOOL); return b; } throw MyError(LEE_BOOL_DATA_PARSE); }
+BOOL			file_read_BOOL(ArnBinaryFile& file) { BOOL b = *(BOOL*)(file.m_data + file.m_curPos); if (b == TRUE || b == FALSE) { file.m_curPos += sizeof(BOOL); return b; } throw MyError(MEE_BOOL_DATA_PARSE); }
 

@@ -78,9 +78,9 @@ int ResourceMan::initializeAll()
 			HRESULT hr = pMR->Initialize(
 				VideoMan::getSingleton().GetDev(),
 				ARN_VDD::ARN_VDD_FVF,
-				NULL,
-				NULL,
-				NULL
+				0,
+				0,
+				0
 				);
 			if ( FAILED( hr ) )
 			{
@@ -122,6 +122,6 @@ const ModelReader* ResourceMan::getModel( MODELID id ) const
 	}
 	else
 	{
-		return NULL; // not exist!
+		return 0; // not exist!
 	}
 }
