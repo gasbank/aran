@@ -3,9 +3,8 @@
 
 
 // Hierarchy info
-class MyFrame : public D3DXFRAME
+struct MyFrame : public D3DXFRAME
 {
-public:
 	MyFrame():isRoot(FALSE),sibling(-1),firstChild(-1)
 	{
 		this->Name = this->nameFixed;
@@ -13,15 +12,15 @@ public:
 		ZeroMemory(&TransformationMatrix, sizeof(D3DXMATRIX));
 	}
 	~MyFrame() {}
-	char nameFixed[128];
-	BOOL isRoot;
-	D3DXMATRIX combinedMatrix;
-	size_t sibling, firstChild;
+	char		nameFixed[128];
+	BOOL		isRoot;
+	D3DXMATRIX	combinedMatrix;
+	size_t		sibling;
+	size_t		firstChild;
 };
 
-class Bone
+struct Bone
 {
-public:
 	Bone()
 	{
 		translationKeys = scaleKeys = NULL;
@@ -34,27 +33,28 @@ public:
 		if (rotationKeys != NULL) { delete [] rotationKeys; rotationKeys = NULL; rotationKeysSize = 0; }
 		if (scaleKeys != NULL) { delete [] scaleKeys; scaleKeys = NULL; scaleKeysSize = 0; }
 	}
-	char nameFixed[128];
-	D3DXMATRIX offsetMatrix;
-	size_t influencingVertexCount;
-	std::vector<DWORD> indices;
-	std::vector<float> weights;
-	std::vector<RST_DATA> keys; // keyframe animation data in ARN file
+	char					nameFixed[128];
+	D3DXMATRIX				offsetMatrix;
+	size_t					influencingVertexCount;
+	std::vector<DWORD>		indices;
+	std::vector<float>		weights;
+	std::vector<RST_DATA>	keys; // keyframe animation data in ARN file
 	
 	// keyframe animation data of ID3DXKeyframedAnimationSet
 	// this->keys should be converted to following data format using ModelReader::AllocateAsAnimationSetFormat()
-	LPD3DXKEY_VECTOR3 translationKeys, scaleKeys;
-	LPD3DXKEY_QUATERNION rotationKeys;
-	UINT translationKeysSize, scaleKeysSize, rotationKeysSize;
+	LPD3DXKEY_VECTOR3		translationKeys;
+	LPD3DXKEY_VECTOR3		scaleKeys;
+	LPD3DXKEY_QUATERNION	rotationKeys;
+	UINT					translationKeysSize, scaleKeysSize, rotationKeysSize;
 };
-class SkeletonNode
+
+struct SkeletonNode
 {
-public:
-	char nameFixed[128];
-	char associatedMeshName[128];
-	int maxWeightsPerVertex; // same as max bones per vertex
-	int bonesCount;
-	std::vector<Bone> bones;
+	char				nameFixed[128];
+	char				associatedMeshName[128];
+	int					maxWeightsPerVertex; // same as max bones per vertex
+	int					bonesCount;
+	std::vector<Bone>	bones;
 };
 
 
@@ -154,7 +154,7 @@ private:
 	int				ParseNDD_Light(int nodeHeaderIndex);
 	int				ParseNDD_Camera(int nodeHeaderIndex);
 
-private:
+
 	TCHAR							szFileName[64];
 	BOOL							initialized;
 	LPDIRECT3DDEVICE9				lpDev;
