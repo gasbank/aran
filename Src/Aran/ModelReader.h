@@ -41,7 +41,7 @@ public:
 	std::vector<float> weights;
 	std::vector<RST_DATA> keys; // keyframe animation data in ARN file
 	
-	// keyframe aniamtion data of ID3DXKeyframedAnimationSet
+	// keyframe animation data of ID3DXKeyframedAnimationSet
 	// this->keys should be converted to following data format using ModelReader::AllocateAsAnimationSetFormat()
 	LPD3DXKEY_VECTOR3 translationKeys, scaleKeys;
 	LPD3DXKEY_QUATERNION rotationKeys;
