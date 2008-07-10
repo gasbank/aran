@@ -20,12 +20,12 @@ InputMan::InputMan(void)
 
 InputMan::~InputMan(void)
 {
-	if (this->lpDInput8 && this->lpDInputDevKeyboard)
+	/*if (this->lpDInput8 && this->lpDInputDevKeyboard)
 	{
 		this->lpDInputDevKeyboard->Unacquire();
 	}
 	SAFE_RELEASE( this->lpDInputDevKeyboard );
-	SAFE_RELEASE( this->lpDInput8 );
+	SAFE_RELEASE( this->lpDInput8 );*/
 }
 
 void InputMan::WalkCharacterForward( float amount /*= 1.0f */ )
@@ -61,13 +61,13 @@ void InputMan::StopCharacterWalking()
 
 HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
 {
-	HRESULT hr;
-	ASSERTCHECK( this->lpDInput8 == NULL && this->lpDInputDevKeyboard == NULL );
+	HRESULT hr = S_OK;
+	//ASSERTCHECK( this->lpDInput8 == NULL && this->lpDInputDevKeyboard == NULL );
 
-	V_OKAY( hr = DirectInput8Create( hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&this->lpDInput8, NULL ) );
-	V_OKAY( hr = this->lpDInput8->CreateDevice( GUID_SysKeyboard, &this->lpDInputDevKeyboard, NULL ) );
-	V_OKAY( hr = this->lpDInputDevKeyboard->SetDataFormat( &c_dfDIKeyboard ) );
-	V_OKAY( hr = this->lpDInputDevKeyboard->SetCooperativeLevel( hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) );
+	//V_OKAY( hr = DirectInput8Create( hInst, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&this->lpDInput8, NULL ) );
+	//V_OKAY( hr = this->lpDInput8->CreateDevice( GUID_SysKeyboard, &this->lpDInputDevKeyboard, NULL ) );
+	//V_OKAY( hr = this->lpDInputDevKeyboard->SetDataFormat( &c_dfDIKeyboard ) );
+	//V_OKAY( hr = this->lpDInputDevKeyboard->SetCooperativeLevel( hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE ) );
 
 	// To acquire keyboard properly, you should call InputMan::AcquireKeyboard()
 	// **AFTER** ShowWindow() or UpdateWindow() call...!
@@ -87,10 +87,11 @@ HRESULT InputMan::AcquireKeyboard()
 	// by unfocusing debugee(Aran Project)
 	//
 	//V_OKAY( hr = this->lpDInputDevKeyboard->Acquire() );
-	while (FAILED(this->lpDInputDevKeyboard->Acquire()))
+	
+	/*while (FAILED(this->lpDInputDevKeyboard->Acquire()))
 	{
 
-	}
+	}*/
 
 	return S_OK;
 }
@@ -98,102 +99,103 @@ HRESULT InputMan::AcquireKeyboard()
 
 HRESULT WINAPI InputMan::ProcessKeyboardInput()
 {
-	static char buffer[256];
-	HRESULT hr;
-	hr = this->lpDInputDevKeyboard->GetDeviceState( sizeof( buffer ), (LPVOID)&buffer );
-	// keyboard handle lost(maybe task-switching)
-	if ( FAILED( hr ) )
-	{
-		// reacquiring; this request always will be failed while in debugging mode
-		// or in focus-lost state. (so do not use ASSERTCHECK or V_OKAY macros here)
-		hr = this->lpDInputDevKeyboard->Acquire();
-		return hr;
-	}
-
-
-	//////////////////////////////////////////////////////////////////////////
-	// Character Movement
-	//////////////////////////////////////////////////////////////////////////
-	BOOL directionalKeyPressed = FALSE;
-	float walkSpeed = 0.2f;
-	float turnSpeed = D3DXToRadian( 5 );
-	if ( KEYDOWN( buffer, DIK_LSHIFT ) )
-	{
-		walkSpeed += 0.2f;
-		turnSpeed += D3DXToRadian( 5 );
-	}
-	if ( KEYDOWN( buffer, DIK_UP ) )
-	{
-		this->WalkCharacterForward( walkSpeed );
-		directionalKeyPressed = TRUE;
-	}
-	else if ( KEYDOWN( buffer, DIK_DOWN ) )
-	{
-		this->WalkCharacterBackward( walkSpeed );
-		directionalKeyPressed = TRUE;
-	}
-
-	if ( KEYDOWN( buffer, DIK_LEFT ) )
-	{
-		this->TurnCharacterLeft( turnSpeed );
-		directionalKeyPressed = TRUE;
-	}
-	else if ( KEYDOWN( buffer, DIK_RIGHT ) )
-	{
-		this->TurnCharacterRight( turnSpeed );
-		directionalKeyPressed = TRUE;
-	}
-
-	if ( directionalKeyPressed == FALSE )
-	{
-		//this->StopCharacterWalking();
-	}
+	HRESULT hr = S_OK;
+	//static char buffer[256];
 	
-
-	//////////////////////////////////////////////////////////////////////////
-	// Dungeon Scroll
-	//////////////////////////////////////////////////////////////////////////
-	D3DXVECTOR3 dScroll( 0.0f, 0.0f, 0.0f );
-	float scrollSpeed = 1.0f;
-	if ( KEYDOWN( buffer, DIK_W ) )
-	{
-		dScroll.y -= scrollSpeed;
-		this->DungeonScrollBy( &dScroll );
-	}
-	else if ( KEYDOWN( buffer, DIK_S ) )
-	{
-		dScroll.y += scrollSpeed;
-		this->DungeonScrollBy( &dScroll );
-	}
-
-	if ( KEYDOWN( buffer, DIK_A ) )
-	{
-		dScroll.x += scrollSpeed;
-		this->DungeonScrollBy( &dScroll );
-	}
-	else if ( KEYDOWN( buffer, DIK_D ) )
-	{
-		dScroll.x -= scrollSpeed;
-		this->DungeonScrollBy( &dScroll );
-	}
+	//hr = this->lpDInputDevKeyboard->GetDeviceState( sizeof( buffer ), (LPVOID)&buffer );
+	//// keyboard handle lost(maybe task-switching)
+	//if ( FAILED( hr ) )
+	//{
+	//	// reacquiring; this request always will be failed while in debugging mode
+	//	// or in focus-lost state. (so do not use ASSERTCHECK or V_OKAY macros here)
+	//	hr = this->lpDInputDevKeyboard->Acquire();
+	//	return hr;
+	//}
 
 
+	////////////////////////////////////////////////////////////////////////////
+	//// Character Movement
+	////////////////////////////////////////////////////////////////////////////
+	//BOOL directionalKeyPressed = FALSE;
+	//float walkSpeed = 0.2f;
+	//float turnSpeed = D3DXToRadian( 5 );
+	//if ( KEYDOWN( buffer, DIK_LSHIFT ) )
+	//{
+	//	walkSpeed += 0.2f;
+	//	turnSpeed += D3DXToRadian( 5 );
+	//}
+	//if ( KEYDOWN( buffer, DIK_UP ) )
+	//{
+	//	this->WalkCharacterForward( walkSpeed );
+	//	directionalKeyPressed = TRUE;
+	//}
+	//else if ( KEYDOWN( buffer, DIK_DOWN ) )
+	//{
+	//	this->WalkCharacterBackward( walkSpeed );
+	//	directionalKeyPressed = TRUE;
+	//}
 
-	//////////////////////////////////////////////////////////////////////////
-	// Test
-	//////////////////////////////////////////////////////////////////////////
-	if ( KEYDOWN( buffer, DIK_NUMPAD0 ) )
-	{
-		OutputDebugString( _T( " . Numpad 0 pressed\n" ) );
-	}
-	else if ( KEYDOWN( buffer, DIK_NUMPAD1 ) )
-	{
-		OutputDebugString( _T( " . Numpad 1 pressed\n" ) );
-	}
-	else if ( KEYDOWN( buffer, DIK_NUMPAD2 ) )
-	{
-		OutputDebugString( _T( " . Numpad 2 pressed\n" ) );
-	}
+	//if ( KEYDOWN( buffer, DIK_LEFT ) )
+	//{
+	//	this->TurnCharacterLeft( turnSpeed );
+	//	directionalKeyPressed = TRUE;
+	//}
+	//else if ( KEYDOWN( buffer, DIK_RIGHT ) )
+	//{
+	//	this->TurnCharacterRight( turnSpeed );
+	//	directionalKeyPressed = TRUE;
+	//}
+
+	//if ( directionalKeyPressed == FALSE )
+	//{
+	//	//this->StopCharacterWalking();
+	//}
+	//
+
+	////////////////////////////////////////////////////////////////////////////
+	//// Dungeon Scroll
+	////////////////////////////////////////////////////////////////////////////
+	//D3DXVECTOR3 dScroll( 0.0f, 0.0f, 0.0f );
+	//float scrollSpeed = 1.0f;
+	//if ( KEYDOWN( buffer, DIK_W ) )
+	//{
+	//	dScroll.y -= scrollSpeed;
+	//	this->DungeonScrollBy( &dScroll );
+	//}
+	//else if ( KEYDOWN( buffer, DIK_S ) )
+	//{
+	//	dScroll.y += scrollSpeed;
+	//	this->DungeonScrollBy( &dScroll );
+	//}
+
+	//if ( KEYDOWN( buffer, DIK_A ) )
+	//{
+	//	dScroll.x += scrollSpeed;
+	//	this->DungeonScrollBy( &dScroll );
+	//}
+	//else if ( KEYDOWN( buffer, DIK_D ) )
+	//{
+	//	dScroll.x -= scrollSpeed;
+	//	this->DungeonScrollBy( &dScroll );
+	//}
+
+
+
+	////////////////////////////////////////////////////////////////////////////
+	//// Test
+	////////////////////////////////////////////////////////////////////////////
+	//if ( KEYDOWN( buffer, DIK_NUMPAD0 ) )
+	//{
+	//	OutputDebugString( _T( " . Numpad 0 pressed\n" ) );
+	//}
+	//else if ( KEYDOWN( buffer, DIK_NUMPAD1 ) )
+	//{
+	//	OutputDebugString( _T( " . Numpad 1 pressed\n" ) );
+	//}
+	//else if ( KEYDOWN( buffer, DIK_NUMPAD2 ) )
+	//{
+	//	OutputDebugString( _T( " . Numpad 2 pressed\n" ) );
+	//}
 
 	return hr;
 }
