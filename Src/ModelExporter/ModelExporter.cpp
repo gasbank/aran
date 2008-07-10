@@ -9,7 +9,7 @@
 #include "NullRestoreObj.h"
 #include "resource.h"
 
-#include "../VideoLib/Macros.h"
+
 
 
 // Define this if want additional dump information

@@ -7,7 +7,7 @@
 //
 #pragma once
 
-#include <tchar.h>
+typedef std::string STRING;
 
 #define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
 #define GLOBAL_TEXTURE_FILE_PATH			"Textures\\"

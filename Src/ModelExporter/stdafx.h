@@ -79,7 +79,8 @@
 #include "IGame/IGameError.h"
 #include "IGame/IGameFX.h"
 
-
+#include "../Aran/Macros.h"
+#include "../Aran/Structs.h"
 
 #pragma comment(lib, "igame.lib")
 #pragma comment(lib, "core.lib")

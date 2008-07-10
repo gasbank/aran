@@ -17,7 +17,6 @@
 #include <d3dx9.h>
 #include <dxerr9.h>
 
-typedef std::string STRING;
 
 #include "Macros.h"
 
