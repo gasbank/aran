@@ -60,116 +60,21 @@ public:
 
 class ModelReader
 {
-private:
-	TCHAR szFileName[64];
-
-	BOOL initialized;
-	
-	LPDIRECT3DDEVICE9 lpDev;
-	LPDIRECT3DVERTEXBUFFER9 lpVB;
-	DWORD fvf;
-
-	// TODO: global or local animation controller?
-	// Use local animation controller to model support instancing
-	BOOL useLocalAC;
-	LPD3DXANIMATIONCONTROLLER lpAnimationController;
-
-	int notIndVertTotalSize; // Vertex buffer size in bytes (not indexed)
-	int indVertTotalSize; // Vertex buffer size in bytes (indexed); cumulative value through all this->lpMeshes's VB
-
-	int lightCount;
-
-	int notIndTotalMeshCount; // not indexed mesh count
-	int indTotalMeshCount; // indexed mesh count == element count of lpMeshes
-	//int totalMeshCount; // (notIndTotalMeshCount + indTotalMeshCount)
-
-	int skinnedMeshCount; // element count of lpSkinnedMeshes
-
-	int nodeCount; // the value read from the ARN file
-	std::vector<ARN_MTD> materialList;
-	std::vector<LPDIRECT3DTEXTURE9> textureList;
-	std::vector<int*> materialReference;
-	std::vector<int> meshVertCount; // vertex count per mesh
-	std::vector<int> materialCount;
-	int totalFaceCount;
-	std::vector<int*> materialReferenceFast;
-	
-	std::vector<int> animQuatSize;
-	std::vector<RST_DATA*> animQuat; // animation data per NDT_MESH1, NDT_MESH2
-	std::vector<D3DXMATRIX> animMatControlledByAC;
-	std::vector<RST_DATA*> lightAnimQuat; // animation data per light
-	
-	std::vector<D3DLIGHT9> lights;
-
-	HWND hLoadingWnd;
-
-	EXPORT_VERSION exportVersion; // ARN10, ARN11, ARN20, ...
-
-	std::vector<std::string> notIndMeshNames;
-
-	// for ARN2x format
-	std::vector<std::string> indMeshNames;
-	LPD3DXMESH* lpMeshes;
-	std::vector<LPD3DXMESH> lpSkinnedMeshes;
-	std::vector<LPD3DXSKININFO> lpSkinnedMeshesSkinInfo;
-
-	D3DXMESHCONTAINER meshContainer;
-	D3DXFRAME frame;
-
-	int hierarchySize;
-	std::vector<MyFrame> hierarchy;
-	std::vector<SkeletonNode> skeletonNode;
-	//std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSet;
-	LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimationSet;
-	std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSetList;
-
-	std::vector<ArnNodeHeader> nodeHeaders;
-	int nodeTypeCounter[32];
-	
-	std::ifstream fin;
-
-	std::vector<int> fmtOffset;
-	std::vector<int> fmtLength; // equals faceCount(=vertCount / 3)
-
-	// ARN10, ARN11 only
-	std::vector<int> verticesOffset;
-	std::vector<int> verticesLength; // equals vertCount * Vertex(fvf) Size
-	
-
-	// Camera
-	std::vector<ARN_NDD_CAMERA_CHUNK> cameraNodes;
 
 public:
 	ModelReader();
 	ModelReader(LPDIRECT3DDEVICE9 lpDev, DWORD fvf);
 	~ModelReader(void);
 
-	HRESULT Initialize(LPDIRECT3DDEVICE9 lpDev,
-		DWORD fvf, HWND hLoadingWnd,
-		const TCHAR* fileName,
-		LPD3DXANIMATIONCONTROLLER lpAC, const BOOL initAC = FALSE );
+	HRESULT			Initialize(LPDIRECT3DDEVICE9 lpDev, DWORD fvf,
+		HWND hLoadingWnd, const TCHAR* fileName, LPD3DXANIMATIONCONTROLLER lpAC, const BOOL initAC = FALSE );
+	void			SetDev(LPDIRECT3DDEVICE9 lpDev);
+	void			SetFVF(DWORD fvf);
+	void			SetLoadingWindowHandle(HWND hLoadingWnd);
 
-	void SetDev(LPDIRECT3DDEVICE9 lpDev);
-	void SetFVF(DWORD fvf);
-	void SetLoadingWindowHandle(HWND hLoadingWnd);
-
-	//
 	// Read mesh(vertices, vertex indices, texture coords, ...), materials, animations
 	// ARN1x, ARN2x compatible
-	//
-	int Read(const TCHAR* fileName);
-private:
-	int BuildTopLevelNodeList();
-
-	int ParseNDD_Skeleton(int nodeHeaderIndex);
-	int ParseNDD_Mesh1(int nodeHeaderIndex);
-	int ParseNDD_Mesh2(int nodeHeaderIndex);
-	HRESULT ParseNDD_Anim(NODE_DATA_TYPE belongsToType, Bone* pBone); // child NDD structure
-	int ParseNDD_Hierarchy(int nodeHeaderIndex);
-	int ParseNDD_Light(int nodeHeaderIndex);
-	int ParseNDD_Camera(int nodeHeaderIndex);
-
-public:
+	int				Read(const TCHAR* fileName);
 
 	//static const int vddSize = sizeof(ARN_VDD);
 	
@@ -177,78 +82,141 @@ public:
 	// (1) implement ID3DXSkinInfo using the skeletonNode element (no hierarchy included)
 	// (2) call ConvertToIndexedBlendedMesh()
 	// (3) return LPD3DXMESH to this->lpSkinnedMeshes
-	int BuildBlendedMeshByMeshIndex(int meshIndex);
+	int				BuildBlendedMeshByMeshIndex(int meshIndex);
 
 	// connect interconnection pointers of this->hierarchy using array index reference
-	int BuildBoneHierarchyByMeshIndex(int meshIndex);
-
+	int				BuildBoneHierarchyByMeshIndex(int meshIndex);
 	
 	// keyframeEndIndex means there the last frame;
 	// i.e. default argument will build animation set of entire frames
-	HRESULT BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeletonNodeIndex, int keyFrameStartIndex = 0, int keyFrameEndIndex = -1);
+	HRESULT			BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeletonNodeIndex, int keyFrameStartIndex = 0, int keyFrameEndIndex = -1);
 
-	static int AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray,
+	static int		AllocateAsAnimationSetFormat(UINT sourceArraySize, RST_DATA* sourceArray,
 		UINT* pScaleSize, UINT* pRotationSize, UINT* pTranslationSize,
 		D3DXKEY_VECTOR3** ppScale, D3DXKEY_QUATERNION** ppRotation, D3DXKEY_VECTOR3** ppTranslation,
 		BOOL removeDuplicates = FALSE);
 	
 	// update combined transformation matrix hierarchically
-	void UpdateBoneCombinedMatrixByMeshIndex(int meshIndex);
-	void UpdateBoneCombinedMatrixRecursive(MyFrame* startFrame, D3DXMATRIX& parentCombinedTransform);
+	void			UpdateBoneCombinedMatrixByMeshIndex(int meshIndex);
+	void			UpdateBoneCombinedMatrixRecursive(MyFrame* startFrame, D3DXMATRIX& parentCombinedTransform);
 	
+	void			clearMembers();
+	void			SetFileName( const TCHAR* fileName );
+	HRESULT			AdvanceTime(float timeDelta) const; // redirection to AC
+
 	// GET methods
-	DWORD GetFVF() const;
+	DWORD			GetFVF() const;
 	LPDIRECT3DVERTEXBUFFER9 GetVB() const;
-	int GetVBLength() const;
-	int GetTotalFaceCount() const;
-	int GetMaterialReference(int meshIndex, int faceIndex) const;
-	int GetMaterialReferenceFast(int meshIndex, int materialIndex) const;
+	int				GetVBLength() const;
+	int				GetTotalFaceCount() const;
+	int				GetMaterialReference(int meshIndex, int faceIndex) const;
+	int				GetMaterialReferenceFast(int meshIndex, int materialIndex) const;
 	const D3DMATERIAL9* GetMaterial(int referenceIndex) const;
-
-	int GetNotIndMeshCount() const;
-	int GetIndMeshCount() const;
-	
-	int GetFaceCount(int meshIndex) const;
+	int				GetNotIndMeshCount() const;
+	int				GetIndMeshCount() const;
+	int				GetFaceCount(int meshIndex) const;
 	LPDIRECT3DTEXTURE9 GetTexture(int referenceIndex) const;
-	int GetMaterialCount(int meshIndex) const;
-	int GetAnimQuatSize(int meshIndex) const;
-	RST_DATA* GetAnimQuat(int meshIndex) const;
-	int GetLightCount() const;
-	D3DLIGHT9 GetLight(int i) const;
-	
-	EXPORT_VERSION GetExportVersion() const;
+	int				GetMaterialCount(int meshIndex) const;
+	int				GetAnimQuatSize(int meshIndex) const;
+	RST_DATA*		GetAnimQuat(int meshIndex) const;
+	int				GetLightCount() const;
+	D3DLIGHT9		GetLight(int i) const;
+	EXPORT_VERSION	GetExportVersion() const;
 	LPD3DXKEYFRAMEDANIMATIONSET GetKeyframedAnimationSet( int animSetIndex = 0 ) const;
-	MyFrame* GetFrameRootByMeshIndex(int meshIndex);
-	MyFrame* GetFrameBySkeletonName(const char* skelName); // for testing
-
-	LPD3DXMESH GetMeshPointer(int i) const;
-	LPD3DXMESH GetSkinnedMeshPointer(int i) const;
-	LPD3DXSKININFO GetSkinInfoPointer(int i) const;
+	MyFrame*		GetFrameRootByMeshIndex(int meshIndex);
+	MyFrame*		GetFrameBySkeletonName(const char* skelName); // for testing
+	LPD3DXMESH		GetMeshPointer(int i) const;
+	LPD3DXMESH		GetSkinnedMeshPointer(int i) const;
+	LPD3DXSKININFO	GetSkinInfoPointer(int i) const;
 	const SkeletonNode* GetSkeletonNodePointer(int index) const;
-	size_t GetSkeletonNodeSize() const;
-	int GetMeshIndexBySkeletonIndex(int skelIndex) const;
-	int GetSkeletonIndexByMeshIndex(int meshIndex) const;
-
+	size_t			GetSkeletonNodeSize() const;
+	int				GetMeshIndexBySkeletonIndex(int skelIndex) const;
+	int				GetSkeletonIndexByMeshIndex(int meshIndex) const;
 	const D3DXMATRIX* GetTransformationMatrixByBoneName( const char* boneName ) const;
-	D3DXMATRIX* GetCombinedMatrixByBoneName( const char* boneName );
-
-	ArnNodeHeader GetArnNodeHeader(int idx);
-	size_t GetArnNodeHeadersSize();
-
-	HRESULT AdvanceTime(float timeDelta) const; // redirection to AC
+	D3DXMATRIX*		GetCombinedMatrixByBoneName( const char* boneName );
+	ArnNodeHeader	GetArnNodeHeader(int idx);
+	size_t			GetArnNodeHeadersSize();
 	const D3DXMATRIX* GetAnimMatControlledByAC(int meshIndex) const;
-
-	const TCHAR* GetFileNameOnly();
-
+	const TCHAR*	GetFileNameOnly();
 	ARN_NDD_CAMERA_CHUNK* GetFirstCamera();
-
-	BOOL IsInitialized() const;
-
+	BOOL			IsInitialized() const;
 	const LPD3DXANIMATIONCONTROLLER GetAnimationController() const { return this->lpAnimationController; }
 
-	void clearMembers();
 
-	void SetFileName( const TCHAR* fileName );
+private:
+	int				BuildTopLevelNodeList();
+
+	int				ParseNDD_Skeleton(int nodeHeaderIndex);
+	int				ParseNDD_Mesh1(int nodeHeaderIndex);
+	int				ParseNDD_Mesh2(int nodeHeaderIndex);
+	HRESULT			ParseNDD_Anim(NODE_DATA_TYPE belongsToType, Bone* pBone); // child NDD structure
+	int				ParseNDD_Hierarchy(int nodeHeaderIndex);
+	int				ParseNDD_Light(int nodeHeaderIndex);
+	int				ParseNDD_Camera(int nodeHeaderIndex);
+
+private:
+	TCHAR							szFileName[64];
+	BOOL							initialized;
+	LPDIRECT3DDEVICE9				lpDev;
+	LPDIRECT3DVERTEXBUFFER9			lpVB;
+	DWORD							fvf;
+	// TODO: global or local animation controller?
+	// Use local animation controller to model support instancing
+	BOOL							useLocalAC;
+	LPD3DXANIMATIONCONTROLLER		lpAnimationController;
+	int								notIndVertTotalSize; // Vertex buffer size in bytes (not indexed)
+	int								indVertTotalSize; // Vertex buffer size in bytes (indexed); cumulative value through all this->lpMeshes's VB
+	int								lightCount;
+	int								notIndTotalMeshCount; // not indexed mesh count
+	int								indTotalMeshCount; // indexed mesh count == element count of lpMeshes
+	int								skinnedMeshCount; // element count of lpSkinnedMeshes
+	int								nodeCount; // the value read from the ARN file
+	std::vector<ARN_MTD>			materialList;
+	std::vector<LPDIRECT3DTEXTURE9> textureList;
+	std::vector<int*>				materialReference;
+	std::vector<int>				meshVertCount; // vertex count per mesh
+	std::vector<int>				materialCount;
+	int								totalFaceCount;
+	std::vector<int*>				materialReferenceFast;
+	std::vector<int>				animQuatSize;
+	std::vector<RST_DATA*>			animQuat; // animation data per NDT_MESH1, NDT_MESH2
+	std::vector<D3DXMATRIX>			animMatControlledByAC;
+	std::vector<RST_DATA*>			lightAnimQuat; // animation data per light
+	std::vector<D3DLIGHT9>			lights;
+	HWND							hLoadingWnd;
+	EXPORT_VERSION					exportVersion; // ARN10, ARN11, ARN20, ...
+	std::vector<std::string>		notIndMeshNames;
+
+	// for ARN2x format
+	std::vector<std::string>		indMeshNames;
+	LPD3DXMESH*						lpMeshes;
+	std::vector<LPD3DXMESH>			lpSkinnedMeshes;
+	std::vector<LPD3DXSKININFO>		lpSkinnedMeshesSkinInfo;
+	D3DXMESHCONTAINER				meshContainer;
+	D3DXFRAME						frame;
+
+	int								hierarchySize;
+	std::vector<MyFrame>			hierarchy;
+	std::vector<SkeletonNode>		skeletonNode;
+	LPD3DXKEYFRAMEDANIMATIONSET		lpKeyframedAnimationSet;
+	std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSetList;
+
+	std::vector<ArnNodeHeader>		nodeHeaders;
+	int								nodeTypeCounter[32];
+
+	std::ifstream					fin;
+
+	std::vector<int>				fmtOffset;
+	std::vector<int>				fmtLength; // equals faceCount(=vertCount / 3)
+
+	// ARN10, ARN11 only
+	std::vector<int>				verticesOffset;
+	std::vector<int>				verticesLength; // equals vertCount * Vertex(fvf) Size
+
+
+	// Camera
+	std::vector<ARN_NDD_CAMERA_CHUNK> cameraNodes;
+
 };
 
 
