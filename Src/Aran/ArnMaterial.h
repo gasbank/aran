@@ -4,18 +4,17 @@
 struct NodeBase;
 struct NodeMaterial1;
 
+// Node that can contain multiple materials
 class ArnMaterial : public ArnNode
 {
 public:
 	ArnMaterial();
 	~ArnMaterial(void);
 	
-	static ArnNode*		createFrom(const NodeBase* nodeBase);
+	static ArnNode*				createFrom(const NodeBase* nodeBase);
 
-	ArnMaterialOb&		getOb() { return m_ob; }
-	const char*			getName() const { return m_ob.hdr->name; }
 private:
-	void				buildFrom(const NodeMaterial1* nm);
+	void						buildFrom(const NodeMaterial1* nm);
 
-	ArnMaterialOb		m_ob;
+	std::vector<MaterialData>	m_materials;
 };

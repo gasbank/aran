@@ -13,6 +13,7 @@ ArnLight::~ArnLight(void)
 ArnNode* ArnLight::createFrom( const NodeBase* nodeBase )
 {
 	ArnLight* node = new ArnLight();
+	node->setName(nodeBase->m_nodeName);
 	try
 	{
 		switch (nodeBase->m_ndt)
@@ -36,12 +37,12 @@ ArnNode* ArnLight::createFrom( const NodeBase* nodeBase )
 }
 
 void ArnLight::buildFrom( const NodeLight1* nl )
-{
-	m_data = nl;
-	setName(m_data->m_nodeName);
+{	
+	m_d3dLight = *nl->m_light;
 }
 
 void ArnLight::buildFrom( const NodeLight2* nl )
 {
-
+	setLocalXform(*nl->m_localXform);
+	m_d3dLight = *nl->m_light;
 }

@@ -132,55 +132,53 @@ HRESULT BoxRenderLayer::render()
 	D3DXMatrixIdentity(&transform);
 	dev->SetTransform(D3DTS_WORLD, &transform);
 	
-	//dev->SetFVF(ARNVERTEX_FVF);
-	//dev->SetMaterial(VideoMan::getSingleton().getDefaultMaterial());
-	//D3DXMatrixRotationYawPitchRoll(&transform, D3DX_PI*0.8f, D3DX_PI/6, 0.0f);
-	
-	D3DXMATRIX flip;
-	flip.m[0][0] = 1; flip.m[0][1] = 0; flip.m[0][2] = 0; flip.m[0][3] = 0; 
-	flip.m[1][0] = 0; flip.m[1][1] = 1; flip.m[1][2] = 0; flip.m[1][3] = 0; 
-	flip.m[2][0] = 0; flip.m[2][1] = 0; flip.m[2][2] = -1; flip.m[2][3] = 0; 
-	flip.m[3][0] = 0; flip.m[3][1] = 0; flip.m[3][2] = 0; flip.m[3][3] = 1; 
-	
-	D3DXMATRIX yRot;
-	D3DXMatrixRotationY(&yRot, D3DX_PI);
+	//
+	//D3DXMATRIX flip;
+	//flip.m[0][0] = 1; flip.m[0][1] = 0; flip.m[0][2] = 0; flip.m[0][3] = 0; 
+	//flip.m[1][0] = 0; flip.m[1][1] = 1; flip.m[1][2] = 0; flip.m[1][3] = 0; 
+	//flip.m[2][0] = 0; flip.m[2][1] = 0; flip.m[2][2] = -1; flip.m[2][3] = 0; 
+	//flip.m[3][0] = 0; flip.m[3][1] = 0; flip.m[3][2] = 0; flip.m[3][3] = 1; 
+	//
+	//D3DXMATRIX yRot;
+	//D3DXMatrixRotationY(&yRot, D3DX_PI);
 
-	D3DXMATRIX change = flip * yRot;
-	//dev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-	unsigned int i, j;
-	for (i = 0; i < m_objects.size(); ++i)
-	{
-		if (m_objects[i]->getType() == NDT_MESH3)
-		{
-			ArnMesh* mesh = (ArnMesh*)m_objects[i];
-			D3DXMatrixIdentity(&transform);
-			ArnNode* parNode = mesh->getParent();
-			while (parNode != 0)
-			{
-				transform = *parNode->getLocalTransform() * transform;
-				parNode = parNode->getParent();
-			}
-			transform = *mesh->getLocalTransform() * transform;
+	//D3DXMATRIX change = flip * yRot;
+	////dev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
+	//dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+	//unsigned int i, j;
+	//for (i = 0; i < m_objects.size(); ++i)
+	//{
+	//	if (m_objects[i]->getType() == NDT_MESH3)
+	//	{
+	//		ArnMesh* mesh = (ArnMesh*)m_objects[i];
+	//		D3DXMatrixIdentity(&transform);
+	//		ArnNode* parNode = mesh->getParent();
+	//		while (parNode != 0)
+	//		{
+	//			transform = *parNode->getLocalTransform() * transform;
+	//			parNode = parNode->getParent();
+	//		}
+	//		transform = *mesh->getLocalTransform() * transform;
 
-			
-			/*D3DXVECTOR3* scalingVec = (D3DXVECTOR3*)mesh->getOb().hdr->scl;
-			D3DXVECTOR3* translationVec = (D3DXVECTOR3*)mesh->getOb().hdr->loc;
-			D3DXQUATERNION* rotQuat = (D3DXQUATERNION*)mesh->getOb().hdr->rotQuat;
-			D3DXMatrixTransformation(&transform, 0, 0, scalingVec, 0, rotQuat, translationVec);
-			*/
-			transform = transform * *VideoMan::getSingleton().getArcballResult();
-			dev->SetTransform(D3DTS_WORLD, &transform);
+	//		
+	//		/*D3DXVECTOR3* scalingVec = (D3DXVECTOR3*)mesh->getOb().hdr->scl;
+	//		D3DXVECTOR3* translationVec = (D3DXVECTOR3*)mesh->getOb().hdr->loc;
+	//		D3DXQUATERNION* rotQuat = (D3DXQUATERNION*)mesh->getOb().hdr->rotQuat;
+	//		D3DXMatrixTransformation(&transform, 0, 0, scalingVec, 0, rotQuat, translationVec);
+	//		*/
+	//		transform = transform * *VideoMan::getSingleton().getArcballResult();
+	//		dev->SetTransform(D3DTS_WORLD, &transform);
 
-			for (j = 0; j < mesh->getOb().hdr->materialCount; ++j)
-			{
-				unsigned int maIndex = mesh->getOb().attrToMaterialMap[j];
-				ArnMaterial* ma = dynamic_cast<ArnMaterial*>(m_objects[maIndex]);
-				dev->SetMaterial(&ma->getOb().hdr->d3dMaterial);
-				mesh->getD3DXMesh()->DrawSubset(j);
-			}
-		}
-	}
+	//		for (j = 0; j < mesh->getOb().hdr->materialCount; ++j)
+	//		{
+	//			unsigned int maIndex = mesh->getOb().attrToMaterialMap[j];
+	//			ArnMaterial* ma = dynamic_cast<ArnMaterial*>(m_objects[maIndex]);
+	//			dev->SetMaterial(&ma->getOb().hdr->d3dMaterial);
+	//			mesh->getD3DXMesh()->DrawSubset(j);
+	//		}
+	//	}
+	//}
+
 	dev->SetTransform(D3DTS_WORLD, &transform);
 	//m_testMesh->DrawSubset(0);
 
@@ -194,41 +192,9 @@ HRESULT BoxRenderLayer::render()
 BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0)
 {
-	/*VideoMan& videoMan = VideoMan::getSingleton();
-	if (FAILED(load_arn("models/gus2.arn", m_objects)))
-	{
-		DebugBreak();
-	}
-	size_t i;
-	ArnCamera* arnCam = 0;
-	for (i = 0; i < m_objects.size(); ++i)
-	{
-		ArnMesh* mesh = dynamic_cast<ArnMesh*>(m_objects[i]);
-		if (mesh)
-		{
-			LPD3DXMESH d3dxMesh;
-			arn_build_mesh(VideoMan::getSingleton().GetDev(), &mesh->getOb(), &d3dxMesh);
-			mesh->setD3DXMesh(d3dxMesh);
-		}
-		if (!arnCam && m_objects[i]->getType() == NDT_CAMERA)
-		{
-			arnCam = reinterpret_cast<ArnCamera*>(m_objects[i]);
-		}
-	}
-	m_testMesh = newTestPlaneMesh(2.0f, 4.0f, 20, 10);
-	videoMan.GetDev()->SetRenderState(D3DRS_LIGHTING, TRUE);
-
-	if (arnCam)
-	{
-		videoMan.SetCamera(*arnCam);
-	}*/
-
-	ArnFileData arnFileData;
-	load_arnfile("models/gus2.arn", arnFileData);
-	ArnSceneGraph arnSG(arnFileData);
-	release_arnfile(arnFileData);
-
-
+	m_arnFileData = new ArnFileData;
+	load_arnfile("models/gus2.arn", *m_arnFileData);
+	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 
 BoxRenderLayer::~BoxRenderLayer()
@@ -240,6 +206,10 @@ BoxRenderLayer::~BoxRenderLayer()
 	}
 
 	SAFE_RELEASE(m_testMesh);
+
+	release_arnfile(*m_arnFileData);
+	delete m_arnFileData;
+	delete m_simpleSG;
 }
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight)

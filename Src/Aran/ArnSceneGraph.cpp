@@ -19,3 +19,8 @@ ArnSceneGraph::~ArnSceneGraph(void)
 {
 	delete m_sceneRoot;
 }
+
+ArnSceneGraph* ArnSceneGraph::createFrom( const ArnFileData& afd )
+{
+	return new ArnSceneGraph(afd);
+}

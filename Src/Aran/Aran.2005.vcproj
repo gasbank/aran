@@ -296,51 +296,11 @@
 			Name="Arn"
 			>
 			<File
-				RelativePath=".\ArnAnim.cpp"
+				RelativePath=".\ArnNodeFactory.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ArnAnim.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnCamera.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnCamera.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnLight.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnLight.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMaterial.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMaterial.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMesh.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnNode.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnNode.h"
+				RelativePath=".\ArnNodeFactory.h"
 				>
 			</File>
 			<File
@@ -351,6 +311,106 @@
 				RelativePath=".\ArnObject.h"
 				>
 			</File>
+			<File
+				RelativePath=".\ArnSceneGraph.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnSceneGraph.h"
+				>
+			</File>
+			<Filter
+				Name="ArnNode Derived"
+				>
+				<File
+					RelativePath=".\ArnAnim.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnAnim.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnBone.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnBone.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnCamera.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnCamera.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnContainer.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnContainer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnFile.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnFile.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnHierarchy.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnHierarchy.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnLight.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnLight.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnMaterial.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnMaterial.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnMesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnMesh.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnNode.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnNode.h"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnSkeleton.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\ArnSkeleton.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<File
 			RelativePath=".\Animation.cpp"
@@ -370,62 +430,6 @@
 		</File>
 		<File
 			RelativePath=".\Arn.cd"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnBone.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnBone.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnContainer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnContainer.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnFile.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnFile.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnHierarchy.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnHierarchy.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnNodeFactory.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnNodeFactory.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnSceneGraph.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnSceneGraph.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnSkeleton.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnSkeleton.h"
 			>
 		</File>
 		<File
@@ -514,6 +518,10 @@
 		</File>
 		<File
 			RelativePath=".\stdafx.h"
+			>
+		</File>
+		<File
+			RelativePath=".\Structs.cpp"
 			>
 		</File>
 		<File

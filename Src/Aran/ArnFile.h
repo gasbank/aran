@@ -11,15 +11,11 @@ struct NodeUnidentified : public NodeBase
 {
 	int m_dummy;
 };
-struct MaterialData
-{
-	char* m_materialName;
-	D3DMATERIAL9* m_d3dMaterial;
-};
+
 struct NodeMaterial1 : public NodeBase
 {
 	unsigned int m_materialCount;
-	std::vector<MaterialData> m_materials;
+	std::vector<MaterialDataShell> m_materials;
 };
 struct NodeMesh2 : public NodeBase
 {

@@ -16,6 +16,7 @@ ArnMesh::~ArnMesh(void)
 ArnNode* ArnMesh::createFrom( const NodeBase* nodeBase )
 {
 	ArnMesh* node = new ArnMesh();
+	node->setName(nodeBase->m_nodeName);
 	try
 	{
 		switch (nodeBase->m_ndt)
@@ -47,6 +48,7 @@ void ArnMesh::buildFrom(const NodeMesh2* nm)
 
 void ArnMesh::buildFrom(const NodeMesh3* nm)
 {
+	setLocalXform(*nm->m_localXform);
 	LPD3DXMESH d3dxMesh;
 	arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
 	setD3DXMesh(d3dxMesh);
@@ -55,36 +57,6 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 
 //////////////////////////////////////////////////////////////////////////
 
-
-HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const ArnMeshOb* ob, OUT LPD3DXMESH* mesh)
-{
-	if (!dev)
-		throw MyError(MEE_DEVICE_NOT_READY);
-
-	HRESULT hr = 0;
-	ArnVertex* v = 0;
-	WORD* ind = 0;
-	hr = D3DXCreateMeshFVF(ob->hdr->faceCount, ob->hdr->vertexCount, D3DXMESH_MANAGED, ArnVertex::FVF, dev, mesh);
-	if (FAILED(hr))
-	{
-		return E_FAIL;
-	}
-
-	(*mesh)->LockVertexBuffer(0, (void**)&v);
-	memcpy(v, ob->vertex, ob->hdr->vertexCount * sizeof(ArnVertex));
-	(*mesh)->UnlockVertexBuffer();
-
-	(*mesh)->LockIndexBuffer(0, (void**)&ind);
-	memcpy(ind, ob->faces, ob->hdr->faceCount * 3 * sizeof(WORD));
-	(*mesh)->UnlockIndexBuffer();
-
-	DWORD* attrBuf = 0;
-	(*mesh)->LockAttributeBuffer(0, &attrBuf);
-	memcpy(attrBuf, ob->attr, ob->hdr->faceCount * sizeof(DWORD));
-	(*mesh)->UnlockAttributeBuffer();
-
-	return S_OK;
-}
 
 
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH* mesh)

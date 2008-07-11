@@ -3,6 +3,8 @@
 
 class Character;
 class ArnObject;
+class ArnSceneGraph;
+struct ArnFileData;
 
 class DefaultRenderLayer :
 	public RenderLayer
@@ -35,6 +37,9 @@ private:
 	std::vector<ArnObject*> m_objects;
 
 	LPD3DXMESH m_testMesh;
+
+	ArnSceneGraph* m_simpleSG;
+	ArnFileData* m_arnFileData;
 };
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight);

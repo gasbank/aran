@@ -21,6 +21,8 @@ static WalkCallback g_walkCallback;
 static LoiterCallback g_loiterCallback;
 static UndefinedCallback g_undefinedCallback;
 
+
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
 	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);

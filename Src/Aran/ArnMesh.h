@@ -13,20 +13,15 @@ public:
 
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
 
-	ArnMeshOb&			getOb() { return m_ob; }
 	const LPD3DXMESH&	getD3DXMesh() { return m_d3dxMesh; }
-	const char*			getName() const { return m_ob.hdr->name; }
-	const D3DXMATRIX*	getLocalTransform() const { return (D3DXMATRIX*)m_ob.hdr->localTf; }
 	void				setD3DXMesh(const LPD3DXMESH d3dxMesh) { m_d3dxMesh = d3dxMesh; }
 	
 private:
 	void				buildFrom(const NodeMesh2* nm);
 	void				buildFrom(const NodeMesh3* nm);
 
-	ArnMeshOb			m_ob;
 	LPD3DXMESH			m_d3dxMesh;
 };
 
-HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const ArnMeshOb* ob, OUT LPD3DXMESH* mesh);
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH* mesh);
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD3DXMESH* mesh);

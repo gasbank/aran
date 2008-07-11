@@ -114,7 +114,7 @@ void parse_nodeMaterial1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	unsigned int i;
 	for (i = 0; i < node->m_materialCount; ++i)
 	{
-		MaterialData md;
+		MaterialDataShell md;
 		md.m_materialName = file_read_string(abf);
 		md.m_d3dMaterial = file_read<D3DMATERIAL9>(abf);
 		node->m_materials.push_back(md);
