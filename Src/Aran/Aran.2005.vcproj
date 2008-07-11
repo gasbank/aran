@@ -296,6 +296,14 @@
 			Name="Arn"
 			>
 			<File
+				RelativePath=".\ArnAnim.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAnim.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnCamera.cpp"
 				>
 			</File>
@@ -365,11 +373,11 @@
 			>
 		</File>
 		<File
-			RelativePath=".\ArnAnim1.cpp"
+			RelativePath=".\ArnBone.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\ArnAnim1.h"
+			RelativePath=".\ArnBone.h"
 			>
 		</File>
 		<File
@@ -434,14 +442,6 @@
 		</File>
 		<File
 			RelativePath=".\InputMan.h"
-			>
-		</File>
-		<File
-			RelativePath=".\load_arn.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\load_arn.h"
 			>
 		</File>
 		<File

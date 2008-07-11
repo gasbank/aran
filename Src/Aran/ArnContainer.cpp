@@ -2,7 +2,7 @@
 #include "ArnContainer.h"
 
 ArnContainer::ArnContainer(void)
-: ArnNode(NDT_CONTAINER)
+: ArnNode(NDT_RT_CONTAINER)
 {
 }
 

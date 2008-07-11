@@ -1,11 +1,12 @@
 #include "StdAfx.h"
 #include "DefaultRenderLayer.h"
 #include "VideoMan.h"
-#include "load_arn.h"
 #include "ArnMesh.h"
 #include "ArnMaterial.h"
 #include "ResourceMan.h"
 #include "Character.h"
+#include "ArnFile.h"
+#include "ArnSceneGraph.h"
 
 DefaultRenderLayer::DefaultRenderLayer(Character* pChar)
 {
@@ -150,7 +151,7 @@ HRESULT BoxRenderLayer::render()
 	unsigned int i, j;
 	for (i = 0; i < m_objects.size(); ++i)
 	{
-		if (m_objects[i]->getType() == NDT_MESH4)
+		if (m_objects[i]->getType() == NDT_MESH3)
 		{
 			ArnMesh* mesh = (ArnMesh*)m_objects[i];
 			D3DXMatrixIdentity(&transform);
@@ -193,7 +194,7 @@ HRESULT BoxRenderLayer::render()
 BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0)
 {
-	VideoMan& videoMan = VideoMan::getSingleton();
+	/*VideoMan& videoMan = VideoMan::getSingleton();
 	if (FAILED(load_arn("models/gus2.arn", m_objects)))
 	{
 		DebugBreak();
@@ -220,7 +221,14 @@ BoxRenderLayer::BoxRenderLayer()
 	if (arnCam)
 	{
 		videoMan.SetCamera(*arnCam);
-	}
+	}*/
+
+	ArnFileData arnFileData;
+	load_arnfile("models/gus2.arn", arnFileData);
+	ArnSceneGraph arnSG(arnFileData);
+	release_arnfile(arnFileData);
+
+
 }
 
 BoxRenderLayer::~BoxRenderLayer()

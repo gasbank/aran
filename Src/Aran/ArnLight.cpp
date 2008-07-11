@@ -2,7 +2,7 @@
 #include "ArnLight.h"
 #include "ArnFile.h"
 ArnLight::ArnLight()
-: ArnNode(NDT_LIGHT)
+: ArnNode(NDT_RT_LIGHT)
 {
 }
 
@@ -10,19 +10,38 @@ ArnLight::~ArnLight(void)
 {
 }
 
-ArnNode* ArnLight::createFromNodeBase( const NodeBase* nodeBase )
+ArnNode* ArnLight::createFrom( const NodeBase* nodeBase )
 {
-	if (nodeBase->m_ndt != NDT_LIGHT)
-		throw MyError(MEE_RTTI_INCONSISTENCY);
-	const NodeLight* nl = static_cast<const NodeLight*>(nodeBase);
 	ArnLight* node = new ArnLight();
-	node->setData(nl);
-
+	try
+	{
+		switch (nodeBase->m_ndt)
+		{
+		case NDT_LIGHT1:
+			node->buildFrom(static_cast<const NodeLight1*>(nodeBase));
+			break;
+		case NDT_LIGHT2:
+			node->buildFrom(static_cast<const NodeLight2*>(nodeBase));
+			break;
+		default:
+			throw MyError(MEE_UNDEFINED_ERROR);
+		}
+	}
+	catch (const MyError& e)
+	{
+		delete node;
+		throw e;
+	}
 	return node;
 }
 
-void ArnLight::setData( const NodeLight* nl )
+void ArnLight::buildFrom( const NodeLight1* nl )
 {
 	m_data = nl;
 	setName(m_data->m_nodeName);
+}
+
+void ArnLight::buildFrom( const NodeLight2* nl )
+{
+
 }

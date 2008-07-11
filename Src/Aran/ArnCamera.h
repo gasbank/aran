@@ -1,20 +1,28 @@
 #pragma once
 #include "ArnNode.h"
-struct NodeCamera;
+
+struct NodeCamera1;
+struct NodeCamera2;
 struct NodeBase;
-class ArnCamera :
-	public ArnNode
+
+class ArnCamera : public ArnNode
 {
 public:
 	ArnCamera();
 	~ArnCamera(void);
-	ArnCameraOb& getOb() { return m_ob; }
-	const char* getName() const { return m_ob.hdr->name; }
-	const D3DXMATRIX* getLocalTransform() const { return (D3DXMATRIX*)m_ob.hdr->localTf; }
 
-	static ArnNode* createFromNodeBase(const NodeBase* nodeBase);
-	void setData(const NodeCamera* nc);
+	static ArnNode*		createFrom(const NodeBase* nodeBase);
+
+	ArnCameraOb&		getOb() { return m_ob; }
+	const char*			getName() const { return m_ob.hdr->name; }
+	const D3DXMATRIX*	getLocalTransform() const { return (D3DXMATRIX*)m_ob.hdr->localTf; }
+
 private:
-	ArnCameraOb m_ob;
-	const NodeCamera* m_data;
+	void				buildFrom(const NodeCamera1* nc);
+	void				buildFrom(const NodeCamera2* nc);
+
+	ArnCameraOb			m_ob;
+	const NodeCamera1*	m_data;
+
+	
 };

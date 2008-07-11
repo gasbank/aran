@@ -11,7 +11,16 @@ struct NodeUnidentified : public NodeBase
 {
 	int m_dummy;
 };
-
+struct MaterialData
+{
+	char* m_materialName;
+	D3DMATERIAL9* m_d3dMaterial;
+};
+struct NodeMaterial1 : public NodeBase
+{
+	unsigned int m_materialCount;
+	std::vector<MaterialData> m_materials;
+};
 struct NodeMesh2 : public NodeBase
 {
 	~NodeMesh2() { delete [] m_mtds; }
@@ -23,40 +32,39 @@ struct NodeMesh2 : public NodeBase
 	unsigned int* m_materialRefs;
 	unsigned int m_materialCount;
 	ARN_MTD_Data* m_mtds;
-
-	// TODO: Anim1 node follows at the very end of this node
-	// which is not included in total node count at top level field!
-	// ---> should be reorganized!
-	NodeBase* m_nodeAnim1;
 };
-
+struct NodeMesh3 : public NodeBase
+{
+	char* m_parentName;
+	D3DXMATRIX* m_localXform;
+	D3DXMATRIX* m_unusedXform;
+	unsigned int m_materialCount;
+	unsigned int m_meshVerticesCount;
+	unsigned int m_meshFacesCount;
+	DWORD* m_attrToMaterialMap;
+	ArnVertex* m_vertex;
+	unsigned short* m_faces;
+	DWORD* m_attr;
+};
 struct NodeAnim1 : public NodeBase
 {
 	unsigned int m_keyCount;
 	RST_DATA* m_rstKeys;
 };
 
-struct BoneData : public NodeBase
+struct NodeBone1 : public NodeBase
 {
 	D3DMATRIX* m_offsetMatrix;
 	unsigned int m_infVertexCount; // influencing vertex count
 	unsigned int* m_vertexIndices;
 	float* m_weights;
-	
-	// TODO: Anim1 node follows at the very end of this node
-	// which is not included in total node count at top level field!
-	// ---> should be reorganized!
-	NodeBase* m_nodeAnim1;
 };
 
-struct NodeSkeleton : public NodeBase
+struct NodeSkeleton1 : public NodeBase
 {
-	~NodeSkeleton() { delete [] m_bones; }
 	char* m_associatedMeshName;
 	unsigned int m_maxWeightsPerVertex;
-
 	unsigned int m_boneCount;
-	NodeBase** m_bones; // Bone Data node
 };
 
 struct MyFrameData
@@ -67,21 +75,38 @@ struct MyFrameData
 	int m_firstChild;
 };
 
-struct NodeHierarchy : public NodeBase
+struct NodeHierarchy1 : public NodeBase
 {
-	~NodeHierarchy() { delete [] m_frames; }
+	~NodeHierarchy1() { delete [] m_frames; }
 	unsigned int m_frameCount;
 	MyFrameData* m_frames;
 };
 
-struct NodeLight : public NodeBase
+struct NodeLight1 : public NodeBase
 {
 	D3DLIGHT9* m_light;
 };
-
-struct NodeCamera : public NodeBase
+struct NodeLight2 : public NodeBase
+{
+	char* m_parentName;
+	D3DXMATRIX* m_localXform;
+	D3DLIGHT9* m_light;
+};
+struct NodeCamera1 : public NodeBase
 {
 	ARN_NDD_CAMERA_CHUNK* m_camera;
+};
+struct NodeCamera2 : public NodeBase
+{
+	enum CamType { CT_ORTHO = 1, CT_PERSP = 0 };
+
+	char* m_parentName;
+	D3DXMATRIX* m_localXform;
+	CamType m_camType;
+	float m_angle;
+	float m_clipStart;
+	float m_clipEnd;
+	float m_scale;
 };
 
 struct ArnBinaryFile
@@ -95,7 +120,8 @@ struct ArnFileData
 {
 	char* m_fileDescriptor;
 	unsigned int m_nodeCount;
-	NodeBase** m_nodes;
+	typedef std::vector<NodeBase*> NodeList;
+	NodeList m_nodes;
 	char* m_terminalDescriptor;
 
 	ArnBinaryFile m_file;
@@ -108,13 +134,17 @@ void release_arnfile(ArnFileData& afd);
 
 void parse_node(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeUnidentified(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeMaterial1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh2(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeSkeleton(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeHierarchy(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeLight(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeCamera(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeMesh3(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeSkeleton1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeHierarchy1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeLight1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeLight2(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeCamera1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeCamera2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeBone(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeBone1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 

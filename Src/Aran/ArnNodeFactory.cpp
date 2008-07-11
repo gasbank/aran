@@ -6,34 +6,44 @@
 #include "ArnLight.h"
 #include "ArnCamera.h"
 #include "ArnFile.h"
-#include "ArnAnim1.h"
+#include "ArnAnim.h"
+#include "ArnBone.h"
+#include "ArnMaterial.h"
 
 ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 {
 	ArnNode* node = 0;
 	switch (nodeBase->m_ndt)
 	{
-	case NDT_MESH1:
 	case NDT_MESH2:
 	case NDT_MESH3:
-		node = ArnMesh::createFromNodeBase(nodeBase);
+		node = ArnMesh::createFrom(nodeBase);
 		break;
-	case NDT_SKELETON:
+	case NDT_SKELETON1:
 		node = ArnSkeleton::createFromNodeBase(nodeBase);
 		break;
-	case NDT_HIERARCHY:
+	case NDT_HIERARCHY1:
 		node = ArnHierarchy::createFromNodeBase(nodeBase);
 		break;
-	case NDT_LIGHT:
-		node = ArnLight::createFromNodeBase(nodeBase);
+	case NDT_LIGHT1:
+	case NDT_LIGHT2:
+		node = ArnLight::createFrom(nodeBase);
 		break;
-	case NDT_CAMERA:
-		node = ArnCamera::createFromNodeBase(nodeBase);
+	case NDT_CAMERA1:
+	case NDT_CAMERA2:
+		node = ArnCamera::createFrom(nodeBase);
 		break;
 	case NDT_ANIM1:
-		node = ArnAnim1::createFromNodeBase(nodeBase);
+		node = ArnAnim::createFromNodeBase(nodeBase);
 		break;
-	default: // unidentified node, maybe corrupted or unsupported; skip the node
+	case NDT_BONE1:
+		node = ArnBone::createFrom(nodeBase);
+		break;
+	case NDT_MATERIAL1:
+		node = ArnMaterial::createFrom(nodeBase);
+		break;
+	default:
+		// unidentified node, maybe corrupted or unsupported; skip the node
 		throw MyError(MEE_UNDEFINED_ERROR);
 	}
 

@@ -290,7 +290,7 @@ HRESULT ModelExporter::ExportNDD_BoneHierarchy()
 	//
 	size_t boneHierarchySize = this->boneHierarchy.size();
 
-	int ndt = NDT_HIERARCHY;
+	int ndt = NDT_HIERARCHY1;
 	int chunkSize = -1;
 	this->fout.write((char*)&ndt, sizeof(int));
 	this->fout.write("Bone Hierarchy", (int)strlen("Bone Hierarchy") + 1);
@@ -1101,7 +1101,7 @@ int ModelExporter::ExportNDD_Camera( IGameNode* node )
 	camChunk.farClip = farClip;
 	camChunk.nearClip = nearClip;
 	
-	int ndt = NDT_CAMERA;
+	int ndt = NDT_CAMERA1;
 	int chunkSize = 12 + 12 + 16 + 12 + 12 + 4 + 4;
 	
 	this->fout.write( (char*)&ndt, sizeof( int ) );
@@ -1694,7 +1694,7 @@ HRESULT ModelExporter::ExportNDD_SkinningData(IGameNode* meshNodeToBeSkinned)
 	//
 	// Write NDD header
 	//
-	int ndt = NDT_SKELETON;
+	int ndt = NDT_SKELETON1;
 	int chunkSize = -1;
 	this->fout.write((char*)&ndt, sizeof(int));
 	this->fout.write(skeletonNodeName.c_str(), (int)strlen(skeletonNodeName.c_str())+1); // write skeleton name
@@ -1796,7 +1796,7 @@ HRESULT ModelExporter::ExportNDD_SkinningData(IGameNode* meshNodeToBeSkinned)
 	for (ptr = boneIndices.begin(), end = boneIndices.end(); ptr != end; ptr++)
 	{
 		IGameNode* boneNode = ptr->first;
-		int boneNdt = NDT_BONE;
+		int boneNdt = NDT_BONE1;
 		int boneChunkSize = 0;
 		this->fout.write((char*)&boneNdt, sizeof(int));
 		this->fout.write(boneNode->GetName(), (int)strlen(boneNode->GetName()) + 1); // write Bone Name

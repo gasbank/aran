@@ -1,12 +1,14 @@
 #pragma once
 #include "ArnNode.h"
+
 struct NodeBase;
 struct NodeAnim1;
-class ArnAnim1 : public ArnNode
+
+class ArnAnim : public ArnNode
 {
 public:
-	ArnAnim1(void);
-	~ArnAnim1(void);
+	ArnAnim(void);
+	~ArnAnim(void);
 
 	static ArnNode* createFromNodeBase(const NodeBase* nodeBase);
 	

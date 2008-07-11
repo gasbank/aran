@@ -2,7 +2,7 @@
 #include "ArnNode.h"
 struct NodeBase;
 class ArnNode;
-struct NodeHierarchy;
+struct NodeHierarchy1;
 class ArnHierarchy : public ArnNode
 {
 public:
@@ -10,7 +10,7 @@ public:
 	~ArnHierarchy(void);
 
 	static ArnNode* createFromNodeBase(const NodeBase* nodeBase);
-	void setData(const NodeHierarchy* nh);
+	void setData(const NodeHierarchy1* nh);
 private:
-	const NodeHierarchy* m_data;
+	const NodeHierarchy1* m_data;
 };

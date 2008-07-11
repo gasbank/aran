@@ -1,14 +1,21 @@
 #pragma once
+#include "ArnNode.h"
 
-#include "ArnObject.h"
+struct NodeBase;
+struct NodeMaterial1;
 
-class ArnMaterial : public ArnObject
+class ArnMaterial : public ArnNode
 {
 public:
 	ArnMaterial();
 	~ArnMaterial(void);
-	ArnMaterialOb& getOb() { return m_ob; }
-	const char* getName() const { return m_ob.hdr->name; }
+	
+	static ArnNode*		createFrom(const NodeBase* nodeBase);
+
+	ArnMaterialOb&		getOb() { return m_ob; }
+	const char*			getName() const { return m_ob.hdr->name; }
 private:
-	ArnMaterialOb m_ob;
+	void				buildFrom(const NodeMaterial1* nm);
+
+	ArnMaterialOb		m_ob;
 };

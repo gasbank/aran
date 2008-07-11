@@ -18,7 +18,6 @@ ModelReader::ModelReader(void)
 	clearMembers();
 
 	ZeroMemory(this->szFileName, sizeof(this->szFileName));
-	ZeroMemory(this->nodeTypeCounter, sizeof(this->nodeTypeCounter));
 
 	// for skinned mesh feature
 	ZeroMemory(&this->meshContainer, sizeof(meshContainer));
@@ -33,7 +32,6 @@ ModelReader::ModelReader(LPDIRECT3DDEVICE9 lpDev, DWORD fvf)
 	this->fvf = fvf;
 
 	ZeroMemory(this->szFileName, sizeof(this->szFileName));
-	ZeroMemory(this->nodeTypeCounter, sizeof(this->nodeTypeCounter));
 
 	// for skinned mesh feature
 	ZeroMemory(&this->meshContainer, sizeof(meshContainer));
@@ -62,6 +60,15 @@ void ModelReader::clearMembers()
 	useLocalAC				= FALSE;
 	initialized				= FALSE;
 	szFileName[0]			= _T('\0');
+	
+	nodeTypeCounter.clear();
+	nodeTypeCounter[NDT_MESH1] = 0;
+	nodeTypeCounter[NDT_MESH2] = 0;
+	nodeTypeCounter[NDT_LIGHT1] = 0;
+	nodeTypeCounter[NDT_CAMERA1] = 0;
+	nodeTypeCounter[NDT_SKELETON1] = 0;
+	nodeTypeCounter[NDT_BONE1] = 0;
+	nodeTypeCounter[NDT_ANIM1] = 0;
 }
 void ModelReader::SetFileName( const TCHAR* fileName )
 {
@@ -273,7 +280,7 @@ int ModelReader::ParseNDD_Skeleton(int nodeHeaderIndex)
 		NODE_DATA_TYPE boneNdt = NDT_UNKNOWN;
 		int boneChunkSize = -1;
 		this->fin.read((char*)&boneNdt, sizeof(int));
-		assert(boneNdt == NDT_BONE);
+		assert(boneNdt == NDT_BONE1);
 		this->fin.getline(skelNode.bones[j].nameFixed, sizeof(skelNode.bones[j].nameFixed), '\0');
 		this->fin.read((char*)&boneChunkSize, sizeof(int));
 		this->fin.read((char*)skelNode.bones[j].offsetMatrix.m, 4*4*sizeof(float));
@@ -298,7 +305,7 @@ int ModelReader::ParseNDD_Skeleton(int nodeHeaderIndex)
 		skelNode.bones[j].keys.resize(keyframeCount);
 		this->fin.read((char*)&skelNode.bones[j].keys[0], keyframeCount * sizeof(RST_DATA));*/
 
-		this->ParseNDD_Anim(NDT_SKELETON, &skelNode.bones[j]);
+		this->ParseNDD_Anim(NDT_SKELETON1, &skelNode.bones[j]);
 
 	}
 
@@ -720,7 +727,7 @@ HRESULT ModelReader::ParseNDD_Anim(NODE_DATA_TYPE belongsToType, Bone* pBone)
 			this->animQuat.push_back(new RST_DATA[frameCount]);
 			this->fin.read((char*)this->animQuat.back(), sizeof(RST_DATA) * frameCount);
 		}
-		else if (belongsToType == NDT_SKELETON)
+		else if (belongsToType == NDT_SKELETON1)
 		{
 			pBone->keys.resize(frameCount);
 			this->fin.read((char*)&pBone->keys[0], frameCount * sizeof(RST_DATA));
@@ -816,16 +823,16 @@ int ModelReader::Read(const TCHAR *fileName)
 			this->ParseNDD_Mesh2(i);
 			this->ParseNDD_Anim(NDT_MESH2, 0); // child NDD structure
 			break;
-		case NDT_SKELETON:
+		case NDT_SKELETON1:
 			this->ParseNDD_Skeleton(i);
 			break;
-		case NDT_HIERARCHY:
+		case NDT_HIERARCHY1:
 			this->ParseNDD_Hierarchy(i);
 			break;
-		case NDT_LIGHT:
+		case NDT_LIGHT1:
 			this->ParseNDD_Light(i);
 			break;
-		case NDT_CAMERA:
+		case NDT_CAMERA1:
 			this->ParseNDD_Camera( i );
 			break;
 		default:

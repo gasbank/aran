@@ -203,7 +203,8 @@ private:
 	std::vector<LPD3DXKEYFRAMEDANIMATIONSET> lpKeyframedAnimationSetList;
 
 	std::vector<ArnNodeHeader>		nodeHeaders;
-	int								nodeTypeCounter[32];
+	typedef std::map<NODE_DATA_TYPE, unsigned int> NodeTypeMap;
+	NodeTypeMap						nodeTypeCounter;
 
 	std::ifstream					fin;
 
