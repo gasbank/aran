@@ -21,6 +21,7 @@ public:
 	ArnNode*				getLastNode();
 	ArnNode*				getNodeByName(const STRING& name);
 	ArnNode*				getNodeAt(unsigned int idx);
+	unsigned int			getNodeCount() const { return m_children.size(); }
 
 	// *** INTERNAL USE ONLY START ***
 	void					setParent(ArnNode* node) { m_parent = node; }

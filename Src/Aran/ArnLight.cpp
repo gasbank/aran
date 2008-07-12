@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "ArnLight.h"
 #include "ArnFile.h"
 ArnLight::ArnLight()

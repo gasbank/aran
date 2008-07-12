@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "DefaultRenderLayer.h"
 #include "VideoMan.h"
 #include "ArnMesh.h"
@@ -193,7 +193,7 @@ BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0)
 {
 	m_arnFileData = new ArnFileData;
-	load_arnfile("models/gus2.arn", *m_arnFileData);
+	load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
 	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 

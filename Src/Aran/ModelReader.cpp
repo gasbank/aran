@@ -2,7 +2,7 @@
 // 2007 Geoyeob Kim
 //
 
-#include "stdafx.h"
+#include "AranPCH.h"
 
 #include "ModelReader.h"
 

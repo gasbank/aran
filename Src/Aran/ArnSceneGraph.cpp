@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "ArnSceneGraph.h"
 #include "ArnFile.h"
 #include "ArnContainer.h"
@@ -17,6 +17,8 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 		throw MyError(MEE_UNSUPPORTED_ARNFILE);
 
 	m_sceneRoot = new ArnContainer();
+	m_sceneRoot->setName("ARN Scene Graph Root");
+
 	unsigned int i;
 	// Create a ArnNode from NodeBase and construct a scene graph
 	// according to the implicit or explicit hierarchy definition.

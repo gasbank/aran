@@ -404,3 +404,10 @@ BOOL CMainFrame::LoadFrame(UINT nIDResource, DWORD dwDefaultStyle, CWnd* pParent
 	return TRUE;
 }
 
+class ArnSceneGraph;
+
+void CMainFrame::updateSceneGraph(ArnSceneGraph* sg)
+{
+	m_wndClassView.updateSceneGraph(sg, &m_wndOutput);
+
+}

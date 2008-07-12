@@ -11,6 +11,8 @@
 #include "NodeViewerDoc.h"
 #include "NodeViewerView.h"
 
+#include "ArnSceneGraph.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -220,6 +222,7 @@ void CNodeViewerApp::OnFileOpen()
 	CNodeViewerView* pView = (CNodeViewerView*)pChildFrm->GetActiveView();
 	CNodeViewerDoc* pDoc = pView->GetDocument();
 
-	
-	AfxMessageBox(pDoc->GetTitle());
+	pView->updateSceneGraph();
+	pMainFrm->updateSceneGraph(pDoc->getSimpleSG());
+	//AfxMessageBox(pDoc->GetTitle());
 }

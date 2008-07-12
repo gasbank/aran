@@ -4,6 +4,8 @@
 /////////////////////////////////////////////////////////////////////////////
 // COutputList window
 
+class CClassView;
+
 class COutputList : public CListBox
 {
 // Construction
@@ -19,8 +21,14 @@ protected:
 	afx_msg void OnEditCopy();
 	afx_msg void OnEditClear();
 	afx_msg void OnViewOutput();
+	afx_msg void OnFindInSceneGraph();
 
 	DECLARE_MESSAGE_MAP()
+public:
+	CClassView* m_wndClassView;
+protected:
+private:
+	HTREEITEM m_prevFound;
 };
 
 class COutputWnd : public CDockablePane
@@ -48,12 +56,21 @@ protected:
 
 // Implementation
 public:
+	void insertNodeName(const CString& name, HTREEITEM treeItem);
+	void setWndClassView(CClassView* val) { m_wndClassView = val; m_wndOutputBuild.m_wndClassView = val; }
+	CClassView* getWndClassView() { return m_wndClassView; }
 	virtual ~COutputWnd();
 
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnFindInSceneGraph();
 
 	DECLARE_MESSAGE_MAP()
+
+private:
+	
+	CClassView* m_wndClassView;
+	
 };
 

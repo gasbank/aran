@@ -4,6 +4,9 @@
 #include "ClassView.h"
 #include "Resource.h"
 #include "NodeViewer.h"
+#include "OutputWnd.h"
+#include "ArnSceneGraph.h"
+#include "ArnNode.h"
 
 class CClassViewMenuButton : public CMFCToolBarMenuButton
 {
@@ -46,7 +49,9 @@ CClassView::~CClassView()
 }
 
 BEGIN_MESSAGE_MAP(CClassView, CDockablePane)
-	ON_WM_CREATE()
+
+
+ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_CLASS_ADD_MEMBER_FUNCTION, OnClassAddMemberFunction)
@@ -110,7 +115,7 @@ int CClassView::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	// Fill in some static tree view data (dummy code, nothing magic here)
-	FillClassView();
+	//FillClassView();
 
 	return 0;
 }
@@ -321,3 +326,32 @@ void CClassView::OnChangeVisualStyle()
 	m_wndToolBar.LoadBitmap(theApp.m_bHiColorIcons ? IDB_SORT_24 : IDR_SORT, 0, 0, TRUE /* Locked */);
 }
 
+void CClassView::updateSceneGraph(ArnSceneGraph* sg, COutputWnd* outputWnd)
+{
+	m_outputWnd = outputWnd;
+	m_outputWnd->setWndClassView(this);
+	ArnNode* rootNode = sg->getSceneRoot();
+
+	CString nodeName(rootNode->getName());
+	HTREEITEM hRoot = m_wndClassView.InsertItem(nodeName, 0, 0);
+	//m_wndClassView.SetItemState(hRoot, TVIS_BOLD, TVIS_BOLD);
+	
+	m_outputWnd->insertNodeName(nodeName, hRoot);
+	buildSceneGraph(rootNode, hRoot);
+
+	m_wndClassView.Expand(hRoot, TVE_EXPAND);
+}
+
+void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
+{
+	unsigned int childrenCount = node->getNodeCount();
+	unsigned int i;
+	for (i = 0; i < childrenCount; ++i)
+	{
+		ArnNode* childNode = node->getNodeAt(i);
+		CString childNodeName(childNode->getName());
+		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, 1, 1, treeParent);
+		m_outputWnd->insertNodeName(childNodeName, hChild);
+		buildSceneGraph(childNode, hChild);
+	}
+}

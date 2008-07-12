@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include "ArnFile.h"
+
+class ArnSceneGraph;
 
 class CNodeViewerDoc : public CDocument
 {
@@ -17,6 +20,7 @@ public:
 
 // Operations
 public:
+	ArnSceneGraph* getSimpleSG() const { return m_simpleSG; }
 
 // Overrides
 public:
@@ -38,6 +42,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	virtual BOOL OnOpenDocument(LPCTSTR lpszPathName);
+	virtual void OnCloseDocument();
+
+private:
+	ArnFileData m_afd;
+	ArnSceneGraph* m_simpleSG;
+	
 };
 
 

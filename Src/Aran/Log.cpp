@@ -3,7 +3,7 @@
 // 2008 Geoyoeb, Kim (Second Revision: Aran Project)
 
 
-#include "stdafx.h"
+#include "AranPCH.h"
 
 #include "Log.h"
 

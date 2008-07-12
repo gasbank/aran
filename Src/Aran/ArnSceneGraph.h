@@ -12,6 +12,7 @@ public:
 	~ArnSceneGraph(void);
 
 	static ArnSceneGraph*	createFrom(const ArnFileData& afd);
+	ArnNode*				getSceneRoot() const { return m_sceneRoot; }
 
 private:
 	void					postprocessingARN20();

@@ -8,6 +8,8 @@
 #include "OutputWnd.h"
 #include "PropertiesWnd.h"
 
+class ArnSceneGraph;
+
 class CMainFrame : public CMDIFrameWndEx
 {
 	DECLARE_DYNAMIC(CMainFrame)
@@ -20,7 +22,7 @@ public:
 // Operations
 public:
 	CClassView& getWndClassView() { return m_wndClassView; }
-
+	void updateSceneGraph(ArnSceneGraph* sg);
 // Overrides
 public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);

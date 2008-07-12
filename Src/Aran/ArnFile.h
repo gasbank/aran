@@ -123,7 +123,7 @@ struct ArnFileData
 
 
 
-void load_arnfile(const char* fileName, ArnFileData& afd);
+void load_arnfile(const TCHAR* fileName, ArnFileData& afd);
 void release_arnfile(ArnFileData& afd);
 
 void parse_node(ArnBinaryFile& abf, NodeBase*& nodeBase);
@@ -142,7 +142,7 @@ void parse_nodeBone1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 
-void			file_load(const char* fileName, ArnBinaryFile& file);
+void			file_load(const TCHAR* fileName, ArnBinaryFile& file);
 void			file_unload(ArnBinaryFile& file);
 
 

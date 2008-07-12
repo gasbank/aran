@@ -4,6 +4,7 @@
 #include "OutputWnd.h"
 #include "Resource.h"
 #include "MainFrm.h"
+#include "ClassView.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -16,6 +17,7 @@ static char THIS_FILE[] = __FILE__;
 
 COutputWnd::COutputWnd()
 {
+
 }
 
 COutputWnd::~COutputWnd()
@@ -25,6 +27,7 @@ COutputWnd::~COutputWnd()
 BEGIN_MESSAGE_MAP(COutputWnd, CDockablePane)
 	ON_WM_CREATE()
 	ON_WM_SIZE()
+	
 END_MESSAGE_MAP()
 
 int COutputWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -47,7 +50,7 @@ int COutputWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// Create output panes:
 	const DWORD dwStyle = LBS_NOINTEGRALHEIGHT | WS_CHILD | WS_VISIBLE | WS_HSCROLL | WS_VSCROLL;
 
-	if (!m_wndOutputBuild.Create(dwStyle, rectDummy, &m_wndTabs, 2) ||
+	if (!m_wndOutputBuild.Create(dwStyle | LBS_SORT, rectDummy, &m_wndTabs, 2) ||
 		!m_wndOutputDebug.Create(dwStyle, rectDummy, &m_wndTabs, 3) ||
 		!m_wndOutputFind.Create(dwStyle, rectDummy, &m_wndTabs, 4))
 	{
@@ -74,7 +77,7 @@ int COutputWnd::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	m_wndTabs.AddTab(&m_wndOutputFind, strTabName, (UINT)2);
 
 	// Fill output tabs with some dummy text (nothing magic here)
-	FillBuildWindow();
+	//FillBuildWindow();
 	FillDebugWindow();
 	FillFindWindow();
 
@@ -129,11 +132,27 @@ void COutputWnd::FillFindWindow()
 	m_wndOutputFind.AddString(_T("but you can change the way it is displayed as you wish..."));
 }
 
+void COutputWnd::insertNodeName( const CString& name, HTREEITEM treeItem )
+{
+	int index = m_wndOutputBuild.AddString(name);
+	m_wndOutputBuild.SetItemData(index, (DWORD_PTR)treeItem);
+}
+
+void COutputWnd::OnFindInSceneGraph()
+{
+	HTREEITEM treeItem = (HTREEITEM)m_wndOutputBuild.GetCurSel();
+
+	//tree.EnsureVisible(treeItem);
+	CViewTree& tree = m_wndClassView->getWndClassView();
+	tree.InsertItem(_T("xxx"), 0, 0, tree.GetRootItem());
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // COutputList1
 
 COutputList::COutputList()
 {
+	m_prevFound = 0;
 }
 
 COutputList::~COutputList()
@@ -145,6 +164,7 @@ BEGIN_MESSAGE_MAP(COutputList, CListBox)
 	ON_COMMAND(ID_EDIT_COPY, OnEditCopy)
 	ON_COMMAND(ID_EDIT_CLEAR, OnEditClear)
 	ON_COMMAND(ID_VIEW_OUTPUTWND, OnViewOutput)
+	ON_COMMAND(ID_FIND_IN_SCENE_GRAPH, OnFindInSceneGraph)
 	ON_WM_WINDOWPOSCHANGING()
 END_MESSAGE_MAP()
 /////////////////////////////////////////////////////////////////////////////
@@ -196,3 +216,17 @@ void COutputList::OnViewOutput()
 }
 
 
+void COutputList::OnFindInSceneGraph()
+{
+	HTREEITEM treeItem = (HTREEITEM)GetItemData(GetCurSel());
+	
+	CViewTree& tree = m_wndClassView->getWndClassView();
+	tree.EnsureVisible(treeItem);
+	tree.SetItemState(treeItem, TVIS_BOLD, TVIS_BOLD);
+	//tree.InsertItem(_T("xxx"), 0, 0, tree.GetRootItem());
+
+	if (m_prevFound)
+		tree.SetItemState(m_prevFound, 0, TVIS_BOLD);
+
+	m_prevFound = treeItem;
+}

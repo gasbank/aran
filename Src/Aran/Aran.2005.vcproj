@@ -16,10 +16,10 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
-			OutputDirectory="../../Working"
+			Name="DebugLib|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="1"
 			>
 			<Tool
@@ -51,6 +51,7 @@
 				BufferSecurityCheck="true"
 				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranPCH.h"
 				WarningLevel="3"
 				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
@@ -67,23 +68,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
-				OutputFile="$(OutDir)/$(ProjectName).exe"
-				LinkIncremental="2"
-				AdditionalLibraryDirectories=""
-				GenerateDebugInformation="true"
-				AssemblyDebug="1"
-				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -93,9 +81,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -429,6 +414,30 @@
 			>
 		</File>
 		<File
+			RelativePath=".\AranPCH.cpp"
+			>
+			<FileConfiguration
+				Name="DebugLib|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
+				/>
+			</FileConfiguration>
+		</File>
+		<File
+			RelativePath=".\AranPCH.h"
+			>
+		</File>
+		<File
 			RelativePath=".\Arn.cd"
 			>
 		</File>
@@ -494,30 +503,6 @@
 		</File>
 		<File
 			RelativePath=".\Singleton.h"
-			>
-		</File>
-		<File
-			RelativePath=".\stdafx.cpp"
-			>
-			<FileConfiguration
-				Name="Debug|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="Release|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\stdafx.h"
 			>
 		</File>
 		<File

@@ -3,6 +3,10 @@
 
 #include "ViewTree.h"
 
+class COutputWnd;
+class ArnSceneGraph;
+class ArnNode;
+
 class CClassToolBar : public CMFCToolBar
 {
 	virtual void OnUpdateCmdUI(CFrameWnd* /*pTarget*/, BOOL bDisableIfNoHndler)
@@ -25,6 +29,7 @@ public:
 protected:
 	CClassToolBar m_wndToolBar;
 	CViewTree m_wndClassView;
+	
 	CImageList m_ClassViewImages;
 	UINT m_nCurrSort;
 
@@ -51,5 +56,10 @@ protected:
 
 	DECLARE_MESSAGE_MAP()
 public:
+	void updateSceneGraph(ArnSceneGraph* sg, COutputWnd* outputWnd);
+	CViewTree& getWndClassView() { return m_wndClassView; }
+private:
+	void buildSceneGraph(ArnNode* node, HTREEITEM treeParent);
+	COutputWnd* m_outputWnd;
 };
 

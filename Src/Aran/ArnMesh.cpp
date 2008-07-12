@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "ArnMesh.h"
 #include "ArnFile.h"
 #include "VideoMan.h"
@@ -40,18 +40,24 @@ ArnNode* ArnMesh::createFrom( const NodeBase* nodeBase )
 }
 
 void ArnMesh::buildFrom(const NodeMesh2* nm)
-{
-	LPD3DXMESH d3dxMesh;
-	arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
-	setD3DXMesh(d3dxMesh);
+{	
+	if (VideoMan::getSingletonPtr())
+	{
+		LPD3DXMESH d3dxMesh;
+		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
+		setD3DXMesh(d3dxMesh);
+	}
 }
 
 void ArnMesh::buildFrom(const NodeMesh3* nm)
 {
 	setLocalXform(*nm->m_localXform);
-	LPD3DXMESH d3dxMesh;
-	arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
-	setD3DXMesh(d3dxMesh);
+	if (VideoMan::getSingletonPtr())
+	{
+		LPD3DXMESH d3dxMesh;
+		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
+		setD3DXMesh(d3dxMesh);
+	}
 }
 
 

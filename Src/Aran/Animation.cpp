@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "Animation.h"
 
 Animation::Animation( unsigned int totalCurveCount )

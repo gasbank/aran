@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "AranPCH.h"
 
 #ifndef DIRECTINPUT_VERSION
 #define DIRECTINPUT_VERSION 0x0800

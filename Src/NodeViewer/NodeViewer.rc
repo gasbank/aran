@@ -324,6 +324,7 @@ IDR_OUTPUT_POPUP MENU
 BEGIN
     POPUP "Popup"
     BEGIN
+        MENUITEM "Find In Scene Graph",         32773
         MENUITEM "&Copy",                       ID_EDIT_COPY
         MENUITEM "&Clear",                      ID_EDIT_CLEAR
         MENUITEM SEPARATOR

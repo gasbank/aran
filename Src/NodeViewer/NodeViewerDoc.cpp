@@ -7,6 +7,8 @@
 
 #include "NodeViewerDoc.h"
 
+#include "ArnSceneGraph.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -25,11 +27,14 @@ END_MESSAGE_MAP()
 CNodeViewerDoc::CNodeViewerDoc()
 {
 	// TODO: add one-time construction code here
-
+	m_simpleSG = 0;
+	m_afd.m_fileDescriptor = 0;
 }
 
 CNodeViewerDoc::~CNodeViewerDoc()
 {
+	release_arnfile(m_afd);
+	delete m_simpleSG;
 }
 
 BOOL CNodeViewerDoc::OnNewDocument()
@@ -85,5 +90,16 @@ BOOL CNodeViewerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 
 	// TODO:  Add your specialized creation code here
 	
+	load_arnfile(lpszPathName, m_afd);
+	m_simpleSG = new ArnSceneGraph(m_afd);
+
 	return TRUE;
+}
+
+void CNodeViewerDoc::OnCloseDocument()
+{
+	// TODO: Add your specialized code here and/or call the base class
+	release_arnfile(m_afd);
+
+	CDocument::OnCloseDocument();
 }

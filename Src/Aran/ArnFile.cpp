@@ -1,8 +1,8 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "ArnFile.h"
 
 
-void load_arnfile( const char* fileName, ArnFileData& afd )
+void load_arnfile( const TCHAR* fileName, ArnFileData& afd )
 {
 	file_load(fileName, afd.m_file);
 
@@ -260,6 +260,9 @@ void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase)
 
 void release_arnfile( ArnFileData& afd )
 {
+	if (afd.m_fileDescriptor == 0) // afd was not initialized
+		return;
+
 	ArnFileData::NodeList::iterator it = afd.m_nodes.begin();
 	for (; it != afd.m_nodes.end(); ++it)
 	{
@@ -273,10 +276,11 @@ void release_arnfile( ArnFileData& afd )
 
 //////////////////////////////////////////////////////////////////////////
 
-void file_load( const char* fileName, ArnBinaryFile& file )
+void file_load( const TCHAR* fileName, ArnBinaryFile& file )
 {
 	FILE* f;
-	fopen_s(&f, fileName, "rb");
+
+	_tfopen_s(&f, fileName, _T("rb"));
 	if (!f)
 		throw std::runtime_error("File open error");
 	fseek(f, 0, SEEK_END);
@@ -291,6 +295,7 @@ void file_load( const char* fileName, ArnBinaryFile& file )
 void file_unload( ArnBinaryFile& file )
 {
 	delete file.m_data;
+	file.m_data = 0;
 }
 
 

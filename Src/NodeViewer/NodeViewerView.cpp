@@ -8,6 +8,8 @@
 #include "NodeViewerDoc.h"
 #include "NodeViewerView.h"
 
+#include "ArnSceneGraph.h"
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -54,8 +56,8 @@ void CNodeViewerView::OnDraw(CDC* pDC)
 		return;
 
 	// TODO: add draw code for native data here
-	RECT rect = { 0, 0, 100, 100 };
-	pDC->DrawText(_T("Hello?"), &rect, DT_CENTER);
+	RECT rect = { 0, 0, 300, 100 };
+	pDC->DrawText(m_drawUpdatedText, &rect, DT_CENTER);
 }
 
 
@@ -112,6 +114,15 @@ CNodeViewerDoc* CNodeViewerView::GetDocument() const // non-debug version is inl
 {
 	ASSERT(m_pDocument->IsKindOf(RUNTIME_CLASS(CNodeViewerDoc)));
 	return (CNodeViewerDoc*)m_pDocument;
+}
+
+void CNodeViewerView::updateSceneGraph()
+{
+	CNodeViewerDoc* pDoc = GetDocument();
+	ArnSceneGraph* sg = pDoc->getSimpleSG();
+
+	m_drawUpdatedText = _T("Updated file: ") + pDoc->GetTitle();
+
 }
 #endif //_DEBUG
 

@@ -18,7 +18,7 @@ public:
 
 // Operations
 public:
-
+	void updateSceneGraph();
 // Overrides
 public:
 	virtual void OnDraw(CDC* pDC);  // overridden to draw this view
@@ -44,6 +44,9 @@ protected:
 	afx_msg void OnRButtonUp(UINT nFlags, CPoint point);
 	afx_msg void OnContextMenu(CWnd* pWnd, CPoint point);
 	DECLARE_MESSAGE_MAP()
+
+private:
+	CString m_drawUpdatedText;
 };
 
 #ifndef _DEBUG  // debug version in NodeViewerView.cpp

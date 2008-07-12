@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "AranPCH.h"
 #include "ResourceMan.h"
 #include "VideoMan.h"
 
