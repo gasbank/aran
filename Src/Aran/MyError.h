@@ -14,6 +14,12 @@ enum MyErrorEnum
 	MEE_NOT_A_MESH_TYPE,
 	MEE_RTTI_INCONSISTENCY,
 	MEE_DEVICE_NOT_READY,
+	MEE_NOT_IMPLEMENTED_YET,
+	MEE_ANIM1NODE_CORRUPTED,
+	MEE_SKELETON1NODE_CORRUPTED,
+	MEE_NODE_NOT_FOUND,
+	MEE_UNSUPPORTED_ARNFILE,
+	MEE_STL_INDEX_OUT_OF_BOUNDS,
 };
 
 class MyError
@@ -33,7 +39,13 @@ public:
 		case MEE_NOT_A_MESH_TYPE:			m_str = "Non-mesh type enum was set at mesh type object";
 		case MEE_RTTI_INCONSISTENCY:		m_str = "Enum based RTTI inconsistent! Type-conversion failed";
 		case MEE_DEVICE_NOT_READY:			m_str = "Direct3D Renderer device is not ready";
-		default:							m_str = "<Should not see me!>";
+		case MEE_NOT_IMPLEMENTED_YET:		m_str = "Reached to unimplemented area";
+		case MEE_ANIM1NODE_CORRUPTED:		m_str = "Anim1 data corrupted";
+		case MEE_SKELETON1NODE_CORRUPTED:	m_str = "Skeleton1 data corrupted";
+		case MEE_NODE_NOT_FOUND:			m_str = "Desired node not found";
+		case MEE_UNSUPPORTED_ARNFILE:		m_str = "Unsupported ARN file format";
+		case MEE_STL_INDEX_OUT_OF_BOUNDS:	m_str = "STL data structure: Index out of bounds";
+		default:							m_str = "<Should not see me! Never!>";
 		}
 	}
 private:

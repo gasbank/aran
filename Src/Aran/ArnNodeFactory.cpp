@@ -20,10 +20,10 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 		node = ArnMesh::createFrom(nodeBase);
 		break;
 	case NDT_SKELETON1:
-		node = ArnSkeleton::createFromNodeBase(nodeBase);
+		node = ArnSkeleton::createFrom(nodeBase);
 		break;
 	case NDT_HIERARCHY1:
-		node = ArnHierarchy::createFromNodeBase(nodeBase);
+		node = ArnHierarchy::createFrom(nodeBase);
 		break;
 	case NDT_LIGHT1:
 	case NDT_LIGHT2:
@@ -34,7 +34,7 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 		node = ArnCamera::createFrom(nodeBase);
 		break;
 	case NDT_ANIM1:
-		node = ArnAnim::createFromNodeBase(nodeBase);
+		node = ArnAnim::createFrom(nodeBase);
 		break;
 	case NDT_BONE1:
 		node = ArnBone::createFrom(nodeBase);

@@ -281,14 +281,16 @@ int ModelReader::ParseNDD_Skeleton(int nodeHeaderIndex)
 		int boneChunkSize = -1;
 		this->fin.read((char*)&boneNdt, sizeof(int));
 		assert(boneNdt == NDT_BONE1);
-		this->fin.getline(skelNode.bones[j].nameFixed, sizeof(skelNode.bones[j].nameFixed), '\0');
+		char tempNameFixed[128];
+		this->fin.getline(tempNameFixed, sizeof(tempNameFixed), '\0');
+		skelNode.bones[j].nameFixed = tempNameFixed;
 		this->fin.read((char*)&boneChunkSize, sizeof(int));
 		this->fin.read((char*)skelNode.bones[j].offsetMatrix.m, 4*4*sizeof(float));
-		this->fin.read((char*)&skelNode.bones[j].influencingVertexCount, sizeof(size_t));
-		skelNode.bones[j].indices.resize(skelNode.bones[j].influencingVertexCount);
-		skelNode.bones[j].weights.resize(skelNode.bones[j].influencingVertexCount);
-		this->fin.read((char*)&skelNode.bones[j].indices[0], (int)skelNode.bones[j].influencingVertexCount * sizeof(DWORD));
-		this->fin.read((char*)&skelNode.bones[j].weights[0], (int)skelNode.bones[j].influencingVertexCount * sizeof(float));
+		this->fin.read((char*)&skelNode.bones[j].infVertexCount, sizeof(size_t));
+		skelNode.bones[j].indices.resize(skelNode.bones[j].infVertexCount);
+		skelNode.bones[j].weights.resize(skelNode.bones[j].infVertexCount);
+		this->fin.read((char*)&skelNode.bones[j].indices[0], (int)skelNode.bones[j].infVertexCount * sizeof(DWORD));
+		this->fin.read((char*)&skelNode.bones[j].weights[0], (int)skelNode.bones[j].infVertexCount * sizeof(float));
 
 
 		//////////////////////////////////////////////////////////////////////////
@@ -1044,7 +1046,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 	for (i = 0; i < (int)boneCount; i++)
 	{
 		Bone* bone = &currentSkeleton->bones[i];
-		V_OKAY(lpSkinInfo->SetBoneName(i, bone->nameFixed));
+		V_OKAY(lpSkinInfo->SetBoneName(i, bone->nameFixed.c_str()));
 		V_OKAY(lpSkinInfo->SetBoneOffsetMatrix(i, &bone->offsetMatrix));
 
 		// optimized
@@ -1055,21 +1057,21 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		{
 			bone->indices.resize(vertCount);
 			bone->weights.resize(vertCount);
-			for (j = (int)bone->influencingVertexCount; j < vertCount; j++)
+			for (j = (int)bone->infVertexCount; j < vertCount; j++)
 			{
-				bone->indices[j] = bone->indices[bone->influencingVertexCount-1];
-				bone->weights[j] = bone->weights[bone->influencingVertexCount-1];
+				bone->indices[j] = bone->indices[bone->infVertexCount-1];
+				bone->weights[j] = bone->weights[bone->infVertexCount-1];
 
 				//bone->indices[j] = 0xffff;
 				//bone->weights[j] = 0.0f;
 			}
 			V_OKAY(lpSkinInfo->SetBoneInfluence(i, vertCount, &bone->indices[0], &bone->weights[0]));
-			bone->indices.resize(bone->influencingVertexCount);
-			bone->weights.resize(bone->influencingVertexCount);
+			bone->indices.resize(bone->infVertexCount);
+			bone->weights.resize(bone->infVertexCount);
 		}
 		else
 		{
-			V_OKAY(lpSkinInfo->SetBoneInfluence(i, (DWORD)bone->influencingVertexCount, &bone->indices[0], &bone->weights[0]));
+			V_OKAY(lpSkinInfo->SetBoneInfluence(i, (DWORD)bone->infVertexCount, &bone->indices[0], &bone->weights[0]));
 		}
 		
 		
@@ -1256,7 +1258,7 @@ HRESULT ModelReader::BuildKeyframedAnimationSetOfSkeletonNodeIndex( int skeleton
 		
 		DWORD animIndex = 0;
 
-		hr = lpKfAnimSet->RegisterAnimationSRTKeys(currentBone->nameFixed,
+		hr = lpKfAnimSet->RegisterAnimationSRTKeys(currentBone->nameFixed.c_str(),
 			currentBone->scaleKeysSize, currentBone->rotationKeysSize, currentBone->translationKeysSize,
 			currentBone->scaleKeys, currentBone->rotationKeys, currentBone->translationKeys,
 			&animIndex);
@@ -1555,7 +1557,7 @@ MyFrame* ModelReader::GetFrameRootByMeshIndex(int meshIndex)
 search_again:
 		for (t = 0; t < this->skeletonNode[skeletonIndex].bones.size(); t++)
 		{
-			if ((strcmp(f->nameFixed, this->skeletonNode[skeletonIndex].bones[t].nameFixed) == 0))
+			if ((strcmp(f->nameFixed, this->skeletonNode[skeletonIndex].bones[t].nameFixed.c_str()) == 0))
 			{
 				return f;
 			}

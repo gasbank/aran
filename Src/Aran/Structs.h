@@ -222,8 +222,36 @@ struct MaterialData
 	STRING m_materialName;
 	D3DMATERIAL9 m_d3dMaterial;
 };
+struct SkeletonData
+{
+	STRING				name;
+	STRING				associatedMeshName;
+	unsigned int		maxWeightsPerVertex; // same as max bones per vertex
+	unsigned int		bonesCount;
+};
+struct BoneData
+{
+	STRING					nameFixed;
+	D3DXMATRIX				offsetMatrix;
+	unsigned int			infVertexCount;
+	std::vector<DWORD>		indices;
+	std::vector<float>		weights;
+};
 
-
+struct MyFrameDataShell
+{
+	char*	m_frameName;
+	BOOL	m_rootFlag;
+	int		m_sibling;
+	int		m_firstChild;
+};
+struct MyFrameData
+{
+	STRING	m_frameName;
+	BOOL	m_rootFlag;
+	int		m_sibling;
+	int		m_firstChild;
+};
 //////////////////////////////////////////////////////////////////////////
 // Unions
 //////////////////////////////////////////////////////////////////////////

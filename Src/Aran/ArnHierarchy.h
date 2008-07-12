@@ -1,16 +1,20 @@
 #pragma once
 #include "ArnNode.h"
+
 struct NodeBase;
-class ArnNode;
 struct NodeHierarchy1;
+
 class ArnHierarchy : public ArnNode
 {
 public:
 	ArnHierarchy(void);
 	~ArnHierarchy(void);
 
-	static ArnNode* createFromNodeBase(const NodeBase* nodeBase);
-	void setData(const NodeHierarchy1* nh);
+	static ArnNode*				createFrom(const NodeBase* nodeBase);
+	const MyFrameData&			getFrame(unsigned int idx) const;
+	unsigned int				getFrameCount() const { return m_data.size(); }
 private:
-	const NodeHierarchy1* m_data;
+	void						buildFrom(const NodeHierarchy1* nh);
+
+	std::vector<MyFrameData>	m_data;
 };

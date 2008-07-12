@@ -19,7 +19,7 @@ struct MyFrame : public D3DXFRAME
 	size_t		firstChild;
 };
 
-struct Bone
+struct Bone : public BoneData
 {
 	Bone()
 	{
@@ -33,11 +33,9 @@ struct Bone
 		if (rotationKeys != 0) { delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0; }
 		if (scaleKeys != 0) { delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0; }
 	}
-	char					nameFixed[128];
-	D3DXMATRIX				offsetMatrix;
-	size_t					influencingVertexCount;
-	std::vector<DWORD>		indices;
-	std::vector<float>		weights;
+
+	// Basic data is moved to BoneData (superclass)
+
 	std::vector<RST_DATA>	keys; // keyframe animation data in ARN file
 	
 	// keyframe animation data of ID3DXKeyframedAnimationSet
@@ -48,6 +46,7 @@ struct Bone
 	UINT					translationKeysSize, scaleKeysSize, rotationKeysSize;
 };
 
+// DEPRECATED: use SkeletonData instead
 struct SkeletonNode
 {
 	char				nameFixed[128];

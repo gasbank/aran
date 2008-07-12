@@ -62,20 +62,18 @@ struct NodeSkeleton1 : public NodeBase
 	unsigned int m_maxWeightsPerVertex;
 	unsigned int m_boneCount;
 };
-
-struct MyFrameData
+struct NodeSkeleton2 : public NodeBase
 {
-	char* m_frameName;
-	BOOL m_rootFlag;
-	int m_sibling;
-	int m_firstChild;
+	int m_dummy;
 };
+
+
 
 struct NodeHierarchy1 : public NodeBase
 {
 	~NodeHierarchy1() { delete [] m_frames; }
 	unsigned int m_frameCount;
-	MyFrameData* m_frames;
+	MyFrameDataShell* m_frames;
 };
 
 struct NodeLight1 : public NodeBase

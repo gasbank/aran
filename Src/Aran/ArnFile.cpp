@@ -197,7 +197,7 @@ void parse_nodeHierarchy1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_frameCount		= file_read_uint(abf);
 	if (node->m_frameCount > 0)
 	{
-		node->m_frames		= new MyFrameData[node->m_frameCount];
+		node->m_frames		= new MyFrameDataShell[node->m_frameCount];
 		unsigned int i;
 		for (i = 0; i < node->m_frameCount; ++i)
 		{

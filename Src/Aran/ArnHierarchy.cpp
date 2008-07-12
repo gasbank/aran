@@ -1,8 +1,9 @@
 #include "StdAfx.h"
 #include "ArnHierarchy.h"
 #include "ArnFile.h"
+
 ArnHierarchy::ArnHierarchy(void)
-: ArnNode(NDT_RT_HIERARCHY), m_data(0)
+: ArnNode(NDT_RT_HIERARCHY)
 {
 }
 
@@ -10,19 +11,49 @@ ArnHierarchy::~ArnHierarchy(void)
 {
 }
 
-ArnNode* ArnHierarchy::createFromNodeBase( const NodeBase* nodeBase )
+ArnNode* ArnHierarchy::createFrom( const NodeBase* nodeBase )
 {
-	if (nodeBase->m_ndt != NDT_HIERARCHY1)
-		throw MyError(MEE_RTTI_INCONSISTENCY);
-	const NodeHierarchy1* nh = static_cast<const NodeHierarchy1*>(nodeBase);
 	ArnHierarchy* node = new ArnHierarchy();
-	node->setData(nh);
-
+	node->setName(nodeBase->m_nodeName);
+	try
+	{
+		switch (nodeBase->m_ndt)
+		{
+		case NDT_HIERARCHY1:
+			node->buildFrom(static_cast<const NodeHierarchy1*>(nodeBase));
+			break;
+		default:
+			throw MyError(MEE_UNDEFINED_ERROR);
+		}
+	}
+	catch (const MyError& e)
+	{
+		delete node;
+		throw e;
+	}
 	return node;
 }
 
-void ArnHierarchy::setData( const NodeHierarchy1* nh )
+void ArnHierarchy::buildFrom( const NodeHierarchy1* nh )
 {
-	m_data = nh;
-	setName(m_data->m_nodeName);
+	m_data.resize(nh->m_frameCount);
+	unsigned int i;
+	for (i = 0; i < m_data.size(); ++i)
+	{
+		MyFrameData& data			= m_data[i];
+		MyFrameDataShell& dataOrig	= nh->m_frames[i];
+
+		data.m_frameName	= dataOrig.m_frameName;
+		data.m_rootFlag		= dataOrig.m_rootFlag;
+		data.m_sibling		= dataOrig.m_sibling;
+		data.m_firstChild	= dataOrig.m_firstChild;
+	}
+}
+
+const MyFrameData& ArnHierarchy::getFrame( unsigned int idx ) const
+{
+	if (idx < getFrameCount())
+		return m_data[idx];
+	else
+		throw MyError(MEE_STL_INDEX_OUT_OF_BOUNDS);
 }

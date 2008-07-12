@@ -11,19 +11,39 @@ ArnAnim::~ArnAnim(void)
 {
 }
 
-ArnNode* ArnAnim::createFromNodeBase(const NodeBase* nodeBase)
+ArnNode* ArnAnim::createFrom(const NodeBase* nodeBase)
 {
-	if (nodeBase->m_ndt != NDT_ANIM1)
-		throw MyError(MEE_RTTI_INCONSISTENCY);
-	const NodeAnim1* na1 = static_cast<const NodeAnim1*>(nodeBase);
 	ArnAnim* node = new ArnAnim();
-	node->setData(na1);
-
+	node->setName(nodeBase->m_nodeName);
+	try
+	{
+		switch (nodeBase->m_ndt)
+		{
+		case NDT_ANIM1:
+			node->buildFrom(static_cast<const NodeAnim1*>(nodeBase));
+			break;
+		default:
+			throw MyError(MEE_UNDEFINED_ERROR);
+		}
+	}
+	catch (const MyError& e)
+	{
+		delete node;
+		throw e;
+	}
 	return node;
 }
 
-void ArnAnim::setData(const NodeAnim1* na1)
+void ArnAnim::buildFrom( const NodeAnim1* na )
 {
-	m_data = na1;
-	setName(m_data->m_nodeName);
+	m_data.resize(na->m_keyCount);
+	unsigned int i;
+	for (i = 0; i < m_data.size(); ++i)
+	{
+		m_data[i] = na->m_rstKeys[i];
+	}
+	if (strncmp(getName(), "Anim-", 5) == 0)
+		setParentName(getName() + 5); // implicit parent
+	else
+		throw MyError(MEE_ANIM1NODE_CORRUPTED);
 }

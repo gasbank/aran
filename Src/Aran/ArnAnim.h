@@ -10,10 +10,10 @@ public:
 	ArnAnim(void);
 	~ArnAnim(void);
 
-	static ArnNode* createFromNodeBase(const NodeBase* nodeBase);
+	static ArnNode*		createFrom(const NodeBase* nodeBase);
 	
 private:
-	void setData(const NodeAnim1* na1);
+	void				buildFrom(const NodeAnim1* na);
 
-	const NodeAnim1* m_data;
+	std::vector<RST_DATA> m_data;
 };
