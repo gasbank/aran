@@ -1,6 +1,14 @@
 
 #pragma once
 
+class ArnNode;
+class ArnMesh;
+class ArnCamera;
+class ArnAnim;
+class ArnSkeleton;
+class ArnBone;
+class ArnHierarchy;
+
 class CPropertiesToolBar : public CMFCToolBar
 {
 public:
@@ -37,6 +45,7 @@ protected:
 // Implementation
 public:
 	virtual ~CPropertiesWnd();
+	void updateNodeProp(ArnNode* node);
 
 protected:
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
@@ -56,5 +65,22 @@ protected:
 
 	void InitPropList();
 	void SetPropListFont();
+
+private:
+	void hideAllPropGroup();
+	void updateNodeProp(ArnMesh* node);
+	void updateNodeProp(ArnCamera* node);
+	void updateNodeProp(ArnAnim* node);
+	void updateNodeProp(ArnSkeleton* node);
+	void updateNodeProp(ArnBone* node);
+	void updateNodeProp(ArnHierarchy* node);
+
+	CMFCPropertyGridProperty* m_nodeBaseGroup;
+	CMFCPropertyGridProperty* m_cameraGroup;
+	CMFCPropertyGridProperty* m_animGroup;
+	CMFCPropertyGridProperty* m_meshGroup;
+	CMFCPropertyGridProperty* m_hierarchyGroup;
+	CMFCPropertyGridProperty* m_skelGroup;
+	CMFCPropertyGridProperty* m_boneGroup;
 };
 

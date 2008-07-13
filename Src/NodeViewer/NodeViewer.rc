@@ -296,6 +296,7 @@ IDR_POPUP_SORT MENU
 BEGIN
     POPUP "Sorting"
     BEGIN
+        MENUITEM "Properties...",               ID_NODE_PROPERTIES
         MENUITEM "&Sort Alphabeticaly",         ID_SORTING_SORTALPHABETIC
         MENUITEM "Sort by &Type",               ID_SORTING_SORTBYTYPE
         MENUITEM "Sort by Acc&ess",             ID_SORTING_SORTBYACCESS
@@ -584,7 +585,7 @@ STRINGTABLE
 BEGIN
     IDS_FILE_VIEW           "File View"
     IDS_CLASS_VIEW          "Scene Graph"
-    IDS_OUTPUT_WND          "Output"
+    IDS_OUTPUT_WND          "Node List"
     IDS_PROPERTIES_WND      "Properties"
 END
 

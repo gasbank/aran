@@ -42,6 +42,8 @@ CMainFrame::CMainFrame()
 {
 	// TODO: add member initialization code here
 	theApp.m_nAppLook = theApp.GetInt(_T("ApplicationLook"), ID_VIEW_APPLOOK_VS_2005);
+
+	m_wndClassView.setPropWnd(&m_wndProperties);
 }
 
 CMainFrame::~CMainFrame()

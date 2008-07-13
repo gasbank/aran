@@ -12,7 +12,7 @@ public:
 	~ArnSkeleton(void);
 
 	static ArnNode*			createFrom(const NodeBase* nodeBase);
-
+	const SkeletonData&		getSkeletonData() const { return m_data; }
 private:
 	void					buildFrom(const NodeSkeleton1* ns);
 	void					buildFrom(const NodeSkeleton2* ns);

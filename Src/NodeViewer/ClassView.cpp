@@ -7,6 +7,7 @@
 #include "OutputWnd.h"
 #include "ArnSceneGraph.h"
 #include "ArnNode.h"
+#include "PropertiesWnd.h"
 
 class CClassViewMenuButton : public CMFCToolBarMenuButton
 {
@@ -63,6 +64,7 @@ ON_WM_CREATE()
 	ON_WM_SETFOCUS()
 	ON_COMMAND_RANGE(ID_SORTING_GROUPBYTYPE, ID_SORTING_SORTBYACCESS, OnSort)
 	ON_UPDATE_COMMAND_UI_RANGE(ID_SORTING_GROUPBYTYPE, ID_SORTING_SORTBYACCESS, OnUpdateSort)
+	ON_COMMAND(ID_NODE_PROPERTIES, OnNodeProperties)
 END_MESSAGE_MAP()
 
 /////////////////////////////////////////////////////////////////////////////
@@ -340,6 +342,8 @@ void CClassView::updateSceneGraph(ArnSceneGraph* sg, COutputWnd* outputWnd)
 	buildSceneGraph(rootNode, hRoot);
 
 	m_wndClassView.Expand(hRoot, TVE_EXPAND);
+
+	m_sg = sg;
 }
 
 void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
@@ -350,8 +354,29 @@ void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
 	{
 		ArnNode* childNode = node->getNodeAt(i);
 		CString childNodeName(childNode->getName());
-		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, 1, 1, treeParent);
+		int imgIdx;
+		switch (childNode->getType())
+		{
+		case NDT_RT_MESH:			imgIdx = 1; break;
+		case NDT_RT_ANIM:			imgIdx = 2; break;
+		case NDT_RT_SKELETON:		imgIdx = 3; break;
+		case NDT_RT_BONE:			imgIdx = 4; break;
+		case NDT_RT_CAMERA:			imgIdx = 5; break;
+		case NDT_RT_HIERARCHY:		imgIdx = 6; break;
+		default:					imgIdx = 1; break;
+		}
+		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, imgIdx, imgIdx, treeParent);
 		m_outputWnd->insertNodeName(childNodeName, hChild);
 		buildSceneGraph(childNode, hChild);
 	}
+}
+
+void CClassView::OnNodeProperties()
+{
+	HTREEITEM item = m_wndClassView.GetSelectedItem();
+	const CString itemName = m_wndClassView.GetItemText(item);
+	CT2CA pszConvertedAnsiString(itemName);
+	ArnNode* node = m_sg->getSceneRoot()->getNodeByName(STRING(pszConvertedAnsiString));
+
+	m_propWnd->updateNodeProp(node);
 }

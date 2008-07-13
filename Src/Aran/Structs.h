@@ -119,89 +119,6 @@ struct ArnVertex
 	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL;
 };
 
-//struct ArnMeshObHdr
-//{
-//	NODE_DATA_TYPE type;
-//	char name[64];
-//	char parName[64]; // parent name
-//	
-//	float localTf[4][4];
-//	float loc[3];
-//	float scl[3];
-//	float rot[3];
-//	float rotQuat[4];
-//	unsigned int materialCount;
-//	unsigned int vertexCount;
-//	unsigned int faceCount;
-//};
-//struct ArnMeshOb
-//{
-//	ArnMeshObHdr* hdr;
-//	DWORD* attrToMaterialMap;
-//	ArnVertex* vertex;
-//	unsigned short (*faces)[3];
-//	DWORD* attr;
-//};
-//struct ArnCameraObHdr
-//{
-//	NODE_DATA_TYPE type;
-//	char name[64];
-//	char parName[64]; // parent name
-//
-//	float localTf[4][4];
-//	float loc[3];
-//	float rot[3];
-//	int camType;		// 0: perspective, 1: orthogonal
-//	float angle;
-//	float clipStart, clipEnd;
-//	float scale;
-//};
-//struct ArnCameraOb
-//{
-//	ArnCameraObHdr* hdr;
-//};
-//struct ArnLightObHdr
-//{
-//	NODE_DATA_TYPE type;
-//	char name[64];
-//	char parName[64]; // parent name
-//
-//	float localTf[4][4];
-//
-//};
-//struct ArnLightOb
-//{
-//	ArnLightObHdr* hdr;
-//	D3DLIGHT9* d3dLight;
-//};
-//struct ArnMaterialObHdr
-//{
-//	NODE_DATA_TYPE type;
-//	char name[64];
-//	D3DMATERIAL9 d3dMaterial;
-//};
-//struct ArnMaterialOb
-//{
-//	ArnMaterialObHdr* hdr;
-//};
-//
-//
-//
-//struct ArnIpoObHdr
-//{
-//	static const NODE_DATA_TYPE type = NDT_IPO1;
-//	char name[64];
-//	unsigned int curveCount;
-//};
-//
-//struct ArnIpoOb
-//{
-//	ArnIpoObHdr* hdr;
-//	ArnCurve* curves;
-//};
-
-
-
 struct ArnCurve
 {
 	enum CurveType { CONSTANT, LINEAR, BEZIER };
@@ -251,6 +168,12 @@ struct MyFrameData
 	BOOL	m_rootFlag;
 	int		m_sibling;
 	int		m_firstChild;
+};
+struct MeshData
+{
+	unsigned int vertexCount;
+	unsigned int faceCount;
+	unsigned int materialCount;
 };
 //////////////////////////////////////////////////////////////////////////
 // Unions

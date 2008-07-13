@@ -12,10 +12,12 @@ public:
 	~ArnCamera(void);
 
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
+	const ARN_NDD_CAMERA_CHUNK& getCameraData() const { return m_cameraData; }
 
 private:
 	void				buildFrom(const NodeCamera1* nc);
 	void				buildFrom(const NodeCamera2* nc);
 
 	ARN_NDD_CAMERA_CHUNK m_cameraData;
+
 };

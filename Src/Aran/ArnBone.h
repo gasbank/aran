@@ -13,6 +13,7 @@ public:
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
 	void				setFrameData(const MyFrameData* frameData) { m_frameData = frameData; }
 	const MyFrameData*	getFrameData() const { return m_frameData; }
+	const BoneData&		getBoneData() const { return m_data; }
 
 private:
 	void				buildFrom(const NodeBone1* nb);

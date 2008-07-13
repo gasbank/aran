@@ -7,6 +7,8 @@ class COutputWnd;
 class ArnSceneGraph;
 class ArnNode;
 
+class CPropertiesWnd;
+
 class CClassToolBar : public CMFCToolBar
 {
 	virtual void OnUpdateCmdUI(CFrameWnd* /*pTarget*/, BOOL bDisableIfNoHndler)
@@ -53,13 +55,19 @@ protected:
 	afx_msg LRESULT OnChangeActiveTab(WPARAM, LPARAM);
 	afx_msg void OnSort(UINT id);
 	afx_msg void OnUpdateSort(CCmdUI* pCmdUI);
+	afx_msg void OnNodeProperties();
 
 	DECLARE_MESSAGE_MAP()
 public:
 	void updateSceneGraph(ArnSceneGraph* sg, COutputWnd* outputWnd);
 	CViewTree& getWndClassView() { return m_wndClassView; }
+	CPropertiesWnd* getPropWnd() const { return m_propWnd; }
+	void setPropWnd(CPropertiesWnd* val) { m_propWnd = val; }
 private:
 	void buildSceneGraph(ArnNode* node, HTREEITEM treeParent);
 	COutputWnd* m_outputWnd;
+	ArnSceneGraph* m_sg;
+	CPropertiesWnd* m_propWnd;
+	
 };
 

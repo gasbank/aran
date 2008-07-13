@@ -4,6 +4,7 @@
 ArnNode::ArnNode(NODE_DATA_TYPE type)
 : ArnObject(type), m_parent(0)
 {
+	D3DXMatrixIdentity(&m_localXform);
 }
 
 ArnNode::~ArnNode(void)
@@ -15,6 +16,7 @@ void ArnNode::attachChild( ArnNode* child )
 {
 	child->detachParent();
 	m_children.push_back(child);
+	child->setParentName(getName());
 	child->setParent(this);
 }
 void ArnNode::detachChild( ArnNode* child )

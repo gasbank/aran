@@ -11,7 +11,7 @@ public:
 	~ArnAnim(void);
 
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
-	
+	unsigned int		getKeyCount() { return m_data.size(); }
 private:
 	void				buildFrom(const NodeAnim1* na);
 

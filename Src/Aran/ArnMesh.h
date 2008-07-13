@@ -15,11 +15,14 @@ public:
 
 	const LPD3DXMESH&	getD3DXMesh() { return m_d3dxMesh; }
 	void				setD3DXMesh(const LPD3DXMESH d3dxMesh) { m_d3dxMesh = d3dxMesh; }
-	
+	const MeshData&		getMeshData() const { return m_data; }
+
 private:
 	void				buildFrom(const NodeMesh2* nm);
 	void				buildFrom(const NodeMesh3* nm);
 
+	MeshData			m_data;
+	
 	LPD3DXMESH			m_d3dxMesh;
 };
 

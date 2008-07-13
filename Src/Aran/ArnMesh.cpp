@@ -40,7 +40,11 @@ ArnNode* ArnMesh::createFrom( const NodeBase* nodeBase )
 }
 
 void ArnMesh::buildFrom(const NodeMesh2* nm)
-{	
+{
+	m_data.vertexCount		= nm->m_meshVerticesCount;
+	m_data.faceCount		= nm->m_meshFacesCount;
+	m_data.materialCount	= nm->m_materialCount;
+
 	if (VideoMan::getSingletonPtr())
 	{
 		LPD3DXMESH d3dxMesh;
@@ -51,6 +55,10 @@ void ArnMesh::buildFrom(const NodeMesh2* nm)
 
 void ArnMesh::buildFrom(const NodeMesh3* nm)
 {
+	m_data.vertexCount		= nm->m_meshVerticesCount;
+	m_data.faceCount		= nm->m_meshFacesCount;
+	m_data.materialCount	= nm->m_materialCount;
+
 	setLocalXform(*nm->m_localXform);
 	if (VideoMan::getSingletonPtr())
 	{
