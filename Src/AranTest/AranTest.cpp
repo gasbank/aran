@@ -1,7 +1,7 @@
 // AranTest.cpp
 // 2008 Geoyeob Kim (gasbank@gmail.com)
 
-#include "stdafx.h"
+#include "AranPCH.h"
 #include "Aran.h"
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"
@@ -62,7 +62,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	ArnFileData arnFileData;
-	load_arnfile("models/man.arn", arnFileData);
+	load_arnfile(_T("models/man.arn"), arnFileData);
 	ArnSceneGraph arnSG(arnFileData);
 	release_arnfile(arnFileData);
 

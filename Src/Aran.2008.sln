@@ -6,6 +6,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelExporter", "ModelExporter\ModelExporter.2005.vcproj", "{29033CC9-13D2-46B8-B54F-D8A2BF2FD5D9}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AranTest", "AranTest\AranTest.vcproj", "{8C0C2AA0-0174-4F19-9573-16C468080F36}"
+	ProjectSection(ProjectDependencies) = postProject
+		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770} = {8FD2D266-F50A-43DE-8DF8-EFACCE93F770}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

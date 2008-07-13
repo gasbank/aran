@@ -281,6 +281,14 @@
 			Name="Arn"
 			>
 			<File
+				RelativePath=".\ArnMath.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMath.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnNodeFactory.cpp"
 				>
 			</File>
@@ -406,14 +414,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\Aran.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Aran.h"
-			>
-		</File>
-		<File
 			RelativePath=".\AranPCH.cpp"
 			>
 			<FileConfiguration
@@ -439,14 +439,6 @@
 		</File>
 		<File
 			RelativePath=".\Arn.cd"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMath.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnMath.h"
 			>
 		</File>
 		<File
