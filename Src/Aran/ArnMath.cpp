@@ -43,3 +43,11 @@ D3DXVECTOR3 ArnMath::Vec3RadToDeg( const D3DXVECTOR3* vec3 )
 {
 	return D3DXVECTOR3(D3DXToDegree(vec3->x), D3DXToDegree(vec3->y), D3DXToDegree(vec3->z));
 }
+
+DWORD ArnMath::Float4ColorToDword( const D3DCOLORVALUE* cv )
+{
+	return ((int)(cv->r * 255) << 24)
+		| ((int)(cv->g * 255) << 16)
+		| ((int)(cv->b * 255) <<  8)
+		| ((int)(cv->a * 255) <<  0);
+}

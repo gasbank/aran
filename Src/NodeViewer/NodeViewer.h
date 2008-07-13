@@ -35,7 +35,6 @@ public:
 	afx_msg void OnAppAbout();
 	DECLARE_MESSAGE_MAP()
 	afx_msg void OnMytoolbarButton();
-	afx_msg void OnFileOpen();
 };
 
 extern CNodeViewerApp theApp;

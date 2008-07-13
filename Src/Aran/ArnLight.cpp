@@ -43,6 +43,7 @@ void ArnLight::buildFrom( const NodeLight1* nl )
 
 void ArnLight::buildFrom( const NodeLight2* nl )
 {
+	setParentName(nl->m_parentName);
 	setLocalXform(*nl->m_localXform);
 	m_d3dLight = *nl->m_light;
 }

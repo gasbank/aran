@@ -58,7 +58,7 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	m_data.vertexCount		= nm->m_meshVerticesCount;
 	m_data.faceCount		= nm->m_meshFacesCount;
 	m_data.materialCount	= nm->m_materialCount;
-
+	setParentName(nm->m_parentName);
 	setLocalXform(*nm->m_localXform);
 	if (VideoMan::getSingletonPtr())
 	{

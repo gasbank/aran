@@ -88,10 +88,10 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="ReleaseLib|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="4"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -121,8 +121,9 @@
 				PreprocessorDefinitions=""
 				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderFile="$(IntDir)\$(TargetName)_$(ConfigurationName).pch"
+				PrecompiledHeaderThrough="AranPCH.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -138,23 +139,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9.lib dxerr.lib dxerr9.lib dinput8.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib VideoLib_$(ConfigurationName).lib"
-				OutputFile="..\..\Working\$(ProjectName)_$(ConfigurationName).exe"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\Working"
-				GenerateDebugInformation="true"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -164,9 +152,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -425,7 +410,7 @@
 				/>
 			</FileConfiguration>
 			<FileConfiguration
-				Name="Release|Win32"
+				Name="ReleaseLib|Win32"
 				>
 				<Tool
 					Name="VCCLCompilerTool"

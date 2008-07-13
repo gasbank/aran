@@ -11,5 +11,5 @@ HKEY_CLASSES_ROOT\NodeViewer.Document\shell\open\ddeexec\application = NodeViewe
     ; note: the application is optional
     ;  (it defaults to the app name in "command")
 
-HKEY_CLASSES_ROOT\NodeViewer.Document = NodeViewer.Document
+HKEY_CLASSES_ROOT\NodeViewer.Document = ARN Node Database
 

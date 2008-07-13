@@ -15,6 +15,8 @@
 #include "ArnCamera.h"
 #include "ArnAnim.h"
 #include "ArnBone.h"
+#include "ArnMaterial.h"
+#include "ArnLight.h"
 #include "ArnMath.h"
 
 #ifdef _DEBUG
@@ -205,6 +207,9 @@ void CPropertiesWnd::InitPropList()
 	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"LX ROTATION");
 	localXformProp->AddSubItem(pProp);
 
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"LX QUAT");
+	localXformProp->AddSubItem(pProp);
+
 	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Local scaling"), (DWORD_PTR)"LX SCALING");
 	localXformProp->AddSubItem(pProp);
 
@@ -338,6 +343,9 @@ void CPropertiesWnd::InitPropList()
 	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"BONE ROTATION");
 	boneOffsetMatrix->AddSubItem(pProp);
 
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"BONE QUAT");
+	boneOffsetMatrix->AddSubItem(pProp);
+
 	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Scaling"), (DWORD_PTR)"BONE SCALING");
 	boneOffsetMatrix->AddSubItem(pProp);
 
@@ -350,6 +358,69 @@ void CPropertiesWnd::InitPropList()
 	m_wndPropList.AddProperty(m_boneGroup);
 	m_boneGroup->Show(FALSE);
 
+	//////////////////////////////////////////////////////////////////////////
+
+	m_materialGroup = new CMFCPropertyGridProperty(_T("Material"));
+
+	pProp = new CMFCPropertyGridProperty( _T("Count"), (_variant_t)(unsigned int) 0, _T("Material count embedded in this node"), (DWORD_PTR)"MAT COUNT");
+	m_materialGroup->AddSubItem(pProp);
+
+	m_wndPropList.AddProperty(m_materialGroup);
+	m_materialGroup->Show(FALSE);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	m_lightGroup = new CMFCPropertyGridProperty(_T("Light"));
+
+	CMFCPropertyGridProperty* d3dLight9 = new CMFCPropertyGridProperty(_T("D3DLIGHT9"));
+	m_lightGroup->AddSubItem(d3dLight9);
+
+	pProp = new CMFCPropertyGridProperty( _T("Type"), _T("Point"), _T("Light type"), (DWORD_PTR)"LIGHT TYPE");
+	pProp->AddOption(_T("Point"));
+	pProp->AddOption(_T("Spot"));
+	pProp->AddOption(_T("Directional"));
+	pProp->AllowEdit(FALSE);
+	d3dLight9->AddSubItem(pProp);
+
+	CMFCPropertyGridColorProperty* pColorProp;
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Diffuse"), RGB(0, 0, 0), NULL, _T("Diffuse color of light"), (DWORD_PTR)"LIGHT DIFFUSE");
+	//pColorProp->EnableOtherButton(_T("Other..."));
+	//pColorProp->EnableAutomaticButton(_T("Default"), ::GetSysColor(COLOR_3DFACE));
+	d3dLight9->AddSubItem(pColorProp);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Specular"), RGB(0, 0, 0), NULL, _T("Specular color of light"), (DWORD_PTR)"LIGHT SPECULAR");
+	d3dLight9->AddSubItem(pColorProp);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Ambient"), RGB(0, 0, 0), NULL, _T("Ambient color of light"), (DWORD_PTR)"LIGHT AMBIENT");
+	d3dLight9->AddSubItem(pColorProp);
+	
+	pProp = new CMFCPropertyGridProperty( _T("Position"), _T("(0, 0, 0)"), _T("Position in world(local) space"), (DWORD_PTR)"LIGHT POS");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Direction"), _T("(0, 0, 0)"), _T("Direction in world(local) space"), (DWORD_PTR)"LIGHT DIR");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Range"), (_variant_t)0.0f, _T("Cutoff range"), (DWORD_PTR)"LIGHT RANGE");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Falloff"), (_variant_t)0.0f, _T("Falloff"), (DWORD_PTR)"LIGHT FALLOFF");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation0"), (_variant_t)0.0f, _T("Constant attenuation"), (DWORD_PTR)"LIGHT ATT0");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation1"), (_variant_t)0.0f, _T("Linear attenuation"), (DWORD_PTR)"LIGHT ATT1");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation2"), (_variant_t)0.0f, _T("Quadratic attenuation"), (DWORD_PTR)"LIGHT ATT2");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Theta"), (_variant_t)0.0f, _T("Inner angle of spotlight cone"), (DWORD_PTR)"LIGHT THETA");
+	d3dLight9->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Phi"), (_variant_t)0.0f, _T("Outer angle of spotlight cone"), (DWORD_PTR)"LIGHT PHI");
+	d3dLight9->AddSubItem(pProp);
+
+	m_wndPropList.AddProperty(m_lightGroup);
+	m_lightGroup->Show(FALSE);
 }
 
 void CPropertiesWnd::OnSetFocus(CWnd* pOldWnd)
@@ -423,6 +494,16 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		m_hierarchyGroup->Show(TRUE);
 		updateNodeProp(static_cast<ArnHierarchy*>(node));
 		break;
+	case NDT_RT_LIGHT:
+		ndtVal = _T("NDT_RT_LIGHT");
+		m_lightGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnLight*>(node));
+		break;
+	case NDT_RT_MATERIAL:
+		ndtVal = _T("NDT_RT_MATERIAL");
+		m_materialGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnMaterial*>(node));
+		break;
 	default:
 		ndtVal = _T("NDT_RT_CONTAINER");
 		break;
@@ -448,6 +529,10 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), euler.x, euler.y, euler.z);
 	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX ROTATION");
+	localXformProp->SetValue(xformStr);
+
+	xformStr.Format(_T("(%.2f %.2f %.2f ; %.2f)"), quat.x, quat.y, quat.z, quat.w);
+	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX QUAT");
 	localXformProp->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
@@ -543,6 +628,10 @@ void CPropertiesWnd::updateNodeProp( ArnBone* node )
 	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE ROTATION");
 	prop->SetValue(xformStr);
 
+	xformStr.Format(_T("(%.2f %.2f %.2f; %.2f)"), quat.x, quat.y, quat.z, quat.w);
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE QUAT");
+	prop->SetValue(xformStr);
+
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
 	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE SCALING");
 	prop->SetValue(xformStr);
@@ -559,6 +648,61 @@ void CPropertiesWnd::updateNodeProp( ArnHierarchy* node )
 {
 
 }
+
+void CPropertiesWnd::updateNodeProp( ArnMaterial* node )
+{
+	CMFCPropertyGridProperty* prop;
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"MAT COUNT");
+	prop->SetValue((_variant_t) node->getMaterialCount());
+}
+
+void CPropertiesWnd::updateNodeProp( ArnLight* node )
+{
+	CString str;
+	CMFCPropertyGridProperty* prop;
+	const D3DLIGHT9& light = node->getD3DLightData();
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT TYPE");
+	switch (node->getD3DLightData().Type)
+	{
+	case D3DLIGHT_POINT:		str = "Point";			break;
+	case D3DLIGHT_SPOT:			str = "Spot";			break;
+	case D3DLIGHT_DIRECTIONAL:	str = "Directional";	break;
+	}
+	prop->SetValue(str);
+	
+	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT DIFFUSE");
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Diffuse));
+
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT SPECULAR");
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Specular));
+
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT AMBIENT");
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Ambient));
+	
+	str.Format(_T("(%.2f %.2f %.2f)"), light.Position.x, light.Position.y, light.Position.z);
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT POS");
+	prop->SetValue(str);
+
+	str.Format(_T("(%.2f %.2f %.2f)"), light.Direction.x, light.Direction.y, light.Direction.z);
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT DIR");
+	prop->SetValue(str);
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT RANGE");
+	prop->SetValue((_variant_t)light.Range);
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT FALLOFF");
+	prop->SetValue((_variant_t)light.Falloff);
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT0");
+	prop->SetValue((_variant_t)light.Attenuation0);
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT1");
+	prop->SetValue((_variant_t)light.Attenuation1);
+
+	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT2");
+	prop->SetValue((_variant_t)light.Attenuation2);
+}
 void CPropertiesWnd::hideAllPropGroup()
 {
 	//nodeBaseGroup->Show(FALSE); /* NodeBase group is always shown */
@@ -568,4 +712,6 @@ void CPropertiesWnd::hideAllPropGroup()
 	m_hierarchyGroup->Show(FALSE);
 	m_skelGroup->Show(FALSE);
 	m_boneGroup->Show(FALSE);
+	m_materialGroup->Show(FALSE);
+	m_lightGroup->Show(FALSE);
 }

@@ -50,9 +50,7 @@ CClassView::~CClassView()
 }
 
 BEGIN_MESSAGE_MAP(CClassView, CDockablePane)
-
-
-ON_WM_CREATE()
+	ON_WM_CREATE()
 	ON_WM_SIZE()
 	ON_WM_CONTEXTMENU()
 	ON_COMMAND(ID_CLASS_ADD_MEMBER_FUNCTION, OnClassAddMemberFunction)
@@ -363,6 +361,8 @@ void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
 		case NDT_RT_BONE:			imgIdx = 4; break;
 		case NDT_RT_CAMERA:			imgIdx = 5; break;
 		case NDT_RT_HIERARCHY:		imgIdx = 6; break;
+		case NDT_RT_LIGHT:			imgIdx = 7; break;
+		case NDT_RT_MATERIAL:		imgIdx = 8; break;
 		default:					imgIdx = 1; break;
 		}
 		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, imgIdx, imgIdx, treeParent);

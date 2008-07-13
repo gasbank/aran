@@ -22,7 +22,6 @@ private:
 	void				buildFrom(const NodeMesh3* nm);
 
 	MeshData			m_data;
-	
 	LPD3DXMESH			m_d3dxMesh;
 };
 

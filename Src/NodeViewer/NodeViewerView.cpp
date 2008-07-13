@@ -116,14 +116,7 @@ CNodeViewerDoc* CNodeViewerView::GetDocument() const // non-debug version is inl
 	return (CNodeViewerDoc*)m_pDocument;
 }
 
-void CNodeViewerView::updateSceneGraph()
-{
-	CNodeViewerDoc* pDoc = GetDocument();
-	ArnSceneGraph* sg = pDoc->getSimpleSG();
 
-	m_drawUpdatedText = _T("Updated file: ") + pDoc->GetTitle();
-
-}
 #endif //_DEBUG
 
 

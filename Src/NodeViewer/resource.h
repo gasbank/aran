@@ -67,6 +67,7 @@
 #define IDR_OUTPUT_POPUP                182
 #define IDR_PROPERTIES                  183
 #define IDB_PROPERTIES_HC               184
+#define IDB_MATERIAL_VIEW_24            185
 #define IDR_THEME_MENU                  200
 #define ID_SET_STYLE                    201
 #define ID_VIEW_APPLOOK_WIN_2000        210
@@ -83,20 +84,27 @@
 #define IDS_FIND_TAB                    302
 #define IDS_EXPLORER                    305
 #define IDS_EDIT_MENU                   306
+#define IDS_MATERIAL_VIEW               307
+#define IDR_POPUP_MATERIAL              310
+#define ID_VIEW_MATERIALVIEW            310
+#define IDI_ICON_MATERIAL_VIEW_HC       312
+#define IDI_MATERIAL_VIEW_HC            312
 #define ID_BUTTON32771                  32771
 #define ID_MYTOOLBAR_BUTTON             32771
 #define ID_MY                           32772
 #define ID_FIND_IN_SCENE_GRAPH          32773
 #define ID_SORTING_PROPERTIES           32774
 #define ID_NODE_PROPERTIES              32775
+#define ID_MATERIALCONTEXT_CONTEXT1     32776
+#define ID_MATERIALCONTEXT_CONTEXT2     32777
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        310
-#define _APS_NEXT_COMMAND_VALUE         32776
+#define _APS_NEXT_RESOURCE_VALUE        313
+#define _APS_NEXT_COMMAND_VALUE         32778
 #define _APS_NEXT_CONTROL_VALUE         1000
-#define _APS_NEXT_SYMED_VALUE           310
+#define _APS_NEXT_SYMED_VALUE           311
 #endif
 #endif

@@ -44,6 +44,7 @@ void ArnCamera::buildFrom( const NodeCamera1* nc )
 
 void ArnCamera::buildFrom( const NodeCamera2* nc )
 {
+	setParentName(nc->m_parentName);
 	setLocalXform(*nc->m_localXform);
 	m_cameraData.nearClip		= nc->m_clipStart;
 	m_cameraData.farClip		= nc->m_clipEnd;

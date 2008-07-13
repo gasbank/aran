@@ -83,6 +83,7 @@ IDI_OUTPUT_WND          ICON                    "res\\output_wnd.ico"
 IDI_OUTPUT_WND_HC       ICON                    "res\\output_wnd_hc.ico"
 IDI_PROPERTIES_WND      ICON                    "res\\properties_wnd.ico"
 IDI_PROPERTIES_WND_HC   ICON                    "res\\properties_wnd_hc.ico"
+IDI_MATERIAL_VIEW_HC    ICON                    "res\\icon1.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -103,6 +104,7 @@ IDR_MENU_IMAGES         BITMAP                  "res\\menuimages.bmp"
 IDB_MENU_IMAGES_24      BITMAP                  "res\\menuimages_hc.bmp"
 IDR_PROPERTIES          BITMAP                  "res\\properties.bmp"
 IDB_PROPERTIES_HC       BITMAP                  "res\\properties_hc.bmp"
+IDB_MATERIAL_VIEW_24    BITMAP                  "res\\class_vi.bmp"
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -341,6 +343,15 @@ BEGIN
     MENUITEM "Office 2007 (&Aqua Style)",   ID_VIEW_APPLOOK_OFF_2007_AQUA
 END
 
+IDR_POPUP_MATERIAL MENU 
+BEGIN
+    POPUP "MaterialContext"
+    BEGIN
+        MENUITEM "Context 1",                   ID_MATERIALCONTEXT_CONTEXT1
+        MENUITEM "Context 2",                   ID_MATERIALCONTEXT_CONTEXT2
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -376,9 +387,9 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "About NodeViewer"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
-    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,21,20
-    LTEXT           "NodeViewer, Version 1.0",IDC_STATIC,42,14,114,8,SS_NOPREFIX
-    LTEXT           "Copyright (C) 2008",IDC_STATIC,42,26,114,8
+    ICON            IDR_MAINFRAME,IDC_STATIC,14,14,20,20
+    LTEXT           "NodeViewer",IDC_STATIC,42,14,114,8,SS_NOPREFIX
+    LTEXT           "Copyright (C) 2008 PoolC",IDC_STATIC,42,26,114,8
     DEFPUSHBUTTON   "OK",IDOK,113,41,50,14,WS_GROUP
 END
 
@@ -405,13 +416,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "TODO: <Company name>"
-            VALUE "FileDescription", "TODO: <File description>"
+            VALUE "CompanyName", "Division of PoolC"
+            VALUE "FileDescription", "ARN File Viewer"
             VALUE "FileVersion", "1.0.0.1"
             VALUE "InternalName", "NodeViewer.exe"
-            VALUE "LegalCopyright", "TODO: (c) <Company name>.  All rights reserved."
+            VALUE "LegalCopyright", "(c) PoolC"
             VALUE "OriginalFilename", "NodeViewer.exe"
-            VALUE "ProductName", "TODO: <Product name>"
+            VALUE "ProductName", "NodeViewer"
             VALUE "ProductVersion", "1.0.0.1"
         END
     END
@@ -547,7 +558,7 @@ END
 
 STRINGTABLE 
 BEGIN
-    ID_VIEW_STATUS_BAR      "Show or hide the status bar\nToggle Status Bar"
+    ID_VIEW_STATUS_BAR      "Debug"
 END
 
 STRINGTABLE 
@@ -593,13 +604,14 @@ STRINGTABLE
 BEGIN
     IDS_EXPLORER            "Explorer"
     IDS_EDIT_MENU           "Edit"
+    IDS_MATERIAL_VIEW       "Material Detail"
 END
 
 STRINGTABLE 
 BEGIN
-    IDS_BUILD_TAB           "Build"
-    IDS_DEBUG_TAB           "Debug"
-    IDS_FIND_TAB            "Find"
+    IDS_BUILD_TAB           "Alphabetically"
+    IDS_DEBUG_TAB           "By Node Type"
+    IDS_FIND_TAB            "By Stored Sequence"
 END
 
 #endif    // English (U.S.) resources

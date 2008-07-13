@@ -4,9 +4,12 @@
 
 #include "stdafx.h"
 #include "NodeViewer.h"
-
 #include "NodeViewerDoc.h"
 
+#include "MainFrm.h"
+#include "ChildFrm.h"
+#include "NodeViewerDoc.h"
+#include "NodeViewerView.h"
 #include "ArnSceneGraph.h"
 
 #ifdef _DEBUG
@@ -89,10 +92,16 @@ BOOL CNodeViewerDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 
 	// TODO:  Add your specialized creation code here
-	
 	load_arnfile(lpszPathName, m_afd);
 	m_simpleSG = new ArnSceneGraph(m_afd);
+	
+	CMainFrame* pMainFrm = (CMainFrame*)theApp.m_pMainWnd;
+	CChildFrame* pChildFrm = (CChildFrame*)pMainFrm->MDIGetActive();
 
+	if (getSimpleSG())
+	{
+		pMainFrm->updateSceneGraph(getSimpleSG());
+	}
 	return TRUE;
 }
 

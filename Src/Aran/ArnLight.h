@@ -12,6 +12,7 @@ public:
 	~ArnLight(void);
 	
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
+	const D3DLIGHT9&	getD3DLightData() const { return m_d3dLight; }
 
 private:
 	void				buildFrom(const NodeLight1* nl);

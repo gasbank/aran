@@ -11,8 +11,6 @@
 #include "NodeViewerDoc.h"
 #include "NodeViewerView.h"
 
-#include "ArnSceneGraph.h"
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -24,7 +22,7 @@ BEGIN_MESSAGE_MAP(CNodeViewerApp, CWinAppEx)
 	ON_COMMAND(ID_APP_ABOUT, &CNodeViewerApp::OnAppAbout)
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, &CWinAppEx::OnFileNew)
-	ON_COMMAND(ID_FILE_OPEN, &CNodeViewerApp::OnFileOpen)
+	ON_COMMAND(ID_FILE_OPEN, &CWinAppEx::OnFileOpen)
 	// Standard print setup command
 	ON_COMMAND(ID_FILE_PRINT_SETUP, &CWinAppEx::OnFilePrintSetup)
 	ON_COMMAND(ID_MYTOOLBAR_BUTTON, &CNodeViewerApp::OnMytoolbarButton)
@@ -210,19 +208,4 @@ void CNodeViewerApp::OnMytoolbarButton()
 	CNodeViewerView* pView = (CNodeViewerView*)pChildFrm->GetActiveView();
 	CNodeViewerDoc* pDoc = pView->GetDocument();
 
-}
-
-void CNodeViewerApp::OnFileOpen()
-{
-	// TODO: Add your command handler code here
-	CWinAppEx::OnFileOpen();
-
-	CMainFrame* pMainFrm = (CMainFrame*)m_pMainWnd;
-	CChildFrame* pChildFrm = (CChildFrame*)pMainFrm->MDIGetActive();
-	CNodeViewerView* pView = (CNodeViewerView*)pChildFrm->GetActiveView();
-	CNodeViewerDoc* pDoc = pView->GetDocument();
-
-	pView->updateSceneGraph();
-	pMainFrm->updateSceneGraph(pDoc->getSimpleSG());
-	//AfxMessageBox(pDoc->GetTitle());
 }

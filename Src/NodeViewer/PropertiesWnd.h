@@ -8,6 +8,8 @@ class ArnAnim;
 class ArnSkeleton;
 class ArnBone;
 class ArnHierarchy;
+class ArnMaterial;
+class ArnLight;
 
 class CPropertiesToolBar : public CMFCToolBar
 {
@@ -74,6 +76,8 @@ private:
 	void updateNodeProp(ArnSkeleton* node);
 	void updateNodeProp(ArnBone* node);
 	void updateNodeProp(ArnHierarchy* node);
+	void updateNodeProp(ArnMaterial* node);
+	void updateNodeProp(ArnLight* node);
 
 	CMFCPropertyGridProperty* m_nodeBaseGroup;
 	CMFCPropertyGridProperty* m_cameraGroup;
@@ -82,5 +86,7 @@ private:
 	CMFCPropertyGridProperty* m_hierarchyGroup;
 	CMFCPropertyGridProperty* m_skelGroup;
 	CMFCPropertyGridProperty* m_boneGroup;
+	CMFCPropertyGridProperty* m_materialGroup;
+	CMFCPropertyGridProperty* m_lightGroup;
 };
 

@@ -99,7 +99,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			OutputDirectory="../../Release"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="2"
@@ -126,12 +126,15 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
-				EnableIntrinsicFunctions="true"
+				Optimization="0"
+				EnableIntrinsicFunctions="false"
+				FavorSizeOrSpeed="0"
+				AdditionalIncludeDirectories="../Aran"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
-				EnableFunctionLevelLinking="true"
+				EnableFunctionLevelLinking="false"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -150,7 +153,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Aran.lib  d3d9.lib d3dx9.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../ReleaseLib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -202,6 +207,10 @@
 			</File>
 			<File
 				RelativePath=".\MainFrm.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MaterialView.cpp"
 				>
 			</File>
 			<File
@@ -271,6 +280,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MaterialView.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NodeViewer.h"
 				>
 			</File>
@@ -313,6 +326,10 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
+				RelativePath=".\res\class_vi.bmp"
+				>
+			</File>
+			<File
 				RelativePath=".\res\class_view.ico"
 				>
 			</File>
@@ -350,6 +367,10 @@
 			</File>
 			<File
 				RelativePath=".\res\fileview_hc.bmp"
+				>
+			</File>
+			<File
+				RelativePath=".\res\icon1.ico"
 				>
 			</File>
 			<File

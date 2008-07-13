@@ -5,6 +5,7 @@
 #pragma once
 #include "FileView.h"
 #include "ClassView.h"
+#include "MaterialView.h"
 #include "OutputWnd.h"
 #include "PropertiesWnd.h"
 
@@ -45,6 +46,7 @@ protected:  // control bar embedded members
 	CClassView        m_wndClassView;
 	COutputWnd        m_wndOutput;
 	CPropertiesWnd    m_wndProperties;
+	CMaterialView     m_wndMaterialView;
 
 // Generated message map functions
 protected:

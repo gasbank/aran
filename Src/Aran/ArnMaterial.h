@@ -12,7 +12,7 @@ public:
 	~ArnMaterial(void);
 	
 	static ArnNode*				createFrom(const NodeBase* nodeBase);
-
+	unsigned int				getMaterialCount() const { return m_materials.size(); }
 private:
 	void						buildFrom(const NodeMaterial1* nm);
 

@@ -161,7 +161,10 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_materialCount = file_read_uint(abf);
 	node->m_meshVerticesCount = file_read_uint(abf);
 	node->m_meshFacesCount = file_read_uint(abf);
-	node->m_attrToMaterialMap = file_read<DWORD>(abf, node->m_materialCount);
+	if (node->m_materialCount)
+		node->m_attrToMaterialMap = file_read<DWORD>(abf, node->m_materialCount);
+	else
+		node->m_attrToMaterialMap = 0; // no material is explicitly defined to this mesh
 	node->m_vertex = file_read<ArnVertex>(abf, node->m_meshVerticesCount);
 	node->m_faces = file_read<unsigned short>(abf, node->m_meshFacesCount * 3);
 	node->m_attr = file_read<DWORD>(abf, node->m_meshFacesCount);
