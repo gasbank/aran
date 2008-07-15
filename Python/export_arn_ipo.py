@@ -1,10 +1,10 @@
 #!BPY
 
 """
-Name: '00 Aran Exporter IPO Test'
+Name: '000 Aran Exporter IPO Test'
 Blender: 246
 Group: 'Export'
-Tooltip: 'Aran Exporter'
+Tooltip: 'Aran Exporter (IPO Test)'
 """
 
 import Blender
