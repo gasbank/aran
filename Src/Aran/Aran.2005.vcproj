@@ -266,6 +266,14 @@
 			Name="Arn"
 			>
 			<File
+				RelativePath=".\ArnFile.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnFile.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnMath.cpp"
 				>
 			</File>
@@ -330,14 +338,6 @@
 				</File>
 				<File
 					RelativePath=".\ArnContainer.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnFile.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnFile.h"
 					>
 				</File>
 				<File

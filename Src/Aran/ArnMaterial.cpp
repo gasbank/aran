@@ -22,6 +22,9 @@ ArnNode* ArnMaterial::createFrom( const NodeBase* nodeBase )
 		case NDT_MATERIAL1:
 			node->buildFrom(static_cast<const NodeMaterial1*>(nodeBase));
 			break;
+		case NDT_MATERIAL2:
+			node->buildFrom(static_cast<const NodeMaterial2*>(nodeBase));
+			break;
 		default:
 			throw MyError(MEE_UNDEFINED_ERROR);
 		}
@@ -36,13 +39,14 @@ ArnNode* ArnMaterial::createFrom( const NodeBase* nodeBase )
 
 void ArnMaterial::buildFrom( const NodeMaterial1* nm )
 {
+	m_materialCount = nm->m_materialCount;
+}
+
+void ArnMaterial::buildFrom( const NodeMaterial2* nm )
+{
 	// Deep copying from ARN data buffer
-	unsigned int i;
-	for (i = 0; i < nm->m_materials.size(); ++i)
-	{
-		MaterialData md;
-		md.m_materialName	= nm->m_materials[i].m_materialName;
-		md.m_d3dMaterial	= *nm->m_materials[i].m_d3dMaterial;
-		m_materials.push_back(md);
-	}
+	setParentName(nm->m_parentName);
+	m_materialCount = 1;
+	m_data.m_materialName = getName();
+	m_data.m_d3dMaterial = *nm->m_d3dMaterial;
 }

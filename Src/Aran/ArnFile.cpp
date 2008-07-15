@@ -38,6 +38,10 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeMaterial1();
 		node_chunk_parser_func = parse_nodeMaterial1;
 		break;
+	case NDT_MATERIAL2:
+		nodeBase = new NodeMaterial2();
+		node_chunk_parser_func = parse_nodeMaterial2;
+		break;
 	case NDT_MESH2:
 		nodeBase = new NodeMesh2();
 		node_chunk_parser_func = parse_nodeMesh2;
@@ -111,14 +115,14 @@ void parse_nodeMaterial1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	NodeMaterial1* node = (NodeMaterial1*)nodeBase;
 
 	node->m_materialCount = file_read_uint(abf);
-	unsigned int i;
-	for (i = 0; i < node->m_materialCount; ++i)
-	{
-		MaterialDataShell md;
-		md.m_materialName = file_read_string(abf);
-		md.m_d3dMaterial = file_read<D3DMATERIAL9>(abf);
-		node->m_materials.push_back(md);
-	}
+}
+void parse_nodeMaterial2( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_MATERIAL2);
+	NodeMaterial2* node = (NodeMaterial2*)nodeBase;
+
+	node->m_parentName = file_read_string(abf);
+	node->m_d3dMaterial = file_read<D3DMATERIAL9>(abf);
 }
 
 void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )

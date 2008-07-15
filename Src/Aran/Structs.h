@@ -70,8 +70,8 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_BONE4,
 	NDT_BONE5,
 	
-	NDT_MATERIAL1			= 0x9000,	// ARN25
-	NDT_MATERIAL2,
+	NDT_MATERIAL1			= 0x9000,	// ARN25 : Global materials node which consists of NDT_MATERIAL2
+	NDT_MATERIAL2,						// ARN25 : Individual material data node
 	NDT_MATERIAL3,
 	NDT_MATERIAL4,
 	NDT_MATERIAL5,
@@ -128,11 +128,6 @@ struct ArnCurve
 	float* data;
 };
 
-struct MaterialDataShell
-{
-	char* m_materialName;
-	D3DMATERIAL9* m_d3dMaterial;
-};
 
 struct MaterialData
 {

@@ -179,7 +179,7 @@ void CPropertiesWnd::InitPropList()
 
 	m_nodeBaseGroup = new CMFCPropertyGridProperty(_T("NodeBase"));
 
-	CMFCPropertyGridProperty* pPropNDT = new CMFCPropertyGridProperty(_T("NODE_DATA_TYPE"), _T("NDT_RT_CONTAINER"), _T("ARN Node data type enum"));
+	CMFCPropertyGridProperty* pPropNDT = new CMFCPropertyGridProperty(_T("NODE_DATA_TYPE"), _T("NDT_RT_CONTAINER"), _T("ARN Node data type enum"), PROP_BASE_NDT);
 	pPropNDT->AddOption(_T("NDT_RT_CONTAINER"));
 	pPropNDT->AddOption(_T("NDT_RT_MESH"));
 	pPropNDT->AddOption(_T("NDT_RT_CAMERA"));
@@ -191,11 +191,10 @@ void CPropertiesWnd::InitPropList()
 	pPropNDT->AddOption(_T("NDT_RT_BONE"));
 	pPropNDT->AllowEdit(FALSE);
 	//pPropNDT->Enable(FALSE);
-	pPropNDT->SetData((DWORD_PTR)"NDT");
 	m_nodeBaseGroup->AddSubItem(pPropNDT);
 
-	m_nodeBaseGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Name"), (_variant_t) _T("Node Name"), _T("Node unique name"), (DWORD_PTR)"NAME"));
-	m_nodeBaseGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Parent"), (_variant_t) _T("Parent Name"), _T("Current node's parent name"), (DWORD_PTR)"PARENT NAME"));
+	m_nodeBaseGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Name"), (_variant_t) _T("Node Name"), _T("Node unique name"), PROP_BASE_NAME));
+	m_nodeBaseGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Parent"), (_variant_t) _T("Parent Name"), _T("Current node's parent name"), PROP_BASE_PARENT));
 	
 	CMFCPropertyGridProperty* pProp = 0;
 	
@@ -204,59 +203,36 @@ void CPropertiesWnd::InitPropList()
 	CMFCPropertyGridProperty* localXformProp = new CMFCPropertyGridProperty(_T("Local Transform"));
 	m_nodeBaseGroup->AddSubItem(localXformProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"LX ROTATION");
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_BASE_LX_ROT);
 	localXformProp->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"LX QUAT");
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_BASE_LX_QUAT);
 	localXformProp->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Local scaling"), (DWORD_PTR)"LX SCALING");
+	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Local scaling"), PROP_BASE_LX_SCALING);
 	localXformProp->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Local translation"), (DWORD_PTR)"LX TRANSLATION");
+	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Local translation"), PROP_BASE_LX_TRANS);
 	localXformProp->AddSubItem(pProp);
-
-	//m_wndPropList.AddProperty(localXformProp);
-	
-
-	/*pProp = new CMFCPropertyGridProperty(_T("Border"), _T("Dialog Frame"), _T("One of: None, Thin, Resizable, or Dialog Frame"));
-	pProp->AddOption(_T("None"));
-	pProp->AddOption(_T("Thin"));
-	pProp->AddOption(_T("Resizable"));
-	pProp->AddOption(_T("Dialog Frame"));
-	pProp->AllowEdit(FALSE);
-
-	nodeBaseGroup->AddSubItem(pProp);
-	nodeBaseGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Caption"), (_variant_t) _T("About"), _T("Specifies the text that will be displayed in the window's title bar")));*/
-
 	
 	//////////////////////////////////////////////////////////////////////
 	
 	m_cameraGroup = new CMFCPropertyGridProperty(_T("Camera"));
 
-	pProp = new CMFCPropertyGridProperty( _T("Target Position"), (_variant_t) _T("(0, 0, 0)"), _T("Camera target position"), (DWORD_PTR)"CAM TARGETPOS");
+	pProp = new CMFCPropertyGridProperty( _T("Target Position"), (_variant_t) _T("(0, 0, 0)"), _T("Camera target position"), PROP_CAM_TARGETPOS);
 	m_cameraGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Up Vector"), (_variant_t) _T("(0, 0, 0)"), _T("Camera up vector"), (DWORD_PTR)"CAM UPVECTOR");
+	pProp = new CMFCPropertyGridProperty( _T("Up Vector"), (_variant_t) _T("(0, 0, 0)"), _T("Camera up vector"), PROP_CAM_UPVEC);
 	m_cameraGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("LookAt Vector"), (_variant_t) _T("(0, 0, 0)"), _T("Camera look at vector"), (DWORD_PTR)"CAM LOOKATVECTOR");
+	pProp = new CMFCPropertyGridProperty( _T("LookAt Vector"), (_variant_t) _T("(0, 0, 0)"), _T("Camera look at vector"), PROP_CAM_LOOKATVEC);
 	m_cameraGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Far Clip"), (_variant_t) 0.0f, _T("Camera far clip"), (DWORD_PTR)"CAM FARCLIP");
+	pProp = new CMFCPropertyGridProperty( _T("Far Clip"), (_variant_t) 0.0f, _T("Camera far clip"), PROP_CAM_FARCLIP);
 	m_cameraGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Near Clip"), (_variant_t) 0.0f, _T("Camera near clip"), (DWORD_PTR)"CAM NEARCLIP");
+	pProp = new CMFCPropertyGridProperty( _T("Near Clip"), (_variant_t) 0.0f, _T("Camera near clip"), PROP_CAM_NEARCLIP);
 	m_cameraGroup->AddSubItem(pProp);
-
-	/*LOGFONT lf;
-	CFont* font = CFont::FromHandle((HFONT) GetStockObject(DEFAULT_GUI_FONT));
-	font->GetLogFont(&lf);
-
-	lstrcpy(lf.lfFaceName, _T("Arial"));
-
-	m_cameraGroup->AddSubItem(new CMFCPropertyGridFontProperty(_T("Font"), lf, CF_EFFECTS | CF_SCREENFONTS, _T("Specifies the default font for the window")));
-	m_cameraGroup->AddSubItem(new CMFCPropertyGridProperty(_T("Use System Font"), (_variant_t) true, _T("Specifies that the window uses MS Shell Dlg font")));*/
 
 	m_wndPropList.AddProperty(m_cameraGroup);
 	m_cameraGroup->Show(FALSE);
@@ -265,23 +241,8 @@ void CPropertiesWnd::InitPropList()
 
 	m_animGroup = new CMFCPropertyGridProperty(_T("Animation"));
 	
-	/*pProp = new CMFCPropertyGridProperty(_T("(Name)"), _T("Application"));
-	pProp->Enable(FALSE);
+	pProp = new CMFCPropertyGridProperty( _T("Key Count"), (_variant_t)(unsigned int) 0, _T("Animation RST key-frame count"), PROP_ANIM_KEYCOUNT);
 	m_animGroup->AddSubItem(pProp);
-
-	CMFCPropertyGridColorProperty* pColorProp = new CMFCPropertyGridColorProperty(_T("Window Color"), RGB(210, 192, 254), NULL, _T("Specifies the default window color"));
-	pColorProp->EnableOtherButton(_T("Other..."));
-	pColorProp->EnableAutomaticButton(_T("Default"), ::GetSysColor(COLOR_3DFACE));
-	m_animGroup->AddSubItem(pColorProp);
-
-	static TCHAR BASED_CODE szFilter[] = _T("Icon Files(*.ico)|*.ico|All Files(*.*)|*.*||");
-	m_animGroup->AddSubItem(new CMFCPropertyGridFileProperty(_T("Icon"), TRUE, _T(""), _T("ico"), 0, szFilter, _T("Specifies the window icon")));
-
-	m_animGroup->AddSubItem(new CMFCPropertyGridFileProperty(_T("Folder"), _T("c:\\")));*/
-
-	pProp = new CMFCPropertyGridProperty( _T("Key Count"), (_variant_t)(unsigned int) 0, _T("Animation RST key-frame count"), (DWORD_PTR)"ANIM KEYCOUNT");
-	m_animGroup->AddSubItem(pProp);
-
 
 	m_wndPropList.AddProperty(m_animGroup);
 	m_animGroup->Show(FALSE);
@@ -290,13 +251,13 @@ void CPropertiesWnd::InitPropList()
 
 	m_meshGroup = new CMFCPropertyGridProperty(_T("Mesh"));
 
-	pProp = new CMFCPropertyGridProperty( _T("Vertex Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), (DWORD_PTR)"MESH VERTCOUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Vertex Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), PROP_MESH_VERTCOUNT);
 	m_meshGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Face Count"), (_variant_t)(unsigned int) 0, _T("Mesh face count"), (DWORD_PTR)"MESH FACECOUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Face Count"), (_variant_t)(unsigned int) 0, _T("Mesh face count"), PROP_MESH_FACECOUNT);
 	m_meshGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Material Count"), (_variant_t)(unsigned int) 0, _T("Mesh material count"), (DWORD_PTR)"MESH MATERIALCOUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Material Count"), (_variant_t)(unsigned int) 0, _T("Mesh material count"), PROP_MESH_MATERIALCOUNT);
 	m_meshGroup->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_meshGroup);
@@ -324,10 +285,10 @@ void CPropertiesWnd::InitPropList()
 
 	m_skelGroup = new CMFCPropertyGridProperty(_T("Skeleton"));
 
-	pProp = new CMFCPropertyGridProperty( _T("Max Weights Per Vertex"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), (DWORD_PTR)"SKEL MAXWEIGHTSPERVERT");
+	pProp = new CMFCPropertyGridProperty( _T("Max Weights Per Vertex"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), PROP_SKEL_MAXWEIGHTSPERVERT);
 	m_skelGroup->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Bone Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), (DWORD_PTR)"SKEL BONECOUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Bone Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), PROP_SKEL_BONECOUNT);
 	m_skelGroup->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_skelGroup);
@@ -340,19 +301,19 @@ void CPropertiesWnd::InitPropList()
 	CMFCPropertyGridProperty* boneOffsetMatrix = new CMFCPropertyGridProperty(_T("Offset Matrix"));
 	m_boneGroup->AddSubItem(boneOffsetMatrix);
 
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"BONE ROTATION");
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), PROP_BONE_OFF_ROT);
 	boneOffsetMatrix->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), (DWORD_PTR)"BONE QUAT");
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0, 0)"), _T("Rotation in Euler form (Unit: Degrees)"), PROP_BONE_OFF_QUAT);
 	boneOffsetMatrix->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Scaling"), (DWORD_PTR)"BONE SCALING");
+	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Scaling"), PROP_BONE_OFF_SCALING);
 	boneOffsetMatrix->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Translation"), (DWORD_PTR)"BONE TRANSLATION");
+	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Translation"), PROP_BONE_OFF_TRANS);
 	boneOffsetMatrix->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Inf Vertex Count"), (_variant_t)(unsigned int) 0, _T("The influenced vertex count by this bone"), (DWORD_PTR)"BONE INFVERTCOUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Inf Vertex Count"), (_variant_t)(unsigned int) 0, _T("The influenced vertex count by this bone"), PROP_BONE_INFVERTCOUNT);
 	m_boneGroup->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_boneGroup);
@@ -362,8 +323,22 @@ void CPropertiesWnd::InitPropList()
 
 	m_materialGroup = new CMFCPropertyGridProperty(_T("Material"));
 
-	pProp = new CMFCPropertyGridProperty( _T("Count"), (_variant_t)(unsigned int) 0, _T("Material count embedded in this node"), (DWORD_PTR)"MAT COUNT");
+	pProp = new CMFCPropertyGridProperty( _T("Count"), (_variant_t)(unsigned int) 0, _T("Material count embedded in this node"), PROP_MAT_COUNT);
 	m_materialGroup->AddSubItem(pProp);
+
+	CMFCPropertyGridProperty* d3dMaterial9 = new CMFCPropertyGridProperty(_T("D3DMATERIAL9"));
+	m_materialGroup->AddSubItem(d3dMaterial9);
+	CMFCPropertyGridColorProperty* pColorProp;
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Diffuse"), RGB(0, 0, 0), NULL, _T("Diffuse color RGBA"), PROP_MAT_DIFFUSE);
+	d3dMaterial9->AddSubItem(pColorProp);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Ambient"), RGB(0, 0, 0), NULL, _T("Ambient color RGB"), PROP_MAT_AMBIENT);
+	d3dMaterial9->AddSubItem(pColorProp);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Specular"), RGB(0, 0, 0), NULL, _T("Specular 'shininess'"), PROP_MAT_SPECULAR);
+	d3dMaterial9->AddSubItem(pColorProp);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Emissive"), RGB(0, 0, 0), NULL, _T("Emissive color RGB"), MAT_EMISSIVE);
+	d3dMaterial9->AddSubItem(pColorProp);
+	pProp = new CMFCPropertyGridProperty( _T("Power"), (_variant_t)0.0f, _T("Sharpness if specular highlight"), MAT_POWER);
+	d3dMaterial9->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_materialGroup);
 	m_materialGroup->Show(FALSE);
@@ -375,48 +350,45 @@ void CPropertiesWnd::InitPropList()
 	CMFCPropertyGridProperty* d3dLight9 = new CMFCPropertyGridProperty(_T("D3DLIGHT9"));
 	m_lightGroup->AddSubItem(d3dLight9);
 
-	pProp = new CMFCPropertyGridProperty( _T("Type"), _T("Point"), _T("Light type"), (DWORD_PTR)"LIGHT TYPE");
+	pProp = new CMFCPropertyGridProperty( _T("Type"), _T("Point"), _T("Light type"), PROP_LIGHT_TYPE);
 	pProp->AddOption(_T("Point"));
 	pProp->AddOption(_T("Spot"));
 	pProp->AddOption(_T("Directional"));
 	pProp->AllowEdit(FALSE);
 	d3dLight9->AddSubItem(pProp);
 
-	CMFCPropertyGridColorProperty* pColorProp;
-	pColorProp = new CMFCPropertyGridColorProperty(_T("Diffuse"), RGB(0, 0, 0), NULL, _T("Diffuse color of light"), (DWORD_PTR)"LIGHT DIFFUSE");
-	//pColorProp->EnableOtherButton(_T("Other..."));
-	//pColorProp->EnableAutomaticButton(_T("Default"), ::GetSysColor(COLOR_3DFACE));
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Diffuse"), RGB(0, 0, 0), NULL, _T("Diffuse color of light"), PROP_LIGHT_DIFFUSE);
 	d3dLight9->AddSubItem(pColorProp);
-	pColorProp = new CMFCPropertyGridColorProperty(_T("Specular"), RGB(0, 0, 0), NULL, _T("Specular color of light"), (DWORD_PTR)"LIGHT SPECULAR");
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Specular"), RGB(0, 0, 0), NULL, _T("Specular color of light"), PROP_LIGHT_SPECULAR);
 	d3dLight9->AddSubItem(pColorProp);
-	pColorProp = new CMFCPropertyGridColorProperty(_T("Ambient"), RGB(0, 0, 0), NULL, _T("Ambient color of light"), (DWORD_PTR)"LIGHT AMBIENT");
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Ambient"), RGB(0, 0, 0), NULL, _T("Ambient color of light"), PROP_LIGHT_AMBIENT);
 	d3dLight9->AddSubItem(pColorProp);
 	
-	pProp = new CMFCPropertyGridProperty( _T("Position"), _T("(0, 0, 0)"), _T("Position in world(local) space"), (DWORD_PTR)"LIGHT POS");
+	pProp = new CMFCPropertyGridProperty( _T("Position"), _T("(0, 0, 0)"), _T("Position in world(local) space"), PROP_LIGHT_POS);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Direction"), _T("(0, 0, 0)"), _T("Direction in world(local) space"), (DWORD_PTR)"LIGHT DIR");
+	pProp = new CMFCPropertyGridProperty( _T("Direction"), _T("(0, 0, 0)"), _T("Direction in world(local) space"), PROP_LIGHT_DIR);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Range"), (_variant_t)0.0f, _T("Cutoff range"), (DWORD_PTR)"LIGHT RANGE");
+	pProp = new CMFCPropertyGridProperty( _T("Range"), (_variant_t)0.0f, _T("Cutoff range"), PROP_LIGHT_RANGE);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Falloff"), (_variant_t)0.0f, _T("Falloff"), (DWORD_PTR)"LIGHT FALLOFF");
+	pProp = new CMFCPropertyGridProperty( _T("Falloff"), (_variant_t)0.0f, _T("Falloff"), PROP_LIGHT_FALLOFF);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Attenuation0"), (_variant_t)0.0f, _T("Constant attenuation"), (DWORD_PTR)"LIGHT ATT0");
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation0"), (_variant_t)0.0f, _T("Constant attenuation"), PROP_LIGHT_ATT0);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Attenuation1"), (_variant_t)0.0f, _T("Linear attenuation"), (DWORD_PTR)"LIGHT ATT1");
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation1"), (_variant_t)0.0f, _T("Linear attenuation"), PROP_LIGHT_ATT1);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Attenuation2"), (_variant_t)0.0f, _T("Quadratic attenuation"), (DWORD_PTR)"LIGHT ATT2");
+	pProp = new CMFCPropertyGridProperty( _T("Attenuation2"), (_variant_t)0.0f, _T("Quadratic attenuation"), PROP_LIGHT_ATT2);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Theta"), (_variant_t)0.0f, _T("Inner angle of spotlight cone"), (DWORD_PTR)"LIGHT THETA");
+	pProp = new CMFCPropertyGridProperty( _T("Theta"), (_variant_t)0.0f, _T("Inner angle of spotlight cone"), PROP_LIGHT_THETA);
 	d3dLight9->AddSubItem(pProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("Phi"), (_variant_t)0.0f, _T("Outer angle of spotlight cone"), (DWORD_PTR)"LIGHT PHI");
+	pProp = new CMFCPropertyGridProperty( _T("Phi"), (_variant_t)0.0f, _T("Outer angle of spotlight cone"), PROP_LIGHT_PHI);
 	d3dLight9->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_lightGroup);
@@ -456,10 +428,12 @@ void CPropertiesWnd::SetPropListFont()
 	m_wndPropList.SetFont(&m_fntPropList);
 }
 
+//////////////////////////////////////////////////////////////////////////
+
 void CPropertiesWnd::updateNodeProp( ArnNode* node )
 {
 	//CMFCPropertyGridProperty* prop = m_wndPropList.GetProperty(0);
-	CMFCPropertyGridProperty* ndtProp = m_wndPropList.FindItemByData((DWORD_PTR)"NDT");
+	CMFCPropertyGridProperty* ndtProp = m_wndPropList.FindItemByData(PROP_BASE_NDT);
 	CString ndtVal;
 	hideAllPropGroup();
 	switch (node->getType())
@@ -510,10 +484,10 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 	}
 	ndtProp->SetValue(ndtVal);
 
-	CMFCPropertyGridProperty* ndtName = m_wndPropList.FindItemByData((DWORD_PTR)"NAME");
+	CMFCPropertyGridProperty* ndtName = m_wndPropList.FindItemByData(PROP_BASE_NAME);
 	ndtName->SetValue(CString(node->getName()));
 
-	CMFCPropertyGridProperty* parentNameProp = m_wndPropList.FindItemByData((DWORD_PTR)"PARENT NAME");
+	CMFCPropertyGridProperty* parentNameProp = m_wndPropList.FindItemByData(PROP_BASE_PARENT);
 	parentNameProp->SetValue(CString(node->getParentName().c_str()));
 	
 	const D3DXMATRIX& localXform = node->getLocalXform();
@@ -528,19 +502,19 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 	CMFCPropertyGridProperty* localXformProp;
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), euler.x, euler.y, euler.z);
-	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX ROTATION");
+	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_ROT);
 	localXformProp->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f ; %.2f)"), quat.x, quat.y, quat.z, quat.w);
-	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX QUAT");
+	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_QUAT);
 	localXformProp->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
-	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX SCALING");
+	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_SCALING);
 	localXformProp->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecTranslation.x, vecTranslation.y, vecTranslation.z);
-	localXformProp = m_wndPropList.FindItemByData((DWORD_PTR)"LX TRANSLATION");
+	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_TRANS);
 	localXformProp->SetValue(xformStr);
 
 	//////////////////////////////////////////////////////////////////////////
@@ -551,13 +525,13 @@ void CPropertiesWnd::updateNodeProp( ArnMesh* node )
 {
 	CMFCPropertyGridProperty* prop;
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"MESH VERTCOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_MESH_VERTCOUNT);
 	prop->SetValue( (_variant_t) node->getMeshData().vertexCount);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"MESH FACECOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_MESH_FACECOUNT);
 	prop->SetValue( (_variant_t) node->getMeshData().faceCount);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"MESH MATERIALCOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_MESH_MATERIALCOUNT);
 	prop->SetValue( (_variant_t) node->getMeshData().materialCount);
 }
 
@@ -566,27 +540,27 @@ void CPropertiesWnd::updateNodeProp( ArnCamera* node )
 	CMFCPropertyGridProperty* prop;
 	CString str;
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"CAM FARCLIP");
+	prop = m_wndPropList.FindItemByData(PROP_CAM_FARCLIP);
 	prop->SetValue(node->getCameraData().farClip);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"CAM NEARCLIP");
+	prop = m_wndPropList.FindItemByData(PROP_CAM_NEARCLIP);
 	prop->SetValue(node->getCameraData().nearClip);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"CAM TARGETPOS");
+	prop = m_wndPropList.FindItemByData(PROP_CAM_TARGETPOS);
 	str.Format(_T("(%.2f %.2f %.2f)"),
 		node->getCameraData().targetPos.x,
 		node->getCameraData().targetPos.y,
 		node->getCameraData().targetPos.z);
 	prop->SetValue(str);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"CAM UPVECTOR");
+	prop = m_wndPropList.FindItemByData(PROP_CAM_UPVEC);
 	str.Format(_T("(%.2f %.2f %.2f)"),
 		node->getCameraData().upVector.x,
 		node->getCameraData().upVector.y,
 		node->getCameraData().upVector.z);
 	prop->SetValue(str);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"CAM LOOKATVECTOR");
+	prop = m_wndPropList.FindItemByData(PROP_CAM_LOOKATVEC);
 	str.Format(_T("(%.2f %.2f %.2f)"),
 		node->getCameraData().lookAtVector.x,
 		node->getCameraData().lookAtVector.y,
@@ -598,16 +572,16 @@ void CPropertiesWnd::updateNodeProp( ArnCamera* node )
 void CPropertiesWnd::updateNodeProp( ArnAnim* node )
 {
 	CMFCPropertyGridProperty* prop;
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"ANIM KEYCOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_ANIM_KEYCOUNT);
 	prop->SetValue((_variant_t)node->getKeyCount());
 }
 
 void CPropertiesWnd::updateNodeProp( ArnSkeleton* node )
 {
 	CMFCPropertyGridProperty* prop;
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"SKEL MAXWEIGHTSPERVERT");
+	prop = m_wndPropList.FindItemByData(PROP_SKEL_MAXWEIGHTSPERVERT);
 	prop->SetValue((_variant_t)node->getSkeletonData().maxWeightsPerVertex);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"SKEL BONECOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_SKEL_BONECOUNT);
 	prop->SetValue((_variant_t)node->getSkeletonData().bonesCount);
 }
 
@@ -625,22 +599,22 @@ void CPropertiesWnd::updateNodeProp( ArnBone* node )
 	CMFCPropertyGridProperty* prop;
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), euler.x, euler.y, euler.z);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE ROTATION");
+	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_ROT);
 	prop->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f; %.2f)"), quat.x, quat.y, quat.z, quat.w);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE QUAT");
+	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_QUAT);
 	prop->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE SCALING");
+	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_SCALING);
 	prop->SetValue(xformStr);
 
 	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecTranslation.x, vecTranslation.y, vecTranslation.z);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE TRANSLATION");
+	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_TRANS);
 	prop->SetValue(xformStr);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"BONE INFVERTCOUNT");
+	prop = m_wndPropList.FindItemByData(PROP_BONE_INFVERTCOUNT);
 	prop->SetValue((_variant_t)node->getBoneData().infVertexCount);
 }
 
@@ -652,8 +626,20 @@ void CPropertiesWnd::updateNodeProp( ArnHierarchy* node )
 void CPropertiesWnd::updateNodeProp( ArnMaterial* node )
 {
 	CMFCPropertyGridProperty* prop;
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"MAT COUNT");
+	const D3DMATERIAL9& mat = node->getD3DMaterialData();
+	prop = m_wndPropList.FindItemByData(PROP_MAT_COUNT);
 	prop->SetValue((_variant_t) node->getMaterialCount());
+	CMFCPropertyGridColorProperty* colorProp;
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_DIFFUSE);
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Diffuse));
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_AMBIENT);
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Ambient));
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_SPECULAR);
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Specular));
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(MAT_EMISSIVE);
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Emissive));
+	prop = m_wndPropList.FindItemByData(MAT_POWER);
+	prop->SetValue((_variant_t)mat.Power);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnLight* node )
@@ -662,7 +648,7 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 	CMFCPropertyGridProperty* prop;
 	const D3DLIGHT9& light = node->getD3DLightData();
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT TYPE");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_TYPE);
 	switch (node->getD3DLightData().Type)
 	{
 	case D3DLIGHT_POINT:		str = "Point";			break;
@@ -671,36 +657,36 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 	}
 	prop->SetValue(str);
 	
-	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT DIFFUSE");
+	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_DIFFUSE);
 	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Diffuse));
 
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT SPECULAR");
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_SPECULAR);
 	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Specular));
 
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT AMBIENT");
+	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_AMBIENT);
 	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Ambient));
 	
 	str.Format(_T("(%.2f %.2f %.2f)"), light.Position.x, light.Position.y, light.Position.z);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT POS");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_POS);
 	prop->SetValue(str);
 
 	str.Format(_T("(%.2f %.2f %.2f)"), light.Direction.x, light.Direction.y, light.Direction.z);
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT DIR");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_DIR);
 	prop->SetValue(str);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT RANGE");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_RANGE);
 	prop->SetValue((_variant_t)light.Range);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT FALLOFF");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_FALLOFF);
 	prop->SetValue((_variant_t)light.Falloff);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT0");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT0);
 	prop->SetValue((_variant_t)light.Attenuation0);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT1");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT1);
 	prop->SetValue((_variant_t)light.Attenuation1);
 
-	prop = m_wndPropList.FindItemByData((DWORD_PTR)"LIGHT ATT2");
+	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT2);
 	prop->SetValue((_variant_t)light.Attenuation2);
 }
 void CPropertiesWnd::hideAllPropGroup()

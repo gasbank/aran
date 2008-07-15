@@ -15,7 +15,12 @@ struct NodeUnidentified : public NodeBase
 struct NodeMaterial1 : public NodeBase
 {
 	unsigned int m_materialCount;
-	std::vector<MaterialDataShell> m_materials;
+};
+struct NodeMaterial2 : public NodeBase
+{
+	char* m_parentName;
+	char* m_materialName;
+	D3DMATERIAL9* m_d3dMaterial;
 };
 struct NodeMesh2 : public NodeBase
 {
@@ -129,6 +134,7 @@ void release_arnfile(ArnFileData& afd);
 void parse_node(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeUnidentified(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMaterial1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeMaterial2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh3(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeSkeleton1(ArnBinaryFile& abf, NodeBase*& nodeBase);

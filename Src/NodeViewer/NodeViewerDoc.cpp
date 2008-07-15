@@ -111,4 +111,5 @@ void CNodeViewerDoc::OnCloseDocument()
 	release_arnfile(m_afd);
 
 	CDocument::OnCloseDocument();
+
 }

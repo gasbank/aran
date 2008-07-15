@@ -40,6 +40,7 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 		node = ArnBone::createFrom(nodeBase);
 		break;
 	case NDT_MATERIAL1:
+	case NDT_MATERIAL2:
 		node = ArnMaterial::createFrom(nodeBase);
 		break;
 	default:
