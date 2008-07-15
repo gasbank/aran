@@ -10,6 +10,7 @@ Tooltip: 'Aran Exporter (Blender 2.43)'
 import math
 import Blender
 from Blender import sys
+from Blender import Ipo
 import bpy
 import BPyMessages
 import array
@@ -74,7 +75,7 @@ def attach_matrix(mat):
 	binstream.append(ary)
 	
 def WriteHLine():
-	out.write('********************************************************************************\n')
+	out.write('*****************************************************\n')
 
 def ColorStr(col, alpha):
 	return '[%.2f %.2f %.2f ; %.2f]' % (col[0], col[1], col[2], alpha);
@@ -143,6 +144,13 @@ def MatrixAxisTransform(mat):
 	"""
 	return matLocal
 
+
+def InterpModeToString(interp):
+	if interp == 0: return 'CONST'
+	elif interp == 1: return 'LINEAR'
+	elif interp == 2: return 'BEZIER'
+
+
 #############################################################################################################
 
 def export_node_mesh(ob):
@@ -181,7 +189,7 @@ def export_node_mesh(ob):
 	out.write('--Verts--\n');
 	vertary = array.array('f')
 	for vert in mesh.verts:
-		out.write('v %f %f %f n %f %f %f\n' % (vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
+		out.write('v %.2f %.2f %.2f n %.2f %.2f %.2f\n' % (vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
 		vertary.fromlist([vert.co.x, vert.co.y, -vert.co.z, vert.no.x, vert.no.y, -vert.no.z])
 	
 	out.write('--Faces with material index--\n');
@@ -230,9 +238,9 @@ def export_node_camera(ob):
 	if (cam.type == 'ortho'): camType = 1
 	else: camType = 0
 	out.write('Type: %s\n' % cam.type)
-	out.write('Angle: %f\n' % cam.angle)
-	out.write('Clip: %f ~ %f\n' % (cam.clipStart, cam.clipEnd))
-	out.write('Scale: %f\n' % cam.scale)
+	out.write('Angle: %.2f\n' % cam.angle)
+	out.write('Clip: %.2f ~ %.2f\n' % (cam.clipStart, cam.clipEnd))
+	out.write('Scale: %.2f\n' % cam.scale)
 
 	# *** Binary Writing Phase ***
 	attach_int(0x00007001)
@@ -277,8 +285,8 @@ def export_node_lamp(ob):
 	out.write('%s\n' % matLocal)
 	
 	out.write('Type  : %s\n' % lampType)
-	out.write('RGB   : %f %f %f\n' % (lamp.R, lamp.G, lamp.B))
-	out.write('Clip  : %f ~ %f\n' % (lamp.clipStart, lamp.clipEnd))
+	out.write('RGB   : %.2f %.2f %.2f\n' % (lamp.R, lamp.G, lamp.B))
+	out.write('Clip  : %.2f ~ %.2f\n' % (lamp.clipStart, lamp.clipEnd))
 	
 	
 	# *** Binary Writing Phase ***
@@ -301,23 +309,31 @@ def export_node_lamp(ob):
 def export_materials():
 	obName = 'Global Materials Node'
 	materialCount = len(bpy.data.materials)
+	matNodeChunkSize = 4 * (4*4 + 1)
+	out.write('-----------------------------------------------------------------\n')
+	out.write('|                   GLOBAL MATERIALS NODE                       |\n')
+	out.write('-----------------------------------------------------------------\n')
 	out.write('<ArnType 0x00009000> %s\n' % obName)
-	out.write('Node Chunk Size : { not calculated }\n')
+	out.write('Node Chunk Size : %d\n' % (matNodeChunkSize * materialCount))
 	out.write('Material Count  : %d\n' % materialCount)
 	
-	# *** Binary Writing Phase ***
+	# *** Binary Writing Phase *** ; Global Materials Node Start
 	attach_int(0x00009000)
 	attach_strz(obName)
 	attach_int(0)                      # Node Chunk SIze
 	# ---------------------------------------------------
 	attach_int(materialCount)
+	# *** Binary Writing Phase *** ; Global Materials Node End
 	
 	matGlobalIndex = 0 # 0 is reserved for default material
+	parName = obName # parent name
 	for mat in bpy.data.materials:
 		WriteHLine()
 		matName = mat.name
 		out.write('MatGlobalIndex: %d\n' % matGlobalIndex)
-		out.write(' - Name           : %s\n' % matName)
+		out.write('<ArnType 0x00009001> %s\n' % matName)
+		out.write('Node Chunk Size : %d\n' % matNodeChunkSize)
+		out.write('Parent Name     : %s\n' % parName)
 		out.write(' - Diffuse  (Col) : %s\n' % ColorStr(mat.rgbCol,  mat.alpha))
 		out.write(' - Ambient  (Mir) : %s\n' % ColorStr(mat.mirCol,  mat.alpha))
 		out.write(' - Specular (Spe) : %s\n' % ColorStr(mat.specCol, mat.alpha))
@@ -334,10 +350,77 @@ def export_materials():
 					#print tex.tex.image
 					pass
 					
-		# *** Binary Writing Phase ***
+		# *** Binary Writing Phase *** ; Individual material data node
+		attach_int(0x00009001)
 		attach_strz(matName)
+		attach_int(matNodeChunkSize)                      # Node Chunk SIze
+		# ------------------------------------------------
+		attach_strz(parName)
 		#            _______Diffuse___________   ________Ambient___________   ________Specular_________   ______Emissive______   Power
 		attach_floats(mat.rgbCol  + [mat.alpha] + mat.mirCol  + [mat.alpha] + mat.specCol + [mat.alpha] + [0.0, 0.0, 0.0, 0.0] + [1.0])
+		# *** Binary Writing Phase *** ; Individual material data End
+
+
+def BezPointToString(bez):
+	return 'Knot : (%.2f,%.2f) / Handles: (%.2f,%.2f) (%.2f,%.2f)\n' % (bez.pt[0], bez.pt[1], bez.vec[0][0], bez.vec[0][1], bez.vec[2][0], bez.vec[2][1])
+
+def NonbezPointToString(bez):
+	return 'Point: (%.2f,%.2f)\n' % (bez.pt[0], bez.pt[1])
+
+def export_ipos():
+	obName = 'Global IPOs Node'
+	ipoCount = len(Ipo.Get())
+	out.write('-----------------------------------------------------------------\n')
+	out.write('|                      GLOBAL IPOS NODE                         |\n')
+	out.write('-----------------------------------------------------------------\n')
+	out.write('<ArnType 0x0000A000> %s\n' % obName)
+	out.write('Node Chunk Size : { not calculated }\n')
+	out.write('IPO Count  : %d\n' % ipoCount)
+	
+	# *** Binary Writing Phase *** ; Global IPOs Node Start
+	attach_int(0x0000A000)
+	attach_strz(obName)
+	attach_int(0)                      # Node Chunk SIze
+	# ---------------------------------------------------
+	attach_int(ipoCount)
+	# *** Binary Writing Phase *** ; Global IPOs Node End
+	
+	parName = obName # parent name
+	for ipo in Ipo.Get():
+		WriteHLine()
+		ipoName = ipo.name
+		ipoCurveCount = len(ipo.curves)
+		out.write('<ArnType 0x0000A001> %s\n' % ipoName)
+		out.write('Node Chunk Size : { not calculated }\n')
+		out.write('Parent Name     : %s\n' % parName)
+		out.write('Curve Count     : %d\n' % ipoCurveCount)
+		
+		attach_int(0x0000A001)
+		attach_strz(ipoName)
+		attach_int(0)                      # Node Chunk SIze
+		# ------------------------------------------------
+		attach_strz(parName)
+		attach_int(ipoCurveCount)
+		
+		
+		for curve in ipo.curves:
+			curveCount = len(curve.bezierPoints)
+			out.write(' - Curve Name   : %s\n' % curve.name)
+			out.write(' - Point count  : %d\n' % curveCount)
+			out.write(' - Interp Type  : %s\n' % InterpModeToString(curve.interpolation))
+			
+			pointary = array.array('f')
+			for point in curve.bezierPoints:
+				if curve.interpolation == 2: # bezier
+					out.write(BezPointToString(point))
+				else:
+					out.write(NonbezPointToString(point))
+				pointary.fromlist([point.pt[0], point.pt[1], point.vec[0][0], point.vec[0][1], point.vec[2][0], point.vec[2][1]])
+		
+			attach_strz(curve.name)
+			attach_int(curveCount)
+			attach_int(curve.interpolation)
+			binstream.append(pointary)
 
 
 def start_export(filename):
@@ -346,6 +429,7 @@ def start_export(filename):
 	
 	sce = bpy.data.scenes.active
 	export_materials()
+	export_ipos()
 	for ob in sce.objects:
 		WriteHLine()
 		"""
@@ -373,6 +457,10 @@ def start_export(filename):
 
 
 
+
+
+
+#############################################################################################################
 
 global matDic        # material dictionary
 global outbin        # out binary ARN
