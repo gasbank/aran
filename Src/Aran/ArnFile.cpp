@@ -82,6 +82,14 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeBone1();
 		node_chunk_parser_func = parse_nodeBone1;
 		break;
+	case NDT_IPO1:
+		nodeBase = new NodeIpo1();
+		node_chunk_parser_func = parse_nodeIpo1;
+		break;
+	case NDT_IPO2:
+		nodeBase = new NodeIpo2();
+		node_chunk_parser_func = parse_nodeIpo2;
+		break;
 	default:
 		// unidentified node, maybe corrupted or unsupported; skip the node
 		nodeBase = new NodeUnidentified();
@@ -103,6 +111,7 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 void parse_nodeUnidentified( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
+	DebugBreak();
 	// skip the whole chunk data
 	file_read<char>(abf, nodeBase->m_nodeChunkSize);
 	_LogWrite(_T("WARNING: Unidentified node detected and skipped while parsing!"), LOG_OKAY);
@@ -265,6 +274,42 @@ void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase)
 	node->m_rstKeys = file_read<RST_DATA>(abf, node->m_keyCount);
 }
 
+
+void parse_nodeIpo1( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_IPO1);
+	NodeIpo1* node = (NodeIpo1*)nodeBase;
+
+	node->m_ipoCount = file_read_uint(abf);
+}
+
+void parse_nodeIpo2( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_IPO2);
+	NodeIpo2* node = (NodeIpo2*)nodeBase;
+
+	node->m_parentName = file_read_string(abf);
+	node->m_curveCount = file_read_uint(abf);
+	if (node->m_curveCount > 0)
+	{
+		node->m_curves = new CurveDataShell[node->m_curveCount];
+		unsigned int i;
+		for (i = 0; i < node->m_curveCount; ++i)
+		{
+			node->m_curves[i].name			= file_read_string(abf);
+			node->m_curves[i].pointCount	= file_read_uint(abf);
+			node->m_curves[i].type			= (CurveType)file_read_uint(abf);
+			node->m_curves[i].points		= file_read<BezTripleData>(abf, node->m_curves[i].pointCount);
+		}
+	}
+	else
+	{
+		node->m_curves = 0;
+	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+
 void release_arnfile( ArnFileData& afd )
 {
 	if (afd.m_fileDescriptor == 0) // afd was not initialized
@@ -312,4 +357,3 @@ unsigned int*	file_read_uint_array(ArnBinaryFile& file, unsigned int count) { un
 int				file_read_int(ArnBinaryFile& file) { int i = *(int*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(int); return i; }
 float			file_read_float(ArnBinaryFile& file) { float f = *(float*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(float); return f; }
 BOOL			file_read_BOOL(ArnBinaryFile& file) { BOOL b = *(BOOL*)(file.m_data + file.m_curPos); if (b == TRUE || b == FALSE) { file.m_curPos += sizeof(BOOL); return b; } throw MyError(MEE_BOOL_DATA_PARSE); }
-

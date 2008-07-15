@@ -12,7 +12,7 @@ Animation::~Animation(void)
 	delete m_curves;
 }
 
-unsigned int Animation::registerCurve( CurveName curveName, unsigned int pointCount, ArnCurve::CurveType curveType )
+unsigned int Animation::registerCurve( CurveName curveName, unsigned int pointCount, CurveType curveType )
 {
 	if (m_curveCount < m_totalCurveCount && m_curveFlags[curveName] == false)
 	{

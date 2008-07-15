@@ -13,7 +13,7 @@ public:
 		CN_SCLX, CN_SCLY, CN_SCLZ,
 		CN_SIZE,
 	};
-	unsigned int registerCurve(CurveName curveName, unsigned int pointCount, ArnCurve::CurveType curveType);
+	unsigned int registerCurve(CurveName curveName, unsigned int pointCount, CurveType curveType);
 
 	bool setCurvePoint(CurveName curveName, POINT2FLOAT* point2Array);
 
@@ -22,7 +22,7 @@ private:
 	{
 		CurveName curveName;
 		unsigned int pointCount;
-		ArnCurve::CurveType curveType;
+		CurveType curveType;
 		POINT2FLOAT* point2Array;
 	};
 

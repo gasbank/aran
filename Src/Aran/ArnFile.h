@@ -108,6 +108,20 @@ struct NodeCamera2 : public NodeBase
 	float m_scale;
 };
 
+struct NodeIpo1 : public NodeBase
+{
+	unsigned int m_ipoCount;
+};
+struct NodeIpo2 : public NodeBase
+{
+	~NodeIpo2() { delete [] m_curves; }
+
+	char* m_parentName;
+	unsigned int m_curveCount;
+	CurveDataShell* m_curves;
+};
+
+
 struct ArnBinaryFile
 {
 	unsigned int m_fileSize;
@@ -145,6 +159,8 @@ void parse_nodeCamera1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeCamera2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeBone1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeIpo1(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeIpo2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 

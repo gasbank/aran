@@ -76,8 +76,8 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_MATERIAL4,
 	NDT_MATERIAL5,
 
-	NDT_IPO1				= 0xa000,
-	NDT_IPO2,
+	NDT_IPO1				= 0xa000,	// ARN25 : Global IPOs node which consists of NDT_IPO2
+	NDT_IPO2,							// ARN25 : Individual IPO data node
 	NDT_IPO3,
 	NDT_IPO4,
 	NDT_IPO5,
@@ -92,6 +92,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_RT_HIERARCHY,
 	NDT_RT_SKELETON,
 	NDT_RT_BONE,
+	NDT_RT_IPO,
 	
 	NDT_FORCE_DWORD = 0x7fffffff,
 };
@@ -119,13 +120,22 @@ struct ArnVertex
 	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL;
 };
 
-struct ArnCurve
+struct BezTripleData
 {
-	enum CurveType { CONSTANT, LINEAR, BEZIER };
-	char name[64];
+	float vec[3][2];
+	//float alfa, weight, radius;	/* alfa: tilt in 3D View, weight: used for softbody goal weight, radius: for bevel tapering */
+	//short h1, h2; 				/* h1, h2: the handle type of the two handles */
+	//char f1, f2, f3, hide;		/* f1, f2, f3: used for selection status,  hide: used to indicate whether BezTriple is hidden */
+};
+
+enum CurveType { CONSTANT, LINEAR, BEZIER };
+
+struct CurveDataShell
+{
+	char* name;
 	unsigned int pointCount;
 	CurveType type;
-	float* data;
+	BezTripleData* points;
 };
 
 

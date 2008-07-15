@@ -363,6 +363,7 @@ void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
 		case NDT_RT_HIERARCHY:		imgIdx = 6; break;
 		case NDT_RT_LIGHT:			imgIdx = 7; break;
 		case NDT_RT_MATERIAL:		imgIdx = 8; break;
+		case NDT_RT_IPO:			imgIdx = 9; break;
 		default:					imgIdx = 1; break;
 		}
 		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, imgIdx, imgIdx, treeParent);
