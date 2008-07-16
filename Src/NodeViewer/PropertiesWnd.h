@@ -10,6 +10,7 @@ class ArnBone;
 class ArnHierarchy;
 class ArnMaterial;
 class ArnLight;
+class ArnIpo;
 
 class CPropertiesToolBar : public CMFCToolBar
 {
@@ -78,6 +79,7 @@ private:
 	void updateNodeProp(ArnHierarchy* node);
 	void updateNodeProp(ArnMaterial* node);
 	void updateNodeProp(ArnLight* node);
+	void updateNodeProp(ArnIpo* node);
 
 	CMFCPropertyGridProperty* m_nodeBaseGroup;
 	CMFCPropertyGridProperty* m_cameraGroup;
@@ -88,6 +90,7 @@ private:
 	CMFCPropertyGridProperty* m_boneGroup;
 	CMFCPropertyGridProperty* m_materialGroup;
 	CMFCPropertyGridProperty* m_lightGroup;
+	CMFCPropertyGridProperty* m_ipoGroup;
 
 	enum
 	{
@@ -128,6 +131,12 @@ private:
 		PROP_LIGHT_ATT2,
 		PROP_LIGHT_THETA,
 		PROP_LIGHT_PHI,
+
+		PROP_IPO_COUNT,
+		PROP_IPO_CURVECOUNT,
+		PROP_IPO_CURVENAMES,
 	};
+
+
 };
 

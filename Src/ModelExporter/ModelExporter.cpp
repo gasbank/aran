@@ -3,7 +3,7 @@
 //
 
 
-#include "stdafx.h"
+#include "ModelExporterPCH.h"
 #include "ModelExporter.h"
 #include "ErrorProcedure.h"
 #include "NullRestoreObj.h"

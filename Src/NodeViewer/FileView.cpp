@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 #include "mainfrm.h"
 #include "FileView.h"
 #include "Resource.h"

@@ -2,7 +2,7 @@
 // NodeViewer.cpp : Defines the class behaviors for the application.
 //
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 #include "afxwinappex.h"
 #include "NodeViewer.h"
 #include "MainFrm.h"

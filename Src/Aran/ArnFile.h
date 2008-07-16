@@ -2,6 +2,8 @@
 
 struct NodeBase
 {
+	virtual ~NodeBase() {}
+
 	NODE_DATA_TYPE m_ndt;
 	char* m_nodeName;
 	unsigned int m_nodeChunkSize;
@@ -76,7 +78,10 @@ struct NodeSkeleton2 : public NodeBase
 
 struct NodeHierarchy1 : public NodeBase
 {
-	~NodeHierarchy1() { delete [] m_frames; }
+	~NodeHierarchy1()
+	{
+		delete [] m_frames;
+	}
 	unsigned int m_frameCount;
 	MyFrameDataShell* m_frames;
 };
@@ -124,6 +129,8 @@ struct NodeIpo2 : public NodeBase
 
 struct ArnBinaryFile
 {
+	ArnBinaryFile() : m_data(0) {}
+
 	unsigned int m_fileSize;
 	char* m_data;
 	unsigned int m_curPos;

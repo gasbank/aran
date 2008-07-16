@@ -2,7 +2,7 @@
 // ChildFrm.cpp : implementation of the CChildFrame class
 //
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 #include "NodeViewer.h"
 
 #include "ChildFrm.h"

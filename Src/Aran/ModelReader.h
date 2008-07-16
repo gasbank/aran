@@ -29,9 +29,9 @@ struct Bone : public BoneData
 	}
 	~Bone()
 	{
-		if (translationKeys != 0) { delete [] translationKeys; translationKeys = 0; translationKeysSize = 0; }
-		if (rotationKeys != 0) { delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0; }
-		if (scaleKeys != 0) { delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0; }
+		delete [] translationKeys; translationKeys = 0; translationKeysSize = 0;
+		delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0;
+		delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0;
 	}
 
 	// Basic data is moved to BoneData (superclass)

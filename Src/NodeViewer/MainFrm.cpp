@@ -2,7 +2,7 @@
 // MainFrm.cpp : implementation of the CMainFrame class
 //
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 #include "NodeViewer.h"
 
 #include "MainFrm.h"

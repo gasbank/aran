@@ -51,6 +51,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="NodeViewerPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -222,19 +223,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NodeViewerView.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\OutputWnd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PropertiesWnd.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp"
+				RelativePath=".\NodeViewerPCH.cpp"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -252,6 +241,18 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\NodeViewerView.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\OutputWnd.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PropertiesWnd.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\ViewTree.cpp"
@@ -292,6 +293,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\NodeViewerPCH.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NodeViewerView.h"
 				>
 			</File>
@@ -305,10 +310,6 @@
 			</File>
 			<File
 				RelativePath=".\Resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.h"
 				>
 			</File>
 			<File

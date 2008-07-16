@@ -1,7 +1,7 @@
 // ErrorProcedure.cpp
 // 2007 Geoyeob Kim
 //
-#include "stdafx.h"
+#include "ModelExporterPCH.h"
 #include "ErrorProcedure.h"
 
 ErrorProcedure::ErrorProcedure(void)

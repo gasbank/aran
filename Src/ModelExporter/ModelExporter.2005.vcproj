@@ -382,7 +382,7 @@
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="stdafx.h"
+				PrecompiledHeaderThrough="ModelExporterPCH.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
@@ -727,6 +727,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ModelExporterPCH.h"
+				>
+			</File>
+			<File
 				RelativePath=".\NullRestoreObj.h"
 				>
 			</File>
@@ -736,10 +740,6 @@
 			</File>
 			<File
 				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.h"
 				>
 			</File>
 		</Filter>
@@ -763,15 +763,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NullRestoreObj.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Remap.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp"
+				RelativePath=".\ModelExporterPCH.cpp"
 				>
 				<FileConfiguration
 					Name="Debug_Max9|Win32"
@@ -805,6 +797,14 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\NullRestoreObj.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Remap.cpp"
+				>
 			</File>
 		</Filter>
 		<File

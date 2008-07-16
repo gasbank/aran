@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 
 #include "PropertiesWnd.h"
 #include "Resource.h"
@@ -17,6 +17,7 @@
 #include "ArnBone.h"
 #include "ArnMaterial.h"
 #include "ArnLight.h"
+#include "ArnIpo.h"
 #include "ArnMath.h"
 
 #ifdef _DEBUG
@@ -393,6 +394,22 @@ void CPropertiesWnd::InitPropList()
 
 	m_wndPropList.AddProperty(m_lightGroup);
 	m_lightGroup->Show(FALSE);
+
+	//////////////////////////////////////////////////////////////////////////
+
+	m_ipoGroup = new CMFCPropertyGridProperty(_T("IPO"));
+
+	pProp = new CMFCPropertyGridProperty(_T("IPO Count"), (_variant_t) (unsigned int)0, _T("IPOs embedded in this node"), PROP_IPO_COUNT);
+	m_ipoGroup->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty(_T("Curve Count"), (_variant_t) (unsigned int)0, _T("Curves included in the IPO (valid only if IPO count is 1)"), PROP_IPO_CURVECOUNT);
+	m_ipoGroup->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty(_T("Curve Names"), (_variant_t) _T("Names..."), _T("Curve names included in the IPO (valid only if IPO count is 1)"), PROP_IPO_CURVENAMES);
+	m_ipoGroup->AddSubItem(pProp);
+
+	m_wndPropList.AddProperty(m_ipoGroup);
+	m_ipoGroup->Show(FALSE);
 }
 
 void CPropertiesWnd::OnSetFocus(CWnd* pOldWnd)
@@ -477,6 +494,11 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_MATERIAL");
 		m_materialGroup->Show(TRUE);
 		updateNodeProp(static_cast<ArnMaterial*>(node));
+		break;
+	case NDT_RT_IPO:
+		ndtVal = _T("NDT_RT_IPO");
+		m_ipoGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnIpo*>(node));
 		break;
 	default:
 		ndtVal = _T("NDT_RT_CONTAINER");
@@ -689,6 +711,29 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT2);
 	prop->SetValue((_variant_t)light.Attenuation2);
 }
+
+void CPropertiesWnd::updateNodeProp( ArnIpo* node )
+{
+	CString str;
+	CMFCPropertyGridProperty* prop;
+
+	prop = m_wndPropList.FindItemByData(PROP_IPO_COUNT);
+	prop->SetValue((_variant_t)(unsigned int)node->getIpoCount());
+
+	unsigned int curveCount = node->getCurveCount();
+	prop = m_wndPropList.FindItemByData(PROP_IPO_CURVECOUNT);
+	prop->SetValue((_variant_t)curveCount);
+
+	unsigned int i;
+	for (i = 0; i < curveCount; ++i)
+	{
+		//CA2CT name();
+		str += (i!=0)?_T(","):_T("");
+		str += node->getCurveData(i).name.c_str();
+	}
+	prop = m_wndPropList.FindItemByData(PROP_IPO_CURVENAMES);
+	prop->SetValue(str);
+}
 void CPropertiesWnd::hideAllPropGroup()
 {
 	//nodeBaseGroup->Show(FALSE); /* NodeBase group is always shown */
@@ -700,4 +745,5 @@ void CPropertiesWnd::hideAllPropGroup()
 	m_boneGroup->Show(FALSE);
 	m_materialGroup->Show(FALSE);
 	m_lightGroup->Show(FALSE);
+	m_ipoGroup->Show(FALSE);
 }

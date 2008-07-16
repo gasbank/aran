@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 
 #include "OutputWnd.h"
 #include "Resource.h"

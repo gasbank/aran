@@ -2,7 +2,7 @@
 // NodeViewerView.cpp : implementation of the CNodeViewerView class
 //
 
-#include "stdafx.h"
+#include "NodeViewerPCH.h"
 #include "NodeViewer.h"
 
 #include "NodeViewerDoc.h"

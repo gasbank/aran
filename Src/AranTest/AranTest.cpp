@@ -2,7 +2,6 @@
 // 2008 Geoyeob Kim (gasbank@gmail.com)
 
 #include "AranPCH.h"
-#include "Aran.h"
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
@@ -26,6 +25,11 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
 {
+	// Enable run-time memory check for debug builds.
+#if defined(DEBUG) | defined(_DEBUG)
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+
 	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
@@ -76,11 +80,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	hr = S_OK;
-	hr = videoMan.InitCustomMesh();
+	
+	/*hr = videoMan.InitCustomMesh();
 	if (FAILED(hr))
 	{
 		return DXTRACE_ERR_MSGBOX(_T("Custom Mesh Initialization Error"), hr);
-	}
+	}*/
 
 	hr = videoMan.InitModels();
 	if (FAILED(hr))

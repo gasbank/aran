@@ -1,4 +1,4 @@
-#include "StdAfx.h"
+#include "NodeViewerPCH.h"
 #include "MaterialView.h"
 #include "MainFrm.h"
 #include "Resource.h"

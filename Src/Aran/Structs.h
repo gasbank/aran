@@ -128,7 +128,7 @@ struct BezTripleData
 	//char f1, f2, f3, hide;		/* f1, f2, f3: used for selection status,  hide: used to indicate whether BezTriple is hidden */
 };
 
-enum CurveType { CONSTANT, LINEAR, BEZIER };
+enum CurveType { CT_CONSTANT, CT_LINEAR, CT_BEZIER };
 
 struct CurveDataShell
 {
@@ -137,7 +137,13 @@ struct CurveDataShell
 	CurveType type;
 	BezTripleData* points;
 };
-
+struct CurveData
+{
+	STRING name;
+	unsigned int pointCount;
+	CurveType type;
+	std::list<BezTripleData> points;
+};
 
 struct MaterialData
 {
@@ -153,6 +159,8 @@ struct SkeletonData
 };
 struct BoneData
 {
+	virtual ~BoneData() {}
+
 	STRING					nameFixed;
 	D3DXMATRIX				offsetMatrix;
 	unsigned int			infVertexCount;

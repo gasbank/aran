@@ -346,7 +346,7 @@ void file_load( const TCHAR* fileName, ArnBinaryFile& file )
 
 void file_unload( ArnBinaryFile& file )
 {
-	delete file.m_data;
+	delete [] file.m_data;
 	file.m_data = 0;
 }
 

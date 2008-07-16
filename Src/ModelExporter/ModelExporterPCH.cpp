@@ -2,7 +2,7 @@
 // PCHSample.pch will be the pre-compiled header
 // stdafx.obj will contain the pre-compiled type information
 
-#include "stdafx.h"
+#include "ModelExporterPCH.h"
 
-// TODO: reference any additional headers you need in STDAFX.H
+// TODO: reference any additional headers you need in ModelExporterPCH.h
 // and not in this file

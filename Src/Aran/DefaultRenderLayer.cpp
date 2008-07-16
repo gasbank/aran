@@ -190,11 +190,11 @@ HRESULT BoxRenderLayer::render()
 }
 
 BoxRenderLayer::BoxRenderLayer()
-: m_testMesh(0)
+: m_testMesh(0), m_arnFileData(0), m_simpleSG(0)
 {
 	m_arnFileData = new ArnFileData;
-	load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
-	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
+	//load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
+	//m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 
 BoxRenderLayer::~BoxRenderLayer()

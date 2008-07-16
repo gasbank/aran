@@ -39,10 +39,26 @@ ArnNode* ArnIpo::createFrom( const NodeBase* nodeBase )
 
 void ArnIpo::buildFrom( const NodeIpo1* ni )
 {
-
+	m_ipoCount = ni->m_ipoCount;
+	m_curveCount = 0;
 }
 
 void ArnIpo::buildFrom( const NodeIpo2* ni )
 {
 	setParentName(ni->m_parentName);
+	m_ipoCount		= 1;
+	m_curveCount	= ni->m_curveCount;
+	unsigned int i, j;
+	for (i = 0; i < m_curveCount; ++i)
+	{
+		CurveData cd;
+		cd.name = ni->m_curves[i].name;
+		cd.type = ni->m_curves[i].type;
+		cd.pointCount = ni->m_curves[i].pointCount;
+		for (j = 0; j < cd.pointCount; ++j)
+		{
+			cd.points.push_back(ni->m_curves[i].points[j]);
+		}
+		m_curves.push_back(cd);
+	}
 }
