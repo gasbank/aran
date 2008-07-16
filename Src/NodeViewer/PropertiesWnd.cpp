@@ -19,6 +19,7 @@
 #include "ArnLight.h"
 #include "ArnIpo.h"
 #include "ArnMath.h"
+#include "Animation.h"
 
 #ifdef _DEBUG
 #undef THIS_FILE
@@ -336,9 +337,9 @@ void CPropertiesWnd::InitPropList()
 	d3dMaterial9->AddSubItem(pColorProp);
 	pColorProp = new CMFCPropertyGridColorProperty(_T("Specular"), RGB(0, 0, 0), NULL, _T("Specular 'shininess'"), PROP_MAT_SPECULAR);
 	d3dMaterial9->AddSubItem(pColorProp);
-	pColorProp = new CMFCPropertyGridColorProperty(_T("Emissive"), RGB(0, 0, 0), NULL, _T("Emissive color RGB"), MAT_EMISSIVE);
+	pColorProp = new CMFCPropertyGridColorProperty(_T("Emissive"), RGB(0, 0, 0), NULL, _T("Emissive color RGB"), PROP_MAT_EMISSIVE);
 	d3dMaterial9->AddSubItem(pColorProp);
-	pProp = new CMFCPropertyGridProperty( _T("Power"), (_variant_t)0.0f, _T("Sharpness if specular highlight"), MAT_POWER);
+	pProp = new CMFCPropertyGridProperty( _T("Power"), (_variant_t)0.0f, _T("Sharpness if specular highlight"), PROP_MAT_POWER);
 	d3dMaterial9->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_materialGroup);
@@ -449,8 +450,6 @@ void CPropertiesWnd::SetPropListFont()
 
 void CPropertiesWnd::updateNodeProp( ArnNode* node )
 {
-	//CMFCPropertyGridProperty* prop = m_wndPropList.GetProperty(0);
-	CMFCPropertyGridProperty* ndtProp = m_wndPropList.FindItemByData(PROP_BASE_NDT);
 	CString ndtVal;
 	hideAllPropGroup();
 	switch (node->getType())
@@ -499,19 +498,13 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_IPO");
 		m_ipoGroup->Show(TRUE);
 		updateNodeProp(static_cast<ArnIpo*>(node));
+		// Bezier interpolation testing
+		//writePrecomputedCurvesToFile(static_cast<ArnIpo*>(node));
 		break;
 	default:
 		ndtVal = _T("NDT_RT_CONTAINER");
 		break;
 	}
-	ndtProp->SetValue(ndtVal);
-
-	CMFCPropertyGridProperty* ndtName = m_wndPropList.FindItemByData(PROP_BASE_NAME);
-	ndtName->SetValue(CString(node->getName()));
-
-	CMFCPropertyGridProperty* parentNameProp = m_wndPropList.FindItemByData(PROP_BASE_PARENT);
-	parentNameProp->SetValue(CString(node->getParentName().c_str()));
-	
 	const D3DXMATRIX& localXform = node->getLocalXform();
 	D3DXVECTOR3 vecScaling, vecTranslation;
 	D3DXQUATERNION quat;
@@ -520,91 +513,44 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 	D3DXVECTOR3 euler = ArnMath::QuatToEuler(&quat);
 	euler = ArnMath::Vec3RadToDeg(&euler);
 
-	CString xformStr;
-	CMFCPropertyGridProperty* localXformProp;
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), euler.x, euler.y, euler.z);
-	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_ROT);
-	localXformProp->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f ; %.2f)"), quat.x, quat.y, quat.z, quat.w);
-	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_QUAT);
-	localXformProp->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
-	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_SCALING);
-	localXformProp->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecTranslation.x, vecTranslation.y, vecTranslation.z);
-	localXformProp = m_wndPropList.FindItemByData(PROP_BASE_LX_TRANS);
-	localXformProp->SetValue(xformStr);
-
-	//////////////////////////////////////////////////////////////////////////
-
+	propEnumSetValue(PROP_BASE_NDT,			ndtVal);
+	propEnumSetValue(PROP_BASE_NAME,		node->getName());
+	propEnumSetValue(PROP_BASE_PARENT,		node->getParentName());
+	propEnumSetValue(PROP_BASE_LX_ROT,		euler);
+	propEnumSetValue(PROP_BASE_LX_QUAT,		quat);
+	propEnumSetValue(PROP_BASE_LX_SCALING,	vecScaling);
+	propEnumSetValue(PROP_BASE_LX_TRANS,	vecTranslation);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnMesh* node )
 {
-	CMFCPropertyGridProperty* prop;
-
-	prop = m_wndPropList.FindItemByData(PROP_MESH_VERTCOUNT);
-	prop->SetValue( (_variant_t) node->getMeshData().vertexCount);
-
-	prop = m_wndPropList.FindItemByData(PROP_MESH_FACECOUNT);
-	prop->SetValue( (_variant_t) node->getMeshData().faceCount);
-
-	prop = m_wndPropList.FindItemByData(PROP_MESH_MATERIALCOUNT);
-	prop->SetValue( (_variant_t) node->getMeshData().materialCount);
+	const MeshData& md = node->getMeshData();
+	propEnumSetValue(PROP_MESH_VERTCOUNT,		md.vertexCount);
+	propEnumSetValue(PROP_MESH_FACECOUNT,		md.faceCount);
+	propEnumSetValue(PROP_MESH_MATERIALCOUNT,	md.materialCount);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnCamera* node )
 {
-	CMFCPropertyGridProperty* prop;
 	CString str;
-
-	prop = m_wndPropList.FindItemByData(PROP_CAM_FARCLIP);
-	prop->SetValue(node->getCameraData().farClip);
-
-	prop = m_wndPropList.FindItemByData(PROP_CAM_NEARCLIP);
-	prop->SetValue(node->getCameraData().nearClip);
-
-	prop = m_wndPropList.FindItemByData(PROP_CAM_TARGETPOS);
-	str.Format(_T("(%.2f %.2f %.2f)"),
-		node->getCameraData().targetPos.x,
-		node->getCameraData().targetPos.y,
-		node->getCameraData().targetPos.z);
-	prop->SetValue(str);
-
-	prop = m_wndPropList.FindItemByData(PROP_CAM_UPVEC);
-	str.Format(_T("(%.2f %.2f %.2f)"),
-		node->getCameraData().upVector.x,
-		node->getCameraData().upVector.y,
-		node->getCameraData().upVector.z);
-	prop->SetValue(str);
-
-	prop = m_wndPropList.FindItemByData(PROP_CAM_LOOKATVEC);
-	str.Format(_T("(%.2f %.2f %.2f)"),
-		node->getCameraData().lookAtVector.x,
-		node->getCameraData().lookAtVector.y,
-		node->getCameraData().lookAtVector.z);
-	prop->SetValue(str);
-
+	const ARN_NDD_CAMERA_CHUNK& cameraData = node->getCameraData();
+	propEnumSetValue(PROP_CAM_FARCLIP,		cameraData.farClip);
+	propEnumSetValue(PROP_CAM_NEARCLIP,		cameraData.nearClip);
+	propEnumSetValue(PROP_CAM_TARGETPOS,	cameraData.targetPos);
+	propEnumSetValue(PROP_CAM_UPVEC,		cameraData.upVector);
+	propEnumSetValue(PROP_CAM_LOOKATVEC,	cameraData.lookAtVector);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnAnim* node )
 {
-	CMFCPropertyGridProperty* prop;
-	prop = m_wndPropList.FindItemByData(PROP_ANIM_KEYCOUNT);
-	prop->SetValue((_variant_t)node->getKeyCount());
+	propEnumSetValue(PROP_ANIM_KEYCOUNT, node->getKeyCount());
 }
 
 void CPropertiesWnd::updateNodeProp( ArnSkeleton* node )
 {
-	CMFCPropertyGridProperty* prop;
-	prop = m_wndPropList.FindItemByData(PROP_SKEL_MAXWEIGHTSPERVERT);
-	prop->SetValue((_variant_t)node->getSkeletonData().maxWeightsPerVertex);
-	prop = m_wndPropList.FindItemByData(PROP_SKEL_BONECOUNT);
-	prop->SetValue((_variant_t)node->getSkeletonData().bonesCount);
+	const SkeletonData& sd = node->getSkeletonData();
+	propEnumSetValue(PROP_SKEL_MAXWEIGHTSPERVERT,	sd.maxWeightsPerVertex);
+	propEnumSetValue(PROP_SKEL_BONECOUNT,			sd.bonesCount);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnBone* node )
@@ -617,112 +563,61 @@ void CPropertiesWnd::updateNodeProp( ArnBone* node )
 	D3DXVECTOR3 euler = ArnMath::QuatToEuler(&quat);
 	euler = ArnMath::Vec3RadToDeg(&euler);
 
-	CString xformStr;
-	CMFCPropertyGridProperty* prop;
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), euler.x, euler.y, euler.z);
-	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_ROT);
-	prop->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f; %.2f)"), quat.x, quat.y, quat.z, quat.w);
-	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_QUAT);
-	prop->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecScaling.x, vecScaling.y, vecScaling.z);
-	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_SCALING);
-	prop->SetValue(xformStr);
-
-	xformStr.Format(_T("(%.2f %.2f %.2f)"), vecTranslation.x, vecTranslation.y, vecTranslation.z);
-	prop = m_wndPropList.FindItemByData(PROP_BONE_OFF_TRANS);
-	prop->SetValue(xformStr);
-
-	prop = m_wndPropList.FindItemByData(PROP_BONE_INFVERTCOUNT);
-	prop->SetValue((_variant_t)node->getBoneData().infVertexCount);
+	propEnumSetValue(PROP_BONE_OFF_ROT,			euler);
+	propEnumSetValue(PROP_BONE_OFF_QUAT,		quat);
+	propEnumSetValue(PROP_BONE_OFF_SCALING,		vecScaling);
+	propEnumSetValue(PROP_BONE_OFF_TRANS,		vecTranslation);
+	propEnumSetValue(PROP_BONE_INFVERTCOUNT,	node->getBoneData().infVertexCount);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnHierarchy* node )
 {
-
+	// TODO: not implemented yet
 }
 
 void CPropertiesWnd::updateNodeProp( ArnMaterial* node )
 {
-	CMFCPropertyGridProperty* prop;
 	const D3DMATERIAL9& mat = node->getD3DMaterialData();
-	prop = m_wndPropList.FindItemByData(PROP_MAT_COUNT);
-	prop->SetValue((_variant_t) node->getMaterialCount());
-	CMFCPropertyGridColorProperty* colorProp;
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_DIFFUSE);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Diffuse));
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_AMBIENT);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Ambient));
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_MAT_SPECULAR);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Specular));
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(MAT_EMISSIVE);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&mat.Emissive));
-	prop = m_wndPropList.FindItemByData(MAT_POWER);
-	prop->SetValue((_variant_t)mat.Power);
+	propEnumSetValue(PROP_MAT_COUNT,	node->getMaterialCount());
+	propEnumSetValue(PROP_MAT_DIFFUSE,	mat.Diffuse);
+	propEnumSetValue(PROP_MAT_AMBIENT,	mat.Ambient);
+	propEnumSetValue(PROP_MAT_SPECULAR, mat.Specular);
+	propEnumSetValue(PROP_MAT_EMISSIVE, mat.Emissive);
+	propEnumSetValue(PROP_MAT_POWER,	mat.Power);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnLight* node )
 {
 	CString str;
-	CMFCPropertyGridProperty* prop;
 	const D3DLIGHT9& light = node->getD3DLightData();
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_TYPE);
+	
 	switch (node->getD3DLightData().Type)
 	{
 	case D3DLIGHT_POINT:		str = "Point";			break;
 	case D3DLIGHT_SPOT:			str = "Spot";			break;
 	case D3DLIGHT_DIRECTIONAL:	str = "Directional";	break;
 	}
-	prop->SetValue(str);
-	
-	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_DIFFUSE);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Diffuse));
 
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_SPECULAR);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Specular));
-
-	colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(PROP_LIGHT_AMBIENT);
-	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&light.Ambient));
-	
-	str.Format(_T("(%.2f %.2f %.2f)"), light.Position.x, light.Position.y, light.Position.z);
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_POS);
-	prop->SetValue(str);
-
-	str.Format(_T("(%.2f %.2f %.2f)"), light.Direction.x, light.Direction.y, light.Direction.z);
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_DIR);
-	prop->SetValue(str);
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_RANGE);
-	prop->SetValue((_variant_t)light.Range);
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_FALLOFF);
-	prop->SetValue((_variant_t)light.Falloff);
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT0);
-	prop->SetValue((_variant_t)light.Attenuation0);
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT1);
-	prop->SetValue((_variant_t)light.Attenuation1);
-
-	prop = m_wndPropList.FindItemByData(PROP_LIGHT_ATT2);
-	prop->SetValue((_variant_t)light.Attenuation2);
+	propEnumSetValue(PROP_LIGHT_TYPE,		str);
+	propEnumSetValue(PROP_LIGHT_DIFFUSE,	light.Diffuse);
+	propEnumSetValue(PROP_LIGHT_SPECULAR,	light.Specular);
+	propEnumSetValue(PROP_LIGHT_AMBIENT,	light.Ambient);
+	propEnumSetValue(PROP_LIGHT_POS,		light.Position);
+	propEnumSetValue(PROP_LIGHT_DIR,		light.Direction);
+	propEnumSetValue(PROP_LIGHT_RANGE,		light.Range);
+	propEnumSetValue(PROP_LIGHT_FALLOFF,	light.Falloff);
+	propEnumSetValue(PROP_LIGHT_ATT0,		light.Attenuation0);
+	propEnumSetValue(PROP_LIGHT_ATT1,		light.Attenuation1);
+	propEnumSetValue(PROP_LIGHT_ATT2,		light.Attenuation2);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 {
 	CString str;
-	CMFCPropertyGridProperty* prop;
-
-	prop = m_wndPropList.FindItemByData(PROP_IPO_COUNT);
-	prop->SetValue((_variant_t)(unsigned int)node->getIpoCount());
-
 	unsigned int curveCount = node->getCurveCount();
-	prop = m_wndPropList.FindItemByData(PROP_IPO_CURVECOUNT);
-	prop->SetValue((_variant_t)curveCount);
+
+	propEnumSetValue(PROP_IPO_COUNT, node->getIpoCount());
+	propEnumSetValue(PROP_IPO_CURVECOUNT, curveCount);
 
 	unsigned int i;
 	for (i = 0; i < curveCount; ++i)
@@ -731,8 +626,7 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 		str += (i!=0)?_T(","):_T("");
 		str += node->getCurveData(i).name.c_str();
 	}
-	prop = m_wndPropList.FindItemByData(PROP_IPO_CURVENAMES);
-	prop->SetValue(str);
+	propEnumSetValue(PROP_IPO_CURVENAMES, str);
 }
 void CPropertiesWnd::hideAllPropGroup()
 {
@@ -746,4 +640,81 @@ void CPropertiesWnd::hideAllPropGroup()
 	m_materialGroup->Show(FALSE);
 	m_lightGroup->Show(FALSE);
 	m_ipoGroup->Show(FALSE);
+}
+
+// Prop SetValue() helper methods
+
+void CPropertiesWnd::propEnumSetValue(PROP_ENUM pe, const POINT3FLOAT& p3f)
+{	
+	CString str;
+	str.Format(_T("(%.2f %.2f %.2f)"), p3f.x, p3f.y, p3f.z);
+	m_wndPropList.FindItemByData(pe)->SetValue(str);
+}
+void CPropertiesWnd::propEnumSetValue(PROP_ENUM pe, float f)
+{	
+	m_wndPropList.FindItemByData(pe)->SetValue((_variant_t)f);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, unsigned int ui )
+{
+	m_wndPropList.FindItemByData(pe)->SetValue((_variant_t)ui);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, CString& cstr )
+{
+	m_wndPropList.FindItemByData(pe)->SetValue(cstr);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DVECTOR& d3dVec )
+{
+	CString str;
+	str.Format(_T("(%.2f %.2f %.2f)"), d3dVec.x, d3dVec.y, d3dVec.z);
+	m_wndPropList.FindItemByData(pe)->SetValue(str);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DCOLORVALUE& d3dColVal )
+{
+	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(pe);
+	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&d3dColVal));
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DXVECTOR3& d3dVec )
+{
+	CString str;
+	str.Format(_T("(%.2f %.2f %.2f)"), d3dVec.x, d3dVec.y, d3dVec.z);
+	m_wndPropList.FindItemByData(pe)->SetValue(str);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DXQUATERNION& quat )
+{
+	CString str;
+	str.Format(_T("(%.2f %.2f %.2f; %.2f)"), quat.x, quat.y, quat.z, quat.w);
+	m_wndPropList.FindItemByData(pe)->SetValue(str);
+}
+
+void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const STRING& arnStr )
+{
+	m_wndPropList.FindItemByData(pe)->SetValue(CString(arnStr.c_str()));
+}
+void CPropertiesWnd::writePrecomputedCurvesToFile( ArnIpo* node )
+{
+	const float timeStep = 0.1f;
+	unsigned int curveCount = node->getCurveCount();
+	unsigned int i, j;
+
+	CString fileName;
+	fileName = _T("c:\\");
+	fileName += node->getName();
+	fileName += _T(".txt");
+	std::ofstream file(fileName);
+
+	for (i = 0; i < curveCount; ++i)
+	{
+		const CurveData& cd = node->getCurveData(i);
+		file << cd.name << std::endl;
+		for (j = 0; j < 1000; j++)
+			file << Animation::EvalCurveInterp(&cd, timeStep * j) << std::endl;
+	}
+
+	file.close();
 }

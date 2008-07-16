@@ -80,6 +80,7 @@ private:
 	void updateNodeProp(ArnMaterial* node);
 	void updateNodeProp(ArnLight* node);
 	void updateNodeProp(ArnIpo* node);
+	void writePrecomputedCurvesToFile(ArnIpo* node);
 
 	CMFCPropertyGridProperty* m_nodeBaseGroup;
 	CMFCPropertyGridProperty* m_cameraGroup;
@@ -92,7 +93,8 @@ private:
 	CMFCPropertyGridProperty* m_lightGroup;
 	CMFCPropertyGridProperty* m_ipoGroup;
 
-	enum
+
+	enum PROP_ENUM
 	{
 		PROP_BASE_NDT,
 		PROP_BASE_NAME,
@@ -118,7 +120,7 @@ private:
 		PROP_BONE_INFVERTCOUNT,
 
 		PROP_MAT_COUNT,
-		PROP_MAT_DIFFUSE, PROP_MAT_AMBIENT, PROP_MAT_SPECULAR, MAT_EMISSIVE, MAT_POWER,
+		PROP_MAT_DIFFUSE, PROP_MAT_AMBIENT, PROP_MAT_SPECULAR, PROP_MAT_EMISSIVE, PROP_MAT_POWER,
 
 		PROP_LIGHT_TYPE,
 		PROP_LIGHT_DIFFUSE, PROP_LIGHT_SPECULAR, PROP_LIGHT_AMBIENT,
@@ -137,6 +139,17 @@ private:
 		PROP_IPO_CURVENAMES,
 	};
 
+	// Prop SetValue() helper methods
+
+	void propEnumSetValue(PROP_ENUM pe, const POINT3FLOAT& p3f);
+	void propEnumSetValue(PROP_ENUM pe, float f);
+	void propEnumSetValue(PROP_ENUM pe, unsigned int ui);
+	void propEnumSetValue(PROP_ENUM pe, CString& cstr);
+	void propEnumSetValue(PROP_ENUM pe, const D3DVECTOR& d3dVec);
+	void propEnumSetValue(PROP_ENUM pe, const D3DXVECTOR3& d3dVec);
+	void propEnumSetValue(PROP_ENUM pe, const D3DCOLORVALUE& d3dColVal);
+	void propEnumSetValue(PROP_ENUM pe, const D3DXQUATERNION& quat);
+	void propEnumSetValue(PROP_ENUM pe, const STRING& arnStr);
 
 };
 

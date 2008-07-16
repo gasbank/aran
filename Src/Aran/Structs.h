@@ -128,7 +128,7 @@ struct BezTripleData
 	//char f1, f2, f3, hide;		/* f1, f2, f3: used for selection status,  hide: used to indicate whether BezTriple is hidden */
 };
 
-enum CurveType { CT_CONSTANT, CT_LINEAR, CT_BEZIER };
+enum CurveType { IPO_CONST, IPO_LIN, IPO_BEZ };
 
 struct CurveDataShell
 {
@@ -142,7 +142,7 @@ struct CurveData
 	STRING name;
 	unsigned int pointCount;
 	CurveType type;
-	std::list<BezTripleData> points;
+	std::vector<BezTripleData> points;
 };
 
 struct MaterialData
