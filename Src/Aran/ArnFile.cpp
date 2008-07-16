@@ -308,6 +308,11 @@ void parse_nodeIpo2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	}
 }
 
+void parse_nodeSymLink( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_SYMLINK1);
+	NodeSymLink1* node = (NodeSymLink1*)nodeBase;
+}
 //////////////////////////////////////////////////////////////////////////
 
 void release_arnfile( ArnFileData& afd )
@@ -357,3 +362,4 @@ unsigned int*	file_read_uint_array(ArnBinaryFile& file, unsigned int count) { un
 int				file_read_int(ArnBinaryFile& file) { int i = *(int*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(int); return i; }
 float			file_read_float(ArnBinaryFile& file) { float f = *(float*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(float); return f; }
 BOOL			file_read_BOOL(ArnBinaryFile& file) { BOOL b = *(BOOL*)(file.m_data + file.m_curPos); if (b == TRUE || b == FALSE) { file.m_curPos += sizeof(BOOL); return b; } throw MyError(MEE_BOOL_DATA_PARSE); }
+

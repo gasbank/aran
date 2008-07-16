@@ -146,7 +146,6 @@ private:
 	void propEnumSetValue(PROP_ENUM pe, unsigned int ui);
 	void propEnumSetValue(PROP_ENUM pe, CString& cstr);
 	void propEnumSetValue(PROP_ENUM pe, const D3DVECTOR& d3dVec);
-	void propEnumSetValue(PROP_ENUM pe, const D3DXVECTOR3& d3dVec);
 	void propEnumSetValue(PROP_ENUM pe, const D3DCOLORVALUE& d3dColVal);
 	void propEnumSetValue(PROP_ENUM pe, const D3DXQUATERNION& quat);
 	void propEnumSetValue(PROP_ENUM pe, const STRING& arnStr);

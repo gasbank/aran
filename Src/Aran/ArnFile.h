@@ -126,6 +126,11 @@ struct NodeIpo2 : public NodeBase
 	CurveDataShell* m_curves;
 };
 
+struct NodeSymLink1 : public NodeBase
+{
+	int dummy;
+};
+//////////////////////////////////////////////////////////////////////////
 
 struct ArnBinaryFile
 {
@@ -168,6 +173,7 @@ void parse_nodeAnim1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeBone1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeIpo1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeIpo2(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeSymLink(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////
 

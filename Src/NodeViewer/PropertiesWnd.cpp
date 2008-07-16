@@ -613,7 +613,7 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 
 void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 {
-	CString str;
+	CString str, substr;
 	unsigned int curveCount = node->getCurveCount();
 
 	propEnumSetValue(PROP_IPO_COUNT, node->getIpoCount());
@@ -622,9 +622,10 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 	unsigned int i;
 	for (i = 0; i < curveCount; ++i)
 	{
-		//CA2CT name();
+		const CurveData& cd = node->getCurveData(i);
+		substr.Format(_T("%s(%d)"), CString(cd.name.c_str()), cd.points.size());
 		str += (i!=0)?_T(","):_T("");
-		str += node->getCurveData(i).name.c_str();
+		str += substr;
 	}
 	propEnumSetValue(PROP_IPO_CURVENAMES, str);
 }
@@ -676,13 +677,6 @@ void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DCOLORVALUE& d3dCol
 {
 	CMFCPropertyGridColorProperty* colorProp = (CMFCPropertyGridColorProperty*)m_wndPropList.FindItemByData(pe);
 	colorProp->SetColor((COLORREF)ArnMath::Float4ColorToDword(&d3dColVal));
-}
-
-void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DXVECTOR3& d3dVec )
-{
-	CString str;
-	str.Format(_T("(%.2f %.2f %.2f)"), d3dVec.x, d3dVec.y, d3dVec.z);
-	m_wndPropList.FindItemByData(pe)->SetValue(str);
 }
 
 void CPropertiesWnd::propEnumSetValue( PROP_ENUM pe, const D3DXQUATERNION& quat )
