@@ -11,7 +11,7 @@ class ArnHierarchy;
 class ArnMaterial;
 class ArnLight;
 class ArnIpo;
-class ArnMovable;
+class ArnXformable;
 
 class CPropertiesToolBar : public CMFCToolBar
 {
@@ -72,7 +72,7 @@ protected:
 
 private:
 	void hideAllPropGroup();
-	void updateNodeProp(ArnMovable* node);
+	void updateNodeProp(ArnXformable* node);
 	void updateNodeProp(ArnMesh* node);
 	void updateNodeProp(ArnCamera* node);
 	void updateNodeProp(ArnAnim* node);

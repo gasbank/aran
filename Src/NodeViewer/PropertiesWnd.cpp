@@ -8,7 +8,7 @@
 #include "MaterialListProperty.h"
 //////////////////////////////////////////////////////////////////////////
 #include "ArnNode.h"
-#include "ArnMovable.h"
+#include "ArnXformable.h"
 #include "ArnContainer.h"
 #include "ArnMesh.h"
 #include "ArnSkeleton.h"
@@ -470,7 +470,7 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_MESH");
 		m_movableGroup->Show(TRUE);
 		m_meshGroup->Show(TRUE);
-		updateNodeProp(static_cast<ArnMovable*>(node));
+		updateNodeProp(static_cast<ArnXformable*>(node));
 		updateNodeProp(static_cast<ArnMesh*>(node));
 		break;
 	case NDT_RT_ANIM:
@@ -492,7 +492,7 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_CAMERA");
 		m_movableGroup->Show(TRUE);
 		m_cameraGroup->Show(TRUE);
-		updateNodeProp(static_cast<ArnMovable*>(node));
+		updateNodeProp(static_cast<ArnXformable*>(node));
 		updateNodeProp(static_cast<ArnCamera*>(node));
 		break;
 	case NDT_RT_HIERARCHY:
@@ -504,7 +504,7 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_LIGHT");
 		m_movableGroup->Show(TRUE);
 		m_lightGroup->Show(TRUE);
-		updateNodeProp(static_cast<ArnMovable*>(node));
+		updateNodeProp(static_cast<ArnXformable*>(node));
 		updateNodeProp(static_cast<ArnLight*>(node));
 		break;
 	case NDT_RT_MATERIAL:
@@ -646,7 +646,7 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 	propEnumSetValue(PROP_IPO_CURVENAMES, str);
 }
 
-void CPropertiesWnd::updateNodeProp( ArnMovable* node )
+void CPropertiesWnd::updateNodeProp( ArnXformable* node )
 {
 	const D3DXMATRIX& localXform = node->getLocalXform();
 	D3DXVECTOR3 vecScaling, vecTranslation;

@@ -40,8 +40,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Copy Resources Error"), hr);
 	}
 #endif
-	int screenX = 1024;
-	int screenY = 768;
+	// 16:9 wide screen?! kyakyakya...
+	int screenX = 16*50;
+	int screenY = 9*50;
 	hr = videoMan.InitWindow(_T("Aran"), MsgProc, screenX, screenY);
 	if (FAILED(hr))
 	{

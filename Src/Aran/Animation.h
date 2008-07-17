@@ -20,7 +20,7 @@ public:
 
 	// originally written by Blender;
 	// file: blendersvn/blender/source/blender/blenkernel/intern/ipo.c
-	// func: float eval_icu(IpoCurve *icu, float ipotime)
+	// function: float eval_icu(IpoCurve *icu, float ipotime)
 	static float EvalCurveInterp(const CurveData* icu, float ipotime);
 
 private:
