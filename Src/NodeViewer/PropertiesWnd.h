@@ -11,6 +11,7 @@ class ArnHierarchy;
 class ArnMaterial;
 class ArnLight;
 class ArnIpo;
+class ArnMovable;
 
 class CPropertiesToolBar : public CMFCToolBar
 {
@@ -71,6 +72,7 @@ protected:
 
 private:
 	void hideAllPropGroup();
+	void updateNodeProp(ArnMovable* node);
 	void updateNodeProp(ArnMesh* node);
 	void updateNodeProp(ArnCamera* node);
 	void updateNodeProp(ArnAnim* node);
@@ -83,6 +85,7 @@ private:
 	void writePrecomputedCurvesToFile(ArnIpo* node);
 
 	CMFCPropertyGridProperty* m_nodeBaseGroup;
+	CMFCPropertyGridProperty* m_movableGroup;
 	CMFCPropertyGridProperty* m_cameraGroup;
 	CMFCPropertyGridProperty* m_animGroup;
 	CMFCPropertyGridProperty* m_meshGroup;
@@ -99,9 +102,10 @@ private:
 		PROP_BASE_NDT,
 		PROP_BASE_NAME,
 		PROP_BASE_PARENT,
-		PROP_BASE_LX_ROT, PROP_BASE_LX_QUAT, PROP_BASE_LX_SCALING, PROP_BASE_LX_TRANS,
 
-		PROP_CAM_IPO,
+		PROP_MOV_LX_ROT, PROP_MOV_LX_QUAT, PROP_MOV_LX_SCALING, PROP_MOV_LX_TRANS,
+		PROP_MOV_IPO,
+
 		PROP_CAM_TARGETPOS,
 		PROP_CAM_UPVEC,
 		PROP_CAM_LOOKATVEC,
@@ -110,7 +114,6 @@ private:
 
 		PROP_ANIM_KEYCOUNT,
 
-		PROP_MESH_IPO,
 		PROP_MESH_VERTCOUNT,
 		PROP_MESH_FACECOUNT,
 		PROP_MESH_MATERIALCOUNT,
@@ -125,7 +128,6 @@ private:
 		PROP_MAT_COUNT,
 		PROP_MAT_DIFFUSE, PROP_MAT_AMBIENT, PROP_MAT_SPECULAR, PROP_MAT_EMISSIVE, PROP_MAT_POWER,
 
-		PROP_LIGHT_IPO,
 		PROP_LIGHT_TYPE,
 		PROP_LIGHT_DIFFUSE, PROP_LIGHT_SPECULAR, PROP_LIGHT_AMBIENT,
 		PROP_LIGHT_POS,

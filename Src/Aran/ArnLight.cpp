@@ -2,7 +2,7 @@
 #include "ArnLight.h"
 #include "ArnFile.h"
 ArnLight::ArnLight()
-: ArnMovable(NDT_RT_LIGHT)
+: ArnXformable(NDT_RT_LIGHT)
 {
 }
 

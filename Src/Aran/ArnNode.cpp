@@ -4,7 +4,6 @@
 ArnNode::ArnNode(NODE_DATA_TYPE type)
 : ArnObject(type), m_parent(0)
 {
-	D3DXMatrixIdentity(&m_localXform);
 }
 
 ArnNode::~ArnNode(void)

@@ -8,6 +8,7 @@
 #include "MaterialListProperty.h"
 //////////////////////////////////////////////////////////////////////////
 #include "ArnNode.h"
+#include "ArnMovable.h"
 #include "ArnContainer.h"
 #include "ArnMesh.h"
 #include "ArnSkeleton.h"
@@ -202,28 +203,33 @@ void CPropertiesWnd::InitPropList()
 	CMFCPropertyGridProperty* pProp = 0;
 	
 	m_wndPropList.AddProperty(m_nodeBaseGroup);
-
-	CMFCPropertyGridProperty* localXformProp = new CMFCPropertyGridProperty(_T("Local Transform"));
-	m_nodeBaseGroup->AddSubItem(localXformProp);
-
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_BASE_LX_ROT);
-	localXformProp->AddSubItem(pProp);
-
-	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_BASE_LX_QUAT);
-	localXformProp->AddSubItem(pProp);
-
-	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Local scaling"), PROP_BASE_LX_SCALING);
-	localXformProp->AddSubItem(pProp);
-
-	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Local translation"), PROP_BASE_LX_TRANS);
-	localXformProp->AddSubItem(pProp);
 	
 	//////////////////////////////////////////////////////////////////////
 	
-	m_cameraGroup = new CMFCPropertyGridProperty(_T("Camera"));
+	m_movableGroup = new CMFCPropertyGridProperty(_T("Movable"));
+	
+	CMFCPropertyGridProperty* localXformProp = new CMFCPropertyGridProperty(_T("Local Transform"));
+	m_movableGroup->AddSubItem(localXformProp);
 
-	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_CAM_IPO);
-	m_cameraGroup->AddSubItem(pProp);
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Deg)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_MOV_LX_ROT);
+	localXformProp->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty(_T("Rotation (Quat)"), (_variant_t) _T("(0, 0, 0)"), _T("Local rotation in Euler form (Unit: Degrees)"), PROP_MOV_LX_QUAT);
+	localXformProp->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Scaling"), (_variant_t) _T("(0, 0, 0)"), _T("Local scaling"), PROP_MOV_LX_SCALING);
+	localXformProp->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("Translation"), (_variant_t) _T("(0, 0, 0)"), _T("Local translation"), PROP_MOV_LX_TRANS);
+	localXformProp->AddSubItem(pProp);
+
+	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_MOV_IPO);
+	m_movableGroup->AddSubItem(pProp);
+
+	m_wndPropList.AddProperty(m_movableGroup);
+
+	//////////////////////////////////////////////////////////////////////
+	m_cameraGroup = new CMFCPropertyGridProperty(_T("Camera"));
 
 	pProp = new CMFCPropertyGridProperty( _T("Target Position"), (_variant_t) _T("(0, 0, 0)"), _T("Camera target position"), PROP_CAM_TARGETPOS);
 	m_cameraGroup->AddSubItem(pProp);
@@ -256,9 +262,6 @@ void CPropertiesWnd::InitPropList()
 	//////////////////////////////////////////////////////////////////////////
 
 	m_meshGroup = new CMFCPropertyGridProperty(_T("Mesh"));
-
-	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_MESH_IPO);
-	m_meshGroup->AddSubItem(pProp);
 
 	pProp = new CMFCPropertyGridProperty( _T("Vertex Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), PROP_MESH_VERTCOUNT);
 	m_meshGroup->AddSubItem(pProp);
@@ -357,9 +360,6 @@ void CPropertiesWnd::InitPropList()
 	//////////////////////////////////////////////////////////////////////////
 
 	m_lightGroup = new CMFCPropertyGridProperty(_T("Light"));
-
-	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_LIGHT_IPO);
-	m_lightGroup->AddSubItem(pProp);
 
 	CMFCPropertyGridProperty* d3dLight9 = new CMFCPropertyGridProperty(_T("D3DLIGHT9"));
 	m_lightGroup->AddSubItem(d3dLight9);
@@ -468,7 +468,9 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 	{
 	case NDT_RT_MESH:
 		ndtVal = _T("NDT_RT_MESH");
+		m_movableGroup->Show(TRUE);
 		m_meshGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnMovable*>(node));
 		updateNodeProp(static_cast<ArnMesh*>(node));
 		break;
 	case NDT_RT_ANIM:
@@ -488,7 +490,9 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		break;
 	case NDT_RT_CAMERA:
 		ndtVal = _T("NDT_RT_CAMERA");
+		m_movableGroup->Show(TRUE);
 		m_cameraGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnMovable*>(node));
 		updateNodeProp(static_cast<ArnCamera*>(node));
 		break;
 	case NDT_RT_HIERARCHY:
@@ -498,7 +502,9 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		break;
 	case NDT_RT_LIGHT:
 		ndtVal = _T("NDT_RT_LIGHT");
+		m_movableGroup->Show(TRUE);
 		m_lightGroup->Show(TRUE);
+		updateNodeProp(static_cast<ArnMovable*>(node));
 		updateNodeProp(static_cast<ArnLight*>(node));
 		break;
 	case NDT_RT_MATERIAL:
@@ -517,28 +523,16 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		ndtVal = _T("NDT_RT_CONTAINER");
 		break;
 	}
-	const D3DXMATRIX& localXform = node->getLocalXform();
-	D3DXVECTOR3 vecScaling, vecTranslation;
-	D3DXQUATERNION quat;
-	D3DXMatrixDecompose(&vecScaling, &quat, &vecTranslation, &localXform);
-
-	D3DXVECTOR3 euler = ArnMath::QuatToEuler(&quat);
-	euler = ArnMath::Vec3RadToDeg(&euler);
-
+	
 	propEnumSetValue(PROP_BASE_NDT,			ndtVal);
 	propEnumSetValue(PROP_BASE_NAME,		node->getName());
 	propEnumSetValue(PROP_BASE_PARENT,		node->getParentName());
-	propEnumSetValue(PROP_BASE_LX_ROT,		euler);
-	propEnumSetValue(PROP_BASE_LX_QUAT,		quat);
-	propEnumSetValue(PROP_BASE_LX_SCALING,	vecScaling);
-	propEnumSetValue(PROP_BASE_LX_TRANS,	vecTranslation);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnMesh* node )
 {
 	const MeshData& md = node->getMeshData();
 	CString str, substr;
-	propEnumSetValue(PROP_MESH_IPO,				node->getIpoName());
 	propEnumSetValue(PROP_MESH_VERTCOUNT,		md.vertexCount);
 	propEnumSetValue(PROP_MESH_FACECOUNT,		md.faceCount);
 	propEnumSetValue(PROP_MESH_MATERIALCOUNT,	md.materialCount);
@@ -556,7 +550,6 @@ void CPropertiesWnd::updateNodeProp( ArnCamera* node )
 {
 	CString str;
 	const ARN_NDD_CAMERA_CHUNK& cameraData = node->getCameraData();
-	propEnumSetValue(PROP_CAM_IPO,			node->getIpoName());
 	propEnumSetValue(PROP_CAM_FARCLIP,		cameraData.farClip);
 	propEnumSetValue(PROP_CAM_NEARCLIP,		cameraData.nearClip);
 	propEnumSetValue(PROP_CAM_TARGETPOS,	cameraData.targetPos);
@@ -621,7 +614,6 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 	case D3DLIGHT_DIRECTIONAL:	str = "Directional";	break;
 	}
 
-	propEnumSetValue(PROP_LIGHT_IPO,		node->getIpoName());
 	propEnumSetValue(PROP_LIGHT_TYPE,		str);
 	propEnumSetValue(PROP_LIGHT_DIFFUSE,	light.Diffuse);
 	propEnumSetValue(PROP_LIGHT_SPECULAR,	light.Specular);
@@ -653,9 +645,27 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 	}
 	propEnumSetValue(PROP_IPO_CURVENAMES, str);
 }
+
+void CPropertiesWnd::updateNodeProp( ArnMovable* node )
+{
+	const D3DXMATRIX& localXform = node->getLocalXform();
+	D3DXVECTOR3 vecScaling, vecTranslation;
+	D3DXQUATERNION quat;
+	D3DXMatrixDecompose(&vecScaling, &quat, &vecTranslation, &localXform);
+
+	D3DXVECTOR3 euler = ArnMath::QuatToEuler(&quat);
+	euler = ArnMath::Vec3RadToDeg(&euler);
+
+	propEnumSetValue(PROP_MOV_LX_ROT,		euler);
+	propEnumSetValue(PROP_MOV_LX_QUAT,		quat);
+	propEnumSetValue(PROP_MOV_LX_SCALING,	vecScaling);
+	propEnumSetValue(PROP_MOV_LX_TRANS,		vecTranslation);
+	propEnumSetValue(PROP_MOV_IPO,			node->getIpoName());
+}
 void CPropertiesWnd::hideAllPropGroup()
 {
 	//nodeBaseGroup->Show(FALSE); /* NodeBase group is always shown */
+	m_movableGroup->Show(FALSE);
 	m_cameraGroup->Show(FALSE);
 	m_animGroup->Show(FALSE);
 	m_meshGroup->Show(FALSE);

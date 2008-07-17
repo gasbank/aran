@@ -9,15 +9,13 @@ public:
 	ArnNode(NODE_DATA_TYPE type);
 	virtual ~ArnNode(void);
 
-	ArnNode*				getParent() { return m_parent; }
+	ArnNode*				getParent() const { return m_parent; }
 	const STRING&			getParentName() const { return m_parentName; }
 	const char*				getName() const { return m_name.c_str(); }
 	void					setName(const char* name) { m_name = name; }
 	void					attachChild(ArnNode* child);
 	void					detachChild(ArnNode* child);
 	void					deleteAllChildren();
-	const D3DXMATRIX&		getLocalXform() const { return m_localXform; }
-	void					setLocalXform(const D3DXMATRIX& localXform) { m_localXform = localXform; }
 	ArnNode*				getLastNode();
 	ArnNode*				getNodeByName(const STRING& name);
 	ArnNode*				getNodeAt(unsigned int idx);
@@ -36,5 +34,4 @@ private:
 	ArnNode*				m_parent;
 	STRING					m_parentName;
 	ChildrenList			m_children;
-	D3DXMATRIX				m_localXform;
 };

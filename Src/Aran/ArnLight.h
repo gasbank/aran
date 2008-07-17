@@ -1,11 +1,11 @@
 #pragma once
-#include "ArnMovable.h"
+#include "ArnXformable.h"
 
 struct NodeBase;
 struct NodeLight1;
 struct NodeLight2;
 
-class ArnLight : public ArnMovable
+class ArnLight : public ArnXformable
 {
 public:
 	ArnLight();

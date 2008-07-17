@@ -1,12 +1,12 @@
 #pragma once
-#include "ArnMovable.h"
+#include "ArnXformable.h"
 
 struct NodeBase;
 struct NodeMesh2;
 struct NodeMesh3;
 class ArnMaterial;
 
-class ArnMesh : public ArnMovable
+class ArnMesh : public ArnXformable
 {
 public:
 	typedef std::vector<ArnMaterial*> MaterialRefList;
@@ -19,7 +19,7 @@ public:
 	const LPD3DXMESH&	getD3DXMesh() { return m_d3dxMesh; }
 	void				setD3DXMesh(const LPD3DXMESH d3dxMesh) { m_d3dxMesh = d3dxMesh; }
 	const MeshData&		getMeshData() const { return m_data; }
-	
+	const D3DMATERIAL9*	getMaterial(unsigned int i) const;
 	// *** INTERNAL USE ONLY START ***
 	virtual void		interconnect(ArnNode* sceneRoot);
 	// *** INTERNAL USE ONLY END ***

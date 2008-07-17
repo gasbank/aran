@@ -1,10 +1,11 @@
 #include "AranPCH.h"
 #include "ArnMesh.h"
+#include "ArnMaterial.h"
 #include "ArnFile.h"
 #include "VideoMan.h"
 
 ArnMesh::ArnMesh()
-: ArnMovable(NDT_RT_MESH), m_d3dxMesh(0)
+: ArnXformable(NDT_RT_MESH), m_d3dxMesh(0)
 {
 }
 
@@ -76,7 +77,7 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 void ArnMesh::interconnect( ArnNode* sceneRoot )
 {
 	unsigned int i;
-	for (i = 0; i < m_data.materialCount; ++i)
+	for (i = 0; i < m_data.matNameList.size(); ++i)
 	{
 		ArnNode* matNode = sceneRoot->getNodeByName(m_data.matNameList[i]);
 		if (matNode && matNode->getType() == NDT_RT_MATERIAL)
@@ -89,6 +90,10 @@ void ArnMesh::interconnect( ArnNode* sceneRoot )
 	ArnNode::interconnect(sceneRoot);
 }
 
+const D3DMATERIAL9* ArnMesh::getMaterial( unsigned int i ) const
+{
+	return &m_materialRefList[i]->getD3DMaterialData();
+}
 //////////////////////////////////////////////////////////////////////////
 
 

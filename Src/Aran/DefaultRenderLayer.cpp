@@ -53,6 +53,7 @@ HRESULT DefaultRenderLayer::render()
 	const ResourceMan& resMan = ResourceMan::getSingleton();
 	
 	// Hero Character
+
 	m_pVideoMan->GetDev()->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
 	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
@@ -61,21 +62,6 @@ HRESULT DefaultRenderLayer::render()
 		&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
 		);
 	resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
-
-	//// PoolC 3D Logo
-	//D3DXMatrixTranslation(&matTranslation, 0.0f, 10.0f, -20.0f );
-	//D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
-	//D3DXMatrixRotationX( &matRotation, D3DXToRadian(60));
-	//m_pVideoMan->RenderModel(
-	//	resMan.getModel( ResourceMan::POOLC ),
-	//	&( matScaling * matRotation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() * matTranslation)
-	//	);
-	//resMan.getModel( ResourceMan::POOLC )->AdvanceTime( 0.1f );
-
-	//D3DXMatrixTranslation(&matTranslation, 0.0f, 0.0f, 100.0f);
-	//m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::BIGHOUSE ), &matTranslation); // House background
-	//resMan.getModel( ResourceMan::BIGHOUSE )->AdvanceTime( 0.1f );
-
 
 	//////////////////////////////////////////////////////////////////////////
 	// Print Text
@@ -126,12 +112,17 @@ HRESULT BoxRenderLayer::render()
 		videoMan.getMainCamera()->nearClip,
 		videoMan.getMainCamera()->farClip
 		);
-	m_pVideoMan->setWorldViewProjection(m_matWorld, m_matView, m_matProjection);
+
+	//m_pVideoMan->setWorldViewProjection(m_matWorld, m_matView, m_matProjection);
 
 	D3DXMATRIX transform;
 	D3DXMatrixIdentity(&transform);
 	dev->SetTransform(D3DTS_WORLD, &transform);
 	
+	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
+	dev->SetFVF(ArnVertex::FVF);
+	videoMan.renderMeshesOnly(m_simpleSG->getSceneRoot());
+
 	//
 	//D3DXMATRIX flip;
 	//flip.m[0][0] = 1; flip.m[0][1] = 0; flip.m[0][2] = 0; flip.m[0][3] = 0; 
@@ -179,7 +170,7 @@ HRESULT BoxRenderLayer::render()
 	//	}
 	//}
 
-	dev->SetTransform(D3DTS_WORLD, &transform);
+	//dev->SetTransform(D3DTS_WORLD, &transform);
 	//m_testMesh->DrawSubset(0);
 
 	RECT rc;
@@ -193,8 +184,8 @@ BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0), m_arnFileData(0), m_simpleSG(0)
 {
 	m_arnFileData = new ArnFileData;
-	//load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
-	//m_simpleSG = new ArnSceneGraph(*m_arnFileData);
+	load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
+	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 
 BoxRenderLayer::~BoxRenderLayer()

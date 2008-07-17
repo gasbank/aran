@@ -3,7 +3,7 @@
 #include "ArnFile.h"
 
 ArnCamera::ArnCamera()
-: ArnMovable(NDT_RT_CAMERA)
+: ArnXformable(NDT_RT_CAMERA)
 {
 }
 

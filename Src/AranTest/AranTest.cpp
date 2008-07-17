@@ -72,6 +72,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 
 	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
+
 	V_OKAY( videoMan.InitAnimationController() );
 	V_OKAY( resMan.initializeAll() );
 	//character->AttachModelReader( resMan.getModel( ResourceMan::MAN ) );

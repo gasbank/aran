@@ -16,7 +16,6 @@
 #include "DungeonInterface.h"
 #include "Singleton.h"
 
-#include <list>
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=0) { (p)->Release(); (p) = 0; }
@@ -24,6 +23,7 @@
 
 class Character;
 class ArnCamera;
+class ArnNode;
 
 struct MY_COLOR_VERTEX
 {
@@ -201,6 +201,8 @@ public:
 
 
 	void setWorldViewProjection( const D3DXMATRIX& matWorld, const D3DXMATRIX& matView, const D3DXMATRIX& matProj );
+
+	void renderMeshesOnly(ArnNode* node);
 };
 
 
