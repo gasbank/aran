@@ -73,3 +73,12 @@ ArnNode* ArnNode::getNodeAt( unsigned int idx )
 	else
 		throw MyError(MEE_STL_INDEX_OUT_OF_BOUNDS);
 }
+
+void ArnNode::interconnect( ArnNode* sceneRoot )
+{
+	ChildrenList::iterator it = m_children.begin();
+	for (; it != m_children.end(); ++it)
+	{
+		(*it)->interconnect(sceneRoot);
+	}
+}

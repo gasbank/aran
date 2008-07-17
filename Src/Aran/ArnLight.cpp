@@ -2,7 +2,7 @@
 #include "ArnLight.h"
 #include "ArnFile.h"
 ArnLight::ArnLight()
-: ArnNode(NDT_RT_LIGHT)
+: ArnMovable(NDT_RT_LIGHT)
 {
 }
 
@@ -46,4 +46,12 @@ void ArnLight::buildFrom( const NodeLight2* nl )
 	setParentName(nl->m_parentName);
 	setLocalXform(*nl->m_localXform);
 	m_d3dLight = *nl->m_light;
+	setIpoName(nl->m_ipoName);
+}
+
+void ArnLight::interconnect( ArnNode* sceneRoot )
+{
+	setIpo(getIpoName());
+
+	ArnNode::interconnect(sceneRoot);
 }

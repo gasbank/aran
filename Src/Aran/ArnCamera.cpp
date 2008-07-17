@@ -3,7 +3,7 @@
 #include "ArnFile.h"
 
 ArnCamera::ArnCamera()
-: ArnNode(NDT_RT_CAMERA)
+: ArnMovable(NDT_RT_CAMERA)
 {
 }
 
@@ -46,6 +46,7 @@ void ArnCamera::buildFrom( const NodeCamera2* nc )
 {
 	setParentName(nc->m_parentName);
 	setLocalXform(*nc->m_localXform);
+	setIpoName(nc->m_ipoName);
 	m_cameraData.nearClip		= nc->m_clipStart;
 	m_cameraData.farClip		= nc->m_clipEnd;
 	m_cameraData.lookAtVector	= POINT3FLOAT::ZERO;
@@ -55,4 +56,10 @@ void ArnCamera::buildFrom( const NodeCamera2* nc )
 	m_cameraData.upVector		= POINT3FLOAT::ZERO;
 }
 
+void ArnCamera::interconnect( ArnNode* sceneRoot )
+{
+	setIpo(getIpoName());
+
+	ArnNode::interconnect(sceneRoot);
+}
 

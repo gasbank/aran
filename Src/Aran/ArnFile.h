@@ -39,12 +39,14 @@ struct NodeMesh2 : public NodeBase
 struct NodeMesh3 : public NodeBase
 {
 	char* m_parentName;
+	char* m_ipoName;
 	D3DXMATRIX* m_localXform;
 	D3DXMATRIX* m_unusedXform;
 	unsigned int m_materialCount;
 	unsigned int m_meshVerticesCount;
 	unsigned int m_meshFacesCount;
-	DWORD* m_attrToMaterialMap;
+	DWORD* m_attrToMaterialMap; // unused
+	std::vector<char*> m_matNameList;
 	ArnVertex* m_vertex;
 	unsigned short* m_faces;
 	DWORD* m_attr;
@@ -93,6 +95,7 @@ struct NodeLight1 : public NodeBase
 struct NodeLight2 : public NodeBase
 {
 	char* m_parentName;
+	char* m_ipoName;
 	D3DXMATRIX* m_localXform;
 	D3DLIGHT9* m_light;
 };
@@ -103,8 +106,8 @@ struct NodeCamera1 : public NodeBase
 struct NodeCamera2 : public NodeBase
 {
 	enum CamType { CT_ORTHO = 1, CT_PERSP = 0 };
-
 	char* m_parentName;
+	char* m_ipoName;
 	D3DXMATRIX* m_localXform;
 	CamType m_camType;
 	float m_angle;

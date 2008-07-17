@@ -5,6 +5,7 @@
 #include "Resource.h"
 #include "MainFrm.h"
 #include "NodeViewer.h"
+#include "MaterialListProperty.h"
 //////////////////////////////////////////////////////////////////////////
 #include "ArnNode.h"
 #include "ArnContainer.h"
@@ -221,6 +222,9 @@ void CPropertiesWnd::InitPropList()
 	
 	m_cameraGroup = new CMFCPropertyGridProperty(_T("Camera"));
 
+	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_CAM_IPO);
+	m_cameraGroup->AddSubItem(pProp);
+
 	pProp = new CMFCPropertyGridProperty( _T("Target Position"), (_variant_t) _T("(0, 0, 0)"), _T("Camera target position"), PROP_CAM_TARGETPOS);
 	m_cameraGroup->AddSubItem(pProp);
 
@@ -253,6 +257,9 @@ void CPropertiesWnd::InitPropList()
 
 	m_meshGroup = new CMFCPropertyGridProperty(_T("Mesh"));
 
+	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_MESH_IPO);
+	m_meshGroup->AddSubItem(pProp);
+
 	pProp = new CMFCPropertyGridProperty( _T("Vertex Count"), (_variant_t)(unsigned int) 0, _T("Mesh vertex count"), PROP_MESH_VERTCOUNT);
 	m_meshGroup->AddSubItem(pProp);
 
@@ -260,6 +267,9 @@ void CPropertiesWnd::InitPropList()
 	m_meshGroup->AddSubItem(pProp);
 
 	pProp = new CMFCPropertyGridProperty( _T("Material Count"), (_variant_t)(unsigned int) 0, _T("Mesh material count"), PROP_MESH_MATERIALCOUNT);
+	m_meshGroup->AddSubItem(pProp);
+
+	pProp = new CMaterialListProperty( _T("Material Name List"), (_variant_t) _T("MatNames"), _T("Material name list"), PROP_MESH_MATERIALNAMELIST);
 	m_meshGroup->AddSubItem(pProp);
 
 	m_wndPropList.AddProperty(m_meshGroup);
@@ -322,15 +332,14 @@ void CPropertiesWnd::InitPropList()
 	m_boneGroup->Show(FALSE);
 
 	//////////////////////////////////////////////////////////////////////////
-
+	CMFCPropertyGridColorProperty* pColorProp;
 	m_materialGroup = new CMFCPropertyGridProperty(_T("Material"));
-
+	
 	pProp = new CMFCPropertyGridProperty( _T("Count"), (_variant_t)(unsigned int) 0, _T("Material count embedded in this node"), PROP_MAT_COUNT);
 	m_materialGroup->AddSubItem(pProp);
 
 	CMFCPropertyGridProperty* d3dMaterial9 = new CMFCPropertyGridProperty(_T("D3DMATERIAL9"));
 	m_materialGroup->AddSubItem(d3dMaterial9);
-	CMFCPropertyGridColorProperty* pColorProp;
 	pColorProp = new CMFCPropertyGridColorProperty(_T("Diffuse"), RGB(0, 0, 0), NULL, _T("Diffuse color RGBA"), PROP_MAT_DIFFUSE);
 	d3dMaterial9->AddSubItem(pColorProp);
 	pColorProp = new CMFCPropertyGridColorProperty(_T("Ambient"), RGB(0, 0, 0), NULL, _T("Ambient color RGB"), PROP_MAT_AMBIENT);
@@ -348,6 +357,9 @@ void CPropertiesWnd::InitPropList()
 	//////////////////////////////////////////////////////////////////////////
 
 	m_lightGroup = new CMFCPropertyGridProperty(_T("Light"));
+
+	pProp = new CMFCPropertyGridProperty( _T("IPO"), (_variant_t) _T("IPO linked to the node"), _T("IPO linked to the node"), PROP_LIGHT_IPO);
+	m_lightGroup->AddSubItem(pProp);
 
 	CMFCPropertyGridProperty* d3dLight9 = new CMFCPropertyGridProperty(_T("D3DLIGHT9"));
 	m_lightGroup->AddSubItem(d3dLight9);
@@ -525,15 +537,26 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 void CPropertiesWnd::updateNodeProp( ArnMesh* node )
 {
 	const MeshData& md = node->getMeshData();
+	CString str, substr;
+	propEnumSetValue(PROP_MESH_IPO,				node->getIpoName());
 	propEnumSetValue(PROP_MESH_VERTCOUNT,		md.vertexCount);
 	propEnumSetValue(PROP_MESH_FACECOUNT,		md.faceCount);
 	propEnumSetValue(PROP_MESH_MATERIALCOUNT,	md.materialCount);
+	unsigned int i;
+	for (i = 0; i < md.materialCount; ++i)
+	{
+		substr.Format(_T("%s"), CString(md.matNameList[i].c_str()));
+		str += (i!=0)?_T(","):_T("");
+		str += substr;
+	}
+	propEnumSetValue(PROP_MESH_MATERIALNAMELIST, str);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnCamera* node )
 {
 	CString str;
 	const ARN_NDD_CAMERA_CHUNK& cameraData = node->getCameraData();
+	propEnumSetValue(PROP_CAM_IPO,			node->getIpoName());
 	propEnumSetValue(PROP_CAM_FARCLIP,		cameraData.farClip);
 	propEnumSetValue(PROP_CAM_NEARCLIP,		cameraData.nearClip);
 	propEnumSetValue(PROP_CAM_TARGETPOS,	cameraData.targetPos);
@@ -598,6 +621,7 @@ void CPropertiesWnd::updateNodeProp( ArnLight* node )
 	case D3DLIGHT_DIRECTIONAL:	str = "Directional";	break;
 	}
 
+	propEnumSetValue(PROP_LIGHT_IPO,		node->getIpoName());
 	propEnumSetValue(PROP_LIGHT_TYPE,		str);
 	propEnumSetValue(PROP_LIGHT_DIFFUSE,	light.Diffuse);
 	propEnumSetValue(PROP_LIGHT_SPECULAR,	light.Specular);

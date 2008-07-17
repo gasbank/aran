@@ -168,16 +168,24 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_MESH3);
 	NodeMesh3* node = (NodeMesh3*)nodeBase;
 
-	node->m_parentName = file_read_string(abf);
-	node->m_localXform = file_read<D3DXMATRIX>(abf);
-	node->m_unusedXform = file_read<D3DXMATRIX>(abf);
-	node->m_materialCount = file_read_uint(abf);
-	node->m_meshVerticesCount = file_read_uint(abf);
-	node->m_meshFacesCount = file_read_uint(abf);
-	if (node->m_materialCount)
-		node->m_attrToMaterialMap = file_read<DWORD>(abf, node->m_materialCount);
-	else
-		node->m_attrToMaterialMap = 0; // no material is explicitly defined to this mesh
+	node->m_parentName			= file_read_string(abf);
+	node->m_ipoName				= file_read_string(abf);
+	node->m_localXform			= file_read<D3DXMATRIX>(abf);
+	node->m_unusedXform			= file_read<D3DXMATRIX>(abf);
+	node->m_materialCount		= file_read_uint(abf);
+	node->m_meshVerticesCount	= file_read_uint(abf);
+	node->m_meshFacesCount		= file_read_uint(abf);
+
+	//if (node->m_materialCount)
+	//	node->m_attrToMaterialMap = file_read<DWORD>(abf, node->m_materialCount);
+	//else
+	//	node->m_attrToMaterialMap = 0; // no material is explicitly defined to this mesh
+
+	unsigned int i;
+	node->m_attrToMaterialMap = 0;
+	for (i = 0; i < node->m_materialCount; ++i)
+		node->m_matNameList.push_back(file_read_string(abf));
+
 	node->m_vertex = file_read<ArnVertex>(abf, node->m_meshVerticesCount);
 	node->m_faces = file_read<unsigned short>(abf, node->m_meshFacesCount * 3);
 	node->m_attr = file_read<DWORD>(abf, node->m_meshFacesCount);
@@ -241,6 +249,7 @@ void parse_nodeLight2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	NodeLight2* node = (NodeLight2*)nodeBase;
 
 	node->m_parentName	= file_read_string(abf);
+	node->m_ipoName		= file_read_string(abf);
 	node->m_localXform	= file_read<D3DXMATRIX>(abf);
 	node->m_light		= file_read<D3DLIGHT9>(abf);
 }
@@ -258,6 +267,7 @@ void parse_nodeCamera2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	NodeCamera2* node = (NodeCamera2*)nodeBase;
 
 	node->m_parentName	= file_read_string(abf);
+	node->m_ipoName		= file_read_string(abf);
 	node->m_localXform	= file_read<D3DXMATRIX>(abf);
 	node->m_camType		= (NodeCamera2::CamType)file_read_int(abf);
 	node->m_angle		= file_read_float(abf);

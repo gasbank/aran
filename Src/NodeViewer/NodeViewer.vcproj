@@ -211,6 +211,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MaterialListProperty.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MaterialView.cpp"
 				>
 			</File>
@@ -278,6 +282,10 @@
 			</File>
 			<File
 				RelativePath=".\MainFrm.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MaterialListProperty.h"
 				>
 			</File>
 			<File

@@ -4,7 +4,7 @@
 #include "VideoMan.h"
 
 ArnMesh::ArnMesh()
-: ArnNode(NDT_RT_MESH), m_d3dxMesh(0)
+: ArnMovable(NDT_RT_MESH), m_d3dxMesh(0)
 {
 }
 
@@ -55,10 +55,15 @@ void ArnMesh::buildFrom(const NodeMesh2* nm)
 
 void ArnMesh::buildFrom(const NodeMesh3* nm)
 {
+	unsigned int i;
 	m_data.vertexCount		= nm->m_meshVerticesCount;
 	m_data.faceCount		= nm->m_meshFacesCount;
 	m_data.materialCount	= nm->m_materialCount;
+	for (i = 0; i < m_data.materialCount; ++i)
+		m_data.matNameList.push_back(nm->m_matNameList[i]);
+
 	setParentName(nm->m_parentName);
+	setIpoName(nm->m_ipoName);
 	setLocalXform(*nm->m_localXform);
 	if (VideoMan::getSingletonPtr())
 	{
@@ -68,9 +73,23 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	}
 }
 
+void ArnMesh::interconnect( ArnNode* sceneRoot )
+{
+	unsigned int i;
+	for (i = 0; i < m_data.materialCount; ++i)
+	{
+		ArnNode* matNode = sceneRoot->getNodeByName(m_data.matNameList[i]);
+		if (matNode && matNode->getType() == NDT_RT_MATERIAL)
+			m_materialRefList.push_back(reinterpret_cast<ArnMaterial*>(matNode));
+		else
+			throw MyError(MEE_RTTI_INCONSISTENCY);
+	}
+	setIpo(getIpoName());
+	
+	ArnNode::interconnect(sceneRoot);
+}
 
 //////////////////////////////////////////////////////////////////////////
-
 
 
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH* mesh)

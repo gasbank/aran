@@ -194,6 +194,7 @@ struct MeshData
 	unsigned int vertexCount;
 	unsigned int faceCount;
 	unsigned int materialCount;
+	std::vector<STRING> matNameList;
 };
 //////////////////////////////////////////////////////////////////////////
 // Unions

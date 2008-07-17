@@ -53,6 +53,8 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 
 	if (m_exportVersion == EV_ARN20)
 		postprocessingARN20();
+
+	m_sceneRoot->interconnect(m_sceneRoot);
 }
 ArnSceneGraph::~ArnSceneGraph(void)
 {

@@ -396,14 +396,6 @@
 					RelativePath=".\ArnSkeleton.h"
 					>
 				</File>
-				<File
-					RelativePath=".\ArnSymLink.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnSymLink.h"
-					>
-				</File>
 			</Filter>
 		</Filter>
 		<File
@@ -440,6 +432,14 @@
 		</File>
 		<File
 			RelativePath=".\Arn.cd"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMovable.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnMovable.h"
 			>
 		</File>
 		<File

@@ -22,8 +22,9 @@ public:
 	ArnNode*				getNodeByName(const STRING& name);
 	ArnNode*				getNodeAt(unsigned int idx);
 	unsigned int			getNodeCount() const { return m_children.size(); }
-
+	ArnNode*				getSceneRoot() { if (m_parent) return m_parent->getSceneRoot(); else return this; }
 	// *** INTERNAL USE ONLY START ***
+	virtual void			interconnect(ArnNode* sceneRoot);
 	void					setParent(ArnNode* node) { m_parent = node; }
 	void					detachParent() { if (m_parent) m_parent->detachChild(this); }
 	// *** INTERNAL USE ONLY END ***
