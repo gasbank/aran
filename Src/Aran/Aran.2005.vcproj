@@ -116,19 +116,20 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="../../DXUT/Core"
 				PreprocessorDefinitions=""
-				BasicRuntimeChecks="0"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="AranPCH.h"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				EnablePREfast="true"
+				DebugInformationFormat="0"
+				EnablePREfast="false"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -141,6 +142,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalOptions="/MACHINE:x86"
 			/>
 			<Tool
 				Name="VCALinkTool"

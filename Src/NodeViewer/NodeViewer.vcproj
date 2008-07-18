@@ -71,7 +71,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Aran.lib  DXUT.lib d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugLib;"
+				AdditionalLibraryDirectories="../DebugLib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -100,7 +100,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="../../Release"
+			OutputDirectory="../../Working"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
 			UseOfMFC="2"
@@ -130,13 +130,14 @@
 				Optimization="0"
 				EnableIntrinsicFunctions="false"
 				FavorSizeOrSpeed="0"
-				AdditionalIncludeDirectories="../Aran"
+				AdditionalIncludeDirectories="../Aran;../../DXUT/Core"
 				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG"
 				MinimalRebuild="false"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="false"
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="NodeViewerPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -154,7 +155,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran.lib  d3d9.lib d3dx9.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				AdditionalDependencies="Aran.lib  DXUT.lib d3d9.lib d3dx9.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_Release.exe"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="../ReleaseLib"
 				GenerateDebugInformation="true"
