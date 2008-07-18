@@ -61,6 +61,13 @@ def attach_strz(val):
 	ary.append('\0')
 	binstream.append(ary)
 
+def attach_strzs(val):
+	for v in val:
+		ary = array.array('c')
+		ary.fromstring(v)
+		ary.append('\0')
+		binstream.append(ary)
+
 def attach_zeros(count):
 	ary = array.array('B')
 	ary.fromlist([0x00] * count)
@@ -157,10 +164,13 @@ def export_node_mesh(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
 	obName = ob.name;
 	parName = '' # parent name
+	ipoName = ''
 	if ob.parent: parName = ob.parent.name
-	
+	if ob.ipo is not None: ipoName = ob.ipo.name
+
 	out.write('<ArnType 0x00002002> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
+	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
@@ -172,6 +182,7 @@ def export_node_mesh(ob):
 	
 	out.write('--Materials--\n');
 	localGlobalMatMap = []
+	matNameList = []
 	localMatIndex = 0
 	for material in mesh.materials:
 		globalMatIndex = 0
@@ -185,6 +196,8 @@ def export_node_mesh(ob):
 		out.write('[%d -> %d] %s\n' % (localMatIndex, globalMatIndex, matNameShort))
 		localGlobalMatMap.append(globalMatIndex)
 		localMatIndex = localMatIndex + 1;
+		
+		matNameList.append(material.name)
 	
 	out.write('--Verts--\n');
 	vertary = array.array('f')
@@ -213,10 +226,12 @@ def export_node_mesh(ob):
 	attach_int(0)                      # Node Chunk SIze
 	# ---------------------------------------------------
 	attach_strz(parName)
+	attach_strz(ipoName)
 	attach_matrix(matLocal)
 	attach_floats([0.0] * 16) # reserved space
 	attach_ints([len(mesh.materials), len(mesh.verts), len(mesh.faces)])
-	attach_ints(localGlobalMatMap)
+	#attach_ints(localGlobalMatMap)
+	attach_strzs(matNameList)
 	
 	binstream.append(vertary)
 	binstream.append(faceary)
@@ -226,10 +241,13 @@ def export_node_camera(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
 	obName = ob.name;
 	parName = '' # parent name
+	ipoName = ''
 	if ob.parent: parName = ob.parent.name
+	if ob.ipo is not None: ipoName = ob.ipo.name
 	
 	out.write('<ArnType 0x00007001> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
+	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
@@ -248,6 +266,7 @@ def export_node_camera(ob):
 	attach_int(0)                      # Node Chunk SIze
 	# ---------------------------------------------------
 	attach_strz(parName)
+	attach_strz(ipoName)
 	attach_matrix(matLocal)
 	attach_int(camType)
 	attach_floats([cam.angle, cam.clipStart, cam.clipEnd, cam.scale])
@@ -256,10 +275,13 @@ def export_node_lamp(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
 	obName = ob.name;
 	parName = '' # parent name
+	ipoName = ''
 	if ob.parent: parName = ob.parent.name
+	if ob.ipo is not None: ipoName = ob.ipo.name
 	
 	out.write('<ArnType 0x00003001> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
+	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
@@ -295,6 +317,7 @@ def export_node_lamp(ob):
 	attach_int(0)                      # Node Chunk SIze
 	# ---------------------------------------------------
 	attach_strz(parName)
+	attach_strz(ipoName)
 	attach_matrix(matLocal)
 	attach_int(d3dType)
 	#             _________Diffuse_____________   __________Specular___________   ____________Ambient__________
@@ -415,7 +438,21 @@ def export_ipos():
 					out.write(BezPointToString(point))
 				else:
 					out.write(NonbezPointToString(point))
-				pointary.fromlist([point.pt[0], point.pt[1], point.vec[0][0], point.vec[0][1], point.vec[2][0], point.vec[2][1]])
+				handle1x = point.vec[0][0]
+				handle1y = point.vec[0][1]
+				knotx = point.pt[0]
+				knoty = point.pt[1]
+				handle2x = point.vec[2][0]
+				handle2y = point.vec[2][1]
+				if curve.name in ['LocZ', 'RotZ']:
+					handle1y = -handle1y
+					knoty    = -knoty
+					handle2y = -handle2y
+				if curve.name in ['RotX', 'RotY', 'RotZ']:
+					handle1y = handle1y * 10
+					knoty    = knoty    * 10
+					handle2y = handle2y * 10
+				pointary.fromlist([handle1x, handle1y, knotx, knoty, handle2x, handle2y])
 		
 			attach_strz(curve.name)
 			attach_int(curveCount)
@@ -431,12 +468,7 @@ def start_export(filename):
 	export_materials()
 	export_ipos()
 	for ob in sce.objects:
-		WriteHLine()
-		"""
-		if ob.ipo is not None:
-			out.write('IPO: %s\n' % ob.ipo.name)
-		"""
-		
+		WriteHLine()		
 		if ob.type == 'Mesh':
 			export_node_mesh(ob)
 		elif ob.type == 'Camera':
