@@ -81,3 +81,12 @@ void ArnNode::interconnect( ArnNode* sceneRoot )
 		(*it)->interconnect(sceneRoot);
 	}
 }
+
+void ArnNode::update( double fTime, float fElapsedTime )
+{
+	ChildrenList::iterator it = m_children.begin();
+	for (; it != m_children.end(); ++it)
+	{
+		(*it)->update(fTime, fElapsedTime);
+	}
+}

@@ -51,3 +51,26 @@ DWORD ArnMath::Float4ColorToDword( const D3DCOLORVALUE* cv )
 		| ((int)(cv->g * 255) <<  8)
 		| ((int)(cv->r * 255) <<  0);
 }
+
+D3DXQUATERNION ArnMath::EulerToQuat( const D3DXVECTOR3* vec3 )
+{
+	// Assuming the angles are in radians.
+	double bank		= vec3->x;
+	double heading	= vec3->y;
+	double attitude	= vec3->z;
+
+	double c1 = cos(heading/2);
+	double s1 = sin(heading/2);
+	double c2 = cos(attitude/2);
+	double s2 = sin(attitude/2);
+	double c3 = cos(bank/2);
+	double s3 = sin(bank/2);
+	double c1c2 = c1*c2;
+	double s1s2 = s1*s2;
+	float w = (float)(c1c2*c3 - s1s2*s3);
+	float x = (float)(c1c2*s3 + s1s2*c3);
+	float y = (float)(s1*c2*c3 + c1*s2*s3);
+	float z = (float)(c1*s2*c3 - s1*c2*s3);
+
+	return D3DXQUATERNION(x, y, z, w);
+}

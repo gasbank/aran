@@ -20,6 +20,8 @@ enum MyErrorEnum
 	MEE_NODE_NOT_FOUND,
 	MEE_UNSUPPORTED_ARNFILE,
 	MEE_STL_INDEX_OUT_OF_BOUNDS,
+	MEE_UNSUPPORTED_CURVENAME,
+	MEE_GENERAL_VERIFICATION_FAILED,
 };
 
 class MyError
@@ -45,6 +47,8 @@ public:
 		case MEE_NODE_NOT_FOUND:			m_str = "Desired node not found";
 		case MEE_UNSUPPORTED_ARNFILE:		m_str = "Unsupported ARN file format";
 		case MEE_STL_INDEX_OUT_OF_BOUNDS:	m_str = "STL data structure: Index out of bounds";
+		case MEE_UNSUPPORTED_CURVENAME:		m_str = "Unsupported IPO curve name";
+		case MEE_GENERAL_VERIFICATION_FAILED: m_str = "General verification failed. Check your code";
 		default:							m_str = "<Should not see me! Never!>";
 		}
 	}

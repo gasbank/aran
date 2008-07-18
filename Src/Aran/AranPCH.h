@@ -17,9 +17,9 @@
 #include <list>
 #include <vector>
 
+#include "DXUT.h"
 #include <d3dx9.h>
 #include <dxerr9.h>
-
 
 #include "Macros.h"
 

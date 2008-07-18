@@ -86,6 +86,7 @@ void ArnMesh::interconnect( ArnNode* sceneRoot )
 			throw MyError(MEE_RTTI_INCONSISTENCY);
 	}
 	setIpo(getIpoName());
+	configureAnimCtrl();
 	
 	ArnNode::interconnect(sceneRoot);
 }

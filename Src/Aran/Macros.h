@@ -10,6 +10,7 @@
 typedef std::string STRING;
 
 #define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
+#define V_VERIFY(x) { if (FAILED(x)) throw MyError(MEE_GENERAL_VERIFICATION_FAILED); }
 #define GLOBAL_TEXTURE_FILE_PATH			"Textures\\"
 #define GLOBAL_ARN_FILE_PATH				"Models\\"
 #ifndef SAFE_RELEASE

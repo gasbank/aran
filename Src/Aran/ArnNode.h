@@ -6,8 +6,8 @@ class ArnNode : public ArnObject
 public:
 	typedef std::list<ArnNode*> ChildrenList;
 
-	ArnNode(NODE_DATA_TYPE type);
-	virtual ~ArnNode(void);
+							ArnNode(NODE_DATA_TYPE type);
+	virtual					~ArnNode(void);
 
 	ArnNode*				getParent() const { return m_parent; }
 	const STRING&			getParentName() const { return m_parentName; }
@@ -21,6 +21,7 @@ public:
 	ArnNode*				getNodeAt(unsigned int idx);
 	unsigned int			getNodeCount() const { return m_children.size(); }
 	ArnNode*				getSceneRoot() { if (m_parent) return m_parent->getSceneRoot(); else return this; }
+	virtual void			update(double fTime, float fElapsedTime);
 	// *** INTERNAL USE ONLY START ***
 	virtual void			interconnect(ArnNode* sceneRoot);
 	void					setParent(ArnNode* node) { m_parent = node; }

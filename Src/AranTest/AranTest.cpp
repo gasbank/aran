@@ -2,6 +2,7 @@
 // 2008 Geoyeob Kim (gasbank@gmail.com)
 
 #include "AranPCH.h"
+
 #include "UndefinedCallback.h"
 #include "LoiterCallback.h"
 #include "WalkCallback.h"
@@ -128,7 +129,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	}
 
 	inputMan.AcquireKeyboard();
-
+	
 	//
 	// Starting main loop...
 	//
@@ -168,10 +169,10 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 		break;
 	case WM_KILLFOCUS:
-		videoMan.PauseMainLoop();
+		//videoMan.PauseMainLoop();
 		break;
 	case WM_SETFOCUS:
-		videoMan.ResumeMainLoop();
+		//videoMan.ResumeMainLoop();
 		break;
 	case WM_KEYDOWN:
 		switch (wParam)

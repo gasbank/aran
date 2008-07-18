@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../Aran"
+				AdditionalIncludeDirectories="../Aran;../../DXUT/Core"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -69,9 +69,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran.lib  d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
+				AdditionalDependencies="Aran.lib  DXUT.lib d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugLib"
+				AdditionalLibraryDirectories="../DebugLib;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"

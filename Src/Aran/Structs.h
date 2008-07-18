@@ -136,7 +136,14 @@ struct BezTripleData
 };
 
 enum CurveType { IPO_CONST, IPO_LIN, IPO_BEZ };
-
+enum CurveName
+{
+	CN_LocX, CN_LocY, CN_LocZ,
+	CN_ScaleX, CN_ScaleY, CN_ScaleZ,
+	CN_RotX, CN_RotY, CN_RotZ,
+	CN_SIZE,
+	CN_UNKNOWN, // error
+};
 struct CurveDataShell
 {
 	char* name;
@@ -146,7 +153,8 @@ struct CurveDataShell
 };
 struct CurveData
 {
-	STRING name;
+	STRING nameStr;
+	CurveName name;
 	unsigned int pointCount;
 	CurveType type;
 	std::vector<BezTripleData> points;
@@ -374,11 +382,30 @@ struct ArnNodeHeader
 
 struct RST_DATA
 {
-	float x, y, z, w; // rotation
-	float sx, sy, sz; // scaling
-	float tx, ty, tz; // translation
+	union
+	{
+		struct  
+		{
+			float x, y, z, w; // rotation
+			float sx, sy, sz; // scaling
+			float tx, ty, tz; // translation
+		};
+		struct 
+		{
+			D3DXQUATERNION quat;
+			D3DXVECTOR3 scale;
+			D3DXVECTOR3 trans;
+		};
+	};
+	static const RST_DATA IDENTITY;
 };
 
-
+struct DX_CONSTS
+{
+	static const D3DXVECTOR3 D3DXVEC3_ZERO;
+	static const D3DXVECTOR3 D3DXVEC3_ONE;
+	static const D3DXQUATERNION D3DXQUAT_IDENTITY;
+	static const D3DXMATRIX D3DXMAT_IDENTITY;
+};
 
 #endif // #ifndef __STRUCTS_H_

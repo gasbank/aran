@@ -203,6 +203,14 @@ public:
 	void setWorldViewProjection( const D3DXMATRIX& matWorld, const D3DXMATRIX& matView, const D3DXMATRIX& matProj );
 
 	void renderMeshesOnly(ArnNode* node);
+	float getFPS() const { return m_fFPS; }
+
+private:
+	double m_prevLastTime;
+	DWORD m_prevUpdateFrames;
+	float m_fFPS;
+
+	CDXUTTimer m_dxutTimer;
 };
 
 

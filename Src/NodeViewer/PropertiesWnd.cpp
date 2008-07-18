@@ -517,7 +517,7 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		m_ipoGroup->Show(TRUE);
 		updateNodeProp(static_cast<ArnIpo*>(node));
 		// Bezier interpolation testing
-		//writePrecomputedCurvesToFile(static_cast<ArnIpo*>(node));
+		writePrecomputedCurvesToFile(static_cast<ArnIpo*>(node));
 		break;
 	default:
 		ndtVal = _T("NDT_RT_CONTAINER");
@@ -639,7 +639,7 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 	for (i = 0; i < curveCount; ++i)
 	{
 		const CurveData& cd = node->getCurveData(i);
-		substr.Format(_T("%s(%d)"), CString(cd.name.c_str()), cd.points.size());
+		substr.Format(_T("%s(%d)"), CString(cd.nameStr.c_str()), cd.points.size());
 		str += (i!=0)?_T(","):_T("");
 		str += substr;
 	}
@@ -648,7 +648,7 @@ void CPropertiesWnd::updateNodeProp( ArnIpo* node )
 
 void CPropertiesWnd::updateNodeProp( ArnXformable* node )
 {
-	const D3DXMATRIX& localXform = node->getLocalXform();
+	const D3DXMATRIX& localXform = node->getFinalLocalXform();
 	D3DXVECTOR3 vecScaling, vecTranslation;
 	D3DXQUATERNION quat;
 	D3DXMatrixDecompose(&vecScaling, &quat, &vecTranslation, &localXform);
@@ -739,7 +739,7 @@ void CPropertiesWnd::writePrecomputedCurvesToFile( ArnIpo* node )
 	for (i = 0; i < curveCount; ++i)
 	{
 		const CurveData& cd = node->getCurveData(i);
-		file << cd.name << std::endl;
+		file << cd.nameStr << std::endl;
 		for (j = 0; j < 1000; j++)
 			file << Animation::EvalCurveInterp(&cd, timeStep * j) << std::endl;
 	}

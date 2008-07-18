@@ -13,7 +13,7 @@ public:
 	DefaultRenderLayer(Character* pChar);
 	~DefaultRenderLayer(void);
 
-	virtual HRESULT render();
+	virtual HRESULT render(double fTime, float fElapsedTime);
 
 private:
 	Character* m_pChar;
@@ -27,7 +27,7 @@ public:
 	BoxRenderLayer();
 	~BoxRenderLayer();
 
-	virtual HRESULT render();
+	virtual HRESULT render(double fTime, float fElapsedTime);
 
 private:
 	

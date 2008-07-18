@@ -17,7 +17,7 @@ DefaultRenderLayer::~DefaultRenderLayer(void)
 {
 }
 
-HRESULT DefaultRenderLayer::render()
+HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 {
 	ASSERTCHECK( m_lpDev );
 
@@ -69,17 +69,12 @@ HRESULT DefaultRenderLayer::render()
 	static TCHAR debugBuffer[512];
 	RECT rc;
 
-	SetRect( &rc, 50, 50, 0, 0 );
-	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Umhahahah....a~~~~") );
-	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
-
-	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Current State: %d"), m_pChar->GetCharacterAnimationState() );
-	SetRect( &rc, 50, 80, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
-	_stprintf_s( debugBuffer, TCHARSIZE(debugBuffer), _T("Next State: %d"), m_pChar->GetCharacterAnimationStateNext() );
-	SetRect( &rc, 50, 110, 0, 0 );
-	m_pVideoMan->getDefaultFont()->DrawText( 0, debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
-
+	int scrWidth, scrHeight;
+	m_pVideoMan->getScreenInfo(scrWidth, scrHeight);
+	SetRect(&rc, 0, 0, scrWidth, scrHeight);
+	TCHAR msg[128];
+	StringCchPrintf(msg, 128, L"%.2f FPS", m_pVideoMan->getFPS());
+	m_pVideoMan->getDefaultFont()->DrawText( 0, msg, -1, &rc, DT_BOTTOM | DT_RIGHT | DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +83,7 @@ HRESULT DefaultRenderLayer::render()
 
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT BoxRenderLayer::render()
+HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 {
 	ASSERTCHECK( m_lpDev );
 	VideoMan& videoMan = VideoMan::getSingleton();
@@ -122,60 +117,11 @@ HRESULT BoxRenderLayer::render()
 	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 	dev->SetFVF(ArnVertex::FVF);
 	videoMan.renderMeshesOnly(m_simpleSG->getSceneRoot());
-
-	//
-	//D3DXMATRIX flip;
-	//flip.m[0][0] = 1; flip.m[0][1] = 0; flip.m[0][2] = 0; flip.m[0][3] = 0; 
-	//flip.m[1][0] = 0; flip.m[1][1] = 1; flip.m[1][2] = 0; flip.m[1][3] = 0; 
-	//flip.m[2][0] = 0; flip.m[2][1] = 0; flip.m[2][2] = -1; flip.m[2][3] = 0; 
-	//flip.m[3][0] = 0; flip.m[3][1] = 0; flip.m[3][2] = 0; flip.m[3][3] = 1; 
-	//
-	//D3DXMATRIX yRot;
-	//D3DXMatrixRotationY(&yRot, D3DX_PI);
-
-	//D3DXMATRIX change = flip * yRot;
-	////dev->SetRenderState(D3DRS_FILLMODE, D3DFILL_WIREFRAME);
-	//dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
-	//unsigned int i, j;
-	//for (i = 0; i < m_objects.size(); ++i)
-	//{
-	//	if (m_objects[i]->getType() == NDT_MESH3)
-	//	{
-	//		ArnMesh* mesh = (ArnMesh*)m_objects[i];
-	//		D3DXMatrixIdentity(&transform);
-	//		ArnNode* parNode = mesh->getParent();
-	//		while (parNode != 0)
-	//		{
-	//			transform = *parNode->getLocalTransform() * transform;
-	//			parNode = parNode->getParent();
-	//		}
-	//		transform = *mesh->getLocalTransform() * transform;
-
-	//		
-	//		/*D3DXVECTOR3* scalingVec = (D3DXVECTOR3*)mesh->getOb().hdr->scl;
-	//		D3DXVECTOR3* translationVec = (D3DXVECTOR3*)mesh->getOb().hdr->loc;
-	//		D3DXQUATERNION* rotQuat = (D3DXQUATERNION*)mesh->getOb().hdr->rotQuat;
-	//		D3DXMatrixTransformation(&transform, 0, 0, scalingVec, 0, rotQuat, translationVec);
-	//		*/
-	//		transform = transform * *VideoMan::getSingleton().getArcballResult();
-	//		dev->SetTransform(D3DTS_WORLD, &transform);
-
-	//		for (j = 0; j < mesh->getOb().hdr->materialCount; ++j)
-	//		{
-	//			unsigned int maIndex = mesh->getOb().attrToMaterialMap[j];
-	//			ArnMaterial* ma = dynamic_cast<ArnMaterial*>(m_objects[maIndex]);
-	//			dev->SetMaterial(&ma->getOb().hdr->d3dMaterial);
-	//			mesh->getD3DXMesh()->DrawSubset(j);
-	//		}
-	//	}
-	//}
-
-	//dev->SetTransform(D3DTS_WORLD, &transform);
-	//m_testMesh->DrawSubset(0);
+	m_simpleSG->getSceneRoot()->update(fTime, fElapsedTime);
 
 	RECT rc;
-	SetRect(&rc, 600, 20, 0, 0);
-	_stprintf_s( m_debugBuffer, TCHARSIZE(m_debugBuffer), _T("BoxRenderLayer") );
+	SetRect(&rc, 0, 0, 0, 0);
+	StringCchPrintf(m_debugBuffer, 128, L"Aran Renderer");
 	m_pVideoMan->getDefaultFont()->DrawText( 0, m_debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 1.0f, 1.0f ) );
 	return S_OK;
 }

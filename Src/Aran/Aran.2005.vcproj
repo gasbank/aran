@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="../../DXUT/Core"
 				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -69,6 +69,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalOptions="/MACHINE:x86"
 			/>
 			<Tool
 				Name="VCALinkTool"
