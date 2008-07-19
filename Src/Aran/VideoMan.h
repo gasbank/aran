@@ -211,6 +211,8 @@ private:
 	float m_fFPS;
 
 	CDXUTTimer m_dxutTimer;
+
+	std::vector<float> testFloatArray;
 };
 
 

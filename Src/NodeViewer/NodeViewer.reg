@@ -4,7 +4,7 @@ REGEDIT
 ;   registered in your InitInstance automatically with a call to
 ;   CWinApp::RegisterShellFileTypes and COleObjectFactory::UpdateRegistryAll.
 
-HKEY_CLASSES_ROOT\.arn = NodeViewer.Document
+HKEY_CLASSES_ROOT\.arn = ARN Node Database
 HKEY_CLASSES_ROOT\NodeViewer.Document\shell\open\command = NodeViewer.EXE %1
 HKEY_CLASSES_ROOT\NodeViewer.Document\shell\open\ddeexec = [open("%1")]
 HKEY_CLASSES_ROOT\NodeViewer.Document\shell\open\ddeexec\application = NodeViewer

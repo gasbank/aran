@@ -20,7 +20,7 @@ extern float4x4 WorldViewProj;
 extern float4x4 FinalTransforms[35];
 extern texture  Tex;
 extern int NumVertInfluences = 3; // <--- Normally set dynamically.
-
+extern float TestFloatArray[2000];
 
 sampler S0 = sampler_state
 {
