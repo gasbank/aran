@@ -215,53 +215,81 @@ def export_node_mesh(ob):
 	addedVertMap = []
 	vertDupCount = [0] * len(mesh.verts)
 	for face in mesh.faces:
-		if mesh.faceUV: # if UV texturing is applied
-			for ii in range(3):
-				faceVertIdx = face.v[ii].index
-				if vertUVMap.has_key(faceVertIdx):
-					if face.uv[ii] not in vertUVMap[faceVertIdx]:
-						vertUVMap[faceVertIdx].append(face.uv[ii])
-						vertDupCount[faceVertIdx] = vertDupCount[faceVertIdx] + 1
-						addedVertMap.append( ( faceVertIdx, vertDupCount[faceVertIdx] ) )
-				else:
-					vertUVMap[faceVertIdx] = [ face.uv[ii] ]
-
 		out.write('f [%d]' % face.mat)
 		attrary.append(face.mat)
 		if len(face.v) is not 3: # Mesh faces should consist of triangles only!
 			print '### error: all faces should consist of three vertices ###'
 			BPyMessages.Error_NoMeshFaces()
 			return;
-		for vert in face.v:
+		for ii in range(3):
+			vert = face.v[ii]
+			dupCount = 0
+			if mesh.faceUV: # if UV texturing is applied
+				faceVertIdx = vert.index
+				if vertUVMap.has_key(faceVertIdx):
+					if face.uv[ii] not in vertUVMap[faceVertIdx]:
+						vertUVMap[faceVertIdx].append(face.uv[ii])
+						vertDupCount[faceVertIdx] = vertDupCount[faceVertIdx] + 1
+						addedVertMap.append( ( faceVertIdx, vertDupCount[faceVertIdx] ) )
+						dupCount = vertDupCount[faceVertIdx]
+					else:
+						dupCount = vertUVMap[faceVertIdx].index(face.uv[ii])
+				else:
+					vertUVMap[faceVertIdx] = [ face.uv[ii] ]
+			realVertIdx = vert.index
 			outStr = ''
-			outStr = ' %i:%i' % (vert.index, vertDupCount[vert.index])
-			if ( vert.index, vertDupCount[vert.index] ) in addedVertMap:
-				outStr = outStr + '{%i}' % (addedVertMap.index(( vert.index, vertDupCount[vert.index]))+len(mesh.verts))
+			outStr = ' %i:%i' % (vert.index, dupCount)
+			if ( vert.index, dupCount ) in addedVertMap:
+				realVertIdx = addedVertMap.index(( vert.index, dupCount))+len(mesh.verts)
+				outStr = '%s{%i}' % (outStr, realVertIdx)
+			else:
+				realVertIdx = vert.index
 			out.write('%10s' % outStr)
-			faceary.append(vert.index)
-		if mesh.faceUV: out.write(' / UV: %s\n' % face.uv.__str__())
-		else: out.write('\n')
+			faceary.append(realVertIdx)
+		
+		if mesh.faceUV: out.write(' / UV: %s' % face.uv.__str__())
+		
+		out.write('\n')
+		
+	finalVertCount = len(mesh.verts) + len(addedVertMap)
 	out.write('--- Final vertices with added vertices ---\n')
-	out.write('  Final Vertices Count: %i\n' % (len(mesh.verts) + len(addedVertMap)))
+	out.write('  Final Vertices Count: %i\n' % finalVertCount)
+	
 	# Print added vertices and whole UV coordinates
-	"""
-	out.write('%s\n' % addedVertMap)
-	for ii in range(len(mesh.verts)):
-			out.write('v %d: %s\n' % (ii, vertUVMap[ii]))
-	"""
+	vertary = array.array('f')
+	if mesh.faceUV:
+		out.write('%s\n' % addedVertMap)
+		for ii in range(len(mesh.verts)):
+				out.write('v %d: %s\n' % (ii, vertUVMap[ii]))
+	
 	# Print original vertices
 	for ii in range(len(mesh.verts)):
 		vert = mesh.verts[ii]
+		if mesh.faceUV:
+			texU = vertUVMap[ii][0].x
+			texV = vertUVMap[ii][0].y
+			
+		else:
+			texU = 0
+			texV = 0
 		out.write('v %4i: %10s %10.2f %10.2f %10.2f / n %10.2f %10.2f %10.2f' % (ii, '', vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
-		if mesh.faceUV: out.write(' / uv %5.2f %5.2f\n' % (vertUVMap[ii][0].x, vertUVMap[ii][0].y))
-		else: out.write('\n')
+		out.write(' / uv %5.2f %5.2f\n' % (texU, texV))
+		vertary.fromlist([vert.co.x, vert.co.y, -vert.co.z])
+		vertary.fromlist([vert.no.x, vert.no.y, -vert.no.z])
+		vertary.fromlist([texU, abs(texV-1)])
+
 	# Print added vertices
 	for ii in range(len(addedVertMap)):
 		vert = mesh.verts[addedVertMap[ii][0]]
 		faceIdxLong = '%i:%i' % (addedVertMap[ii][0], addedVertMap[ii][1])
+		texU = vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].x
+		texV = vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].y
 		out.write('v %4i: %10s ' % (ii+len(mesh.verts), faceIdxLong))
 		out.write('%10.2f %10.2f %10.2f / n %10.2f %10.2f %10.2f' % (vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
-		out.write(' / uv %5.2f %5.2f\n' % (vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].x, vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].y))
+		out.write(' / uv %5.2f %5.2f\n' % (texU, texV))
+		vertary.fromlist([vert.co.x, vert.co.y, -vert.co.z])
+		vertary.fromlist([vert.no.x, vert.no.y, -vert.no.z])
+		vertary.fromlist([texU, abs(texV-1)])
 		
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
@@ -272,11 +300,10 @@ def export_node_mesh(ob):
 	attach_strz(ipoName)
 	attach_matrix(matLocal)
 	attach_floats([0.0] * 16) # reserved space
-	attach_ints([len(mesh.materials), len(mesh.verts), len(mesh.faces)])
-	#attach_ints(localGlobalMatMap)
+	attach_ints([len(mesh.materials), finalVertCount, len(mesh.faces)])
 	attach_strzs(matNameList)
 	
-	#binstream.append(vertary)
+	binstream.append(vertary)
 	binstream.append(faceary)
 	binstream.append(attrary)
 
@@ -405,17 +432,16 @@ def export_materials():
 		out.write(' - Specular (Spe) : %s\n' % ColorStr(mat.specCol, mat.alpha))
 		out.write(' - Emissive (???) : [0.00 0.00 0.00 ; 0.00]\n')
 		out.write(' - Power    (???) : 1.00\n')
-		
+		texs = mat.getTextures()
+		texImgs = []
+		for tex in texs:
+			if tex != None and tex.tex:
+				texImgs.append(tex.tex.image.name)
+				out.write(' - Textures: %s\n' % tex.tex.image.name)
+				
 		matDic[mat.name] = matGlobalIndex
 		matGlobalIndex = matGlobalIndex + 1
-		
-		texs = mat.getTextures()
-		for tex in texs:
-			if tex != None:
-				if tex.tex:
-					#print tex.tex.image
-					pass
-					
+			
 		# *** Binary Writing Phase *** ; Individual material data node
 		attach_int(0x00009001)
 		attach_strz(matName)
@@ -424,6 +450,8 @@ def export_materials():
 		attach_strz(parName)
 		#            _______Diffuse___________   ________Ambient___________   ________Specular_________   ______Emissive______   Power
 		attach_floats(mat.rgbCol  + [mat.alpha] + mat.mirCol  + [mat.alpha] + mat.specCol + [mat.alpha] + [0.0, 0.0, 0.0, 0.0] + [1.0])
+		attach_int(len(texImgs))
+		attach_strzs(texImgs)
 		# *** Binary Writing Phase *** ; Individual material data End
 
 
