@@ -9,8 +9,7 @@ Tooltip: 'Aran Exporter (Blender 2.43)'
 
 import math
 import Blender
-from Blender import sys
-from Blender import Ipo
+from Blender import sys, Window, Ipo
 import bpy
 import BPyMessages
 import array
@@ -176,9 +175,9 @@ def export_node_mesh(ob):
 	out.write('%s\n' % matLocal)
 	
 	mesh = ob.getData(mesh=1)
-	out.write('Materials  : %d\n' % len(mesh.materials))
-	out.write('Verts      : %d\n' % len(mesh.verts))
-	out.write('Faces      : %d\n' % len(mesh.faces))
+	out.write('Materials         : %d\n' % len(mesh.materials))
+	out.write('Original Vertices : %d\n' % len(mesh.verts))
+	out.write('Faces             : %d\n' % len(mesh.faces))
 	
 	out.write('--Materials--\n');
 	localGlobalMatMap = []
@@ -198,27 +197,71 @@ def export_node_mesh(ob):
 		localMatIndex = localMatIndex + 1;
 		
 		matNameList.append(material.name)
-	
-	out.write('--Verts--\n');
+
+	# Print original vertices
+	"""
+	out.write('--Orignal Vertices--\n');
 	vertary = array.array('f')
-	for vert in mesh.verts:
-		out.write('v %.2f %.2f %.2f n %.2f %.2f %.2f\n' % (vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
+	for ii in range(len(mesh.verts)):
+		vert = mesh.verts[ii]
+		out.write('v %4i: %10.2f %10.2f %10.2f / n %10.2f %10.2f %10.2f\n' % (ii, vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
 		vertary.fromlist([vert.co.x, vert.co.y, -vert.co.z, vert.no.x, vert.no.y, -vert.no.z])
+	"""
 	
-	out.write('--Faces with material index--\n');
+	out.write('--Faces with material/original vertex index--\n');
 	faceary = array.array('H')
 	attrary = array.array('L')
+	vertUVMap = {}
+	addedVertMap = []
+	vertDupCount = [0] * len(mesh.verts)
 	for face in mesh.faces:
+		if mesh.faceUV: # if UV texturing is applied
+			for ii in range(3):
+				faceVertIdx = face.v[ii].index
+				if vertUVMap.has_key(faceVertIdx):
+					if face.uv[ii] not in vertUVMap[faceVertIdx]:
+						vertUVMap[faceVertIdx].append(face.uv[ii])
+						vertDupCount[faceVertIdx] = vertDupCount[faceVertIdx] + 1
+						addedVertMap.append( ( faceVertIdx, vertDupCount[faceVertIdx] ) )
+				else:
+					vertUVMap[faceVertIdx] = [ face.uv[ii] ]
+
 		out.write('f [%d]' % face.mat)
 		attrary.append(face.mat)
-		if len(face.v) is not 3:
+		if len(face.v) is not 3: # Mesh faces should consist of triangles only!
 			print '### error: all faces should consist of three vertices ###'
+			BPyMessages.Error_NoMeshFaces()
 			return;
 		for vert in face.v:
-			out.write(' %i' % vert.index)
+			outStr = ''
+			outStr = ' %i:%i' % (vert.index, vertDupCount[vert.index])
+			if ( vert.index, vertDupCount[vert.index] ) in addedVertMap:
+				outStr = outStr + '{%i}' % (addedVertMap.index(( vert.index, vertDupCount[vert.index]))+len(mesh.verts))
+			out.write('%10s' % outStr)
 			faceary.append(vert.index)
-		out.write('\n')
-		
+		if mesh.faceUV: out.write(' / UV: %s\n' % face.uv.__str__())
+		else: out.write('\n')
+	out.write('--- Final vertices with added vertices ---\n')
+	out.write('  Final Vertices Count: %i\n' % (len(mesh.verts) + len(addedVertMap)))
+	# Print added vertices and whole UV coordinates
+	"""
+	out.write('%s\n' % addedVertMap)
+	for ii in range(len(mesh.verts)):
+			out.write('v %d: %s\n' % (ii, vertUVMap[ii]))
+	"""
+	# Print original vertices
+	for ii in range(len(mesh.verts)):
+		vert = mesh.verts[ii]
+		out.write('v %4i: %10s %10.2f %10.2f %10.2f / n %10.2f %10.2f %10.2f' % (ii, '', vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
+		if mesh.faceUV: out.write(' / uv %5.2f %5.2f\n' % (vertUVMap[ii][0].x, vertUVMap[ii][0].y))
+		else: out.write('\n')
+	# Print added vertices
+	for ii in range(len(addedVertMap)):
+		vert = mesh.verts[addedVertMap[ii][0]]
+		faceIdxLong = '%i:%i' % (addedVertMap[ii][0], addedVertMap[ii][1])
+		out.write('v %4i: %10s ' % (ii+len(mesh.verts), faceIdxLong))
+		out.write('%10.2f %10.2f %10.2f / n %10.2f %10.2f %10.2f' % (vert.co.x, vert.co.y, vert.co.z, vert.no.x, vert.no.y, vert.no.z))
+		out.write(' / uv %5.2f %5.2f\n' % (vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].x, vertUVMap[addedVertMap[ii][0]][addedVertMap[ii][1]].y))
 		
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
@@ -233,7 +276,7 @@ def export_node_mesh(ob):
 	#attach_ints(localGlobalMatMap)
 	attach_strzs(matNameList)
 	
-	binstream.append(vertary)
+	#binstream.append(vertary)
 	binstream.append(faceary)
 	binstream.append(attrary)
 
@@ -500,12 +543,15 @@ global out           # out text ARN (for debug)
 global binstream     # array collection
 
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = 'e:/devel/aran_svn/working/models/gus2.arn'
+fileName = 'd:/devel/aran_svn/working/models/gus2.arn'
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
 out          = file(fileName + '.txt', 'w')
 binstream    = []
 
+em = Window.EditMode()
+Window.EditMode(0)
 start_export(fileName)
+Window.EditMode(em)
 
