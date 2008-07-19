@@ -354,6 +354,9 @@ void CPropertiesWnd::InitPropList()
 	pProp = new CMFCPropertyGridProperty( _T("Power"), (_variant_t)0.0f, _T("Sharpness if specular highlight"), PROP_MAT_POWER);
 	d3dMaterial9->AddSubItem(pProp);
 
+	pProp = new CMFCPropertyGridProperty( _T("Texture Images"), (_variant_t) _T("TexImgs"), _T("Texture images"), PROP_MAT_TEXIMGS);
+	m_materialGroup->AddSubItem(pProp);
+
 	m_wndPropList.AddProperty(m_materialGroup);
 	m_materialGroup->Show(FALSE);
 
@@ -593,6 +596,7 @@ void CPropertiesWnd::updateNodeProp( ArnHierarchy* node )
 
 void CPropertiesWnd::updateNodeProp( ArnMaterial* node )
 {
+	CString str, substr;
 	const D3DMATERIAL9& mat = node->getD3DMaterialData();
 	propEnumSetValue(PROP_MAT_COUNT,	node->getMaterialCount());
 	propEnumSetValue(PROP_MAT_DIFFUSE,	mat.Diffuse);
@@ -600,6 +604,14 @@ void CPropertiesWnd::updateNodeProp( ArnMaterial* node )
 	propEnumSetValue(PROP_MAT_SPECULAR, mat.Specular);
 	propEnumSetValue(PROP_MAT_EMISSIVE, mat.Emissive);
 	propEnumSetValue(PROP_MAT_POWER,	mat.Power);
+	unsigned int i;
+	for (i = 0; i < node->getTexImgCount(); ++i)
+	{
+		substr = node->getTexImgName(i).c_str();
+		str += (i!=0)?_T(","):_T("");
+		str += substr;
+	}
+	propEnumSetValue(PROP_MAT_TEXIMGS, str);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnLight* node )

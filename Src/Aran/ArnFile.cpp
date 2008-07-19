@@ -130,8 +130,12 @@ void parse_nodeMaterial2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_MATERIAL2);
 	NodeMaterial2* node = (NodeMaterial2*)nodeBase;
 
-	node->m_parentName = file_read_string(abf);
+	node->m_parentName	= file_read_string(abf);
 	node->m_d3dMaterial = file_read<D3DMATERIAL9>(abf);
+	node->m_texCount	= file_read_uint(abf);
+	unsigned int i;
+	for (i = 0; i < node->m_texCount; ++i)
+		node->m_texNameList.push_back(file_read_string(abf));
 }
 
 void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )

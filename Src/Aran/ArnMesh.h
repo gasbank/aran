@@ -20,6 +20,7 @@ public:
 	void				setD3DXMesh(const LPD3DXMESH d3dxMesh) { m_d3dxMesh = d3dxMesh; }
 	const MeshData&		getMeshData() const { return m_data; }
 	const D3DMATERIAL9*	getMaterial(unsigned int i) const;
+	ArnMaterial*		getMaterialNode(unsigned int i) const { return m_materialRefList[i]; }
 	// *** INTERNAL USE ONLY START ***
 	virtual void		interconnect(ArnNode* sceneRoot);
 	// *** INTERNAL USE ONLY END ***

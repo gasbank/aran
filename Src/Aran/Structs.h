@@ -164,6 +164,7 @@ struct MaterialData
 {
 	STRING m_materialName;
 	D3DMATERIAL9 m_d3dMaterial;
+	std::vector<STRING> m_texImgList;
 };
 struct SkeletonData
 {

@@ -1,6 +1,7 @@
 #include "AranPCH.h"
 #include "ArnMaterial.h"
 #include "ArnFile.h"
+#include "VideoMan.h"
 
 ArnMaterial::ArnMaterial()
 : ArnNode(NDT_RT_MATERIAL)
@@ -9,6 +10,12 @@ ArnMaterial::ArnMaterial()
 
 ArnMaterial::~ArnMaterial(void)
 {
+	TextureList::iterator it = m_d3dTextureList.begin();
+	while (it != m_d3dTextureList.end())
+	{
+		SAFE_RELEASE(*it);
+		++it;
+	}
 }
 
 ArnNode* ArnMaterial::createFrom( const NodeBase* nodeBase )
@@ -49,4 +56,16 @@ void ArnMaterial::buildFrom( const NodeMaterial2* nm )
 	m_materialCount = 1;
 	m_data.m_materialName = getName();
 	m_data.m_d3dMaterial = *nm->m_d3dMaterial;
+	unsigned int i;
+	for (i = 0; i < nm->m_texCount; ++i)
+	{
+		m_data.m_texImgList.push_back(nm->m_texNameList[i]);
+		
+		if (VideoMan::getSingletonPtr())
+		{
+			LPDIRECT3DTEXTURE9 d3dTex;
+			D3DXCreateTextureFromFileA(VideoMan::getSingleton().GetDev(), nm->m_texNameList[i], &d3dTex);
+			m_d3dTextureList.push_back(d3dTex);
+		}
+	}
 }

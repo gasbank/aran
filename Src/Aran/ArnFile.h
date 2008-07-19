@@ -23,6 +23,8 @@ struct NodeMaterial2 : public NodeBase
 	char* m_parentName;
 	char* m_materialName;
 	D3DMATERIAL9* m_d3dMaterial;
+	unsigned int m_texCount;
+	std::vector<char*> m_texNameList;
 };
 struct NodeMesh2 : public NodeBase
 {
