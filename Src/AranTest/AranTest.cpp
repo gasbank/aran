@@ -31,6 +31,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
 
+	TCHAR buf[MAX_PATH];
+	TCHAR drive[_MAX_DRIVE];
+	TCHAR dir[_MAX_DIR];
+	GetModuleFileName(NULL, buf, MAX_PATH);
+	_tsplitpath_s(buf, drive, _MAX_DRIVE, dir, _MAX_DIR, 0, 0, 0, 0);
+	StringCchPrintf(buf, MAX_PATH, _T("%s%s"), drive, dir);
+	SetCurrentDirectory(buf);
+
+
 	_LogWrite(_T( "WinMain() Start ...!!" ), LOG_OKAY);
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
