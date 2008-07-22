@@ -36,7 +36,7 @@ LOGMANAGER::~LOGMANAGER()
 	}
 }
 
-LOGMANAGER::LOGMANAGER(char *filename, bool bAppend)
+LOGMANAGER::LOGMANAGER(const char *filename, bool bAppend)
 {
 	okayCount = 0;
 	failCount = 0;
@@ -53,17 +53,17 @@ LOGMANAGER::LOGMANAGER(char *filename, bool bAppend)
 	}
 }
 
-LOGMANAGER::LOGMANAGER(char *filename)
+LOGMANAGER::LOGMANAGER(const char *filename)
 {
 	LOGMANAGER(filename, false);
 }
 
-void LOGMANAGER::NewLog(TCHAR* message)
+void LOGMANAGER::NewLog(const TCHAR* message)
 {
 	NewLog(message, LOG_OKAY);
 }
 
-void LOGMANAGER::NewLog(TCHAR* message, bool bOkay)
+void LOGMANAGER::NewLog(const TCHAR* message, bool bOkay)
 {
 	//fout << "-----------------------------------------------------------------------------------------------------------\n";
 	fout << "***********\n";
@@ -79,7 +79,7 @@ void LOGMANAGER::NewLog(TCHAR* message, bool bOkay)
 	}
 }
 
-void LOGMANAGER::NewLog(TCHAR* sourcefilename, TCHAR* funcname, int line, TCHAR* message, bool bOkay)
+void LOGMANAGER::NewLog(const TCHAR* sourcefilename, const TCHAR* funcname, int line, const TCHAR* message, bool bOkay)
 {
 	NewLog(message, bOkay);
 	

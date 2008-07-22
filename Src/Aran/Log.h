@@ -19,12 +19,12 @@ class LOGMANAGER : public Singleton<LOGMANAGER>
 public:
 	LOGMANAGER();
 	~LOGMANAGER();
-	LOGMANAGER(char* filename);
-	LOGMANAGER(char* filename, bool bAppend);
+	LOGMANAGER(const char* filename);
+	LOGMANAGER(const char* filename, bool bAppend);
 
-	void NewLog(TCHAR* sourcefilename, TCHAR* funcname, int line, TCHAR* message, bool bOkay);
-	void NewLog(TCHAR* message, bool bOkay);
-	void NewLog(TCHAR* message);
+	void NewLog(const TCHAR* sourcefilename, const TCHAR* funcname, int line, const TCHAR* message, bool bOkay);
+	void NewLog(const TCHAR* message, bool bOkay);
+	void NewLog(const TCHAR* message);
 	int GetFailCount() { return failCount; };
 
 private:
@@ -32,6 +32,7 @@ private:
 	int failCount;
 	//std::ofstream fout;
 	std::wofstream fout;
+	
 
 	TCHAR debugBuf[256];
 };

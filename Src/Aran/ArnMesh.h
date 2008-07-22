@@ -28,9 +28,9 @@ private:
 	void				buildFrom(const NodeMesh2* nm);
 	void				buildFrom(const NodeMesh3* nm);
 
-	MeshData			m_data;
 	LPD3DXMESH			m_d3dxMesh;
 	MaterialRefList		m_materialRefList;
+	MeshData			m_data;
 };
 
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH* mesh);

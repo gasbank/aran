@@ -151,8 +151,9 @@ struct CurveDataShell
 	CurveType type;
 	BezTripleData* points;
 };
-struct CurveData
+class CurveData
 {
+public:
 	STRING nameStr;
 	CurveName name;
 	unsigned int pointCount;
@@ -160,8 +161,9 @@ struct CurveData
 	std::vector<BezTripleData> points;
 };
 
-struct MaterialData
+class MaterialData
 {
+public:
 	STRING m_materialName;
 	D3DMATERIAL9 m_d3dMaterial;
 	std::vector<STRING> m_texImgList;
@@ -198,8 +200,9 @@ struct MyFrameData
 	int		m_sibling;
 	int		m_firstChild;
 };
-struct MeshData
+class MeshData
 {
+public:
 	unsigned int vertexCount;
 	unsigned int faceCount;
 	unsigned int materialCount;

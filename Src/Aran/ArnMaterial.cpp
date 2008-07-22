@@ -64,7 +64,16 @@ void ArnMaterial::buildFrom( const NodeMaterial2* nm )
 		if (VideoMan::getSingletonPtr())
 		{
 			LPDIRECT3DTEXTURE9 d3dTex;
-			D3DXCreateTextureFromFileA(VideoMan::getSingleton().GetDev(), nm->m_texNameList[i], &d3dTex);
+			try
+			{
+				V_VERIFY(D3DXCreateTextureFromFileA(VideoMan::getSingleton().GetDev(), nm->m_texNameList[i], &d3dTex));
+			}
+			catch (const MyError& e)
+			{
+				_LogWrite(e.toString(), LOG_OKAY);
+				d3dTex = 0;
+			}
+			
 			m_d3dTextureList.push_back(d3dTex);
 		}
 	}

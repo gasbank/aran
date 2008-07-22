@@ -115,10 +115,14 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 				case CN_RotX:	eulX = D3DXToRadian(val);		break;
 				case CN_RotY:	eulY = D3DXToRadian(val);		break;
 				case CN_RotZ:	eulZ = D3DXToRadian(val);		break;
-				default: throw MyError(MEE_UNSUPPORTED_CURVENAME);
+				default:		throw MyError(MEE_UNSUPPORTED_CURVENAME);
 				}
 			}
-			rotKeys[i].Value = ArnMath::EulerToQuat(&D3DXVECTOR3(eulX, eulY, eulZ));
+			D3DXQUATERNION quatX, quatY, quatZ;
+			quatX = ArnMath::EulerToQuat(&D3DXVECTOR3(eulX, 0, 0));
+			quatY = ArnMath::EulerToQuat(&D3DXVECTOR3(0, eulY, 0));
+			quatZ = ArnMath::EulerToQuat(&D3DXVECTOR3(0, 0, eulZ));
+			rotKeys[i].Value = quatZ * quatY * quatX;
 		}
 		DWORD animIdx;
 		V_VERIFY(d3dxAnimSet->RegisterAnimationSRTKeys(getName(), sampleCount, sampleCount, sampleCount, &scaleKeys[0], &rotKeys[0], &transKeys[0], &animIdx));

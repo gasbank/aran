@@ -203,6 +203,8 @@ float Animation::EvalCurveInterp(const CurveData* icu, float ipotime)
 	int a, b;
 
 	cycyofs= 0.0;
+	if (icu->points[0                ].vec[1][0] >= ipotime) return icu->points[0                ].vec[1][1];
+	if (icu->points[icu->pointCount-1].vec[1][0] <= ipotime) return icu->points[icu->pointCount-1].vec[1][1];
 
 	if(icu->points.size()) {
 		prevbezt= &icu->points[0];
@@ -218,7 +220,7 @@ float Animation::EvalCurveInterp(const CurveData* icu, float ipotime)
 			cvalue+= cycyofs;
 		}
 		else if( (prevbezt+a)->vec[1][0]<=ipotime) {
-			if( (/*icu->extrap & IPO_DIR*/ true) && icu->type!=IPO_CONST) {
+			if( (/*icu->extrap & IPO_DIR*/ false) && icu->type!=IPO_CONST) {
 				dx= prevbezt->vec[1][0]-ipotime;
 				fac= prevbezt->vec[1][0]-prevbezt->vec[0][0];
 				if(fac!=0.0) {

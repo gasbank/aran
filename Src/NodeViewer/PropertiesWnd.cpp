@@ -520,7 +520,7 @@ void CPropertiesWnd::updateNodeProp( ArnNode* node )
 		m_ipoGroup->Show(TRUE);
 		updateNodeProp(static_cast<ArnIpo*>(node));
 		// Bezier interpolation testing
-		//writePrecomputedCurvesToFile(static_cast<ArnIpo*>(node));
+		writePrecomputedCurvesToFile(static_cast<ArnIpo*>(node));
 		break;
 	default:
 		ndtVal = _T("NDT_RT_CONTAINER");
