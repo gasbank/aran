@@ -6,6 +6,7 @@ Picture::Picture(void)
 	m_d3dxMesh = 0;
 	m_d3dTex = 0;
 	m_x = m_y = 0;
+	m_width = m_height = 0;
 }
 
 Picture::~Picture(void)
@@ -13,7 +14,7 @@ Picture::~Picture(void)
 	release();
 }
 
-void Picture::init( UINT x, UINT y, UINT width, UINT height, const TCHAR* imgFileName, LPDIRECT3DDEVICE9 d3dDev, UINT segments )
+void Picture::init(const TCHAR* imgFileName, LPDIRECT3DDEVICE9 d3dDev, UINT segments )
 {
 	UINT faces = segments * segments * 2;
 	UINT vertices = (segments+1) * (segments+1);
@@ -69,6 +70,8 @@ void Picture::init( UINT x, UINT y, UINT width, UINT height, const TCHAR* imgFil
 	m_d3dDev = d3dDev;
 
 	D3DXMatrixIdentity(&m_localXform);
+
+	
 }
 
 void Picture::release()
@@ -84,13 +87,6 @@ void Picture::draw()
 	m_d3dxMesh->DrawSubset(0);
 }
 
-void Picture::move( float dx, float dy )
-{
-	m_x += dx;
-	m_y += dy;
-
-	D3DXMatrixTranslation(&m_localXform, m_x, m_y, 0);
-}
 
 LRESULT Picture::handleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam )
 {
@@ -152,13 +148,13 @@ void Picture::frameMove( float fElapsedTime )
 	m_vKeyboardDirection = D3DXVECTOR3( 0, 0, 0 );
 	// Update acceleration vector based on keyboard state
 	if( IsKeyDown( m_aKeys[PIC_MOVE_UP] ) )
-		m_vKeyboardDirection.y += 1.0f;
+		m_vKeyboardDirection.y -= 0.5f;
 	if( IsKeyDown( m_aKeys[PIC_MOVE_DOWN] ) )
-		m_vKeyboardDirection.y -= 1.0f;
+		m_vKeyboardDirection.y += 0.5f;
 	if( IsKeyDown( m_aKeys[PIC_MOVE_RIGHT] ) )
-		m_vKeyboardDirection.x += 1.0f;
+		m_vKeyboardDirection.x -= 0.5f;
 	if( IsKeyDown( m_aKeys[PIC_MOVE_LEFT] ) )
-		m_vKeyboardDirection.x -= 1.0f;
+		m_vKeyboardDirection.x += 0.5f;
 
 	// Update velocity
 	m_vVelocity = m_vKeyboardDirection;
@@ -167,7 +163,9 @@ void Picture::frameMove( float fElapsedTime )
 	D3DXVECTOR3 vPosDelta = m_vVelocity * fElapsedTime;
 	m_vPos += vPosDelta;
 
-	D3DXMATRIX mTrans;
-	D3DXMatrixTranslation( &mTrans, m_vPos.x, m_vPos.y, m_vPos.z );
-	m_localXform = mTrans;
+	D3DXMATRIX mScaling, mTranslation;
+	D3DXMatrixScaling(&mScaling, m_width, m_height, 1.0f);
+	D3DXMatrixTranslation(&mTranslation, m_vPos.x, m_vPos.y, m_vPos.z);
+
+	m_localXform = mTranslation * mScaling;
 }

@@ -34,11 +34,11 @@ public:
 	Picture(void);
 	~Picture(void);
 
-	void init(UINT x, UINT y, UINT width, UINT height, const TCHAR* imgFileName, LPDIRECT3DDEVICE9 d3dDev, UINT segments = 1);
+	void init(const TCHAR* imgFileName, LPDIRECT3DDEVICE9 d3dDev, UINT segments = 1);
 	void release();
 	void draw();
-	void move(float dx, float dy);
 	const D3DXMATRIX* getLocalXform() const { return &m_localXform; }
+	void setSize(float width, float height) { m_width = width; m_height = height; }
 	
 	LRESULT handleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 	void frameMove(float fElapsedTime);
@@ -58,4 +58,5 @@ private:
 	D3DXVECTOR3 m_vVelocity;
 	D3DXVECTOR3 m_vPos;
 	D3DXMATRIX m_mWorld;
+	float m_width, m_height;
 };
