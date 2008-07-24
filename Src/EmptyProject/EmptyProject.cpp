@@ -2,6 +2,9 @@
 // File: EmptyProject.cpp
 //
 // Copyright (c) Microsoft Corporation. All rights reserved.
+//
+// Modified PoolG Team, a Division of PoolC
+//
 //--------------------------------------------------------------------------------------
 #include "EmptyProjectPCH.h"
 #include "DXUTcamera.h"
@@ -12,12 +15,8 @@ LPDIRECT3DVERTEXSHADER9         g_pVertexShader = NULL;
 LPD3DXCONSTANTTABLE             g_pConstantTable = NULL;
 LPDIRECT3DVERTEXDECLARATION9    g_pVertexDeclaration = NULL;
 
-CModelViewerCamera				g_cam;
+CFirstPersonCamera				g_camera;
 Picture							g_pic;
-
-
-void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext );
-
 
 //--------------------------------------------------------------------------------------
 // Rejects any D3D9 devices that aren't acceptable to the app by returning false
@@ -52,40 +51,13 @@ bool CALLBACK ModifyDeviceSettings( DXUTDeviceSettings* pDeviceSettings, void* p
 HRESULT CALLBACK OnD3D9CreateDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
                                      void* pUserContext )
 {
-	HRESULT hr;
+	// Setup main camera
+	D3DXVECTOR3 vecEye( 0.0f, 0.0f, -5.0f );
+	D3DXVECTOR3 vecAt ( 0.0f, 0.0f, -0.0f );
+	g_camera.SetViewParams( &vecEye, &vecAt );
 
+	// Load sample image (vertex and index buffer creation with texture)
 	g_pic.init(0, 0, 100, 200, L"tank.jpg", pd3dDevice, 10);
-
-	// Create vertex shader
-	WCHAR strPath[512];
-	LPD3DXBUFFER pCode;
-
-	D3DVERTEXELEMENT9 decl[] =
-	{
-		{ 0, 0, D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0 },
-		D3DDECL_END()
-	};
-
-	V_RETURN( pd3dDevice->CreateVertexDeclaration( decl, &g_pVertexDeclaration ) );
-
-	V_RETURN(StringCchCopy( strPath, sizeof(strPath)/sizeof(TCHAR), L"HLSLwithoutEffects.vsh" ));
-
-	DWORD dwShaderFlags = 0;
-
-	dwShaderFlags |= D3DXSHADER_DEBUG;
-	dwShaderFlags |= D3DXSHADER_SKIPOPTIMIZATION|D3DXSHADER_DEBUG;
-	dwShaderFlags |= D3DXSHADER_SKIPOPTIMIZATION|D3DXSHADER_DEBUG;
-
-	V_RETURN( D3DXCompileShaderFromFile( strPath, NULL, NULL, "Ripple",
-		"vs_2_0", dwShaderFlags, &pCode,
-		NULL, &g_pConstantTable ) );
-
-	// Create the vertex shader
-	hr = pd3dDevice->CreateVertexShader( ( DWORD* )pCode->GetBufferPointer(),
-		&g_pVertexShader );
-	pCode->Release();
-	if( FAILED( hr ) )
-		return DXTRACE_ERR( TEXT( "CreateVertexShader" ), hr );
 
     return S_OK;
 }
@@ -100,7 +72,8 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFA
 {
 	pd3dDevice->SetRenderState(D3DRS_LIGHTING, FALSE);
 
-	g_cam.
+	float fAspectRatio = pBackBufferSurfaceDesc->Width / ( FLOAT )pBackBufferSurfaceDesc->Height;
+	g_camera.SetProjParams( D3DX_PI / 4, fAspectRatio, 0.1f, 20.0f );
 	
     return S_OK;
 }
@@ -111,19 +84,9 @@ HRESULT CALLBACK OnD3D9ResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFA
 //--------------------------------------------------------------------------------------
 void CALLBACK OnFrameMove( double fTime, float fElapsedTime, void* pUserContext )
 {
-	// Set up the vertex shader constants
-	D3DXMATRIXA16 mWorldViewProj;
-	
-	D3DXMatrixIdentity(&mWorldViewProj);
-
-	g_pConstantTable->SetMatrix( DXUTGetD3D9Device(), "mWorldViewProj", &mWorldViewProj );
-	g_pConstantTable->SetFloat( DXUTGetD3D9Device(), "fTime", ( float )fTime );
-
 	g_pic.frameMove(fElapsedTime);
-
-	g_cam.FrameMove(fElapsedTime);
+	g_camera.FrameMove(fElapsedTime);
 }
-
 
 //--------------------------------------------------------------------------------------
 // Render the scene using the D3D9 device
@@ -139,9 +102,13 @@ void CALLBACK OnD3D9FrameRender( IDirect3DDevice9* pd3dDevice, double fTime, flo
     // Render the scene
     if( SUCCEEDED( pd3dDevice->BeginScene() ) )
     {
-		//pd3dDevice->SetVertexDeclaration( g_pVertexDeclaration );
-		//pd3dDevice->SetVertexShader( g_pVertexShader );
+		// Setup view and projection xforms
+		pd3dDevice->SetTransform(D3DTS_VIEW, g_camera.GetViewMatrix());
+		pd3dDevice->SetTransform(D3DTS_PROJECTION, g_camera.GetProjMatrix());
+
+		// Draw our image
 		g_pic.draw();
+		
 
         V( pd3dDevice->EndScene() );
     }
@@ -156,6 +123,7 @@ LRESULT CALLBACK MsgProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 {
 
 	g_pic.handleMessages(hWnd, uMsg, wParam, lParam);
+	//g_camera.HandleMessages(hWnd, uMsg, wParam, lParam);
     return 0;
 }
 
@@ -178,6 +146,17 @@ void CALLBACK OnD3D9DestroyDevice( void* pUserContext )
 	SAFE_RELEASE( g_pVertexShader );
 	SAFE_RELEASE( g_pConstantTable );
 	SAFE_RELEASE( g_pVertexDeclaration );
+}
+
+
+//--------------------------------------------------------------------------------------
+// As a convenience, DXUT inspects the incoming windows messages for
+// keystroke messages and decodes the message parameters to pass relevant keyboard
+// messages to the application.  The framework does not remove the underlying keystroke 
+// messages, which are still passed to the application's MsgProc callback.
+//--------------------------------------------------------------------------------------
+void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext )
+{
 }
 
 
@@ -220,13 +199,3 @@ INT WINAPI wWinMain( HINSTANCE, HINSTANCE, LPWSTR, int )
     return DXUTGetExitCode();
 }
 
-
-//--------------------------------------------------------------------------------------
-// As a convenience, DXUT inspects the incoming windows messages for
-// keystroke messages and decodes the message parameters to pass relevant keyboard
-// messages to the application.  The framework does not remove the underlying keystroke 
-// messages, which are still passed to the application's MsgProc callback.
-//--------------------------------------------------------------------------------------
-void CALLBACK KeyboardProc( UINT nChar, bool bKeyDown, bool bAltDown, void* pUserContext )
-{	
-}
