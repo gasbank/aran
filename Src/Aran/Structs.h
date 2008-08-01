@@ -138,11 +138,18 @@ struct BezTripleData
 enum CurveType { IPO_CONST, IPO_LIN, IPO_BEZ };
 enum CurveName
 {
-	CN_LocX, CN_LocY, CN_LocZ,
-	CN_ScaleX, CN_ScaleY, CN_ScaleZ,
-	CN_RotX, CN_RotY, CN_RotZ,
-	CN_SIZE,
-	CN_UNKNOWN, // error
+	CN_LocX		= 0x00000001,
+	CN_LocY		= 0x00000002,
+	CN_LocZ		= 0x00000004,
+	CN_ScaleX	= 0x00000010,
+	CN_ScaleY	= 0x00000020,
+	CN_ScaleZ	= 0x00000040,
+	CN_RotX		= 0x00000100,
+	CN_RotY		= 0x00000200,
+	CN_RotZ		= 0x00000400,
+
+	CN_SIZE = 9,
+	CN_UNKNOWN = 0x7fffffff, // error
 };
 struct CurveDataShell
 {

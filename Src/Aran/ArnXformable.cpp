@@ -1,12 +1,14 @@
 #include "AranPCH.h"
 #include "ArnXformable.h"
 #include "ArnIpo.h"
+#include "ArnMath.h"
 
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 : ArnNode(ndt), m_d3dxAnimCtrl(0)
 {
-	m_animLocalXform = DX_CONSTS::D3DXMAT_IDENTITY;
-	m_localXform = DX_CONSTS::D3DXMAT_IDENTITY;
+	m_animLocalXform	= DX_CONSTS::D3DXMAT_IDENTITY;
+	m_localXform		= DX_CONSTS::D3DXMAT_IDENTITY;
+	m_localXformIpo		= DX_CONSTS::D3DXMAT_IDENTITY;
 }
 
 ArnXformable::~ArnXformable(void)
@@ -30,6 +32,32 @@ void ArnXformable::setIpo( const STRING& ipoName )
 	}
 }
 
+void ArnXformable::setIpo( ArnIpo* val )
+{
+	m_ipo = val;
+	if (m_ipo)
+	{
+		DWORD cn = m_ipo->getCurveNames();
+
+		D3DXVECTOR3 vTrans = getLocalXform_Trans(), vScale = getLocalXform_Scale();
+		D3DXQUATERNION qRot = getLocalXform_Rot();
+		D3DXVECTOR3 vRot = ArnMath::QuatToEuler(&qRot);
+
+		if (cn & CN_LocX) vTrans.x = 0;
+		if (cn & CN_LocY) vTrans.y = 0;
+		if (cn & CN_LocZ) vTrans.z = 0;
+		if (cn & CN_ScaleX) vScale.x = 1.0f;
+		if (cn & CN_ScaleY) vScale.y = 1.0f;
+		if (cn & CN_ScaleZ) vScale.z = 1.0f;
+		if (cn & CN_RotX) vRot.x = 0;
+		if (cn & CN_RotY) vRot.y = 0;
+		if (cn & CN_RotZ) vRot.z = 0;
+
+		qRot = ArnMath::EulerToQuat(&vRot);
+
+		D3DXMatrixTransformation(&m_localXformIpo, 0, 0, &vScale, 0, &qRot, &vTrans);
+	}
+}
 D3DXMATRIX ArnXformable::getFinalXform()
 {
 	if (	(getParent()->getType() == NDT_RT_MESH)
@@ -73,4 +101,17 @@ void ArnXformable::update( double fTime, float fElapsedTime )
 {
 	if (m_d3dxAnimCtrl)
 		m_d3dxAnimCtrl->AdvanceTime(fElapsedTime, 0);
+}
+
+void ArnXformable::setLocalXform( const D3DXMATRIX& localXform )
+{
+	m_localXform = localXform;
+	m_localXformIpo = m_localXform;
+	D3DXMatrixDecompose(&m_localXform_Scale, &m_localXform_Rot, &m_localXform_Trans, &m_localXform);
+}
+
+const D3DXMATRIX& ArnXformable::getFinalLocalXform()
+{
+	m_finalLocalXform = m_animLocalXform * m_localXformIpo;
+	return m_finalLocalXform;
 }

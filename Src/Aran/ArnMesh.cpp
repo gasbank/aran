@@ -49,7 +49,7 @@ void ArnMesh::buildFrom(const NodeMesh2* nm)
 	if (VideoMan::getSingletonPtr())
 	{
 		LPD3DXMESH d3dxMesh;
-		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
+		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
 		setD3DXMesh(d3dxMesh);
 	}
 }
@@ -69,7 +69,7 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	if (VideoMan::getSingletonPtr())
 	{
 		LPD3DXMESH d3dxMesh;
-		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, &d3dxMesh);
+		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
 		setD3DXMesh(d3dxMesh);
 	}
 }
@@ -98,7 +98,7 @@ const D3DMATERIAL9* ArnMesh::getMaterial( unsigned int i ) const
 //////////////////////////////////////////////////////////////////////////
 
 
-HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH* mesh)
+HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH& mesh)
 {
 	if (!dev)
 		throw MyError(MEE_DEVICE_NOT_READY);
@@ -106,34 +106,34 @@ HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD
 	HRESULT hr = 0;
 	ArnVertex* v = 0;
 	WORD* ind = 0;
-	hr = D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ARN_VDD::ARN_VDD_FVF, dev, mesh);
+	hr = D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ARN_VDD::ARN_VDD_FVF, dev, &mesh);
 	if (FAILED(hr))
 	{
 		return E_FAIL;
 	}
 
-	(*mesh)->LockVertexBuffer(0, (void**)&v);
+	mesh->LockVertexBuffer(0, (void**)&v);
 	memcpy(v, nm->m_vdd, nm->m_meshVerticesCount * sizeof(ARN_VDD));
-	(*mesh)->UnlockVertexBuffer();
+	mesh->UnlockVertexBuffer();
 
-	(*mesh)->LockIndexBuffer(0, (void**)&ind);
+	mesh->LockIndexBuffer(0, (void**)&ind);
 	unsigned int i;
 	for (i = 0; i < nm->m_meshFacesCount * 3; ++i)
 	{
 		assert((nm->m_triangleIndice[i] & 0xffff0000) == 0);
 		ind[i] = (WORD)nm->m_triangleIndice[i];
 	}
-	(*mesh)->UnlockIndexBuffer();
+	mesh->UnlockIndexBuffer();
 
 	DWORD* attrBuf = 0;
-	(*mesh)->LockAttributeBuffer(0, &attrBuf);
+	mesh->LockAttributeBuffer(0, &attrBuf);
 	memcpy(attrBuf, nm->m_materialRefs, nm->m_meshFacesCount * sizeof(DWORD));
-	(*mesh)->UnlockAttributeBuffer();
+	mesh->UnlockAttributeBuffer();
 
 	return S_OK;
 }
 
-HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD3DXMESH* mesh)
+HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD3DXMESH& mesh)
 {
 	if (!dev)
 		throw MyError(MEE_DEVICE_NOT_READY);
@@ -141,24 +141,25 @@ HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD
 	HRESULT hr = 0;
 	ArnVertex* v = 0;
 	WORD* ind = 0;
-	hr = D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ArnVertex::FVF, dev, mesh);
+	hr = D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ArnVertex::FVF, dev, &mesh);
 	if (FAILED(hr))
 	{
+		DebugBreak();
 		return E_FAIL;
 	}
 
-	(*mesh)->LockVertexBuffer(0, (void**)&v);
+	mesh->LockVertexBuffer(0, (void**)&v);
 	memcpy(v, nm->m_vertex, nm->m_meshVerticesCount * sizeof(ArnVertex));
-	(*mesh)->UnlockVertexBuffer();
+	mesh->UnlockVertexBuffer();
 
-	(*mesh)->LockIndexBuffer(0, (void**)&ind);
+	mesh->LockIndexBuffer(0, (void**)&ind);
 	memcpy(ind, nm->m_faces, nm->m_meshFacesCount * 3 * sizeof(WORD));
-	(*mesh)->UnlockIndexBuffer();
+	mesh->UnlockIndexBuffer();
 
 	DWORD* attrBuf = 0;
-	(*mesh)->LockAttributeBuffer(0, &attrBuf);
+	mesh->LockAttributeBuffer(0, &attrBuf);
 	memcpy(attrBuf, nm->m_attr, nm->m_meshFacesCount * sizeof(DWORD));
-	(*mesh)->UnlockAttributeBuffer();
+	mesh->UnlockAttributeBuffer();
 
 	return S_OK;
 }

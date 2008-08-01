@@ -76,6 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
 
+
 	ArnFileData arnFileData;
 	load_arnfile(_T("models/man.arn"), arnFileData);
 	ArnSceneGraph arnSG(arnFileData);

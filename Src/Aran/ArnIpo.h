@@ -16,6 +16,7 @@ public:
 	unsigned int				getCurveCount() const { return m_curveCount; }
 	const CurveData&			getCurveData(unsigned int idx) const { return m_curves[idx]; }
 	LPD3DXKEYFRAMEDANIMATIONSET getD3DXAnimSet() const { return m_d3dxAnimSet; }
+	DWORD						getCurveNames() const { return m_curveNames; }
 
 	// *** INTERNAL USE ONLY START ***
 	virtual void				interconnect(ArnNode* sceneRoot);
@@ -27,6 +28,8 @@ private:
 	void						buildFrom(const NodeIpo1* ni);
 	void						buildFrom(const NodeIpo2* ni);
 
+	DWORD						m_curveNames;
+	
 	unsigned int				m_ipoCount;
 	unsigned int				m_curveCount;
 	std::vector<CurveData>		m_curves;

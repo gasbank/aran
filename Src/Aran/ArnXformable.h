@@ -9,16 +9,19 @@ public:
 	virtual						~ArnXformable(void);
 
 	const STRING&				getIpoName() const { return m_ipoName; }
-	const D3DXMATRIX&			getFinalLocalXform() { m_finalLocalXform = m_animLocalXform * m_localXform; return m_finalLocalXform; }
+	const D3DXMATRIX&			getFinalLocalXform();
+	const D3DXVECTOR3&			getLocalXform_Scale() const { return m_localXform_Scale; }
+	const D3DXQUATERNION&		getLocalXform_Rot() const { return m_localXform_Rot; }
+	const D3DXVECTOR3&			getLocalXform_Trans() const { return m_localXform_Trans; }
 	D3DXMATRIX					getFinalXform();
 protected:
 								ArnXformable(NODE_DATA_TYPE ndt);
 
 	ArnIpo*						getIpo() const { return m_ipo; }
-	void						setIpo(ArnIpo* val) { m_ipo = val; }
+	void						setIpo(ArnIpo* val);
 	void						setIpo(const STRING& ipoName);
 	void						setIpoName(const char* ipoName) { m_ipoName = ipoName; }
-	void						setLocalXform(const D3DXMATRIX& localXform) { m_localXform = localXform; }
+	void						setLocalXform(const D3DXMATRIX& localXform);
 	virtual void				update(double fTime, float fElapsedTime);
 	// *** INTERNAL USE ONLY START ***
 	void						configureAnimCtrl();
@@ -26,7 +29,13 @@ protected:
 private:
 	ArnIpo*						m_ipo;
 	STRING						m_ipoName;
+
 	D3DXMATRIX					m_localXform;
+	D3DXMATRIX					m_localXformIpo;
+	D3DXVECTOR3					m_localXform_Scale;
+	D3DXQUATERNION				m_localXform_Rot;
+	D3DXVECTOR3					m_localXform_Trans;
+
 	D3DXMATRIX					m_animLocalXform;
 	D3DXMATRIX					m_finalLocalXform;
 

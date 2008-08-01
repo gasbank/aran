@@ -5,7 +5,7 @@
 #include "ArnMath.h"
 
 ArnIpo::ArnIpo(void)
-: ArnNode(NDT_RT_IPO), m_d3dxAnimSet(0)
+: ArnNode(NDT_RT_IPO), m_d3dxAnimSet(0), m_curveNames(0)
 {
 }
 
@@ -64,6 +64,8 @@ void ArnIpo::buildFrom( const NodeIpo2* ni )
 			cd.points.push_back(ni->m_curves[i].points[j]);
 		}
 		m_curves.push_back(cd);
+
+		m_curveNames |= (DWORD)cd.name;
 	}
 }
 
