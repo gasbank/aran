@@ -166,14 +166,6 @@ def export_node_mesh(ob):
 	ipoName = ''
 	if ob.parent: parName = ob.parent.name
 	if ob.ipo is not None: ipoName = ob.ipo.name
-
-
-	out.write('<ArnType 0x00002002> %s\n' % obName)
-	out.write('Node Chunk Size: { not calculated }\n')
-	out.write('IPO        : %s\n' % ipoName)
-	out.write(MatrixToDetailString(matLocal))
-	out.write('matrixLocal:\n')
-	out.write('%s\n' % matLocal)
 	
 	"""
 	if ob.ipo is not None:
@@ -182,6 +174,20 @@ def export_node_mesh(ob):
 	"""
 	
 	mesh = ob.getData(mesh=1)
+	if len(mesh.verts) is 0:
+		print ob.name, ': No vertices; skipping'
+		return
+	for face in mesh.faces: face.sel = 1
+	mesh.quadToTriangle()
+	
+	out.write('<ArnType 0x00002002> %s\n' % obName)
+	out.write('Node Chunk Size: { not calculated }\n')
+	out.write('IPO        : %s\n' % ipoName)
+	out.write(MatrixToDetailString(matLocal))
+	out.write('matrixLocal:\n')
+	out.write('%s\n' % matLocal)
+	
+	
 	out.write('Materials         : %d\n' % len(mesh.materials))
 	out.write('Original Vertices : %d\n' % len(mesh.verts))
 	out.write('Faces             : %d\n' % len(mesh.faces))
@@ -224,11 +230,12 @@ def export_node_mesh(ob):
 	for face in mesh.faces:
 		out.write('f [%d]' % face.mat)
 		attrary.append(face.mat)
-		if len(face.v) is not 3: # Mesh faces should consist of triangles only!
+		faceVertCount = len(face.v)
+		if faceVertCount is not 3: # Mesh faces should consist of triangles only!
 			print '### error: all faces should consist of three vertices ###'
 			BPyMessages.Error_NoMeshFaces()
 			return;
-		for ii in range(3):
+		for ii in range(faceVertCount):
 			vert = face.v[ii]
 			dupCount = 0
 			if mesh.faceUV: # if UV texturing is applied
@@ -301,7 +308,7 @@ def export_node_mesh(ob):
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
 	attach_strz(obName)
-	attach_int(0)                      # Node Chunk SIze
+	attach_int(0x17622680)                      # Node Chunk Size
 	# ---------------------------------------------------
 	attach_strz(parName)
 	attach_strz(ipoName)
@@ -313,6 +320,8 @@ def export_node_mesh(ob):
 	binstream.append(vertary)
 	binstream.append(faceary)
 	binstream.append(attrary)
+	
+	mesh.triangleToQuad()
 
 def export_node_camera(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
@@ -356,13 +365,6 @@ def export_node_lamp(ob):
 	if ob.parent: parName = ob.parent.name
 	if ob.ipo is not None: ipoName = ob.ipo.name
 	
-	out.write('<ArnType 0x00003001> %s\n' % obName)
-	out.write('Node Chunk Size: { not calculated }\n')
-	out.write('IPO        : %s\n' % ipoName)
-	out.write(MatrixToDetailString(matLocal))
-	out.write('matrixLocal:\n')
-	out.write('%s\n' % matLocal)
-	
 	lamp = ob.getData(mesh=0)
 	if lamp.type == 0:
 		lampType = 'Lamp'
@@ -374,8 +376,17 @@ def export_node_lamp(ob):
 		lampType = 'Spot'
 		d3dType = 2 # spot light
 	else:
-		print 'Unsupported lamp type.'
+		print ob.name, ': Unsupported lamp type; skipping'
 		return
+	
+	out.write('<ArnType 0x00003001> %s\n' % obName)
+	out.write('Node Chunk Size: { not calculated }\n')
+	out.write('IPO        : %s\n' % ipoName)
+	out.write(MatrixToDetailString(matLocal))
+	out.write('matrixLocal:\n')
+	out.write('%s\n' % matLocal)
+	
+	
 	
 	out.write('<ArnType 0x00000030> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
@@ -554,7 +565,7 @@ def start_export(filename):
 		elif ob.type == 'Lamp':
 			export_node_lamp(ob)
 		else:
-			print ob.name, 'is not supported type; skipping'
+			print 'Object \'', ob.name, '\' of type ', ob.type, ' is not supported type; skipping'
 	
 	attach_strz('TERM')           # Terminal Descriptor
 	
