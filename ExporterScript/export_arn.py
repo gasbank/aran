@@ -167,12 +167,17 @@ def export_node_mesh(ob):
 	if ob.parent: parName = ob.parent.name
 	if ob.ipo is not None: ipoName = ob.ipo.name
 
+
 	out.write('<ArnType 0x00002002> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
+	
+	if ob.ipo is not None:
+		out.write('(*)matrixLocal will be ignored by IPO data\n')
+		matLocal.identity()
 	
 	mesh = ob.getData(mesh=1)
 	out.write('Materials         : %d\n' % len(mesh.materials))
@@ -435,7 +440,7 @@ def export_materials():
 		texs = mat.getTextures()
 		texImgs = []
 		for tex in texs:
-			if tex != None and tex.tex:
+			if tex != None and tex.tex != None and tex.tex.image != None:
 				texImgs.append(tex.tex.image.name)
 				out.write(' - Textures: %s\n' % tex.tex.image.name)
 				
@@ -511,15 +516,15 @@ def export_ipos():
 					out.write(NonbezPointToString(point))
 				handle1x = point.vec[0][0]
 				handle1y = point.vec[0][1]
-				knotx = point.pt[0]
-				knoty = point.pt[1]
+				knotx    = point.vec[1][0] #point.pt[0]
+				knoty    = point.vec[1][1] #point.pt[1]
 				handle2x = point.vec[2][0]
 				handle2y = point.vec[2][1]
-				if curve.name in ['LocZ', 'RotZ']:
+				if curve.name in ['LocZ', 'RotX', 'RotY']:
 					handle1y = -handle1y
 					knoty    = -knoty
 					handle2y = -handle2y
-				if curve.name in ['RotX', 'RotY', 'RotZ']:
+				if curve.name in ['RotX', 'RotY', 'RotZ']: # Blender stores its Rot IPO's Y values with divided by 10.
 					handle1y = handle1y * 10
 					knoty    = knoty    * 10
 					handle2y = handle2y * 10
@@ -571,7 +576,7 @@ global out           # out text ARN (for debug)
 global binstream     # array collection
 
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = 'd:/devel/aran_svn/working/models/gus2.arn'
+fileName = 'e:/devel3/aran_svn/working/models/gus2.arn'
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
