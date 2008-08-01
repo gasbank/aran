@@ -175,9 +175,11 @@ def export_node_mesh(ob):
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
 	
+	"""
 	if ob.ipo is not None:
 		out.write('(*)matrixLocal will be ignored by IPO data\n')
 		matLocal.identity()
+	"""
 	
 	mesh = ob.getData(mesh=1)
 	out.write('Materials         : %d\n' % len(mesh.materials))
@@ -295,7 +297,7 @@ def export_node_mesh(ob):
 		vertary.fromlist([vert.co.x, vert.co.y, -vert.co.z])
 		vertary.fromlist([vert.no.x, vert.no.y, -vert.no.z])
 		vertary.fromlist([texU, abs(texV-1)])
-		
+	
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
 	attach_strz(obName)
@@ -520,7 +522,7 @@ def export_ipos():
 				knoty    = point.vec[1][1] #point.pt[1]
 				handle2x = point.vec[2][0]
 				handle2y = point.vec[2][1]
-				if curve.name in ['LocZ', 'RotX', 'RotY']:
+				if curve.name in ['LocZ', 'RotZ']:
 					handle1y = -handle1y
 					knoty    = -knoty
 					handle2y = -handle2y
