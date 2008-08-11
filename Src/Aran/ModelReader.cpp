@@ -360,7 +360,6 @@ int ModelReader::ParseNDD_Mesh1(int nodeHeaderIndex)
 
 
 	// skip vertices data (will be processed afterwards)
-	DWORD vertexPos = this->fin.tellg();
 	this->fin.seekg(curMeshVertCount * sizeof(ARN_VDD), std::ios_base::cur);
 
 
@@ -413,7 +412,6 @@ int ModelReader::ParseNDD_Mesh1(int nodeHeaderIndex)
 		if (mtd.strTexFileName.length() > 0)
 		{
 			LPDIRECT3DTEXTURE9 lpTex;
-			int oldErrorMode = SetErrorMode( SEM_FAILCRITICALERRORS );
 
 			DWORD fileAttr = GetFileAttributesA( mtd.strTexFileName.c_str() );
 			if ( fileAttr != 0xffffffff )
@@ -743,8 +741,7 @@ HRESULT ModelReader::ParseNDD_Anim(NODE_DATA_TYPE belongsToType, Bone* pBone)
 	}
 	else
 	{
-		ASSERTCHECK("UNIMPLEMENTED ANIMATION FORMAT");
-		hr = E_FAIL;
+		throw std::runtime_error("UNIMPLEMENTED ANIMATION FORMAT");
 	}
 
 e_Exit:
@@ -1118,7 +1115,7 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 		MessageBox(0, _T("Convert failed"), _T("Error"), MB_OK | MB_ICONERROR);
 		goto e_Exit;
 	}
-	D3DXBONECOMBINATION* boneComb = (D3DXBONECOMBINATION*)lpBoneCombinations->GetBufferPointer();
+	//D3DXBONECOMBINATION* boneComb = (D3DXBONECOMBINATION*)lpBoneCombinations->GetBufferPointer();
 	
 	this->lpSkinnedMeshes.push_back(lpSkinnedMesh);
 	this->lpSkinnedMeshesSkinInfo.push_back(lpSkinInfo);
@@ -1129,8 +1126,8 @@ int ModelReader::BuildBlendedMeshByMeshIndex(int meshIndex)
 
 	// Debug skinned mesh declaration here...
 
-	int numBytesPerVertex = lpTempMesh->GetNumBytesPerVertex();
-	int numBytesPerVertexSkinned = lpSkinnedMesh->GetNumBytesPerVertex();
+	//int numBytesPerVertex = lpTempMesh->GetNumBytesPerVertex();
+	//int numBytesPerVertexSkinned = lpSkinnedMesh->GetNumBytesPerVertex();
 
 	D3DVERTEXELEMENT9 declMesh[MAX_FVF_DECL_SIZE];
 	ZeroMemory(declMesh, sizeof(declMesh));
@@ -1718,7 +1715,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf,
 	//////////////////////////////////////////////////////////////////////////
 	// General mesh animation loading (single animation set first)
 	//////////////////////////////////////////////////////////////////////////
-	LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimSet = 0;
+	//LPD3DXKEYFRAMEDANIMATIONSET lpKeyframedAnimSet = 0;
 	LPD3DXANIMATIONSET lpAnimSetTemp = 0;
 	int ticksPerSecond = 1;
 
@@ -1733,7 +1730,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf,
 	}
 	else
 	{
-		ASSERTCHECK( !"Unexpected ARN format" );
+		throw std::runtime_error("Unexpected ARN format");
 	}
 
 	hr = D3DXCreateKeyframedAnimationSet("Default General Mesh Anim Set", ticksPerSecond, D3DXPLAY_LOOP,
@@ -1742,7 +1739,7 @@ HRESULT ModelReader::Initialize( LPDIRECT3DDEVICE9 lpDev, DWORD fvf,
 		goto e_NoGeneralMeshAnim;
 
 	this->animMatControlledByAC.resize(generalMeshCount);
-	int i = 0, j = 0;
+	int i = 0;
 	for (i = 0; i < generalMeshCount; i++)
 	{
 		DWORD animIndex = 0;

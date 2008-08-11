@@ -85,7 +85,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 		LPD3DXKEYFRAMEDANIMATIONSET d3dxAnimSet = ipoContainer->getD3DXAnimSet();
 		assert(d3dxAnimSet);
 		
-		const unsigned int keyCount = 41;
+		const unsigned int keyCount = 121;
 		const unsigned int sampleCount = keyCount * FPS;
 		std::vector<D3DXKEY_VECTOR3> scaleKeys(sampleCount);
 		std::vector<D3DXKEY_VECTOR3> transKeys(sampleCount);
@@ -121,9 +121,12 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 				}
 			}
 			D3DXQUATERNION quatX, quatY, quatZ;
-			quatX = ArnMath::EulerToQuat(&D3DXVECTOR3(eulX, 0, 0));
-			quatY = ArnMath::EulerToQuat(&D3DXVECTOR3(0, eulY, 0));
-			quatZ = ArnMath::EulerToQuat(&D3DXVECTOR3(0, 0, eulZ));
+			D3DXVECTOR3 vEulX(eulX, 0, 0);
+			D3DXVECTOR3 vEulY(0, eulY, 0);
+			D3DXVECTOR3 vEulZ(0, 0, eulZ);
+			quatX = ArnMath::EulerToQuat(&vEulX);
+			quatY = ArnMath::EulerToQuat(&vEulY);
+			quatZ = ArnMath::EulerToQuat(&vEulZ);
 			rotKeys[i].Value = quatZ * quatY * quatX;
 		}
 		DWORD animIdx;

@@ -57,10 +57,8 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 	m_pVideoMan->GetDev()->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
 	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
-	m_pVideoMan->RenderModel(
-		resMan.getModel( ResourceMan::MAN ),
-		&( matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation() )
-		);
+	const D3DXMATRIX finalXform = matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation();
+	m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::MAN ), &finalXform);
 	resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
 
 	//////////////////////////////////////////////////////////////////////////
@@ -197,13 +195,13 @@ LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeig
 		{
 			int v0Index = i * (segWidth+1) + j;
 			WORD* curI = &indices[6 * (i * segWidth + j)];
-			curI[0] = v0Index;
-			curI[1] = v0Index + (segWidth+1);
-			curI[2] = v0Index + 1;
+			curI[0] = (WORD)(v0Index);
+			curI[1] = (WORD)(v0Index + (segWidth+1));
+			curI[2] = (WORD)(v0Index + 1);
 
-			curI[3] = v0Index + 1;
-			curI[4] = v0Index + (segWidth+1);
-			curI[5] = v0Index + (segWidth+1) + 1;
+			curI[3] = (WORD)(v0Index + 1);
+			curI[4] = (WORD)(v0Index + (segWidth+1));
+			curI[5] = (WORD)(v0Index + (segWidth+1) + 1);
 		}
 	}
 

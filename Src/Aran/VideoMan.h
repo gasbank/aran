@@ -165,6 +165,8 @@ public:
 
 	HWND GetWindowHandle();
 	LPDIRECT3DDEVICE9 GetDev();
+	void SetDev(LPDIRECT3DDEVICE9 dev); // Aran Internal Use Only
+
 
 	HRESULT SetCamera(float x, float y, float z);
 	HRESULT SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );

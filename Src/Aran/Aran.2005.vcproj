@@ -44,15 +44,15 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../DXUT/Core"
-				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG"
+				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				BufferSecurityCheck="true"
 				EnableEnhancedInstructionSet="0"
-				UsePrecompiledHeader="2"
+				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="AranPCH.h"
-				WarningLevel="3"
+				WarningLevel="4"
 				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
@@ -143,6 +143,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalOptions="/MACHINE:x86"
+				OutputFile="$(OutDir)\$(ProjectName)_Release.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"

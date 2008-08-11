@@ -75,7 +75,7 @@
 #include <initguid.h>
 #include <assert.h>
 #include <wchar.h>
-#include <mmsystem.h>
+//#include <mmsystem.h>
 #include <commctrl.h> // for InitCommonControls() 
 #include <shellapi.h> // for ExtractIcon()
 #include <new.h>      // for placement new

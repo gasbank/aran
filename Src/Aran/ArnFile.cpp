@@ -325,7 +325,7 @@ void parse_nodeIpo2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 void parse_nodeSymLink( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_SYMLINK1);
-	NodeSymLink1* node = (NodeSymLink1*)nodeBase;
+	//NodeSymLink1* node = (NodeSymLink1*)nodeBase;
 }
 //////////////////////////////////////////////////////////////////////////
 

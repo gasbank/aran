@@ -6,3 +6,5 @@
 
 // TODO: reference any additional headers you need in STDAFX.H
 // and not in this file
+
+int aranPCH_Value; // Dummy variable to avoid 'no public symbols' LNK4221 warning

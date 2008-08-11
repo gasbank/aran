@@ -7,7 +7,7 @@
 #include "ArnBone.h"
 
 ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
-: m_afd(afd), m_sceneRoot(0)
+: ArnObject(NDT_RT_SCENEGRAPH), m_afd(afd), m_sceneRoot(0)
 {
 	if (strcmp(afd.m_fileDescriptor, "ARN20") == 0)
 		m_exportVersion = EV_ARN20;
