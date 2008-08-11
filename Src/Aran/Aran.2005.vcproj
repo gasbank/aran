@@ -52,6 +52,7 @@
 				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="AranPCH.h"
+				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="4"
 				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
