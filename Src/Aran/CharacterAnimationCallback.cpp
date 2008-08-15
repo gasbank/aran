@@ -31,12 +31,12 @@ void CharacterAnimationCallback::DoUnregisterCallback()
 
 }
 
-void CharacterAnimationCallback::AttachCharacter( Character* pCharacter )
+void CharacterAnimationCallback::AttachCharacter( Aran::Character* pCharacter )
 {
 	this->pCharacter = pCharacter;
 }
 
-Character* CharacterAnimationCallback::GetCharacter()
+Aran::Character* CharacterAnimationCallback::GetCharacter()
 {
 	return this->pCharacter;
 }

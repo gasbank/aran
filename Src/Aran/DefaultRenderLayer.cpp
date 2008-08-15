@@ -8,7 +8,7 @@
 #include "ArnFile.h"
 #include "ArnSceneGraph.h"
 
-DefaultRenderLayer::DefaultRenderLayer(Character* pChar)
+DefaultRenderLayer::DefaultRenderLayer(Aran::Character* pChar)
 {
 	m_pChar = pChar;
 }
@@ -59,7 +59,9 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
 	const D3DXMATRIX finalXform = matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation();
 	m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::MAN ), &finalXform);
-	resMan.getModel( ResourceMan::MAN )->AdvanceTime( 0.1f );
+	const ModelReader* manModel = resMan.getModel( ResourceMan::MAN );
+	if (manModel)
+		manModel->AdvanceTime( 0.1f );
 
 	//////////////////////////////////////////////////////////////////////////
 	// Print Text

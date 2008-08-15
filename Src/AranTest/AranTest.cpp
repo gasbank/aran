@@ -63,7 +63,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	inputMan.Initialize( hInstance, videoMan.GetWindowHandle() );
 	videoMan.AttachInputMan(&inputMan);
 
-	std::auto_ptr<Character> character(new Character());
+	std::auto_ptr<Aran::Character> character(new Aran::Character());
 	character->Initialize();
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_UNDEFINED, &g_undefinedCallback );
 	character->RegisterCharacterAnimationCallback( CharacterInterface::CAS_WALKING, &g_walkCallback );
@@ -76,14 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
 
-
-	ArnFileData arnFileData;
-	load_arnfile(_T("models/man.arn"), arnFileData);
-	ArnSceneGraph arnSG(arnFileData);
-	release_arnfile(arnFileData);
-
-
-	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
+	//resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
 
 	V_OKAY( videoMan.InitAnimationController() );
 	V_OKAY( resMan.initializeAll() );
