@@ -59,6 +59,7 @@ void ArnCamera::buildFrom( const NodeCamera2* nc )
 void ArnCamera::interconnect( ArnNode* sceneRoot )
 {
 	setIpo(getIpoName());
+	configureAnimCtrl();
 
 	ArnNode::interconnect(sceneRoot);
 }

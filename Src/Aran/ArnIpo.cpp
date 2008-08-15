@@ -85,7 +85,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 		LPD3DXKEYFRAMEDANIMATIONSET d3dxAnimSet = ipoContainer->getD3DXAnimSet();
 		assert(d3dxAnimSet);
 		
-		const unsigned int keyCount = 121;
+		const unsigned int keyCount = 151;
 		const unsigned int sampleCount = keyCount * FPS;
 		std::vector<D3DXKEY_VECTOR3> scaleKeys(sampleCount);
 		std::vector<D3DXKEY_VECTOR3> transKeys(sampleCount);

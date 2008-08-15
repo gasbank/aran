@@ -7,6 +7,7 @@
 #include "Character.h"
 #include "ArnFile.h"
 #include "ArnSceneGraph.h"
+#include "ArnCamera.h"
 
 DefaultRenderLayer::DefaultRenderLayer(Aran::Character* pChar)
 {
@@ -86,27 +87,49 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 {
 	ASSERTCHECK( m_lpDev );
+	D3DXMATRIX mWorld, mView, mProjection;
+
 	VideoMan& videoMan = VideoMan::getSingleton();
 	LPDIRECT3DDEVICE9 dev = videoMan.GetDev();
 	// World
-	D3DXMatrixIdentity(&m_matWorld);
+	D3DXMatrixIdentity(&mWorld);
+	
 	// View
-	D3DXMatrixLookAtLH(
-		&m_matView,
-		&videoMan.getMainCamera()->eye,		// the camera position
-		&videoMan.getMainCamera()->at,		// the look-at position
-		&videoMan.getMainCamera()->up		// the up direction
-		);
+	//D3DXMatrixLookAtLH(
+	//	&m_matView,
+	//	&videoMan.getMainCamera()->eye,		// the camera position
+	//	&videoMan.getMainCamera()->at,		// the look-at position
+	//	&videoMan.getMainCamera()->up		// the up direction
+	//	);
+	ArnCamera* cam = static_cast<ArnCamera*>( m_simpleSG->getSceneRoot()->getNodeByName( "Camera" ) );
+	
+	D3DXMATRIX camXform = cam->getFinalLocalXform();
+	D3DXVECTOR3 pos = *(D3DXVECTOR3*)&camXform._41;
+	
+	
+	D3DXVECTOR3 up = DX_CONSTS::D3DXVEC3_Y;
+	D3DXVECTOR3 look = DX_CONSTS::D3DXVEC3_Z;
+	
+	D3DXVec3TransformCoord( &look, &look, &camXform );
+
+	camXform._41 = camXform._42 = camXform._43 = 0; 
+	D3DXVec3TransformCoord( &up, &up, &camXform );
+
+	
+	D3DXMatrixLookAtLH( &mView, &pos, &look, &up );
+	dev->SetTransform( D3DTS_VIEW, &mView );
+	
 	// Projection
 	int screenWidth, screenHeight;
 	videoMan.getScreenInfo( screenWidth, screenHeight );
 	D3DXMatrixPerspectiveFovLH(
-		&m_matProjection,
-		videoMan.getMainCamera()->angle,
+		&mProjection,
+		D3DXToRadian( 49.14f ),
 		(float)screenWidth / (float)screenHeight,
-		videoMan.getMainCamera()->nearClip,
-		videoMan.getMainCamera()->farClip
+		0.1f,
+		1000.0f
 		);
+	dev->SetTransform( D3DTS_PROJECTION, &mProjection );
 
 	//m_pVideoMan->setWorldViewProjection(m_matWorld, m_matView, m_matProjection);
 

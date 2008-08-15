@@ -76,7 +76,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return DXTRACE_ERR_MSGBOX(_T("Direct3D Initialization Error"), hr);
 	}
 
-	//resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
+	resMan.registerModel(ResourceMan::MAN, _T("man.arn"));
 
 	V_OKAY( videoMan.InitAnimationController() );
 	V_OKAY( resMan.initializeAll() );
