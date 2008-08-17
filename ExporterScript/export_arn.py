@@ -588,8 +588,9 @@ global outbin        # out binary ARN
 global out           # out text ARN (for debug)
 global binstream     # array collection
 
+sceName = bpy.data.scenes.active.name
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = 'e:/devel3/aran_svn/working/models/gus2.arn'
+fileName = 'e:/devel3/aran_svn/working/models/%s.arn' % sceName
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
@@ -601,3 +602,4 @@ Window.EditMode(0)
 start_export(fileName)
 Window.EditMode(em)
 
+print '== SAVED AS %s ==' % sceName
