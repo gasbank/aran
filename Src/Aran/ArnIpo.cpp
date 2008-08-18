@@ -76,7 +76,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 	if (m_curveCount == 0) // If this is IPO container node ...
 	{
 		if (getNodeCount()) // ... and there are some IPOs there
-			D3DXCreateKeyframedAnimationSet(getName(), FPS /* ticks per second */, D3DXPLAY_LOOP, getIpoCount() /* num Animations seq */, 0, 0, &m_d3dxAnimSet);
+			D3DXCreateKeyframedAnimationSet(getName(), FPS /* ticks per second */, D3DXPLAY_ONCE, getIpoCount() /* num Animations seq */, 0, 0, &m_d3dxAnimSet);
 	}
 	else
 	{
