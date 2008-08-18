@@ -4,7 +4,7 @@
 #include "ArnMath.h"
 
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
-: ArnNode(ndt), m_d3dxAnimCtrl(0)
+: ArnNode(ndt), m_d3dxAnimCtrl(0), m_bDoAnim(false)
 {
 	m_animLocalXform	= DX_CONSTS::D3DXMAT_IDENTITY;
 	m_localXform		= DX_CONSTS::D3DXMAT_IDENTITY;
@@ -95,12 +95,15 @@ void ArnXformable::configureAnimCtrl()
 	m_d3dxAnimCtrl->SetTrackWeight(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackEnable(0, TRUE);
 	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, 0, 0, 0));
+	m_d3dxAnimCtrl->AdvanceTime( 0.0001f, 0 );
 }
 
 void ArnXformable::update( double fTime, float fElapsedTime )
 {
-	if (m_d3dxAnimCtrl)
+	if (m_bDoAnim && m_d3dxAnimCtrl)
+	{
 		m_d3dxAnimCtrl->AdvanceTime(fElapsedTime, 0);
+	}
 }
 
 void ArnXformable::setLocalXform( const D3DXMATRIX& localXform )
@@ -114,4 +117,27 @@ const D3DXMATRIX& ArnXformable::getFinalLocalXform()
 {
 	m_finalLocalXform = m_animLocalXform * m_localXformIpo;
 	return m_finalLocalXform;
+}
+
+double ArnXformable::getAnimCtrlTime() const
+{
+	if ( m_d3dxAnimCtrl )
+		return m_d3dxAnimCtrl->GetTime();
+	else return -1.0;
+}
+
+void ArnXformable::setAnimCtrlTime( double dTime )
+{
+	if ( m_d3dxAnimCtrl )
+	{
+		m_d3dxAnimCtrl->SetTrackPosition( 0, dTime );
+		//m_d3dxAnimCtrl->AdvanceTime( dTime, 0 );
+	}
+	else
+		OutputDebugString( _T("Animation controller is not available on the ArnXformable. setAnimCtrlTime ignored\n" ) );
+}
+
+void ArnXformable::setDoAnim( bool bDoAnim )
+{
+	m_bDoAnim = bDoAnim;
 }

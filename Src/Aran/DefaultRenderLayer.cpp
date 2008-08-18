@@ -140,6 +140,27 @@ HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 	dev->SetFVF(ArnVertex::FVF);
 	videoMan.renderMeshesOnly(m_simpleSG->getSceneRoot());
+	if ( GetAsyncKeyState( VK_RIGHT ) )
+	{
+		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
+		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
+		door->setDoAnim( true );
+		tofuMan->setDoAnim( true );
+	}
+	if ( GetAsyncKeyState( VK_LEFT ) )
+	{
+		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
+		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
+		door->setDoAnim( false );
+		tofuMan->setDoAnim( false );
+	}
+	if ( GetAsyncKeyState( VK_DOWN ) )
+	{
+		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
+		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
+		door->setAnimCtrlTime( 0 );
+		tofuMan->setAnimCtrlTime( 0 );
+	}
 	m_simpleSG->getSceneRoot()->update(fTime, fElapsedTime);
 
 	RECT rc;
@@ -153,7 +174,7 @@ BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0), m_arnFileData(0), m_simpleSG(0)
 {
 	m_arnFileData = new ArnFileData;
-	load_arnfile(_T("models/gus2.arn"), *m_arnFileData);
+	load_arnfile(_T("models/RoomWorld.arn"), *m_arnFileData);
 	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 

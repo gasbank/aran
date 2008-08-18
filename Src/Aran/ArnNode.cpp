@@ -41,10 +41,10 @@ ArnNode* ArnNode::getLastNode()
 		return 0;
 }
 
-ArnNode* ArnNode::getNodeByName(const STRING& name)
+ArnNode* ArnNode::getNodeByName(const STRING& name) const
 {
 	if (getName() == name)
-		return this;
+		return const_cast<ArnNode*>( this );
 
 	ChildrenList::const_iterator it = m_children.begin();
 	for (; it != m_children.end(); ++it)
