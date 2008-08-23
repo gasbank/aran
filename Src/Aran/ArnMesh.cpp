@@ -81,7 +81,11 @@ void ArnMesh::interconnect( ArnNode* sceneRoot )
 	{
 		ArnNode* matNode = sceneRoot->getNodeByName(m_data.matNameList[i]);
 		if (matNode && matNode->getType() == NDT_RT_MATERIAL)
+		{
+			ArnMaterial* mat = reinterpret_cast<ArnMaterial*>(matNode);
+			mat->loadTexture();
 			m_materialRefList.push_back(reinterpret_cast<ArnMaterial*>(matNode));
+		}
 		else
 			throw MyError(MEE_RTTI_INCONSISTENCY);
 	}
