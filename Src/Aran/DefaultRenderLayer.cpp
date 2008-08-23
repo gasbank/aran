@@ -101,7 +101,7 @@ HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 	//	&videoMan.getMainCamera()->at,		// the look-at position
 	//	&videoMan.getMainCamera()->up		// the up direction
 	//	);
-	ArnCamera* cam = static_cast<ArnCamera*>( m_simpleSG->getSceneRoot()->getNodeByName( "Camera" ) );
+	ArnCamera* cam = static_cast<ArnCamera*>( m_simpleSG->getSceneRoot()->getNodeByName( "Camera.001" ) );
 	
 	D3DXMATRIX camXform = cam->getFinalLocalXform();
 	D3DXVECTOR3 pos = *(D3DXVECTOR3*)&camXform._41;
@@ -140,24 +140,21 @@ HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 	dev->SetRenderState(D3DRS_CULLMODE, D3DCULL_CW);
 	dev->SetFVF(ArnVertex::FVF);
 	videoMan.renderMeshesOnly(m_simpleSG->getSceneRoot());
+
+	ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Needle" ) );
+	ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Needle" ) );
 	if ( GetAsyncKeyState( VK_RIGHT ) )
 	{
-		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
-		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
 		door->setDoAnim( true );
 		tofuMan->setDoAnim( true );
 	}
 	if ( GetAsyncKeyState( VK_LEFT ) )
 	{
-		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
-		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
 		door->setDoAnim( false );
 		tofuMan->setDoAnim( false );
 	}
 	if ( GetAsyncKeyState( VK_DOWN ) )
 	{
-		ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Door" ) );
-		ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "TofuMan" ) );
 		door->setAnimCtrlTime( 0 );
 		tofuMan->setAnimCtrlTime( 0 );
 	}
@@ -174,7 +171,7 @@ BoxRenderLayer::BoxRenderLayer()
 : m_testMesh(0), m_arnFileData(0), m_simpleSG(0)
 {
 	m_arnFileData = new ArnFileData;
-	load_arnfile(_T("models/RoomWorld.arn"), *m_arnFileData);
+	load_arnfile(_T("models/TestStage.arn"), *m_arnFileData);
 	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
 }
 

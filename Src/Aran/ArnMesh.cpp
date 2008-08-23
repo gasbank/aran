@@ -5,7 +5,7 @@
 #include "VideoMan.h"
 
 ArnMesh::ArnMesh()
-: ArnXformable(NDT_RT_MESH), m_d3dxMesh(0)
+: ArnXformable(NDT_RT_MESH), m_d3dxMesh(0), m_bVisible(true), m_bCollide(true)
 {
 }
 
