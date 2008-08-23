@@ -5,7 +5,7 @@
 #include "ArnMath.h"
 
 ArnIpo::ArnIpo(void)
-: ArnNode(NDT_RT_IPO), m_d3dxAnimSet(0), m_curveNames(0)
+: ArnNode(NDT_RT_IPO), m_d3dxAnimSet(0), m_curveNames(0), m_endKeyframe(0)
 {
 }
 
@@ -52,6 +52,7 @@ void ArnIpo::buildFrom( const NodeIpo2* ni )
 	m_ipoCount		= 1;
 	m_curveCount	= ni->m_curveCount;
 	unsigned int i, j;
+
 	for (i = 0; i < m_curveCount; ++i)
 	{
 		CurveData cd;
@@ -61,7 +62,18 @@ void ArnIpo::buildFrom( const NodeIpo2* ni )
 		cd.pointCount = ni->m_curves[i].pointCount;
 		for (j = 0; j < cd.pointCount; ++j)
 		{
-			cd.points.push_back(ni->m_curves[i].points[j]);
+			// TODO
+			// Vec[0][0] is smaller than Blender IPO point value by -1.0f
+			// Vec[2][0] is larger than Blender IPO point value by +1.0f... Strange...
+			const BezTripleData& btd = ni->m_curves[i].points[j];
+			if ( (float)((int)btd.vec[1][0]) - btd.vec[1][0] > 0.01f )
+			{
+				OutputDebugString(_T("WARN: Bezier key points X value should be integer\n"));
+				DebugBreak();
+			}
+			if ( m_endKeyframe < (int)btd.vec[1][0] ) m_endKeyframe = (int)btd.vec[1][0];
+
+			cd.points.push_back(btd);
 		}
 		m_curves.push_back(cd);
 
@@ -84,20 +96,22 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 		assert(ipoContainer->getType() == NDT_RT_IPO);
 		LPD3DXKEYFRAMEDANIMATIONSET d3dxAnimSet = ipoContainer->getD3DXAnimSet();
 		assert(d3dxAnimSet);
-		
-		const unsigned int keyCount = 151;
-		const unsigned int sampleCount = keyCount * FPS;
+		assert( m_endKeyframe );
+
+		//const unsigned int keyCount = 151;
+		//const unsigned int sampleCount = keyCount * FPS;
+		const unsigned int sampleCount = m_endKeyframe + 1; //(unsigned int)((m_endKeyframe+1.0f) * FPS);
 		std::vector<D3DXKEY_VECTOR3> scaleKeys(sampleCount);
 		std::vector<D3DXKEY_VECTOR3> transKeys(sampleCount);
 		std::vector<D3DXKEY_QUATERNION> rotKeys(sampleCount);
 		for (i = 0; i < sampleCount; ++i)
 		{
-			float keyTime = (float)i/FPS;
-			rotKeys[i].Time = keyTime;
+			//float keyTime = (float)i/FPS;
+			rotKeys[i].Time = (float)i;
 			rotKeys[i].Value = DX_CONSTS::D3DXQUAT_IDENTITY;
-			scaleKeys[i].Time = keyTime;
+			scaleKeys[i].Time = (float)i;
 			scaleKeys[i].Value = DX_CONSTS::D3DXVEC3_ONE;
-			transKeys[i].Time = keyTime;
+			transKeys[i].Time = (float)i;
 			transKeys[i].Value = DX_CONSTS::D3DXVEC3_ZERO;
 
 			float eulX = 0.0f, eulY = 0.0f, eulZ = 0.0f; // Euler rotation values
@@ -105,7 +119,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 			for (j = 0; j < getCurveCount(); ++j)
 			{
 				const CurveData& cd = getCurveData(j);
-				float val = Animation::EvalCurveInterp(&cd, keyTime);
+				float val = Animation::EvalCurveInterp(&cd, (float)i);
 				switch (cd.name)
 				{
 				case CN_LocX:	transKeys[i].Value.x = val;		break;

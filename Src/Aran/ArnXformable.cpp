@@ -3,8 +3,10 @@
 #include "ArnIpo.h"
 #include "ArnMath.h"
 
+#define FPS (60)
+
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
-: ArnNode(ndt), m_d3dxAnimCtrl(0), m_bDoAnim(false)
+: ArnNode(ndt), m_d3dxAnimCtrl(0), m_bDoAnim(false), m_bAnimSeqEnded(false)
 {
 	m_animLocalXform	= DX_CONSTS::D3DXMAT_IDENTITY;
 	m_localXform		= DX_CONSTS::D3DXMAT_IDENTITY;
@@ -91,7 +93,7 @@ void ArnXformable::configureAnimCtrl()
 	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationSet(animSet));
 	m_d3dxAnimCtrl->SetTrackAnimationSet(0, animSet);
 	m_d3dxAnimCtrl->SetTrackPosition(0, 0.0f);
-	m_d3dxAnimCtrl->SetTrackSpeed(0, 1.0f/10);
+	m_d3dxAnimCtrl->SetTrackSpeed(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackWeight(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackEnable(0, TRUE);
 	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, 0, 0, 0));
@@ -103,6 +105,19 @@ void ArnXformable::update( double fTime, float fElapsedTime )
 	if (m_bDoAnim && m_d3dxAnimCtrl)
 	{
 		m_d3dxAnimCtrl->AdvanceTime(fElapsedTime, 0);
+		D3DXTRACK_DESC trackDesc;
+		m_d3dxAnimCtrl->GetTrackDesc( 0, &trackDesc );
+		if (m_ipo && ( (float)m_ipo->getEndKeyframe() / FPS < (float)trackDesc.Position ))
+		{
+			// Current Ipo ended. Stop the animation
+			setDoAnim(false);
+			setAnimSeqEnded(true);
+			
+			TCHAR debugMsg[128];
+			StringCchPrintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
+			OutputDebugString(_T("INFO: Animation stopped since all keyframes passed\n"));
+			OutputDebugString(debugMsg);
+		}
 	}
 }
 
@@ -134,7 +149,9 @@ void ArnXformable::setAnimCtrlTime( double dTime )
 		//m_d3dxAnimCtrl->AdvanceTime( dTime, 0 );
 	}
 	else
+	{
 		OutputDebugString( _T("Animation controller is not available on the ArnXformable. setAnimCtrlTime ignored\n" ) );
+	}
 }
 
 void ArnXformable::setDoAnim( bool bDoAnim )
