@@ -9,14 +9,12 @@ Tooltip: 'Aran Exporter (Blender 2.43)'
 
 import math
 import Blender
-from Blender import sys, Window, Ipo
+from Blender import sys, Window, Ipo, Armature
 import bpy
 import BPyMessages
 import array
 import Blender.Mathutils
-from Blender.Mathutils import Euler
-from Blender.Mathutils import Matrix
-#from Blender import Ipo
+from Blender.Mathutils import *
 
 """
 'c' char character 1 
@@ -106,18 +104,18 @@ def EulerRadToDeg(eul):
 def EulerDegToRad(eul):
 	return Euler([math.radians(eul.x), math.radians(eul.y), math.radians(eul.z)])
 
-def MatrixToDetailString(mat):
+def MatrixToDetailString(mat, precedingSpace = 0):
 	scaleVec = mat.scalePart()
 	transVec = mat.translationPart()
 	rotatEulerDeg = mat.toEuler()
 	rotatEulerRad = EulerDegToRad(rotatEulerDeg)
 	ret = ''
-	ret = ret + 'Loc        : %s\n' % VectorToString(transVec)
-	ret = ret + 'Size       : %s\n' % VectorToString(scaleVec)
-	ret = ret + 'Rot (Rad)  : %s\n' % VectorToString(rotatEulerRad)
-	ret = ret + 'Rot (Deg)  : %s\n' % VectorToString(rotatEulerDeg)
-	ret = ret + 'Rot        : %s\n' % rotatEulerDeg.toQuat()
-	ret = ret + 'Rot        : %s\n' % EulerToAxisDegString(rotatEulerDeg)
+	ret = ret + ' ' * precedingSpace + 'Loc        : %s\n' % VectorToString(transVec)
+	ret = ret + ' ' * precedingSpace + 'Size       : %s\n' % VectorToString(scaleVec)
+	ret = ret + ' ' * precedingSpace + 'Rot (Rad)  : %s\n' % VectorToString(rotatEulerRad)
+	ret = ret + ' ' * precedingSpace + 'Rot (Deg)  : %s\n' % VectorToString(rotatEulerDeg)
+	ret = ret + ' ' * precedingSpace + 'Rot        : %s\n' % rotatEulerDeg.toQuat()
+	ret = ret + ' ' * precedingSpace + 'Rot        : %s\n' % EulerToAxisDegString(rotatEulerDeg)
 	return ret
 
 def MatrixAxisTransform(mat):
@@ -305,6 +303,22 @@ def export_node_mesh(ob):
 		vertary.fromlist([vert.no.x, vert.no.y, -vert.no.z])
 		vertary.fromlist([texU, abs(texV-1)])
 	
+	
+	
+	# Check for modifiers, especially for 'Armature'
+	if len(ob.modifiers) is not 0:
+		modifier = ob.modifiers[0]
+		out.write(' @ Modifier exist on this mesh @\n')
+	
+	out.write('-= Bone Influences against each vertex =-\n')
+	for i in range(len(mesh.verts)):
+		out.write(' -- Vert: %.2f %.2f %.2f\n' % (mesh.verts[i].co.x, mesh.verts[i].co.y, mesh.verts[i].co.z))
+		boneinf_list = mesh.getVertexInfluences(i)
+		for boneinf in boneinf_list:
+			out.write('     - %s %.2f\n' % (boneinf[0], boneinf[1]))
+		
+	
+	
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
 	attach_strz(obName)
@@ -382,14 +396,6 @@ def export_node_lamp(ob):
 	out.write('<ArnType 0x00003001> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write('IPO        : %s\n' % ipoName)
-	out.write(MatrixToDetailString(matLocal))
-	out.write('matrixLocal:\n')
-	out.write('%s\n' % matLocal)
-	
-	
-	
-	out.write('<ArnType 0x00000030> %s\n' % obName)
-	out.write('Node Chunk Size: { not calculated }\n')
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
@@ -548,6 +554,52 @@ def export_ipos():
 			attach_int(curve.interpolation)
 			binstream.append(pointary)
 
+def export_particle_system(ob):
+	psys_list = ob.getParticleSystems()
+	if len(psys_list) == 0:
+		return
+	print len(psys_list), "particle systems applied on", ob.name
+	psys = psys_list[0]
+	if psys.type is not 0:
+		print "Only EMITTER type of particle system is supported."
+		return
+	print " - amount:", psys.amount
+	print " - startFrame:", psys.startFrame
+	print " - endFrame:", psys.endFrame
+	print " - lifetime:", psys.lifetime
+	print " - randlife:", psys.randlife
+	print " - particleDistribution:", psys.particleDistribution
+	
+
+def export_node_armature(ob):
+	matLocal = MatrixAxisTransform(ob.matrixLocal)
+	obName = ob.name;
+	parName = '' # parent name
+	ipoName = ''
+	if ob.parent: parName = ob.parent.name
+	if ob.ipo is not None: ipoName = ob.ipo.name
+	
+	ar_mat = ob.matrixWorld
+	ar_data = ob.getData()
+	
+	out.write('<ArnType 0x0000????> %s\n' % obName)
+	out.write('Node Chunk Size: { not calculated }\n')
+	out.write(MatrixToDetailString(matLocal))
+	out.write('matrixLocal:\n')
+	out.write('%s\n' % matLocal)
+	
+	bones = ar_data.bones.values()
+	for bone in bones:
+		bone_mat = bone.matrix['ARMATURESPACE']
+		#bone_mat = bone.matrix['BONESPACE']
+		bone_mat_world = bone_mat * ar_mat
+		out.write('-- Bone:%s' % bone.name)
+		if bone.parent:
+			out.write(' (Parent:%s)' % bone.parent.name)
+		out.write('\n')
+		out.write('---- Bone World Mat:\n')
+		out.write(MatrixToDetailString(bone_mat, 7))
+		
 
 def start_export(filename):
 	attach_strz('ARN25')          # File Descriptor
@@ -560,10 +612,13 @@ def start_export(filename):
 		WriteHLine()		
 		if ob.type == 'Mesh':
 			export_node_mesh(ob)
+			export_particle_system(ob)
 		elif ob.type == 'Camera':
 			export_node_camera(ob)
 		elif ob.type == 'Lamp':
 			export_node_lamp(ob)
+		elif ob.type == 'Armature':
+			export_node_armature(ob)
 		else:
 			print 'Object \'', ob.name, '\' of type ', ob.type, ' is not supported type; skipping'
 	
@@ -590,7 +645,7 @@ global binstream     # array collection
 
 sceName = bpy.data.scenes.active.name
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = 'e:/devel3/aran_svn/working/models/%s.arn' % sceName
+fileName = 'c:/%s.arn' % sceName
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
@@ -602,4 +657,4 @@ Window.EditMode(0)
 start_export(fileName)
 Window.EditMode(em)
 
-print '== SAVED AS %s ==' % sceName
+print '== SAVED AS %s ==' % fileName
