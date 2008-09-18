@@ -9,7 +9,7 @@ Tooltip: 'Aran Exporter (Blender 2.43)'
 
 import math
 import Blender
-from Blender import sys, Window, Ipo, Armature
+from Blender import sys, Window, Ipo, Armature, Modifier
 import bpy
 import BPyMessages
 import array
@@ -306,16 +306,30 @@ def export_node_mesh(ob):
 	
 	
 	# Check for modifiers, especially for 'Armature'
+	armature_modifier_exist = False
 	if len(ob.modifiers) is not 0:
-		modifier = ob.modifiers[0]
-		out.write(' @ Modifier exist on this mesh @\n')
+		for modifier in ob.modifiers:
+			if modifier.type == Modifier.Types['ARMATURE']:
+				armature_modifier_exist = True
+				out.write(' @ Armature Modifier exist on this mesh @\n')
 	
-	out.write('-= Bone Influences against each vertex =-\n')
-	for i in range(len(mesh.verts)):
-		out.write(' -- Vert: %.2f %.2f %.2f\n' % (mesh.verts[i].co.x, mesh.verts[i].co.y, mesh.verts[i].co.z))
-		boneinf_list = mesh.getVertexInfluences(i)
-		for boneinf in boneinf_list:
-			out.write('     - %s %.2f\n' % (boneinf[0], boneinf[1]))
+	if armature_modifier_exist:
+		out.write('-= Bone Influences against each vertex =-\n')
+		for i in range(len(mesh.verts)):
+			out.write('v %4i: %10.2f %10.2f %10.2f / Bones:' % (i, mesh.verts[i].co.x, mesh.verts[i].co.y, mesh.verts[i].co.z))
+			boneinf_list = mesh.getVertexInfluences(i)
+			
+			if len(boneinf_list) > 4:
+				print '### error: there should be no more than 4 influences per vertex ###'
+				BPyMessages.Error_NoMeshFaces()
+			
+			total_bone_inf = 0
+			for boneinf in boneinf_list:
+				total_bone_inf = total_bone_inf + boneinf[1]
+			for boneinf in boneinf_list:
+				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
+			
+			out.write('\n')
 		
 	
 	
