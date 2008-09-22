@@ -157,6 +157,14 @@ def InterpModeToString(interp):
 
 #############################################################################################################
 
+def BoneWeightCompareDesc(w1, w2):
+	if w1[1] > w2[1]:
+		return -1
+	elif w1[1] == w2[1]:
+		return 0
+	else:
+		return 1
+		
 def export_node_mesh(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
 	obName = ob.name;
@@ -315,6 +323,8 @@ def export_node_mesh(ob):
 	
 	if armature_modifier_exist:
 		out.write('-= Bone Influences against each vertex =-\n')
+		
+		# Print bone weights related to original verts
 		for i in range(len(mesh.verts)):
 			out.write('v %4i: %10.2f %10.2f %10.2f / Bones:' % (i, mesh.verts[i].co.x, mesh.verts[i].co.y, mesh.verts[i].co.z))
 			boneinf_list = mesh.getVertexInfluences(i)
@@ -326,12 +336,36 @@ def export_node_mesh(ob):
 			total_bone_inf = 0
 			for boneinf in boneinf_list:
 				total_bone_inf = total_bone_inf + boneinf[1]
+				
+			boneinf_list = sorted(boneinf_list, BoneWeightCompareDesc)
+			
 			for boneinf in boneinf_list:
 				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
 			
 			out.write('\n')
 		
-	
+		# Print bone weights related to added vertices
+		for ii in range(len(addedVertMap)):
+			i = addedVertMap[ii][0]
+			
+			out.write('v %4i(%4i): %10.2f %10.2f %10.2f / Bones:' % (ii+len(mesh.verts), i, mesh.verts[i].co.x, mesh.verts[i].co.y, mesh.verts[i].co.z))
+			boneinf_list = mesh.getVertexInfluences(i)
+			
+			if len(boneinf_list) > 4:
+				print '### error: there should be no more than 4 influences per vertex ###'
+				BPyMessages.Error_NoMeshFaces()
+			
+			total_bone_inf = 0
+			for boneinf in boneinf_list:
+				total_bone_inf = total_bone_inf + boneinf[1]
+				
+			boneinf_list = sorted(boneinf_list, BoneWeightCompareDesc)
+			
+			for boneinf in boneinf_list:
+				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
+			
+			out.write('\n')
+			
 	
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
