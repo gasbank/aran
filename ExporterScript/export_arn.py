@@ -315,14 +315,32 @@ def export_node_mesh(ob):
 	
 	# Check for modifiers, especially for 'Armature'
 	armature_modifier_exist = False
+	armature_mod = 0
 	if len(ob.modifiers) is not 0:
 		for modifier in ob.modifiers:
 			if modifier.type == Modifier.Types['ARMATURE']:
 				armature_modifier_exist = True
+				armature_mod = modifier
 				out.write(' @ Armature Modifier exist on this mesh @\n')
 	
+	boneWeightList = []
 	if armature_modifier_exist:
 		out.write('-= Bone Influences against each vertex =-\n')
+		
+		vertGroup = mesh.getVertGroupNames()
+		for vg in vertGroup:
+			vertIndList = mesh.getVertsFromGroup(vg, 1)
+			weightList = []
+			out.write(' ~ %s [Start] ~\n' % vg)
+			for ind in vertIndList:
+				out.write('   (%4i, %.2f)\n' % (ind[0], ind[1]))
+				weightList.append( (ind[0], ind[1]) )
+				for addedVertInd in range(len(addedVertMap)):
+					if addedVertMap[addedVertInd][0] == ind[0]:
+						out.write('   (%4i, %.2f)*\n' % (addedVertInd + len(mesh.verts), ind[1]))
+						weightList.append( (addedVertInd + len(mesh.verts), ind[1]) )
+			out.write(' ~ %s [End / Total: %i] ~\n\n' % (vg, len(weightList)))
+			boneWeightList.append( (vg, weightList) )
 		
 		# Print bone weights related to original verts
 		for i in range(len(mesh.verts)):
@@ -365,6 +383,8 @@ def export_node_mesh(ob):
 				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
 			
 			out.write('\n')
+		
+		
 			
 	
 	# *** Binary Writing Phase ***
@@ -375,13 +395,25 @@ def export_node_mesh(ob):
 	attach_strz(parName)
 	attach_strz(ipoName)
 	attach_matrix(matLocal)
-	attach_floats([0.0] * 16) # reserved space
+	attach_ints([armature_modifier_exist]) # Indicates whether skeleton animation applied to this mesh
+	attach_floats([0.0] * 15) # reserved space
 	attach_ints([len(mesh.materials), finalVertCount, len(mesh.faces)])
 	attach_strzs(matNameList)
 	
 	binstream.append(vertary)
 	binstream.append(faceary)
 	binstream.append(attrary)
+	
+	# Write [Bone Name, (vert index, weight), ...] [Bone Name, (vert index, weight), ...] ...
+	if armature_modifier_exist:
+		attach_int( len(boneWeightList) )
+		for bwl in boneWeightList:
+			attach_strz(bwl[0])
+			attach_int( len(bwl[1]) )
+			out.write('xxxxxxxxxxx;; %i\n' % len(bwl[1]))
+			for bw in bwl[1]:
+				attach_int(bw[0])
+				attach_floats([bw[1]])
 	
 	mesh.triangleToQuad()
 
@@ -617,7 +649,23 @@ def export_particle_system(ob):
 	print " - lifetime:", psys.lifetime
 	print " - randlife:", psys.randlife
 	print " - particleDistribution:", psys.particleDistribution
+
+def MakeBoneListRecursive(bone, boneList):
+	bone_mat = bone.matrix['ARMATURESPACE']
+	#bone_mat = bone.matrix['BONESPACE']
+	#bone_mat_world = bone_mat * ar_mat
+	out.write('-- Bone:%s' % bone.name)
+	boneParentName = ''
+	if bone.parent:
+		boneParentName = bone.parent.name
+		out.write(' (Parent:%s)' % boneParentName)
+	out.write('\n')
+	out.write('---- Bone World Mat:\n')
+	out.write(MatrixToDetailString(bone_mat, 7))
+	boneList.append( (bone.name, boneParentName, bone_mat) )	
 	
+	for boneChild in bone.children:
+		MakeBoneListRecursive(boneChild, boneList)
 
 def export_node_armature(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
@@ -630,24 +678,45 @@ def export_node_armature(ob):
 	ar_mat = ob.matrixWorld
 	ar_data = ob.getData()
 	
-	out.write('<ArnType 0x0000????> %s\n' % obName)
+	out.write('<ArnType 0x00004001> %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
 	out.write('%s\n' % matLocal)
 	
+	boneList = []
 	bones = ar_data.bones.values()
+	boneRoot = 0
 	for bone in bones:
-		bone_mat = bone.matrix['ARMATURESPACE']
-		#bone_mat = bone.matrix['BONESPACE']
-		bone_mat_world = bone_mat * ar_mat
-		out.write('-- Bone:%s' % bone.name)
-		if bone.parent:
-			out.write(' (Parent:%s)' % bone.parent.name)
-		out.write('\n')
-		out.write('---- Bone World Mat:\n')
-		out.write(MatrixToDetailString(bone_mat, 7))
+		if not bone.parent:
+			boneRoot = bone
+			break
+	
+	MakeBoneListRecursive(boneRoot, boneList)
 		
+
+	# *** Binary Writing Phase ***
+	attach_int(0x00004001)
+	attach_strz(obName)
+	attach_int(0)                      # Node Chunk SIze
+	# ---------------------------------------------------
+	attach_strz(parName)
+	attach_int(len(bones))
+	
+	# End of skeleton node data
+	
+	# Each bone is an individual node
+	for b in boneList:
+		attach_int(0x00008001)
+		attach_strz(b[0])         # Bone name
+		attach_int(0)             # Node Chunk SIze
+		#------------------------------------------------
+		if len(b[1]) is not 0:
+			attach_strz( b[1] )       # Bone parent name
+		else:
+			attach_strz( obName )     # Set bone parent name to Skeleton(Armature) since it is root bone
+		
+		attach_matrix( b[2] )     # Bone local xform
 
 def start_export(filename):
 	attach_strz('ARN25')          # File Descriptor
