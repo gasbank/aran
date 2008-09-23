@@ -72,6 +72,9 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
 		setD3DXMesh(d3dxMesh);
 	}
+
+	if (nm->m_armatureName)
+		m_data.armatureName = nm->m_armatureName;
 }
 
 void ArnMesh::interconnect( ArnNode* sceneRoot )

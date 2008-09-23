@@ -367,6 +367,7 @@ void CClassView::buildSceneGraph( ArnNode* node, HTREEITEM treeParent )
 		default:					imgIdx = 1; break;
 		}
 		HTREEITEM hChild = m_wndClassView.InsertItem(childNodeName, imgIdx, imgIdx, treeParent);
+		m_wndClassView.SetItemData(hChild, reinterpret_cast<DWORD_PTR>(childNode));
 		m_outputWnd->insertNodeName(childNodeName, hChild);
 		buildSceneGraph(childNode, hChild);
 	}
@@ -376,8 +377,11 @@ void CClassView::OnNodeProperties()
 {
 	HTREEITEM item = m_wndClassView.GetSelectedItem();
 	const CString itemName = m_wndClassView.GetItemText(item);
-	CT2CA pszConvertedAnsiString(itemName);
-	ArnNode* node = m_sg->getSceneRoot()->getNodeByName(STRING(pszConvertedAnsiString));
+	const DWORD_PTR itemData = m_wndClassView.GetItemData(item);
+
+	//CT2CA pszConvertedAnsiString(itemName);
+	//ArnNode* node = m_sg->getSceneRoot()->getNodeByName(STRING(pszConvertedAnsiString));
+	ArnNode* node = reinterpret_cast<ArnNode*>(itemData);
 
 	m_propWnd->updateNodeProp(node);
 }

@@ -235,6 +235,7 @@ public:
 	unsigned int faceCount;
 	unsigned int materialCount;
 	std::vector<STRING> matNameList;
+	STRING armatureName;
 };
 //////////////////////////////////////////////////////////////////////////
 // Unions

@@ -184,7 +184,7 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_parentName			= file_read_string(abf);
 	node->m_ipoName				= file_read_string(abf);
 	node->m_localXform			= file_read<D3DXMATRIX>(abf);
-	node->m_armature			= file_read_BOOL(abf);
+	node->m_bArmature			= file_read_BOOL(abf);
 	for (i = 0; i < 15; ++i)
 		file_read<int>(abf); // Unused data
 	
@@ -200,17 +200,15 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_faces = file_read<unsigned short>(abf, node->m_meshFacesCount * 3);
 	node->m_attr = file_read<DWORD>(abf, node->m_meshFacesCount);
 
-	if (node->m_armature)
+	if (node->m_bArmature)
 	{
+		node->m_armatureName = file_read_string(abf);
 		const unsigned int totalBoneCount = file_read_uint(abf);
-		for (i = 0; i < totalBoneCount; ++i)
-		{
-			Bone2 b2;
-			b2.boneName = file_read_string(abf);
-			b2.indWeightCount = file_read_uint(abf);
-			b2.indWeight = file_read<BoneIndWeight>(abf, b2.indWeightCount);
-			node->m_bones.push_back( b2 );
-		}
+		UNREFERENCED_PARAMETER( totalBoneCount );
+	}
+	else
+	{
+		node->m_armatureName = 0;
 	}
 }
 
@@ -266,6 +264,11 @@ void parse_nodeBone2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 	node->m_parentBoneName	= file_read_string(abf);
 	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
+	node->m_infVertCount	= file_read_uint(abf);
+	if (node->m_infVertCount)
+		node->m_indWeightArray = file_read<BoneIndWeight>(abf, node->m_infVertCount);
+	else
+		node->m_indWeightArray = 0;
 }
 
 void parse_nodeHierarchy1( ArnBinaryFile& abf, NodeBase*& nodeBase )

@@ -275,6 +275,9 @@ void CPropertiesWnd::InitPropList()
 	pProp = new CMaterialListProperty( _T("Material Name List"), (_variant_t) _T("MatNames"), _T("Material name list"), PROP_MESH_MATERIALNAMELIST);
 	m_meshGroup->AddSubItem(pProp);
 
+	pProp = new CMaterialListProperty( _T("Armature"), (_variant_t) _T(""), _T("Armature(Skeleton) node linked to this mesh"), PROP_MESH_ARMATURENAME);
+	m_meshGroup->AddSubItem(pProp);
+
 	m_wndPropList.AddProperty(m_meshGroup);
 	m_meshGroup->Show(FALSE);
 
@@ -547,6 +550,7 @@ void CPropertiesWnd::updateNodeProp( ArnMesh* node )
 		str += substr;
 	}
 	propEnumSetValue(PROP_MESH_MATERIALNAMELIST, str);
+	propEnumSetValue(PROP_MESH_ARMATURENAME, md.armatureName);
 }
 
 void CPropertiesWnd::updateNodeProp( ArnCamera* node )
