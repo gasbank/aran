@@ -54,5 +54,11 @@ void ArnSkeleton::buildFrom( const NodeSkeleton1* ns )
 
 void ArnSkeleton::buildFrom( const NodeSkeleton2* ns )
 {
-	throw MyError(MEE_NOT_IMPLEMENTED_YET);
+	m_data.name					= ns->m_nodeName;
+	m_data.associatedMeshName	= "~ Should not see me~";
+	m_data.maxWeightsPerVertex	= 4;
+	m_data.bonesCount			= ns->m_boneCount;
+
+	assert(m_data.name == getName());
+
 }

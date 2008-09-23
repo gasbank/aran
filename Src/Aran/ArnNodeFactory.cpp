@@ -21,6 +21,7 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 		node = ArnMesh::createFrom(nodeBase);
 		break;
 	case NDT_SKELETON1:
+	case NDT_SKELETON2:
 		node = ArnSkeleton::createFrom(nodeBase);
 		break;
 	case NDT_HIERARCHY1:
@@ -38,6 +39,7 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 		node = ArnAnim::createFrom(nodeBase);
 		break;
 	case NDT_BONE1:
+	case NDT_BONE2:
 		node = ArnBone::createFrom(nodeBase);
 		break;
 	case NDT_MATERIAL1:

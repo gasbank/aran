@@ -183,7 +183,7 @@ void CPropertiesWnd::InitPropList()
 
 	m_nodeBaseGroup = new CMFCPropertyGridProperty(_T("NodeBase"));
 
-	CMFCPropertyGridProperty* pPropNDT = new CMFCPropertyGridProperty(_T("NODE_DATA_TYPE"), _T("NDT_RT_CONTAINER"), _T("ARN Node data type enum"), PROP_BASE_NDT);
+	CMFCPropertyGridProperty* pPropNDT = new CMFCPropertyGridProperty(_T("NODE_DATA_TYPE"), (_variant_t) _T("NDT_RT_CONTAINER"), _T("ARN Node data type enum"), PROP_BASE_NDT);
 	pPropNDT->AddOption(_T("NDT_RT_CONTAINER"));
 	pPropNDT->AddOption(_T("NDT_RT_MESH"));
 	pPropNDT->AddOption(_T("NDT_RT_CAMERA"));

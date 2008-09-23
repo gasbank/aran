@@ -30,9 +30,13 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 		{
 			ArnNode* lastToplevelNode = m_sceneRoot->getLastNode();
 			if (lastToplevelNode->getType() == NDT_RT_MESH && lastToplevelNode->getLastNode()->getType() == NDT_RT_SKELETON)
+			{
 				lastToplevelNode->getLastNode()->attachChild(node);
+			}
 			else
+			{
 				throw MyError(MEE_UNDEFINED_ERROR);
+			}
 		}
 		else
 		{

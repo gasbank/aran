@@ -54,6 +54,10 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeSkeleton1();
 		node_chunk_parser_func = parse_nodeSkeleton1;
 		break;
+	case NDT_SKELETON2:
+		nodeBase = new NodeSkeleton2();
+		node_chunk_parser_func = parse_nodeSkeleton2;
+		break;
 	case NDT_HIERARCHY1:
 		nodeBase = new NodeHierarchy1();
 		node_chunk_parser_func = parse_nodeHierarchy1;
@@ -81,6 +85,10 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	case NDT_BONE1:
 		nodeBase = new NodeBone1();
 		node_chunk_parser_func = parse_nodeBone1;
+		break;
+	case NDT_BONE2:
+		nodeBase = new NodeBone2();
+		node_chunk_parser_func = parse_nodeBone2;
 		break;
 	case NDT_IPO1:
 		nodeBase = new NodeIpo1();
@@ -170,22 +178,20 @@ void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_MESH3);
+	unsigned int i;
 	NodeMesh3* node = (NodeMesh3*)nodeBase;
 
 	node->m_parentName			= file_read_string(abf);
 	node->m_ipoName				= file_read_string(abf);
 	node->m_localXform			= file_read<D3DXMATRIX>(abf);
-	node->m_unusedXform			= file_read<D3DXMATRIX>(abf);
+	node->m_armature			= file_read_BOOL(abf);
+	for (i = 0; i < 15; ++i)
+		file_read<int>(abf); // Unused data
+	
 	node->m_materialCount		= file_read_uint(abf);
 	node->m_meshVerticesCount	= file_read_uint(abf);
 	node->m_meshFacesCount		= file_read_uint(abf);
-
-	//if (node->m_materialCount)
-	//	node->m_attrToMaterialMap = file_read<DWORD>(abf, node->m_materialCount);
-	//else
-	//	node->m_attrToMaterialMap = 0; // no material is explicitly defined to this mesh
-
-	unsigned int i;
+	
 	node->m_attrToMaterialMap = 0;
 	for (i = 0; i < node->m_materialCount; ++i)
 		node->m_matNameList.push_back(file_read_string(abf));
@@ -193,6 +199,19 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_vertex = file_read<ArnVertex>(abf, node->m_meshVerticesCount);
 	node->m_faces = file_read<unsigned short>(abf, node->m_meshFacesCount * 3);
 	node->m_attr = file_read<DWORD>(abf, node->m_meshFacesCount);
+
+	if (node->m_armature)
+	{
+		const unsigned int totalBoneCount = file_read_uint(abf);
+		for (i = 0; i < totalBoneCount; ++i)
+		{
+			Bone2 b2;
+			b2.boneName = file_read_string(abf);
+			b2.indWeightCount = file_read_uint(abf);
+			b2.indWeight = file_read<BoneIndWeight>(abf, b2.indWeightCount);
+			node->m_bones.push_back( b2 );
+		}
+	}
 }
 
 
@@ -206,6 +225,29 @@ void parse_nodeSkeleton1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_boneCount				= file_read_uint(abf);
 }
 
+void parse_nodeSkeleton2( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_SKELETON2);
+
+	NodeSkeleton2* node = (NodeSkeleton2*)nodeBase;
+
+	node->m_parentName				= file_read_string(abf);
+	node->m_boneCount				= file_read_uint(abf);
+	
+	/*unsigned int i;
+	for (i = 0; i < node->m_boneCount; ++i)
+	{
+		Bone2 b;
+		b.boneName					= file_read_string(abf);
+		b.boneParentName			= file_read_string(abf);
+		b.localXform				= file_read<float>(abf, 16);
+		b.indWeight					= 0;
+		b.indWeightCount			= 0;
+		node->m_bones.push_back(b);
+	}*/
+}
+
+
 void parse_nodeBone1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_BONE1);
@@ -215,6 +257,15 @@ void parse_nodeBone1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_infVertexCount	= file_read_uint(abf);
 	node->m_vertexIndices	= file_read_uint_array(abf, node->m_infVertexCount);
 	node->m_weights			= file_read<float>(abf, node->m_infVertexCount);
+}
+
+void parse_nodeBone2( ArnBinaryFile& abf, NodeBase*& nodeBase )
+{
+	assert(nodeBase->m_ndt == NDT_BONE2);
+	NodeBone2* node = (NodeBone2*)nodeBase;
+
+	node->m_parentBoneName	= file_read_string(abf);
+	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
 }
 
 void parse_nodeHierarchy1( ArnBinaryFile& abf, NodeBase*& nodeBase )

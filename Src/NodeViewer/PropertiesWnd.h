@@ -99,7 +99,9 @@ private:
 
 	enum PROP_ENUM
 	{
-		PROP_BASE_NDT,
+		INVALID_PROP = 0,
+
+		PROP_BASE_NDT = 1,
 		PROP_BASE_NAME,
 		PROP_BASE_PARENT,
 

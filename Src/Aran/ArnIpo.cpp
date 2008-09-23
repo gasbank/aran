@@ -131,6 +131,14 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 				case CN_RotX:	eulX = D3DXToRadian(val);		break;
 				case CN_RotY:	eulY = D3DXToRadian(val);		break;
 				case CN_RotZ:	eulZ = D3DXToRadian(val);		break;
+				
+				case CN_QuatW:
+				case CN_QuatX:
+				case CN_QuatY:
+				case CN_QuatZ:
+					/*** TODO: NOT IMPLEMENTED YET ***/
+					break;
+
 				default:		throw MyError(MEE_UNSUPPORTED_CURVENAME);
 				}
 			}
@@ -167,6 +175,10 @@ CurveName ArnIpo::CurveNameStrToEnum( const char* name )
 	CNCONVERT(ScaleX);
 	CNCONVERT(ScaleY);
 	CNCONVERT(ScaleZ);
+	CNCONVERT(QuatW)
+	CNCONVERT(QuatX)
+	CNCONVERT(QuatY)
+	CNCONVERT(QuatZ)
 #undef CNCONVERT
 	return CN_UNKNOWN;
 }

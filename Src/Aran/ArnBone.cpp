@@ -22,6 +22,9 @@ ArnNode* ArnBone::createFrom( const NodeBase* nodeBase )
 		case NDT_BONE1:
 			node->buildFrom(static_cast<const NodeBone1*>(nodeBase));
 			break;
+		case NDT_BONE2:
+			node->buildFrom(static_cast<const NodeBone2*>(nodeBase));
+			break;
 		default:
 			throw MyError(MEE_UNDEFINED_ERROR);
 		}
@@ -47,4 +50,12 @@ void ArnBone::buildFrom( const NodeBone1* nb )
 		m_data.indices[i] = nb->m_vertexIndices[i];
 		m_data.weights[i] = nb->m_weights[i];
 	}
+}
+
+void ArnBone::buildFrom( const NodeBone2* nb )
+{
+	m_data.nameFixed		= nb->m_nodeName;
+	m_data.offsetMatrix		= *nb->m_offsetMatrix;
+	m_data.infVertexCount	= 0;
+	setParentName( nb->m_parentBoneName );
 }
