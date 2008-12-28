@@ -57,5 +57,13 @@ void ArnBone::buildFrom( const NodeBone2* nb )
 	m_data.nameFixed		= nb->m_nodeName;
 	m_data.offsetMatrix		= *nb->m_offsetMatrix;
 	m_data.infVertexCount	= nb->m_infVertCount;
+	unsigned int i;
+	m_data.indices.resize(m_data.infVertexCount, 0);
+	m_data.weights.resize(m_data.infVertexCount, 0);
+	for (i = 0; i < m_data.infVertexCount; ++i)
+	{
+		m_data.indices[i] = nb->m_indWeightArray[i].ind;
+		m_data.weights[i] = nb->m_indWeightArray[i].weight;
+	}
 	setParentName( nb->m_parentBoneName );
 }
