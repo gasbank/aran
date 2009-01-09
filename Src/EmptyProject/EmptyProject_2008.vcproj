@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../Aran;../../DXUT/Core;../../../ode/include"
+				AdditionalIncludeDirectories="../Aran;../../DXUT/Core;../../../opende/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;dDOUBLE;ODE_DLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
@@ -70,7 +70,7 @@
 				AdditionalOptions="/IGNORE:4089"
 				AdditionalDependencies="Aran.lib DXUT.lib d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib ode_doubled.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugLib;../../../ode/lib/DebugDoubleDLL"
+				AdditionalLibraryDirectories="../DebugLib;../../../opende/lib/DebugDoubleDLL"
 				GenerateManifest="false"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
