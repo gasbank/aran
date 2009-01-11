@@ -5,6 +5,7 @@ struct NodeBase;
 struct NodeMesh2;
 struct NodeMesh3;
 class ArnMaterial;
+class ArnSkeleton;
 
 class ArnMesh : public ArnXformable
 {
@@ -39,7 +40,15 @@ private:
 
 	bool				m_bVisible;
 	bool				m_bCollide;
-	
+
+	ArnSkeleton*		m_skeleton;
+
+	struct BoneDataInternal
+	{
+		STRING									nameFixed;
+		std::vector<std::pair<DWORD, float> >	indWeight;
+	};
+	std::vector<BoneDataInternal>	m_boneDataInt;
 };
 
 HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh2* nm, OUT LPD3DXMESH& mesh);

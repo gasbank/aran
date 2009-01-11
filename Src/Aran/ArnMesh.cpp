@@ -3,6 +3,7 @@
 #include "ArnMaterial.h"
 #include "ArnFile.h"
 #include "VideoMan.h"
+#include "ArnSkeleton.h"
 
 ArnMesh::ArnMesh()
 : ArnXformable(NDT_RT_MESH), m_d3dxMesh(0), m_bVisible(true), m_bCollide(true)
@@ -56,7 +57,7 @@ void ArnMesh::buildFrom(const NodeMesh2* nm)
 
 void ArnMesh::buildFrom(const NodeMesh3* nm)
 {
-	unsigned int i;
+	unsigned int i, j, k;
 	m_data.vertexCount		= nm->m_meshVerticesCount;
 	m_data.faceCount		= nm->m_meshFacesCount;
 	m_data.materialCount	= nm->m_materialCount;
@@ -74,7 +75,23 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	}
 
 	if (nm->m_armatureName)
+	{
 		m_data.armatureName = nm->m_armatureName;
+		const unsigned boneCount = nm->m_bones.size();
+		m_boneDataInt.resize(boneCount);
+		for (j = 0; j < boneCount; ++j)
+		{
+			m_boneDataInt[j].nameFixed = nm->m_bones[j].boneName;
+			assert(nm->m_bones[j].indWeightCount);
+			m_boneDataInt[j].indWeight.resize(nm->m_bones[j].indWeightCount);
+			for (k = 0; k < nm->m_bones[j].indWeightCount; ++k)
+			{
+				m_boneDataInt[j].indWeight[k].first = nm->m_bones[j].indWeight[k].ind;
+				m_boneDataInt[j].indWeight[k].second = nm->m_bones[j].indWeight[k].weight;
+			}
+		}
+		
+	}
 }
 
 void ArnMesh::interconnect( ArnNode* sceneRoot )
@@ -95,6 +112,12 @@ void ArnMesh::interconnect( ArnNode* sceneRoot )
 	setIpo(getIpoName());
 	configureAnimCtrl();
 	
+	if (m_data.armatureName.length())
+	{
+		m_skeleton = dynamic_cast<ArnSkeleton*>(sceneRoot->getNodeByName(m_data.armatureName));
+		assert(m_skeleton);
+	}
+
 	ArnNode::interconnect(sceneRoot);
 }
 
