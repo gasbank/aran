@@ -702,7 +702,7 @@ def export_actions():
 	attach_int(actionCount)
 	for act in actList:
 		attach_strz(act[0])
-		attach_int(len(act[1])) # Number of channels(bone--ipo correspondance)
+		attach_int(len(act[1])) # Number of channels(bone--ipo correspondence)
 		for channel in act[1]:
 			attach_strz(channel[0])
 			attach_strz(channel[1])
