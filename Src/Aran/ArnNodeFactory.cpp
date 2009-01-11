@@ -10,6 +10,7 @@
 #include "ArnBone.h"
 #include "ArnMaterial.h"
 #include "ArnIpo.h"
+#include "ArnActions.h"
 
 ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 {
@@ -49,6 +50,9 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 	case NDT_IPO1:
 	case NDT_IPO2:
 		node = ArnIpo::createFrom(nodeBase);
+		break;
+	case NDT_ACTION1:
+		node = ArnActions::createFrom(nodeBase);
 		break;
 	default:
 		// unidentified node, maybe corrupted or unsupported; skip the node

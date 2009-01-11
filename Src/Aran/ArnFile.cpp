@@ -98,6 +98,10 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeIpo2();
 		node_chunk_parser_func = parse_nodeIpo2;
 		break;
+	case NDT_ACTION1:
+		nodeBase = new NodeAction1();
+		node_chunk_parser_func = parse_nodeAction1;
+		break;
 	default:
 		// unidentified node, maybe corrupted or unsupported; skip the node
 		nodeBase = new NodeUnidentified();
@@ -398,6 +402,29 @@ void parse_nodeSymLink( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_SYMLINK1);
 	//NodeSymLink1* node = (NodeSymLink1*)nodeBase;
+}
+
+void parse_nodeAction1(ArnBinaryFile& abf, NodeBase*& nodeBase)
+{
+	assert(nodeBase->m_ndt == NDT_ACTION1);
+	NodeAction1* node = (NodeAction1*)nodeBase;
+
+	node->m_actionCount = file_read_uint(abf);
+	assert(node->m_actionCount);
+	node->m_actions.resize(node->m_actionCount);
+	unsigned i, j;
+	for (i = 0; i < node->m_actionCount; ++i)
+	{
+		node->m_actions[i].first = file_read_string(abf);
+		const unsigned channelCount = file_read_uint(abf);
+		assert(channelCount);
+		node->m_actions[i].second.resize(channelCount);
+		for (j = 0; j < channelCount; ++j)
+		{
+			node->m_actions[i].second[j].first = file_read_string(abf); // Global bone name
+			node->m_actions[i].second[j].second = file_read_string(abf); // Global ipo name
+		}
+	}
 }
 //////////////////////////////////////////////////////////////////////////
 

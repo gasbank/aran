@@ -144,6 +144,11 @@ struct NodeIpo2 : public NodeBase
 	unsigned int m_curveCount;
 	CurveDataShell* m_curves;
 };
+struct NodeAction1 : public NodeBase
+{
+	unsigned int m_actionCount;
+	std::vector<std::pair<const char*, std::vector<std::pair<const char*, const char*> > > > m_actions;
+};
 
 struct NodeSymLink1 : public NodeBase
 {
@@ -194,6 +199,7 @@ void parse_nodeBone1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeBone2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeIpo1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeIpo2(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeAction1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeSymLink(ArnBinaryFile& abf, NodeBase*& nodeBase);
 
 //////////////////////////////////////////////////////////////////////////

@@ -90,7 +90,6 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 				m_boneDataInt[j].indWeight[k].second = nm->m_bones[j].indWeight[k].weight;
 			}
 		}
-		
 	}
 }
 

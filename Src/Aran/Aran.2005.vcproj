@@ -436,6 +436,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\ArnActions.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnActions.h"
+			>
+		</File>
+		<File
 			RelativePath=".\DungeonInterface.cpp"
 			>
 		</File>
