@@ -80,7 +80,7 @@ int ResourceMan::initializeAll()
 				ARN_VDD::ARN_VDD_FVF,
 				0,
 				0,
-				0
+				FALSE
 				);
 			if ( FAILED( hr ) )
 			{
