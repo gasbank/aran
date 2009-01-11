@@ -10,6 +10,7 @@ Tooltip: 'Aran Exporter (Blender 2.43)'
 import math
 import Blender
 from Blender import sys, Window, Ipo, Armature, Modifier
+from Blender.Armature import NLA
 import bpy
 import BPyMessages
 import array
@@ -321,7 +322,7 @@ def export_node_mesh(ob):
 			if modifier.type == Modifier.Types['ARMATURE']:
 				armature_modifier_exist = True
 				armature_mod = modifier
-				out.write(' @ Armature Modifier exist on this mesh @\n')
+				out.write(' @ Armature Modifier exist on this mesh (Name: %s)@\n' % armature_mod[Modifier.Settings.OBJECT].name)
 	
 	boneWeightList = []
 	if armature_modifier_exist:
@@ -404,13 +405,18 @@ def export_node_mesh(ob):
 	binstream.append(faceary)
 	binstream.append(attrary)
 	
-	# Write [Bone Name, (vert index, weight), ...] [Bone Name, (vert index, weight), ...] ...
+	# Write
+	# BoneCount
+	#    [Bone Name, vertCount, (vert index, weight), (vert index, weight), ...]
+	#    [Bone Name, vertCount, (vert index, weight), (vert index, weight), ...]
+	#     ...
 	if armature_modifier_exist:
+		attach_strz(armature_mod[Modifier.Settings.OBJECT].name)
 		attach_int( len(boneWeightList) )
 		for bwl in boneWeightList:
 			attach_strz(bwl[0])
 			attach_int( len(bwl[1]) )
-			out.write('xxxxxxxxxxx;; %i\n' % len(bwl[1]))
+			#out.write('xxxxxxxxxxx;; %i\n' % len(bwl[1]))
 			for bw in bwl[1]:
 				attach_int(bw[0])
 				attach_floats([bw[1]])
@@ -667,6 +673,41 @@ def MakeBoneListRecursive(bone, boneList):
 	for boneChild in bone.children:
 		MakeBoneListRecursive(boneChild, boneList)
 
+def export_actions():
+	obName = 'Global Actions Node'
+	actionCount = len(NLA.GetActions())
+	out.write('-----------------------------------------------------------------\n')
+	out.write('|                    GLOBAL ACTIONS NODE                        |\n')
+	out.write('-----------------------------------------------------------------\n')
+	out.write('< ArnType 0x0000C000 - NDT_ACTION1 > %s\n' % obName)
+	out.write('Node Chunk Size : { not calculated }\n')
+	out.write('Action Count  : %d\n' % actionCount)
+	
+	actList = []
+	for actName in NLA.GetActions():
+		act = NLA.GetActions()[actName]
+		out.write('  - Action Name: %s\n' % act.name)
+		channelList = []
+		for actIpoName in act.getAllChannelIpos():
+			actIpo = act.getAllChannelIpos()[actIpoName]
+			out.write('    - Ipo: %s - %s\n' % (actIpoName, actIpo.name))
+			channelList.append( (actIpoName, actIpo.name) )
+		actList.append( (act.name, channelList) )
+	
+	# *** Binary Writing Phase *** ; Global IPOs Node Start
+	attach_int(0x0000C000)
+	attach_strz(obName)
+	attach_int(0)                      # Node Chunk SIze
+	# ---------------------------------------------------
+	attach_int(actionCount)
+	for act in actList:
+		attach_strz(act[0])
+		attach_int(len(act[1])) # Number of channels(bone--ipo correspondance)
+		for channel in act[1]:
+			attach_strz(channel[0])
+			attach_strz(channel[1])
+	
+
 def export_node_armature(ob):
 	matLocal = MatrixAxisTransform(ob.matrixLocal)
 	obName = ob.name;
@@ -725,6 +766,8 @@ def start_export(filename):
 	sce = bpy.data.scenes.active
 	export_materials()
 	export_ipos()
+	export_actions()
+
 	for ob in sce.objects:
 		WriteHLine()		
 		if ob.type == 'Mesh':
