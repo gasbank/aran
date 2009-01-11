@@ -256,18 +256,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="RenderLayer"
-			>
-			<File
-				RelativePath=".\DefaultRenderLayer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DefaultRenderLayer.h"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="Arn"
 			>
 			<File
