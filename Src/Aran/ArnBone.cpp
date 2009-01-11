@@ -56,7 +56,8 @@ void ArnBone::buildFrom( const NodeBone2* nb )
 {
 	m_data.nameFixed		= nb->m_nodeName;
 	m_data.offsetMatrix		= *nb->m_offsetMatrix;
-	m_data.infVertexCount	= nb->m_infVertCount;
+	
+	/*m_data.infVertexCount	= nb->m_infVertCount;
 	unsigned int i;
 	m_data.indices.resize(m_data.infVertexCount, 0);
 	m_data.weights.resize(m_data.infVertexCount, 0);
@@ -64,6 +65,8 @@ void ArnBone::buildFrom( const NodeBone2* nb )
 	{
 		m_data.indices[i] = nb->m_indWeightArray[i].ind;
 		m_data.weights[i] = nb->m_indWeightArray[i].weight;
-	}
+	}*/
+
+	// If bone name is the same as its armature, this bone is root.
 	setParentName( nb->m_parentBoneName );
 }

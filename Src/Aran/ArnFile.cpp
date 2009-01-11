@@ -178,7 +178,7 @@ void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_MESH3);
-	unsigned int i;
+	unsigned int i, j;
 	NodeMesh3* node = (NodeMesh3*)nodeBase;
 
 	node->m_parentName			= file_read_string(abf);
@@ -204,7 +204,24 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	{
 		node->m_armatureName = file_read_string(abf);
 		const unsigned int totalBoneCount = file_read_uint(abf);
-		UNREFERENCED_PARAMETER( totalBoneCount );
+		node->m_bones.resize(totalBoneCount);
+		for (j = 0; j < totalBoneCount; ++j)
+		{
+			node->m_bones[j].boneName = file_read_string(abf);
+			node->m_bones[j].indWeightCount = file_read_uint(abf);
+			assert(node->m_bones[j].indWeightCount);
+
+			/*
+			The following line is shortcut of these codes;
+
+			for (k = 0; k < node->m_bones[j].indWeightCount; ++k)
+			{
+			node->m_bones[j].indWeight[k].ind = file_read_uint(abf);
+			node->m_bones[j].indWeight[k].weight = file_read_float(abf);
+			}
+			*/
+			node->m_bones[j].indWeight = reinterpret_cast<BoneIndWeight*>(file_read_implicit_array(abf, sizeof(BoneIndWeight) * node->m_bones[j].indWeightCount));
+		}
 	}
 	else
 	{
@@ -264,11 +281,12 @@ void parse_nodeBone2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 	node->m_parentBoneName	= file_read_string(abf);
 	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
-	node->m_infVertCount	= file_read_uint(abf);
+	
+	/*node->m_infVertCount	= file_read_uint(abf);
 	if (node->m_infVertCount)
 		node->m_indWeightArray = file_read<BoneIndWeight>(abf, node->m_infVertCount);
 	else
-		node->m_indWeightArray = 0;
+		node->m_indWeightArray = 0;*/
 }
 
 void parse_nodeHierarchy1( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -430,4 +448,4 @@ unsigned int*	file_read_uint_array(ArnBinaryFile& file, unsigned int count) { un
 int				file_read_int(ArnBinaryFile& file) { int i = *(int*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(int); return i; }
 float			file_read_float(ArnBinaryFile& file) { float f = *(float*)(file.m_data + file.m_curPos); file.m_curPos += sizeof(float); return f; }
 BOOL			file_read_BOOL(ArnBinaryFile& file) { BOOL b = *(BOOL*)(file.m_data + file.m_curPos); if (b == TRUE || b == FALSE) { file.m_curPos += sizeof(BOOL); return b; } throw MyError(MEE_BOOL_DATA_PARSE); }
-
+void*			file_read_implicit_array(ArnBinaryFile& file, unsigned int byteLen ) { void* ret = file.m_data + file.m_curPos; file.m_curPos += byteLen; return ret; }

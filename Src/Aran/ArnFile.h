@@ -208,6 +208,7 @@ unsigned int*	file_read_uint_array(ArnBinaryFile& file, unsigned int count);
 int				file_read_int(ArnBinaryFile& file);
 float			file_read_float(ArnBinaryFile& file);
 BOOL			file_read_BOOL(ArnBinaryFile& file);
+void*			file_read_implicit_array(ArnBinaryFile& file, unsigned int byteLen);
 
 ARN_VDD*		file_read_arn_vdd_array(ArnBinaryFile& file, unsigned int count);
 ARN_MTD*		file_read_arn_mtd_array(ArnBinaryFile& file, unsigned int count);

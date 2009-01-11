@@ -173,6 +173,10 @@ BoxRenderLayer::BoxRenderLayer()
 	m_arnFileData = new ArnFileData;
 	load_arnfile(_T("models/TestStage.arn"), *m_arnFileData);
 	m_simpleSG = new ArnSceneGraph(*m_arnFileData);
+
+	m_skelSceneData = new ArnFileData;
+	load_arnfile(_T("c:/Scene.arn"), *m_skelSceneData);
+	m_skelScene = new ArnSceneGraph(*m_skelSceneData);
 }
 
 BoxRenderLayer::~BoxRenderLayer()
@@ -188,6 +192,10 @@ BoxRenderLayer::~BoxRenderLayer()
 	release_arnfile(*m_arnFileData);
 	delete m_arnFileData;
 	delete m_simpleSG;
+
+	release_arnfile(*m_skelSceneData);
+	delete m_skelSceneData;
+	delete m_skelScene;
 }
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight)

@@ -43,6 +43,9 @@ private:
 
 	ArnSceneGraph* m_simpleSG;
 	ArnFileData* m_arnFileData;
+
+	ArnSceneGraph* m_skelScene;
+	ArnFileData* m_skelSceneData;
 };
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight);
