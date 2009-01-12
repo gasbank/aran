@@ -135,6 +135,34 @@ struct ArnVertex
 	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
 };
 
+struct ArnBlendedVertex
+{
+	ArnBlendedVertex(float x, float y, float z, float nx, float ny, float nz, float u, float v, float w0, float w1, float w2, DWORD matIndices)
+	{
+		this->x = x;
+		this->y = y;
+		this->z = z;
+		weight0 = w0;
+		weight1 = w1;
+		weight2 = w2;
+		matrixIndices = matIndices;
+		normal[0] = nx;
+		normal[1] = ny;
+		normal[2] = nz;
+		this->u = u;
+		this->v = v;
+	}
+	float x, y, z;
+	float weight0;
+	float weight1;
+	float weight2;
+	DWORD matrixIndices; // 0x44332211 --> 11, 22, 33, 44 are individual bone matrix indices
+	float normal[3];
+	float u, v;
+
+	static const DWORD FVF = D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4 | D3DFVF_NORMAL | D3DFVF_TEX0;
+};
+
 struct BezTripleData
 {
 	float vec[3][2];
@@ -434,5 +462,9 @@ struct DX_CONSTS
 	static const D3DXCOLOR D3DXCOLOR_CYAN;
 	static const D3DXCOLOR D3DXCOLOR_WHITE;
 };
+
+
+
+#define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
 
 #endif // #ifndef __STRUCTS_H_

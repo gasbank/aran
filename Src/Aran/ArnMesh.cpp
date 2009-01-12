@@ -3,16 +3,18 @@
 #include "ArnMaterial.h"
 #include "ArnFile.h"
 #include "VideoMan.h"
-#include "ArnSkeleton.h"
+#include "ArnHierarchy.h"
 
 ArnMesh::ArnMesh()
-: ArnXformable(NDT_RT_MESH), m_d3dxMesh(0), m_bVisible(true), m_bCollide(true)
+: ArnXformable(NDT_RT_MESH), m_d3dxMesh(0), m_bVisible(true), m_bCollide(true), m_d3dvb(0), m_d3dib(0)
 {
 }
 
 ArnMesh::~ArnMesh(void)
 {
 	SAFE_RELEASE(m_d3dxMesh);
+	SAFE_RELEASE(m_d3dvb);
+	SAFE_RELEASE(m_d3dib);
 }
 
 ArnNode* ArnMesh::createFrom( const NodeBase* nodeBase )
@@ -69,9 +71,16 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	setLocalXform(*nm->m_localXform);
 	if (VideoMan::getSingletonPtr())
 	{
-		LPD3DXMESH d3dxMesh;
-		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
-		setD3DXMesh(d3dxMesh);
+		if (nm->m_armatureName)
+		{
+			arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, m_d3dvb, m_d3dib);
+		}
+		else
+		{
+			LPD3DXMESH d3dxMesh;
+			arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
+			setD3DXMesh(d3dxMesh);
+		}
 	}
 
 	if (nm->m_armatureName)
@@ -113,7 +122,7 @@ void ArnMesh::interconnect( ArnNode* sceneRoot )
 	
 	if (m_data.armatureName.length())
 	{
-		m_skeleton = dynamic_cast<ArnSkeleton*>(sceneRoot->getNodeByName(m_data.armatureName));
+		m_skeleton = dynamic_cast<ArnHierarchy*>(sceneRoot->getNodeByName(m_data.armatureName));
 		assert(m_skeleton);
 	}
 
@@ -167,16 +176,17 @@ HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD
 	if (!dev)
 		throw MyError(MEE_DEVICE_NOT_READY);
 
+	assert(nm->m_armatureName == 0);
 	HRESULT hr = 0;
+
 	ArnVertex* v = 0;
 	WORD* ind = 0;
-	hr = D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ArnVertex::FVF, dev, &mesh);
+	V( D3DXCreateMeshFVF(nm->m_meshFacesCount, nm->m_meshVerticesCount, D3DXMESH_MANAGED, ArnVertex::FVF, dev, &mesh) );
 	if (FAILED(hr))
 	{
 		DebugBreak();
 		return E_FAIL;
 	}
-
 	mesh->LockVertexBuffer(0, (void**)&v);
 	memcpy(v, nm->m_vertex, nm->m_meshVerticesCount * sizeof(ArnVertex));
 	mesh->UnlockVertexBuffer();
@@ -189,6 +199,56 @@ HRESULT arn_build_mesh(IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPD
 	mesh->LockAttributeBuffer(0, &attrBuf);
 	memcpy(attrBuf, nm->m_attr, nm->m_meshFacesCount * sizeof(DWORD));
 	mesh->UnlockAttributeBuffer();
+	return hr;
+}
 
-	return S_OK;
+HRESULT arn_build_mesh( IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LPDIRECT3DVERTEXBUFFER9& d3dvb, OUT LPDIRECT3DINDEXBUFFER9& d3dib )
+{
+	if (!dev)
+		throw MyError(MEE_DEVICE_NOT_READY);
+
+	assert(nm->m_armatureName);
+	assert(d3dvb || d3dib == 0);
+	HRESULT hr = 0;
+
+	ArnBlendedVertex* v = 0;
+	WORD* ind = 0;
+	
+	/*
+	ArnVertex        ---     x, y, z, nx, ny, nz, u, v
+	ArnBlendedVertex ---     x, y, z, nx, ny, nz, u, v, w0, w1, w2, m0~4
+	*/
+	
+	V( dev->CreateVertexBuffer(sizeof(ArnBlendedVertex) * nm->m_meshVerticesCount, D3DUSAGE_WRITEONLY, ArnBlendedVertex::FVF, D3DPOOL_MANAGED, &d3dvb, 0) );
+	d3dvb->Lock(0, 0, (void**)&v, 0);
+	unsigned i;
+	for (i = 0; i < nm->m_meshVerticesCount; ++i)
+	{
+		v[i].x				= nm->m_vertex[i].x;
+		v[i].y				= nm->m_vertex[i].y;
+		v[i].z				= nm->m_vertex[i].z;
+		v[i].normal[0]		= nm->m_vertex[i].nx;
+		v[i].normal[1]		= nm->m_vertex[i].ny;
+		v[i].normal[2]		= nm->m_vertex[i].nz;
+		v[i].u				= nm->m_vertex[i].u;
+		v[i].v				= nm->m_vertex[i].v;
+		v[i].weight0		= nm->m_weights[3*i + 0];
+		v[i].weight1		= nm->m_weights[3*i + 1];
+		v[i].weight2		= nm->m_weights[3*i + 2];
+		v[i].matrixIndices	= FOUR_BYTES_INTO_DWORD(nm->m_matIdx[4*i + 0], nm->m_matIdx[4*i + 1], nm->m_matIdx[4*i + 2], nm->m_matIdx[4*i + 3]);
+	}
+	d3dvb->Unlock();
+
+	V( dev->CreateIndexBuffer(sizeof(WORD) * nm->m_meshFacesCount * 3, D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_MANAGED, &d3dib, 0) );
+	d3dib->Lock(0, 0, (void**)&ind, 0);
+	memcpy(ind, nm->m_faces, nm->m_meshFacesCount * 3 * sizeof(WORD));
+	d3dib->Unlock();
+
+	// TODO: Attribute handling on non-d3dx structure.
+	/*DWORD* attrBuf = 0;
+	mesh->LockAttributeBuffer(0, &attrBuf);
+	memcpy(attrBuf, nm->m_attr, nm->m_meshFacesCount * sizeof(DWORD));
+	mesh->UnlockAttributeBuffer();*/
+
+	return hr;
 }

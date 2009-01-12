@@ -56,7 +56,13 @@ struct NodeMesh3 : public NodeBase
 	const DWORD* m_attr;
 	const char* m_armatureName;
 	std::vector<Bone2> m_bones;
+
+	std::vector<const char*> m_boneMatIdxMap;
+	float* m_weights; // Start address of v0[w0, w1, w2] v1[w0, w1, w2] ... w? are floats
+	unsigned char* m_matIdx; // v0[m0, m1, m2, m3], v1[m0, m1, m2, m3] ... m? are unsigned chars(0~255)
+
 };
+
 struct NodeAnim1 : public NodeBase
 {
 	unsigned int m_keyCount;
@@ -86,7 +92,7 @@ struct NodeSkeleton1 : public NodeBase
 	unsigned int m_boneCount;
 };
 
-struct NodeSkeleton2 : public NodeBase
+struct NodeHierarchy2 : public NodeBase
 {
 	const char* m_parentName;
 	unsigned int m_boneCount;
@@ -188,7 +194,7 @@ void parse_nodeMaterial2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeMesh3(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeSkeleton1(ArnBinaryFile& abf, NodeBase*& nodeBase);
-void parse_nodeSkeleton2(ArnBinaryFile& abf, NodeBase*& nodeBase);
+void parse_nodeHierarchy2(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeHierarchy1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeLight1(ArnBinaryFile& abf, NodeBase*& nodeBase);
 void parse_nodeLight2(ArnBinaryFile& abf, NodeBase*& nodeBase);

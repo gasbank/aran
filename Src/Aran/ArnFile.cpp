@@ -54,13 +54,13 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		nodeBase = new NodeSkeleton1();
 		node_chunk_parser_func = parse_nodeSkeleton1;
 		break;
-	case NDT_SKELETON2:
-		nodeBase = new NodeSkeleton2();
-		node_chunk_parser_func = parse_nodeSkeleton2;
-		break;
 	case NDT_HIERARCHY1:
 		nodeBase = new NodeHierarchy1();
 		node_chunk_parser_func = parse_nodeHierarchy1;
+		break;
+	case NDT_HIERARCHY2:
+		nodeBase = new NodeHierarchy2();
+		node_chunk_parser_func = parse_nodeHierarchy2;
 		break;
 	case NDT_LIGHT1:
 		nodeBase = new NodeLight1();
@@ -184,7 +184,7 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_MESH3);
 	unsigned int i, j;
 	NodeMesh3* node = (NodeMesh3*)nodeBase;
-
+	
 	node->m_parentName			= file_read_string(abf);
 	node->m_ipoName				= file_read_string(abf);
 	node->m_localXform			= file_read<D3DXMATRIX>(abf);
@@ -204,11 +204,22 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_faces = file_read<unsigned short>(abf, node->m_meshFacesCount * 3);
 	node->m_attr = file_read<DWORD>(abf, node->m_meshFacesCount);
 
+
 	if (node->m_bArmature)
 	{
 		node->m_armatureName = file_read_string(abf);
+		const unsigned int totalBoneMatIdxMap = file_read_uint(abf);
+		for (j = 0; j < totalBoneMatIdxMap; ++j)
+			node->m_boneMatIdxMap.push_back( file_read_string(abf) );
+
+		node->m_weights = reinterpret_cast<float*>( file_read_implicit_array(abf, node->m_meshVerticesCount * sizeof(float) * 3) ); // Three weights per vertex. Fourth weight can be induced from these.
+		node->m_matIdx = reinterpret_cast<unsigned char*>( file_read_implicit_array(abf, node->m_meshVerticesCount * sizeof(unsigned char) * 4) ); // This is not a string!
+
+		// consistent
 		const unsigned int totalBoneCount = file_read_uint(abf);
 		node->m_bones.resize(totalBoneCount);
+		if (totalBoneCount != totalBoneMatIdxMap)
+			throw MyError(MEE_BONE_COUNT_INCONSISTENCY);
 		for (j = 0; j < totalBoneCount; ++j)
 		{
 			node->m_bones[j].boneName = file_read_string(abf);
@@ -230,6 +241,8 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	else
 	{
 		node->m_armatureName = 0;
+		node->m_weights = 0;
+		node->m_matIdx = 0;
 	}
 }
 
@@ -244,11 +257,11 @@ void parse_nodeSkeleton1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	node->m_boneCount				= file_read_uint(abf);
 }
 
-void parse_nodeSkeleton2( ArnBinaryFile& abf, NodeBase*& nodeBase )
+void parse_nodeHierarchy2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
-	assert(nodeBase->m_ndt == NDT_SKELETON2);
+	assert(nodeBase->m_ndt == NDT_HIERARCHY2);
 
-	NodeSkeleton2* node = (NodeSkeleton2*)nodeBase;
+	NodeHierarchy2* node = (NodeHierarchy2*)nodeBase;
 
 	node->m_parentName				= file_read_string(abf);
 	node->m_boneCount				= file_read_uint(abf);
@@ -410,19 +423,21 @@ void parse_nodeAction1(ArnBinaryFile& abf, NodeBase*& nodeBase)
 	NodeAction1* node = (NodeAction1*)nodeBase;
 
 	node->m_actionCount = file_read_uint(abf);
-	assert(node->m_actionCount);
-	node->m_actions.resize(node->m_actionCount);
-	unsigned i, j;
-	for (i = 0; i < node->m_actionCount; ++i)
+	if (node->m_actionCount)
 	{
-		node->m_actions[i].first = file_read_string(abf);
-		const unsigned channelCount = file_read_uint(abf);
-		assert(channelCount);
-		node->m_actions[i].second.resize(channelCount);
-		for (j = 0; j < channelCount; ++j)
+		node->m_actions.resize(node->m_actionCount);
+		unsigned i, j;
+		for (i = 0; i < node->m_actionCount; ++i)
 		{
-			node->m_actions[i].second[j].first = file_read_string(abf); // Global bone name
-			node->m_actions[i].second[j].second = file_read_string(abf); // Global ipo name
+			node->m_actions[i].first = file_read_string(abf);
+			const unsigned channelCount = file_read_uint(abf);
+			assert(channelCount);
+			node->m_actions[i].second.resize(channelCount);
+			for (j = 0; j < channelCount; ++j)
+			{
+				node->m_actions[i].second[j].first = file_read_string(abf); // Global bone name
+				node->m_actions[i].second[j].second = file_read_string(abf); // Global ipo name
+			}
 		}
 	}
 }

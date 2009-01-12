@@ -22,6 +22,9 @@ ArnNode* ArnHierarchy::createFrom( const NodeBase* nodeBase )
 		case NDT_HIERARCHY1:
 			node->buildFrom(static_cast<const NodeHierarchy1*>(nodeBase));
 			break;
+		case NDT_HIERARCHY2:
+			node->buildFrom(static_cast<const NodeHierarchy2*>(nodeBase));
+			break;
 		default:
 			throw MyError(MEE_UNDEFINED_ERROR);
 		}
@@ -48,6 +51,18 @@ void ArnHierarchy::buildFrom( const NodeHierarchy1* nh )
 		data.m_sibling		= dataOrig.m_sibling;
 		data.m_firstChild	= dataOrig.m_firstChild;
 	}
+}
+
+
+void ArnHierarchy::buildFrom( const NodeHierarchy2* ns )
+{
+	m_data2.name					= ns->m_nodeName;
+	m_data2.associatedMeshName		= "~ Should not see me~";
+	m_data2.maxWeightsPerVertex		= 4;
+	m_data2.bonesCount				= ns->m_boneCount;
+
+	assert(m_data2.name == getName());
+
 }
 
 const MyFrameData& ArnHierarchy::getFrame( unsigned int idx ) const

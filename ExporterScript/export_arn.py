@@ -324,6 +324,8 @@ def export_node_mesh(ob):
 				armature_mod = modifier
 				out.write(' @ Armature Modifier exist on this mesh (Name: %s)@\n' % armature_mod[Modifier.Settings.OBJECT].name)
 	
+	vertWeightArray = array.array('f')
+	vertMatIdxArray = array.array('B')
 	boneWeightList = []
 	if armature_modifier_exist:
 		out.write('-= Bone Influences against each vertex =-\n')
@@ -403,11 +405,15 @@ def export_node_mesh(ob):
 		#
 		# For each vertex,
 		#
-		#   3 floats for vertex positions
-		#   3 floats for vertex normals
-		#   2 floats for uv texture coords
-		#   3 floats for three blending weights, and fourth one can be induced
-		#   4 ints for bone matrix indices
+		#   -------------------+-------------------------------------------------
+		#                      |  3 floats for vertex positions
+		#   stored in vertary  |  3 floats for vertex normals
+		#                      |  2 floats for uv texture coords
+		#   -------------------+-------------------------------------------------
+		#                      |  3 floats for three blending weights, and fourth one can be induced
+		#                      |  4 ints for bone matrix indices
+		#   -------------------+-------------------------------------------------
+		#
 		# --------------------------
 		#out.write(boneInfPerVert.__str__())
 		out.write('/* C/C++ Vertex data code */\n')
@@ -422,15 +428,18 @@ def export_node_mesh(ob):
 			for j in range(min(range(3), len(boneInfPerVert[i]))):
 				out.write('%10.6ff, ' % (boneInfPerVert[i][j][1]))
 				weightSum = weightSum + boneInfPerVert[i][j][1]
+				vertWeightArray.append(boneInfPerVert[i][j][1])
 			for j in range(max(0, 3 - len(boneInfPerVert[i]))):
 				out.write('%10.6ff, ' % (1-weightSum))
+				vertWeightArray.append(1-weightSum)
 			
-			boneMatIdx = [0, 0, 0, 0]
+			boneMatIdx = [255, 255, 255, 255]
 			for j in range(len(boneInfPerVert[i])):
 				boneMatIdx[j] = 0
 				if vertGroupMap.has_key( boneInfPerVert[i][j][0] ):
 					boneMatIdx[j] = vertGroupMap[ boneInfPerVert[i][j][0] ]
-			out.write('BLEND_MAT_INDICES(%d, %d, %d, %d) );\n' % (boneMatIdx[0], boneMatIdx[1], boneMatIdx[2], boneMatIdx[3] ))
+			out.write('FOUR_BYTES_INTO_DWORD(%d, %d, %d, %d) );\n' % (boneMatIdx[0], boneMatIdx[1], boneMatIdx[2], boneMatIdx[3] ))
+			vertMatIdxArray.fromlist(boneMatIdx)
 		out.write('\n\n')
 		for i in range(len(mesh.faces)*3):
 			out.write('f[%3d] = %d;\n' % (i, faceary[i]))
@@ -460,6 +469,11 @@ def export_node_mesh(ob):
 	#     ...
 	if armature_modifier_exist:
 		attach_strz(armature_mod[Modifier.Settings.OBJECT].name)
+		attach_int(len(vertGroupMap)) # Should be the same as bone count!
+		for vgm in vertGroupMap:
+			attach_strz(vgm)
+		binstream.append(vertWeightArray)
+		binstream.append(vertMatIdxArray)
 		attach_int( len(boneWeightList) )
 		for bwl in boneWeightList:
 			attach_strz(bwl[0])

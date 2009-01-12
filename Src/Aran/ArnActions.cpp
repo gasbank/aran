@@ -42,18 +42,20 @@ void ArnActions::interconnect( ArnNode* sceneRoot )
 void ArnActions::buildFrom( const NodeAction1* ni )
 {
 	assert( ni->m_actions.size() == ni->m_actionCount );
-	assert( ni->m_actionCount > 0);
 	unsigned i, j;
-	m_data.resize(ni->m_actionCount);
-	for (i = 0; i < ni->m_actionCount; ++i)
+	if ( ni->m_actionCount )
 	{
-		m_data[i].actionName = ni->m_actions[i].first;
-		const unsigned channelCount = ni->m_actions[i].second.size();
-		m_data[i].channels.resize( channelCount );
-		for (j = 0; j < channelCount; ++j)
+		m_data.resize(ni->m_actionCount);
+		for (i = 0; i < ni->m_actionCount; ++i)
 		{
-			m_data[i].channels[j].first = ni->m_actions[i].second[j].first; // Bone name
-			m_data[i].channels[j].second = ni->m_actions[i].second[j].second; // Corresponding ipo name
+			m_data[i].actionName = ni->m_actions[i].first;
+			const unsigned channelCount = ni->m_actions[i].second.size();
+			m_data[i].channels.resize( channelCount );
+			for (j = 0; j < channelCount; ++j)
+			{
+				m_data[i].channels[j].first = ni->m_actions[i].second[j].first; // Bone name
+				m_data[i].channels[j].second = ni->m_actions[i].second[j].second; // Corresponding ipo name
+			}
 		}
 	}
 }

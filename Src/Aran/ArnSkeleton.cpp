@@ -22,9 +22,6 @@ ArnNode* ArnSkeleton::createFrom( const NodeBase* nodeBase )
 		case NDT_SKELETON1:
 			node->buildFrom(static_cast<const NodeSkeleton1*>(nodeBase));
 			break;
-		case NDT_SKELETON2:
-			node->buildFrom(static_cast<const NodeSkeleton2*>(nodeBase));
-			break;
 		default:
 			throw MyError(MEE_UNDEFINED_ERROR);
 		}
@@ -52,13 +49,3 @@ void ArnSkeleton::buildFrom( const NodeSkeleton1* ns )
 		throw MyError(MEE_SKELETON1NODE_CORRUPTED);
 }
 
-void ArnSkeleton::buildFrom( const NodeSkeleton2* ns )
-{
-	m_data.name					= ns->m_nodeName;
-	m_data.associatedMeshName	= "~ Should not see me~";
-	m_data.maxWeightsPerVertex	= 4;
-	m_data.bonesCount			= ns->m_boneCount;
-
-	assert(m_data.name == getName());
-
-}

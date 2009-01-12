@@ -177,6 +177,8 @@ BoxRenderLayer::BoxRenderLayer()
 	m_skelSceneData = new ArnFileData;
 	load_arnfile(_T("c:/Scene.arn"), *m_skelSceneData);
 	m_skelScene = new ArnSceneGraph(*m_skelSceneData);
+	//m_skelSceneData = 0;
+	//m_skelScene = 0;
 }
 
 BoxRenderLayer::~BoxRenderLayer()
@@ -189,11 +191,13 @@ BoxRenderLayer::~BoxRenderLayer()
 
 	SAFE_RELEASE(m_testMesh);
 
-	release_arnfile(*m_arnFileData);
+	if (m_arnFileData)
+		release_arnfile(*m_arnFileData);
 	delete m_arnFileData;
 	delete m_simpleSG;
 
-	release_arnfile(*m_skelSceneData);
+	if (m_skelSceneData)
+		release_arnfile(*m_skelSceneData);
 	delete m_skelSceneData;
 	delete m_skelScene;
 }
