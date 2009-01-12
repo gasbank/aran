@@ -86,7 +86,15 @@ void ArnMesh::buildFrom(const NodeMesh3* nm)
 	if (nm->m_armatureName)
 	{
 		m_data.armatureName = nm->m_armatureName;
+
 		const unsigned boneCount = nm->m_bones.size();
+		const unsigned idxMapCount = nm->m_boneMatIdxMap.size();
+		assert(boneCount == idxMapCount);
+		for (j = 0; j < idxMapCount; ++j)
+			m_data.boneMatIdxMap.push_back(nm->m_boneMatIdxMap[j]);
+		
+		// Data copied to 'm_boneDataInt' are not used(redundant) basically.
+		// Bone weights per vertex are included in vertex declaration.
 		m_boneDataInt.resize(boneCount);
 		for (j = 0; j < boneCount; ++j)
 		{

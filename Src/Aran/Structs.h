@@ -271,6 +271,7 @@ public:
 	unsigned int materialCount;
 	std::vector<STRING> matNameList;
 	STRING armatureName;
+	std::vector<STRING> boneMatIdxMap;
 };
 //////////////////////////////////////////////////////////////////////////
 // Unions
