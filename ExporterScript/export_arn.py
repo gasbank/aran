@@ -329,6 +329,7 @@ def export_node_mesh(ob):
 		out.write('-= Bone Influences against each vertex =-\n')
 		
 		vertGroup = mesh.getVertGroupNames()
+		vertGroupMap = {}
 		for vg in vertGroup:
 			vertIndList = mesh.getVertsFromGroup(vg, 1)
 			weightList = []
@@ -342,6 +343,11 @@ def export_node_mesh(ob):
 						weightList.append( (addedVertInd + len(mesh.verts), ind[1]) )
 			out.write(' ~ %s [End / Total: %i] ~\n\n' % (vg, len(weightList)))
 			boneWeightList.append( (vg, weightList) )
+			if not vertGroupMap.has_key(vg):
+				vertGroupMap[vg] = len(vertGroupMap)
+		
+		#out.write(vertGroupMap.__str__())
+		boneInfPerVert = []
 		
 		# Print bone weights related to original verts
 		for i in range(len(mesh.verts)):
@@ -358,10 +364,13 @@ def export_node_mesh(ob):
 				
 			boneinf_list = sorted(boneinf_list, BoneWeightCompareDesc)
 			
+			boneinf_list_normalized = []
 			for boneinf in boneinf_list:
 				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
+				boneinf_list_normalized.append( (boneinf[0], boneinf[1]/total_bone_inf) )
 			
 			out.write('\n')
+			boneInfPerVert.append( boneinf_list_normalized )
 		
 		# Print bone weights related to added vertices
 		for ii in range(len(addedVertMap)):
@@ -380,13 +389,52 @@ def export_node_mesh(ob):
 				
 			boneinf_list = sorted(boneinf_list, BoneWeightCompareDesc)
 			
+			boneinf_list_normalized = []
 			for boneinf in boneinf_list:
 				out.write(' %s(%.2f)' % (boneinf[0], boneinf[1]/total_bone_inf))
+				boneinf_list_normalized.append( (boneinf[0], boneinf[1]/total_bone_inf) )
 			
 			out.write('\n')
+			boneInfPerVert.append( boneinf_list_normalized )
 		
 		
+		# --------------------------
+		# C/C++ Vertex data code
+		#
+		# For each vertex,
+		#
+		#   3 floats for vertex positions
+		#   3 floats for vertex normals
+		#   2 floats for uv texture coords
+		#   3 floats for three blending weights, and fourth one can be induced
+		#   4 ints for bone matrix indices
+		# --------------------------
+		#out.write(boneInfPerVert.__str__())
+		out.write('/* C/C++ Vertex data code */\n')
+		out.write('/* x y z    nx ny nz   u v     w0 w1 w2    m0 m1 m2 m3 */\n')
+		for i in range(finalVertCount):
+			out.write('vert[%3d] = VERTEX( ' % i)
+			out.write('%10.6ff, %10.6ff, %10.6ff, ' % (vertary[8*i + 0], vertary[8*i + 1], vertary[8*i + 2])) # Position
+			out.write('%10.6ff, %10.6ff, %10.6ff, ' % (vertary[8*i + 3], vertary[8*i + 4], vertary[8*i + 5])) # Normal
+			out.write('%10.6ff, %10.6ff, ' % (vertary[8*i + 6], vertary[8*i + 7])) # UV
+			weightSum = 0.0
+
+			for j in range(min(range(3), len(boneInfPerVert[i]))):
+				out.write('%10.6ff, ' % (boneInfPerVert[i][j][1]))
+				weightSum = weightSum + boneInfPerVert[i][j][1]
+			for j in range(max(0, 3 - len(boneInfPerVert[i]))):
+				out.write('%10.6ff, ' % (1-weightSum))
 			
+			boneMatIdx = [0, 0, 0, 0]
+			for j in range(len(boneInfPerVert[i])):
+				boneMatIdx[j] = 0
+				if vertGroupMap.has_key( boneInfPerVert[i][j][0] ):
+					boneMatIdx[j] = vertGroupMap[ boneInfPerVert[i][j][0] ]
+			out.write('BLEND_MAT_INDICES(%d, %d, %d, %d) );\n' % (boneMatIdx[0], boneMatIdx[1], boneMatIdx[2], boneMatIdx[3] ))
+		out.write('\n\n')
+		for i in range(len(mesh.faces)*3):
+			out.write('f[%3d] = %d;\n' % (i, faceary[i]))
+	
 	
 	# *** Binary Writing Phase ***
 	attach_int(0x00002002)
@@ -719,7 +767,7 @@ def export_node_armature(ob):
 	ar_mat = ob.matrixWorld
 	ar_data = ob.getData()
 	
-	out.write('{ ArnType 0x00004001   NDT_SKELETON2 } %s\n' % obName)
+	out.write('{ ArnType 0x00005001   NDT_HIERARCHY2 } %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
@@ -737,7 +785,7 @@ def export_node_armature(ob):
 		
 
 	# *** Binary Writing Phase ***
-	attach_int(0x00004001)
+	attach_int(0x00005001)
 	attach_strz(obName)
 	attach_int(0)                      # Node Chunk SIze
 	# ---------------------------------------------------
