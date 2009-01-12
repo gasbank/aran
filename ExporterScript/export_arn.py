@@ -187,7 +187,7 @@ def export_node_mesh(ob):
 	for face in mesh.faces: face.sel = 1
 	mesh.quadToTriangle()
 	
-	out.write('<ArnType 0x00002002> %s\n' % obName)
+	out.write('{ ArnType 0x00002002   NDT_MESH3 } %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
@@ -431,7 +431,7 @@ def export_node_camera(ob):
 	if ob.parent: parName = ob.parent.name
 	if ob.ipo is not None: ipoName = ob.ipo.name
 	
-	out.write('<ArnType 0x00007001> %s\n' % obName)
+	out.write('{ ArnType 0x00007001   NDT_CAMERA2 } %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
@@ -479,7 +479,7 @@ def export_node_lamp(ob):
 		print ob.name, ': Unsupported lamp type; skipping'
 		return
 	
-	out.write('<ArnType 0x00003001> %s\n' % obName)
+	out.write('{ ArnType 0x00003001   NDT_LIGHT2 } %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write('IPO        : %s\n' % ipoName)
 	out.write(MatrixToDetailString(matLocal))
@@ -516,7 +516,7 @@ def export_materials():
 	out.write('-----------------------------------------------------------------\n')
 	out.write('|                   GLOBAL MATERIALS NODE                       |\n')
 	out.write('-----------------------------------------------------------------\n')
-	out.write('<ArnType 0x00009000> %s\n' % obName)
+	out.write('{ ArnType 0x00009000   NDT_MATERIAL1 } %s\n' % obName)
 	out.write('Node Chunk Size : %d\n' % (matNodeChunkSize * materialCount))
 	out.write('Material Count  : %d\n' % materialCount)
 	
@@ -534,7 +534,7 @@ def export_materials():
 		WriteHLine()
 		matName = mat.name
 		out.write('MatGlobalIndex: %d\n' % matGlobalIndex)
-		out.write('<ArnType 0x00009001> %s\n' % matName)
+		out.write('{ ArnType 0x00009001   NDT_MATERIAL2 } %s\n' % matName)
 		out.write('Node Chunk Size : %d\n' % matNodeChunkSize)
 		out.write('Parent Name     : %s\n' % parName)
 		out.write(' - Diffuse  (Col) : %s\n' % ColorStr(mat.rgbCol,  mat.alpha))
@@ -577,7 +577,7 @@ def export_ipos():
 	out.write('-----------------------------------------------------------------\n')
 	out.write('|                      GLOBAL IPOS NODE                         |\n')
 	out.write('-----------------------------------------------------------------\n')
-	out.write('<ArnType 0x0000A000> %s\n' % obName)
+	out.write('{ ArnType 0x0000A000   NDT_IPO1 } %s\n' % obName)
 	out.write('Node Chunk Size : { not calculated }\n')
 	out.write('IPO Count  : %d\n' % ipoCount)
 	
@@ -594,7 +594,7 @@ def export_ipos():
 		WriteHLine()
 		ipoName = ipo.name
 		ipoCurveCount = len(ipo.curves)
-		out.write('<ArnType 0x0000A001> %s\n' % ipoName)
+		out.write('{ ArnType 0x0000A001   NDT_IPO2 } %s\n' % ipoName)
 		out.write('Node Chunk Size : { not calculated }\n')
 		out.write('Parent Name     : %s\n' % parName)
 		out.write('Curve Count     : %d\n' % ipoCurveCount)
@@ -679,7 +679,7 @@ def export_actions():
 	out.write('-----------------------------------------------------------------\n')
 	out.write('|                    GLOBAL ACTIONS NODE                        |\n')
 	out.write('-----------------------------------------------------------------\n')
-	out.write('< ArnType 0x0000C000 - NDT_ACTION1 > %s\n' % obName)
+	out.write('{ ArnType 0x0000C000   NDT_ACTION1 } %s\n' % obName)
 	out.write('Node Chunk Size : { not calculated }\n')
 	out.write('Action Count  : %d\n' % actionCount)
 	
@@ -719,7 +719,7 @@ def export_node_armature(ob):
 	ar_mat = ob.matrixWorld
 	ar_data = ob.getData()
 	
-	out.write('<ArnType 0x00004001> %s\n' % obName)
+	out.write('{ ArnType 0x00004001   NDT_SKELETON2 } %s\n' % obName)
 	out.write('Node Chunk Size: { not calculated }\n')
 	out.write(MatrixToDetailString(matLocal))
 	out.write('matrixLocal:\n')
