@@ -36,7 +36,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	TCHAR dir[_MAX_DIR];
 	GetModuleFileName(NULL, buf, MAX_PATH);
 	_tsplitpath_s(buf, drive, _MAX_DRIVE, dir, _MAX_DIR, 0, 0, 0, 0);
-	StringCchPrintf(buf, MAX_PATH, _T("%s%s"), drive, dir);
+	swprintf(buf, MAX_PATH, _T("%s%s"), drive, dir);
 	SetCurrentDirectory(buf);
 
 

@@ -45,11 +45,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../Aran;../../DXUT/Core;../../../opende/include"
+				AdditionalIncludeDirectories="../Aran;../../DXUT/Core;../../DXUT/Optional;../../../opende/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;DEBUG;PROFILE;_WINDOWS;dDOUBLE;ODE_DLL"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="0"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="EmptyProjectPCH.h"
 				WarningLevel="4"
@@ -71,7 +71,6 @@
 				AdditionalDependencies="Aran.lib DXUT.lib d3d9.lib d3dx9d.lib dxerr.lib dxerr9.lib dxguid.lib winmm.lib user32.lib gdi32.lib advapi32.lib comctl32.lib ode_doubled.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../DebugLib;../../../opende/lib/DebugDoubleDLL"
-				GenerateManifest="false"
 				DelayLoadDLLs=""
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/EmptyProject.pdb"
@@ -545,113 +544,6 @@
 	<References>
 	</References>
 	<Files>
-		<Filter
-			Name="Resource Files"
-			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe"
-			>
-			<File
-				RelativePath="..\..\DXUT\Optional\directx.ico"
-				>
-			</File>
-			<File
-				RelativePath="EmptyProject.manifest"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Profile|x64"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="EmptyProject.rc"
-				>
-			</File>
-			<File
-				RelativePath="resource.h"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="DXUT"
-			>
-			<File
-				RelativePath=".\DXUT.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUT.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTcamera.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTcamera.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTenum.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTenum.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTmisc.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTmisc.h"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTres.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\DXUTres.h"
-				>
-			</File>
-		</Filter>
 		<File
 			RelativePath="EmptyProject.cpp"
 			>

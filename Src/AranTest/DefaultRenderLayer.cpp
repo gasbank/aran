@@ -18,7 +18,7 @@ DefaultRenderLayer::~DefaultRenderLayer(void)
 {
 }
 
-HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
+HRESULT DefaultRenderLayer::render()
 {
 	ASSERTCHECK( m_lpDev );
 
@@ -49,21 +49,15 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 
 	m_pVideoMan->setWorldViewProjection(matWorld, matView, matProjection);
 
-
-
-	const ResourceMan& resMan = ResourceMan::getSingleton();
 	
 	// Hero Character
-
+	const ResourceMan& resMan = ResourceMan::getSingleton();
 	m_pVideoMan->GetDev()->SetRenderState(D3DRS_CULLMODE, D3DCULL_CCW);
 	D3DXMatrixTranslation(&matTranslation, -20.0f, 0.0f, 0.0f );
 	D3DXMatrixScaling( &matScaling, 0.1f, 0.1f, 0.1f );
 	const D3DXMATRIX finalXform = matScaling * matTranslation * *(m_pChar->GetFinalTransform()) * *m_pVideoMan->getModelArcBallRotation();
 	m_pVideoMan->RenderModel(resMan.getModel( ResourceMan::MAN ), &finalXform);
-	const ModelReader* manModel = resMan.getModel( ResourceMan::MAN );
-	if (manModel)
-		manModel->AdvanceTime( 0.1f );
-
+	
 	//////////////////////////////////////////////////////////////////////////
 	// Print Text
 	//////////////////////////////////////////////////////////////////////////
@@ -74,7 +68,7 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 	m_pVideoMan->getScreenInfo(scrWidth, scrHeight);
 	SetRect(&rc, 0, 0, scrWidth, scrHeight);
 	TCHAR msg[128];
-	StringCchPrintf(msg, 128, L"%.2f FPS", m_pVideoMan->getFPS());
+	swprintf(msg, 128, L"%.2f FPS", m_pVideoMan->getFPS());
 	m_pVideoMan->getDefaultFont()->DrawText( 0, msg, -1, &rc, DT_BOTTOM | DT_RIGHT | DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 0.0f, 1.0f ) );
 
 	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,9 +76,19 @@ HRESULT DefaultRenderLayer::render(double fTime, float fElapsedTime)
 	return S_OK;
 }
 
+HRESULT DefaultRenderLayer::update( double fTime, float fElapsedTime )
+{
+	const ResourceMan& resMan = ResourceMan::getSingleton();
+	const ModelReader* manModel = resMan.getModel( ResourceMan::MAN );
+
+	if (manModel)
+		manModel->AdvanceTime( 0.1f );
+
+	return S_OK;
+}
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
+HRESULT BoxRenderLayer::render()
 {
 	ASSERTCHECK( m_lpDev );
 	D3DXMATRIX mWorld, mView, mProjection;
@@ -141,6 +145,16 @@ HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 	dev->SetFVF(ArnVertex::FVF);
 	videoMan.renderMeshesOnly(m_simpleSG->getSceneRoot());
 
+
+	RECT rc;
+	SetRect(&rc, 0, 0, 0, 0);
+	swprintf(m_debugBuffer, 128, L"Aran Renderer");
+	m_pVideoMan->getDefaultFont()->DrawText( 0, m_debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 1.0f, 1.0f ) );
+	return S_OK;
+}
+
+HRESULT BoxRenderLayer::update( double fTime, float fElapsedTime )
+{
 	ArnMesh* door = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Needle" ) );
 	ArnMesh* tofuMan = dynamic_cast<ArnMesh*>( m_simpleSG->getSceneRoot()->getNodeByName( "Needle" ) );
 	if ( GetAsyncKeyState( VK_RIGHT ) )
@@ -159,11 +173,6 @@ HRESULT BoxRenderLayer::render(double fTime, float fElapsedTime)
 		tofuMan->setAnimCtrlTime( 0 );
 	}
 	m_simpleSG->getSceneRoot()->update(fTime, fElapsedTime);
-
-	RECT rc;
-	SetRect(&rc, 0, 0, 0, 0);
-	StringCchPrintf(m_debugBuffer, 128, L"Aran Renderer");
-	m_pVideoMan->getDefaultFont()->DrawText( 0, m_debugBuffer, -1, &rc, DT_NOCLIP, D3DXCOLOR( 0.0f, 1.0f, 1.0f, 1.0f ) );
 	return S_OK;
 }
 
@@ -177,8 +186,6 @@ BoxRenderLayer::BoxRenderLayer()
 	m_skelSceneData = new ArnFileData;
 	load_arnfile(_T("c:/Scene.arn"), *m_skelSceneData);
 	m_skelScene = new ArnSceneGraph(*m_skelSceneData);
-	//m_skelSceneData = 0;
-	//m_skelScene = 0;
 }
 
 BoxRenderLayer::~BoxRenderLayer()
@@ -201,6 +208,7 @@ BoxRenderLayer::~BoxRenderLayer()
 	delete m_skelSceneData;
 	delete m_skelScene;
 }
+
 
 LPD3DXMESH newTestPlaneMesh(float width, float height, int segWidth, int segHeight)
 {	

@@ -220,7 +220,7 @@ public:
     D3DXMATRIX*  GetWorldMatrix()            { return &m_mCameraWorld; }
 
     const D3DXVECTOR3* GetWorldRight() const { return (D3DXVECTOR3*)&m_mCameraWorld._11; } 
-    const D3DXVECTOR3* GetWorldUp() const    { return (D3DXVECTOR3*)&m_mCameraWorld._21; }
+	const D3DXVECTOR3* GetWorldUp() const    { return (D3DXVECTOR3*)&m_mCameraWorld._21; }
     const D3DXVECTOR3* GetWorldAhead() const { return (D3DXVECTOR3*)&m_mCameraWorld._31; }
     const D3DXVECTOR3* GetEyePt() const      { return (D3DXVECTOR3*)&m_mCameraWorld._41; }
 
@@ -302,6 +302,13 @@ public:
     static void WINAPI      StaticOnD3D9LostDevice();
     static void WINAPI      StaticOnD3D9DestroyDevice();
 
+#ifdef COMPILE_D3D10_SPECIFIC
+    static HRESULT WINAPI   StaticOnD3D10CreateDevice( ID3D10Device* pd3dDevice );
+#endif
+
+
+    HRESULT OnRender10( D3DXCOLOR color, const D3DXMATRIX* pmView, const D3DXMATRIX* pmProj, const D3DXVECTOR3* pEyePt );
+    static void WINAPI      StaticOnD3D10DestroyDevice();
 
     D3DXVECTOR3 GetLightDirection()         { return m_vCurrentDir; };
     void        SetLightDirection( D3DXVECTOR3 vDir ) { m_vDefaultDir = m_vCurrentDir = vDir; };

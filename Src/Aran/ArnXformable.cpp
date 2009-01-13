@@ -114,7 +114,8 @@ void ArnXformable::update( double fTime, float fElapsedTime )
 			setAnimSeqEnded(true);
 			
 			TCHAR debugMsg[128];
-			StringCchPrintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
+			//StringCchPrintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
+			swprintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
 			OutputDebugString(_T("INFO: Animation stopped since all keyframes passed\n"));
 			OutputDebugString(debugMsg);
 		}

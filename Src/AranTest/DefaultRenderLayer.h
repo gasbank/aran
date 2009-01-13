@@ -9,14 +9,14 @@ class ArnObject;
 class ArnSceneGraph;
 struct ArnFileData;
 
-class DefaultRenderLayer :
-	public RenderLayer
+class DefaultRenderLayer : public RenderLayer
 {
 public:
 	DefaultRenderLayer(Aran::Character* pChar);
-	~DefaultRenderLayer(void);
+	virtual ~DefaultRenderLayer(void);
 
-	virtual HRESULT render(double fTime, float fElapsedTime);
+	virtual HRESULT render();
+	virtual HRESULT update(double fTime, float fElapsedTime);
 
 private:
 	Aran::Character* m_pChar;
@@ -28,9 +28,10 @@ class BoxRenderLayer : public RenderLayer
 {
 public:
 	BoxRenderLayer();
-	~BoxRenderLayer();
+	virtual ~BoxRenderLayer();
 
-	virtual HRESULT render(double fTime, float fElapsedTime);
+	virtual HRESULT render();
+	virtual HRESULT update(double fTime, float fElapsedTime);
 
 private:
 	
