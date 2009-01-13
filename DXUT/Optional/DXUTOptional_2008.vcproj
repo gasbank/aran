@@ -49,6 +49,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="1"
 				PrecompiledHeaderThrough="dxut.h"
+				ProgramDataBaseFileName="$(OutDir)\DXUTOpt.pdb"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
