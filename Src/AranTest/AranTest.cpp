@@ -44,7 +44,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	HRESULT hr = E_FAIL;
 #ifdef _DEBUG
 	// Copy external resources to working directory
-	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0) // use of '/' instead '\\' cause error
+	if (system( "..\\Src\\Aran\\CopyResourcesToWorking.bat" ) != 0) // use of '/' instead '\\' cause error in Windows
 	{
 		_LogWrite(_T("Copy Resources Error"), LOG_FAIL);
 		return DXTRACE_ERR_MSGBOX(_T("Copy Resources Error"), hr);
