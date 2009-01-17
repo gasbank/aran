@@ -5,7 +5,6 @@ Picture::Picture(void)
 {
 	m_d3dxMesh = 0;
 	m_d3dTex = 0;
-	m_x = m_y = 0;
 	m_width = m_height = 0;
 }
 
@@ -33,10 +32,10 @@ void Picture::init(const TCHAR* imgFileName, LPDIRECT3DDEVICE9 d3dDev, UINT segm
 		{
 			Vertex* cv = &v[(segments+1) * i + j];
 			cv->x = 1.0f/segments * j;
-			cv->y = 1.0f/segments * i;
-			cv->z = 0;
+			cv->y = 0;
+			cv->z = 1.0f/segments * i;
 			cv->u = 1.0f/segments * j;
-			cv->v = abs(cv->y - 1);
+			cv->v = abs(cv->z - 1);
 		}
 	}
 	
@@ -164,8 +163,8 @@ void Picture::frameMove( float fElapsedTime )
 	m_vPos += vPosDelta;
 
 	D3DXMATRIX mScaling, mTranslation;
-	D3DXMatrixScaling(&mScaling, m_width, m_height, 1.0f);
+	D3DXMatrixScaling(&mScaling, m_width, 1.0f, m_height);
 	D3DXMatrixTranslation(&mTranslation, m_vPos.x, m_vPos.y, m_vPos.z);
 
-	m_localXform = mTranslation * mScaling;
+	m_localXform = mScaling * mTranslation;
 }

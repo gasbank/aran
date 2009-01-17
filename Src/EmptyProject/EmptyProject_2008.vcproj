@@ -545,6 +545,14 @@
 	</References>
 	<Files>
 		<File
+			RelativePath=".\Ball.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Ball.h"
+			>
+		</File>
+		<File
 			RelativePath="EmptyProject.cpp"
 			>
 		</File>

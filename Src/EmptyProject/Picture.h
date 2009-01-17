@@ -39,6 +39,7 @@ public:
 	void draw();
 	const D3DXMATRIX* getLocalXform() const { return &m_localXform; }
 	void setSize(float width, float height) { m_width = width; m_height = height; }
+	void setPos(float x, float y, float z) { m_vPos.x = x; m_vPos.y = y; m_vPos.z = z; }
 	
 	LRESULT handleMessages( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam );
 	void frameMove(float fElapsedTime);
@@ -47,7 +48,6 @@ private:
 	bool WasKeyDown( BYTE key ) const { return( (key & KEY_WAS_DOWN_MASK) == KEY_WAS_DOWN_MASK ); }
 	PictureInput mapKey( UINT nKey );
 
-	float m_x, m_y;
 	D3DXMATRIX m_localXform;
 	LPDIRECT3DDEVICE9 m_d3dDev;
 	LPD3DXMESH m_d3dxMesh;
