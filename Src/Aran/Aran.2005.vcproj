@@ -492,6 +492,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\Renderer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Renderer.h"
+			>
+		</File>
+		<File
 			RelativePath=".\RenderLayer.cpp"
 			>
 		</File>
