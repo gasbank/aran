@@ -26,20 +26,20 @@ from Blender.Mathutils import *
 'H' unsigned short int 2 
 'i' signed int int 2 
 'I' unsigned int long 2 
-'l' signed long int 4 
-'L' unsigned long long 4 
+'I' signed long int 4 
+'I' unsigned long long 4 
 'f' float float 4 
 'd' double float 8 
 
 """
 
 def attach_int(val):
-	ary = array.array('L')
+	ary = array.array('I')
 	ary.append(val)
 	binstream.append(ary)
 
 def attach_ints(val):
-	ary = array.array('L')
+	ary = array.array('I')
 	ary.fromlist(val)
 	binstream.append(ary)
 
@@ -230,7 +230,7 @@ def export_node_mesh(ob):
 	
 	out.write('--Faces with material/original vertex index--\n');
 	faceary = array.array('H')
-	attrary = array.array('L')
+	attrary = array.array('I')
 	vertUVMap = {}
 	addedVertMap = []
 	vertDupCount = [0] * len(mesh.verts)
@@ -867,7 +867,7 @@ global binstream     # array collection
 
 sceName = bpy.data.scenes.active.name
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = 'c:/%s.arn' % sceName
+fileName = '/home/gbu/%s.arn' % sceName
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
