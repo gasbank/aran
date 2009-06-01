@@ -26,8 +26,8 @@ from Blender.Mathutils import *
 'H' unsigned short int 2 
 'i' signed int int 2 
 'I' unsigned int long 2 
-'I' signed long int 4 
-'I' unsigned long long 4 
+'l' signed long int 4 
+'L' unsigned long long 4 
 'f' float float 4 
 'd' double float 8 
 
