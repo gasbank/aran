@@ -58,7 +58,11 @@ public:
 	DrawRequest* drawRequest( const char* rectName, const D3DXVECTOR3* center, int posX, int posY, int posZ, D3DCOLOR color );
 	DrawRequest* drawRequest( const char* rectName, ScreenPosition spe, D3DCOLOR color );
 	DrawRequest* drawRequestXformable( const char* rectName );
-	LPDIRECT3DTEXTURE9 getTexture() const { assert( m_d3dTex ); return m_d3dTex; }
+	LPDIRECT3DTEXTURE9 getTexture() const
+	{
+		// m_d3dTex is may be zero.
+		return m_d3dTex;
+	}
 
 	void clearDrawRequest();
 	void removeDrawRequest( DrawRequest*& dr );

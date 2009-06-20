@@ -50,7 +50,11 @@ void SpriteManager::frameRender()
 				{
 					const DrawRequest* drawReq = *itDr;
 					if (drawReq->bRender)
-						m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, &drawReq->center, &drawReq->position, drawReq->color );
+					{
+						LPDIRECT3DTEXTURE9 tex = it->second->getTexture();
+						if (tex)
+							m_d3dxSprite->Draw(tex, &drawReq->srcRect, &drawReq->center, &drawReq->position, drawReq->color );
+					}
 				}
 			}
 
