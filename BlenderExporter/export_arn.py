@@ -6,7 +6,7 @@ Blender: 246
 Group: 'Export'
 Tooltip: 'Aran Exporter (Blender 2.43)'
 """
-
+import os
 import math
 import Blender
 from Blender import sys, Window, Ipo, Armature, Modifier
@@ -867,7 +867,8 @@ global binstream     # array collection
 
 sceName = bpy.data.scenes.active.name
 #Blender.Window.FileSelector(write_obj, 'Aran Export', sys.makename(ext='.txt'))
-fileName = '/home/gbu/%s.arn' % sceName
+
+fileName = '%s/%s.arn' % (os.path.expanduser('~'), sceName)
 
 matDic       = {}
 outbin       = file(fileName, 'wb')
