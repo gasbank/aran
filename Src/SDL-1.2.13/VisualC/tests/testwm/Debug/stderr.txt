@@ -1,0 +1,1 @@
+Couldn't load icon.bmp: Couldn't open icon.bmp

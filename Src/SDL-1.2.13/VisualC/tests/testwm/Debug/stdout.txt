@@ -1,0 +1,24 @@
+Title was set to: Testing  1.. 2.. 3...
+Running in windowed mode
+App gained mouse focus
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+App lost mouse focus
+App gained mouse focus
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+Mouse button 1 has been pressed
+Mouse button 1 has been released
+App lost mouse focus
+Quit requested
+App gained mouse focus
+Posting internal quit request
+Handling internal quit request
+Bye bye..
+App lost input focus

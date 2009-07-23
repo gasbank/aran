@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="AranDecouple_Test" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../Working/AranDecouple_Test_D" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../Working" />
+				<Option object_output="obj/Debug/" />
+				<Option external_deps="../Aran/bin/Debug/libAranCB.a;" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="/home/gbu/NormalMapping.xml" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add directory="../Aran/bin/Debug" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/AranDecouple_Test" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-pedantic" />
+			<Add option="-Wall" />
+			<Add directory="../Aran" />
+			<Add directory="/usr/include/freetype2" />
+			<Add directory="../cml-1_0_0" />
+		</Compiler>
+		<Linker>
+			<Add library="gtest" />
+			<Add library="AranCB" />
+			<Add library="glut" />
+			<Add library="GLEW" />
+			<Add library="xerces-c" />
+			<Add library="rt" />
+			<Add library="SDL" />
+			<Add library="freetype" />
+			<Add library="IL" />
+		</Linker>
+		<Unit filename="Test2.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+			<envvars />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

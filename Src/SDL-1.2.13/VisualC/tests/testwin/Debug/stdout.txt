@@ -1,0 +1,3 @@
+Set 640x480x32 mode
+(video surface located in system memory)
+Time: 1 milliseconds

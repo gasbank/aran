@@ -1,0 +1,6 @@
+INCLUDE_DIRECTORIES(../Aran)
+ADD_EXECUTABLE(arantest Test)
+TARGET_LINK_LIBRARIES(arantest Aran)
+TARGET_LINK_LIBRARIES(arantest gtest)
+TARGET_LINK_LIBRARIES(arantest GL GLU glut)
+
