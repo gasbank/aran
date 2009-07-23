@@ -2,23 +2,34 @@
 #include "ArnXformable.h"
 #include "ArnIpo.h"
 #include "ArnMath.h"
-
-#define FPS (60)
+#include "Animation.h"
+#include "ArnAnimationController.h"
+#include "ArnConsts.h"
 
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
-: ArnNode(ndt), m_d3dxAnimCtrl(0), m_bDoAnim(false), m_bAnimSeqEnded(false)
+: ArnNode(ndt)
+, m_ipo(0)
+, m_d3dxAnimCtrl(0)
+, m_bDoAnim(false)
+, m_bAnimSeqEnded(false)
+, m_bLocalXformDirty(true)
 {
-	m_animLocalXform	= DX_CONSTS::D3DXMAT_IDENTITY;
-	m_localXform		= DX_CONSTS::D3DXMAT_IDENTITY;
-	m_localXformIpo		= DX_CONSTS::D3DXMAT_IDENTITY;
+	m_localXform_Scale	= ArnConsts::D3DXVEC3_ONE;
+	m_localXform_Trans	= ArnConsts::D3DXVEC3_ZERO;
+	m_localXform_Rot	= ArnConsts::D3DXQUAT_IDENTITY;
+	m_animLocalXform	= ArnConsts::D3DXMAT_IDENTITY;
+	m_localXform		= ArnConsts::D3DXMAT_IDENTITY;
+	m_localXformIpo		= ArnConsts::D3DXMAT_IDENTITY;
 }
 
 ArnXformable::~ArnXformable(void)
 {
-	SAFE_RELEASE(m_d3dxAnimCtrl);
+	//SAFE_RELEASE(m_d3dxAnimCtrl);
+	delete m_d3dxAnimCtrl;
 }
 
-void ArnXformable::setIpo( const STRING& ipoName )
+void
+ArnXformable::setIpo( const STRING& ipoName )
 {
 	if (ipoName.length())
 	{
@@ -34,16 +45,23 @@ void ArnXformable::setIpo( const STRING& ipoName )
 	}
 }
 
-void ArnXformable::setIpo( ArnIpo* val )
+void
+ArnXformable::advanceTime(float fTime)
+{
+	m_d3dxAnimCtrl->AdvanceTime( fTime );
+}
+
+void
+ArnXformable::setIpo( ArnIpo* val )
 {
 	m_ipo = val;
 	if (m_ipo)
 	{
 		DWORD cn = m_ipo->getCurveNames();
 
-		D3DXVECTOR3 vTrans = getLocalXform_Trans(), vScale = getLocalXform_Scale();
-		D3DXQUATERNION qRot = getLocalXform_Rot();
-		D3DXVECTOR3 vRot = ArnMath::QuatToEuler(&qRot);
+		ArnVec3 vTrans = getLocalXform_Trans(), vScale = getLocalXform_Scale();
+		ArnQuat qRot = getLocalXform_Rot();
+		ArnVec3 vRot = ArnQuatToEuler(&qRot);
 
 		if (cn & CN_LocX) vTrans.x = 0;
 		if (cn & CN_LocY) vTrans.y = 0;
@@ -55,12 +73,13 @@ void ArnXformable::setIpo( ArnIpo* val )
 		if (cn & CN_RotY) vRot.y = 0;
 		if (cn & CN_RotZ) vRot.z = 0;
 
-		qRot = ArnMath::EulerToQuat(&vRot);
+		qRot = ArnEulerToQuat(&vRot);
 
-		D3DXMatrixTransformation(&m_localXformIpo, 0, 0, &vScale, 0, &qRot, &vTrans);
+		ArnMatrixTransformation(&m_localXformIpo, 0, 0, &vScale, 0, &qRot, &vTrans);
 	}
 }
-D3DXMATRIX ArnXformable::getFinalXform()
+ArnMatrix
+ArnXformable::getFinalXform()
 {
 	if (	(getParent()->getType() == NDT_RT_MESH)
 		||	(getParent()->getType() == NDT_RT_CAMERA)
@@ -74,12 +93,17 @@ D3DXMATRIX ArnXformable::getFinalXform()
 	}
 }
 
-void ArnXformable::configureAnimCtrl()
+void
+ArnXformable::configureAnimCtrl()
 {
-	if (!getIpo())
+	ArnIpo* ipo = getIpo();
+	if (!ipo)
+	{
+		fprintf(stderr, " ** [Node: %s] Animation controller cannot be configured since there is no IPO associated.\n", getName());
 		return;
-
-	V_VERIFY( D3DXCreateAnimationController(
+	}
+	assert(!m_d3dxAnimCtrl);
+	V_VERIFY( ArnCreateAnimationController(
 		1, /* MaxNumMatrices */
 		1, /* MaxNumAnimationSets */
 		1, /* MaxNumTracks */
@@ -88,61 +112,106 @@ void ArnXformable::configureAnimCtrl()
 		) );
 
 	ArnIpo* globalIpoNode = static_cast<ArnIpo*>(getSceneRoot()->getNodeByName("Global IPOs Node"));
-	assert(globalIpoNode->getType() == NDT_RT_IPO);
-	LPD3DXANIMATIONSET animSet = globalIpoNode->getD3DXAnimSet();
-	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationSet(animSet));
-	m_d3dxAnimCtrl->SetTrackAnimationSet(0, animSet);
+	if (globalIpoNode)
+	{
+		// Older way (does not use XML file.)
+		assert(globalIpoNode->getType() == NDT_RT_IPO);
+		ArnIpo* animSet = globalIpoNode->getD3DXAnimSet();
+		V_VERIFY(m_d3dxAnimCtrl->RegisterIpo(animSet));
+		m_d3dxAnimCtrl->SetTrackAnimationSet(0, 0);
+	}
+	else
+	{
+		// Newer way
+		m_d3dxAnimCtrl->RegisterIpo(ipo);
+		m_d3dxAnimCtrl->SetTrackAnimationSet(0, 0);
+	}
 	m_d3dxAnimCtrl->SetTrackPosition(0, 0.0f);
 	m_d3dxAnimCtrl->SetTrackSpeed(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackWeight(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackEnable(0, TRUE);
-	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, 0, 0, 0));
-	m_d3dxAnimCtrl->AdvanceTime( 0.0001f, 0 );
+	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, &m_animLocalXform_Scale, &m_animLocalXform_Rot, &m_animLocalXform_Trans));
+	m_d3dxAnimCtrl->AdvanceTime( 0.0001 );
+
+	//setDoAnim(true); // Start Animation right now.
 }
 
-void ArnXformable::update( double fTime, float fElapsedTime )
+void
+ArnXformable::update( double fTime, float fElapsedTime )
 {
 	if (m_bDoAnim && m_d3dxAnimCtrl)
 	{
-		m_d3dxAnimCtrl->AdvanceTime(fElapsedTime, 0);
-		D3DXTRACK_DESC trackDesc;
+		m_d3dxAnimCtrl->AdvanceTime(0.005, 0);
+
+		/*
+		ARNTRACK_DESC trackDesc;
 		m_d3dxAnimCtrl->GetTrackDesc( 0, &trackDesc );
 		if (m_ipo && ( (float)m_ipo->getEndKeyframe() / FPS < (float)trackDesc.Position ))
 		{
 			// Current Ipo ended. Stop the animation
 			setDoAnim(false);
 			setAnimSeqEnded(true);
-			
-			TCHAR debugMsg[128];
+
+			char debugMsg[128];
 			//StringCchPrintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
-			swprintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
-			OutputDebugString(_T("INFO: Animation stopped since all keyframes passed\n"));
-			OutputDebugString(debugMsg);
+			sprintf(debugMsg, "m_ipo End Keyframe = %d, trackDescPosition = %f\n", m_ipo->getEndKeyframe(), (float)trackDesc.Position);
+			OutputDebugStringA("INFO: Animation stopped since all keyframes passed\n");
+			OutputDebugStringA(debugMsg);
 		}
+		*/
 	}
+
+	ArnNode::update(fTime, fElapsedTime);
 }
 
-void ArnXformable::setLocalXform( const D3DXMATRIX& localXform )
+// Explicitly set m_localXform, and therefore, Scale, rotation(quat) and translation values are recalculated.
+void
+ArnXformable::setLocalXform( const ArnMatrix& localXform )
 {
 	m_localXform = localXform;
 	m_localXformIpo = m_localXform;
-	D3DXMatrixDecompose(&m_localXform_Scale, &m_localXform_Rot, &m_localXform_Trans, &m_localXform);
+	ArnMatrixDecompose(&m_localXform_Scale, &m_localXform_Rot, &m_localXform_Trans, &m_localXform);
+	m_bLocalXformDirty = false;
 }
 
-const D3DXMATRIX& ArnXformable::getFinalLocalXform()
+// Recalculate local xform from scale, rotation(quat) and translation.
+void
+ArnXformable::recalcLocalXform()
 {
-	m_finalLocalXform = m_animLocalXform * m_localXformIpo;
-	return m_finalLocalXform;
+	m_localXform_Rot.normalize();
+	ArnMatrixTransformation(&m_localXform, 0, 0, &m_localXform_Scale, 0, &m_localXform_Rot, &m_localXform_Trans);
+	m_bLocalXformDirty = false;
 }
 
-double ArnXformable::getAnimCtrlTime() const
+
+void
+ArnXformable::setAnimLocalXform_Rot( const ArnQuat& q )
+{
+	m_animLocalXform_Rot = q;
+}
+
+const ArnMatrix&
+ArnXformable::getFinalLocalXform()
+{
+	// TODO: We need urgent transformation matrix cleanup -_-;
+
+	//m_finalLocalXform = m_animLocalXform * m_localXformIpo;
+	if (m_ipo)
+		return m_animLocalXform;
+	else
+		return m_localXform;
+}
+
+double
+ArnXformable::getAnimCtrlTime() const
 {
 	if ( m_d3dxAnimCtrl )
 		return m_d3dxAnimCtrl->GetTime();
 	else return -1.0;
 }
 
-void ArnXformable::setAnimCtrlTime( double dTime )
+void
+ArnXformable::setAnimCtrlTime( double dTime )
 {
 	if ( m_d3dxAnimCtrl )
 	{
@@ -151,11 +220,30 @@ void ArnXformable::setAnimCtrlTime( double dTime )
 	}
 	else
 	{
-		OutputDebugString( _T("Animation controller is not available on the ArnXformable. setAnimCtrlTime ignored\n" ) );
+		OutputDebugStringA( "Animation controller is not available on the ArnXformable. setAnimCtrlTime ignored\n" );
 	}
 }
 
-void ArnXformable::setDoAnim( bool bDoAnim )
+void
+ArnXformable::setDoAnim( bool bDoAnim )
 {
 	m_bDoAnim = bDoAnim;
+}
+
+void
+ArnXformable::printXformData() const
+{
+	printf("Node name: %s\n", getName());
+	printf("Local translation (%.3f, %.3f, %.3f)\n", m_localXform_Trans.x, m_localXform_Trans.y, m_localXform_Trans.z);
+	ArnVec3 eul = ArnQuatToEuler(&m_localXform_Rot);
+	printf("Rotation Quat (w%.3f, %.3f, %.3f, %.3f)\n", m_localXform_Rot.w, m_localXform_Rot.x, m_localXform_Rot.y, m_localXform_Rot.z);
+	printf("Rotation Euler (%.3f, %.3f, %.3f)\n", eul.x * 180 / M_PI, eul.y * 180 / M_PI, eul.z * 180 / M_PI);
+}
+
+void
+ArnXformable::configureIpo()
+{
+	if (!m_ipo)
+		setIpo(getIpoName());
+	configureAnimCtrl();
 }

@@ -2,6 +2,8 @@
 #include "Character.h"
 #include "CharacterAnimationCallback.h"
 #include "ModelReader.h"
+#include "Animation.h"
+#include "ArnMath.h"
 
 namespace Aran
 {
@@ -11,24 +13,24 @@ namespace Aran
 		this->animState = CharacterInterface::CAS_LOITER;
 		this->animStateNext = CharacterInterface::CAS_UNDEFINED;
 
-		this->translation = D3DXVECTOR3( 0.0f, 0.0f, 0.0f );
-		this->scale = D3DXVECTOR3( 1.0f, 1.0f, 1.0f );
-		this->rotation = D3DXQUATERNION( 0.0f, 0.0f, 0.0f, 0.0f );
-		this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
-		this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
-		D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
+		this->translation = ArnVec3( 0.0f, 0.0f, 0.0f );
+		this->scale = ArnVec3( 1.0f, 1.0f, 1.0f );
+		this->rotation = ArnQuat( 0.0f, 0.0f, 0.0f, 0.0f );
+		this->lookAt = ArnVec3( 0.0f, -1.0f, 0.0f );
+		this->outLookAt = ArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
+		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
 
-	Character::Character( D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation )
+	Character::Character( ArnVec3 translation, ArnVec3 scale, ArnQuat rotation )
 	{
 		this->pMR = 0;
 		this->translation = translation;
 		this->scale = scale;
 		this->rotation = rotation;
-		this->lookAt = D3DXVECTOR3( 0.0f, -1.0f, 0.0f );
-		this->outLookAt = D3DXVECTOR4( 0.0f, -1.0f, 0.0f, 1.0f );
+		this->lookAt = ArnVec3( 0.0f, -1.0f, 0.0f );
+		this->outLookAt = ArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
 
-		D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
+		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
 	Character::~Character(void)
 	{
@@ -36,37 +38,37 @@ namespace Aran
 
 	void Character::ChangeTranslation( float dx, float dy, float dz )
 	{
-		D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
+		ArnMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
 
 		translation.x += dx;
 		translation.y += dy;
 		translation.z += dz;
-		D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
+		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
 
 	void Character::ChangeOrientation( float dx, float dy, float dz ) /* radian */
 	{
-		D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
+		ArnMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
 
-		D3DXMATRIX matRot[4]; // x, y, z, x*y*z
-		D3DXMatrixRotationX( &matRot[0], dx );
-		D3DXMatrixRotationY( &matRot[1], dy );
-		D3DXMatrixRotationZ( &matRot[2], dz );
-		D3DXMATRIX matRotOriginal;
-		D3DXMatrixRotationQuaternion( &matRotOriginal, &this->rotation );
+		ArnMatrix matRot[4]; // x, y, z, x*y*z
+		ArnMatrixRotationX( &matRot[0], dx );
+		ArnMatrixRotationY( &matRot[1], dy );
+		ArnMatrixRotationZ( &matRot[2], dz );
+		ArnMatrix matRotOriginal;
+		ArnMatrixRotationQuaternion( &matRotOriginal, &this->rotation );
 
 		matRot[3] = matRot[0] * matRot[1] * matRot[2];
-		D3DXVec3Transform( &this->outLookAt, &this->lookAt, &matRot[3] );
+		ArnVec3Transform( &this->outLookAt, &this->lookAt, &matRot[3] );
 		this->lookAt.x = this->outLookAt.x;
 		this->lookAt.y = this->outLookAt.y;
 		this->lookAt.z = this->outLookAt.z;
 
 		matRot[3] *= matRotOriginal;
-		D3DXQuaternionRotationMatrix( &rotation, &matRot[3] );
-		D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
+		ArnQuaternionRotationMatrix( &rotation, &matRot[3] );
+		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
 
-	const D3DXMATRIX* Character::GetFinalTransform() const
+	const ArnMatrix* Character::GetFinalTransform() const
 	{
 		return &finalTransform;
 	}
@@ -113,9 +115,9 @@ namespace Aran
 
 	void Character::ChangeTranslationToLookAtDirection( float amount )
 	{
-		D3DXMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
+		ArnMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
 		translation += this->lookAt * amount;
-		D3DXMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
+		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 
 
 	}

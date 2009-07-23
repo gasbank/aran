@@ -7,9 +7,11 @@
 //
 #pragma once
 
-typedef std::string STRING;
+#ifndef V
+#define V(x)           { hr = (x); if( FAILED(hr) ) { DXTrace( __FILE__, (DWORD)__LINE__, hr, L#x, true ); } }
+#endif
 
-#define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) return DXTRACE_ERR_MSGBOX(_T("V_OKAY() FAILED"), __hr__); }
+#define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) throw std::runtime_error("V_OKAY() FAILED"); }
 #define V_VERIFY(x) { if (FAILED(x)) throw MyError(MEE_GENERAL_VERIFICATION_FAILED); }
 #define GLOBAL_TEXTURE_FILE_PATH			"Textures\\"
 #define GLOBAL_ARN_FILE_PATH				"Models\\"
@@ -25,16 +27,36 @@ typedef std::string STRING;
 #define SAFE_DELETE(p) if((p)!=0) { delete (p); (p) = 0; }
 #endif
 
-namespace std {
-#if defined _UNICODE || defined UNICODE
-	typedef wstring tstring;
-#else
-	typedef string tstring;
-#endif
-}
-
 #define TCHARSIZE(x) (sizeof(x)/sizeof(TCHAR))
 
+#define ARN_PI       (3.14159265358979323846)
+#ifndef M_PI
+#define M_PI ARN_PI
+#endif
+
+#ifndef WIN32
+#define TCHAR char
+#endif
+
+#ifdef WIN32
+	#ifndef EP_SAFE_RELEASE
+	#define EP_SAFE_RELEASE(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
+	#endif
+
+	template<typename T> void EpSafeReleaseAll( T& obj ) {
+		T::iterator it = obj.begin();
+		for ( ; it != obj.end(); ++it )
+		{
+			EP_SAFE_RELEASE( *it );
+		}
+		obj.clear();
+	};
+
+
+	#ifndef V_RETURN
+	#define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
+	#endif
+#endif
 
 #if defined(DEBUG) | defined(_DEBUG)
 #define ASSERTCHECK(x) \
@@ -53,6 +75,14 @@ namespace std {
 #else
 #define ASSERTCHECK(x)
 #endif
+
+// For annotation purpose
+#define ARAN_API __declspec(dllexport)
+#define ARN_REMOVED
+#define ARN_OWNERSHIP
+#define ARN_THROW_REMOVE_FUNCTION_ERROR { throw new std::runtime_error("This function should not be called because it was removed by the design issue!"); }
+#define ARN_THROW_NOT_IMPLEMENTED_ERROR { throw new std::runtime_error("Not implemented!"); }
+#define ARN_THROW_UNEXPECTED_CASE_ERROR { throw new std::runtime_error("Unexpected error!"); }
 
 
 

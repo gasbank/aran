@@ -14,6 +14,10 @@ public:
 	static ArnNode*				createFrom(const NodeBase* nodeBase);
 	const MyFrameData&			getFrame(unsigned int idx) const;
 	unsigned int				getFrameCount() const { return m_data.size(); }
+
+	// *** INTERNAL USE ONLY START ***
+	virtual void			interconnect(ArnNode* sceneRoot) { ArnNode::interconnect(sceneRoot); }
+	// *** INTERNAL USE ONLY END ***
 private:
 	void						buildFrom(const NodeHierarchy1* nh);
 	void						buildFrom(const NodeHierarchy2* ns);

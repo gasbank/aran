@@ -8,9 +8,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AranDecouple_Test", "AranDe
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770} = {8FD2D266-F50A-43DE-8DF8-EFACCE93F770}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AranMath", "AranMath\AranMath.vcproj", "{4A2C1E91-BC81-4CAC-B266-D62E7904D112}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
+		DebugDLL|Win32 = DebugDLL|Win32
 		DebugLib|Win32 = DebugLib|Win32
 		Release|Win32 = Release|Win32
 		ReleaseLib|Win32 = ReleaseLib|Win32
@@ -18,20 +21,34 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.Debug|Win32.ActiveCfg = DebugLib|Win32
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.Debug|Win32.Build.0 = DebugLib|Win32
-		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugLib|Win32.ActiveCfg = DebugLib|Win32
-		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugLib|Win32.Build.0 = DebugLib|Win32
+		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugDLL|Win32.ActiveCfg = DebugDLL|Win32
+		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugDLL|Win32.Build.0 = DebugDLL|Win32
+		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugLib|Win32.ActiveCfg = DebugDLL|Win32
+		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.DebugLib|Win32.Build.0 = DebugDLL|Win32
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.Release|Win32.ActiveCfg = ReleaseLib|Win32
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.Release|Win32.Build.0 = ReleaseLib|Win32
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.ReleaseLib|Win32.ActiveCfg = ReleaseLib|Win32
 		{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}.ReleaseLib|Win32.Build.0 = ReleaseLib|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.Debug|Win32.ActiveCfg = Debug|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.Debug|Win32.Build.0 = Debug|Win32
+		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.DebugDLL|Win32.ActiveCfg = Debug|Win32
+		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.DebugDLL|Win32.Build.0 = Debug|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.DebugLib|Win32.ActiveCfg = Debug|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.DebugLib|Win32.Build.0 = Debug|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.Release|Win32.ActiveCfg = Release|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.Release|Win32.Build.0 = Release|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.ReleaseLib|Win32.ActiveCfg = Release|Win32
 		{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}.ReleaseLib|Win32.Build.0 = Release|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.Debug|Win32.Build.0 = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.DebugDLL|Win32.ActiveCfg = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.DebugDLL|Win32.Build.0 = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.DebugLib|Win32.ActiveCfg = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.DebugLib|Win32.Build.0 = Debug|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.Release|Win32.ActiveCfg = Release|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.Release|Win32.Build.0 = Release|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.ReleaseLib|Win32.ActiveCfg = Release|Win32
+		{4A2C1E91-BC81-4CAC-B266-D62E7904D112}.ReleaseLib|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

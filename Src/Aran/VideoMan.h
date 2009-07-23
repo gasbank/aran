@@ -1,21 +1,19 @@
 // VideoMan.h
 // 2007 Geoyeob Kim
+// 2009 Geoyeob Kim
 //
 // Aran Project Video Manager
 //
-// (1) Window Creation
-// (2) Direct3D 9 Initialization
-// (3) Model Rendering Capability
-//
 
 #pragma once
-
 
 #include "InputMan.h"
 #include "ModelReader.h"
 #include "DungeonInterface.h"
 #include "Singleton.h"
 #include "PreciseTimer.h"
+#include "ArnCamera.h"
+#include "ArnConsts.h"
 
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=0) { (p)->Release(); (p) = 0; }
@@ -25,30 +23,35 @@ class Character;
 class ArnCamera;
 class ArnNode;
 class ArnMesh;
+class ArnAnimationController;
+class ArnIpo;
+class ArnSkinInfo;
+class ArnSceneGraph;
+class ArnLight;
+class ArnTimer;
+
+static const DWORD ARNSHADER_DEBUG = 1;
 
 struct MY_COLOR_VERTEX
 {
-	FLOAT x, y, z;
+	float x, y, z;
 	DWORD color;
 };
 //
 // Classes and Structures
 //
-struct ARN_CAMERA
+enum RendererType
 {
-	// eye: Position of camera
-	// at: Look-at vector
-	// up: Up-vector
-
-	D3DXVECTOR3 eye, at, up;
-	float farClip, nearClip;
-	float angle; // in radian
+	RENDERER_DX9,
+	RENDERER_GL
 };
 
 class RenderLayer;
 
 // General callbacks
-typedef void    (CALLBACK *LPARNCALLBACKFRAMEMOVE)( double fTime, float fElapsedTime);
+typedef void    (*LPARNCALLBACKFRAMEMOVE)( double fTime, float fElapsedTime);
+typedef void	(*ARNUPDATEFRAME)(double dTime, float fElapsedTime);
+typedef void	(*ARNRENDERFRAME)();
 //typedef LRESULT (CALLBACK *LPARNCALLBACKMSGPROC)( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, bool* pbNoFurtherProcessing);
 //typedef void    (CALLBACK *LPARNCALLBACKTIMER)( UINT idEvent);
 //typedef bool    (CALLBACK *LPARNCALLBACKMODIFYDEVICESETTINGS)( DXUTDeviceSettings* pDeviceSettings);
@@ -73,182 +76,161 @@ typedef void    (CALLBACK *LPARNCALLBACKFRAMEMOVE)( double fTime, float fElapsed
 
 class VideoMan : public Singleton<VideoMan>
 {
-private:
-	InputMan* pInputMan;
-
-	TCHAR szClassName[64];
-	WNDCLASS wndClass;
-	HWND hWnd, hLoadingWnd;
-	int screenWidth, screenHeight;
-
-	LPDIRECT3D9 lpD3D;
-	LPDIRECT3DDEVICE9 lpD3DDevice;
-	LPDIRECT3DTEXTURE9 lpTex1;
-
-	LPD3DXFONT lpFont;
-
-	D3DXMATRIX matWorld, matView, matProjection;
-
-	DWORD shaderFlags;
-	LPD3DXBUFFER lpCompiledFragments;
-	LPD3DXFRAGMENTLINKER lpFragmentLinker;
-	LPDIRECT3DVERTEXSHADER9 lpVertexShader;
-	LPD3DXCONSTANTTABLE lpConstantTable;
-	LPD3DXEFFECT lpEffect;
-	LPD3DXEFFECT lpEffectSkinning;
-
-	LPD3DXMESH lpCustomMesh, lpCustomSkinnedMesh;
-	LPD3DXSKININFO lpSkinInfo;
-	D3DXMESHCONTAINER meshContainer;
-	D3DXFRAME frame1, frame2; // bones
-
-	LPD3DXANIMATIONCONTROLLER lpAnimationController;
-private:
-	LPD3DXKEYFRAMEDANIMATIONSET lpDefaultAnimationSet;
-
-
-	D3DLIGHT9 defaultLight, pointLight;
-	D3DMATERIAL9 defaultMaterial;
-	D3DXMATERIAL rgbMaterial[3]; // red, green, blue with no texture
-	
-
-	D3DXMATRIX modelArcBallRotation, modelArcBallRotationLast;
-	D3DXVECTOR3 cameraVector;
-	BOOL cameraBounceDirection;
-	BOOL leftPattern, rightPattern;
-
-	LPDIRECT3DVERTEXBUFFER9 lpTestVB, lpTestVB2, lpBoxVB, lpSkinnedVB;
-	void* pVBVertices;
-	static const DWORD MY_COLOR_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
-	//static const DWORD MY_COLOR_VERTEX_NORMAL_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
-
-	BOOL rendering;
-	BOOL closeNow;
-
-	ModelReader mr1, mr2, mr3;
-	ModelReader mrHouse;
-	ModelReader mrMan;
-	ModelReader gamebryo, middlesnake;
-	ModelReader highpoly;
-	ModelReader mrRocky;
-	ModelReader mrDungeon;		// Dungeon(level) test
-	D3DXVECTOR3 dungeonTranslation;
-
-	ModelReader* pDrawingModel; // indicates drawing model at editor
-	
-
-	DWORD drawCount; // count for Draw() function call
-	DWORD curFrameIndex; // current animation keyframe index (editor)
-
-	int totalLightCount;
-	BOOL isOkayToDestruct; // resolves multithread issue
-
-	ARN_CAMERA mainCamera;
-
-	
-
-	std::list<RenderLayer*> m_renderLayers;
 
 public:
-	VideoMan();
-	~VideoMan();
-
-	HRESULT InitWindow(TCHAR* szClassName, WNDPROC wndProc, int width, int height);
-	HRESULT InitD3D(BOOL isMultithreaded = FALSE);
-	HRESULT InitTestVertexBuffer();
-	HRESULT InitBoxVertexBuffer();
-	HRESULT InitSkinnedMeshVertexBuffer();
-	HRESULT InitTexture();
-	HRESULT InitShader();
-	HRESULT InitAnimationController(); // Global animation controller
-	HRESULT InitCustomMesh();
-	HRESULT InitMainCamera();
-	HRESULT InitLight();
-	HRESULT InitMaterial();
-	HRESULT InitFont();
-
-	HRESULT InitModels();
-	
-	const D3DXMATRIX* getArcballResult() const { return &modelArcBallRotation; }
-	D3DMATERIAL9* getDefaultMaterial() { return &defaultMaterial; }
-
-	HRESULT Show();
-	HRESULT StartMainLoop();
-	BOOL PauseMainLoop();
-	BOOL ResumeMainLoop();
-	int Draw();
-	HRESULT RenderModel(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = 0);
-	HRESULT RenderModel1(const ModelReader* pMR, const D3DXMATRIX* worldTransformMatrix = 0);
-	HRESULT RenderModel2(const ModelReader *pMR, const D3DXMATRIX* worldTransformMatrix = 0);
-	HRESULT TurnModelLightOn(const ModelReader *pMR, D3DXMATRIX* worldTransformMatrix = 0);
-	void Close();
-
-	void MoveMainCameraEye(float dx, float dy, float dz);
-	void ChangeInTestVB(D3DCOLOR color);
-	void ToggleLeftPattern();
-	void ToggleRightPattern();
-
-	HWND GetWindowHandle();
-	LPDIRECT3DDEVICE9 GetDev();
-	void SetDev(LPDIRECT3DDEVICE9 dev); // Aran Internal Use Only
-
-
-	HRESULT SetCamera(float x, float y, float z);
-	HRESULT SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );
-	HRESULT SetCamera(ArnCamera& arnCam);
-
-	void AttachInputMan(InputMan* inputMan);
-
-	InputMan* GetInputMan();
-
-	void SetWindowSize(int w, int h);
-	void SetHwnd(HWND hWnd);
-
-	void DrawAtEditor(BOOL isReady, BOOL isRunning);
-	HRESULT InitModelsAtEditor();
-
-	LPD3DXANIMATIONCONTROLLER GetAnimationController(); // global animation controller
-	void SetDrawingModelAtEditor(ModelReader* pMR);
-	HRESULT SetCurrentFrameIndex(int idx);
-
-	virtual void ScrollBy( D3DXVECTOR3* dScroll );
-	//LRESULT CALLBACK LoadingDialogProc(HWND hWndDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
-
-
-	size_t registerRenderLayer(RenderLayer* pRL);
-	BOOL unregisterRenderLayerAt( unsigned int ui );
-	size_t unregisterAllRenderLayers();
-	RenderLayer* getRenderLayerAt(unsigned int ui);
-
-	const ARN_CAMERA* getMainCamera() const { return &mainCamera; }
-	const void getScreenInfo(int& width, int& height) { width = screenWidth; height = screenHeight; }
-
-	const D3DXMATRIX* getModelArcBallRotation() const { return &modelArcBallRotation; }
-	const LPD3DXFONT getDefaultFont() const { return lpFont; }
-
-
-	void setWorldViewProjection( const D3DXMATRIX& matWorld, const D3DXMATRIX& matView, const D3DXMATRIX& matProj );
-
-	void renderMeshesOnly(ArnNode* node, const D3DXMATRIX& globalXform = DX_CONSTS::D3DXMAT_IDENTITY);
-	void renderSingleMesh(ArnMesh* mesh, const D3DXMATRIX& globalXform = DX_CONSTS::D3DXMAT_IDENTITY);
-	float getFPS() const { return m_fFPS; }
-
-	void setFrameMoveCallback(LPARNCALLBACKFRAMEMOVE pCallback);
+	virtual											~VideoMan();
+	static VideoMan*								create(RendererType type, int width, int height, int argc, char** argv);
+	void											setUpdateFrameCallback(ARNUPDATEFRAME cb) { m_updateFrameCb = cb; }
+	virtual void									setRenderFrameCallback(ARNRENDERFRAME cb) { m_renderFrameCb = cb; }
+	virtual void									setReshapeCallback(void reshape(int, int)) = 0;
+	virtual void									setKeyboardCallback(void keyboardCB(unsigned char, int, int)) = 0;
+	virtual void									setMouseCallback(void mouseCB(int, int, int, int)) = 0;
+	virtual void									clearFrameBuffer() = 0;
+	virtual void									swapFrameBuffer() = 0;
+	virtual void									setupViewMatrix() const = 0;
+	virtual void									setupProjectionMatrix() const = 0;
+	HRESULT											InitLight();
+	virtual void									setLight(int lightId, const ArnLight* light) = 0;
+	void											setupLightsFromSceneGraph();
+	void											disableAllLights();
+	virtual HRESULT									InitTexture() = 0;
+	virtual HRESULT									InitShader() = 0;
+	virtual HRESULT									InitAnimationController() = 0; // Global animation controller
+	virtual HRESULT									InitMainCamera() = 0;
+	virtual HRESULT									InitMaterial() = 0;
+	virtual HRESULT									InitFont() = 0;
+	virtual HRESULT									InitModels() = 0;
+	virtual HRESULT									InitModelsAtEditor() = 0;
+	virtual HRESULT									Show() = 0;
+	virtual HRESULT									StartMainLoop() = 0;
+	virtual void									DrawAtEditor(BOOL isReady, BOOL isRunning) = 0;
+	virtual void									setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix& matView, const ArnMatrix& matProj ) = 0;
+	virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY) = 0;
+	virtual void									renderSceneGraph();
+	void											updateSceneGraph(double dTime, float fElapsedTime);
+	const ArnMatrix*								getArcballResult() const { return &modelArcBallRotation; }
+	ArnMaterialData*								getDefaultMaterial() { return &defaultMaterial; }
+	BOOL											isRendering() const { return m_bRendering; }
+	void											setAllowRenderNewFrame(bool val) { m_bAllowRenderNewFrame = val; }
+	BOOL											isCloseNow() const { return closeNow; }
+	void											setCloseNow(BOOL val) { closeNow = val; }
+	BOOL											isOkayToDestruct() const { return okayToDestruct; }
+	void											setOkayToDestruct(BOOL val) { okayToDestruct = val; }
+	bool											PauseMainLoop();
+	bool											ResumeMainLoop();
+	void											Close();
+	void											MoveMainCameraEye(float dx, float dy, float dz);
+	void											ToggleLeftPattern();
+	void											ToggleRightPattern();
+	HRESULT											SetCamera(float x, float y, float z);
+	HRESULT											SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk );
+	HRESULT											SetCamera(ArnCamera& arnCam);
+	const ARN_CAMERA&								getCamera() const { return mainCamera; }
+	void											AttachInputMan(InputMan* inputMan);
+	InputMan*										GetInputMan();
+	void											SetWindowSize(int w, int h);
+	int												GetWindowSizeW() const { return screenWidth; }
+	int												GetWindowSizeH() const { return screenHeight; }
+	void											SetHwnd(HWND hWnd);
+	void											attachSceneGraph(ArnSceneGraph* sceneGraph);
+	ArnSceneGraph*									detachSceneGraph();
+	LPD3DXANIMATIONCONTROLLER						GetAnimationController(); // global animation controller
+	HRESULT											SetCurrentFrameIndex(int idx);
+	virtual void									ScrollBy( ArnVec3* dScroll );
+	size_t											registerRenderLayer(RenderLayer* pRL);
+	BOOL											unregisterRenderLayerAt( unsigned int ui );
+	size_t											unregisterAllRenderLayers();
+	RenderLayer*									getRenderLayerAt(unsigned int ui);
+	const ARN_CAMERA*								getMainCamera() const { return &mainCamera; }
+	const void										getScreenInfo(int& width, int& height) { width = screenWidth; height = screenHeight; }
+	const ArnMatrix*								getModelArcBallRotation() const { return &modelArcBallRotation; }
+	void											renderMeshesOnly(ArnNode* node, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY);
+	float											getFPS() const { return m_fFPS; }
+	void											setFrameMoveCallback(LPARNCALLBACKFRAMEMOVE pCallback);
+	void											setScreenSize(int width, int height) { screenWidth = width; screenHeight = height; }
+	int												getScreenWidth() const { return screenWidth; }
+	int												getScreenHeight() const { return screenHeight; }
+	std::list<RenderLayer*>&						getRenderLayers() { return m_renderLayers; }
+	double											getTime() const { return m_fTime; }
+	float											getElapsedTime() const { return m_fElapsedTime; }
+	void											resetModelArcBallRotation();
+	void											setClearColor(const ArnColorValue4f& clearColor) { m_clearColor = clearColor; setClearColor_Internal(); }
+	void											updateTime(); // Update the current time using internal timer.
+	double											getLastRefreshedTime() const { return m_dLastRefreshedTime; }
+	ArnSceneGraph*									getSceneGraph() { return m_sceneGraph; }
+	void											updateFrame(double dTime, float fElapsedTime);
+	void											renderFrame();
+	bool											setRenderStarted();
+	void											setRenderFinished();
+	// TODO: Direct3D device context problem...
+	virtual LPDIRECT3DDEVICE9						GetDev() const = 0;
+	virtual void									SetDev(LPDIRECT3DDEVICE9 dev) = 0;
+protected:
+													VideoMan();
+	int												Draw();
+	void											setModelArcBallRotation(const ArnMatrix& mat) { modelArcBallRotation = mat; }
+	const ArnMatrix*								getModelArcBallRotationLast() const { return &modelArcBallRotationLast; }
+	void											updateModelArcBallRotation() { modelArcBallRotationLast = modelArcBallRotation; }
+	const ArnLightData&								getDefaultLight() const { return defaultLight; }
+	void											resetWorldMatrix();
+	const ArnMatrix&								getWorldMatrix() const { return matWorld; }
+	const ArnMatrix&								getViewMatrix() const { return matView; }
+	void											setViewMatrix(const ArnMatrix& view) { matView = view; }
+	void											setWorldMatrix(const ArnMatrix& world) { matWorld = world; }
+	void											setProjectionMatrix(const ArnMatrix& proj) { matProjection = proj; }
+	const ArnMatrix&								getProjectionMatrix() const { return matProjection; }
+	int												getTotalLightCount() const { return totalLightCount; }
+	void											setTotalLightCount(int count) { totalLightCount = count; }
+	const ArnMaterialData&							getDefaultMaterial() const { return defaultMaterial; }
+	const ArnColorValue4f&							getClearColor() const { return m_clearColor; }
 
 private:
-	double m_prevLastTime;
-	DWORD m_prevUpdateFrames;
-	float m_fFPS;
-	CPreciseTimer m_preciseTimer;
-
-	std::vector<float> testFloatArray;
+	virtual HRESULT									InitLight_Internal() = 0;
+	virtual void									setClearColor_Internal() = 0;
+	InputMan*										pInputMan;
+	DWORD											shaderFlags;
+	ArnVec3											cameraVector;
+	BOOL											cameraBounceDirection;
+	BOOL											leftPattern;
+	BOOL											rightPattern;
+	bool											m_bRendering; // Indicates rendering is in its way...
+	bool											m_bAllowRenderNewFrame; // Allow new start of rendering process
+	BOOL											closeNow;
+	ArnVec3											dungeonTranslation;
+	DWORD											drawCount; // count for Draw() function call
+	DWORD											curFrameIndex; // current animation keyframe index (editor)
+	BOOL											okayToDestruct; // resolves multithread issue
+	ARN_CAMERA										mainCamera;
+	ArnLightData									defaultLight;
+	ArnLightData									pointLight;
+	ArnMatrix										matWorld;
+	ArnMatrix										matView;
+	ArnMatrix										matProjection;
+	int												screenWidth;
+	int												screenHeight;
+	int												totalLightCount;
+	ArnMaterialData									defaultMaterial;
+	ArnMaterialData									rgbMaterial[3]; // red, green, blue with no texture
+	std::list<RenderLayer*>							m_renderLayers;
+	ArnMatrix										modelArcBallRotation;
+	ArnMatrix										modelArcBallRotationLast;
+	double											m_fTime;
+	float											m_fElapsedTime;
+	double											m_prevLastTime;
+	double											m_dLastRefreshedTime;
+	DWORD											m_prevUpdateFrames;
+	float											m_fFPS;
+	ArnTimer*										m_preciseTimer;
+	ArnSceneGraph*									m_sceneGraph;
+	ArnColorValue4f									m_clearColor;
+	ARNUPDATEFRAME									m_updateFrameCb;
+	ARNRENDERFRAME									m_renderFrameCb;
 };
 
+inline VideoMan& GetVideoManager() { return VideoMan::getSingleton(); }
+// Template approach is also possible.
+//template<typename T> T& ArnGet() { return T::getSingleton(); }
 
+//////////////////////////////////////////////////////////////////////////
 
-
-void SetSimpleColoredMaterial(D3DMATERIAL9* material, D3DXCOLOR color);
-
-
-
-
+ArnMatrix* ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, cml::Handedness handedness);

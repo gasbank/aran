@@ -2,7 +2,7 @@
 #include "ResourceMan.h"
 #include "VideoMan.h"
 
-IMPLEMENT_SINGLETON(ResourceMan);
+IMPLEMENT_SINGLETON(ResourceMan)
 
 #ifndef _LogWrite
 #define _LogWrite(a,b)
@@ -17,29 +17,31 @@ ResourceMan::~ResourceMan(void)
 	unregisterAllModels();
 }
 
-HRESULT ResourceMan::registerModel( MODELID id, const TCHAR* modelFileName )
+HRESULT ResourceMan::registerModel( MODELID id, const char* modelFileName )
 {
-	TCHAR logMessage[128];
+	//TCHAR logMessage[128];
 
 	ModelMap::iterator it = m_models.find( id );
 	ModelMap::iterator itEnd = m_models.end();
 
 	if ( it == itEnd ) // registration valid (not exist already)
 	{
-		ModelReader* pModelReader = new ModelReader();
+		ModelReader* pModelReader = ModelReader::create(modelFileName, false);
 		pModelReader->SetFileName( modelFileName );
 		m_models.insert( ModelMap::value_type( id, pModelReader ) );
 
-		_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
-		_LogWrite( logMessage, LOG_OKAY );
-		
+		//_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		//_LogWrite( logMessage, LOG_OKAY );
+
 		return S_OK;
 	}
 	else
 	{
 		// already exist...
-		_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
-		_LogWrite( logMessage, LOG_FAIL );
+
+		//_stprintf_s( logMessage, TCHARSIZE(logMessage), _T("%s%s"), _T( "Model Loading: " ), modelFileName );
+		//_LogWrite( logMessage, LOG_FAIL );
+
 		return E_FAIL;
 	}
 }
@@ -64,24 +66,28 @@ HRESULT ResourceMan::unregisterModel( MODELID id )
 
 
 int ResourceMan::initializeAll()
-{	
+{
 	ModelMap::iterator it = m_models.begin();
 	ModelMap::iterator itEnd = m_models.end();
 
-	
+
 	int initedCount = 0;
+	initedCount = 0;
 	for ( ; it != itEnd; ++it )
 	{
 		ModelReader* pMR = it->second;
 		if ( !pMR->IsInitialized() )
 		{
-			HRESULT hr = pMR->Initialize(
+			HRESULT hr = E_FAIL;
+			/*
+			hr = pMR->Initialize(
 				VideoMan::getSingleton().GetDev(),
 				ARN_VDD::ARN_VDD_FVF,
 				0,
 				0,
 				FALSE
 				);
+			*/
 			if ( FAILED( hr ) )
 			{
 				_LogWrite( _T( "Model Loading Error!" ), LOG_FAIL );
@@ -89,10 +95,11 @@ int ResourceMan::initializeAll()
 			}
 			else
 			{
-				pMR->AdvanceTime( 0.001f );
-				++initedCount;
+				ARN_THROW_NOT_IMPLEMENTED_ERROR
+				//pMR->AdvanceTime( 0.001f );
+				//++initedCount;
 			}
-			
+
 		}
 	}
 	_LogWrite( _T( "Model Initialization" ), LOG_OKAY );

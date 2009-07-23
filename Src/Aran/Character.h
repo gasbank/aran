@@ -1,6 +1,6 @@
 #pragma once
 
-#include <d3dx9.h>
+//#include <d3dx9.h>
 
 #include "CharacterInterface.h"
 
@@ -14,7 +14,7 @@ namespace Aran
 	{
 	public:
 		Character(void);
-		Character(D3DXVECTOR3 translation, D3DXVECTOR3 scale, D3DXQUATERNION rotation);
+		Character(ArnVec3 translation, ArnVec3 scale, ArnQuat rotation);
 		~Character(void);
 
 		void Initialize();
@@ -22,7 +22,7 @@ namespace Aran
 		virtual void ChangeTranslationToLookAtDirection( float amount );
 		virtual void ChangeTranslation( float dx, float dy, float dz );
 		virtual void ChangeOrientation( float dx, float dy, float dz ) /* radian */;
-		virtual const D3DXMATRIX* GetFinalTransform() const;
+		virtual const ArnMatrix* GetFinalTransform() const;
 
 
 		virtual void SetCharacterAnimationState(CharacterAnimationState cas);
@@ -46,12 +46,12 @@ namespace Aran
 		}
 
 	private:
-		D3DXMATRIX finalTransform;
-		D3DXVECTOR3 translation, scale;
-		D3DXQUATERNION rotation;
+		ArnMatrix finalTransform;
+		ArnVec3 translation, scale;
+		ArnQuat rotation;
 
-		D3DXVECTOR3 lookAt; // character's eye(font) direction
-		D3DXVECTOR4 outLookAt;
+		ArnVec3 lookAt; // character's eye(font) direction
+		ArnVec4 outLookAt;
 
 
 		CharacterAnimationCallback* callbacks[CAS_SIZE];

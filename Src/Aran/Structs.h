@@ -3,10 +3,93 @@
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
 
-enum
+typedef std::string STRING;
+
+namespace std {
+#if defined _UNICODE || defined UNICODE
+	typedef wstring tstring;
+#else
+	typedef string tstring;
+#endif
+}
+
+#ifndef WIN32
+	#define CONST const
+	#ifndef CALLBACK
+		#define CALLBACK
+	#endif
+	#define UNREFERENCED_PARAMETER(x) {x=x;}
+	#define S_OK				(0)
+	#define E_FAIL				(-1)
+	static const int			MB_OK = 1 << 0;
+	static const int			MB_ICONERROR = 1 << 1;
+	static const int			MB_ICONEXCLAMATION = 1 << 2;
+	#ifndef FALSE
+		static const int			FALSE = 0;
+	#endif
+	#ifndef TRUE
+		static const int			TRUE = 1;
+	#endif
+	typedef unsigned int		UINT;
+	typedef int					BOOL;
+	typedef float				FLOAT;
+	typedef double				DOUBLE;
+	typedef unsigned int		DWORD;
+	typedef DWORD				LRESULT;
+	typedef DWORD				WPARAM;
+	typedef DWORD				LPARAM;
+	typedef int					HRESULT;
+	typedef void*				HWND;
+	typedef void*				LPDIRECT3DDEVICE9;
+	typedef void*				LPDIRECT3DTEXTURE9;
+	typedef void*				LPD3DXANIMATIONCONTROLLER;
+	typedef void*				LPD3DXMESH;
+	typedef void*				LPDIRECT3DVERTEXBUFFER9;
+	typedef void*				LPDIRECT3DINDEXBUFFER9;
+#endif
+
+#ifndef FAILED
+#define FAILED(x) ((x)<0)
+#endif
+
+#ifndef IN
+#define IN
+#endif
+
+#ifndef OUT
+#define OUT
+#endif
+
+#ifndef WIN32
+inline static void ZeroMemory(void* addr, size_t len)
 {
-	ARNVERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL
-};
+    memset(addr, 0, len);
+}
+inline static void OutputDebugStringW(const wchar_t* msg)
+{
+    fwprintf(stderr, L"%s", msg);
+}
+inline static void OutputDebugStringA(const char* msg)
+{
+    fprintf(stderr, "%s", msg);
+}
+inline static void MessageBoxA(void* noUse, const char* title, const char* content, int msgType)
+{
+    fprintf(stderr, "%s: %s\n", title, content);
+}
+inline static void MessageBoxW(void* noUse, const wchar_t* title, const wchar_t* content, int msgType)
+{
+    fwprintf(stderr, L"%s: %s\n", title, content);
+}
+#endif
+
+#ifndef WIN32
+	#if 1
+	#define OutputDebugString(x) OutputDebugStringW(x)
+	#else
+	#define OutputDebugString(x) OutputDebugStringA(x)
+	#endif
+#endif
 
 enum EXPORT_VERSION
 {
@@ -15,13 +98,13 @@ enum EXPORT_VERSION
 	EV_ARN11,
 	EV_ARN20,
 	EV_ARN25,
-	EV_FORCE_DWORD = 0x7fffffff,
+	EV_FORCE_DWORD = 0x7fffffff
 };
 
 enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 {
 	NDT_UNKNOWN,
-	
+
 	NDT_CONTAINER1			= 0x1000,	// not used
 	NDT_CONTAINER2,						// not used
 	NDT_CONTAINER3,						// not used
@@ -57,7 +140,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_ANIM3,							// not used
 	NDT_ANIM4,							// not used
 	NDT_ANIM5,							// not used
-	
+
 	NDT_CAMERA1				= 0x7000,	// ARN10, ARN11, ARN20
 	NDT_CAMERA2,						// ARN25
 	NDT_CAMERA3,						// not used
@@ -69,7 +152,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_BONE3,							// not used
 	NDT_BONE4,							// not used
 	NDT_BONE5,							// not used
-	
+
 	NDT_MATERIAL1			= 0x9000,	// ARN25 : Global materials node which consists of NDT_MATERIAL2
 	NDT_MATERIAL2,						// ARN25 : Individual material data node
 	NDT_MATERIAL3,						// not used
@@ -81,7 +164,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_IPO3,							// not used
 	NDT_IPO4,							// not used
 	NDT_IPO5,							// not used
-	
+
 	NDT_SYMLINK1			= 0xb000,	// ARN25 : Symbolic link to another node
 	NDT_SYMLINK2,						// not used
 	NDT_SYMLINK3,						// not used
@@ -89,7 +172,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_SYMLINK5,						// not used
 
 	NDT_ACTION1				= 0xc000,	// ARN25 : Global Action list node which consists all actions (Action list in Blender)
-	NDT_ACTION2,						// not used
+	NDT_ACTION2,						// ARN30 (XML)
 	NDT_ACTION3,						// not used
 	NDT_ACTION4,						// not used
 	NDT_ACTION5,						// not used
@@ -108,11 +191,13 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_RT_ACTIONS,
 	NDT_RT_SYMLINK,
 	NDT_RT_SCENEGRAPH,
-	
-	NDT_FORCE_DWORD = 0x7fffffff,
+
+	NDT_FORCE_DWORD = 0x7fffffff
 };
 
 //////////////////////////////////////////////////////////////////////////
+
+#include "ArnVec3.h"
 
 class MY_CUSTOM_MESH_VERTEX
 {
@@ -125,14 +210,18 @@ public:
 		this->u = u; this->v = v;
 	}
 	float x, y, z, nx, ny, nz, u, v;
+#ifdef WIN32
 	static const DWORD MY_CUSTOM_MESH_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
+#endif
 };
 
 struct ArnVertex
 {
 	float x, y, z, nx, ny, nz, u, v;
 
+#ifdef WIN32
 	static const DWORD FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
+#endif
 };
 
 struct ArnBlendedVertex
@@ -159,8 +248,9 @@ struct ArnBlendedVertex
 	DWORD matrixIndices; // 0x44332211 --> 11, 22, 33, 44 are individual bone matrix indices
 	float normal[3];
 	float u, v;
-
+#ifdef WIN32
 	static const DWORD FVF = D3DFVF_XYZB4 | D3DFVF_LASTBETA_UBYTE4 | D3DFVF_NORMAL | D3DFVF_TEX0;
+#endif
 };
 
 struct BezTripleData
@@ -189,7 +279,7 @@ enum CurveName
 	CN_QuatZ	= 0x00008000,
 
 	CN_SIZE = 9,
-	CN_UNKNOWN = 0x7fffffff, // error
+	CN_UNKNOWN = 0x7fffffff // error
 };
 struct CurveDataShell
 {
@@ -208,13 +298,139 @@ public:
 	std::vector<BezTripleData> points;
 };
 
+
+inline float ArnVec3GetLength(const ArnVec3& v) { return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z); }
+inline float ArnVec3Dot(const ArnVec3& v1, const ArnVec3& v2)
+{
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+inline float ArnVec3Dot(const ArnVec3* v1, const ArnVec3* v2)
+{
+	return ArnVec3Dot(*v1, *v2);
+}
+inline ArnVec3 ArnVec3GetCrossProduct(const ArnVec3& va, const ArnVec3& vb)
+{
+	return ArnVec3(va[1]*vb[2] - va[2]*vb[1], va[2]*vb[0] - va[0]*vb[2], va[0]*vb[1] - va[1]*vb[0]);
+}
+
+struct ArnVec4
+{
+	float x, y, z, w;
+
+	ArnVec4() : x(0), y(0), z(0), w(0) {}
+	ArnVec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
+	ArnVec4(const ArnVec3& vec3, float _w) : x(vec3.x), y(vec3.y), z(vec3.z), w(_w) {}
+
+	const float* getRawData() const { return (const float*)&x; }
+	void printFormatString() const
+	{
+		printf("(x %6.3f, y %6.3f, z %6.3f, w %6.3f)\n", x, y, z, w);
+	}
+};
+
+class ArnColorValue4f
+{
+public:
+	ArnColorValue4f() : r(0), g(0), b(0), a(1.0f)
+	{
+	}
+	ArnColorValue4f(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a)
+	{
+	}
+	void printFormatString() const
+	{
+		printf("(r %6.3f, g %6.3f, b %6.3f, a %6.3f)\n", r, g, b, a);
+	}
+#ifdef WIN32
+	D3DXCOLOR getDx() const { return D3DXCOLOR(r, g, b, a); }
+#endif
+
+	float r;
+	float g;
+	float b;
+	float a;
+};
+
+template<typename V1, typename V2> void ArnRgbaAssign(V1& v1, const V2& v2)
+{
+	v1.r = v2.r;
+	v1.g = v2.g;
+	v1.b = v2.b;
+	v1.a = v2.a;
+}
+
+
+class ArnMaterialData
+{
+public:
+	ArnColorValue4f Diffuse;
+	ArnColorValue4f Ambient;
+	ArnColorValue4f Specular;
+	ArnColorValue4f Emissive;
+	float Power;
+
+#ifdef WIN32
+	const D3DMATERIAL9* getConstDxPtr() const { return reinterpret_cast<const D3DMATERIAL9*>(this); }
+	D3DMATERIAL9* getDxPtr() { return reinterpret_cast<D3DMATERIAL9*>(this); }
+#endif
+};
+
+//
+// Data structure for Direct3D compatibility. (D3DLIGHT9)
+//
+struct ArnLightData
+{
+#ifdef WIN32
+	const D3DLIGHT9*		getConstDxPtr() const { return reinterpret_cast<const D3DLIGHT9*>(this); }
+	D3DLIGHT9*				getDxPtr() { return reinterpret_cast<D3DLIGHT9*>(this); }
+#endif
+
+	enum
+	{
+		ARNLIGHT_POINT = 1,
+		ARNLIGHT_SPOT = 2,
+		ARNLIGHT_DIRECTIONAL = 3
+	};
+	DWORD					Type;
+	ArnColorValue4f			Diffuse;
+	ArnColorValue4f			Specular;
+	ArnColorValue4f			Ambient;
+	ArnVec3					Position;
+	ArnVec3					Direction;
+	float					Range;
+	float					Falloff;
+	float					Attenuation0;
+	float					Attenuation1;
+	float					Attenuation2;
+	float					Theta;
+	float					Phi;
+};
+
+//
+// Data structure for Direct3D compatibility. (D3DVIEWPORT9)
+//
+struct ArnViewportData {
+#ifdef WIN32
+	const D3DVIEWPORT9*		getConstDxPtr() const { return reinterpret_cast<const D3DVIEWPORT9*>(this); }
+	D3DVIEWPORT9*			getDxPtr() { return reinterpret_cast<D3DVIEWPORT9*>(this); }
+#endif
+
+	DWORD					X;
+	DWORD					Y;            /* Viewport Top left */
+	DWORD					Width;
+	DWORD					Height;       /* Viewport Dimensions */
+	float					MinZ;         /* Min/max of clip Volume */
+	float					MaxZ;
+};
+
 class MaterialData
 {
 public:
 	STRING m_materialName;
-	D3DMATERIAL9 m_d3dMaterial;
 	std::vector<STRING> m_texImgList;
+	ArnMaterialData m_d3dMaterial;
 };
+
 struct SkeletonData
 {
 	STRING				name;
@@ -222,12 +438,17 @@ struct SkeletonData
 	unsigned int		maxWeightsPerVertex; // same as max bones per vertex
 	unsigned int		bonesCount;
 };
+
+#include "ArnMatrix.h"
+#include "ArnQuat.h"
+
 struct BoneData
 {
+	BoneData() {}
 	virtual ~BoneData() {}
 
 	STRING					nameFixed;
-	D3DXMATRIX				offsetMatrix;
+	ArnMatrix               offsetMatrix;
 	unsigned int			infVertexCount;
 	std::vector<DWORD>		indices;
 	std::vector<float>		weights;
@@ -296,7 +517,7 @@ struct POINT4FLOAT
 typedef union tagTEXCOORD{
 	float xy[2];
 	float uv[2];
-	
+
 } TEXCOORD, POINT2FLOAT;
 
 typedef union tagARN_KDD // Key Data Definition
@@ -321,10 +542,11 @@ typedef struct tagARN_VDD
 	{
 		DWORD color; // vertex color (may not be used)
 	};
-	
-	TEXCOORD tc;
 
+	TEXCOORD tc;
+#ifdef WIN32
 	static const DWORD ARN_VDD_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
+#endif
 } ARN_VDD;
 
 typedef struct tagARN_VDD_S
@@ -339,16 +561,16 @@ typedef struct tagARN_VDD_S
 // (STRING should be converted to 0-terminated char[])
 typedef struct tagARN_MTD
 {
-	STRING strMatName;
-	D3DMATERIAL9 d3dMat;
-	STRING strTexFileName;
+	STRING				strMatName;
+	ArnMaterialData		d3dMat;
+	STRING				strTexFileName;
 } ARN_MTD;
 
 struct ARN_MTD_Data
 {
-	char* m_strMatName;
-	D3DMATERIAL9* m_d3dMat;
-	char* m_strTexFileName;
+	char*				m_strMatName;
+	ArnMaterialData*	m_d3dMat;
+	char*				m_strTexFileName;
 };
 
 typedef struct tagARN_NDD_HEADER
@@ -407,25 +629,17 @@ typedef struct tagARN_NDD_MESH3
 
 typedef struct tagARN_NDD_CAMERA_CHUNK
 {
-
-	POINT3FLOAT pos, targetPos;
-	POINT4FLOAT rot;
-
-	POINT3FLOAT upVector, lookAtVector;
-
-	float farClip;
-	float nearClip;
-
-	// No animation yet
+	ArnVec3		pos;
+	ArnVec3		targetPos;
+	ArnQuat		rot;
+	ArnVec3		upVector;
+	ArnVec3		lookAtVector;
+	float		farClip;
+	float		nearClip;
+	float		fov;
 } ARN_NDD_CAMERA_CHUNK;
 
-
-
-
-
-
 // Deprecated
-
 struct ArnNodeHeader
 {
 	NODE_DATA_TYPE ndt;
@@ -433,7 +647,6 @@ struct ArnNodeHeader
 	DWORD chunkSize;
 	DWORD chunkStartPos;
 };
-
 
 struct RST_DATA
 {
@@ -444,28 +657,130 @@ struct RST_DATA
 	static const RST_DATA IDENTITY;
 };
 
-struct DX_CONSTS
+//----------------------------------------------------------------------------
+// D3DXKEY_VECTOR3:
+// ----------------
+// This structure describes a vector key for use in keyframe animation.
+// It specifies a vector Value at a given Time. This is used for scale and
+// translation keys.
+//----------------------------------------------------------------------------
+struct ARNKEY_VECTOR3
 {
-	static const D3DXVECTOR3 D3DXVEC3_ZERO;
-	static const D3DXVECTOR3 D3DXVEC3_ONE;
-	static const D3DXVECTOR3 D3DXVEC3_X;
-	static const D3DXVECTOR3 D3DXVEC3_Y;
-	static const D3DXVECTOR3 D3DXVEC3_Z;
-	static const D3DXQUATERNION D3DXQUAT_IDENTITY;
-	static const D3DXMATRIX D3DXMAT_IDENTITY;
+	float Time;
+	ArnVec3 Value;
 
-	static const D3DXCOLOR D3DXCOLOR_BLACK;
-	static const D3DXCOLOR D3DXCOLOR_RED;
-	static const D3DXCOLOR D3DXCOLOR_GREEN;
-	static const D3DXCOLOR D3DXCOLOR_BLUE;
-	static const D3DXCOLOR D3DXCOLOR_YELLOW;
-	static const D3DXCOLOR D3DXCOLOR_MAGENTA;
-	static const D3DXCOLOR D3DXCOLOR_CYAN;
-	static const D3DXCOLOR D3DXCOLOR_WHITE;
+#ifdef WIN32
+	D3DXKEY_VECTOR3* getDxPtr() { return reinterpret_cast<D3DXKEY_VECTOR3*>(this); }
+#endif
 };
 
 
+//----------------------------------------------------------------------------
+// D3DXKEY_QUATERNION:
+// -------------------
+// This structure describes a quaternion key for use in keyframe animation.
+// It specifies a quaternion Value at a given Time. This is used for rotation
+// keys.
+//----------------------------------------------------------------------------
+struct ARNKEY_QUATERNION
+{
+	float Time;
+	ArnQuat Value;
+
+#ifdef WIN32
+	D3DXKEY_QUATERNION* getDxPtr() { return reinterpret_cast<D3DXKEY_QUATERNION*>(this); }
+#endif
+};
+
+
+// Hierarchy info
+
+class ArnContainer;
+
+struct ArnFrame
+{
+	char*					Name;
+	ArnMatrix				TransformationMatrix;
+	ArnContainer*			pMeshContainer;
+	ArnFrame*				pFrameSibling;
+	ArnFrame*				pFrameFirstChild;
+};
+
+struct MyFrame : public ArnFrame
+{
+	MyFrame():isRoot(FALSE),sibling(0xffffffff),firstChild(0xffffffff)
+	{
+		this->Name = this->nameFixed;
+		ZeroMemory(&combinedMatrix, sizeof(ArnMatrix));
+		ZeroMemory(&TransformationMatrix, sizeof(ArnMatrix));
+	}
+	~MyFrame() {}
+	char		nameFixed[128];
+	bool		isRoot;
+	ArnMatrix	combinedMatrix;
+	size_t		sibling;
+	size_t		firstChild;
+};
+struct Bone : public BoneData
+{
+	Bone()
+	{
+		translationKeys = scaleKeys = 0;
+		rotationKeys = 0;
+		translationKeysSize = scaleKeysSize = rotationKeysSize = 0;
+	}
+	~Bone()
+	{
+		delete [] translationKeys; translationKeys = 0; translationKeysSize = 0;
+		delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0;
+		delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0;
+	}
+
+	// Basic data is moved to BoneData (superclass)
+
+	std::vector<RST_DATA>	keys; // keyframe animation data in ARN file
+
+	// keyframe animation data of ID3DXKeyframedAnimationSet
+	// this->keys should be converted to following data format using ModelReader::AllocateAsAnimationSetFormat()
+	ARNKEY_VECTOR3*			translationKeys;
+	ARNKEY_VECTOR3*			scaleKeys;
+	ARNKEY_QUATERNION*		rotationKeys;
+	UINT					translationKeysSize, scaleKeysSize, rotationKeysSize;
+};
+
+
+// DEPRECATED: use SkeletonData instead
+struct SkeletonNode
+{
+	char				nameFixed[128];
+	char				associatedMeshName[128];
+	int					maxWeightsPerVertex; // same as max bones per vertex
+	int					bonesCount;
+	std::vector<Bone>	bones;
+};
+
+// limits a value to low and high
+#define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}
+
+////////////
+
+// Floating Point Library Specific
+
+static const float	EPSILON						= 0.0001f;		// error tolerance for check
+static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
+
+#define ZERO_CLAMP(x)	( (EPSILON > fabs(x))?0.0f:(x) )						// set float to 0 if within tolerance
+
+#define FLOAT_EQ(x,v)	( ((v) - EPSILON) < (x) && (x) < ((v) + EPSILON) )		// float equality test
+#define	SQR(x)		( (x) * (x) )
 
 #define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
 
 #endif // #ifndef __STRUCTS_H_
+
+
+typedef cml::quaternion< float, cml::fixed<>, cml::scalar_first, cml::positive_cross > cml_quat;
+typedef cml::vector< float, cml::fixed<3> > cml_vec3;
+typedef cml::matrix33f_c cml_mat33;
+typedef cml::matrix44f_c cml_mat44;
+

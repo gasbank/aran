@@ -1,24 +1,41 @@
 #pragma once
-#include "ArnObject.h"
+#include "ArnNode.h"
 
 struct ArnFileData;
-class ArnNode;
 class ArnHierarchy;
 class ArnBone;
+class ArnBinaryChunk;
+class ArnLight;
 
-class ArnSceneGraph : public ArnObject
+class ArnSceneGraph : public ArnNode
 {
 public:
-	ArnSceneGraph(const ArnFileData& afd);
-	~ArnSceneGraph(void);
+									~ArnSceneGraph(void);
 
-	static ArnSceneGraph*	createFrom(const ArnFileData& afd);
-	ArnNode*				getSceneRoot() const { return m_sceneRoot; }
-	virtual const char*		getName() const { return "Scene Graph"; }
+	static ArnSceneGraph*			createFromEmptySceneGraph();
+	static ArnSceneGraph*			createFrom(const ArnFileData* afd);
+	static ArnSceneGraph*			createFrom(const char* fileName);
+
+	void							attachToRoot(ArnNode* node);
+	void							render();
+	void							initRendererObjects();
+	ArnNode* findFirstNodeOfType(NODE_DATA_TYPE ndt);
+
+	// *** INTERNAL USE ONLY START ***
+	virtual void					interconnect(ArnNode* sceneRoot);
+	// *** INTERNAL USE ONLY END ***
 private:
-	void					postprocessingARN20();
-	void					buildBoneHierarchy( ArnHierarchy* hierNode, ArnNode* skelNode, ArnBone* parentBoneNode );
-	const ArnFileData&		m_afd;
-	EXPORT_VERSION			m_exportVersion;
-	ArnNode*				m_sceneRoot;
+									ArnSceneGraph();
+									ArnSceneGraph(const ArnFileData* afd);
+
+	void							createEmptyRootNode();
+	void							postprocessingARN20();
+	void							buildBoneHierarchy( ArnHierarchy* hierNode, ArnNode* skelNode, ArnBone* parentBoneNode );
+	bool							m_bRendererObjectInited;
+	const ArnFileData*				m_afd;
+	EXPORT_VERSION					m_exportVersion;
+	//ArnNode*						m_sceneRoot;  // DEPRECATED
+	ArnBinaryChunk*					m_binaryChunk;
 };
+
+#include "ArnSceneGraph.inl"

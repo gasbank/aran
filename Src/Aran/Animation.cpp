@@ -1,5 +1,6 @@
 #include "AranPCH.h"
 #include "Animation.h"
+//#include "ArnAnimationController.h"
 
 #define SMALL (-1.0e-10)
 
@@ -175,7 +176,7 @@ static int findzero(float x, float q0, float q1, float q2, float q3, float *o)
 			o[0]= 0.0;
 			return 1;
 		}
-		return 0;	
+		return 0;
 	}
 }
 
@@ -194,7 +195,12 @@ static void berekeny(float f1, float f2, float f3, float f4, float *o, int b)
 		o[a]= c0+t*c1+t*t*c2+t*t*t*c3;
 	}
 }
-float Animation::EvalCurveInterp(const CurveData* icu, float ipotime) 
+
+HRESULT ArnCreateSkinInfoFVF( DWORD NumVertices, DWORD FVF, DWORD NumBones, ArnSkinInfo** ppSkinInfo )
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+float Animation::EvalCurveInterp(const CurveData* icu, float ipotime)
 {
 	const BezTripleData* bezt;
 	const BezTripleData* prevbezt;
@@ -272,4 +278,3 @@ float Animation::EvalCurveInterp(const CurveData* icu, float ipotime)
 
 	return cvalue;
 }
-

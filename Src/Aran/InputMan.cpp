@@ -15,7 +15,7 @@
 
 InputMan::InputMan(void)
 {
-	
+
 }
 
 InputMan::~InputMan(void)
@@ -49,7 +49,7 @@ void InputMan::TurnCharacterRight( float amount /*= D3DXToRadian( 10 ) */ )
 	this->pCharInterface->ChangeOrientation( 0.0f, 0.0f, -amount );
 }
 
-const D3DXMATRIX* InputMan::GetFinalTransform() const
+const ArnMatrix* InputMan::GetFinalTransform() const
 {
 	return this->pCharInterface->GetFinalTransform();
 }
@@ -59,7 +59,7 @@ void InputMan::StopCharacterWalking()
 	this->pCharInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_LOITER );
 }
 
-HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
+HRESULT InputMan::Initialize( /*HINSTANCE hInst, HWND hwnd*/ )
 {
 	HRESULT hr = S_OK;
 	//ASSERTCHECK( this->lpDInput8 == 0 && this->lpDInputDevKeyboard == 0 );
@@ -87,7 +87,7 @@ HRESULT InputMan::AcquireKeyboard()
 	// by unfocusing debugee(Aran Project)
 	//
 	//V_OKAY( hr = this->lpDInputDevKeyboard->Acquire() );
-	
+
 	/*while (FAILED(this->lpDInputDevKeyboard->Acquire()))
 	{
 
@@ -97,11 +97,11 @@ HRESULT InputMan::AcquireKeyboard()
 }
 
 
-HRESULT WINAPI InputMan::ProcessKeyboardInput()
+HRESULT InputMan::ProcessKeyboardInput()
 {
 	HRESULT hr = S_OK;
 	//static char buffer[256];
-	
+
 	//hr = this->lpDInputDevKeyboard->GetDeviceState( sizeof( buffer ), (LPVOID)&buffer );
 	//// keyboard handle lost(maybe task-switching)
 	//if ( FAILED( hr ) )
@@ -200,7 +200,7 @@ HRESULT WINAPI InputMan::ProcessKeyboardInput()
 	return hr;
 }
 
-void InputMan::DungeonScrollBy( D3DXVECTOR3* pDScroll )
+void InputMan::DungeonScrollBy( const ArnVec3* pDScroll )
 {
 	this->pDungeonInterface->ScrollBy( pDScroll );
 }

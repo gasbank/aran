@@ -5,30 +5,43 @@
 #include "ArnNodeFactory.h"
 #include "ArnHierarchy.h"
 #include "ArnBone.h"
+#include "ArnMesh.h"
+#include "ArnBinaryChunk.h"
+#include "ArnMaterial.h"
+#include "ArnLight.h"
+#include "ArnSkeleton.h"
 
-ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
-: ArnObject(NDT_RT_SCENEGRAPH), m_afd(afd), m_sceneRoot(0)
+ArnSceneGraph::ArnSceneGraph()
+: ArnNode(NDT_RT_SCENEGRAPH)
+, m_bRendererObjectInited(false)
+, m_binaryChunk(0)
 {
-	if (strcmp(afd.m_fileDescriptor, "ARN20") == 0)
+}
+
+ArnSceneGraph::ArnSceneGraph( const ArnFileData* afd )
+: ArnNode(NDT_RT_SCENEGRAPH)
+, m_afd(afd)
+, m_binaryChunk(0)
+{
+	assert(afd);
+
+	if (strcmp(afd->m_fileDescriptor, "ARN20") == 0)
 		m_exportVersion = EV_ARN20;
-	else if (strcmp(afd.m_fileDescriptor, "ARN25") == 0)
+	else if (strcmp(afd->m_fileDescriptor, "ARN25") == 0)
 		m_exportVersion = EV_ARN25;
 	else
 		throw MyError(MEE_UNSUPPORTED_ARNFILE);
 
-	m_sceneRoot = new ArnContainer();
-	m_sceneRoot->setName("ARN Scene Graph Root");
-
 	unsigned int i;
 	// Create a ArnNode from NodeBase and construct a scene graph
 	// according to the implicit or explicit hierarchy definition.
-	for (i = 0; i < afd.m_nodes.size(); ++i)
+	for (i = 0; i < afd->m_nodes.size(); ++i)
 	{
-		ArnNode* node = ArnNodeFactory::createFromNodeBase(afd.m_nodes[i]);
+		ArnNode* node = ArnNodeFactory::createFromNodeBase(afd->m_nodes[i]);
 
 		if (node->getType() == NDT_RT_BONE && node->getParentName().length() == 0)
 		{
-			ArnNode* lastToplevelNode = m_sceneRoot->getLastNode();
+			ArnNode* lastToplevelNode = getLastNode();
 			if (lastToplevelNode->getType() == NDT_RT_MESH && lastToplevelNode->getLastNode()->getType() == NDT_RT_SKELETON)
 			{
 				lastToplevelNode->getLastNode()->attachChild(node);
@@ -42,7 +55,7 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 		{
 			if (node->getParentName().length() > 0)
 			{
-				ArnNode* parentNode = m_sceneRoot->getNodeByName(node->getParentName());
+				ArnNode* parentNode = getNodeByName(node->getParentName());
 				if (parentNode)
 					parentNode->attachChild(node);
 				else
@@ -50,7 +63,7 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 			}
 			else
 			{
-				m_sceneRoot->attachChild(node); // Child of scene root
+				attachChild(node); // Child of scene root
 			}
 		}
 	}
@@ -58,15 +71,16 @@ ArnSceneGraph::ArnSceneGraph( const ArnFileData& afd )
 	if (m_exportVersion == EV_ARN20)
 		postprocessingARN20();
 
-	m_sceneRoot->interconnect(m_sceneRoot);
+	interconnect(this);
 }
 ArnSceneGraph::~ArnSceneGraph(void)
 {
-	delete m_sceneRoot;
+	delete m_binaryChunk;
 }
 
-ArnSceneGraph* ArnSceneGraph::createFrom( const ArnFileData& afd )
+ArnSceneGraph* ArnSceneGraph::createFrom( const ArnFileData* afd )
 {
+	assert(afd);
 	return new ArnSceneGraph(afd);
 }
 
@@ -74,10 +88,10 @@ void ArnSceneGraph::postprocessingARN20()
 {
 	// Build bone hierarchy according to NDT_RT_HIERARCHY data
 	// which is placed at the end of scene graph root nodes.
-	if (m_sceneRoot->getLastNode()->getType() != NDT_RT_HIERARCHY)
+	if (getLastNode()->getType() != NDT_RT_HIERARCHY)
 		throw MyError(MEE_UNDEFINED_ERROR);
 
-	ArnHierarchy* hierNode = static_cast<ArnHierarchy*>(m_sceneRoot->getLastNode());
+	ArnHierarchy* hierNode = static_cast<ArnHierarchy*>(getLastNode());
 	unsigned int frameCount = hierNode->getFrameCount();
 	unsigned int i;
 	// Find the root frame.
@@ -88,7 +102,7 @@ void ArnSceneGraph::postprocessingARN20()
 	}
 	const MyFrameData& rootFrame = hierNode->getFrame(i);
 	assert(rootFrame.m_sibling == -1);
-	ArnBone* rootFrameNode = static_cast<ArnBone*>(m_sceneRoot->getNodeByName(rootFrame.m_frameName));
+	ArnBone* rootFrameNode = static_cast<ArnBone*>(getNodeByName(rootFrame.m_frameName));
 	ArnNode* skelNode = rootFrameNode->getParent();
 	rootFrameNode->setFrameData(&rootFrame);
 
@@ -124,4 +138,78 @@ void ArnSceneGraph::buildBoneHierarchy( ArnHierarchy* hierNode, ArnNode* skelNod
 			buildBoneHierarchy(hierNode, skelNode, siblingBoneNode);
 		}
 	}
+}
+
+ArnSceneGraph* ArnSceneGraph::createFromEmptySceneGraph()
+{
+	ArnSceneGraph* sg = new ArnSceneGraph();
+	sg->createEmptyRootNode();
+	return sg;
+}
+
+void ArnSceneGraph::createEmptyRootNode()
+{
+}
+
+void ArnSceneGraph::attachToRoot(ArnNode* node)
+{
+	attachChild(node);
+}
+
+void ArnSceneGraph::render()
+{
+	foreach (const ArnNode* node, getChildren())
+	{
+		if (node->getType() == NDT_RT_MESH)
+		{
+			ArnMesh* mesh = (ArnMesh*)node;
+			mesh->render();
+		}
+		else if (node->getType() == NDT_RT_SKELETON)
+		{
+			ArnSkeleton* skel = (ArnSkeleton*)node;
+			skel->render();
+		}
+	}
+}
+
+void ArnSceneGraph::interconnect(ArnNode* sceneRoot)
+{
+	ArnNode::interconnect(sceneRoot);
+}
+
+void ArnSceneGraph::initRendererObjects()
+{
+	foreach (ArnNode* node, getChildren())
+	{
+		if (node->getType() == NDT_RT_MESH)
+		{
+			ArnMesh* mesh = static_cast<ArnMesh*>(node);
+			mesh->initRendererObject();
+			mesh->configureIpo();
+		}
+		else if (node->getType() == NDT_RT_MATERIAL)
+		{
+			ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
+			mtrl->initRendererObject();
+		}
+		else if (node->getType() == NDT_RT_SKELETON)
+		{
+			ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
+			skel->configureIpos();
+		}
+	}
+	m_bRendererObjectInited = true;
+}
+
+ArnNode* ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )
+{
+	foreach (ArnNode* node, getChildren())
+	{
+		if (node->getType() == ndt)
+		{
+			return node;
+		}
+	}
+	return 0;
 }

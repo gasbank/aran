@@ -1,11 +1,14 @@
 #include "AranPCH.h"
 #include "SpriteManager.h"
 #include "Sprite.h"
+#include "ArnConsts.h"
+
+#ifdef WIN32
 
 IMPLEMENT_SINGLETON( SpriteManager )
 
 SpriteManager::SpriteManager()
-: m_d3dxSprite( 0 ), m_d3dxObjectSprite( 0 ), m_viewMat(DX_CONSTS::D3DXMAT_IDENTITY), m_projMat(DX_CONSTS::D3DXMAT_IDENTITY)
+: m_d3dxSprite( 0 ), m_d3dxObjectSprite( 0 ), m_viewMat(ArnConsts::D3DXMAT_IDENTITY), m_projMat(ArnConsts::D3DXMAT_IDENTITY)
 {
 	init();
 }
@@ -18,7 +21,7 @@ SpriteManager::~SpriteManager(void)
 
 void SpriteManager::init()
 {
-	
+
 }
 
 void SpriteManager::release()
@@ -36,7 +39,7 @@ void SpriteManager::frameRender()
 
 	m_d3dxSprite->Begin( D3DXSPRITE_ALPHABLEND );
 	{
-		SpriteMap::iterator it = m_spriteMap.begin();	
+		SpriteMap::iterator it = m_spriteMap.begin();
 		for ( ; it != m_spriteMap.end(); ++it )
 		{
 			if ( it->second->isCustomRendered() )
@@ -50,11 +53,7 @@ void SpriteManager::frameRender()
 				{
 					const DrawRequest* drawReq = *itDr;
 					if (drawReq->bRender)
-					{
-						LPDIRECT3DTEXTURE9 tex = it->second->getTexture();
-						if (tex)
-							m_d3dxSprite->Draw(tex, &drawReq->srcRect, &drawReq->center, &drawReq->position, drawReq->color );
-					}
+						m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
 				}
 			}
 
@@ -63,11 +62,11 @@ void SpriteManager::frameRender()
 	m_d3dxSprite->End();
 
 	//////////////////////////////////////////////////////////////////////////
-	
+
 	m_d3dxObjectSprite->Begin( D3DXSPRITE_ALPHABLEND | D3DXSPRITE_OBJECTSPACE );
 	{
-		m_dev->SetTransform( D3DTS_VIEW, &m_viewMat );
-		m_dev->SetTransform( D3DTS_PROJECTION, &m_projMat );
+		m_dev->SetTransform( D3DTS_VIEW, m_viewMat.getConstDxPtr() );
+		m_dev->SetTransform( D3DTS_PROJECTION, m_projMat.getConstDxPtr() );
 		SpriteMap::iterator it = m_spriteMap.begin();
 		for ( ; it != m_spriteMap.end(); ++it )
 		{
@@ -78,18 +77,18 @@ void SpriteManager::frameRender()
 			if ( !dr.empty() )
 			{
 				Sprite::DrawRequestList::const_iterator itDr = dr.begin();
-				
+
 				for ( ; itDr != dr.end(); ++itDr )
 				{
 					const DrawRequest* drawReq = *itDr;
-					D3DXMATRIX centerBiased = drawReq->xform;
-					*((D3DXVECTOR3*)&centerBiased._41) -= drawReq->center;
-					m_dev->SetTransform( D3DTS_WORLD, &drawReq->xform );
-					m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, &drawReq->center, &drawReq->position, drawReq->color );
+					ArnMatrix centerBiased = drawReq->xform;
+					*((ArnVec3*)&centerBiased.m[3][0]) -= drawReq->center;
+					m_dev->SetTransform( D3DTS_WORLD, drawReq->xform.getConstDxPtr() );
+					m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
 				}
 			}
 		}
-	}	
+	}
 	m_d3dxObjectSprite->End();
 
 }
@@ -105,10 +104,10 @@ Sprite* SpriteManager::registerSprite( const char* spriteName, const char* sprit
 		Sprite* sprite = new Sprite( spriteFileName );
 		m_spriteMap[ spriteName ] = sprite;
 		return sprite;
-	}	
+	}
 	else
 		throw std::runtime_error( "Duplicate sprite name already exist!" );
-	
+
 }
 
 
@@ -127,14 +126,14 @@ void SpriteManager::frameRenderSpecificSprite( const char* spriteName )
 	Sprite* sprite = m_spriteMap[ spriteName ];
 	assert( sprite->isCustomRendered() );
 	const Sprite::DrawRequestList& dr = sprite->getDrawRequestList();
-	
+
 	if ( !dr.empty() )
 	{
 		Sprite::DrawRequestList::const_iterator itDr = dr.begin();
 		for ( ; itDr != dr.end(); ++itDr )
 		{
 			const DrawRequest* drawReq = *itDr;
-			m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, &drawReq->center, &drawReq->position, drawReq->color );
+			m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
 		}
 	}
 	m_d3dxSprite->End();
@@ -185,3 +184,5 @@ void SpriteManager::onDestroyDevice()
 	SAFE_RELEASE( m_d3dxSprite );
 	SAFE_RELEASE( m_d3dxObjectSprite );
 }
+
+#endif

@@ -1,5 +1,8 @@
 #include "AranPCH.h"
 #include "Sprite.h"
+#include "ArnConsts.h"
+
+#ifdef WIN32
 
 Sprite::Sprite( const char* texFileName )
 : m_d3dTex( 0 ), m_bCustomRendered( false ), m_texFileName( texFileName )
@@ -49,7 +52,7 @@ void Sprite::registerRect( const char* rectName, long left, long top, long right
 
 	registerRect( rectName, rect );
 }
-DrawRequest* Sprite::drawRequest( const char* rectName, const D3DXVECTOR3* center, const D3DXVECTOR3* position, D3DCOLOR color )
+DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, const ArnVec3* position, D3DCOLOR color )
 {
 	DrawRequest* dr = new DrawRequest( false );
 	RectMap::iterator it = m_rectMap.find( rectName );
@@ -57,23 +60,23 @@ DrawRequest* Sprite::drawRequest( const char* rectName, const D3DXVECTOR3* cente
 		dr->srcRect = m_rectMap[ rectName ];
 	else
 		throw std::runtime_error( "Specified rectName does not exist" );
-	
+
 	if ( center ) dr->center = *center;
-	else dr->center = DX_CONSTS::D3DXVEC3_ZERO;
+	else dr->center = ArnConsts::D3DXVEC3_ZERO;
 
 	if ( position ) dr->position = *position;
-	else dr->position = DX_CONSTS::D3DXVEC3_ZERO;
+	else dr->position = ArnConsts::D3DXVEC3_ZERO;
 
 	dr->color = color;
-	dr->xform = DX_CONSTS::D3DXMAT_IDENTITY;
-		
+	dr->xform = ArnConsts::D3DXMAT_IDENTITY;
+
 	m_drawReqList.push_back( dr );
 	return dr;
 }
 
-DrawRequest* Sprite::drawRequest( const char* rectName, const D3DXVECTOR3* center, int posX, int posY, int posZ, D3DCOLOR color )
+DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, D3DCOLOR color )
 {
-	D3DXVECTOR3 vPos( (float)posX, (float)posY, (float)posZ );
+	ArnVec3 vPos( (float)posX, (float)posY, (float)posZ );
 	return drawRequest( rectName, center, &vPos, color );
 }
 
@@ -82,7 +85,7 @@ DrawRequest* Sprite::drawRequest( const char* rectName, ScreenPosition spe, D3DC
 	// TODO: Screen width and height
 	int scrWidth = 800;
 	int scrHeight = 600;
-	D3DXVECTOR3 vPos = DX_CONSTS::D3DXVEC3_ZERO;
+	ArnVec3 vPos = ArnConsts::D3DXVEC3_ZERO;
 	const RECT& imgRect = m_rectMap[ rectName ];
 	int imgWidth = imgRect.right - imgRect.left;
 	int imgHeight = imgRect.bottom - imgRect.top;
@@ -111,13 +114,13 @@ DrawRequest* Sprite::drawRequestXformable( const char* rectName )
 		dr->srcRect = m_rectMap[ rectName ];
 	else
 		throw std::runtime_error( "Specified rectName does not exist" );
-	
+
 	dr->center.x = (dr->srcRect.right - dr->srcRect.left + 1) * 0.5f;
 	dr->center.y = (dr->srcRect.bottom - dr->srcRect.top + 1) * 0.5f;
 	dr->center.z = 0;
 	dr->color = D3DCOLOR_RGBA( 255, 255, 255, 255 );
-	dr->position = DX_CONSTS::D3DXVEC3_ZERO;
-	dr->xform = DX_CONSTS::D3DXMAT_IDENTITY;
+	dr->position = ArnConsts::D3DXVEC3_ZERO;
+	dr->xform = ArnConsts::D3DXMAT_IDENTITY;
 
 	m_drawReqXformableList.push_back( dr );
 	return dr;
@@ -151,3 +154,5 @@ void Sprite::clearDrawRequest()
 {
 	EpSafeReleaseAll( m_drawReqList );
 }
+
+#endif

@@ -10,7 +10,7 @@ ArnLight::~ArnLight(void)
 {
 }
 
-ArnNode* ArnLight::createFrom( const NodeBase* nodeBase )
+ArnLight* ArnLight::createFrom( const NodeBase* nodeBase )
 {
 	ArnLight* node = new ArnLight();
 	node->setName(nodeBase->m_nodeName);
@@ -54,4 +54,19 @@ void ArnLight::interconnect( ArnNode* sceneRoot )
 	setIpo(getIpoName());
 
 	ArnNode::interconnect(sceneRoot);
+}
+
+ArnLight* ArnLight::createPointLight( const ArnVec3& pos, const ArnColorValue4f& color, const ArnVec3& att )
+{
+	ArnLight* ret = new ArnLight();
+	memset(&ret->m_d3dLight, 0, sizeof(ArnLightData));
+	ret->m_d3dLight.Ambient = color;
+	ret->m_d3dLight.Diffuse = color;
+	ret->m_d3dLight.Specular = color;
+	ret->m_d3dLight.Position = pos;
+	ret->m_d3dLight.Type = 1;
+	ret->m_d3dLight.Attenuation0 = att.x; // const attenuation
+	ret->m_d3dLight.Attenuation1 = att.y; // linear attenuation
+	ret->m_d3dLight.Attenuation2 = att.z; // quadratic attenuation
+	return ret;
 }

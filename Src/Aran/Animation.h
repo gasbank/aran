@@ -1,5 +1,8 @@
 #pragma once
 
+class ArnSkinInfo;
+
+
 class Animation
 {
 public:
@@ -32,3 +35,9 @@ private:
 	AnimCurve* m_curves;
 	bool m_curveFlags[CN_SIZE];
 };
+
+//////////////////////////////////////////////////////////////////////////
+
+// Creates a skin info object based on the number of vertices, number of bones, and a FVF describing the vertex layout of the target vertices
+// The bone names and initial bone transforms are not filled in the skin info object by this method.
+HRESULT ArnCreateSkinInfoFVF( DWORD NumVertices, DWORD FVF, DWORD NumBones, ArnSkinInfo** ppSkinInfo);

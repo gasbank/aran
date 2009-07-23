@@ -20,11 +20,11 @@ struct NodeMaterial1 : public NodeBase
 };
 struct NodeMaterial2 : public NodeBase
 {
-	char* m_parentName;
-	char* m_materialName;
-	D3DMATERIAL9* m_d3dMaterial;
-	unsigned int m_texCount;
-	std::vector<char*> m_texNameList;
+	char*				m_parentName;
+	char*				m_materialName;
+	ArnMaterialData*	m_d3dMaterial;
+	unsigned int		m_texCount;
+	std::vector<char*>	m_texNameList;
 };
 struct NodeMesh2 : public NodeBase
 {
@@ -43,7 +43,7 @@ struct NodeMesh3 : public NodeBase
 {
 	const char* m_parentName;
 	const char* m_ipoName;
-	const D3DXMATRIX* m_localXform;
+	const ArnMatrix* m_localXform;
 	BOOL m_bArmature;
 	//D3DXMATRIX* m_unusedXform;
 	unsigned int m_materialCount;
@@ -71,7 +71,7 @@ struct NodeAnim1 : public NodeBase
 
 struct NodeBone1 : public NodeBase
 {
-	D3DMATRIX* m_offsetMatrix;
+	ArnMatrix* m_offsetMatrix;
 	unsigned int m_infVertexCount; // influencing vertex count
 	unsigned int* m_vertexIndices;
 	float* m_weights;
@@ -80,7 +80,7 @@ struct NodeBone1 : public NodeBase
 struct NodeBone2 : public NodeBase
 {
 	const char* m_parentBoneName;
-	D3DMATRIX* m_offsetMatrix;
+	ArnMatrix* m_offsetMatrix;
 	unsigned int m_infVertCount;
 	BoneIndWeight* m_indWeightArray;
 };
@@ -110,16 +110,18 @@ struct NodeHierarchy1 : public NodeBase
 	MyFrameDataShell* m_frames;
 };
 
+
+
 struct NodeLight1 : public NodeBase
 {
-	D3DLIGHT9* m_light;
+	ArnLightData* m_light;
 };
 struct NodeLight2 : public NodeBase
 {
 	char* m_parentName;
 	char* m_ipoName;
-	D3DXMATRIX* m_localXform;
-	D3DLIGHT9* m_light;
+	ArnMatrix* m_localXform;
+	ArnLightData* m_light;
 };
 struct NodeCamera1 : public NodeBase
 {
@@ -130,7 +132,7 @@ struct NodeCamera2 : public NodeBase
 	enum CamType { CT_ORTHO = 1, CT_PERSP = 0 };
 	char* m_parentName;
 	char* m_ipoName;
-	D3DXMATRIX* m_localXform;
+	ArnMatrix* m_localXform;
 	CamType m_camType;
 	float m_angle;
 	float m_clipStart;

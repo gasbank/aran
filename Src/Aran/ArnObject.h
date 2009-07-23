@@ -14,12 +14,15 @@ private:
 class ArnObject : private Uncopyable
 {
 public:
-	ArnObject(NODE_DATA_TYPE type);
-	virtual ~ArnObject(void);
+	virtual					~ArnObject(void);
 
 	NODE_DATA_TYPE			getType() const { return m_type; }
 	virtual const char*		getName() const = 0;
+	unsigned int			getObjectId() const { return m_objectId; }
+protected:
+							ArnObject(NODE_DATA_TYPE type);
 private:
 	const NODE_DATA_TYPE	m_type;
-
+	const unsigned int		m_objectId;
+	static unsigned int		ms_objectId;
 };

@@ -20,7 +20,7 @@ void load_arnfile( const TCHAR* fileName, ArnFileData& afd )
 		parse_node(afd.m_file, node);
 		afd.m_nodes.push_back(node);
 	}
-	
+
 	afd.m_terminalDescriptor = file_read_string(afd.m_file);
 	if (strcmp(afd.m_terminalDescriptor, "TERM") != 0)
 		throw MyError(MEE_TERMINALSTRING_CORRUPTED);
@@ -123,7 +123,9 @@ void parse_node( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 void parse_nodeUnidentified( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
+#ifdef WIN32
 	DebugBreak();
+#endif
 	// skip the whole chunk data
 	file_read<char>(abf, nodeBase->m_nodeChunkSize);
 	_LogWrite(_T("WARNING: Unidentified node detected and skipped while parsing!"), LOG_OKAY);
@@ -141,9 +143,8 @@ void parse_nodeMaterial2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
 	assert(nodeBase->m_ndt == NDT_MATERIAL2);
 	NodeMaterial2* node = (NodeMaterial2*)nodeBase;
-
 	node->m_parentName	= file_read_string(abf);
-	node->m_d3dMaterial = file_read<D3DMATERIAL9>(abf);
+	node->m_d3dMaterial = file_read<ArnMaterialData>(abf);
 	node->m_texCount	= file_read_uint(abf);
 	unsigned int i;
 	for (i = 0; i < node->m_texCount; ++i)
@@ -168,9 +169,9 @@ void parse_nodeMesh2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 		unsigned int i;
 		for (i = 0; i < node->m_materialCount; ++i)
 		{
-			node->m_mtds[i].m_strMatName = file_read_string(abf);
-			node->m_mtds[i].m_d3dMat = file_read<D3DMATERIAL9>(abf);
-			node->m_mtds[i].m_strTexFileName = file_read_string(abf);
+			node->m_mtds[i].m_strMatName		= file_read_string(abf);
+			node->m_mtds[i].m_d3dMat			= file_read<ArnMaterialData>(abf);
+			node->m_mtds[i].m_strTexFileName	= file_read_string(abf);
 		}
 	}
 	else
@@ -184,18 +185,18 @@ void parse_nodeMesh3( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_MESH3);
 	unsigned int i, j;
 	NodeMesh3* node = (NodeMesh3*)nodeBase;
-	
+
 	node->m_parentName			= file_read_string(abf);
 	node->m_ipoName				= file_read_string(abf);
-	node->m_localXform			= file_read<D3DXMATRIX>(abf);
+	node->m_localXform			= file_read<ArnMatrix>(abf);
 	node->m_bArmature			= file_read_BOOL(abf);
 	for (i = 0; i < 15; ++i)
 		file_read<int>(abf); // Unused data
-	
+
 	node->m_materialCount		= file_read_uint(abf);
 	node->m_meshVerticesCount	= file_read_uint(abf);
 	node->m_meshFacesCount		= file_read_uint(abf);
-	
+
 	node->m_attrToMaterialMap = 0;
 	for (i = 0; i < node->m_materialCount; ++i)
 		node->m_matNameList.push_back(file_read_string(abf));
@@ -265,7 +266,7 @@ void parse_nodeHierarchy2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 	node->m_parentName				= file_read_string(abf);
 	node->m_boneCount				= file_read_uint(abf);
-	
+
 	/*unsigned int i;
 	for (i = 0; i < node->m_boneCount; ++i)
 	{
@@ -285,7 +286,7 @@ void parse_nodeBone1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_BONE1);
 	NodeBone1* node = (NodeBone1*)nodeBase;
 
-	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
+	node->m_offsetMatrix	= file_read<ArnMatrix>(abf);
 	node->m_infVertexCount	= file_read_uint(abf);
 	node->m_vertexIndices	= file_read_uint_array(abf, node->m_infVertexCount);
 	node->m_weights			= file_read<float>(abf, node->m_infVertexCount);
@@ -297,8 +298,8 @@ void parse_nodeBone2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	NodeBone2* node = (NodeBone2*)nodeBase;
 
 	node->m_parentBoneName	= file_read_string(abf);
-	node->m_offsetMatrix	= file_read<D3DMATRIX>(abf);
-	
+	node->m_offsetMatrix	= file_read<ArnMatrix>(abf);
+
 	/*node->m_infVertCount	= file_read_uint(abf);
 	if (node->m_infVertCount)
 		node->m_indWeightArray = file_read<BoneIndWeight>(abf, node->m_infVertCount);
@@ -326,7 +327,7 @@ void parse_nodeHierarchy1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	}
 	else
 		throw MyError(MEE_HIERARCHY_FRAMES_ERROR);
-	
+
 }
 
 void parse_nodeLight1( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -334,7 +335,7 @@ void parse_nodeLight1( ArnBinaryFile& abf, NodeBase*& nodeBase )
 	assert(nodeBase->m_ndt == NDT_LIGHT1);
 	NodeLight1* node = (NodeLight1*)nodeBase;
 
-	node->m_light = file_read<D3DLIGHT9>(abf);
+	node->m_light = file_read<ArnLightData>(abf);
 }
 void parse_nodeLight2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 {
@@ -343,8 +344,8 @@ void parse_nodeLight2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 	node->m_parentName	= file_read_string(abf);
 	node->m_ipoName		= file_read_string(abf);
-	node->m_localXform	= file_read<D3DXMATRIX>(abf);
-	node->m_light		= file_read<D3DLIGHT9>(abf);
+	node->m_localXform	= file_read<ArnMatrix>(abf);
+	node->m_light		= file_read<ArnLightData>(abf);
 }
 
 void parse_nodeCamera1( ArnBinaryFile& abf, NodeBase*& nodeBase )
@@ -361,7 +362,7 @@ void parse_nodeCamera2( ArnBinaryFile& abf, NodeBase*& nodeBase )
 
 	node->m_parentName	= file_read_string(abf);
 	node->m_ipoName		= file_read_string(abf);
-	node->m_localXform	= file_read<D3DXMATRIX>(abf);
+	node->m_localXform	= file_read<ArnMatrix>(abf);
 	node->m_camType		= (NodeCamera2::CamType)file_read_int(abf);
 	node->m_angle		= file_read_float(abf);
 	node->m_clipStart	= file_read_float(abf);
@@ -464,8 +465,11 @@ void release_arnfile( ArnFileData& afd )
 void file_load( const TCHAR* fileName, ArnBinaryFile& file )
 {
 	FILE* f;
-
-	_tfopen_s(&f, fileName, _T("rb"));
+#ifdef WIN32
+	f = _tfopen(fileName, _T("rb"));
+#else
+	f = fopen(fileName, "rb");
+#endif
 	if (!f)
 		throw std::runtime_error("File open error");
 	fseek(f, 0, SEEK_END);

@@ -1,6 +1,8 @@
 #include "AranPCH.h"
 #include "WalkCallback.h"
 #include "Character.h"
+#include "Animation.h"
+#include "ArnAnimationController.h"
 
 WalkCallback::WalkCallback(void)
 {
@@ -10,11 +12,9 @@ WalkCallback::~WalkCallback(void)
 {
 }
 
-
-
 void WalkCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ )
 {
-	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
+	ArnAnimationController* lpAC = (ArnAnimationController*)pData;
 	lpAC->SetTrackPosition( 0, 0.0f );
 
 	if ( pResultData != 0 )
@@ -25,10 +25,10 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 {
 
 	// TODO: Start walking animation by blending with previous animation set
-	LPD3DXANIMATIONCONTROLLER lpAC = (LPD3DXANIMATIONCONTROLLER)pData;
+	ArnAnimationController* lpAC = (ArnAnimationController*)pData;
 
 	float currentStateWeight = this->GetCharacter()->GetAnimStateWeight();
-	
+
 
 	// already FULL LOITER state... no need to adjust weights
 	if ( this->GetCharacter()->GetCharacterAnimationState() == CharacterInterface::CAS_WALKING
@@ -49,7 +49,7 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 	// turn off loiter anim set
 	lpAC->SetTrackEnable( 0, TRUE );
 	lpAC->SetTrackWeight( 0, currentStateWeight );
-	
+
 
 	// turn on walking anim set
 	lpAC->SetTrackEnable( 1, TRUE );
@@ -66,7 +66,7 @@ void WalkCallback::DoCallback( void* pData /* in */, void* pResultData /* out */
 		this->GetCharacter()->SetCharacterAnimationStateNext( CharacterInterface::CAS_WALKING );
 	}
 
-	
+
 	if ( pResultData != 0 )
 		*(int*)pResultData = 0;
 }

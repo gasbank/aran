@@ -1,8 +1,7 @@
 #pragma once
-#include "characteranimationcallback.h"
+#include "CharacterAnimationCallback.h"
 
-class UndefinedCallback :
-	public CharacterAnimationCallback
+class UndefinedCallback : public CharacterAnimationCallback
 {
 public:
 	UndefinedCallback(void);

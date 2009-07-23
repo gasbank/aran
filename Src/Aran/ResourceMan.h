@@ -19,7 +19,7 @@ public:
 		DUN,
 		BIGHOUSE,
 		MOMA,
-		
+
 
 		BOX0,
 		BOX1,
@@ -27,9 +27,9 @@ public:
 		BOX3,
 		BOXSKIN,
 
-		MODEL_COUNT,
+		MODEL_COUNT
 	};
-	HRESULT registerModel( MODELID id, const TCHAR* modelFileName );
+	HRESULT registerModel( MODELID id, const char* modelFileName );
 	HRESULT unregisterModel( MODELID id );
 	int initializeAll();
 	HRESULT unregisterAllModels();

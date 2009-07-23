@@ -9,7 +9,6 @@ CharacterAnimationCallback::~CharacterAnimationCallback(void)
 {
 }
 
-
 void CharacterAnimationCallback::DoCallbackFirstTimeOnly( void* pData /* in */, void* pResultData /* out */ )
 {
 	UNREFERENCED_PARAMETER(pData);

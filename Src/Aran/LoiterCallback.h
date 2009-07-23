@@ -1,5 +1,5 @@
 #pragma once
-#include "characteranimationcallback.h"
+#include "CharacterAnimationCallback.h"
 
 class LoiterCallback :
 	public CharacterAnimationCallback

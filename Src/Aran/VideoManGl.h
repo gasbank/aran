@@ -48,11 +48,11 @@ private:
 
 };
 
-void ArnDrawAxesGl(float size);
-void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
-void ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
-void ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
-void ArnConfigureViewMatrixGl(ArnCamera* cam);
-GLuint ArnCreateNormalizationCubeMapGl();
+ARAN_API void ArnDrawAxesGl(float size);
+ARAN_API void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
+ARAN_API void ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
+ARAN_API void ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
+ARAN_API void ArnConfigureViewMatrixGl(ArnCamera* cam);
+ARAN_API GLuint ArnCreateNormalizationCubeMapGl();
 
 #endif // VIDEOMANGL_H

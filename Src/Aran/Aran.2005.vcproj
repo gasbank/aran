@@ -20,7 +20,8 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="1"
+			InheritedPropertySheets=".\Global.vsprops"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -43,20 +44,20 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
-				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB"
+				AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				BufferSecurityCheck="true"
 				EnableEnhancedInstructionSet="0"
-				UsePrecompiledHeader="1"
+				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="AranPCH.h"
 				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
 				WarningLevel="4"
-				WarnAsError="true"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4127;4512;4100"
 				EnablePREfast="false"
 			/>
 			<Tool
@@ -71,6 +72,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalOptions="/MACHINE:x86"
+				OutputFile="$(OutDir)\$(ProjectName)_D.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -94,7 +96,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			CharacterSet="1"
+			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -121,8 +123,8 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../../DXUT/Core"
-				PreprocessorDefinitions=""
+				AdditionalIncludeDirectories="&quot;../cml-1_0_0&quot;;&quot;../DevIL-SDK-x86-1.7.8/include&quot;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_LIB;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="2"
@@ -144,7 +146,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalOptions="/MACHINE:x86"
-				OutputFile="$(OutDir)\$(ProjectName)_Release.lib"
+				OutputFile="$(OutDir)\$(ProjectName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -157,6 +159,91 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="DebugDLL|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets=".\Global.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+				Description=""
+				CommandLine=""
+				Outputs=""
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="0"
+				AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				BufferSecurityCheck="true"
+				EnableEnhancedInstructionSet="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranPCH.h"
+				ProgramDataBaseFileName="$(OutDir)\$(TargetName).pdb"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4127;4512;4100"
+				EnablePREfast="false"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="d3d9.lib d3dx9d.lib opengl32.lib glu32.lib xerces-c_3D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib DevIL.lib"
+				OutputFile="$(OutDir)\$(ProjectName)_D.dll"
+				AdditionalLibraryDirectories="&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				ImportLibrary="$(TargetDir)$(TargetName).lib"
+				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -259,6 +346,78 @@
 			Name="Arn"
 			>
 			<File
+				RelativePath=".\ArnAction.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAction.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnActions.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnActions.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAnim.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAnim.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAnimationController.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnAnimationController.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnBinaryChunk.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnBinaryChunk.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnBone.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnBone.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnCamera.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnCamera.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnConsts.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnConsts.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnContainer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnContainer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnFile.cpp"
 				>
 			</File>
@@ -267,11 +426,99 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnGenericBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGenericBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGenericBuffer.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnHierarchy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnHierarchy.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnIndexBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnIndexBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnIpo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnIpo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnLight.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnLight.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMaterial.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMaterial.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnMath.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\ArnMath.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMath.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMatrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMatrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMesh.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMesh.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnNode.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnNode.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnNode.inl"
 				>
 			</File>
 			<File
@@ -291,6 +538,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnQuat.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnQuat.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnSceneGraph.cpp"
 				>
 			</File>
@@ -298,261 +553,317 @@
 				RelativePath=".\ArnSceneGraph.h"
 				>
 			</File>
-			<Filter
-				Name="ArnNode Derived"
+			<File
+				RelativePath=".\ArnSceneGraph.inl"
 				>
-				<File
-					RelativePath=".\ArnAnim.cpp"
+			</File>
+			<File
+				RelativePath=".\ArnSkeleton.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnSkeleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnSkinInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnSkinInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnTexture.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnTexture.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVertexBuffer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVertexBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXformable.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXformable.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXformable.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXmlLoader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXmlLoader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXmlString.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnXmlString.h"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Sources &amp; Headers"
+			>
+			<File
+				RelativePath=".\Animation.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Animation.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AranApi.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AranPCH.cpp"
+				>
+				<FileConfiguration
+					Name="DebugLib|Win32"
 					>
-				</File>
-				<File
-					RelativePath=".\ArnAnim.h"
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseLib|Win32"
 					>
-				</File>
-				<File
-					RelativePath=".\ArnBone.cpp"
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="DebugDLL|Win32"
 					>
-				</File>
-				<File
-					RelativePath=".\ArnBone.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnCamera.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnCamera.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnContainer.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnContainer.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnHierarchy.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnHierarchy.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnIpo.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnIpo.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnLight.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnLight.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnMaterial.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnMaterial.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnMesh.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnMesh.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnNode.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnNode.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnSkeleton.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnSkeleton.h"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnXformable.cpp"
-					>
-				</File>
-				<File
-					RelativePath=".\ArnXformable.h"
-					>
-				</File>
-			</Filter>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\AranPCH.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Decompose.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Decompose.h"
+				>
+			</File>
+			<File
+				RelativePath=".\DungeonInterface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\DungeonInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glext.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glInfo.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\glInfo.h"
+				>
+			</File>
+			<File
+				RelativePath=".\inotify-cxx.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\inotify-cxx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\InputMan.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\InputMan.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Log.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Log.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Macros.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelDrawer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelDrawer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelDrawerDx9.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelDrawerDx9.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelDrawerGl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelReader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ModelReader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MyError.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PreciseTimer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PreciseTimer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PreciseTimer.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\Renderer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Renderer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderLayer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderLayer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ResourceMan.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ResourceMan.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Singleton.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Sprite.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Sprite.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SpriteManager.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SpriteManager.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Structs.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Structs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoMan.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoMan.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoManDx9.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoManDx9.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoManGl.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VideoManGl.h"
+				>
+			</File>
 		</Filter>
 		<File
-			RelativePath=".\Animation.cpp"
+			RelativePath=".\DllMain.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\Animation.h"
-			>
-		</File>
-		<File
-			RelativePath=".\AranPCH.cpp"
-			>
-			<FileConfiguration
-				Name="DebugLib|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-			<FileConfiguration
-				Name="ReleaseLib|Win32"
-				>
-				<Tool
-					Name="VCCLCompilerTool"
-					UsePrecompiledHeader="1"
-				/>
-			</FileConfiguration>
-		</File>
-		<File
-			RelativePath=".\AranPCH.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Arn.cd"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnActions.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnActions.h"
-			>
-		</File>
-		<File
-			RelativePath=".\DungeonInterface.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\DungeonInterface.h"
-			>
-		</File>
-		<File
-			RelativePath=".\InputMan.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\InputMan.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Log.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Log.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Macros.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ModelReader.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ModelReader.h"
-			>
-		</File>
-		<File
-			RelativePath=".\MyError.h"
-			>
-		</File>
-		<File
-			RelativePath=".\PreciseTimer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\PreciseTimer.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Renderer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Renderer.h"
-			>
-		</File>
-		<File
-			RelativePath=".\RenderLayer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\RenderLayer.h"
-			>
-		</File>
-		<File
-			RelativePath=".\resource.h"
-			>
-		</File>
-		<File
-			RelativePath=".\ResourceMan.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ResourceMan.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Singleton.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Sprite.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Sprite.h"
-			>
-		</File>
-		<File
-			RelativePath=".\SpriteManager.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\SpriteManager.h"
-			>
-		</File>
-		<File
-			RelativePath=".\Structs.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Structs.h"
-			>
-		</File>
-		<File
-			RelativePath=".\VideoMan.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\VideoMan.h"
+			RelativePath=".\Global.vsprops"
 			>
 		</File>
 	</Files>

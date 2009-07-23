@@ -1,15 +1,15 @@
 // InputMan.h
 // 2007 Geoyeob Kim
+// 2009 Geoyeob Kim
 
 #pragma once
 
-
-typedef int BOOL;
+#include "ArnMath.h"
 
 class CharacterInterface;
 class DungeonInterface;
 
-struct Point2Int 
+struct Point2Int
 {
 	int x, y;
 };
@@ -29,12 +29,12 @@ private:
 
 	/*IDirectInput8*						lpDInput8;
 	IDirectInputDevice8*				lpDInputDevKeyboard;*/
-	
+
 public:
 	InputMan(void);
 	~InputMan(void);
 
-	HRESULT Initialize( HINSTANCE hInst, HWND hwnd );
+	HRESULT Initialize( /*HINSTANCE hInst, HWND hwnd*/ );
 	HRESULT AcquireKeyboard();
 
 	void SetClicked(BOOL b) { this->isClicked = b; }
@@ -47,7 +47,7 @@ public:
 	void SetMouseDownPos(int x, int y) { this->mouseDownPos.x = x; this->mouseDownPos.y = y; }
 	void SetMouseUpPos(Point2Int p) { this->mouseUpPos = p; }
 	void SetMouseUpPos(int x, int y) { this->mouseUpPos.x = x; this->mouseUpPos.y = y; }
-	
+
 
 	BOOL IsClicked() { return this->isClicked; }
 	BOOL IsRClicked() { return this->isRClicked; }
@@ -64,15 +64,15 @@ public:
 	// Player character control
 	void WalkCharacterForward( float amount = 0.2f );
 	void WalkCharacterBackward( float amount = 0.2f );
-	void TurnCharacterLeft( float amount = D3DXToRadian( 5 ) );
-	void TurnCharacterRight( float amount = D3DXToRadian( 5 ) );
-	const D3DXMATRIX* GetFinalTransform() const;
+	void TurnCharacterLeft( float amount = ArnToRadian( 5 ) );
+	void TurnCharacterRight( float amount = ArnToRadian( 5 ) );
+	const ArnMatrix* GetFinalTransform() const;
 
 	void StopCharacterWalking();
 
 	// Dungeon
 	void AttachDungeonInterface( DungeonInterface* pDungeonInterface ) { this->pDungeonInterface = pDungeonInterface; }
-	void DungeonScrollBy( D3DXVECTOR3* pDScroll );
+	void DungeonScrollBy( const ArnVec3* pDScroll );
 
-	HRESULT WINAPI ProcessKeyboardInput();
+	HRESULT ProcessKeyboardInput();
 };

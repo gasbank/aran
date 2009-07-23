@@ -12,6 +12,10 @@ public:
 
 	static ArnNode*		createFrom(const NodeBase* nodeBase);
 	unsigned int		getKeyCount() { return m_data.size(); }
+
+	// *** INTERNAL USE ONLY START ***
+	virtual void			interconnect(ArnNode* sceneRoot) { ArnNode::interconnect(sceneRoot); }
+	// *** INTERNAL USE ONLY END ***
 private:
 	void				buildFrom(const NodeAnim1* na);
 

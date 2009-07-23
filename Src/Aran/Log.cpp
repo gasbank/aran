@@ -7,7 +7,7 @@
 
 #include "Log.h"
 
-IMPLEMENT_SINGLETON(LOGMANAGER);
+IMPLEMENT_SINGLETON(LOGMANAGER)
 
 
 LOGMANAGER::LOGMANAGER()
@@ -22,7 +22,7 @@ LOGMANAGER::LOGMANAGER()
 	}
 	else
 	{
-		NewLog( _T( "Start log file" ) );
+		NewLog("Start log file");
 	}
 }
 
@@ -30,7 +30,7 @@ LOGMANAGER::~LOGMANAGER()
 {
 	if (fout)
 	{
-		NewLog( _T( "Close log file" ) );
+		NewLog("Close log file");
 		fout << _T( "CNTS : " ) << okayCount << _T( " Okays, " ) << failCount << _T( " Fails" ) << std::endl;
 		fout.close();
 	}
@@ -48,8 +48,8 @@ LOGMANAGER::LOGMANAGER(const char *filename, bool bAppend)
 	}
 	else
 	{
-		if (bAppend) NewLog( _T( "Start log file (Append)" ) );
-		else NewLog( _T( "Start log file" ) );
+		if (bAppend) NewLog("Start log file (Append)");
+		else NewLog("Start log file");
 	}
 }
 
@@ -58,12 +58,7 @@ LOGMANAGER::LOGMANAGER(const char *filename)
 	LOGMANAGER(filename, false);
 }
 
-void LOGMANAGER::NewLog(const TCHAR* message)
-{
-	NewLog(message, LOG_OKAY);
-}
-
-void LOGMANAGER::NewLog(const TCHAR* message, bool bOkay)
+void LOGMANAGER::NewLog(const char* message, bool bOkay)
 {
 	//fout << "-----------------------------------------------------------------------------------------------------------\n";
 	fout << "***********\n";
@@ -79,16 +74,36 @@ void LOGMANAGER::NewLog(const TCHAR* message, bool bOkay)
 	}
 }
 
-void LOGMANAGER::NewLog(const TCHAR* sourcefilename, const TCHAR* funcname, int line, const TCHAR* message, bool bOkay)
+void LOGMANAGER::NewLog(const wchar_t* message, bool bOkay)
 {
-	NewLog(message, bOkay);
-	
-	fout << _T( "FILE : " ) << sourcefilename << " (" << line << ")" << std::endl;
-	fout << _T( "FUNC : " ) << funcname << std::endl;
-
-	_stprintf_s(debugBuf, TCHARSIZE(debugBuf), _T("%s(%d) : %s\n"), sourcefilename, line, message);
-	OutputDebugString(debugBuf);
+	// TODO
 }
 
+void LOGMANAGER::NewLog(const char* sourcefilename, const char* funcname, int line, const char* message, bool bOkay)
+{
+	NewLog(message, bOkay);
+
+	fout << _T( "FILE : " ) << sourcefilename << " (" << line << ")" << std::endl;
+	if (funcname)
+		fout << _T( "FUNC : " ) << funcname << std::endl;
 
 
+	// _stprintf_s(debugBuf, TCHARSIZE(debugBuf), _T("%s(%d) : %s\n"), sourcefilename, line, message);
+	sprintf(debugBuf, "%s(%d) : %s\n", sourcefilename, line, message);
+	OutputDebugStringA(debugBuf);
+}
+
+void LOGMANAGER::NewLog(const wchar_t* sourcefilename, const wchar_t* funcname, int line, const wchar_t* message, bool bOkay)
+{
+	// TODO
+}
+
+void LOGMANAGER::NewLog(const wchar_t* sourcefilename, int unknown, int line, const char* message, bool bOkay)
+{
+	// TODO
+}
+
+void LOGMANAGER::NewLog( const char* message )
+{
+
+}
