@@ -43,7 +43,7 @@ almostEqualFloat4(float* floatArray1, float* floatArray2)
 static inline void
 ArnMatrixIdentity(ArnMatrix* out)
 {
-	*out = ArnMatrix(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+	*out = CreateArnMatrix(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 }
 
 static inline void
@@ -74,6 +74,29 @@ static inline float
 ArnToDegree(float rad)
 {
 	return float(rad * (180.0 / ARN_PI));
+}
+
+static inline float
+ArnVec3GetLength(const ArnVec3& v)
+{
+	return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+static inline float
+ArnVec3Dot(const ArnVec3& v1, const ArnVec3& v2)
+{
+	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+}
+
+static inline float
+ArnVec3Dot(const ArnVec3* v1, const ArnVec3* v2)
+{
+	return ArnVec3Dot(*v1, *v2);
+}
+static inline ArnVec3
+ArnVec3GetCrossProduct(const ArnVec3& va, const ArnVec3& vb)
+{
+	return CreateArnVec3(va.y * vb.z - va.z * vb.y, va.z * vb.x - va.x * vb.z, va.x * vb.y - va.y * vb.x);
 }
 
 static inline void

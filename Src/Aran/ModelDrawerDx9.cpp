@@ -173,7 +173,7 @@ int ModelDrawerDx9::BuildBlendedMeshByMeshIndex(int meshIndex)
 	{
 		Bone* bone = &currentSkeleton->bones[i];
 		V_OKAY(lpSkinInfo->SetBoneName(i, bone->nameFixed.c_str()));
-		V_OKAY(lpSkinInfo->SetBoneOffsetMatrix(i, bone->offsetMatrix.getConstDxPtr()));
+		V_OKAY(lpSkinInfo->SetBoneOffsetMatrix(i, ArnMatrixGetConstDxPtr(bone->offsetMatrix)));
 
 		// optimized
 		//V_OKAY(lpSkinInfo->SetBoneInfluence(i, (DWORD)bone->influencingVertexCount, &bone->indices[0], &bone->weights[0]));
@@ -415,12 +415,12 @@ void ModelDrawerDx9::UpdateBoneCombinedMatrixByMeshIndex(int meshIndex)
 	MyFrame* frameRoot = this->GetFrameRootByMeshIndex(meshIndex);
 
 	ArnMatrix identity;
-	D3DXMatrixIdentity(identity.getDxPtr());
+	ArnMatrixIdentity(&identity);
 	UpdateBoneCombinedMatrixRecursive(frameRoot, identity);
 }
 void ModelDrawerDx9::UpdateBoneCombinedMatrixRecursive(MyFrame* startFrame, ArnMatrix& parentCombinedTransform)
 {
-	startFrame->combinedMatrix = startFrame->TransformationMatrix * parentCombinedTransform;
+	startFrame->combinedMatrix = ArnMatrixMultiply(startFrame->TransformationMatrix, parentCombinedTransform);
 
 	if (startFrame->pFrameSibling != 0)
 		this->UpdateBoneCombinedMatrixRecursive((MyFrame*)startFrame->pFrameSibling, parentCombinedTransform);
@@ -441,4 +441,5 @@ LPDIRECT3DTEXTURE9 ModelDrawerDx9::GetTexture(int referenceIndex) const
 	else
 		return 0;
 }
-#endif
+
+#endif // #ifdef WIN32

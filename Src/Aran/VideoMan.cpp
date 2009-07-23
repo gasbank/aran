@@ -15,6 +15,7 @@
 #include "ArnLight.h"
 #include "ArnSceneGraph.h"
 #include "ArnMath.h"
+#include "ArnViewportData.h"
 
 IMPLEMENT_SINGLETON(VideoMan)
 
@@ -32,7 +33,7 @@ VideoMan::VideoMan()
 {
 	std::cout << "Constructing VideoMan..." << std::endl;
 
-	dungeonTranslation = ArnVec3( 0.0f, 0.0f, 0.0f );
+	dungeonTranslation = CreateArnVec3( 0.0f, 0.0f, 0.0f );
 
 	ArnMatrixIdentity(&this->modelArcBallRotation);
 
@@ -178,11 +179,11 @@ VideoMan::SetWindowSize(int w, int h)
 HRESULT
 VideoMan::InitMainCamera()
 {
-	if (getMainCamera()->up == ArnVec3(0.0f, 0.0f, 0.0f))
+	if (ArnVec3Equals(getMainCamera()->up, ArnConsts::D3DXVEC3_ZERO))
 	{
-		this->mainCamera.eye = ArnVec3( 0.0f, 0.0f, -50.0f );
-		this->mainCamera.at = ArnVec3( 0.0f, 0.0f, 0.0f );
-		this->mainCamera.up = ArnVec3( 0.0f, 1.0f, 0.0f );
+		this->mainCamera.eye = CreateArnVec3( 0.0f, 0.0f, -50.0f );
+		this->mainCamera.at = CreateArnVec3( 0.0f, 0.0f, 0.0f );
+		this->mainCamera.up = CreateArnVec3( 0.0f, 1.0f, 0.0f );
 
 		this->mainCamera.farClip = 1000.0f;
 		this->mainCamera.nearClip = 1.0f;
@@ -235,9 +236,9 @@ VideoMan::SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk )
 	this->mainCamera.eye.y = pCamChunk->pos.y;
 	this->mainCamera.eye.z = pCamChunk->pos.z;
 
-	ArnVec3 lookAtVector( 0.0f, 0.0f, 1.0f );
-	ArnVec3 upVector( 0.0f, 1.0f, 0.0f );
-	ArnMatrix upVectorRotX, upVectorRotY, upVectorRotZ, upVectorRot;
+	ArnVec3 lookAtVector = ArnConsts::D3DXVEC3_Z;
+	ArnVec3 upVector = ArnConsts::D3DXVEC3_Y;
+	ArnMatrix upVectorRot;
 	ArnQuat quat( pCamChunk->rot.x, pCamChunk->rot.y, pCamChunk->rot.z, pCamChunk->rot.w );
 	ArnMatrixRotationQuaternion( &upVectorRot, &quat );
 
@@ -245,8 +246,8 @@ VideoMan::SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk )
 	ArnVec3Transform( &upv, &upVector, &upVectorRot );
 	ArnVec3TransformNormal( &upVector, &upVector, &upVectorRot );
 	ArnVec3TransformNormal( &lookAtVector, &lookAtVector, &upVectorRot );
-	this->mainCamera.up = ArnVec3( pCamChunk->upVector.x, pCamChunk->upVector.y, pCamChunk->upVector.z );
-	this->mainCamera.at = ArnVec3( pCamChunk->lookAtVector.x, pCamChunk->lookAtVector.y, pCamChunk->lookAtVector.z );
+	this->mainCamera.up = CreateArnVec3( pCamChunk->upVector.x, pCamChunk->upVector.y, pCamChunk->upVector.z );
+	this->mainCamera.at = CreateArnVec3( pCamChunk->lookAtVector.x, pCamChunk->lookAtVector.y, pCamChunk->lookAtVector.z );
 	this->mainCamera.farClip = pCamChunk->farClip;
 	this->mainCamera.nearClip = pCamChunk->nearClip;
 	return S_OK;
@@ -259,7 +260,7 @@ VideoMan::SetCamera( ArnCamera& arnCam )
 	ArnMatrix localTf = arnCam.getLocalXform();
 
 #ifdef WIN32
-	localTf = localTf.transpose();
+	localTf = ArnMatrixTranspose(localTf);
 #endif
 	mainCamera.eye.x = localTf.m[0][3];
 	mainCamera.eye.y = localTf.m[1][3];
@@ -355,7 +356,7 @@ VideoMan::InitLight()
 	this->defaultLight.Diffuse.g = 0.5f;
 	this->defaultLight.Diffuse.b = 0.5f;
 	this->defaultLight.Diffuse.a = 1.0f;
-	ArnVec3 dir(0.0f, 0.0f, 1.0f);
+	ArnVec3 dir = ArnConsts::D3DXVEC3_Z;
 	this->defaultLight.Direction = dir;
 
 	/*ZeroMemory(&this->pointLight, sizeof(D3DLIGHT9));
@@ -370,7 +371,7 @@ VideoMan::InitLight()
 	this->pointLight.Attenuation1 = 0.125f;
 	this->pointLight.Attenuation2 = 0.0f;*/
 
-	ArnVec3 pos(0.0f, 0.0f, -50.0f);
+	ArnVec3 pos = CreateArnVec3(0.0f, 0.0f, -50.0f);
 	this->pointLight.Position = pos;
 	//this->pointLight.Direction = D3DXVECTOR3(1.0f, 1.0f, 1.0f);
 
@@ -438,7 +439,7 @@ VideoMan::InitFont()
 void
 VideoMan::ScrollBy( ArnVec3* dScroll )
 {
-	this->dungeonTranslation += *dScroll;
+	this->dungeonTranslation = ArnVec3Add(this->dungeonTranslation, *dScroll);
 }
 
 size_t
@@ -644,11 +645,8 @@ VideoMan::renderSceneGraph()
 //////////////////////////////////////////////////////////////////////////
 
 ArnMatrix*
-ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, cml::Handedness handedness)
+ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, bool rightHanded)
 {
-	cml_mat44 cmlout;
 	float aspect = (float)viewportData->Width / viewportData->Height;
-	cml::matrix_perspective_yfov(cmlout, cam->getFov(), aspect, cam->getNearClip(), cam->getFarClip(), handedness, cml::z_clip_zero);
-	ArnCmlMatToArnMat(out, &cmlout);
-	return out;
+	return ArnMatrixPerspectiveYFov(out, cam->getFov(), aspect, cam->getNearClip(), cam->getFarClip(), rightHanded);
 }

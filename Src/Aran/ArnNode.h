@@ -1,11 +1,14 @@
 #pragma once
 #include "ArnObject.h"
 
-class ArnNode : public ArnObject
+class ArnNode;
+
+ARAN_API_EXTERN template class ARAN_API std::list<ArnNode*>;
+
+class ARAN_API ArnNode : public ArnObject
 {
 public:
 	typedef std::list<ArnNode*>		ChildrenList;
-
 									ArnNode(NODE_DATA_TYPE type);
 	virtual							~ArnNode(void);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-class Uncopyable
+class ARAN_API Uncopyable
 {
 protected:
 	Uncopyable() {}
@@ -11,7 +11,7 @@ private:
 
 };
 
-class ArnObject : private Uncopyable
+class ARAN_API ArnObject : private Uncopyable
 {
 public:
 	virtual					~ArnObject(void);

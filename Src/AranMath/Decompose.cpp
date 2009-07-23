@@ -1,7 +1,8 @@
 // Originally written by Ken Shoemake
 /**** Decompose.c ****/
 /* Ken Shoemake, 1993 */
-#include "AranPCH.h"
+// 2009 Geoyeob Kim Modified
+#include "AranMathPCH.h"
 #include "Decompose.h"
 
 

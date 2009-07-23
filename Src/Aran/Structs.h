@@ -1,7 +1,12 @@
 // Structs.h
-// 2007, 2008 Geoyeob Kim (gasbank@gmail.com)
+// 2007, 2008, 2009 Geoyeob Kim (gasbank@gmail.com)
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
+
+#include "ArnVec3.h"
+#include "ArnVec4.h"
+#include "ArnColorValue4f.h"
+#include "RST_DATA.h"
 
 typedef std::string STRING;
 
@@ -98,6 +103,7 @@ enum EXPORT_VERSION
 	EV_ARN11,
 	EV_ARN20,
 	EV_ARN25,
+	EV_ARN30,
 	EV_FORCE_DWORD = 0x7fffffff
 };
 
@@ -196,8 +202,6 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 };
 
 //////////////////////////////////////////////////////////////////////////
-
-#include "ArnVec3.h"
 
 class MY_CUSTOM_MESH_VERTEX
 {
@@ -298,59 +302,6 @@ public:
 	std::vector<BezTripleData> points;
 };
 
-
-inline float ArnVec3GetLength(const ArnVec3& v) { return sqrtf(v.x*v.x + v.y*v.y + v.z*v.z); }
-inline float ArnVec3Dot(const ArnVec3& v1, const ArnVec3& v2)
-{
-	return v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-}
-inline float ArnVec3Dot(const ArnVec3* v1, const ArnVec3* v2)
-{
-	return ArnVec3Dot(*v1, *v2);
-}
-inline ArnVec3 ArnVec3GetCrossProduct(const ArnVec3& va, const ArnVec3& vb)
-{
-	return ArnVec3(va[1]*vb[2] - va[2]*vb[1], va[2]*vb[0] - va[0]*vb[2], va[0]*vb[1] - va[1]*vb[0]);
-}
-
-struct ArnVec4
-{
-	float x, y, z, w;
-
-	ArnVec4() : x(0), y(0), z(0), w(0) {}
-	ArnVec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
-	ArnVec4(const ArnVec3& vec3, float _w) : x(vec3.x), y(vec3.y), z(vec3.z), w(_w) {}
-
-	const float* getRawData() const { return (const float*)&x; }
-	void printFormatString() const
-	{
-		printf("(x %6.3f, y %6.3f, z %6.3f, w %6.3f)\n", x, y, z, w);
-	}
-};
-
-class ArnColorValue4f
-{
-public:
-	ArnColorValue4f() : r(0), g(0), b(0), a(1.0f)
-	{
-	}
-	ArnColorValue4f(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a)
-	{
-	}
-	void printFormatString() const
-	{
-		printf("(r %6.3f, g %6.3f, b %6.3f, a %6.3f)\n", r, g, b, a);
-	}
-#ifdef WIN32
-	D3DXCOLOR getDx() const { return D3DXCOLOR(r, g, b, a); }
-#endif
-
-	float r;
-	float g;
-	float b;
-	float a;
-};
-
 template<typename V1, typename V2> void ArnRgbaAssign(V1& v1, const V2& v2)
 {
 	v1.r = v2.r;
@@ -406,22 +357,6 @@ struct ArnLightData
 	float					Phi;
 };
 
-//
-// Data structure for Direct3D compatibility. (D3DVIEWPORT9)
-//
-struct ArnViewportData {
-#ifdef WIN32
-	const D3DVIEWPORT9*		getConstDxPtr() const { return reinterpret_cast<const D3DVIEWPORT9*>(this); }
-	D3DVIEWPORT9*			getDxPtr() { return reinterpret_cast<D3DVIEWPORT9*>(this); }
-#endif
-
-	DWORD					X;
-	DWORD					Y;            /* Viewport Top left */
-	DWORD					Width;
-	DWORD					Height;       /* Viewport Dimensions */
-	float					MinZ;         /* Min/max of clip Volume */
-	float					MaxZ;
-};
 
 class MaterialData
 {
@@ -648,15 +583,6 @@ struct ArnNodeHeader
 	DWORD chunkStartPos;
 };
 
-struct RST_DATA
-{
-	float x, y, z, w; // rotation
-	float sx, sy, sz; // scaling
-	float tx, ty, tz; // translation
-
-	static const RST_DATA IDENTITY;
-};
-
 //----------------------------------------------------------------------------
 // D3DXKEY_VECTOR3:
 // ----------------
@@ -759,28 +685,4 @@ struct SkeletonNode
 	std::vector<Bone>	bones;
 };
 
-// limits a value to low and high
-#define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}
-
-////////////
-
-// Floating Point Library Specific
-
-static const float	EPSILON						= 0.0001f;		// error tolerance for check
-static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
-
-#define ZERO_CLAMP(x)	( (EPSILON > fabs(x))?0.0f:(x) )						// set float to 0 if within tolerance
-
-#define FLOAT_EQ(x,v)	( ((v) - EPSILON) < (x) && (x) < ((v) + EPSILON) )		// float equality test
-#define	SQR(x)		( (x) * (x) )
-
-#define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
-
 #endif // #ifndef __STRUCTS_H_
-
-
-typedef cml::quaternion< float, cml::fixed<>, cml::scalar_first, cml::positive_cross > cml_quat;
-typedef cml::vector< float, cml::fixed<3> > cml_vec3;
-typedef cml::matrix33f_c cml_mat33;
-typedef cml::matrix44f_c cml_mat44;
-

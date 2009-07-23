@@ -226,7 +226,7 @@ VideoManDx9::Draw()
 			ArnMatrix mRot;
 			ArnMatrixRotationQuaternion(&mRot, &quat);
 
-			setModelArcBallRotation(*getModelArcBallRotationLast() * mRot);
+			setModelArcBallRotation(ArnMatrixMultiply(*getModelArcBallRotationLast(), mRot));
 		}
 		else
 		{
@@ -401,7 +401,7 @@ VideoManDx9::DrawAtEditor( BOOL isReady, BOOL isRunning )
 	// World - View - Projection
 	//////////////////////////////////////////////////////////////////////////
 	resetWorldMatrix();
-	this->lpD3DDevice->SetTransform(D3DTS_WORLD, getWorldMatrix().getConstDxPtr());
+	this->lpD3DDevice->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(getWorldMatrix()));
 
 	//this->SetCamera(0.0f, 0.0f, -50.0f);
 
@@ -413,7 +413,7 @@ VideoManDx9::DrawAtEditor( BOOL isReady, BOOL isRunning )
 		&getMainCamera()->up	// the up direction
 		);
 	setViewMatrix(view);
-	this->lpD3DDevice->SetTransform(D3DTS_VIEW, getViewMatrix().getConstDxPtr());
+	this->lpD3DDevice->SetTransform(D3DTS_VIEW, ArnMatrixGetConstDxPtr(getViewMatrix()));
 
 	ArnMatrix proj;
 	ArnMatrixPerspectiveFovLH(
@@ -424,22 +424,22 @@ VideoManDx9::DrawAtEditor( BOOL isReady, BOOL isRunning )
 		getMainCamera()->farClip
 		);
 	setProjectionMatrix(proj);
-	this->lpD3DDevice->SetTransform(D3DTS_PROJECTION, getProjectionMatrix().getConstDxPtr());
+	this->lpD3DDevice->SetTransform(D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(getProjectionMatrix()));
 
-	ArnMatrix matTranslation, matRotation, matScaling;
+	ArnMatrix matTranslation, matScaling;
 	if (this->pDrawingModel == 0)
 	{
 		// Sample model displaying
 		ArnMatrixTranslation(&matTranslation, 0.0f, 0.0f, 10.0f);
 		ArnMatrixScaling(&matScaling, 0.1f, 0.1f, 0.1f);
-		ArnMatrix xform = matScaling * matTranslation;
+		ArnMatrix xform = ArnMatrixMultiply(matScaling, matTranslation);
 		this->RenderModel(this->mrMan, &xform);
 	}
 	else
 	{
 		ArnMatrixTranslation(&matTranslation, 0.0f, 0.0f, 10.0f);
 		ArnMatrixScaling(&matScaling, 1.0f, 1.0f, 1.0f);
-		ArnMatrix xform = matScaling * matTranslation;
+		ArnMatrix xform = ArnMatrixMultiply(matScaling, matTranslation);
 		this->RenderModel(this->pDrawingModel, &xform);
 		this->pDrawingModel->AdvanceTime( 0.1f );
 	}
@@ -683,7 +683,7 @@ VideoManDx9::TurnModelLightOn(ModelReader *pMR, ArnMatrix* worldTransformMatrix)
 
 		if (worldTransformMatrix != 0)
 		{
-			ArnVec3 lightPos(light.Position), lightDir(light.Direction); // original
+			ArnVec3 lightDir(light.Direction); // original
 			ArnVec4 lightPosition, lightDirection; // transformed
 			ArnVec3 scaling, translation;
 			ArnQuat rotation;
@@ -750,13 +750,13 @@ VideoManDx9::RenderModel1(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 	{
 		// TODO: keyframed animation
 		const ArnMatrix* pAnimMat = pMR->GetAnimMatControlledByAC(i);
-		matFinalTransform = (*pAnimMat) * matRotX90;
+		matFinalTransform = ArnMatrixMultiply(*pAnimMat, matRotX90);
 
 		if (worldTransformMatrix != 0)
 		{
-			matFinalTransform = matFinalTransform * (*worldTransformMatrix);
+			matFinalTransform = ArnMatrixMultiply(matFinalTransform, *worldTransformMatrix);
 		}
-		this->lpD3DDevice->SetTransform(D3DTS_WORLD, matFinalTransform.getConstDxPtr());
+		this->lpD3DDevice->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(matFinalTransform));
 
 		//////////////////////////////////////////////////////////////////////////
 		//////////////////////////////////////////////////////////////////////////
@@ -885,13 +885,13 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 		{
 			// General mesh case
 			const ArnMatrix* pAnimMat = pMR->GetAnimMatControlledByAC(i);
-			matGeneralMeshFinalTransform = (*pAnimMat) * matRotX90;
+			matGeneralMeshFinalTransform = ArnMatrixMultiply(*pAnimMat, matRotX90);
 
 			if (worldTransformMatrix != 0)
 			{
-				matGeneralMeshFinalTransform = matGeneralMeshFinalTransform * (*worldTransformMatrix);
+				matGeneralMeshFinalTransform = ArnMatrixMultiply(matGeneralMeshFinalTransform, *worldTransformMatrix);
 			}
-			this->lpD3DDevice->SetTransform(D3DTS_WORLD, matGeneralMeshFinalTransform.getConstDxPtr());
+			this->lpD3DDevice->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(matGeneralMeshFinalTransform));
 
 			for (j = 0; j < matCount; j++)
 			{
@@ -933,11 +933,11 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 	D3DXHANDLE hNumVertInflu	= this->lpEffectSkinning->GetParameterByName(0, "NumVertInfluences");
 	D3DXHANDLE hTestFloatArray	= this->lpEffectSkinning->GetParameterByName(0, "TestFloatArray");
 
-	ArnMatrix matWorldViewProj = getWorldMatrix() * getViewMatrix() * getProjectionMatrix();
+	ArnMatrix matWorldViewProj = ArnMatrixMultiply(getWorldMatrix(), getViewMatrix(), getProjectionMatrix());
 
 	int numVertInfluences = 3;
 	V_OKAY( this->lpEffectSkinning->SetInt( hNumVertInflu, numVertInfluences ) );
-	V_OKAY( this->lpEffectSkinning->SetMatrix( hWorldViewProj, matWorldViewProj.getConstDxPtr() ) );
+	V_OKAY( this->lpEffectSkinning->SetMatrix( hWorldViewProj, ArnMatrixGetConstDxPtr(matWorldViewProj) ) );
 
 	V_OKAY( this->lpEffectSkinning->SetTechnique( hTech ) );
 	UINT numPasses;
@@ -961,13 +961,13 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 				offset = pMR->GetSkeletonNodePointer(j)->bones[k].offsetMatrix;
 				ArnMatrixInverse(&offsetInverse, 0, &offset);
 
-				finalTransforms[k] = offsetInverse * (*combinedTemp) * matRotX90;
+				finalTransforms[k] = ArnMatrixMultiply(offsetInverse, *combinedTemp, matRotX90);
 				if (worldTransformMatrix != 0)
 				{
-					finalTransforms[k] = finalTransforms[k] * (*worldTransformMatrix);
+					finalTransforms[k] = ArnMatrixMultiply(finalTransforms[k], *worldTransformMatrix);
 				}
 			}
-			this->lpEffectSkinning->SetMatrixArray(hFinalTransforms, finalTransforms[0].getConstDxPtr(), (UINT)boneCount);
+			this->lpEffectSkinning->SetMatrixArray(hFinalTransforms, ArnMatrixGetConstDxPtr(finalTransforms[0]), (UINT)boneCount);
 			this->lpEffectSkinning->SetFloatArray(hTestFloatArray, &testFloatArray[0], 2000);
 
 			this->lpEffectSkinning->BeginPass(i);
@@ -1267,8 +1267,7 @@ VideoManDx9::InitCustomMesh()
 	ArnVec3 translation;
 	ArnQuat rotation;
 
-	ArnMatrix matOut;
-	ArnVec3 vecOutScale, vecOutTranslation;
+	//ArnVec3 vecOutScale, vecOutTranslation;
 	ArnQuat qOut;
 
 	ARNKEY_QUATERNION* rotationKeys = 0;
@@ -1302,20 +1301,20 @@ VideoManDx9::InitCustomMesh()
 	ArnQuaternionRotationAxis(&rotationKeys[3].Value, &ArnConsts::D3DXVEC3_X, D3DXToRadian(10));
 
 	translationKeys[0].Time = 1.0f;
-	translationKeys[0].Value = ArnVec3(1.0f, 1.0f, 1.0f);
+	translationKeys[0].Value = CreateArnVec3(1.0f, 1.0f, 1.0f);
 	translationKeys[1].Time = 2.0f;
-	translationKeys[1].Value = ArnVec3(1.0f, 0.0f, 1.0f);
+	translationKeys[1].Value = CreateArnVec3(1.0f, 0.0f, 1.0f);
 	translationKeys[2].Time = 4.0f;
-	translationKeys[2].Value = ArnVec3(0.0f, 1.0f, 5.0f);
+	translationKeys[2].Value = CreateArnVec3(0.0f, 1.0f, 5.0f);
 
 	scaleKeys[0].Time = 0.0f;
-	scaleKeys[0].Value = ArnVec3(1.0f, 1.0f, 1.0f);
+	scaleKeys[0].Value = CreateArnVec3(1.0f, 1.0f, 1.0f);
 	scaleKeys[1].Time = 2.0f;
-	scaleKeys[1].Value = ArnVec3(0.3f, 0.3f, 1.0f);
+	scaleKeys[1].Value = CreateArnVec3(0.3f, 0.3f, 1.0f);
 	scaleKeys[2].Time = 3.5f;
-	scaleKeys[2].Value = ArnVec3(1.0f, 10.0f, 1.0f);
+	scaleKeys[2].Value = CreateArnVec3(1.0f, 10.0f, 1.0f);
 	scaleKeys[3].Time = 4.0f;
-	scaleKeys[3].Value = ArnVec3(100.0f, 100.0f, 500.0f);
+	scaleKeys[3].Value = CreateArnVec3(100.0f, 100.0f, 500.0f);
 
 	V_OKAY(this->lpDefaultAnimationSet->RegisterAnimationSRTKeys("Custom Bone 1", 0, 4, 3, 0, rotationKeys, translationKeys, &animIndex));
 	V_OKAY(this->lpDefaultAnimationSet->RegisterAnimationSRTKeys("Custom Bone 2", 4, 0, 0, scaleKeys, 0, 0, &animIndex));
@@ -1359,9 +1358,9 @@ VideoManDx9::setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix&
 	setViewMatrix(matView);
 	setProjectionMatrix(matProj);
 
-	this->lpD3DDevice->SetTransform(D3DTS_WORLD, getWorldMatrix().getConstDxPtr());
-	this->lpD3DDevice->SetTransform(D3DTS_VIEW, getViewMatrix().getConstDxPtr());
-	this->lpD3DDevice->SetTransform(D3DTS_PROJECTION, getProjectionMatrix().getConstDxPtr());
+	this->lpD3DDevice->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(getWorldMatrix()));
+	this->lpD3DDevice->SetTransform(D3DTS_VIEW, ArnMatrixGetConstDxPtr(getViewMatrix()));
+	this->lpD3DDevice->SetTransform(D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(getProjectionMatrix()));
 }
 
 void
@@ -1370,8 +1369,8 @@ VideoManDx9::renderSingleMesh( ArnMesh* mesh, const ArnMatrix& globalXform /*= D
 	if (mesh->isVisible())
 	{
 		unsigned int j;
-		ArnMatrix finalXform = mesh->getFinalXform() * globalXform;
-		GetDev()->SetTransform(D3DTS_WORLD, finalXform.getConstDxPtr());
+		ArnMatrix finalXform = ArnMatrixMultiply(mesh->getFinalXform(), globalXform);
+		GetDev()->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(finalXform));
 		unsigned int subsetCount = mesh->getMeshData().materialCount;
 		for (j = 0; j < subsetCount; ++j)
 		{
@@ -1446,5 +1445,24 @@ void VideoManDx9::setMouseCallback( void mouseCB(int, int, int, int) )
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+HRESULT
+ArnIntersectDx9( LPD3DXMESH pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, DWORD* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, DWORD* pCountOfHits )
+{
+	assert(ppAllHits == 0);
+	//
+	// TODO: Is exhaustive collision test by ray testing too slow???
+	//
+	/*
+	BOOL hit;
+	D3DXIntersect(pMesh, pRayPos->getConstDxPtr(), pRayDir->getConstDxPtr(), &hit, pFaceIndex, pU, pV, pDist, 0, pCountOfHits);
+	*pHit = hit ? true : false;
+	*/
+	*pHit = false;
+	return S_OK;
+}
+
 #endif // #ifdef WIN32
 

@@ -13,11 +13,11 @@ namespace Aran
 		this->animState = CharacterInterface::CAS_LOITER;
 		this->animStateNext = CharacterInterface::CAS_UNDEFINED;
 
-		this->translation = ArnVec3( 0.0f, 0.0f, 0.0f );
-		this->scale = ArnVec3( 1.0f, 1.0f, 1.0f );
-		this->rotation = ArnQuat( 0.0f, 0.0f, 0.0f, 0.0f );
-		this->lookAt = ArnVec3( 0.0f, -1.0f, 0.0f );
-		this->outLookAt = ArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
+		this->translation = CreateArnVec3( 0.0f, 0.0f, 0.0f );
+		this->scale = CreateArnVec3( 1.0f, 1.0f, 1.0f );
+		this->rotation = CreateArnQuat( 0.0f, 0.0f, 0.0f, 0.0f );
+		this->lookAt = CreateArnVec3( 0.0f, -1.0f, 0.0f );
+		this->outLookAt = CreateArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
 		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
 
@@ -27,8 +27,8 @@ namespace Aran
 		this->translation = translation;
 		this->scale = scale;
 		this->rotation = rotation;
-		this->lookAt = ArnVec3( 0.0f, -1.0f, 0.0f );
-		this->outLookAt = ArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
+		this->lookAt = CreateArnVec3( 0.0f, -1.0f, 0.0f );
+		this->outLookAt = CreateArnVec4( 0.0f, -1.0f, 0.0f, 1.0f );
 
 		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
@@ -57,13 +57,13 @@ namespace Aran
 		ArnMatrix matRotOriginal;
 		ArnMatrixRotationQuaternion( &matRotOriginal, &this->rotation );
 
-		matRot[3] = matRot[0] * matRot[1] * matRot[2];
+		matRot[3] = ArnMatrixMultiply(matRot[0], matRot[1], matRot[2]);
 		ArnVec3Transform( &this->outLookAt, &this->lookAt, &matRot[3] );
 		this->lookAt.x = this->outLookAt.x;
 		this->lookAt.y = this->outLookAt.y;
 		this->lookAt.z = this->outLookAt.z;
 
-		matRot[3] *= matRotOriginal;
+		matRot[3] = ArnMatrixMultiply(matRot[3], matRotOriginal);
 		ArnQuaternionRotationMatrix( &rotation, &matRot[3] );
 		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 	}
@@ -116,7 +116,9 @@ namespace Aran
 	void Character::ChangeTranslationToLookAtDirection( float amount )
 	{
 		ArnMatrixDecompose( &this->scale, &this->rotation, &this->translation, &this->finalTransform );
-		translation += this->lookAt * amount;
+		translation.x += this->lookAt.x * amount;
+		translation.y += this->lookAt.y * amount;
+		translation.z += this->lookAt.z * amount;
 		ArnMatrixTransformation( &this->finalTransform, 0, 0, &this->scale, 0, &this->rotation, &this->translation );
 
 

@@ -97,6 +97,23 @@ private:
 	void*											pVBVertices;
 	static const DWORD								MY_COLOR_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
 };
+
+//////////////////////////////////////////////////////////////////////////
+
+HRESULT 
+ArnIntersectDx9(
+				LPD3DXMESH pMesh,
+				const ArnVec3* pRayPos,
+				const ArnVec3* pRayDir, 
+				bool* pHit,              // True if any faces were intersected
+				DWORD* pFaceIndex,        // index of closest face intersected
+				FLOAT* pU,                // Barycentric Hit Coordinates    
+				FLOAT* pV,                // Barycentric Hit Coordinates
+				FLOAT* pDist,             // Ray-Intersection Parameter Distance
+				ArnGenericBuffer* ppAllHits,    // Array of D3DXINTERSECTINFOs for all hits (not just closest) 
+				DWORD* pCountOfHits);     // Number of entries in AllHits array
+
+
 #endif
 
 #endif // VIDEOMANDX9_H

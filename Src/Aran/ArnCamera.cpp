@@ -12,7 +12,7 @@ ArnCamera::ArnCamera()
 	m_cameraData.fov = float(ARN_PI / 4);
 	m_cameraData.pos = ArnConsts::D3DXVEC3_ZERO;
 	m_cameraData.rot = ArnConsts::D3DXQUAT_IDENTITY;
-	m_cameraData.lookAtVector = ArnVec3(0, 0, -1);
+	m_cameraData.lookAtVector = CreateArnVec3(0, 0, -1);
 	m_cameraData.targetPos = ArnConsts::D3DXVEC3_ZERO;
 	m_cameraData.upVector = ArnConsts::D3DXVEC3_Y;
 }
@@ -62,16 +62,16 @@ ArnCamera::createFrom( const char* name, const ArnQuat& rot, const ArnVec3& tran
 }
 
 ArnCamera*
-ArnCamera::createFrom( const char* name, const ArnVec3& eye, const ArnVec3& target, const ArnVec3& up, float fov, cml::Handedness handedness )
+ArnCamera::createFrom( const char* name, const ArnVec3& eye, const ArnVec3& target, const ArnVec3& up, float fov )
 {
 	ArnCamera* node = new ArnCamera();
 	node->setName(name);
 	node->setLocalXform_Scale(ArnConsts::D3DXVEC3_ONE);
 
-	ArnVec3 lookDir = target - eye;
-	lookDir /= ArnVec3Length(&lookDir);
-	ArnVec3 right = ArnVec3GetCrossProduct(up, ArnVec3(-lookDir.x, -lookDir.y, -lookDir.z));
-	right /= ArnVec3Length(&right);
+	ArnVec3 lookDir = ArnVec3Substract(target, eye);
+	ArnVec3NormalizeSelf(&lookDir);
+	ArnVec3 right = ArnVec3GetCrossProduct(up, CreateArnVec3(-lookDir.x, -lookDir.y, -lookDir.z));
+	ArnVec3NormalizeSelf(&right);
 	ArnMatrix mat;
 
 	// Right vector (1st column)
@@ -117,7 +117,7 @@ ArnCamera::buildFrom( const NodeCamera2* nc )
 	setIpoName(nc->m_ipoName);
 	m_cameraData.nearClip		= nc->m_clipStart;
 	m_cameraData.farClip		= nc->m_clipEnd;
-	m_cameraData.lookAtVector	= ArnVec3(0, 0, -1);
+	m_cameraData.lookAtVector	= CreateArnVec3(0, 0, -1);
 	m_cameraData.pos			= ArnConsts::D3DXVEC3_ZERO;
 	m_cameraData.rot			= ArnConsts::D3DXQUAT_IDENTITY;
 	m_cameraData.targetPos		= ArnConsts::D3DXVEC3_ZERO;

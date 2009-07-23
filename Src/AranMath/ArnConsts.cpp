@@ -1,4 +1,9 @@
-#include "AranPCH.h"
+#include "AranMathPCH.h"
+#include "ArnVec3.h"
+#include "ArnQuat.h"
+#include "ArnMatrix.h"
+#include "ArnColorValue4f.h"
+#include "RST_DATA.h"
 #include "ArnConsts.h"
 
 const RST_DATA					RST_DATA::IDENTITY				= { 0, 0, 0, 1.0f, 1.0f, 1.0f, 1.0f, 0, 0, 0 };

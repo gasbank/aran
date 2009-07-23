@@ -20,7 +20,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
-			InheritedPropertySheets=".\Global.vsprops"
+			InheritedPropertySheets="..\Global.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -170,7 +170,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets=".\Global.vsprops"
+			InheritedPropertySheets="..\Global.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -194,8 +194,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
-				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;;../AranMath"
+				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_USRDLL;ARAN_EXPORTS;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -221,10 +221,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="d3d9.lib d3dx9d.lib opengl32.lib glu32.lib xerces-c_3D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib DevIL.lib"
-				OutputFile="$(OutDir)\$(ProjectName)_D.dll"
-				AdditionalLibraryDirectories="&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
-				ImportLibrary="$(TargetDir)$(TargetName).lib"
+				AdditionalDependencies="AranMath_D.lib d3d9.lib d3dx9.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib"
+				OutputFile="$(WORKING)\$(ProjectName)_D.dll"
+				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				GenerateDebugInformation="true"
+				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -402,14 +403,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnConsts.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnConsts.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnContainer.cpp"
 				>
 			</File>
@@ -478,26 +471,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnMath.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMath.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMath.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMatrix.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMatrix.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnMesh.cpp"
 				>
 			</File>
@@ -538,14 +511,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnQuat.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnQuat.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnSceneGraph.cpp"
 				>
 			</File>
@@ -579,18 +544,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnTexture.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.inl"
 				>
 			</File>
 			<File
@@ -678,11 +631,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Decompose.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Decompose.h"
+				RelativePath=".\DllMain.cpp"
 				>
 			</File>
 			<File
@@ -727,10 +676,6 @@
 			</File>
 			<File
 				RelativePath=".\Log.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Macros.h"
 				>
 			</File>
 			<File
@@ -859,11 +804,7 @@
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\DllMain.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Global.vsprops"
+			RelativePath="..\Macros.h"
 			>
 		</File>
 	</Files>

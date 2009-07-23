@@ -2,6 +2,8 @@
 #include "VideoManGl.h"
 #include "ArnSceneGraph.h"
 #include "ArnLight.h"
+#include "ArnViewportData.h"
+#include "ArnMesh.h"
 
 VideoManGl::VideoManGl()
 : m_glInfoValid(false)
@@ -540,3 +542,101 @@ GLuint ArnCreateNormalizationCubeMapGl()
 	return tex;
 }
 
+
+HRESULT
+ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, unsigned int* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, unsigned int* pCountOfHits )
+{
+	const unsigned int faceGroupCount = pMesh->getFaceGroupCount();
+	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
+	{
+		unsigned int triCount, quadCount;
+		pMesh->getFaceCount(triCount, quadCount, fg);
+		for (unsigned int tc = 0; tc < triCount; ++tc)
+		{
+			unsigned int totalIndex;
+			unsigned int tinds[3];
+			pMesh->getTriFace(totalIndex, tinds, fg, tc);
+			ArnVec3 verts[3];
+			for (unsigned int v = 0; v < 3; ++v)
+				pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
+			float t = 0, u = 0, v = 0;
+			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
+			{
+				if (pFaceIndex)
+					*pFaceIndex = totalIndex;
+				*pHit = true;
+				return S_OK;
+			}
+		}
+
+		/*
+		for (unsigned int qc = 0; qc < quadCount; ++qc)
+		{
+		unsigned int totalIndex;
+		unsigned int qinds[4];
+		pMesh->getQuadFace(totalIndex, qinds, fg, qc);
+		ArnVec3 verts[4];
+		for (unsigned int v = 0; v < 4; ++v)
+		pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
+		float t = 0, u = 0, v = 0;
+		if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
+		{
+		return S_OK;
+		}
+		}
+		*/
+	}
+
+	*pHit = false;
+	return S_OK;
+}
+
+#ifdef WIN32
+ARAN_API void ArnInitGlExtFunctions()
+{
+	// get pointers to GL functions
+	glGenBuffersARB				= (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
+	glBindBufferARB				= (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
+	glBufferDataARB				= (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
+	glBufferSubDataARB			= (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
+	glDeleteBuffersARB			= (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
+	glGetBufferParameterivARB	= (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
+	glMapBufferARB				= (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
+	glUnmapBufferARB			= (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
+
+	glActiveTextureARB			= (PFNGLACTIVETEXTUREARBPROC)wglGetProcAddress("glActiveTextureARB");
+	glClientActiveTextureARB	= (PFNGLCLIENTACTIVETEXTUREARBPROC)wglGetProcAddress("glClientActiveTextureARB");
+	glMultiTexCoord1dARB		= (PFNGLMULTITEXCOORD1DARBPROC)wglGetProcAddress("glMultiTexCoord1dARB");
+	glMultiTexCoord1dvARB		= (PFNGLMULTITEXCOORD1DVARBPROC)wglGetProcAddress("glMultiTexCoord1dvARB");
+	glMultiTexCoord1fARB		= (PFNGLMULTITEXCOORD1FARBPROC)wglGetProcAddress("glMultiTexCoord1fARB");
+	glMultiTexCoord1fvARB		= (PFNGLMULTITEXCOORD1FVARBPROC)wglGetProcAddress("glMultiTexCoord1fvARB");
+	glMultiTexCoord1iARB		= (PFNGLMULTITEXCOORD1IARBPROC)wglGetProcAddress("glMultiTexCoord1iARB");
+	glMultiTexCoord1ivARB		= (PFNGLMULTITEXCOORD1IVARBPROC)wglGetProcAddress("glMultiTexCoord1ivARB");
+	glMultiTexCoord1sARB		= (PFNGLMULTITEXCOORD1SARBPROC)wglGetProcAddress("glMultiTexCoord1sARB");
+	glMultiTexCoord1svARB		= (PFNGLMULTITEXCOORD1SVARBPROC)wglGetProcAddress("glMultiTexCoord1svARB");
+	glMultiTexCoord2dARB		= (PFNGLMULTITEXCOORD2DARBPROC)wglGetProcAddress("glMultiTexCoord2dARB");
+	glMultiTexCoord2dvARB		= (PFNGLMULTITEXCOORD2DVARBPROC)wglGetProcAddress("glMultiTexCoord2dvARB");
+	glMultiTexCoord2fARB		= (PFNGLMULTITEXCOORD2FARBPROC)wglGetProcAddress("glMultiTexCoord2fARB");
+	glMultiTexCoord2fvARB		= (PFNGLMULTITEXCOORD2FVARBPROC)wglGetProcAddress("glMultiTexCoord2fvARB");
+	glMultiTexCoord2iARB		= (PFNGLMULTITEXCOORD2IARBPROC)wglGetProcAddress("glMultiTexCoord2iARB");
+	glMultiTexCoord2ivARB		= (PFNGLMULTITEXCOORD2IVARBPROC)wglGetProcAddress("glMultiTexCoord2ivARB");
+	glMultiTexCoord2sARB		= (PFNGLMULTITEXCOORD2SARBPROC)wglGetProcAddress("glMultiTexCoord2sARB");
+	glMultiTexCoord2svARB		= (PFNGLMULTITEXCOORD2SVARBPROC)wglGetProcAddress("glMultiTexCoord2svARB");
+	glMultiTexCoord3dARB		= (PFNGLMULTITEXCOORD3DARBPROC)wglGetProcAddress("glMultiTexCoord3dARB");
+	glMultiTexCoord3dvARB		= (PFNGLMULTITEXCOORD3DVARBPROC)wglGetProcAddress("glMultiTexCoord3dvARB");
+	glMultiTexCoord3fARB		= (PFNGLMULTITEXCOORD3FARBPROC)wglGetProcAddress("glMultiTexCoord3fARB");
+	glMultiTexCoord3fvARB		= (PFNGLMULTITEXCOORD3FVARBPROC)wglGetProcAddress("glMultiTexCoord3fvARB");
+	glMultiTexCoord3iARB		= (PFNGLMULTITEXCOORD3IARBPROC)wglGetProcAddress("glMultiTexCoord3iARB");
+	glMultiTexCoord3ivARB		= (PFNGLMULTITEXCOORD3IVARBPROC)wglGetProcAddress("glMultiTexCoord3ivARB");
+	glMultiTexCoord3sARB		= (PFNGLMULTITEXCOORD3SARBPROC)wglGetProcAddress("glMultiTexCoord3sARB");
+	glMultiTexCoord3svARB		= (PFNGLMULTITEXCOORD3SVARBPROC)wglGetProcAddress("glMultiTexCoord3svARB");
+	glMultiTexCoord4dARB		= (PFNGLMULTITEXCOORD4DARBPROC)wglGetProcAddress("glMultiTexCoord4dARB");
+	glMultiTexCoord4dvARB		= (PFNGLMULTITEXCOORD4DVARBPROC)wglGetProcAddress("glMultiTexCoord4dvARB");
+	glMultiTexCoord4fARB		= (PFNGLMULTITEXCOORD4FARBPROC)wglGetProcAddress("glMultiTexCoord4fARB");
+	glMultiTexCoord4fvARB		= (PFNGLMULTITEXCOORD4FVARBPROC)wglGetProcAddress("glMultiTexCoord4fvARB");
+	glMultiTexCoord4iARB		= (PFNGLMULTITEXCOORD4IARBPROC)wglGetProcAddress("glMultiTexCoord4iARB");
+	glMultiTexCoord4ivARB		= (PFNGLMULTITEXCOORD4IVARBPROC)wglGetProcAddress("glMultiTexCoord4ivARB");
+	glMultiTexCoord4sARB		= (PFNGLMULTITEXCOORD4SARBPROC)wglGetProcAddress("glMultiTexCoord4sARB");
+	glMultiTexCoord4svARB		= (PFNGLMULTITEXCOORD4SVARBPROC)wglGetProcAddress("glMultiTexCoord4svARB");
+}
+#endif

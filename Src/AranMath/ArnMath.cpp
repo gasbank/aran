@@ -1,7 +1,16 @@
-#include "AranPCH.h"
-#include "ArnMath.h"
+#include "AranMathPCH.h"
 #include "Decompose.h"
-#include "ArnMesh.h"
+#include "ArnQuat.h"
+#include "ArnVec3.h"
+#include "ArnVec4.h"
+#include "ArnMatrix.h"
+#include "ArnColorValue4f.h"
+#include "ArnViewportData.h"
+#include "ArnMath.h"
+
+// Floating Point Library Specific
+static const float	EPSILON						= 0.0001f;		// error tolerance for check
+static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
 
 ArnVec3
 ArnQuatToEuler( const ArnQuat* quat )
@@ -54,17 +63,6 @@ ArnMatrixTransformation(
 	assert(pScalingRotation == 0);
 	assert(pRotationCenter == 0);
 
-#ifdef WIN32
-	D3DXMatrixTransformation(
-		reinterpret_cast<D3DXMATRIX*>( pOut ),
-		reinterpret_cast<const D3DXVECTOR3*>( pScalingCenter ),
-		reinterpret_cast<const D3DXQUATERNION*>( pScalingRotation ),
-		reinterpret_cast<const D3DXVECTOR3*>( pScaling ),
-		reinterpret_cast<const D3DXVECTOR3*>( pRotationCenter ),
-		reinterpret_cast<const D3DXQUATERNION*>( pRotation ),
-		reinterpret_cast<const D3DXVECTOR3*>( pTranslation )
-	);
-#else
 	ArnMatrix mat;
 	if (pTranslation)
 	{
@@ -87,7 +85,6 @@ ArnMatrixTransformation(
 		ArnMatrixScaling(&mat, pScaling->x, pScaling->y, pScaling->z);
 		*pOut *= mat;
 	}
-#endif
 	return pOut;
 }
 
@@ -192,9 +189,6 @@ ArnQuatToAxisAngle(ArnVec3* axis, float* angle, const ArnQuat* q)
 void
 ArnMatrixRotationQuaternion(ArnMatrix* mat, const ArnQuat* quat)
 {
-#ifdef WIN32
-	D3DXMatrixRotationQuaternion(reinterpret_cast<D3DXMATRIX*>(mat), reinterpret_cast<const D3DXQUATERNION*>(quat));
-#else
 	typedef cml::matrix<double, cml::fixed<3,3>, cml::col_basis> matrix_d3;
 	matrix_d3 cmlmat;
 	typedef cml::quaternion<double, cml::fixed<>, cml::scalar_first, cml::positive_cross> quaternion_type;
@@ -204,7 +198,6 @@ ArnMatrixRotationQuaternion(ArnMatrix* mat, const ArnQuat* quat)
 	for (int i = 0; i < 3; ++i)
 		for (int j = 0; j < 3; ++j)
 			mat->m[i][j] = cmlmat(i, j);
-#endif
 }
 
 float
@@ -275,6 +268,14 @@ ArnVec3Normalize( ArnVec3* out, const ArnVec3* v3 )
 	*out = *v3 / ArnVec3Length(v3);
 }
 
+float
+ArnVec3NormalizeSelf( ArnVec3* inout )
+{
+	float len = ArnVec3Length(inout);
+	*inout = *inout / len;
+	return len;
+}
+
 ArnMatrix*
 ArnMatrixRotationAxis( ArnMatrix* pOut, const ArnVec3* pV, float Angle )
 {
@@ -312,13 +313,16 @@ ArnMatrixOrthoLH( ArnMatrix* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf )
 
 
 // Build a lookat matrix.
-ArnMatrix* ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp, cml::Handedness handedness )
+ArnMatrix* ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp, bool rightHanded )
 {
 	cml_mat44 cmlmat;
 	cml_vec3 eye(pEye->x, pEye->y, pEye->z);
 	cml_vec3 target(pAt->x, pAt->y, pAt->z);
 	cml_vec3 up(pUp->x, pUp->y, pUp->z);
-	cml::matrix_look_at(cmlmat, eye, target, up, handedness);
+	if (rightHanded)
+		cml::matrix_look_at(cmlmat, eye, target, up, cml::right_handed);
+	else
+		cml::matrix_look_at(cmlmat, eye, target, up, cml::left_handed);
 	for (int i = 0; i < 4; ++i) // row
 		for (int j = 0; j < 4; ++j) // column
 			pOut->m[i][j] = cmlmat(j, i);
@@ -351,53 +355,6 @@ ArnCmlMatToArnMat(ArnMatrix* out, const cml_mat44* cmlmat)
 			out->m[i][j] = (*cmlmat)(j, i);
 }
 
-HRESULT
-ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, unsigned int* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, unsigned int* pCountOfHits )
-{
-	const unsigned int faceGroupCount = pMesh->getFaceGroupCount();
-	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
-	{
-		unsigned int triCount, quadCount;
-		pMesh->getFaceCount(triCount, quadCount, fg);
-		for (unsigned int tc = 0; tc < triCount; ++tc)
-		{
-			unsigned int totalIndex;
-			unsigned int tinds[3];
-			pMesh->getTriFace(totalIndex, tinds, fg, tc);
-			ArnVec3 verts[3];
-			for (unsigned int v = 0; v < 3; ++v)
-				pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
-			float t = 0, u = 0, v = 0;
-			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
-			{
-				if (pFaceIndex)
-					*pFaceIndex = totalIndex;
-				*pHit = true;
-				return S_OK;
-			}
-		}
-
-		/*
-		for (unsigned int qc = 0; qc < quadCount; ++qc)
-		{
-			unsigned int totalIndex;
-			unsigned int qinds[4];
-			pMesh->getQuadFace(totalIndex, qinds, fg, qc);
-			ArnVec3 verts[4];
-			for (unsigned int v = 0; v < 4; ++v)
-				pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
-			float t = 0, u = 0, v = 0;
-			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
-			{
-				return S_OK;
-			}
-		}
-		*/
-	}
-
-	*pHit = false;
-	return S_OK;
-}
 
 void ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport)
 {
@@ -407,24 +364,6 @@ void ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport)
 		for (int j = 0; j < 4; ++j) // Column
 			out->m[i][j] = viewport(j, i);
 }
-
-#ifdef WIN32
-HRESULT
-ArnIntersectDx9( LPD3DXMESH pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, DWORD* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, DWORD* pCountOfHits )
-{
-	assert(ppAllHits == 0);
-	//
-	// TODO: Is exhaustive collision test by ray testing too slow???
-	//
-	/*
-	BOOL hit;
-	D3DXIntersect(pMesh, pRayPos->getConstDxPtr(), pRayDir->getConstDxPtr(), &hit, pFaceIndex, pU, pV, pDist, 0, pCountOfHits);
-	*pHit = hit ? true : false;
-	*/
-	*pHit = false;
-	return S_OK;
-}
-#endif
 
 #define TEST_CULL
 
@@ -520,3 +459,19 @@ ArnGetFrustumCorners(ArnVec3 corners[8], float planes[6][4])
 		corners[i].z = cmlcorners[i][2];
 	}
 }
+
+ArnMatrix*
+ArnMatrixPerspectiveYFov(ArnMatrix* out, float yFov, float aspect, float nearClip, float farClip, bool rightHanded)
+{
+	cml_mat44 cmlout;
+	cml::Handedness handedness;
+	if (rightHanded)
+		handedness = cml::right_handed;
+	else
+		handedness = cml::left_handed;
+
+	cml::matrix_perspective_yfov(cmlout, yFov, aspect, nearClip, farClip, handedness, cml::z_clip_zero);
+	ArnCmlMatToArnMat(out, &cmlout);
+	return out;
+}
+

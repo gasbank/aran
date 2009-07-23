@@ -184,9 +184,9 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 				}
 			}
 			ArnQuat quatX, quatY, quatZ;
-			ArnVec3 vEulX(eulX, 0, 0);
-			ArnVec3 vEulY(0, eulY, 0);
-			ArnVec3 vEulZ(0, 0, eulZ);
+			ArnVec3 vEulX = CreateArnVec3(eulX, 0, 0);
+			ArnVec3 vEulY = CreateArnVec3(0, eulY, 0);
+			ArnVec3 vEulZ = CreateArnVec3(0, 0, eulZ);
 			quatX = ArnEulerToQuat(&vEulX);
 			quatY = ArnEulerToQuat(&vEulY);
 			quatZ = ArnEulerToQuat(&vEulZ);

@@ -1,6 +1,6 @@
 #pragma once
 
-class ArnVec3
+class ARANMATH_API ArnVec3
 {
 public:
 							ArnVec3();
@@ -39,4 +39,17 @@ public:
 	float					z;
 };
 
+ARANMATH_API ArnVec3 CreateArnVec3(float x, float y, float z);
+ARANMATH_API void ArnVec3GetFormatString(char* buf, size_t bufSize, const ArnVec3& v);
+ARANMATH_API ArnVec3 ArnVec3Add(const ArnVec3& v1, const ArnVec3& v2);
+ARANMATH_API ArnVec3 ArnVec3Substract(const ArnVec3& v1, const ArnVec3& v2);
+ARANMATH_API bool ArnVec3Equals(const ArnVec3& v1, const ArnVec3& v2);
+
+#ifdef WIN32
+ARANMATH_API const D3DXVECTOR3* ArnVec3GetConstDxPtr(const ArnVec3& v);
+ARANMATH_API D3DXVECTOR3* ArnVec3GetDxPtr(ArnVec3& v);
+#endif
+
+#ifdef ARANMATH_EXPORTS
 #include "ArnVec3.inl"
+#endif

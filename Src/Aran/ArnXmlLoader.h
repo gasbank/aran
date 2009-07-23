@@ -13,7 +13,7 @@ private:
 };
 
 ArnNode* CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr);
-int InitializeXmlParser();
-void DeallocateXmlParser();
+ARAN_API int InitializeXmlParser();
+ARAN_API void DeallocateXmlParser();
 
 #endif // ARNXMLLOADER_H

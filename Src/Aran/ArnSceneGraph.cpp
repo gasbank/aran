@@ -15,6 +15,7 @@ ArnSceneGraph::ArnSceneGraph()
 : ArnNode(NDT_RT_SCENEGRAPH)
 , m_bRendererObjectInited(false)
 , m_binaryChunk(0)
+, m_exportVersion(EV_ARN30)
 {
 }
 

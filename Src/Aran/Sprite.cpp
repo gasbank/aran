@@ -76,7 +76,7 @@ DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, c
 
 DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, D3DCOLOR color )
 {
-	ArnVec3 vPos( (float)posX, (float)posY, (float)posZ );
+	ArnVec3 vPos = CreateArnVec3( (float)posX, (float)posY, (float)posZ );
 	return drawRequest( rectName, center, &vPos, color );
 }
 

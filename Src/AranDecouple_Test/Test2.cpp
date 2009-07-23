@@ -38,7 +38,7 @@ XERCES_CPP_NAMESPACE_USE
 
 #include "IL/il.h"
 
-#include "Macros.h"
+#include "../Macros.h"
 #include "Structs.h"
 #include "Singleton.h"
 #include "ArnXmlLoader.h"
@@ -49,52 +49,8 @@ XERCES_CPP_NAMESPACE_USE
 #include "ArnSkeleton.h"
 #include "ArnAnimationController.h"
 #include "ArnMesh.h"
-
-#ifdef WIN32
-PFNGLGENBUFFERSARBPROC					glGenBuffersARB = 0;                     // VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC					glBindBufferARB = 0;                     // VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC					glBufferDataARB = 0;                     // VBO Data Loading Procedure
-PFNGLBUFFERSUBDATAARBPROC				glBufferSubDataARB = 0;               // VBO Sub Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC				glDeleteBuffersARB = 0;               // VBO Deletion Procedure
-PFNGLGETBUFFERPARAMETERIVARBPROC		glGetBufferParameterivARB = 0; // return various parameters of VBO
-PFNGLMAPBUFFERARBPROC					glMapBufferARB = 0;                       // map VBO procedure
-PFNGLUNMAPBUFFERARBPROC					glUnmapBufferARB = 0;                   // unmap VBO procedure
-
-PFNGLACTIVETEXTUREARBPROC				glActiveTextureARB;
-PFNGLCLIENTACTIVETEXTUREARBPROC			glClientActiveTextureARB;
-PFNGLMULTITEXCOORD1DARBPROC				glMultiTexCoord1dARB;
-PFNGLMULTITEXCOORD1DVARBPROC			glMultiTexCoord1dvARB;
-PFNGLMULTITEXCOORD1FARBPROC				glMultiTexCoord1fARB;
-PFNGLMULTITEXCOORD1FVARBPROC			glMultiTexCoord1fvARB;
-PFNGLMULTITEXCOORD1IARBPROC				glMultiTexCoord1iARB;
-PFNGLMULTITEXCOORD1IVARBPROC			glMultiTexCoord1ivARB;
-PFNGLMULTITEXCOORD1SARBPROC				glMultiTexCoord1sARB;
-PFNGLMULTITEXCOORD1SVARBPROC			glMultiTexCoord1svARB;
-PFNGLMULTITEXCOORD2DARBPROC				glMultiTexCoord2dARB;
-PFNGLMULTITEXCOORD2DVARBPROC			glMultiTexCoord2dvARB;
-PFNGLMULTITEXCOORD2FARBPROC				glMultiTexCoord2fARB;
-PFNGLMULTITEXCOORD2FVARBPROC			glMultiTexCoord2fvARB;
-PFNGLMULTITEXCOORD2IARBPROC				glMultiTexCoord2iARB;
-PFNGLMULTITEXCOORD2IVARBPROC			glMultiTexCoord2ivARB;
-PFNGLMULTITEXCOORD2SARBPROC				glMultiTexCoord2sARB;
-PFNGLMULTITEXCOORD2SVARBPROC			glMultiTexCoord2svARB;
-PFNGLMULTITEXCOORD3DARBPROC				glMultiTexCoord3dARB;
-PFNGLMULTITEXCOORD3DVARBPROC			glMultiTexCoord3dvARB;
-PFNGLMULTITEXCOORD3FARBPROC				glMultiTexCoord3fARB;
-PFNGLMULTITEXCOORD3FVARBPROC			glMultiTexCoord3fvARB;
-PFNGLMULTITEXCOORD3IARBPROC				glMultiTexCoord3iARB;
-PFNGLMULTITEXCOORD3IVARBPROC			glMultiTexCoord3ivARB;
-PFNGLMULTITEXCOORD3SARBPROC				glMultiTexCoord3sARB;
-PFNGLMULTITEXCOORD3SVARBPROC			glMultiTexCoord3svARB;
-PFNGLMULTITEXCOORD4DARBPROC				glMultiTexCoord4dARB;
-PFNGLMULTITEXCOORD4DVARBPROC			glMultiTexCoord4dvARB;
-PFNGLMULTITEXCOORD4FARBPROC				glMultiTexCoord4fARB;
-PFNGLMULTITEXCOORD4FVARBPROC			glMultiTexCoord4fvARB;
-PFNGLMULTITEXCOORD4IARBPROC				glMultiTexCoord4iARB;
-PFNGLMULTITEXCOORD4IVARBPROC			glMultiTexCoord4ivARB;
-PFNGLMULTITEXCOORD4SARBPROC				glMultiTexCoord4sARB;
-PFNGLMULTITEXCOORD4SVARBPROC			glMultiTexCoord4svARB;
-#endif
+#include "ArnViewportData.h"
+#include "AranMathTypeDefs.h"
 
 struct HitRecord
 {
@@ -430,52 +386,7 @@ int main(int argc, char *argv[])
 	//SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &value );
 	//printf( "SDL_GL_SWAP_CONTROL: requested 1, got %d\n", value );
 
-#ifdef WIN32
-	// get pointers to GL functions
-	glGenBuffersARB				= (PFNGLGENBUFFERSARBPROC)SDL_GL_GetProcAddress("glGenBuffersARB");
-	glBindBufferARB				= (PFNGLBINDBUFFERARBPROC)SDL_GL_GetProcAddress("glBindBufferARB");
-	glBufferDataARB				= (PFNGLBUFFERDATAARBPROC)SDL_GL_GetProcAddress("glBufferDataARB");
-	glBufferSubDataARB			= (PFNGLBUFFERSUBDATAARBPROC)SDL_GL_GetProcAddress("glBufferSubDataARB");
-	glDeleteBuffersARB			= (PFNGLDELETEBUFFERSARBPROC)SDL_GL_GetProcAddress("glDeleteBuffersARB");
-	glGetBufferParameterivARB	= (PFNGLGETBUFFERPARAMETERIVARBPROC)SDL_GL_GetProcAddress("glGetBufferParameterivARB");
-	glMapBufferARB				= (PFNGLMAPBUFFERARBPROC)SDL_GL_GetProcAddress("glMapBufferARB");
-	glUnmapBufferARB			= (PFNGLUNMAPBUFFERARBPROC)SDL_GL_GetProcAddress("glUnmapBufferARB");
-
-	glActiveTextureARB			= (PFNGLACTIVETEXTUREARBPROC)SDL_GL_GetProcAddress("glActiveTextureARB");
-	glClientActiveTextureARB	= (PFNGLCLIENTACTIVETEXTUREARBPROC)SDL_GL_GetProcAddress("glClientActiveTextureARB");
-	glMultiTexCoord1dARB		= (PFNGLMULTITEXCOORD1DARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1dARB");
-	glMultiTexCoord1dvARB		= (PFNGLMULTITEXCOORD1DVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1dvARB");
-	glMultiTexCoord1fARB		= (PFNGLMULTITEXCOORD1FARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1fARB");
-	glMultiTexCoord1fvARB		= (PFNGLMULTITEXCOORD1FVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1fvARB");
-	glMultiTexCoord1iARB		= (PFNGLMULTITEXCOORD1IARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1iARB");
-	glMultiTexCoord1ivARB		= (PFNGLMULTITEXCOORD1IVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1ivARB");
-	glMultiTexCoord1sARB		= (PFNGLMULTITEXCOORD1SARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1sARB");
-	glMultiTexCoord1svARB		= (PFNGLMULTITEXCOORD1SVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord1svARB");
-	glMultiTexCoord2dARB		= (PFNGLMULTITEXCOORD2DARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2dARB");
-	glMultiTexCoord2dvARB		= (PFNGLMULTITEXCOORD2DVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2dvARB");
-	glMultiTexCoord2fARB		= (PFNGLMULTITEXCOORD2FARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2fARB");
-	glMultiTexCoord2fvARB		= (PFNGLMULTITEXCOORD2FVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2fvARB");
-	glMultiTexCoord2iARB		= (PFNGLMULTITEXCOORD2IARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2iARB");
-	glMultiTexCoord2ivARB		= (PFNGLMULTITEXCOORD2IVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2ivARB");
-	glMultiTexCoord2sARB		= (PFNGLMULTITEXCOORD2SARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2sARB");
-	glMultiTexCoord2svARB		= (PFNGLMULTITEXCOORD2SVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord2svARB");
-	glMultiTexCoord3dARB		= (PFNGLMULTITEXCOORD3DARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3dARB");
-	glMultiTexCoord3dvARB		= (PFNGLMULTITEXCOORD3DVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3dvARB");
-	glMultiTexCoord3fARB		= (PFNGLMULTITEXCOORD3FARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3fARB");
-	glMultiTexCoord3fvARB		= (PFNGLMULTITEXCOORD3FVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3fvARB");
-	glMultiTexCoord3iARB		= (PFNGLMULTITEXCOORD3IARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3iARB");
-	glMultiTexCoord3ivARB		= (PFNGLMULTITEXCOORD3IVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3ivARB");
-	glMultiTexCoord3sARB		= (PFNGLMULTITEXCOORD3SARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3sARB");
-	glMultiTexCoord3svARB		= (PFNGLMULTITEXCOORD3SVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord3svARB");
-	glMultiTexCoord4dARB		= (PFNGLMULTITEXCOORD4DARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4dARB");
-	glMultiTexCoord4dvARB		= (PFNGLMULTITEXCOORD4DVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4dvARB");
-	glMultiTexCoord4fARB		= (PFNGLMULTITEXCOORD4FARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4fARB");
-	glMultiTexCoord4fvARB		= (PFNGLMULTITEXCOORD4FVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4fvARB");
-	glMultiTexCoord4iARB		= (PFNGLMULTITEXCOORD4IARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4iARB");
-	glMultiTexCoord4ivARB		= (PFNGLMULTITEXCOORD4IVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4ivARB");
-	glMultiTexCoord4sARB		= (PFNGLMULTITEXCOORD4SARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4sARB");
-	glMultiTexCoord4svARB		= (PFNGLMULTITEXCOORD4SVARBPROC)SDL_GL_GetProcAddress("glMultiTexCoord4svARB");
-#endif
+	ArnInitGlExtFunctions();
 
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "Realtime User Control Biped", "RUCB" );
@@ -554,7 +465,7 @@ int main(int argc, char *argv[])
 	// Create and init the scene graph instance from XML file
 	// and attach that one to the video manager.
 	InitializeXmlParser();
-	ArnXmlString axs;
+	ArnXmlString* axs = new ArnXmlString;
 	if (argc != 2)
 	{
 		fprintf(stderr, " *** Provide XML scene file path as the first argument.\n");
@@ -571,7 +482,7 @@ int main(int argc, char *argv[])
 	ArnCamera* cam = reinterpret_cast<ArnCamera*>(sceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
 	if (!cam)
 		cam = ArnCamera::createFrom("Auto-generated Camera", ArnQuat::createFromEuler(0, 0, 0), ArnVec3(0, 0, 30), (float)(ARN_PI / 4));
-
+	cam->printCameraOrientation();
 	ArnViewportData avd;
 	avd.X = 0;
 	avd.Y = 0;
@@ -595,10 +506,8 @@ int main(int argc, char *argv[])
 	{
 		ArnVec3 pos;
 		mesh->getVert(&pos, 0, 0, 0, v);
-		printf("[%d] ", v); pos.printFormatString();
-
-
-
+		printf("[%d] ", v);
+		pos.printFormatString();
 	}
 	const unsigned int faceGroupCount = mesh->getFaceGroupCount();
 	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
@@ -714,6 +623,8 @@ int main(int argc, char *argv[])
 	sceneGraph = 0;
 
 	glDeleteTextures(1, &fontTextureId);
+	delete axs;
+	DeallocateXmlParser();
 
 	/* Destroy our GL context, etc. */
 	SDL_Quit();

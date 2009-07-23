@@ -1,14 +1,14 @@
 #include "AranPCH.h"
 
 #ifdef WIN32
-PFNGLGENBUFFERSARBPROC					glGenBuffersARB;                     // VBO Name Generation Procedure
-PFNGLBINDBUFFERARBPROC					glBindBufferARB;                     // VBO Bind Procedure
-PFNGLBUFFERDATAARBPROC					glBufferDataARB;                     // VBO Data Loading Procedure
-PFNGLBUFFERSUBDATAARBPROC				glBufferSubDataARB;               // VBO Sub Data Loading Procedure
-PFNGLDELETEBUFFERSARBPROC				glDeleteBuffersARB;               // VBO Deletion Procedure
-PFNGLGETBUFFERPARAMETERIVARBPROC		glGetBufferParameterivARB; // return various parameters of VBO
-PFNGLMAPBUFFERARBPROC					glMapBufferARB;                       // map VBO procedure
-PFNGLUNMAPBUFFERARBPROC					glUnmapBufferARB;                   // unmap VBO procedure
+PFNGLGENBUFFERSARBPROC					glGenBuffersARB;
+PFNGLBINDBUFFERARBPROC					glBindBufferARB;
+PFNGLBUFFERDATAARBPROC					glBufferDataARB;
+PFNGLBUFFERSUBDATAARBPROC				glBufferSubDataARB;
+PFNGLDELETEBUFFERSARBPROC				glDeleteBuffersARB;
+PFNGLGETBUFFERPARAMETERIVARBPROC		glGetBufferParameterivARB;
+PFNGLMAPBUFFERARBPROC					glMapBufferARB;
+PFNGLUNMAPBUFFERARBPROC					glUnmapBufferARB;
 
 PFNGLACTIVETEXTUREARBPROC				glActiveTextureARB;
 PFNGLCLIENTACTIVETEXTUREARBPROC			glClientActiveTextureARB;

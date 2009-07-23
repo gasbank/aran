@@ -1,6 +1,6 @@
 #pragma once
 
-struct ArnConsts
+struct ARANMATH_API ArnConsts
 {
 	static const ArnVec3 D3DXVEC3_ZERO;
 	static const ArnVec3 D3DXVEC3_ONE;
@@ -21,3 +21,4 @@ struct ArnConsts
 };
 
 static const unsigned int FPS = 60;
+

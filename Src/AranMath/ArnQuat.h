@@ -1,7 +1,9 @@
 #ifndef ARNQUAT_H
 #define ARNQUAT_H
 
-class ArnQuat
+class ArnMatrix;
+
+class ARANMATH_API ArnQuat
 {
 public:
 								ArnQuat() : x(0), y(0), z(0), w(1.0f) {}
@@ -23,11 +25,14 @@ public:
 	const D3DXQUATERNION*		getConstDxPtr() const { return reinterpret_cast<const D3DXQUATERNION*>(this); }
 	D3DXQUATERNION*				getDxPtr() { return reinterpret_cast<D3DXQUATERNION*>(this); }
 	D3DXQUATERNION				getDx() const { return D3DXQUATERNION(x, y, z, w); }
-#endif
+#endif // #ifdef WIN32
+
 	float						x;
 	float						y;
 	float						z;
 	float						w;
 };
+
+ARANMATH_API ArnQuat CreateArnQuat(float x, float y, float z, float w);
 
 #endif // ARNQUAT_H

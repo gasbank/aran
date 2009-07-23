@@ -7,7 +7,7 @@ class ArnBone;
 class ArnBinaryChunk;
 class ArnLight;
 
-class ArnSceneGraph : public ArnNode
+class ARAN_API ArnSceneGraph : public ArnNode
 {
 public:
 									~ArnSceneGraph(void);

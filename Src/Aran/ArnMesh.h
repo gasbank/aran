@@ -10,7 +10,7 @@ class ArnVertexBuffer;
 class ArnIndexBuffer;
 class ArnBinaryChunk;
 
-class ArnMesh : public ArnXformable
+class ARAN_API ArnMesh : public ArnXformable
 {
 public:
 	typedef std::vector<ArnMaterial*>		MaterialRefList;

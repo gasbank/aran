@@ -233,4 +233,4 @@ inline VideoMan& GetVideoManager() { return VideoMan::getSingleton(); }
 
 //////////////////////////////////////////////////////////////////////////
 
-ArnMatrix* ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, cml::Handedness handedness);
+ARAN_API ArnMatrix* ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, bool rightHanded);

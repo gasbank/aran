@@ -53,7 +53,7 @@ void SpriteManager::frameRender()
 				{
 					const DrawRequest* drawReq = *itDr;
 					if (drawReq->bRender)
-						m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
+						m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
 				}
 			}
 
@@ -65,8 +65,8 @@ void SpriteManager::frameRender()
 
 	m_d3dxObjectSprite->Begin( D3DXSPRITE_ALPHABLEND | D3DXSPRITE_OBJECTSPACE );
 	{
-		m_dev->SetTransform( D3DTS_VIEW, m_viewMat.getConstDxPtr() );
-		m_dev->SetTransform( D3DTS_PROJECTION, m_projMat.getConstDxPtr() );
+		m_dev->SetTransform( D3DTS_VIEW, ArnMatrixGetConstDxPtr(m_viewMat) );
+		m_dev->SetTransform( D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(m_projMat) );
 		SpriteMap::iterator it = m_spriteMap.begin();
 		for ( ; it != m_spriteMap.end(); ++it )
 		{
@@ -82,9 +82,9 @@ void SpriteManager::frameRender()
 				{
 					const DrawRequest* drawReq = *itDr;
 					ArnMatrix centerBiased = drawReq->xform;
-					*((ArnVec3*)&centerBiased.m[3][0]) -= drawReq->center;
-					m_dev->SetTransform( D3DTS_WORLD, drawReq->xform.getConstDxPtr() );
-					m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
+					*((ArnVec3*)&centerBiased.m[3][0]) = ArnVec3Substract(*((ArnVec3*)&centerBiased.m[3][0]), drawReq->center);
+					m_dev->SetTransform( D3DTS_WORLD, ArnMatrixGetConstDxPtr(drawReq->xform) );
+					m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
 				}
 			}
 		}
@@ -133,7 +133,7 @@ void SpriteManager::frameRenderSpecificSprite( const char* spriteName )
 		for ( ; itDr != dr.end(); ++itDr )
 		{
 			const DrawRequest* drawReq = *itDr;
-			m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, drawReq->center.getConstDxPtr(), drawReq->position.getConstDxPtr(), drawReq->color );
+			m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
 		}
 	}
 	m_d3dxSprite->End();

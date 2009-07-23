@@ -1,6 +1,8 @@
-#include "AranPCH.h"
-#include "ArnQuat.h"
+#include "AranMathPCH.h"
+#include "ArnVec3.h"
+#include "ArnMatrix.h"
 #include "ArnMath.h"
+#include "ArnQuat.h"
 
 ArnQuat
 ArnQuat::createFromEuler(float rx, float ry, float rz)
@@ -115,4 +117,11 @@ ArnQuat::operator /= ( float f )
 	z /= f;
 	w /= f;
 	return *this;
+}
+
+//////////////////////////////////////////////////////////////////////////
+
+ARANMATH_API ArnQuat CreateArnQuat( float x, float y, float z, float w )
+{
+	return ArnQuat(x, y, z, w);
 }

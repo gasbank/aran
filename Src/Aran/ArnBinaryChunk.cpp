@@ -233,7 +233,7 @@ void ArnBinaryChunk::printFieldArray(const char* usage) const
 		{
 			const ArnVec3* vec3 = (const ArnVec3*)(m_data + m_recordSize * i + field->offset);
 			char buf[128];
-			vec3->getFormatString(buf, 128);
+			ArnVec3GetFormatString(buf, 128, *vec3);
 			std::cout << buf << std::endl;
 		}
 	}

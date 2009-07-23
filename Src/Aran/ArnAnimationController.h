@@ -37,8 +37,9 @@ struct ARNTRACK_DESC
 	unsigned int		ActionIdx;
 };
 
-struct ARNANIMATIONOUTPUT
+class ARNANIMATIONOUTPUT
 {
+public:
 						ARNANIMATIONOUTPUT() : mat(0), scale(0), quat(0), trans(0) {}
 	STRING				name;
 	ArnMatrix*			mat;
@@ -48,7 +49,7 @@ struct ARNANIMATIONOUTPUT
 };
 
 // Aran library compartment of LPD3DXANIMATIONCONTROLLER
-class ArnAnimationController
+class ARAN_API ArnAnimationController
 {
 public:
 													~ArnAnimationController();

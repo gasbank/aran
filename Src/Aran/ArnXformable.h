@@ -7,7 +7,7 @@ class ArnAnimationController;
 /**
 @brief A superclass of renderer objects which have position and orientation.
 */
-class ArnXformable : public ArnNode
+class ARAN_API ArnXformable : public ArnNode
 {
 public:
 	virtual										~ArnXformable(void);

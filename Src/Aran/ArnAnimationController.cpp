@@ -161,8 +161,10 @@ ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 		{
 			ArnIpo* ipo = p.second;
 			assert(ipo);
-			ArnVec3 transKey(0,0,0), scaleKey(1,1,1), rotKey(0,0,0);
-			ArnQuat quat(0, 0, 0, 0);
+			ArnVec3 transKey = CreateArnVec3(0,0,0);
+			ArnVec3 scaleKey = CreateArnVec3(1,1,1);
+			ArnVec3 rotKey = CreateArnVec3(0,0,0);
+			ArnQuat quat = CreateArnQuat(0, 0, 0, 0);
 			foreach (const CurveData& cd, ipo->getCurves())
 			{
 				float val = Animation::EvalCurveInterp(&cd, (float)(m_dTime - track.Position)*FPS);

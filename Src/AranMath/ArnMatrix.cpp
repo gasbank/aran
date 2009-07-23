@@ -1,4 +1,6 @@
-#include "AranPCH.h"
+#include "AranMathPCH.h"
+#include "ArnVec3.h"
+#include "ArnVec4.h"
 #include "ArnMatrix.h"
 
 ArnMatrix::ArnMatrix()
@@ -37,11 +39,6 @@ void ArnMatrix::getFormatString(char* buf) const
 
 ArnMatrix ArnMatrix::operator*( const ArnMatrix& rhs) const
 {
-#ifdef WIN32
-	D3DXMATRIX ret;
-	D3DXMatrixMultiply(&ret, reinterpret_cast<const D3DXMATRIX*>(this), reinterpret_cast<const D3DXMATRIX*>(&rhs));
-	return *reinterpret_cast<const ArnMatrix*>(&ret);
-#else
 	ArnMatrix ret;
 	memset(&ret, 0, sizeof(float)*4*4);
 	for (int i = 0; i < 4; ++i)
@@ -56,7 +53,6 @@ ArnMatrix ArnMatrix::operator*( const ArnMatrix& rhs) const
 		}
 	}
 	return ret;
-#endif
 }
 
 ArnVec4 ArnMatrix::operator*( const ArnVec4& rhs ) const
@@ -124,4 +120,38 @@ ArnMatrix::operator = (const D3DMATRIX& rhs)
 	return *this;
 }
 
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+
+ArnMatrix CreateArnMatrix( float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33 )
+{
+	return ArnMatrix(m00, m01, m02, m03, m10, m11, m12, m13, m20, m21, m22, m23, m30, m31, m32, m33);
+}
+
+ArnMatrix ArnMatrixMultiply( const ArnMatrix& m0, const ArnMatrix m1 )
+{
+	return m0 * m1;
+}
+
+ArnMatrix ArnMatrixMultiply( const ArnMatrix& m0, const ArnMatrix m1, const ArnMatrix m2 )
+{
+	return m0 * m1 * m2;
+}
+
+#ifdef WIN32
+const D3DXMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat)
+{
+	return mat.getConstDxPtr();
+}
+
+D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
+{
+	return mat.getDxPtr();
+}
+
+ArnMatrix ArnMatrixTranspose( const ArnMatrix& m )
+{
+	return m.transpose();
+}
 #endif

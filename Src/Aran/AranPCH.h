@@ -68,14 +68,9 @@ XERCES_CPP_NAMESPACE_USE
 #define foreach BOOST_FOREACH
 
 //
-// Configurable Math Library (cml)
-//
-#include "cml/cml.h"
-
-//
 // Aran Library
 //
-#include "Macros.h"
+#include "../Macros.h"
 #include "Structs.h"
 #include "Singleton.h"
 #include "Log.h"

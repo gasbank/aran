@@ -17,10 +17,11 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
+			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\Global.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -41,11 +42,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANMATH_EXPORTS"
+				AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_0&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANMATH_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranMathPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -60,9 +63,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(WORKING)/$(ProjectName)_D.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -170,12 +175,112 @@
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
+			<File
+				RelativePath=".\AranMathPCH.cpp"
+				>
+				<FileConfiguration
+					Name="DebugDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ArnConsts.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMath.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMatrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnQuat.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec4.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Decompose.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\AranMathPCH.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AranMathTypeDefs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnColorValue4f.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnConsts.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMath.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMath.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnMatrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnQuat.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec3.inl"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnVec4.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnViewportData.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Decompose.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Macros.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RST_DATA.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

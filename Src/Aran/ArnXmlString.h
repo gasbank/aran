@@ -1,7 +1,7 @@
 #ifndef ARNXMLSTRING_H
 #define ARNXMLSTRING_H
 
-class ArnXmlString : public Singleton<ArnXmlString>
+class ARAN_API ArnXmlString : public Singleton<ArnXmlString>
 {
 public:
 	ArnXmlString();

@@ -85,7 +85,9 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 		DOMElement* rotation = GetUniqueChildElement(elm, GetArnXmlString().TAG_rotation);
 		DOMElement* translation = GetUniqueChildElement(elm, GetArnXmlString().TAG_translation);
 
-		ArnVec3 s(1,1,1), r(0,0,0), t(0,0,0);
+		ArnVec3 s = CreateArnVec3(1,1,1);
+		ArnVec3 r = CreateArnVec3(0,0,0);
+		ArnVec3 t = CreateArnVec3(0,0,0);
 		if (scaling)
 		{
 			ParseArnVec3FromElement(&s, scaling);

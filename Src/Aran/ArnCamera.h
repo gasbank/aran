@@ -5,13 +5,13 @@ struct NodeCamera1;
 struct NodeCamera2;
 struct NodeBase;
 
-class ArnCamera : public ArnXformable
+class ARAN_API ArnCamera : public ArnXformable
 {
 public:
 	virtual								~ArnCamera(void);
 	static ArnCamera*					createFrom(const NodeBase* nodeBase);
 	static ArnCamera*					createFrom(const char* name, const ArnQuat& rot, const ArnVec3& trans, float fov);
-	static ArnCamera*					createFrom(const char* name, const ArnVec3& eye, const ArnVec3& target, const ArnVec3& up, float fov, cml::Handedness handedness);
+	static ArnCamera*					createFrom(const char* name, const ArnVec3& eye, const ArnVec3& target, const ArnVec3& up, float fov);
 	static ArnCamera*					createFrom(xercesc::DOMElement* elm);
 	ARN_NDD_CAMERA_CHUNK&				getCameraData() { return m_cameraData; }
 	float								getFarClip() const { return m_cameraData.farClip; }

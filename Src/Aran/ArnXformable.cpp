@@ -85,7 +85,7 @@ ArnXformable::getFinalXform()
 		||	(getParent()->getType() == NDT_RT_CAMERA)
 		||	(getParent()->getType() == NDT_RT_LIGHT) )
 	{
-		return static_cast<ArnXformable*>(getParent())->getFinalXform() * getFinalLocalXform();
+		return ArnMatrixMultiply(static_cast<ArnXformable*>(getParent())->getFinalXform(), getFinalLocalXform());
 	}
 	else
 	{

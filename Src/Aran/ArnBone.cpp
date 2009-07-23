@@ -81,7 +81,7 @@ ArnBone::buildFrom( const NodeBone2* nb )
 void ArnBone::render()
 {
 	recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-	ArnVec3 boneDir = m_tailPos - m_headPos;
+	ArnVec3 boneDir = ArnVec3Substract(m_tailPos, m_headPos);
 	float boneLength = ArnVec3GetLength(boneDir);
 	glPushMatrix();
 	{
