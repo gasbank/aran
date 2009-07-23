@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="AranCB" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/libAranCB" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/AranCB" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-pedantic-errors" />
+			<Add option="-pedantic" />
+			<Add option="-Wall" />
+			<Add directory="../cml-1_0_0" />
+		</Compiler>
+		<Unit filename="Animation.cpp" />
+		<Unit filename="Animation.h" />
+		<Unit filename="AranApi.h" />
+		<Unit filename="AranPCH.cpp" />
+		<Unit filename="AranPCH.h" />
+		<Unit filename="ArnAction.cpp" />
+		<Unit filename="ArnAction.h" />
+		<Unit filename="ArnActions.cpp" />
+		<Unit filename="ArnActions.h" />
+		<Unit filename="ArnAnim.cpp" />
+		<Unit filename="ArnAnim.h" />
+		<Unit filename="ArnAnimationController.cpp" />
+		<Unit filename="ArnAnimationController.h" />
+		<Unit filename="ArnBinaryChunk.cpp" />
+		<Unit filename="ArnBinaryChunk.h" />
+		<Unit filename="ArnBone.cpp" />
+		<Unit filename="ArnBone.h" />
+		<Unit filename="ArnCamera.cpp" />
+		<Unit filename="ArnCamera.h" />
+		<Unit filename="ArnConsts.cpp" />
+		<Unit filename="ArnConsts.h" />
+		<Unit filename="ArnContainer.cpp" />
+		<Unit filename="ArnContainer.h" />
+		<Unit filename="ArnFile.cpp" />
+		<Unit filename="ArnFile.h" />
+		<Unit filename="ArnGenericBuffer.cpp" />
+		<Unit filename="ArnGenericBuffer.h" />
+		<Unit filename="ArnGenericBuffer.inl" />
+		<Unit filename="ArnHierarchy.cpp" />
+		<Unit filename="ArnHierarchy.h" />
+		<Unit filename="ArnIndexBuffer.cpp" />
+		<Unit filename="ArnIndexBuffer.h" />
+		<Unit filename="ArnIpo.cpp" />
+		<Unit filename="ArnIpo.h" />
+		<Unit filename="ArnLight.cpp" />
+		<Unit filename="ArnLight.h" />
+		<Unit filename="ArnMaterial.cpp" />
+		<Unit filename="ArnMaterial.h" />
+		<Unit filename="ArnMath.cpp" />
+		<Unit filename="ArnMath.h" />
+		<Unit filename="ArnMath.inl" />
+		<Unit filename="ArnMatrix.cpp" />
+		<Unit filename="ArnMatrix.h" />
+		<Unit filename="ArnMesh.cpp" />
+		<Unit filename="ArnMesh.h" />
+		<Unit filename="ArnMesh.inl" />
+		<Unit filename="ArnNode.cpp" />
+		<Unit filename="ArnNode.h" />
+		<Unit filename="ArnNode.inl" />
+		<Unit filename="ArnNodeFactory.cpp" />
+		<Unit filename="ArnNodeFactory.h" />
+		<Unit filename="ArnObject.cpp" />
+		<Unit filename="ArnObject.h" />
+		<Unit filename="ArnQuat.cpp" />
+		<Unit filename="ArnQuat.h" />
+		<Unit filename="ArnSceneGraph.cpp" />
+		<Unit filename="ArnSceneGraph.h" />
+		<Unit filename="ArnSceneGraph.inl" />
+		<Unit filename="ArnSkeleton.cpp" />
+		<Unit filename="ArnSkeleton.h" />
+		<Unit filename="ArnSkinInfo.cpp" />
+		<Unit filename="ArnSkinInfo.h" />
+		<Unit filename="ArnTexture.cpp" />
+		<Unit filename="ArnTexture.h" />
+		<Unit filename="ArnVec3.cpp" />
+		<Unit filename="ArnVec3.h" />
+		<Unit filename="ArnVec3.inl" />
+		<Unit filename="ArnVertexBuffer.cpp" />
+		<Unit filename="ArnVertexBuffer.h" />
+		<Unit filename="ArnXformable.cpp" />
+		<Unit filename="ArnXformable.h" />
+		<Unit filename="ArnXformable.inl" />
+		<Unit filename="ArnXmlLoader.cpp" />
+		<Unit filename="ArnXmlLoader.h" />
+		<Unit filename="ArnXmlString.cpp" />
+		<Unit filename="ArnXmlString.h" />
+		<Unit filename="Character.cpp" />
+		<Unit filename="Character.h" />
+		<Unit filename="CharacterAnimationCallback.cpp" />
+		<Unit filename="CharacterAnimationCallback.h" />
+		<Unit filename="CharacterInterface.cpp" />
+		<Unit filename="CharacterInterface.h" />
+		<Unit filename="Decompose.cpp" />
+		<Unit filename="Decompose.h" />
+		<Unit filename="DefaultRenderLayer.h" />
+		<Unit filename="DungeonInterface.cpp" />
+		<Unit filename="DungeonInterface.h" />
+		<Unit filename="InputMan.cpp" />
+		<Unit filename="InputMan.h" />
+		<Unit filename="Log.cpp" />
+		<Unit filename="Log.h" />
+		<Unit filename="LoiterCallback.cpp" />
+		<Unit filename="LoiterCallback.h" />
+		<Unit filename="Macros.h" />
+		<Unit filename="ModelDrawer.cpp" />
+		<Unit filename="ModelDrawer.h" />
+		<Unit filename="ModelDrawerDx9.cpp" />
+		<Unit filename="ModelDrawerDx9.h" />
+		<Unit filename="ModelDrawerGl.h" />
+		<Unit filename="ModelReader.cpp" />
+		<Unit filename="ModelReader.h" />
+		<Unit filename="MyError.h" />
+		<Unit filename="PreciseTimer.cpp" />
+		<Unit filename="PreciseTimer.h" />
+		<Unit filename="PreciseTimer.inl" />
+		<Unit filename="RenderLayer.cpp" />
+		<Unit filename="RenderLayer.h" />
+		<Unit filename="Renderer.cpp" />
+		<Unit filename="Renderer.h" />
+		<Unit filename="ResourceMan.cpp" />
+		<Unit filename="ResourceMan.h" />
+		<Unit filename="Singleton.h" />
+		<Unit filename="Sprite.cpp" />
+		<Unit filename="Sprite.h" />
+		<Unit filename="SpriteManager.cpp" />
+		<Unit filename="SpriteManager.h" />
+		<Unit filename="Structs.cpp" />
+		<Unit filename="Structs.h" />
+		<Unit filename="UndefinedCallback.cpp" />
+		<Unit filename="UndefinedCallback.h" />
+		<Unit filename="VideoMan.cpp" />
+		<Unit filename="VideoMan.h" />
+		<Unit filename="VideoManDx9.cpp" />
+		<Unit filename="VideoManDx9.h" />
+		<Unit filename="VideoManGl.cpp" />
+		<Unit filename="VideoManGl.h" />
+		<Unit filename="WalkCallback.cpp" />
+		<Unit filename="WalkCallback.h" />
+		<Unit filename="glInfo.cpp" />
+		<Unit filename="glInfo.h" />
+		<Unit filename="glext.h" />
+		<Unit filename="inotify-cxx.cpp" />
+		<Unit filename="inotify-cxx.h" />
+		<Unit filename="resource.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<AutoVersioning>
+				<Scheme minor_max="10" build_max="0" rev_max="0" rev_rand_max="10" build_times_to_increment_minor="100" />
+				<Settings autoincrement="1" date_declarations="1" do_auto_increment="0" ask_to_increment="0" language="C++" svn="0" svn_directory="" header_path="version.h" />
+				<Changes_Log show_changes_editor="0" app_title="released version %M.%m.%b of %p" changeslog_path="ChangesLog.txt" />
+			</AutoVersioning>
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
