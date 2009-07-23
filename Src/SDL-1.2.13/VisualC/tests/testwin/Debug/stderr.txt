@@ -1,2 +1,0 @@
-Loading picture: sample.bmp
-Couldn't load sample.bmp: Couldn't open sample.bmp

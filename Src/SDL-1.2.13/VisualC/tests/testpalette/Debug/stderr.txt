@@ -1,1 +1,0 @@
-SDL error: loading sail.bmp: Couldn't open sail.bmp
