@@ -99,6 +99,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="1"
+			InheritedPropertySheets="..\Global.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -122,7 +123,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../Aran;&quot;../SDL-1.2.13/include&quot;;&quot;../freetype-2.3.9/include&quot;;&quot;../cml-1_0_0&quot;;&quot;../DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../Aran;../AranMath;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -141,10 +142,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran.lib d3d9.lib d3dx9.lib opengl32.lib glu32.lib xerces-c_3.lib SDL.lib SDLmain.lib freetype239MT.lib DevIL.lib"
-				OutputFile="../Working/$(ProjectName).exe"
+				AdditionalDependencies="Aran.lib AranMath.lib SDL.lib SDLmain.lib freetype239MT.lib opengl32.lib glu32.lib DevIL.lib"
+				OutputFile="$(WORKING)/$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../ReleaseLib;&quot;../SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;../SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;../freetype-2.3.9/objs/win32/vc2008&quot;;&quot;../DevIL-SDK-x86-1.7.8/lib&quot;"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"

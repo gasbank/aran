@@ -34,7 +34,7 @@ public:
 
 	ArnNodeHeader					GetArnNodeHeader(int idx);
 	size_t							GetArnNodeHeadersSize();
-	const char*					GetFileNameOnly();
+	const char*						GetFileNameOnly();
 	ARN_NDD_CAMERA_CHUNK*			GetFirstCamera();
 	BOOL							IsInitialized() const;
 

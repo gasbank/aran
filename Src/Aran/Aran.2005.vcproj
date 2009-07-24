@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="&quot;../cml-1_0_0&quot;;&quot;../DevIL-SDK-x86-1.7.8/include&quot;"
 				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -96,6 +96,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="4"
+			InheritedPropertySheets="..\Global.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -194,7 +195,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;;../AranMath"
+				AdditionalIncludeDirectories="../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
 				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_USRDLL;ARAN_EXPORTS;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -221,12 +222,96 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib d3d9.lib d3dx9.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib"
+				AdditionalDependencies="AranMath_D.lib d3d9.lib d3dx9d.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib"
 				OutputFile="$(WORKING)\$(ProjectName)_D.dll"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
 				GenerateDebugInformation="true"
+				SubSystem="1"
 				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine=""
+			/>
+		</Configuration>
+		<Configuration
+			Name="ReleaseDLL|Win32"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="..\Global.vsprops"
+			CharacterSet="2"
+			WholeProgramOptimization="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+				Description=""
+				CommandLine=""
+				Outputs=""
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				Optimization="3"
+				EnableIntrinsicFunctions="true"
+				FavorSizeOrSpeed="1"
+				WholeProgramOptimization="true"
+				AdditionalIncludeDirectories="../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;ARAN_EXPORTS;_CRT_SECURE_NO_WARNINGS"
+				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranPCH.h"
+				WarningLevel="3"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="0"
+				EnablePREfast="false"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="AranMath.lib d3d9.lib d3dx9.lib xerces-c_3.lib DevIL.lib opengl32.lib glu32.lib"
+				OutputFile="$(WORKING)\$(ProjectName).dll"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				ImportLibrary="$(OutDir)/$(TargetName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -619,6 +704,14 @@
 				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"

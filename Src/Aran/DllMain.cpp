@@ -44,4 +44,21 @@ PFNGLMULTITEXCOORD4IARBPROC				glMultiTexCoord4iARB;
 PFNGLMULTITEXCOORD4IVARBPROC			glMultiTexCoord4ivARB;
 PFNGLMULTITEXCOORD4SARBPROC				glMultiTexCoord4sARB;
 PFNGLMULTITEXCOORD4SVARBPROC			glMultiTexCoord4svARB;
+
+BOOL APIENTRY DllMain( HMODULE hModule,
+					  DWORD  ul_reason_for_call,
+					  LPVOID lpReserved
+					  )
+{
+	switch (ul_reason_for_call)
+	{
+	case DLL_PROCESS_ATTACH:
+	case DLL_THREAD_ATTACH:
+	case DLL_THREAD_DETACH:
+	case DLL_PROCESS_DETACH:
+		break;
+	}
+	return TRUE;
+}
+
 #endif
