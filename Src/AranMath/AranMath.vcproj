@@ -51,6 +51,7 @@
 				PrecompiledHeaderThrough="AranMathPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -290,10 +291,6 @@
 				RelativePath=".\ArnVec4.cpp"
 				>
 			</File>
-			<File
-				RelativePath=".\Decompose.cpp"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -346,10 +343,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnViewportData.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Decompose.h"
 				>
 			</File>
 			<File

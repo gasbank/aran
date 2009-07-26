@@ -259,7 +259,8 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		const XMLSize_t chunkCount = chunk->getLength();
 		assert(chunkCount == 2);
 
-		DOMElement* chunkElm = dynamic_cast<DOMElement*>(chunk->item(0));
+		DOMElement* chunkElm;
+		chunkElm = dynamic_cast<DOMElement*>(chunk->item(0));
 		fg.triFaceChunk = ArnBinaryChunk::createFrom(chunkElm, binaryChunkBasePtr);
 		chunkElm = dynamic_cast<DOMElement*>(chunk->item(1));
 		fg.quadFaceChunk = ArnBinaryChunk::createFrom(chunkElm, binaryChunkBasePtr);

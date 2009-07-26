@@ -464,11 +464,7 @@ ArnMesh::renderXml()
 		glPushMatrix();
 		{
 			recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-#ifdef WIN32
-			glMultMatrixf((float*)getFinalLocalXform().m);
-#else
 			glMultTransposeMatrixf((float*)getFinalLocalXform().m);
-#endif
 			glLoadName(getObjectId());
 			// 1. Draw tri faces
 			if (triFaceCount)

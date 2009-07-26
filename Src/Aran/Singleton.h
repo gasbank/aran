@@ -1,7 +1,7 @@
 #pragma once
 #include <stdexcept>
 
-template <typename T> class Singleton
+template <typename T> class ARAN_API Singleton
 {
 	static T* s_instance;
 

@@ -48,13 +48,6 @@ private:
 
 };
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-#ifdef WIN32
-ARAN_API void ArnInitGlExtFunctions();
-#endif
 ARAN_API void ArnDrawAxesGl(float size);
 ARAN_API void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
 ARAN_API void ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
@@ -62,9 +55,5 @@ ARAN_API void ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
 ARAN_API void ArnConfigureViewMatrixGl(ArnCamera* cam);
 ARAN_API GLuint ArnCreateNormalizationCubeMapGl();
 ARAN_API HRESULT ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, unsigned int* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, unsigned int* pCountOfHits );
-#ifdef __cplusplus
-}
-#endif
-
 
 #endif // VIDEOMANGL_H

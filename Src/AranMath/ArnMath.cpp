@@ -1,5 +1,4 @@
 #include "AranMathPCH.h"
-#include "Decompose.h"
 #include "ArnQuat.h"
 #include "ArnVec3.h"
 #include "ArnVec4.h"
@@ -39,9 +38,8 @@ ArnFloat4ColorToDword( const ArnColorValue4f* cv )
 ArnQuat
 ArnEulerToQuat( const ArnVec3* vec3 )
 {
-	typedef cml::quaternion<float, cml::fixed<>, cml::scalar_first, cml::positive_cross> quaternion_type;
-	quaternion_type cmlq;
-	quaternion_rotation_euler(cmlq, vec3->x, vec3->y, vec3->z, cml::euler_order_xyz);
+	cml_quat cmlq;
+	cml::quaternion_rotation_euler(cmlq, vec3->x, vec3->y, vec3->z, cml::euler_order_xyz);
 	return ArnQuat(cmlq[1], cmlq[2], cmlq[3], cmlq[0]);
 }
 
@@ -88,33 +86,29 @@ ArnMatrixTransformation(
 	return pOut;
 }
 
+// The input transform is assumed to consist of a scaling, a rotation, and a translation,
+// applied in the order scale->rotation->translation.
 HRESULT
 ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTranslation, const ArnMatrix* pM )
 {
-	HMatrix hm;
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			#ifdef WIN32
-			hm[i][j] = pM->m[j][i]; // D3D uses row-wise index on transform matrices
-			#else
-			hm[i][j] = pM->m[i][j]; // OpenGL uses column-wise index on transform matrices
-			#endif
-		}
-	}
-	AffineParts ap;
-	decomp_affine(hm, &ap);
-	pOutTranslation->x = ap.t.x;
-	pOutTranslation->y = ap.t.y;
-	pOutTranslation->z = ap.t.z;
-	pOutRotation->x = ap.q.x;
-	pOutRotation->y = ap.q.y;
-	pOutRotation->z = ap.q.z;
-	pOutRotation->w = ap.q.w;
-	pOutScale->x = ap.k.x;
-	pOutScale->y = ap.k.y;
-	pOutScale->z = ap.k.z;
+	cml_mat44 cmlmat;
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
+			cmlmat.set_basis_element(j, i, pM->m[i][j]);
+	cml_vec3 cmlTrans;
+	cml_quat cmlRot;
+	float sx, sy, sz;
+	cml::matrix_decompose_SRT(cmlmat, sx, sy, sz, cmlRot, cmlTrans);
+	pOutTranslation->x = cmlTrans[0];
+	pOutTranslation->y = cmlTrans[1];
+	pOutTranslation->z = cmlTrans[2];
+	pOutRotation->w = cmlRot[0];
+	pOutRotation->x = cmlRot[1];
+	pOutRotation->y = cmlRot[2];
+	pOutRotation->z = cmlRot[3];
+	pOutScale->x = sx;
+	pOutScale->y = sy;
+	pOutScale->z = sz;
 	return S_OK;
 }
 
@@ -131,14 +125,14 @@ ArnMatrix*
 ArnMatrixInverse( ArnMatrix *pOut, FLOAT *pDeterminant, CONST ArnMatrix *pM )
 {
 	assert(pDeterminant == 0);
-	cml::matrix44d_c cmlmat;
-	for (int i = 0; i < 4; ++i)
-		for (int j = 0; j < 4; ++j)
-			cmlmat(i, j) = pOut->m[i][j];
+	cml_mat44 cmlmat;
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
+			cmlmat.set_basis_element(j, i, pOut->m[i][j]);
 	cmlmat = cmlmat.inverse();
-	for (int i = 0; i < 4; ++i)
-		for (int j = 0; j < 4; ++j)
-			pOut->m[i][j] = float(cmlmat(i, j));
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
+			pOut->m[i][j] = float(cmlmat.basis_element(j, i));
 	return pOut;
 }
 
@@ -162,7 +156,7 @@ ArnQuaternionRotationMatrix( ArnQuat *pOut, CONST ArnMatrix *pM)
 	cml_mat44 cmlmat;
 	for (int i = 0; i < 4; ++i)
 		for (int j = 0; j < 4; ++j)
-			cmlmat(i, j) = pM->m[i][j];
+			cmlmat.set_basis_element(j, i, pM->m[i][j]);
 	cml_quat cmlquat;
 	quaternion_rotation_matrix(cmlquat, cmlmat);
 	pOut->w = cmlquat[0];
@@ -189,15 +183,12 @@ ArnQuatToAxisAngle(ArnVec3* axis, float* angle, const ArnQuat* q)
 void
 ArnMatrixRotationQuaternion(ArnMatrix* mat, const ArnQuat* quat)
 {
-	typedef cml::matrix<double, cml::fixed<3,3>, cml::col_basis> matrix_d3;
-	matrix_d3 cmlmat;
-	typedef cml::quaternion<double, cml::fixed<>, cml::scalar_first, cml::positive_cross> quaternion_type;
-	quaternion_type cmlq(quat->w, quat->x, quat->y, quat->z);
-	matrix_rotation_quaternion(cmlmat, cmlq);
-	ArnMatrixIdentity(mat);
-	for (int i = 0; i < 3; ++i)
-		for (int j = 0; j < 3; ++j)
-			mat->m[i][j] = cmlmat(i, j);
+	cml_mat44 cmlmat;
+	cml_quat cmlq(quat->w, quat->x, quat->y, quat->z);
+	cml::matrix_rotation_quaternion(cmlmat, cmlq);
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
+			mat->m[i][j] = cmlmat.basis_element(j, i);
 }
 
 float
@@ -284,7 +275,7 @@ ArnMatrixRotationAxis( ArnMatrix* pOut, const ArnVec3* pV, float Angle )
 	cml::matrix_rotation_axis_angle(cmlmat, cmlvec, Angle);
 	for (int i = 0; i < 4; ++i)
 		for (int j = 0; j < 4; ++j)
-			pOut->m[i][j] = cmlmat(i, j);
+			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
 
@@ -307,7 +298,7 @@ ArnMatrixOrthoLH( ArnMatrix* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf )
 	cml::matrix_orthographic_LH(cmlmat, -h/2, h/2, -w/2, w/2, zn, zf, cml::z_clip_zero);
 	for (int i = 0; i < 4; ++i)
 		for (int j = 0; j < 4; ++j)
-			pOut->m[i][j] = cmlmat(i, j);
+			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
 
@@ -325,7 +316,7 @@ ArnMatrix* ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 
 		cml::matrix_look_at(cmlmat, eye, target, up, cml::left_handed);
 	for (int i = 0; i < 4; ++i) // row
 		for (int j = 0; j < 4; ++j) // column
-			pOut->m[i][j] = cmlmat(j, i);
+			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
 // Equivalent to D3DXMatrixLookAtRH()
@@ -352,17 +343,17 @@ ArnCmlMatToArnMat(ArnMatrix* out, const cml_mat44* cmlmat)
 {
 	for (int i = 0; i < 4; ++i) // Row
 		for (int j = 0; j < 4; ++j) // Column
-			out->m[i][j] = (*cmlmat)(j, i);
+			out->m[i][j] = cmlmat->basis_element(j, i);
 }
 
-
-void ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport)
+void
+ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport)
 {
 	cml_mat44 viewport;
 	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_zero, float(pViewport->MinZ), float(pViewport->MaxZ));
 	for (int i = 0; i < 4; ++i) // Row
 		for (int j = 0; j < 4; ++j) // Column
-			out->m[i][j] = viewport(j, i);
+			out->m[i][j] = viewport.basis_element(j, i);
 }
 
 #define TEST_CULL
@@ -417,9 +408,9 @@ ArnMakePickRay(ArnVec3* origin, ArnVec3* direction, float scrX, float scrY, cons
 	{
 		for (int j = 0; j < 4; ++j) // Column
 		{
-			cmlview(j, i) = view->m[i][j];
-			cmlproj(j, i) = projection->m[i][j];
-			cmlviewport(j, i) = viewport->m[i][j];
+			cmlview.set_basis_element(j, i, view->m[i][j]);
+			cmlproj.set_basis_element(j, i, projection->m[i][j]);
+			cmlviewport.set_basis_element(j, i, viewport->m[i][j]);
 		}
 	}
 	cml_vec3 cmlorg, cmldir;
@@ -440,8 +431,8 @@ ArnExtractFrustumPlanes(float planes[6][4], const ArnMatrix* modelview, const Ar
 	{
 		for (int j = 0; j < 4; ++j) // Column
 		{
-			cmlmodelview(j, i) = modelview->m[i][j];
-			cmlproj(j, i) = projection->m[i][j];
+			cmlmodelview.set_basis_element(j, i, modelview->m[i][j]);
+			cmlproj.set_basis_element(j, i, projection->m[i][j]);
 		}
 	}
 	cml::extract_frustum_planes(cmlmodelview, cmlproj, planes, cml::z_clip_neg_one, false);

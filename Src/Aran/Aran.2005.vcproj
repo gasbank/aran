@@ -208,7 +208,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
-				DisableSpecificWarnings="4127;4512;4100"
+				DisableSpecificWarnings="4127;4512;4100;4251"
 				EnablePREfast="false"
 			/>
 			<Tool
@@ -896,6 +896,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\ArnGlExt.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnGlExt.h"
+			>
+		</File>
 		<File
 			RelativePath="..\Macros.h"
 			>

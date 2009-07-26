@@ -3,8 +3,6 @@
 
 class ArnNode;
 
-ARAN_API_EXTERN template class ARAN_API std::list<ArnNode*>;
-
 class ARAN_API ArnNode : public ArnObject
 {
 public:
