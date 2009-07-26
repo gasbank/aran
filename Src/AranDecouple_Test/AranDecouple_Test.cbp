@@ -7,10 +7,10 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="../Working/AranDecouple_Test_D" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="../Working" />
+				<Option output="../../../Working/AranDecouple_Test_D" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../../../Working" />
 				<Option object_output="obj/Debug/" />
-				<Option external_deps="../Aran/bin/Debug/libAranCB.a;" />
+				<Option external_deps="../../../Working/libAranD.so;../../../Working/libAranMathD.so;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Option parameters="/home/gbu/NormalMapping.xml" />
@@ -38,19 +38,20 @@
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
 			<Add directory="../Aran" />
+			<Add directory="../AranMath" />
 			<Add directory="/usr/include/freetype2" />
-			<Add directory="../cml-1_0_0" />
 		</Compiler>
 		<Linker>
-			<Add library="gtest" />
-			<Add library="AranCB" />
-			<Add library="glut" />
-			<Add library="GLEW" />
 			<Add library="xerces-c" />
 			<Add library="rt" />
 			<Add library="SDL" />
 			<Add library="freetype" />
 			<Add library="IL" />
+			<Add library="GL" />
+			<Add library="GLU" />
+			<Add library="AranD" />
+			<Add library="AranMathD" />
+			<Add directory="../../../Working" />
 		</Linker>
 		<Unit filename="Test2.cpp" />
 		<Extensions>

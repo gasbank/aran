@@ -54,6 +54,6 @@ extern ARAN_API PFNGLMULTITEXCOORD4IVARBPROC				glMultiTexCoord4ivARB;
 extern ARAN_API PFNGLMULTITEXCOORD4SARBPROC				glMultiTexCoord4sARB;
 extern ARAN_API PFNGLMULTITEXCOORD4SVARBPROC				glMultiTexCoord4svARB;
 
+#endif
 
 ARAN_API void ArnInitGlExtFunctions();
-#endif

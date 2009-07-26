@@ -36,14 +36,11 @@ namespace std {
 		static const int			TRUE = 1;
 	#endif
 	typedef unsigned int		UINT;
-	typedef int					BOOL;
 	typedef float				FLOAT;
 	typedef double				DOUBLE;
-	typedef unsigned int		DWORD;
 	typedef DWORD				LRESULT;
 	typedef DWORD				WPARAM;
 	typedef DWORD				LPARAM;
-	typedef int					HRESULT;
 	typedef void*				HWND;
 	typedef void*				LPDIRECT3DDEVICE9;
 	typedef void*				LPDIRECT3DTEXTURE9;

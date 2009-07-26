@@ -4,9 +4,11 @@
 		<Project filename="Aran/AranCB.cbp" />
 		<Project filename="AranDecouple_Test/AranDecouple_Test.cbp" active="1">
 			<Depends filename="Aran/AranCB.cbp" />
+			<Depends filename="AranMath/AranMath.cbp" />
 		</Project>
 		<Project filename="AranMathTest/AranMathTest.cbp">
 			<Depends filename="Aran/AranCB.cbp" />
 		</Project>
+		<Project filename="AranMath/AranMath.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

@@ -543,7 +543,7 @@ int main(int argc, char *argv[])
 	}
 	printf("=== Eight Frustum Corder Points End ===\n");
 
-	
+
 	printf("=== Test Ray ===\n");
 	ArnVec3 origin, dir;
 	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &modelview, &projection, &avd);
@@ -557,8 +557,8 @@ int main(int argc, char *argv[])
 	GLint glvp[4] = { 0, 0, 640, 480 };
 	GLdouble objx, objy, objz;
 	gluUnProject(320, 240, 0, glmv, glproj, glvp, &objx, &objy, &objz);
-	printf("gluUnproject result: %.3Lf, %.3Lf, %.3Lf\n", objx, objy, objz);
-	
+	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
+
 
 	// TODO: Normalized cube map
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();

@@ -1,7 +1,7 @@
 #include "AranMathPCH.h"
-#include "ArnQuat.h"
 #include "ArnVec3.h"
 #include "ArnVec4.h"
+#include "ArnQuat.h"
 #include "ArnMatrix.h"
 #include "ArnColorValue4f.h"
 #include "ArnViewportData.h"
@@ -10,6 +10,8 @@
 // Floating Point Library Specific
 static const float	EPSILON						= 0.0001f;		// error tolerance for check
 static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
+
+static void ArnCmlMatToArnMat(ArnMatrix* out, const cml_mat44* cmlout);
 
 ArnVec3
 ArnQuatToEuler( const ArnQuat* quat )
@@ -26,6 +28,14 @@ ArnVec3RadToDeg( const ArnVec3* vec3 )
 	return ArnVec3((float)ArnToDegree(vec3->x), (float)ArnToDegree(vec3->y), (float)ArnToDegree(vec3->z));
 }
 
+ArnQuat
+ArnEulerToQuat( const ArnVec3* vec3 )
+{
+	cml_quat cmlq;
+	cml::quaternion_rotation_euler(cmlq, vec3->x, vec3->y, vec3->z, cml::euler_order_xyz);
+	return ArnQuat(cmlq[1], cmlq[2], cmlq[3], cmlq[0]);
+}
+
 DWORD
 ArnFloat4ColorToDword( const ArnColorValue4f* cv )
 {
@@ -33,14 +43,6 @@ ArnFloat4ColorToDword( const ArnColorValue4f* cv )
 		| ((int)(cv->b * 255) << 16)
 		| ((int)(cv->g * 255) <<  8)
 		| ((int)(cv->r * 255) <<  0);
-}
-
-ArnQuat
-ArnEulerToQuat( const ArnVec3* vec3 )
-{
-	cml_quat cmlq;
-	cml::quaternion_rotation_euler(cmlq, vec3->x, vec3->y, vec3->z, cml::euler_order_xyz);
-	return ArnQuat(cmlq[1], cmlq[2], cmlq[3], cmlq[0]);
 }
 
 ArnMatrix*
@@ -112,7 +114,7 @@ ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTran
 	return S_OK;
 }
 
-void
+ArnVec3*
 ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec, const ArnMatrix* mat)
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
@@ -122,7 +124,7 @@ ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec, const ArnMatrix* mat)
 // be returned.  The determinant of pM is also returned it pfDeterminant
 // is non-NULL.
 ArnMatrix*
-ArnMatrixInverse( ArnMatrix *pOut, FLOAT *pDeterminant, CONST ArnMatrix *pM )
+ArnMatrixInverse( ArnMatrix *pOut, float *pDeterminant, const ArnMatrix *pM )
 {
 	assert(pDeterminant == 0);
 	cml_mat44 cmlmat;
@@ -138,7 +140,7 @@ ArnMatrixInverse( ArnMatrix *pOut, FLOAT *pDeterminant, CONST ArnMatrix *pM )
 
 // Rotation about arbitrary axis.
 ArnQuat*
-ArnQuaternionRotationAxis( ArnQuat *pOut, CONST ArnVec3 *pV, FLOAT Angle )
+ArnQuaternionRotationAxis( ArnQuat *pOut, const ArnVec3 *pV, float Angle )
 {
 	assert(ArnVec3GetLength(*pV) == 1);
 	float s = sinf(Angle / 2);
@@ -151,7 +153,7 @@ ArnQuaternionRotationAxis( ArnQuat *pOut, CONST ArnVec3 *pV, FLOAT Angle )
 
 // Build a quaternion from a rotation matrix.
 ArnQuat*
-ArnQuaternionRotationMatrix( ArnQuat *pOut, CONST ArnMatrix *pM)
+ArnQuaternionRotationMatrix( ArnQuat *pOut, const ArnMatrix *pM)
 {
 	cml_mat44 cmlmat;
 	for (int i = 0; i < 4; ++i)
@@ -283,7 +285,7 @@ ArnVec3TransformCoord( ArnVec3* pOut, const ArnVec3* pV, const ArnMatrix* pM )
 }
 
 ArnMatrix*
-ArnMatrixOrthoLH( ArnMatrix* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf )
+ArnMatrixOrthoLH( ArnMatrix* pOut, float w, float h, float zn, float zf )
 {
 	cml_mat44 cmlmat;
 	cml::matrix_orthographic_LH(cmlmat, -h/2, h/2, -w/2, w/2, zn, zf, cml::z_clip_neg_one);
@@ -295,7 +297,7 @@ ArnMatrixOrthoLH( ArnMatrix* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf )
 
 // Build a lookat matrix.
 ArnMatrix*
-ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp, bool rightHanded )
+ArnMatrixLookAt( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const ArnVec3 *pUp, bool rightHanded )
 {
 	cml_mat44 cmlmat;
 	cml_vec3 eye(pEye->x, pEye->y, pEye->z);
@@ -314,21 +316,21 @@ ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST
 }
 // Equivalent to D3DXMatrixLookAtRH()
 ArnMatrix*
-ArnMatrixLookAtRH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp )
+ArnMatrixLookAtRH( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const ArnVec3 *pUp )
 {
 	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, true);
 }
 
 // Equivalent to D3DXMatrixLookAtLH()
 ArnMatrix*
-ArnMatrixLookAtLH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp )
+ArnMatrixLookAtLH( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const ArnVec3 *pUp )
 {
 	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, false);
 }
 
 // Build a perspective projection matrix. (left-handed)
 ArnMatrix*
-ArnMatrixPerspectiveFovLH( ArnMatrix *pOut, FLOAT fovy, FLOAT Aspect, FLOAT zn, FLOAT zf )
+ArnMatrixPerspectiveFovLH( ArnMatrix *pOut, float fovy, float Aspect, float zn, float zf )
 {
 	return ArnMatrixPerspectiveYFov(pOut, fovy, Aspect, zn, zf, false);
 }
@@ -448,3 +450,14 @@ ArnGetFrustumCorners(ArnVec3 corners[8], float planes[6][4])
 		corners[i].z = cmlcorners[i][2];
 	}
 }
+
+ArnVec4*
+ArnVec3Transform(ArnVec4* out, const ArnVec3* vec, const ArnMatrix* mat)
+{
+	out->x = mat->m[0][0] * vec->x + mat->m[0][1] * vec->y + mat->m[0][2] * vec->z + mat->m[0][3];
+	out->y = mat->m[1][0] * vec->x + mat->m[1][1] * vec->y + mat->m[1][2] * vec->z + mat->m[1][3];
+	out->z = mat->m[2][0] * vec->x + mat->m[2][1] * vec->y + mat->m[2][2] * vec->z + mat->m[2][3];
+	out->w = mat->m[3][0] * vec->x + mat->m[3][1] * vec->y + mat->m[3][2] * vec->z + mat->m[3][3];
+	return out;
+}
+

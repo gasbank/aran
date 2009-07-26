@@ -2,16 +2,18 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="AranCB" />
+		<Option title="Aran" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/libAranCB" prefix_auto="1" extension_auto="1" />
-				<Option working_dir="" />
+				<Option output="../../../Working/libAranD" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="bin/Debug" />
 				<Option object_output="obj/Debug/" />
-				<Option type="2" />
+				<Option type="3" />
 				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -33,7 +35,8 @@
 			<Add option="-pedantic-errors" />
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
-			<Add directory="../cml-1_0_0" />
+			<Add option="-fPIC" />
+			<Add directory="../AranMath" />
 		</Compiler>
 		<Unit filename="Animation.cpp" />
 		<Unit filename="Animation.h" />
@@ -54,15 +57,17 @@
 		<Unit filename="ArnBone.h" />
 		<Unit filename="ArnCamera.cpp" />
 		<Unit filename="ArnCamera.h" />
-		<Unit filename="ArnConsts.cpp" />
-		<Unit filename="ArnConsts.h" />
 		<Unit filename="ArnContainer.cpp" />
 		<Unit filename="ArnContainer.h" />
 		<Unit filename="ArnFile.cpp" />
 		<Unit filename="ArnFile.h" />
 		<Unit filename="ArnGenericBuffer.cpp" />
 		<Unit filename="ArnGenericBuffer.h" />
-		<Unit filename="ArnGenericBuffer.inl" />
+		<Unit filename="ArnGenericBuffer.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
+		<Unit filename="ArnGlExt.cpp" />
 		<Unit filename="ArnHierarchy.cpp" />
 		<Unit filename="ArnHierarchy.h" />
 		<Unit filename="ArnIndexBuffer.cpp" />
@@ -73,40 +78,44 @@
 		<Unit filename="ArnLight.h" />
 		<Unit filename="ArnMaterial.cpp" />
 		<Unit filename="ArnMaterial.h" />
-		<Unit filename="ArnMath.cpp" />
 		<Unit filename="ArnMath.h" />
-		<Unit filename="ArnMath.inl" />
-		<Unit filename="ArnMatrix.cpp" />
 		<Unit filename="ArnMatrix.h" />
 		<Unit filename="ArnMesh.cpp" />
 		<Unit filename="ArnMesh.h" />
-		<Unit filename="ArnMesh.inl" />
+		<Unit filename="ArnMesh.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="ArnNode.cpp" />
 		<Unit filename="ArnNode.h" />
-		<Unit filename="ArnNode.inl" />
+		<Unit filename="ArnNode.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="ArnNodeFactory.cpp" />
 		<Unit filename="ArnNodeFactory.h" />
 		<Unit filename="ArnObject.cpp" />
 		<Unit filename="ArnObject.h" />
-		<Unit filename="ArnQuat.cpp" />
-		<Unit filename="ArnQuat.h" />
 		<Unit filename="ArnSceneGraph.cpp" />
 		<Unit filename="ArnSceneGraph.h" />
-		<Unit filename="ArnSceneGraph.inl" />
+		<Unit filename="ArnSceneGraph.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="ArnSkeleton.cpp" />
 		<Unit filename="ArnSkeleton.h" />
 		<Unit filename="ArnSkinInfo.cpp" />
 		<Unit filename="ArnSkinInfo.h" />
 		<Unit filename="ArnTexture.cpp" />
 		<Unit filename="ArnTexture.h" />
-		<Unit filename="ArnVec3.cpp" />
-		<Unit filename="ArnVec3.h" />
-		<Unit filename="ArnVec3.inl" />
 		<Unit filename="ArnVertexBuffer.cpp" />
 		<Unit filename="ArnVertexBuffer.h" />
 		<Unit filename="ArnXformable.cpp" />
 		<Unit filename="ArnXformable.h" />
-		<Unit filename="ArnXformable.inl" />
+		<Unit filename="ArnXformable.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="ArnXmlLoader.cpp" />
 		<Unit filename="ArnXmlLoader.h" />
 		<Unit filename="ArnXmlString.cpp" />
@@ -117,8 +126,6 @@
 		<Unit filename="CharacterAnimationCallback.h" />
 		<Unit filename="CharacterInterface.cpp" />
 		<Unit filename="CharacterInterface.h" />
-		<Unit filename="Decompose.cpp" />
-		<Unit filename="Decompose.h" />
 		<Unit filename="DefaultRenderLayer.h" />
 		<Unit filename="DungeonInterface.cpp" />
 		<Unit filename="DungeonInterface.h" />
@@ -128,7 +135,6 @@
 		<Unit filename="Log.h" />
 		<Unit filename="LoiterCallback.cpp" />
 		<Unit filename="LoiterCallback.h" />
-		<Unit filename="Macros.h" />
 		<Unit filename="ModelDrawer.cpp" />
 		<Unit filename="ModelDrawer.h" />
 		<Unit filename="ModelDrawerDx9.cpp" />
@@ -139,7 +145,10 @@
 		<Unit filename="MyError.h" />
 		<Unit filename="PreciseTimer.cpp" />
 		<Unit filename="PreciseTimer.h" />
-		<Unit filename="PreciseTimer.inl" />
+		<Unit filename="PreciseTimer.inl">
+			<Option compile="0" />
+			<Option link="0" />
+		</Unit>
 		<Unit filename="RenderLayer.cpp" />
 		<Unit filename="RenderLayer.h" />
 		<Unit filename="Renderer.cpp" />
@@ -169,6 +178,7 @@
 		<Unit filename="inotify-cxx.cpp" />
 		<Unit filename="inotify-cxx.h" />
 		<Unit filename="resource.h" />
+		<Unit filename="../Macros.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

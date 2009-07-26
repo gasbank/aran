@@ -98,17 +98,3 @@ ArnVec3GetCrossProduct(const ArnVec3& va, const ArnVec3& vb)
 {
 	return CreateArnVec3(va.y * vb.z - va.z * vb.y, va.z * vb.x - va.x * vb.z, va.x * vb.y - va.y * vb.x);
 }
-
-static inline void
-ArnVec3Transform(ArnVec4* out, const ArnVec3* vec, const ArnMatrix* mat)
-{
-#ifdef WIN32
-	D3DXVec3Transform(reinterpret_cast<D3DXVECTOR4*>(out), reinterpret_cast<const D3DXVECTOR3*>(vec), reinterpret_cast<const D3DXMATRIX*>(mat));
-#else
-	out->x = mat->m[0][0] * vec->x + mat->m[0][1] * vec->y + mat->m[0][2] * vec->z + mat->m[0][3];
-	out->y = mat->m[1][0] * vec->x + mat->m[1][1] * vec->y + mat->m[1][2] * vec->z + mat->m[1][3];
-	out->z = mat->m[2][0] * vec->x + mat->m[2][1] * vec->y + mat->m[2][2] * vec->z + mat->m[2][3];
-	out->w = mat->m[3][0] * vec->x + mat->m[3][1] * vec->y + mat->m[3][2] * vec->z + mat->m[3][3];
-#endif
-}
-

@@ -677,3 +677,150 @@
 1207365906 /devel/devel/AranLib_Decouple/cml-1_0_0/cml/mathlib/picking.h
 	<cml/mathlib/projection.h>
 
+1248625050 source:/devel/devel/Aran_trunk/Src/AranDecouple_Test/Test2.cpp
+	<stdlib.h>
+	<stdio.h>
+	<string.h>
+	<math.h>
+	<string>
+	<vector>
+	<list>
+	<map>
+	<fstream>
+	<sstream>
+	<iostream>
+	<iomanip>
+	<SDL.h>
+	<SDL_opengl.h>
+	<SDL/SDL.h>
+	<SDL/SDL_opengl.h>
+	"ft2build.h"
+	<d3dx9.h>
+	<xercesc/parsers/XercesDOMParser.hpp>
+	<xercesc/dom/DOM.hpp>
+	<xercesc/sax/HandlerBase.hpp>
+	<xercesc/util/XMLString.hpp>
+	<xercesc/util/PlatformUtils.hpp>
+	"IL/il.h"
+	"../Macros.h"
+	"Structs.h"
+	"Singleton.h"
+	"ArnXmlLoader.h"
+	"ArnXmlString.h"
+	"ArnSceneGraph.h"
+	"ArnCamera.h"
+	"VideoManGl.h"
+	"ArnSkeleton.h"
+	"ArnAnimationController.h"
+	"ArnMesh.h"
+	"ArnViewportData.h"
+	"ArnGlExt.h"
+
+1248624671 /devel/devel/Aran_trunk/Src/Macros.h
+
+1248624301 /devel/devel/Aran_trunk/Src/Aran/Structs.h
+	"ArnVec3.h"
+	"ArnVec4.h"
+	"ArnColorValue4f.h"
+	"RST_DATA.h"
+	"ArnMatrix.h"
+	"ArnQuat.h"
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnVec3.h
+	"ArnVec3.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnVec3.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnVec4.h
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnColorValue4f.h
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/RST_DATA.h
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnMatrix.h
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnQuat.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/Singleton.h
+	<stdexcept>
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnXmlLoader.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnXmlString.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnSceneGraph.h
+	"ArnNode.h"
+	"ArnSceneGraph.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnNode.h
+	"ArnObject.h"
+	"ArnNode.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnObject.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnNode.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnSceneGraph.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnCamera.h
+	"ArnXformable.h"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnXformable.h
+	"ArnNode.h"
+	"ArnXformable.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnXformable.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/VideoManGl.h
+	"VideoMan.h"
+	"glInfo.h"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/VideoMan.h
+	"InputMan.h"
+	"ModelReader.h"
+	"DungeonInterface.h"
+	"Singleton.h"
+	"PreciseTimer.h"
+	"ArnCamera.h"
+	"ArnConsts.h"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/InputMan.h
+	"ArnMath.h"
+
+1248623481 /devel/devel/Aran_trunk/Src/AranMath/ArnMath.h
+	"ArnMath.inl"
+
+1248621763 /devel/devel/Aran_trunk/Src/AranMath/ArnMath.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ModelReader.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/DungeonInterface.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/PreciseTimer.h
+	<unistd.h>
+	<time.h>
+	"PreciseTimer.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/PreciseTimer.inl
+
+1248620353 /devel/devel/Aran_trunk/Src/AranMath/ArnConsts.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/glInfo.h
+	<string>
+	<vector>
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnSkeleton.h
+	"ArnXformable.h"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnAnimationController.h
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnMesh.h
+	"ArnXformable.h"
+	"ArnMesh.inl"
+
+1248620353 /devel/devel/Aran_trunk/Src/Aran/ArnMesh.inl
+
+1248621263 /devel/devel/Aran_trunk/Src/AranMath/ArnViewportData.h
+
+1248625005 /devel/devel/Aran_trunk/Src/Aran/ArnGlExt.h
+

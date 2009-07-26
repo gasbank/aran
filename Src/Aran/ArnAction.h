@@ -6,9 +6,6 @@
 class ArnNode;
 class ArnIpo;
 
-ARAN_API_EXTERN template class ARAN_API std::map<STRING, STRING>;
-ARAN_API_EXTERN template class ARAN_API std::map<ArnNode*, ArnIpo*>;
-
 class ArnIpo;
 
 class ArnAction : public ArnNode

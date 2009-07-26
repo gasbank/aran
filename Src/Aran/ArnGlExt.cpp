@@ -98,3 +98,10 @@ ARAN_API void ArnInitGlExtFunctions()
 }
 
 #endif
+
+#ifndef WIN32
+ARAN_API void ArnInitGlExtFunctions()
+{
+	// Do nothing on linux
+}
+#endif

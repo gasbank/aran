@@ -65,7 +65,7 @@ ArnVec4 ArnMatrix::operator*( const ArnVec4& rhs ) const
 	return ret;
 }
 
-ArnMatrix& ArnMatrix::operator *= ( FLOAT f )
+ArnMatrix& ArnMatrix::operator *= ( float f )
 {
 	m[0][0] *= f; m[0][1] *= f; m[0][2] *= f; m[0][3] *= f;
 	m[1][0] *= f; m[1][1] *= f; m[1][2] *= f; m[1][3] *= f;
