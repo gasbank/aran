@@ -40,7 +40,7 @@ public:
 	
 	unsigned int							getVertGroupCount() const { return m_vertexGroup.size(); }
 	unsigned int							getVertCount(unsigned int vertGroupIdx);
-	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx);
+	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx, bool finalXformed);
 
 	// ********************************* INTERNAL USE ONLY START *********************************
 	virtual void							interconnect(ArnNode* sceneRoot);

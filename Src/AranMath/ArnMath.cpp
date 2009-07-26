@@ -113,7 +113,7 @@ ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTran
 }
 
 void
-ArnVec3TransformNormal(ArnVec3* out, ArnVec3* vec, ArnMatrix* mat)
+ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec, const ArnMatrix* mat)
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
@@ -222,7 +222,7 @@ ArnVec3Project( ArnVec3* pOut, const ArnVec3* pV, const ArnViewportData* pViewpo
 	0
 
 	*/
-	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_zero, float(pViewport->MinZ), float(pViewport->MaxZ));
+	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_neg_one, float(pViewport->MinZ), float(pViewport->MaxZ));
 	cml_vec3 projected(cml::project_point(model, view, proj, viewport, point));
 
 	pOut->x = projected[0];
@@ -232,24 +232,15 @@ ArnVec3Project( ArnVec3* pOut, const ArnVec3* pV, const ArnViewportData* pViewpo
 }
 
 ArnVec3*
-ArnVec3Unproject( ArnVec3* pOut, const ArnVec3* pV, const ArnViewportData* pViewport, const ArnMatrix* pProjection, const ArnMatrix* pModelview )
+ArnVec3Unproject( ArnVec3* pOut, const ArnVec3* pV, const ArnViewportData* avd, const ArnMatrix* pProjection, const ArnMatrix* pModelview )
 {
-	cml_mat44 modelview, proj, viewport;
-	cml_vec3 point(pV->x, pV->y, pV->z); // Point in the screen-space to be unprojected to world-space.
-	for (int i = 0; i < 4; ++i)
-	{
-		for (int j = 0; j < 4; ++j)
-		{
-			modelview(i, j) = pModelview->m[i][j];
-			proj(i, j) = pProjection->m[i][j];
-		}
-	}
-	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_zero, float(pViewport->MinZ), float(pViewport->MaxZ));
-	cml_vec3 unprojected(cml::unproject_point(modelview, proj, viewport, point));
-
-	pOut->x = unprojected[0];
-	pOut->y = unprojected[1];
-	pOut->z = unprojected[2];
+	ArnVec3 in;
+	in.x = (pV->x - avd->X) * 2 / (avd->X + avd->Width) - 1.0f;
+	in.y = (pV->y - avd->Y) * 2 / (avd->Y + avd->Height) - 1.0f;
+	in.z = 2 * pV->z - 1.0f;
+	ArnMatrix A = *pProjection * *pModelview;
+	ArnMatrixInverse(&A, 0, &A);
+	ArnVec3TransformCoord(pOut, &in, &A);
 	return pOut;
 }
 
@@ -285,9 +276,9 @@ ArnVec3TransformCoord( ArnVec3* pOut, const ArnVec3* pV, const ArnMatrix* pM )
 	ArnVec4 v4(*pV, 1);
 	ArnVec4 v4Out;
 	v4Out = (*pM) * (v4);
-	pOut->x = v4Out.x;
-	pOut->y = v4Out.y;
-	pOut->z = v4Out.z;
+	pOut->x = v4Out.x / v4Out.w;
+	pOut->y = v4Out.y / v4Out.w;
+	pOut->z = v4Out.z / v4Out.w;
 	return pOut;
 }
 
@@ -295,47 +286,66 @@ ArnMatrix*
 ArnMatrixOrthoLH( ArnMatrix* pOut, FLOAT w, FLOAT h, FLOAT zn, FLOAT zf )
 {
 	cml_mat44 cmlmat;
-	cml::matrix_orthographic_LH(cmlmat, -h/2, h/2, -w/2, w/2, zn, zf, cml::z_clip_zero);
+	cml::matrix_orthographic_LH(cmlmat, -h/2, h/2, -w/2, w/2, zn, zf, cml::z_clip_neg_one);
 	for (int i = 0; i < 4; ++i)
 		for (int j = 0; j < 4; ++j)
 			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
 
-
 // Build a lookat matrix.
-ArnMatrix* ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp, bool rightHanded )
+ArnMatrix*
+ArnMatrixLookAt( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp, bool rightHanded )
 {
 	cml_mat44 cmlmat;
 	cml_vec3 eye(pEye->x, pEye->y, pEye->z);
 	cml_vec3 target(pAt->x, pAt->y, pAt->z);
 	cml_vec3 up(pUp->x, pUp->y, pUp->z);
+	cml::Handedness handedness;
 	if (rightHanded)
-		cml::matrix_look_at(cmlmat, eye, target, up, cml::right_handed);
+		handedness = cml::right_handed;
 	else
-		cml::matrix_look_at(cmlmat, eye, target, up, cml::left_handed);
+		handedness = cml::left_handed;
+	cml::matrix_look_at(cmlmat, eye, target, up, handedness);
 	for (int i = 0; i < 4; ++i) // row
 		for (int j = 0; j < 4; ++j) // column
 			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
 // Equivalent to D3DXMatrixLookAtRH()
-ArnMatrix* ArnMatrixLookAtRH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp )
+ArnMatrix*
+ArnMatrixLookAtRH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp )
 {
-	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, cml::right_handed);
+	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, true);
 }
+
 // Equivalent to D3DXMatrixLookAtLH()
 ArnMatrix*
 ArnMatrixLookAtLH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp )
 {
-	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, cml::left_handed);
+	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, false);
 }
 
 // Build a perspective projection matrix. (left-handed)
 ArnMatrix*
 ArnMatrixPerspectiveFovLH( ArnMatrix *pOut, FLOAT fovy, FLOAT Aspect, FLOAT zn, FLOAT zf )
 {
-	ARN_THROW_NOT_IMPLEMENTED_ERROR
+	return ArnMatrixPerspectiveYFov(pOut, fovy, Aspect, zn, zf, false);
+}
+
+ArnMatrix*
+ArnMatrixPerspectiveYFov(ArnMatrix* out, float yFov, float aspect, float nearClip, float farClip, bool rightHanded)
+{
+	cml_mat44 cmlout;
+	cml::Handedness handedness;
+	if (rightHanded)
+		handedness = cml::right_handed;
+	else
+		handedness = cml::left_handed;
+
+	cml::matrix_perspective_yfov(cmlout, yFov, aspect, nearClip, farClip, handedness, cml::z_clip_neg_one);
+	ArnCmlMatToArnMat(out, &cmlout);
+	return out;
 }
 
 void
@@ -350,7 +360,7 @@ void
 ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport)
 {
 	cml_mat44 viewport;
-	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_zero, float(pViewport->MinZ), float(pViewport->MaxZ));
+	cml::matrix_viewport(viewport, float(pViewport->X), float(pViewport->X + pViewport->Width), float(pViewport->Y), float(pViewport->Y + pViewport->Height), cml::z_clip_neg_one, float(pViewport->MinZ), float(pViewport->MaxZ));
 	for (int i = 0; i < 4; ++i) // Row
 		for (int j = 0; j < 4; ++j) // Column
 			out->m[i][j] = viewport.basis_element(j, i);
@@ -401,26 +411,14 @@ ArnIntersectTriangle(float* t, float* u, float* v, const ArnVec3* orig, const Ar
 }
 
 void
-ArnMakePickRay(ArnVec3* origin, ArnVec3* direction, float scrX, float scrY, const ArnMatrix* view, const ArnMatrix* projection, const ArnMatrix* viewport)
+ArnMakePickRay(ArnVec3* origin, ArnVec3* direction, float scrX, float scrY, const ArnMatrix* view, const ArnMatrix* projection, const ArnViewportData* avd)
 {
-	cml_mat44 cmlview, cmlproj, cmlviewport;
-	for (int i = 0; i < 4; ++i) // Row
-	{
-		for (int j = 0; j < 4; ++j) // Column
-		{
-			cmlview.set_basis_element(j, i, view->m[i][j]);
-			cmlproj.set_basis_element(j, i, projection->m[i][j]);
-			cmlviewport.set_basis_element(j, i, viewport->m[i][j]);
-		}
-	}
-	cml_vec3 cmlorg, cmldir;
-	cml::make_pick_ray(scrX, scrY, cmlview, cmlproj, cmlviewport, cmlorg, cmldir);
-	origin->x = cmlorg[0];
-	origin->y = cmlorg[1];
-	origin->z = cmlorg[2];
-	direction->x = cmldir[0];
-	direction->y = cmldir[1];
-	direction->z = cmldir[2];
+	ArnVec3 scrNear(scrX, scrY, 0);
+	ArnVec3 scrFar(scrX, scrY, 1.0f);
+	ArnVec3Unproject(origin, &scrNear, avd, projection, view);
+	ArnVec3Unproject(direction, &scrFar, avd, projection, view);
+	*direction = *direction - *origin;
+	ArnVec3NormalizeSelf(direction);
 }
 
 void
@@ -450,19 +448,3 @@ ArnGetFrustumCorners(ArnVec3 corners[8], float planes[6][4])
 		corners[i].z = cmlcorners[i][2];
 	}
 }
-
-ArnMatrix*
-ArnMatrixPerspectiveYFov(ArnMatrix* out, float yFov, float aspect, float nearClip, float farClip, bool rightHanded)
-{
-	cml_mat44 cmlout;
-	cml::Handedness handedness;
-	if (rightHanded)
-		handedness = cml::right_handed;
-	else
-		handedness = cml::left_handed;
-
-	cml::matrix_perspective_yfov(cmlout, yFov, aspect, nearClip, farClip, handedness, cml::z_clip_zero);
-	ArnCmlMatToArnMat(out, &cmlout);
-	return out;
-}
-

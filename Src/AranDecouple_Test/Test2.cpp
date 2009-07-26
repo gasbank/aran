@@ -117,57 +117,35 @@ void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGrap
 	for (GLint h = 0; h < hits; ++h)
 	{
 		ArnNode* node = sceneGraph->getNodeById(buff[h].contents);
-		printf("[Object %p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
+		printf("[Object 0x%p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
 	}
 }
 
 int HandleEvent(SDL_Event *event, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam)
 {
 	int done;
-
 	ArnSkeleton* skel = reinterpret_cast<ArnSkeleton*>(sceneGraph->findFirstNodeOfType(NDT_RT_SKELETON));
-
-
 	done = 0;
 	switch( event->type ) {
 		case SDL_MOUSEBUTTONUP:
 			{
 				SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), sceneGraph, avd, cam); // Y-coord flipped.
-
-				/*
-				float frustumPlanes[6][4];
-				cml_mat44 cmlmv, cmlproj, cmlvp;
-				cml_vec3 cmleye(cam->getCameraData().pos.x, cam->getCameraData().pos.y, cam->getCameraData().pos.z);
-				cml_vec3 cmltarget(cam->getCameraData().targetPos.x, cam->getCameraData().targetPos.y, cam->getCameraData().targetPos.z);
-				cml_vec3 cmlup(cam->getCameraData().upVector.x, cam->getCameraData().upVector.y, cam->getCameraData().upVector.z);
-				cml_vec3 cmlcorners[8];
-				cml::matrix_look_at_RH(cmlmv, cmleye, cmltarget, cmlup);
-				cml::matrix_perspective_yfov_RH(cmlproj, cam->getFov(), (float)avd->Width / avd->Height, cam->getNearClip(), cam->getFarClip(), cml::z_clip_zero);
-				cml::extract_frustum_planes(cmlmv, cmlproj, frustumPlanes, cml::z_clip_zero, false);
-				cml::get_frustum_corners(frustumPlanes, cmlcorners);
-				for (int i = 0; i < 8; ++i)
-				{
-					//printf("%.3f %.3f %.3f\n", cmlcorners[i][0], cmlcorners[i][1], cmlcorners[i][2]);
-				}
-				cml::matrix_viewport(cmlvp, 0.0f, 0.0f + avd->Width, 0.0f, 0.0f + avd->Height, cml::z_clip_zero);
-				cml_vec3 cmlorigin, cmldir;
-				cml::make_pick_ray(float(event->motion.x), float(avd->Height - event->motion.y), cmlmv, cmlproj, cmlvp, cmlorigin, cmldir);
-				//printf("Ray origin   : %.3f %.3f %.3f\n", cmlorigin[0], cmlorigin[1], cmlorigin[2]);
-				//printf("Ray direction: %.3f %.3f %.3f\n", cmldir[0], cmldir[1], cmldir[2]);
-				
-
-				
-				
-
-				ArnVec3 origin(cmlorigin[0], cmlorigin[1], cmlorigin[2]);
-				ArnVec3 direction(cmldir[0], cmldir[1], cmldir[2]);
+				ArnMatrix modelview, projection;
+				glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+				modelview = modelview.transpose();
+				glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+				projection = projection.transpose();
+				ArnVec3 origin, direction;
+				ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
 				ArnMesh* mesh = reinterpret_cast<ArnMesh*>(sceneGraph->findFirstNodeOfType(NDT_RT_MESH));
-				bool bHit = false;
-				unsigned int faceIdx = 0;
-				ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-				if (bHit)
-					printf("Hit on Face %u\n", faceIdx);
-				*/
+				if (mesh)
+				{
+					bool bHit = false;
+					unsigned int faceIdx = 0;
+					ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
+					if (bHit)
+						printf("Hit on Face %u\n", faceIdx);
+				}
 			}
 			break;
 
@@ -513,7 +491,7 @@ int main(int argc, char *argv[])
 		for (unsigned int v = 0; v < vertCount; ++v)
 		{
 			ArnVec3 pos;
-			mesh->getVert(&pos, 0, 0, 0, v);
+			mesh->getVert(&pos, 0, 0, 0, v, false);
 			printf("[%d] ", v);
 			pos.printFormatString();
 		}
@@ -533,10 +511,12 @@ int main(int argc, char *argv[])
 		printf("====== First Mesh Vertex List End =======\n");
 	}
 
-	/*
+
 	ArnMatrix modelview, projection;
 	glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+	modelview = modelview.transpose();
 	glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+	projection = projection.transpose();
 	float frustumPlanes[6][4];
 	ArnExtractFrustumPlanes(frustumPlanes, &modelview, &projection);
 	ArnVec3 frustumCorners[8];
@@ -548,30 +528,37 @@ int main(int argc, char *argv[])
 	}
 	printf("=== Eight Frustum Corder Points End ===\n");
 
-	cml_mat44 cmlmv, cmlproj, cmlvp;
-	cml_vec3 cmleye   (cam->getLocalXform().m[0][3], cam->getLocalXform().m[1][3], cam->getLocalXform().m[2][3]);
-	cml_vec3 cmltarget(cam->getLocalXform().m[0][3]-cam->getLocalXform().m[0][2], cam->getLocalXform().m[1][3]-cam->getLocalXform().m[1][2], cam->getLocalXform().m[2][3]-cam->getLocalXform().m[2][2]);
-	cml_vec3 cmlup    (cam->getLocalXform().m[0][1], cam->getLocalXform().m[1][1], cam->getLocalXform().m[2][1]);
-	cml_vec3 cmlcorners[8];
-	cml::matrix_look_at_RH(cmlmv, cmleye, cmltarget, cmlup);
-	cml::matrix_perspective_yfov_RH(cmlproj, cam->getFov(), (float)avd.Width / avd.Height, cam->getNearClip(), cam->getFarClip(), cml::z_clip_zero);
-	cml::extract_frustum_planes(cmlmv, cmlproj, frustumPlanes, cml::z_clip_zero, false);
-	cml::get_frustum_corners(frustumPlanes, cmlcorners);
+	ArnMatrix camModelview, camProjection;
+	ArnVec3 eye(cam->getLocalXform().m[0][3], cam->getLocalXform().m[1][3], cam->getLocalXform().m[2][3]);
+	ArnVec3 at(cam->getLocalXform().m[0][3]-cam->getLocalXform().m[0][2], cam->getLocalXform().m[1][3]-cam->getLocalXform().m[1][2], cam->getLocalXform().m[2][3]-cam->getLocalXform().m[2][2]);
+	ArnVec3 up(cam->getLocalXform().m[0][1], cam->getLocalXform().m[1][1], cam->getLocalXform().m[2][1]);
+	ArnMatrixLookAtRH(&camModelview, &eye, &at, &up);
+	ArnMatrixPerspectiveYFov(&camProjection, cam->getFov(), (float)avd.Width / avd.Height, cam->getNearClip(), cam->getFarClip(), true);
+	ArnExtractFrustumPlanes(frustumPlanes, &camModelview, &camProjection);
+	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
 	printf("=== Eight Frustum Corder points (calculated from CML routines) ===\n");
 	for (int i = 0; i < 8; ++i)
 	{
-		printf("%.3f %.3f %.3f\n", cmlcorners[i][0], cmlcorners[i][1], cmlcorners[i][2]);
+		frustumCorners[i].printFormatString();
 	}
 	printf("=== Eight Frustum Corder Points End ===\n");
 
+	
 	printf("=== Test Ray ===\n");
-	cml::matrix_viewport(cmlvp, 0.0f, 0.0f + avd.Width, 0.0f, 0.0f + avd.Height, cml::z_clip_zero);
-	cml_vec3 origin, dir;
-	cml::make_pick_ray(100.0f, 100.0f, cmlmv, cmlproj, cmlvp, origin, dir);
-	printf("Ray origin   : %.3f %.3f %.3f\n", origin[0], origin[1], origin[2]);
-	printf("Ray direction: %.3f %.3f %.3f\n", dir[0], dir[1], dir[2]);
+	ArnVec3 origin, dir;
+	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &modelview, &projection, &avd);
+	printf("Ray origin   : "); origin.printFormatString();
+	printf("Ray direction: "); dir.printFormatString();
 	printf("=== Test Ray End\n");
-	*/
+
+	GLdouble glmv[16], glproj[16];
+	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
+	glGetDoublev(GL_PROJECTION_MATRIX, glproj);
+	GLint glvp[4] = { 0, 0, 640, 480 };
+	GLdouble objx, objy, objz;
+	gluUnProject(320, 240, 0, glmv, glproj, glvp, &objx, &objy, &objz);
+	printf("gluUnproject result: %.3Lf, %.3Lf, %.3Lf\n", objx, objy, objz);
+	
 
 	// TODO: Normalized cube map
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();

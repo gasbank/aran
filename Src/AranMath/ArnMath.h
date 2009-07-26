@@ -21,7 +21,7 @@ ARANMATH_API ArnMatrix*			ArnMatrixTransformation(ArnMatrix* pOut, const ArnVec3
 								   const ArnVec3* pTranslation);
 ARANMATH_API HRESULT				ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTranslation, const ArnMatrix* pM );
 ARANMATH_API void				ArnMatrixRotationQuaternion(ArnMatrix* mat, const ArnQuat* quat);
-ARANMATH_API void				ArnVec3TransformNormal(ArnVec3* out, ArnVec3* vec, ArnMatrix* mat);
+ARANMATH_API void				ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec, const ArnMatrix* mat);
 
 // Calculate inverse of matrix.  Inversion my fail, in which case NULL will
 // be returned.  The determinant of pM is also returned it pfDeterminant
@@ -40,7 +40,6 @@ ARANMATH_API ArnMatrix*			ArnMatrixLookAtLH( ArnMatrix *pOut, CONST ArnVec3 *pEy
 ARANMATH_API ArnMatrix*			ArnMatrixLookAtRH( ArnMatrix *pOut, CONST ArnVec3 *pEye, CONST ArnVec3 *pAt, CONST ArnVec3 *pUp );
 
 // Build a perspective projection matrix. (left-handed)
-// TODO: Duplicated functions
 ARANMATH_API ArnMatrix*			ArnMatrixPerspectiveFovLH( ArnMatrix *pOut, FLOAT fovy, FLOAT Aspect, FLOAT zn, FLOAT zf );
 ARANMATH_API ArnMatrix*			ArnMatrixPerspectiveYFov(ArnMatrix* out, float yFov, float aspect, float nearClip, float farClip, bool rightHanded);
 
@@ -74,7 +73,7 @@ template<typename V1, typename V2, typename V3> V1* ArnVec3Lerp( V1* pOut, const
 }
 
 ARANMATH_API int ArnIntersectTriangle(float* t, float* u, float* v, const ArnVec3* orig, const ArnVec3* dir, const ArnVec3 verts[3]);
-ARANMATH_API void ArnMakePickRay(ArnVec3* origin, ArnVec3* direction, float scrX, float scrY, const ArnMatrix* view, const ArnMatrix* projection, const ArnMatrix* viewport);
+ARANMATH_API void ArnMakePickRay(ArnVec3* origin, ArnVec3* direction, float scrX, float scrY, const ArnMatrix* view, const ArnMatrix* projection, const ArnViewportData* avd);
 
 #ifdef ARANMATH_EXPORTS
 void ArnCmlMatToArnMat(ArnMatrix* out, const cml_mat44* cmlout);

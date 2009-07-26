@@ -50,6 +50,6 @@ ARANMATH_API const D3DXVECTOR3* ArnVec3GetConstDxPtr(const ArnVec3& v);
 ARANMATH_API D3DXVECTOR3* ArnVec3GetDxPtr(ArnVec3& v);
 #endif
 
-#ifdef ARANMATH_EXPORTS
+
 #include "ArnVec3.inl"
-#endif
+

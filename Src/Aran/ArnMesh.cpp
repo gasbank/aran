@@ -529,13 +529,25 @@ void ArnMesh::getQuadFace( unsigned int& faceIdx, unsigned int vind[4], unsigned
 	vind[3] = vert4Ind[4];
 }
 
-void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx )
+void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx, bool finalXformed )
 {
 	assert(pos || nor);
 	struct PosNor { ArnVec3 pos; ArnVec3 nor; };
 	const PosNor* posnor = reinterpret_cast<const PosNor*>(m_vertexGroup[vertGroupIdx].vertexChunk->getRecordAt(vertIdx));
-	if (pos) *pos = posnor->pos;
-	if (nor) *nor = posnor->nor;
+	if (pos)
+	{
+		if (finalXformed)
+			ArnVec3TransformCoord(pos, &posnor->pos, &getFinalLocalXform());
+		else
+			*pos = posnor->pos;
+	}
+	if (nor)
+	{
+		if (finalXformed)
+			ArnVec3TransformNormal(nor, &posnor->nor, &getFinalLocalXform());
+		else
+			*nor = posnor->nor;
+	}
 }
 
 unsigned int ArnMesh::getVertCount( unsigned int vertGroupIdx )
