@@ -506,31 +506,32 @@ int main(int argc, char *argv[])
 	ArnConfigureLightGl(0, light);
 
 	ArnMesh* mesh = reinterpret_cast<ArnMesh*>(sceneGraph->findFirstNodeOfType(NDT_RT_MESH));
-	assert(mesh);
-	unsigned int vertCount = mesh->getVertCount(0);
-	printf("====== First Mesh Vertex List =======\n");
-	for (unsigned int v = 0; v < vertCount; ++v)
+	if (mesh)
 	{
-		ArnVec3 pos;
-		mesh->getVert(&pos, 0, 0, 0, v);
-		printf("[%d] ", v);
-		pos.printFormatString();
-	}
-	const unsigned int faceGroupCount = mesh->getFaceGroupCount();
-	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
-	{
-		unsigned int triCount, quadCount;
-		mesh->getFaceCount(triCount, quadCount, fg);
-		for (unsigned int tc = 0; tc < triCount; ++tc)
+		unsigned int vertCount = mesh->getVertCount(0);
+		printf("====== First Mesh Vertex List =======\n");
+		for (unsigned int v = 0; v < vertCount; ++v)
 		{
-			unsigned int totalIndex;
-			unsigned int tinds[3];
-			mesh->getTriFace(totalIndex, tinds, fg, tc);
-			printf("Tri OrigInd/VertInds: %d / %d %d %d\n", totalIndex, tinds[0], tinds[1], tinds[2]);
+			ArnVec3 pos;
+			mesh->getVert(&pos, 0, 0, 0, v);
+			printf("[%d] ", v);
+			pos.printFormatString();
 		}
+		const unsigned int faceGroupCount = mesh->getFaceGroupCount();
+		for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
+		{
+			unsigned int triCount, quadCount;
+			mesh->getFaceCount(triCount, quadCount, fg);
+			for (unsigned int tc = 0; tc < triCount; ++tc)
+			{
+				unsigned int totalIndex;
+				unsigned int tinds[3];
+				mesh->getTriFace(totalIndex, tinds, fg, tc);
+				printf("Tri OrigInd/VertInds: %d / %d %d %d\n", totalIndex, tinds[0], tinds[1], tinds[2]);
+			}
+		}
+		printf("====== First Mesh Vertex List End =======\n");
 	}
-	printf("====== First Mesh Vertex List End =======\n");
-
 
 	/*
 	ArnMatrix modelview, projection;

@@ -88,13 +88,7 @@ void ArnBone::render()
 		ArnQuat q = getLocalXform_Rot() * getAnimLocalXform_Rot();
 		ArnMatrix matRot;
 		q.getRotationMatrix(&matRot);
-#ifdef WIN32
-		glMultMatrixf((const GLfloat*)matRot.m);
-#else
-		ArnMatrix matRotT = matRot.transpose();
-		glMultMatrixf((float*)matRotT.m);
-#endif
-
+		glMultTransposeMatrixf((const GLfloat*)matRot.m);
 		glPushMatrix();
 		{
 			glRotatef(-90, 1, 0, 0);

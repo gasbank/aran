@@ -74,11 +74,7 @@ ArnSkeleton::render()
 	glPushMatrix();
 	{
 		recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-#ifdef WIN32
-		glMultMatrixf((float*)getLocalXform().m);
-#else
 		glMultTransposeMatrixf((float*)getLocalXform().m);
-#endif
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		ArnDrawAxesGl(0.5);
 		foreach (ArnNode* node, getChildren())
