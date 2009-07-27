@@ -4,6 +4,7 @@
 
 ArnAnim::ArnAnim(void)
 : ArnNode(NDT_RT_ANIM)
+, m_data()
 {
 }
 

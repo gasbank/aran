@@ -33,6 +33,10 @@
 			</Target>
 		</Build>
 		<Compiler>
+			<Add option="-Weffc++" />
+			<Add option="-pedantic" />
+			<Add option="-Wfatal-errors" />
+			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
 			<Add directory="../../../cml-1_0_0" />

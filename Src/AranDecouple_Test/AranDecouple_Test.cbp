@@ -13,7 +13,7 @@
 				<Option external_deps="../../../Working/libAranD.so;../../../Working/libAranMathD.so;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="/home/gbu/NormalMapping.xml" />
+				<Option parameters="/home/gbu/BipedTest.xml" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>

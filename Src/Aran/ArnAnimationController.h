@@ -40,13 +40,15 @@ struct ARNTRACK_DESC
 class ARNANIMATIONOUTPUT
 {
 public:
-						ARNANIMATIONOUTPUT() : mat(0), scale(0), quat(0), trans(0) {}
-	STRING				name;
-	ArnMatrix*			mat;
-	ArnVec3*			scale;
-	ArnQuat*			quat;
-	ArnVec3*			trans;
+										ARNANIMATIONOUTPUT() : name(), mat(), scale(), quat(), trans() {}
+	STRING								name;
+	ArnMatrix*							mat;
+	ArnVec3*							scale;
+	ArnQuat*							quat;
+	ArnVec3*							trans;
 };
+
+class ArnAnimationController;
 
 // Aran library compartment of LPD3DXANIMATIONCONTROLLER
 class ARAN_API ArnAnimationController

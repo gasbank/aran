@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <tr1/memory>
 
 #ifdef WIN32
 	#include <SDL.h>
@@ -34,7 +35,6 @@
 
 XERCES_CPP_NAMESPACE_USE
 
-//#include "cml/cml.h"
 
 #include "IL/il.h"
 

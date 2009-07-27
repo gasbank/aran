@@ -21,6 +21,7 @@ private:
 
 	struct ActionsData
 	{
+		ActionsData() : actionName(), channels() {}
 		STRING actionName;
 		std::vector<std::pair<STRING, STRING> > channels;
 	};

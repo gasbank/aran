@@ -5,6 +5,8 @@
 
 ArnAction::ArnAction()
 : ArnNode(NDT_ACTION2)
+, m_objectIpoNameMap()
+, m_objectIpoMap()
 {
 	//ctor
 }

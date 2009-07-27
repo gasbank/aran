@@ -77,10 +77,14 @@ inline static void OutputDebugStringA(const char* msg)
 }
 inline static void MessageBoxA(void* noUse, const char* title, const char* content, int msgType)
 {
+	UNREFERENCED_PARAMETER(noUse);
+	UNREFERENCED_PARAMETER(msgType);
     fprintf(stderr, "%s: %s\n", title, content);
 }
 inline static void MessageBoxW(void* noUse, const wchar_t* title, const wchar_t* content, int msgType)
 {
+	UNREFERENCED_PARAMETER(noUse);
+	UNREFERENCED_PARAMETER(msgType);
     fwprintf(stderr, L"%s: %s\n", title, content);
 }
 #endif
@@ -203,12 +207,27 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 class MY_CUSTOM_MESH_VERTEX
 {
 public:
-	MY_CUSTOM_MESH_VERTEX() {}
-	MY_CUSTOM_MESH_VERTEX(float x, float y, float z, float nx, float ny, float nz, float u, float v)
+	MY_CUSTOM_MESH_VERTEX()
+	: x(0)
+	, y(0)
+	, z(0)
+	, nx(0)
+	, ny(0)
+	, nz(1)
+	, u(0)
+	, v(0)
 	{
-		this->x = x; this->y = y; this->z = z;
-		this->nx = nx; this->ny = ny; this->nz = nz;
-		this->u = u; this->v = v;
+	}
+	MY_CUSTOM_MESH_VERTEX(float x, float y, float z, float nx, float ny, float nz, float u, float v)
+	: x(x)
+	, y(y)
+	, z(z)
+	, nx(nx)
+	, ny(ny)
+	, nz(nz)
+	, u(u)
+	, v(v)
+	{
 	}
 	float x, y, z, nx, ny, nz, u, v;
 #ifdef WIN32
@@ -228,19 +247,19 @@ struct ArnVertex
 struct ArnBlendedVertex
 {
 	ArnBlendedVertex(float x, float y, float z, float nx, float ny, float nz, float u, float v, float w0, float w1, float w2, DWORD matIndices)
+	: x(x)
+	, y(y)
+	, z(z)
+	, weight0(w0)
+	, weight1(w1)
+	, weight2(w2)
+	, matrixIndices(matIndices)
+	, u(u)
+	, v(v)
 	{
-		this->x = x;
-		this->y = y;
-		this->z = z;
-		weight0 = w0;
-		weight1 = w1;
-		weight2 = w2;
-		matrixIndices = matIndices;
 		normal[0] = nx;
 		normal[1] = ny;
 		normal[2] = nz;
-		this->u = u;
-		this->v = v;
 	}
 	float x, y, z;
 	float weight0;
@@ -373,10 +392,18 @@ struct SkeletonData
 
 #include "ArnMatrix.h"
 #include "ArnQuat.h"
+#include "ArnConsts.h"
 
 struct BoneData
 {
-	BoneData() {}
+	BoneData()
+	: nameFixed("")
+	, offsetMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, infVertexCount(0)
+	, indices()
+	, weights()
+	{
+	}
 	virtual ~BoneData() {}
 
 	STRING					nameFixed;
@@ -622,16 +649,31 @@ class ArnContainer;
 
 struct ArnFrame
 {
-	char*					Name;
-	ArnMatrix				TransformationMatrix;
-	ArnContainer*			pMeshContainer;
-	ArnFrame*				pFrameSibling;
-	ArnFrame*				pFrameFirstChild;
+	ArnFrame()
+	: Name(0)
+	, TransformationMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, pMeshContainer()
+	, pFrameSibling()
+	, pFrameFirstChild()
+	{
+	}
+	virtual ~ArnFrame()
+	{
+	}
+	char*									Name;
+	ArnMatrix								TransformationMatrix;
+	ArnContainer*							pMeshContainer;
+	ArnFrame*								pFrameSibling;
+	ArnFrame*								pFrameFirstChild;
 };
 
 struct MyFrame : public ArnFrame
 {
-	MyFrame():isRoot(FALSE),sibling(0xffffffff),firstChild(0xffffffff)
+	MyFrame()
+	: isRoot(false)
+	, combinedMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, sibling(0xffffffff)
+	, firstChild(0xffffffff)
 	{
 		this->Name = this->nameFixed;
 		ZeroMemory(&combinedMatrix, sizeof(ArnMatrix));
@@ -644,31 +686,40 @@ struct MyFrame : public ArnFrame
 	size_t		sibling;
 	size_t		firstChild;
 };
+
 struct Bone : public BoneData
 {
 	Bone()
+	: keys()
+	, translationKeys()
+	, scaleKeys()
+	, rotationKeys()
+	, translationKeysSize(0)
+	, scaleKeysSize(0)
+	, rotationKeysSize(0)
 	{
-		translationKeys = scaleKeys = 0;
-		rotationKeys = 0;
-		translationKeysSize = scaleKeysSize = rotationKeysSize = 0;
 	}
 	~Bone()
 	{
+		/*
 		delete [] translationKeys; translationKeys = 0; translationKeysSize = 0;
 		delete [] rotationKeys; rotationKeys = 0; rotationKeysSize = 0;
 		delete [] scaleKeys; scaleKeys = 0; scaleKeysSize = 0;
+		*/
 	}
 
 	// Basic data is moved to BoneData (superclass)
 
-	std::vector<RST_DATA>	keys; // keyframe animation data in ARN file
+	std::vector<RST_DATA>						keys; // keyframe animation data in ARN file
 
 	// keyframe animation data of ID3DXKeyframedAnimationSet
 	// this->keys should be converted to following data format using ModelReader::AllocateAsAnimationSetFormat()
 	ARNKEY_VECTOR3*			translationKeys;
 	ARNKEY_VECTOR3*			scaleKeys;
 	ARNKEY_QUATERNION*		rotationKeys;
-	UINT					translationKeysSize, scaleKeysSize, rotationKeysSize;
+	UINT					translationKeysSize;
+	UINT					scaleKeysSize;
+	UINT					rotationKeysSize;
 };
 
 

@@ -32,6 +32,8 @@ public:
 	float							m[4][4]; // First index is row index, second index is column index!!!
 };
 
+typedef std::tr1::shared_ptr<ArnMatrix> ArnMatrixPtr;
+
 ARANMATH_API ArnMatrix CreateArnMatrix(float m00, float m01, float m02, float m03,
 						  float m10, float m11, float m12, float m13,
 						  float m20, float m21, float m22, float m23,

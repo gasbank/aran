@@ -23,7 +23,7 @@
 #include <fstream>
 #include <list>
 #include <vector>
-
+#include <tr1/memory> // TODO: EXPERIMENTAL
 
 //
 // Configurable Math Library (cml)

@@ -166,7 +166,12 @@ struct NodeSymLink1 : public NodeBase
 
 struct ArnBinaryFile
 {
-	ArnBinaryFile() : m_data(0) {}
+	ArnBinaryFile()
+	: m_fileSize(0)
+	, m_data(0)
+	, m_curPos(0)
+	{
+	}
 
 	unsigned int m_fileSize;
 	char* m_data;

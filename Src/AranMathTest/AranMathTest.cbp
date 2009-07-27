@@ -7,7 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/AranMathTest" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../Working/AranMathTest" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../../../Working" />
 				<Option object_output="obj/Debug/" />
 				<Option external_deps="../Aran/bin/Debug/libAranCB.a;" />
 				<Option type="1" />
@@ -16,6 +17,7 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
+					<Add library="AranMathD" />
 					<Add directory="../Aran/bin/Debug" />
 				</Linker>
 			</Target>
@@ -36,15 +38,11 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
-			<Add directory="../Aran" />
-			<Add directory="../cml-1_0_0" />
+			<Add directory="../AranMath" />
+			<Add directory="../" />
 		</Compiler>
 		<Linker>
-			<Add library="AranCB" />
-			<Add library="glut" />
-			<Add library="GLEW" />
-			<Add library="xerces-c" />
-			<Add library="rt" />
+			<Add directory="../../../Working" />
 		</Linker>
 		<Unit filename="main.cpp" />
 		<Extensions>

@@ -18,4 +18,6 @@ public:
 	}
 };
 
+typedef std::tr1::shared_ptr<ArnVec4> ArnVec4Ptr;
+
 ARANMATH_API ArnVec4 CreateArnVec4(float x, float y, float z, float w);

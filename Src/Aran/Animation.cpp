@@ -6,13 +6,14 @@
 
 Animation::Animation( unsigned int totalCurveCount )
 : m_totalCurveCount(totalCurveCount)
+, m_curveCount(0)
+, m_curves(new AnimCurve[totalCurveCount])
 {
-	m_curves = new AnimCurve[m_totalCurveCount];
 	memset(m_curveFlags, 0, sizeof(m_curveFlags));
 }
+
 Animation::~Animation(void)
 {
-	delete m_curves;
 }
 
 unsigned int Animation::registerCurve( CurveName curveName, unsigned int pointCount, CurveType curveType )
@@ -198,6 +199,10 @@ static void berekeny(float f1, float f2, float f3, float f4, float *o, int b)
 
 HRESULT ArnCreateSkinInfoFVF( DWORD NumVertices, DWORD FVF, DWORD NumBones, ArnSkinInfo** ppSkinInfo )
 {
+	UNREFERENCED_PARAMETER(NumVertices);
+	UNREFERENCED_PARAMETER(FVF);
+	UNREFERENCED_PARAMETER(NumBones);
+	UNREFERENCED_PARAMETER(ppSkinInfo);
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 float Animation::EvalCurveInterp(const CurveData* icu, float ipotime)

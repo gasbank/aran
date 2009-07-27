@@ -11,7 +11,7 @@ public:
         assert( !s_instance );
         s_instance = static_cast<T*>(this);
     }
-   ~Singleton( void )
+   virtual ~Singleton( void )
         {  assert( s_instance );  s_instance = 0;  }
     static T& getSingleton( void )
 	{

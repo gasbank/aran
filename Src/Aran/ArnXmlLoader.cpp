@@ -53,37 +53,37 @@ GetUniqueChildElement(const DOMElement* elm, const XMLCh* tagName)
 void
 ParseRgbaFromElement(float* r, float* g, float* b, float* a, const DOMElement* elm)
 {
-	*r = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_r)).c_str()) );
-	*g = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_g)).c_str()) );
-	*b = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_b)).c_str()) );
-	*a = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_a)).c_str()) );
+	*r = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_r.get())).c_str()) );
+	*g = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_g.get())).c_str()) );
+	*b = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_b.get())).c_str()) );
+	*a = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_a.get())).c_str()) );
 }
 
 void
 ParseRgbFromElement(float* r, float* g, float* b, const DOMElement* elm)
 {
-	*r = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_r)).c_str()) );
-	*g = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_g)).c_str()) );
-	*b = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_b)).c_str()) );
+	*r = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_r.get())).c_str()) );
+	*g = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_g.get())).c_str()) );
+	*b = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_b.get())).c_str()) );
 }
 
 void
 ParseArnVec3FromElement(ArnVec3* v, const DOMElement* elm)
 {
-	v->x = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_x)).c_str()) );
-	v->y = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_y)).c_str()) );
-	v->z = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_z)).c_str()) );
+	v->x = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_x.get())).c_str()) );
+	v->y = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_y.get())).c_str()) );
+	v->z = float( atof(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_z.get())).c_str()) );
 }
 
 void
 ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec3* trans, const DOMElement* elm)
 {
-	assert(XMLString::equals(elm->getTagName(), GetArnXmlString().TAG_transform));
-	if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_type), GetArnXmlString().VAL_srt))
+	assert(XMLString::equals(elm->getTagName(), GetArnXmlString().TAG_transform.get()));
+	if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_type.get()), GetArnXmlString().VAL_srt.get()))
 	{
-		DOMElement* scaling = GetUniqueChildElement(elm, GetArnXmlString().TAG_scaling);
-		DOMElement* rotation = GetUniqueChildElement(elm, GetArnXmlString().TAG_rotation);
-		DOMElement* translation = GetUniqueChildElement(elm, GetArnXmlString().TAG_translation);
+		DOMElement* scaling = GetUniqueChildElement(elm, GetArnXmlString().TAG_scaling.get());
+		DOMElement* rotation = GetUniqueChildElement(elm, GetArnXmlString().TAG_rotation.get());
+		DOMElement* translation = GetUniqueChildElement(elm, GetArnXmlString().TAG_translation.get());
 
 		ArnVec3 s = CreateArnVec3(1,1,1);
 		ArnVec3 r = CreateArnVec3(0,0,0);
@@ -99,10 +99,10 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 
 		if (rotation)
 		{
-			assert(XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_type), GetArnXmlString().VAL_euler));
-			assert(XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_unit), GetArnXmlString().VAL_deg));
+			assert(XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_type.get()), GetArnXmlString().VAL_euler.get()));
+			assert(XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_unit.get()), GetArnXmlString().VAL_deg.get()));
 			ParseArnVec3FromElement(&r, rotation);
-			if (XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_unit), GetArnXmlString().VAL_deg))
+			if (XMLString::equals(rotation->getAttribute(GetArnXmlString().ATTR_unit.get()), GetArnXmlString().VAL_deg.get()))
 			{
 				r.x = ArnToRadian(r.x);
 				r.y = ArnToRadian(r.y);
@@ -172,12 +172,12 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 
 	xercesc::DOMDocument* xmlDoc = parser->getDocument();
 	DOMElement* elm = xmlDoc->getDocumentElement();
-	char* sceneNameStr = XMLString::transcode(elm->getAttribute(GetArnXmlString().ATTR_name));
+	char* sceneNameStr = XMLString::transcode(elm->getAttribute(GetArnXmlString().ATTR_name.get()));
 	std::cout << " - Root scene name: " << sceneNameStr << std::endl;
 
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnSceneGraph));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnSceneGraph.get()));
 	ArnSceneGraph* ret = ArnSceneGraph::createFromEmptySceneGraph();
-	const XMLCh* name = elm->getAttribute(GetArnXmlString().ATTR_name);
+	const XMLCh* name = elm->getAttribute(GetArnXmlString().ATTR_name.get());
 	std::string sceneName = ScopedString(name).c_str();
 	ret->setName(sceneName.c_str());
 	std::string binaryFileName(xmlFile);
@@ -187,7 +187,7 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 
 	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str());
 
-	DOMNodeList* childrenObj = elm->getElementsByTagName(GetArnXmlString().TAG_object);
+	DOMNodeList* childrenObj = elm->getElementsByTagName(GetArnXmlString().TAG_object.get());
 	const XMLSize_t childrenCount = childrenObj->getLength();
 	for (XMLSize_t xx = 0; xx < childrenCount; ++xx)
 	{
@@ -211,51 +211,51 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 ArnMesh*
 ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnMesh));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnMesh.get()));
 
 	ArnMesh* ret = new ArnMesh();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform));
+	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform.get()));
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMElement* ipoElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_ipo);
+	DOMElement* ipoElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_ipo.get());
 	if (ipoElm)
-		ret->setIpoName(ScopedString(ipoElm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+		ret->setIpoName(ScopedString(ipoElm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 	else
 		ret->setIpoName("");
 
-	DOMNodeList* vertexNodes = elm->getElementsByTagName(GetArnXmlString().TAG_vertex);
-	DOMNodeList* faceNodes = elm->getElementsByTagName(GetArnXmlString().TAG_face);
+	DOMNodeList* vertexNodes = elm->getElementsByTagName(GetArnXmlString().TAG_vertex.get());
+	DOMNodeList* faceNodes = elm->getElementsByTagName(GetArnXmlString().TAG_face.get());
 	assert(vertexNodes && faceNodes);
 	DOMElement* vertexElm  = dynamic_cast<DOMElement*>(vertexNodes->item(0));
 	DOMElement* faceElm = dynamic_cast<DOMElement*>(faceNodes->item(0));
 	assert(vertexElm && faceElm);
 
 	ArnMesh::VertexGroup vg;
-	DOMElement* vertexChunkElm = dynamic_cast<DOMElement*>(vertexElm->getElementsByTagName(GetArnXmlString().TAG_chunk)->item(0));
+	DOMElement* vertexChunkElm = dynamic_cast<DOMElement*>(vertexElm->getElementsByTagName(GetArnXmlString().TAG_chunk.get())->item(0));
 	vg.mtrlIndex = 0;
 	vg.vertexChunk = ArnBinaryChunk::createFrom(vertexChunkElm, binaryChunkBasePtr);
 	ret->m_vertexGroup.push_back(vg);
 
-	DOMNodeList* faceGroup = faceElm->getElementsByTagName(GetArnXmlString().TAG_facegroup);
+	DOMNodeList* faceGroup = faceElm->getElementsByTagName(GetArnXmlString().TAG_facegroup.get());
 	const XMLSize_t faceGroupCount = faceGroup->getLength();
 	for (XMLSize_t xx = 0; xx < faceGroupCount; ++xx)
 	{
 		DOMElement* faceGroupElm = dynamic_cast<DOMElement*>(faceGroup->item(xx));
-		ScopedString ssMtrl(faceGroupElm->getAttribute(GetArnXmlString().ATTR_mtrl));
+		ScopedString ssMtrl(faceGroupElm->getAttribute(GetArnXmlString().ATTR_mtrl.get()));
 		ArnMesh::FaceGroup fg;
 		fg.mtrlIndex = atoi(ssMtrl.c_str());
 		fg.triFaceChunk = 0;
 		fg.quadFaceChunk = 0;
 		assert(fg.mtrlIndex >= 0);
 
-		DOMNodeList* chunk = faceGroupElm->getElementsByTagName(GetArnXmlString().TAG_chunk);
+		DOMNodeList* chunk = faceGroupElm->getElementsByTagName(GetArnXmlString().TAG_chunk.get());
 		const XMLSize_t chunkCount = chunk->getLength();
 		assert(chunkCount == 2);
 
@@ -269,20 +269,20 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		ret->m_faceGroup.push_back(fg);
 	}
 
-	DOMNodeList* mtrlRefs = elm->getElementsByTagName(GetArnXmlString().TAG_material);
+	DOMNodeList* mtrlRefs = elm->getElementsByTagName(GetArnXmlString().TAG_material.get());
 	const XMLSize_t mtrlRefsCount = mtrlRefs->getLength();
 	for (XMLSize_t xx = 0; xx < mtrlRefsCount; ++xx)
 	{
 		DOMElement* mtrlElm = dynamic_cast<DOMElement*>( mtrlRefs->item(xx) );
-		ScopedString ss(mtrlElm->getAttribute(GetArnXmlString().ATTR_name));
+		ScopedString ss(mtrlElm->getAttribute(GetArnXmlString().ATTR_name.get()));
 		ret->m_mtrlRefNameList.push_back(ss.c_str());
 	}
 
-	DOMNodeList* uvElmList = elm->getElementsByTagName(GetArnXmlString().TAG_uv);
+	DOMNodeList* uvElmList = elm->getElementsByTagName(GetArnXmlString().TAG_uv.get());
 	if (uvElmList->getLength())
 	{
-		DOMElement* uvElm = static_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_uv)->item(0));
-		DOMElement* triquadUvElm = dynamic_cast<DOMElement*>(uvElm->getElementsByTagName(GetArnXmlString().TAG_chunk)->item(0));
+		DOMElement* uvElm = static_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_uv.get())->item(0));
+		DOMElement* triquadUvElm = dynamic_cast<DOMElement*>(uvElm->getElementsByTagName(GetArnXmlString().TAG_chunk.get())->item(0));
 		assert(triquadUvElm);
 		ret->m_triquadUvChunk = ArnBinaryChunk::createFrom(triquadUvElm, binaryChunkBasePtr);
 	}
@@ -298,25 +298,25 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 ArnMaterial*
 ArnMaterial::createFrom(const DOMElement* elm)
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnMaterial));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnMaterial.get()));
 	ArnMaterial* ret = new ArnMaterial();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
-	DOMElement* materialElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_material);
-	DOMElement* diffuseElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_diffuse);
-	DOMElement* ambientElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_ambient);
-	DOMElement* specularElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_specular);
-	DOMElement* emissiveElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_emissive);
-	DOMElement* powerElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_power);
+	DOMElement* materialElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_material.get());
+	DOMElement* diffuseElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_diffuse.get());
+	DOMElement* ambientElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_ambient.get());
+	DOMElement* specularElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_specular.get());
+	DOMElement* emissiveElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_emissive.get());
+	DOMElement* powerElm = GetUniqueChildElement(materialElm, GetArnXmlString().TAG_power.get());
 	assert(diffuseElm && ambientElm && specularElm && emissiveElm && powerElm);
 
-	int shadeless = atoi(ScopedString(materialElm->getAttribute(GetArnXmlString().ATTR_shadeless)).c_str());
+	int shadeless = atoi(ScopedString(materialElm->getAttribute(GetArnXmlString().ATTR_shadeless.get())).c_str());
 	if (shadeless)
 		ret->m_bShadeless = true;
 
 	float r, g, b, a;
 	// TODO: Light colors...
-	ret->m_data.m_materialName = ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str();
+	ret->m_data.m_materialName = ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str();
 	ParseRgbaFromElement(&r, &g, &b, &a, diffuseElm);
 	ret->m_data.m_d3dMaterial.Diffuse = ArnColorValue4f(r, g, b, a);
 	ParseRgbaFromElement(&r, &g, &b, &a, ambientElm);
@@ -325,16 +325,16 @@ ArnMaterial::createFrom(const DOMElement* elm)
 	ret->m_data.m_d3dMaterial.Specular = ArnColorValue4f(r, g, b, a);
 	ParseRgbaFromElement(&r, &g, &b, &a, emissiveElm);
 	ret->m_data.m_d3dMaterial.Emissive = ArnColorValue4f(r, g, b, 1);
-	ret->m_data.m_d3dMaterial.Power = float( atof(ScopedString(powerElm->getAttribute(GetArnXmlString().ATTR_value)).c_str()) );
+	ret->m_data.m_d3dMaterial.Power = float( atof(ScopedString(powerElm->getAttribute(GetArnXmlString().ATTR_value.get())).c_str()) );
 
-	DOMNodeList* textureList = materialElm->getElementsByTagName(GetArnXmlString().TAG_texture);
+	DOMNodeList* textureList = materialElm->getElementsByTagName(GetArnXmlString().TAG_texture.get());
 	const XMLSize_t textureCount = textureList->getLength();
 	for (XMLSize_t xx = 0; xx < textureCount; ++xx)
 	{
 		DOMElement* textureElm = static_cast<DOMElement*>(textureList->item(xx));
-		if (XMLString::equals(textureElm->getAttribute(GetArnXmlString().ATTR_type), GetArnXmlString().VAL_image))
+		if (XMLString::equals(textureElm->getAttribute(GetArnXmlString().ATTR_type.get()), GetArnXmlString().VAL_image.get()))
 		{
-			ScopedString texImageFileName(textureElm->getAttribute(GetArnXmlString().ATTR_path));
+			ScopedString texImageFileName(textureElm->getAttribute(GetArnXmlString().ATTR_path.get()));
 			ArnTexture* tex = ArnTexture::createFrom(texImageFileName.c_str());
 			ret->attachTexture(tex);
 		}
@@ -349,36 +349,36 @@ ArnMaterial::createFrom(const DOMElement* elm)
 ArnCamera*
 ArnCamera::createFrom( DOMElement* elm )
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnCamera));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnCamera.get()));
 	ArnCamera* ret = new ArnCamera();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform));
+	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform.get()));
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMElement* ipoElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_ipo);
+	DOMElement* ipoElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_ipo.get());
 	if (ipoElm)
-		ret->setIpoName(ScopedString(ipoElm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+		ret->setIpoName(ScopedString(ipoElm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 	else
 		ret->setIpoName("");
 
-	DOMElement* cameraElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_camera);
-	float farClip = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_farclip)).c_str()) );
-	float nearClip = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_nearclip)).c_str()) );
-	float fovdeg = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_fovdeg)).c_str()) );
+	DOMElement* cameraElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_camera.get());
+	float farClip = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_farclip.get())).c_str()) );
+	float nearClip = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_nearclip.get())).c_str()) );
+	float fovdeg = float( atof(ScopedString(cameraElm->getAttribute(GetArnXmlString().ATTR_fovdeg.get())).c_str()) );
 	ret->setFarClip(farClip);
 	ret->setNearClip(nearClip);
 	ret->setFov(ArnToRadian(fovdeg));
-	const XMLCh* typeCh = cameraElm->getAttribute(GetArnXmlString().ATTR_type);
-	if (XMLString::equals(typeCh, GetArnXmlString().VAL_persp))
+	const XMLCh* typeCh = cameraElm->getAttribute(GetArnXmlString().ATTR_type.get());
+	if (XMLString::equals(typeCh, GetArnXmlString().VAL_persp.get()))
 	{
 	}
-	else if (XMLString::equals(typeCh, GetArnXmlString().VAL_ortho))
+	else if (XMLString::equals(typeCh, GetArnXmlString().VAL_ortho.get()))
 	{
 	}
 	else
@@ -391,38 +391,38 @@ ArnCamera::createFrom( DOMElement* elm )
 ArnLight*
 ArnLight::createFrom( const DOMElement* elm )
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnLight));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnLight.get()));
 	ArnLight* ret = new ArnLight();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform));
+	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform.get()));
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMElement* lightElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_light);
+	DOMElement* lightElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_light.get());
 	float r, g, b;
 	ParseRgbFromElement(&r, &g, &b, lightElm);
 	ret->m_d3dLight.Ambient = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Diffuse = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Specular = ArnColorValue4f(r, g, b, 1);
-	const XMLCh* lightType = lightElm->getAttribute(GetArnXmlString().ATTR_type);
-	if (XMLString::equals(lightType, GetArnXmlString().VAL_point))
+	const XMLCh* lightType = lightElm->getAttribute(GetArnXmlString().ATTR_type.get());
+	if (XMLString::equals(lightType, GetArnXmlString().VAL_point.get()))
 	{
 		// Point light
 		ret->m_d3dLight.Type = 1;
 		ret->m_d3dLight.Position = trans;
 	}
-	else if (XMLString::equals(lightType, GetArnXmlString().VAL_spot))
+	else if (XMLString::equals(lightType, GetArnXmlString().VAL_spot.get()))
 	{
 		// Spot light
 		ret->m_d3dLight.Type = 2;
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
-	else if (XMLString::equals(lightType, GetArnXmlString().VAL_directional))
+	else if (XMLString::equals(lightType, GetArnXmlString().VAL_directional.get()))
 	{
 		// Directional light
 		ret->m_d3dLight.Type = 3;
@@ -438,34 +438,34 @@ ArnLight::createFrom( const DOMElement* elm )
 ArnSkeleton*
 ArnSkeleton::createFrom( const DOMElement* elm )
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnSkeleton));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnSkeleton.get()));
 	ArnSkeleton* ret = new ArnSkeleton();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform));
+	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform.get()));
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMNodeList* actionstrips = elm->getElementsByTagName(GetArnXmlString().TAG_actionstrip);
+	DOMNodeList* actionstrips = elm->getElementsByTagName(GetArnXmlString().TAG_actionstrip.get());
 	const XMLSize_t actionstripCount = actionstrips->getLength();
 	for (XMLSize_t xx = 0; xx < actionstripCount; ++xx)
 	{
 		DOMElement* actStripElm = reinterpret_cast<DOMElement*>(actionstrips->item(xx));
-		ret->m_actionStripNames.push_back(ScopedString(actStripElm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+		ret->m_actionStripNames.push_back(ScopedString(actStripElm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 	}
-	DOMElement* actionElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_action);
+	DOMElement* actionElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_action.get());
 	if (actionElm)
-		ret->setDefaultActionName(ScopedString(actionElm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+		ret->setDefaultActionName(ScopedString(actionElm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 	else
 		ret->setDefaultActionName("");
 
 
-	DOMElement* skelElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_skeleton);
-	DOMNodeList* boneList = skelElm->getElementsByTagName(GetArnXmlString().TAG_object);
+	DOMElement* skelElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_skeleton.get());
+	DOMNodeList* boneList = skelElm->getElementsByTagName(GetArnXmlString().TAG_object.get());
 	const XMLSize_t rootBoneCount = boneList->getLength();
 	for (XMLSize_t xx = 0; xx < rootBoneCount; ++xx)
 	{
@@ -483,32 +483,32 @@ ArnSkeleton::createFrom( const DOMElement* elm )
 ArnBone*
 ArnBone::createFrom( const DOMElement* elm )
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnBone));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnBone.get()));
 	ArnBone* ret = new ArnBone();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform));
+	ParseTransformFromElement(0, &scale, &rot, &trans, GetUniqueChildElement(elm, GetArnXmlString().TAG_transform.get()));
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMElement* boneElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_bone);
-	DOMElement* headElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_head);
-	DOMElement* tailElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_tail);
-	DOMElement* rollElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_roll);
+	DOMElement* boneElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_bone.get());
+	DOMElement* headElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_head.get());
+	DOMElement* tailElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_tail.get());
+	DOMElement* rollElm = GetUniqueChildElement(boneElm, GetArnXmlString().TAG_roll.get());
 
 	ArnVec3 headPos, tailPos;
 	ParseArnVec3FromElement(&headPos, headElm);
 	ParseArnVec3FromElement(&tailPos, tailElm);
-	float roll = float( atof(ScopedString(rollElm->getAttribute(GetArnXmlString().ATTR_value)).c_str()) );
+	float roll = float( atof(ScopedString(rollElm->getAttribute(GetArnXmlString().ATTR_value.get())).c_str()) );
 	ret->setHeadPos(headPos);
 	ret->setTailPos(tailPos);
 	ret->setRoll(ArnToRadian(roll));
 
-	DOMNodeList* boneList = elm->getElementsByTagName(GetArnXmlString().TAG_object);
+	DOMNodeList* boneList = elm->getElementsByTagName(GetArnXmlString().TAG_object.get());
 	const XMLSize_t boneCount = boneList->getLength();
 	for (XMLSize_t xx = 0; xx < boneCount; ++xx)
 	{
@@ -525,18 +525,18 @@ ArnBone::createFrom( const DOMElement* elm )
 ArnIpo*
 ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnIpo));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnIpo.get()));
 	ArnIpo* ret = new ArnIpo();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
-	DOMElement* ipoElm = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_ipo)->item(0));
-	DOMNodeList* curveList = ipoElm->getElementsByTagName(GetArnXmlString().TAG_curve);
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
+	DOMElement* ipoElm = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_ipo.get())->item(0));
+	DOMNodeList* curveList = ipoElm->getElementsByTagName(GetArnXmlString().TAG_curve.get());
 	const XMLSize_t curveListSize = curveList->getLength();
 	for (XMLSize_t xx = 0; xx < curveListSize; ++xx)
 	{
 		DOMElement* curveElm = dynamic_cast<DOMElement*>( curveList->item(xx) );
-		ScopedString curveTypeStr(curveElm->getAttribute(GetArnXmlString().ATTR_type));
-		ScopedString curveNameStr(curveElm->getAttribute(GetArnXmlString().ATTR_name));
-		DOMElement* controlPointElm = GetUniqueChildElement(curveElm, GetArnXmlString().TAG_controlpoint);
+		ScopedString curveTypeStr(curveElm->getAttribute(GetArnXmlString().ATTR_type.get()));
+		ScopedString curveNameStr(curveElm->getAttribute(GetArnXmlString().ATTR_name.get()));
+		DOMElement* controlPointElm = GetUniqueChildElement(curveElm, GetArnXmlString().TAG_controlpoint.get());
 
 		ret->m_curves.push_back(CurveData());
 		CurveData& cd = ret->m_curves.back();
@@ -551,7 +551,7 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		else
 			ARN_THROW_UNEXPECTED_CASE_ERROR
 
-		DOMElement* cpChunk = GetUniqueChildElement(controlPointElm, GetArnXmlString().TAG_chunk);
+		DOMElement* cpChunk = GetUniqueChildElement(controlPointElm, GetArnXmlString().TAG_chunk.get());
 		ArnBinaryChunk* controlPointChunk = ArnBinaryChunk::createFrom(cpChunk, binaryChunkBasePtr);
 		assert(controlPointChunk->getRecordSize() == sizeof(BezTripleData));
 		cd.pointCount = controlPointChunk->getRecordCount();
@@ -573,17 +573,17 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 ArnAction*
 ArnAction::createFrom(const DOMElement* elm)
 {
-	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass), GetArnXmlString().VAL_ArnAction));
+	assert(XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_rtclass.get()), GetArnXmlString().VAL_ArnAction.get()));
 	ArnAction* ret = new ArnAction();
-	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name)).c_str());
-	DOMElement* actionElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_action);
-	DOMNodeList* list = actionElm->getElementsByTagName(GetArnXmlString().TAG_objectipomap);
+	ret->setName(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_name.get())).c_str());
+	DOMElement* actionElm = GetUniqueChildElement(elm, GetArnXmlString().TAG_action.get());
+	DOMNodeList* list = actionElm->getElementsByTagName(GetArnXmlString().TAG_objectipomap.get());
 	const XMLSize_t listCount = list->getLength();
 	for (XMLSize_t xx = 0; xx < listCount; ++xx)
 	{
 		DOMElement* mapElm = dynamic_cast<DOMElement*>(list->item(xx));
-		ScopedString ssObjName(mapElm->getAttribute(GetArnXmlString().ATTR_obj));
-		ScopedString ssIpoName(mapElm->getAttribute(GetArnXmlString().ATTR_ipo));
+		ScopedString ssObjName(mapElm->getAttribute(GetArnXmlString().ATTR_obj.get()));
+		ScopedString ssIpoName(mapElm->getAttribute(GetArnXmlString().ATTR_ipo.get()));
 		ret->m_objectIpoNameMap[ssObjName.c_str()] = ssIpoName.c_str();
 	}
 	return ret;
@@ -592,37 +592,37 @@ ArnAction::createFrom(const DOMElement* elm)
 ArnNode*
 CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
 {
-	const XMLCh* rtclass = elm->getAttribute(GetArnXmlString().ATTR_rtclass);
+	const XMLCh* rtclass = elm->getAttribute(GetArnXmlString().ATTR_rtclass.get());
 	ArnNode* ret = 0;
-	if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnMesh))
+	if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnMesh.get()))
 	{
 		ret = ArnMesh::createFrom(elm, binaryChunkBasePtr);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnCamera))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnCamera.get()))
 	{
 		ret = ArnCamera::createFrom(elm);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnMaterial))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnMaterial.get()))
 	{
 		ret = ArnMaterial::createFrom(elm);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnSkeleton))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnSkeleton.get()))
 	{
 		ret = ArnSkeleton::createFrom(elm);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnIpo))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnIpo.get()))
 	{
 		ret = ArnIpo::createFrom(elm, binaryChunkBasePtr);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnAction))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnAction.get()))
 	{
 		ret = ArnAction::createFrom(elm);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnLight))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnLight.get()))
 	{
 		ret = ArnLight::createFrom(elm);
 	}
-	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnBone))
+	else if (XMLString::equals(rtclass, GetArnXmlString().VAL_ArnBone.get()))
 	{
 		ret = ArnBone::createFrom(elm);
 	}

@@ -6,7 +6,7 @@
 
 ArnBone::ArnBone(void)
 : ArnXformable(NDT_RT_BONE)
-, m_frameData(0)
+, m_frameData()
 , m_roll(0)
 {
 }

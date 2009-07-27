@@ -4,7 +4,7 @@ class ARAN_API Uncopyable
 {
 protected:
 	Uncopyable() {}
-	~Uncopyable() {}
+	virtual ~Uncopyable() {}
 private:
 	Uncopyable(const Uncopyable&);
 	Uncopyable& operator=(const Uncopyable&);

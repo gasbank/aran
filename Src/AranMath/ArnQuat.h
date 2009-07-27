@@ -33,6 +33,8 @@ public:
 	float						w;
 };
 
+typedef std::tr1::shared_ptr<ArnQuat> ArnQuatPtr;
+
 ARANMATH_API ArnQuat CreateArnQuat(float x, float y, float z, float w);
 
 #endif // ARNQUAT_H

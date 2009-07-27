@@ -33,5 +33,4 @@ private:
 	ArnVec3									m_headPos;
 	ArnVec3									m_tailPos;
 	float									m_roll;
-
 };

@@ -117,6 +117,9 @@ ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTran
 ArnVec3*
 ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec, const ArnMatrix* mat)
 {
+	out = out;
+	vec = vec;
+	mat = mat;
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 
@@ -130,7 +133,7 @@ ArnMatrixInverse( ArnMatrix *pOut, float *pDeterminant, const ArnMatrix *pM )
 	cml_mat44 cmlmat;
 	for (int i = 0; i < 4; ++i) // row
 		for (int j = 0; j < 4; ++j) // column
-			cmlmat.set_basis_element(j, i, pOut->m[i][j]);
+			cmlmat.set_basis_element(j, i, pM->m[i][j]);
 	cmlmat = cmlmat.inverse();
 	for (int i = 0; i < 4; ++i) // row
 		for (int j = 0; j < 4; ++j) // column

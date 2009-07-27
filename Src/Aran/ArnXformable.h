@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ArnNode.h"
-class ArnIpo;
 class ArnAnimationController;
+class ArnIpo;
 
 /**
 @brief A superclass of renderer objects which have position and orientation.

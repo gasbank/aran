@@ -20,6 +20,8 @@ struct NodeBase;
 struct NodeIpo1;
 struct NodeIpo2;
 
+class ArnIpo;
+
 class ArnIpo : public ArnNode
 {
 public:
@@ -49,8 +51,17 @@ public:
 																	CONST ARNKEY_VECTOR3* pTranslationKeys,		// Array of translation keys
 																	DWORD *pAnimationIndex						// Returns the animation index
 																	);
-	double									GetPeriodicPosition(double time) const { ARN_THROW_NOT_IMPLEMENTED_ERROR }
-	HRESULT									GetSRT(double time, UINT unused, ArnVec3*, ArnQuat*, ArnVec3*) { ARN_THROW_NOT_IMPLEMENTED_ERROR }
+	double									GetPeriodicPosition(double time) const
+	{
+		UNREFERENCED_PARAMETER(time);
+		ARN_THROW_NOT_IMPLEMENTED_ERROR
+	}
+	HRESULT									GetSRT(double time, UINT unused, ArnVec3*, ArnQuat*, ArnVec3*)
+	{
+		UNREFERENCED_PARAMETER(time);
+		UNREFERENCED_PARAMETER(unused);
+		ARN_THROW_NOT_IMPLEMENTED_ERROR
+	}
 	// ******************  Aran library compartment of LPD3DXKEYFRAMEDANIMATIONSET END  ******************
 
 	// *** INTERNAL USE ONLY START ***

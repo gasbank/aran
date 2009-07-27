@@ -12,14 +12,13 @@ ArnIpo::ArnIpo(void)
 , m_ipoCount(0)
 , m_curveCount(0)
 , m_endKeyframe(0)
-, m_d3dxAnimSet(0)
+, m_d3dxAnimSet()
 , m_playbackType(ARNPLAY_LOOP)
 {
 }
 
 ArnIpo::~ArnIpo(void)
 {
-	delete m_d3dxAnimSet;
 }
 
 ArnIpo* ArnIpo::createFrom( const NodeBase* nodeBase )
@@ -116,7 +115,8 @@ CurveName ArnIpo::CurveNameStrToEnum( const char* name )
 void ArnIpo::interconnect( ArnNode* sceneRoot )
 {
 	unsigned int i, j;
-	ArnIpo* ipoContainer = dynamic_cast<ArnIpo*>(getParent());
+	ArnNode* ipoNode = getParent();
+	ArnIpo* ipoContainer = dynamic_cast<ArnIpo*>(ipoNode);
 
 	if (m_curveCount == 0) // If this is IPO container node ...
 	{

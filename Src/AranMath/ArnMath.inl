@@ -1,18 +1,24 @@
 static inline void
-ArnMatrixRotationX( ArnMatrix* out, float rad	)
+ArnMatrixRotationX( ArnMatrix* out, float rad )
 {
+	out = out;
+	rad = rad;
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 
 static inline void
 ArnMatrixRotationY( ArnMatrix* out, float rad	)
 {
+	out = out;
+	rad = rad;
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 
 static inline void
 ArnMatrixRotationZ( ArnMatrix* out, float rad	)
 {
+	out = out;
+	rad = rad;
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 

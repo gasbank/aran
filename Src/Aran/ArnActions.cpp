@@ -4,6 +4,7 @@
 
 ArnActions::ArnActions(void)
 : ArnNode(NDT_RT_ACTIONS)
+, m_data()
 {
 }
 
@@ -36,7 +37,7 @@ ArnActions* ArnActions::createFrom( const NodeBase* nodeBase )
 
 void ArnActions::interconnect( ArnNode* sceneRoot )
 {
-
+	UNREFERENCED_PARAMETER(sceneRoot);
 }
 
 void ArnActions::buildFrom( const NodeAction1* ni )

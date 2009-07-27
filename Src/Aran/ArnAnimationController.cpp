@@ -9,6 +9,11 @@
 
 ArnAnimationController::ArnAnimationController()
 : m_dTime(0)
+, m_outputs()
+, m_ipos()
+, m_actions()
+, m_tracks()
+, m_events()
 , m_outputCount(0)
 , m_actionCount(0)
 , m_eventCount(0)
@@ -258,7 +263,7 @@ void ArnAnimationController::SetActionToNext()
 
 HRESULT ArnCreateAnimationController( UINT MaxNumMatrices, UINT MaxNumAnimationSets, UINT MaxNumTracks, UINT MaxNumEvents, ArnAnimationController** ppAnimController )
 {
-	*ppAnimController = ArnAnimationController::create(MaxNumMatrices, MaxNumAnimationSets, MaxNumTracks, MaxNumEvents);	
+	*ppAnimController = ArnAnimationController::create(MaxNumMatrices, MaxNumAnimationSets, MaxNumTracks, MaxNumEvents);
 	return S_OK;
 }
 

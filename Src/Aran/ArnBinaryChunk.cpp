@@ -20,7 +20,8 @@ void test()
 */
 
 ArnBinaryChunk::ArnBinaryChunk()
-: m_data(0)
+: m_recordDef()
+, m_data()
 , m_deallocateData(0)
 , m_recordCount(0)
 , m_recordSize(0)
@@ -51,22 +52,22 @@ inline float atof2(const char* c) { return (float)atof(c); }
 ArnBinaryChunk* ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
 {
 	ArnBinaryChunk* ret = new ArnBinaryChunk();
-	DOMElement* templ = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_template)->item(0));
+	DOMElement* templ = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_template.get())->item(0));
 	assert(templ);
-	DOMNodeList* templChildren = templ->getElementsByTagName(GetArnXmlString().TAG_field);
+	DOMNodeList* templChildren = templ->getElementsByTagName(GetArnXmlString().TAG_field.get());
 	const XMLSize_t childCount = templChildren->getLength();
 	assert(childCount);
 	for (XMLSize_t xx = 0; xx < childCount; ++xx)
 	{
 		DOMElement* childElm = dynamic_cast<DOMElement*>(templChildren->item(xx));
-		ret->addField(	ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_type)).c_str()
-						, ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_usage)).c_str());
+		ret->addField(	ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_type.get())).c_str()
+						, ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_usage.get())).c_str());
 	}
 
-	if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place), GetArnXmlString().VAL_xml))
+	if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place.get()), GetArnXmlString().VAL_xml.get()))
 	{
-		DOMElement* arraydata = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_arraydata)->item(0));
-		DOMNodeList* arraydataChildren = arraydata->getElementsByTagName(GetArnXmlString().TAG_data);
+		DOMElement* arraydata = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_arraydata.get())->item(0));
+		DOMNodeList* arraydataChildren = arraydata->getElementsByTagName(GetArnXmlString().TAG_data.get());
 		ret->m_recordCount = arraydataChildren->getLength();
 		assert(ret->m_recordCount >= 0); // There can be no record in the chunk.
 		ret->m_data = new char[ ret->m_recordCount * ret->m_recordSize ];
@@ -75,7 +76,7 @@ ArnBinaryChunk* ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBas
 		for (XMLSize_t xx = 0; xx < (XMLSize_t)ret->m_recordCount; ++xx)
 		{
 			DOMElement* data = dynamic_cast<DOMElement*>(arraydataChildren->item(xx));
-			ScopedString attrStr = ScopedString(data->getAttribute(GetArnXmlString().ATTR_value));
+			ScopedString attrStr = ScopedString(data->getAttribute(GetArnXmlString().ATTR_value.get()));
 			//std::cout << "Original string: " << attrStr.c_str() << std::endl;
 		    boost::char_separator<char> sep(";");
 			std::string attrString(attrStr.c_str());
@@ -122,10 +123,10 @@ ArnBinaryChunk* ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBas
 		}
 		assert(dataOffset == ret->m_recordCount * ret->m_recordSize);
 	}
-	else if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place), GetArnXmlString().VAL_bin))
+	else if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place.get()), GetArnXmlString().VAL_bin.get()))
 	{
-		const int startOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_startoffset)).c_str());
-		const int endOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_endoffset)).c_str());
+		const int startOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_startoffset.get())).c_str());
+		const int endOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_endoffset.get())).c_str());
 		const int dataSize = endOffset - startOffset;
 		const int recordCount = dataSize / ret->m_recordSize;
 		assert(dataSize % ret->m_recordSize == 0);

@@ -27,6 +27,7 @@
 #include <fstream>
 #include <list>
 #include <vector>
+#include <tr1/memory> // TODO: EXPERIMENTAL
 
 #ifndef WIN32
 	#define GL_GLEXT_PROTOTYPES
@@ -76,3 +77,14 @@ XERCES_CPP_NAMESPACE_USE
 #include "Log.h"
 #include "MyError.h"
 #include "ArnGlExt.h"
+
+
+template <typename T>
+class ArrayDeleter
+{
+public:
+	void operator () (T* d) const
+	{
+		delete [] d;
+	}
+};

@@ -1,119 +1,134 @@
 #ifndef ARNXMLSTRING_H
 #define ARNXMLSTRING_H
 
+typedef std::tr1::shared_ptr<XMLCh> XMLChPtr;
+
+class XMLStringDeleter
+{
+public:
+	void operator () (char*& d) const
+	{
+		xercesc::XMLString::release(&d);
+	}
+	void operator () (XMLCh*& d) const
+	{
+		xercesc::XMLString::release(&d);
+	}
+};
+
 class ARAN_API ArnXmlString : public Singleton<ArnXmlString>
 {
 public:
 	ArnXmlString();
 	~ArnXmlString();
 
-	XMLCh* TAG_object;
-	XMLCh* TAG_scene;
-	XMLCh* TAG_transform;
-	XMLCh* TAG_scaling;
-	XMLCh* TAG_rotation;
-	XMLCh* TAG_translation;
-	XMLCh* TAG_chunk;
-	XMLCh* TAG_template;
-	XMLCh* TAG_int;
-	XMLCh* TAG_int4;
-	XMLCh* TAG_float;
-	XMLCh* TAG_float2;
-	XMLCh* TAG_float3;
-	XMLCh* TAG_arraydata;
-	XMLCh* TAG_data;
-	XMLCh* TAG_skeleton;
-	XMLCh* TAG_bone;
-	XMLCh* TAG_head;
-	XMLCh* TAG_tail;
-	XMLCh* TAG_roll;
-	XMLCh* TAG_mesh;
-	XMLCh* TAG_vertex;
-	XMLCh* TAG_face;
-	XMLCh* TAG_uv;
-	XMLCh* TAG_vertexgroup;
-	XMLCh* TAG_material;
-	XMLCh* TAG_light;
-	XMLCh* TAG_camera;
-	XMLCh* TAG_diffuse;
-	XMLCh* TAG_ambient;
-	XMLCh* TAG_specular;
-	XMLCh* TAG_emissive;
-	XMLCh* TAG_power;
-	XMLCh* TAG_texture;
-	XMLCh* TAG_facegroup;
-	XMLCh* TAG_field;
-	XMLCh* TAG_ipo;
-	XMLCh* TAG_curve;
-	XMLCh* TAG_controlpoint;
-	XMLCh* TAG_action;
-	XMLCh* TAG_actionstrip;
-	XMLCh* TAG_objectipomap;
+	XMLChPtr TAG_object;
+	XMLChPtr TAG_scene;
+	XMLChPtr TAG_transform;
+	XMLChPtr TAG_scaling;
+	XMLChPtr TAG_rotation;
+	XMLChPtr TAG_translation;
+	XMLChPtr TAG_chunk;
+	XMLChPtr TAG_template;
+	XMLChPtr TAG_int;
+	XMLChPtr TAG_int4;
+	XMLChPtr TAG_float;
+	XMLChPtr TAG_float2;
+	XMLChPtr TAG_float3;
+	XMLChPtr TAG_arraydata;
+	XMLChPtr TAG_data;
+	XMLChPtr TAG_skeleton;
+	XMLChPtr TAG_bone;
+	XMLChPtr TAG_head;
+	XMLChPtr TAG_tail;
+	XMLChPtr TAG_roll;
+	XMLChPtr TAG_mesh;
+	XMLChPtr TAG_vertex;
+	XMLChPtr TAG_face;
+	XMLChPtr TAG_uv;
+	XMLChPtr TAG_vertexgroup;
+	XMLChPtr TAG_material;
+	XMLChPtr TAG_light;
+	XMLChPtr TAG_camera;
+	XMLChPtr TAG_diffuse;
+	XMLChPtr TAG_ambient;
+	XMLChPtr TAG_specular;
+	XMLChPtr TAG_emissive;
+	XMLChPtr TAG_power;
+	XMLChPtr TAG_texture;
+	XMLChPtr TAG_facegroup;
+	XMLChPtr TAG_field;
+	XMLChPtr TAG_ipo;
+	XMLChPtr TAG_curve;
+	XMLChPtr TAG_controlpoint;
+	XMLChPtr TAG_action;
+	XMLChPtr TAG_actionstrip;
+	XMLChPtr TAG_objectipomap;
 
-	XMLCh* ATTR_name;
-	XMLCh* ATTR_type;
-	XMLCh* ATTR_place;
-	XMLCh* ATTR_unit;
-	XMLCh* ATTR_rtclass;
-	XMLCh* ATTR_startoffset;
-	XMLCh* ATTR_endoffset;
-	XMLCh* ATTR_farclip;
-	XMLCh* ATTR_nearclip;
-	XMLCh* ATTR_fovdeg;
-	XMLCh* ATTR_value;
-	XMLCh* ATTR_path;
-	XMLCh* ATTR_mtrl;
-	XMLCh* ATTR_usage;
-	XMLCh* ATTR_x;
-	XMLCh* ATTR_y;
-	XMLCh* ATTR_z;
-	XMLCh* ATTR_w;
-	XMLCh* ATTR_r;
-	XMLCh* ATTR_g;
-	XMLCh* ATTR_b;
-	XMLCh* ATTR_a;
-	XMLCh* ATTR_ipo;
-	XMLCh* ATTR_obj;
-	XMLCh* ATTR_shadeless;
+	XMLChPtr ATTR_name;
+	XMLChPtr ATTR_type;
+	XMLChPtr ATTR_place;
+	XMLChPtr ATTR_unit;
+	XMLChPtr ATTR_rtclass;
+	XMLChPtr ATTR_startoffset;
+	XMLChPtr ATTR_endoffset;
+	XMLChPtr ATTR_farclip;
+	XMLChPtr ATTR_nearclip;
+	XMLChPtr ATTR_fovdeg;
+	XMLChPtr ATTR_value;
+	XMLChPtr ATTR_path;
+	XMLChPtr ATTR_mtrl;
+	XMLChPtr ATTR_usage;
+	XMLChPtr ATTR_x;
+	XMLChPtr ATTR_y;
+	XMLChPtr ATTR_z;
+	XMLChPtr ATTR_w;
+	XMLChPtr ATTR_r;
+	XMLChPtr ATTR_g;
+	XMLChPtr ATTR_b;
+	XMLChPtr ATTR_a;
+	XMLChPtr ATTR_ipo;
+	XMLChPtr ATTR_obj;
+	XMLChPtr ATTR_shadeless;
 
 	// Possible values for 'object rtclass' attribute
-	XMLCh* VAL_ArnSceneGraph;
-	XMLCh* VAL_ArnMesh;
-	XMLCh* VAL_ArnLight;
-	XMLCh* VAL_ArnCamera;
-	XMLCh* VAL_ArnMaterial;
-	XMLCh* VAL_ArnSkeleton;
-	XMLCh* VAL_ArnIpo;
-	XMLCh* VAL_ArnAction;
-	XMLCh* VAL_ArnBone;
+	XMLChPtr VAL_ArnSceneGraph;
+	XMLChPtr VAL_ArnMesh;
+	XMLChPtr VAL_ArnLight;
+	XMLChPtr VAL_ArnCamera;
+	XMLChPtr VAL_ArnMaterial;
+	XMLChPtr VAL_ArnSkeleton;
+	XMLChPtr VAL_ArnIpo;
+	XMLChPtr VAL_ArnAction;
+	XMLChPtr VAL_ArnBone;
 
 	// Possible values for 'chunk place' attribute
-	XMLCh* VAL_xml;
-	XMLCh* VAL_bin;
+	XMLChPtr VAL_xml;
+	XMLChPtr VAL_bin;
 
 	// Possible values for 'transform type' attribute
-	XMLCh* VAL_srt; // Scaling, Rotation, Translation
-	XMLCh* VAL_matrix;
+	XMLChPtr VAL_srt; // Scaling, Rotation, Translation
+	XMLChPtr VAL_matrix;
 
 	// Possible values for 'rotation type' attribute
-	XMLCh* VAL_euler; // Euler angle rotation
-	XMLCh* VAL_quat; // Quaternion rotation
+	XMLChPtr VAL_euler; // Euler angle rotation
+	XMLChPtr VAL_quat; // Quaternion rotation
 
 	// Possible values for 'rotation unit' attribute (Only useful when rotation type is euler.
-	XMLCh* VAL_deg;
-	XMLCh* VAL_rad;
+	XMLChPtr VAL_deg;
+	XMLChPtr VAL_rad;
 
 	// Possible values for 'light type' attribute
-	XMLCh* VAL_point;
-	XMLCh* VAL_spot;
-	XMLCh* VAL_directional;
+	XMLChPtr VAL_point;
+	XMLChPtr VAL_spot;
+	XMLChPtr VAL_directional;
 
 	// Possible values for 'material texture type' attribute
-	XMLCh* VAL_image;
+	XMLChPtr VAL_image;
 
 	// Possible values for 'camera type' attribute
-	XMLCh* VAL_persp;
-	XMLCh* VAL_ortho;
+	XMLChPtr VAL_persp;
+	XMLChPtr VAL_ortho;
 };
 
 inline ArnXmlString& GetArnXmlString() { return ArnXmlString::getSingleton(); }
@@ -122,18 +137,17 @@ class ScopedString
 {
 public:
 	ScopedString(const XMLCh* x)
-	: m_str(XMLString::transcode(x))
+	: m_str(xercesc::XMLString::transcode(x), XMLStringDeleter())
 	{
 		// Note: Empty string allowed.
 		//assert(strlen(m_str));
 	}
 	~ScopedString()
 	{
-		XMLString::release(&m_str);
 	}
-	const char* c_str() const { return m_str; }
+	const char* c_str() const { return m_str.get(); }
 private:
-	char* m_str;
+	std::tr1::shared_ptr<char> m_str;
 };
 
 #endif // ARNXMLSTRING_H

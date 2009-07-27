@@ -30,6 +30,7 @@ class MyError
 {
 public:
 	MyError(MyErrorEnum lee)
+	: m_str()
 	{
 		switch (lee)
 		{
