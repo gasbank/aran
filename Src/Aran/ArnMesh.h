@@ -37,7 +37,7 @@ public:
 	unsigned int							getFaceCount(unsigned int& triCount, unsigned int& quadCount, unsigned int faceGroupIdx) const;
 	void									getTriFace(unsigned int& faceIdx, unsigned int vind[3], unsigned int faceGroupIdx, unsigned int triFaceIndex) const;
 	void									getQuadFace(unsigned int& faceIdx, unsigned int vind[4], unsigned int faceGroupIdx, unsigned int quadFaceIndex) const;
-	
+
 	unsigned int							getVertGroupCount() const { return m_vertexGroup.size(); }
 	unsigned int							getVertCount(unsigned int vertGroupIdx);
 	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx, bool finalXformed);

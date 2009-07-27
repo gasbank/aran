@@ -78,7 +78,6 @@ XERCES_CPP_NAMESPACE_USE
 #include "MyError.h"
 #include "ArnGlExt.h"
 
-
 template <typename T>
 class ArrayDeleter
 {
@@ -88,3 +87,4 @@ public:
 		delete [] d;
 	}
 };
+

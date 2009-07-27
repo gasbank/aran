@@ -28,7 +28,7 @@ public:
 											~ArnIpo(void);
 	static ArnIpo*							createFrom(const NodeBase* nodeBase);
 	static ArnIpo*							createFrom(const DOMElement* elm, char* binaryChunkBasePtr);
-	static ArnIpo* create(const char* name, unsigned int curveCount);
+	static ArnIpo*							create(const char* name, unsigned int curveCount);
 	unsigned int							getIpoCount() const { return m_ipoCount; }
 	unsigned int							getCurveCount() const { return m_curveCount; }
 	const CurveData&						getCurveData(unsigned int idx) const { return m_curves[idx]; }

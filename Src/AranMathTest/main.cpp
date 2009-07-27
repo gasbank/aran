@@ -15,6 +15,7 @@
 
 using namespace std;
 
+
 void QuaternionTest()
 {
 	ArnQuat q;

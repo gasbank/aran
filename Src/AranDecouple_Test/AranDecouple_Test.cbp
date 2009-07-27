@@ -37,6 +37,7 @@
 		<Compiler>
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
+			<Add directory="../" />
 			<Add directory="../Aran" />
 			<Add directory="../AranMath" />
 			<Add directory="/usr/include/freetype2" />
@@ -54,6 +55,7 @@
 			<Add directory="../../../Working" />
 		</Linker>
 		<Unit filename="Test2.cpp" />
+		<Unit filename="Test2.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />

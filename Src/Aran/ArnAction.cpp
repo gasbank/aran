@@ -25,7 +25,14 @@ ArnAction::interconnect(ArnNode* sceneRoot)
 	{
 		ArnXformable* obj = dynamic_cast<ArnXformable*>(sceneRoot->getNodeByName(p.first));
 		ArnIpo* ipo = dynamic_cast<ArnIpo*>(sceneRoot->getNodeByName(p.second));
-		assert(obj && ipo);
+		// Note: IPO, Action and NLA should be configured in blender
+		//       in order to play an animation
+		if (!(obj && ipo))
+		{
+			std::cerr << " ** Critical error while interconnecting ArnAction : Object-Ipo mapping corruption." << std::endl;
+			std::cerr << "      Object: " << p.first << "  --->  " << "IPO: " << p.second << std::endl;
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
 		m_objectIpoMap[obj] = ipo;
 	}
 }

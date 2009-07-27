@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnBinaryChunk.h"
-#include "ArnXmlString.h"
 
 /*
 using namespace std;
@@ -34,118 +33,8 @@ ArnBinaryChunk::~ArnBinaryChunk()
 		delete m_data;
 }
 
-typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
-
-template <typename T> void parseFromToken(char* target, int& dataOffset, Tokenizer::const_iterator& it, const int doCount, T func(const char*))
-{
-	assert(doCount >= 1);
-	for (int i = 0; i < doCount; ++i)
-	{
-		*(T*)(target + i*sizeof(T)) = func((*it).c_str());
-		++it;
-		dataOffset += sizeof(T);
-	}
-}
-
-inline float atof2(const char* c) { return (float)atof(c); }
-
-ArnBinaryChunk* ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
-{
-	ArnBinaryChunk* ret = new ArnBinaryChunk();
-	DOMElement* templ = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_template.get())->item(0));
-	assert(templ);
-	DOMNodeList* templChildren = templ->getElementsByTagName(GetArnXmlString().TAG_field.get());
-	const XMLSize_t childCount = templChildren->getLength();
-	assert(childCount);
-	for (XMLSize_t xx = 0; xx < childCount; ++xx)
-	{
-		DOMElement* childElm = dynamic_cast<DOMElement*>(templChildren->item(xx));
-		ret->addField(	ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_type.get())).c_str()
-						, ScopedString(childElm->getAttribute(GetArnXmlString().ATTR_usage.get())).c_str());
-	}
-
-	if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place.get()), GetArnXmlString().VAL_xml.get()))
-	{
-		DOMElement* arraydata = dynamic_cast<DOMElement*>(elm->getElementsByTagName(GetArnXmlString().TAG_arraydata.get())->item(0));
-		DOMNodeList* arraydataChildren = arraydata->getElementsByTagName(GetArnXmlString().TAG_data.get());
-		ret->m_recordCount = arraydataChildren->getLength();
-		assert(ret->m_recordCount >= 0); // There can be no record in the chunk.
-		ret->m_data = new char[ ret->m_recordCount * ret->m_recordSize ];
-		ret->m_deallocateData = true;
-		int dataOffset = 0;
-		for (XMLSize_t xx = 0; xx < (XMLSize_t)ret->m_recordCount; ++xx)
-		{
-			DOMElement* data = dynamic_cast<DOMElement*>(arraydataChildren->item(xx));
-			ScopedString attrStr = ScopedString(data->getAttribute(GetArnXmlString().ATTR_value.get()));
-			//std::cout << "Original string: " << attrStr.c_str() << std::endl;
-		    boost::char_separator<char> sep(";");
-			std::string attrString(attrStr.c_str());
-			Tokenizer tok(attrString, sep);
-			Tokenizer::const_iterator it = tok.begin();
-			/*
-			for (; it != tok.end(); ++it)
-			{
-				std::cout << "<" << *it << ">" << std::endl;
-			}
-			*/
-
-			foreach(const Field& field, ret->m_recordDef)
-			{
-				switch (field.type)
-				{
-				case ACFT_FLOAT:
-					parseFromToken<float>(ret->m_data + dataOffset, dataOffset, it, 1, atof2);
-					break;
-				case ACFT_FLOAT2:
-					parseFromToken<float>(ret->m_data + dataOffset, dataOffset, it, 2, atof2);
-					break;
-				case ACFT_FLOAT3:
-					parseFromToken<float>(ret->m_data + dataOffset, dataOffset, it, 3, atof2);
-					break;
-				case ACFT_FLOAT8:
-					parseFromToken<float>(ret->m_data + dataOffset, dataOffset, it, 8, atof2);
-					break;
-				case ACFT_INT:
-					parseFromToken<int>(ret->m_data + dataOffset, dataOffset, it, 1, atoi);
-					break;
-				case ACFT_INT3:
-					parseFromToken<int>(ret->m_data + dataOffset, dataOffset, it, 3, atoi);
-					break;
-				case ACFT_INT4:
-					parseFromToken<int>(ret->m_data + dataOffset, dataOffset, it, 4, atoi);
-					break;
-				default:
-					assert(!"Should not reach here!");
-					break;
-				}
-			}
-			assert(dataOffset % ret->m_recordSize == 0);
-		}
-		assert(dataOffset == ret->m_recordCount * ret->m_recordSize);
-	}
-	else if (XMLString::equals(elm->getAttribute(GetArnXmlString().ATTR_place.get()), GetArnXmlString().VAL_bin.get()))
-	{
-		const int startOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_startoffset.get())).c_str());
-		const int endOffset = atoi(ScopedString(elm->getAttribute(GetArnXmlString().ATTR_endoffset.get())).c_str());
-		const int dataSize = endOffset - startOffset;
-		const int recordCount = dataSize / ret->m_recordSize;
-		assert(dataSize % ret->m_recordSize == 0);
-		if (recordCount)
-			ret->m_data = binaryChunkBasePtr + startOffset;
-		else
-			ret->m_data = 0;
-		ret->m_deallocateData = false;
-		ret->m_recordCount = recordCount;
-	}
-	else
-	{
-		ARN_THROW_UNEXPECTED_CASE_ERROR
-	}
-
-	return ret;
-}
-
-ArnBinaryChunk* ArnBinaryChunk::createFrom(const char* fileName)
+ArnBinaryChunk*
+ArnBinaryChunk::createFrom(const char* fileName)
 {
 	FILE* f = fopen(fileName, "rb");
 	ArnBinaryChunk* ret = 0;
@@ -172,7 +61,8 @@ ArnBinaryChunk* ArnBinaryChunk::createFrom(const char* fileName)
 	return ret;
 }
 
-void ArnBinaryChunk::addField(const char* type, const char* usage)
+void
+ArnBinaryChunk::addField(const char* type, const char* usage)
 {
 	ArnChunkFieldType acft = ACFT_UNKNOWN;
 	if (strcmp(type, "float") == 0)
@@ -196,7 +86,8 @@ void ArnBinaryChunk::addField(const char* type, const char* usage)
 	m_recordSize += ArnChunkFieldTypeSize[acft];
 }
 
-void ArnBinaryChunk::copyFieldArray(void* target, int targetSize, const char* usage) const
+void
+ArnBinaryChunk::copyFieldArray(void* target, int targetSize, const char* usage) const
 {
 	const Field* field = 0;
 	foreach(const Field& f, m_recordDef)
@@ -216,7 +107,8 @@ void ArnBinaryChunk::copyFieldArray(void* target, int targetSize, const char* us
 	}
 }
 
-void ArnBinaryChunk::printFieldArray(const char* usage) const
+void
+ArnBinaryChunk::printFieldArray(const char* usage) const
 {
 	const Field* field = 0;
 	foreach(const Field& f, m_recordDef)
@@ -240,22 +132,26 @@ void ArnBinaryChunk::printFieldArray(const char* usage) const
 	}
 }
 
-unsigned int ArnBinaryChunk::getRecordCount() const
+unsigned int
+ArnBinaryChunk::getRecordCount() const
 {
 	return m_recordCount;
 }
 
-unsigned int ArnBinaryChunk::getRecordSize() const
+unsigned int
+ArnBinaryChunk::getRecordSize() const
 {
 	return m_recordSize;
 }
 
-char* ArnBinaryChunk::getRawDataPtr()
+char*
+ArnBinaryChunk::getRawDataPtr()
 {
 	return m_data;
 }
 
-const char* ArnBinaryChunk::getRecordAt( int i ) const
+const char*
+ArnBinaryChunk::getRecordAt( int i ) const
 {
 	assert(i < m_recordCount);
 	return m_data + m_recordSize * i;

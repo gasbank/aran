@@ -113,7 +113,6 @@ ArnVec3& ArnVec3::operator = ( const T& v )
 	return *this;
 }
 
-
 template<typename V1, typename V2> void ArnVec3Assign(V1& v1, const V2& v2)
 {
 	v1.x = v2.x;

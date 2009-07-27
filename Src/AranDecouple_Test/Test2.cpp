@@ -1,56 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <string>
-#include <vector>
-#include <list>
-#include <map>
-#include <fstream>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <tr1/memory>
-
-#ifdef WIN32
-	#include <SDL.h>
-	#include <SDL_opengl.h>
-#else
-	#define GL_GLEXT_PROTOTYPES
-	#include <SDL/SDL.h>
-	#include <SDL/SDL_opengl.h>
-#endif
-
-#include "ft2build.h"
-#include FT_FREETYPE_H
-
-#ifdef WIN32
-#include <d3dx9.h>
-#endif
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-
-XERCES_CPP_NAMESPACE_USE
-
-
-#include "IL/il.h"
-
-#include "../Macros.h"
-#include "Structs.h"
-#include "Singleton.h"
-#include "ArnXmlLoader.h"
-#include "ArnXmlString.h"
-#include "ArnSceneGraph.h"
-#include "ArnCamera.h"
-#include "VideoManGl.h"
-#include "ArnSkeleton.h"
-#include "ArnAnimationController.h"
-#include "ArnMesh.h"
-#include "ArnViewportData.h"
-#include "ArnGlExt.h"
+#include "Test2.h"
 
 struct HitRecord
 {
@@ -310,8 +258,8 @@ int main(int argc, char *argv[])
 	bool bNoFrame = false;
 
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
-		fprintf(stderr,"Couldn't initialize SDL: %s\n",SDL_GetError());
-		exit( 1 );
+		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
+		exit(1);
 	}
 
 	/* Set the flags we want to use for setting the video mode */
@@ -416,7 +364,8 @@ int main(int argc, char *argv[])
 	int pen_x, pen_y;
 	pen_x = 0;
 	pen_y = 0;
-	const wchar_t* testString = L"Realtime User Control Biped";
+	wchar_t testString[128];
+	swprintf(testString, 128, L"RUCB (Aran build %ld)", ArnGetBuildCount());
 	size_t testStringLen = wcslen(testString);
 	int textTextureSize = 256;
 	unsigned char* fontTexture = (unsigned char*)malloc( textTextureSize * textTextureSize * 4 ); // RGBA texture
@@ -449,7 +398,6 @@ int main(int argc, char *argv[])
 	// Create and init the scene graph instance from XML file
 	// and attach that one to the video manager.
 	InitializeXmlParser();
-	ArnXmlString* axs = new ArnXmlString;
 	if (argc != 2)
 	{
 		fprintf(stderr, " *** Provide XML scene file path as the first argument.\n");
@@ -629,7 +577,6 @@ int main(int argc, char *argv[])
 	sceneGraph = 0;
 
 	glDeleteTextures(1, &fontTextureId);
-	delete axs;
 	DeallocateXmlParser();
 
 	/* Destroy our GL context, etc. */

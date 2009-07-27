@@ -32,17 +32,15 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-Weffc++" />
 			<Add option="-pedantic-errors" />
 			<Add option="-pedantic" />
-			<Add option="-Wfatal-errors" />
-			<Add option="-Wextra" />
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
 			<Add directory="../AranMath" />
 		</Compiler>
 		<Unit filename="Animation.cpp" />
 		<Unit filename="Animation.h" />
+		<Unit filename="AranApi.cpp" />
 		<Unit filename="AranApi.h" />
 		<Unit filename="AranPCH.cpp" />
 		<Unit filename="AranPCH.h" />
@@ -121,8 +119,6 @@
 		</Unit>
 		<Unit filename="ArnXmlLoader.cpp" />
 		<Unit filename="ArnXmlLoader.h" />
-		<Unit filename="ArnXmlString.cpp" />
-		<Unit filename="ArnXmlString.h" />
 		<Unit filename="Character.cpp" />
 		<Unit filename="Character.h" />
 		<Unit filename="CharacterAnimationCallback.cpp" />
@@ -181,6 +177,7 @@
 		<Unit filename="inotify-cxx.cpp" />
 		<Unit filename="inotify-cxx.h" />
 		<Unit filename="resource.h" />
+		<Unit filename="version.h" />
 		<Unit filename="../Macros.h" />
 		<Extensions>
 			<code_completion />
