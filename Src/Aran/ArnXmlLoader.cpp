@@ -865,7 +865,7 @@ CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int InitializeXmlParser()
+int ArnInitializeXmlParser()
 {
 	try
 	{
@@ -882,7 +882,7 @@ int InitializeXmlParser()
 	}
 }
 
-void DeallocateXmlParser()
+void ArnCleanupXmlParser()
 {
 	XMLPlatformUtils::Terminate();
 }

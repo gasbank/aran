@@ -75,6 +75,7 @@ public:
 	int												GetNumAnimationSets() const;
 	void											UnregisterAnimationSet(ArnIpo* animSet);
 	void											update(double fTime, float fElapsedTime);
+	unsigned int									getTrackCount() const { return m_tracks.size(); }
 
 private:
 													ArnAnimationController();

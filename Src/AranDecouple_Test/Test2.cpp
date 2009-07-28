@@ -8,9 +8,18 @@ struct HitRecord
 	GLuint contents;	// Name stack contents
 };
 
+enum MessageHandleResult
+{
+	MHR_DO_NOTHING,
+	MHR_EXIT_APP,
+	MHR_NEXT_SCENE
+};
 
 void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam )
 {
+	if (!sceneGraph)
+		return;
+
 	HitRecord buff[16];
 	GLint hits, view[4];
 
@@ -70,31 +79,39 @@ void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGrap
 	}
 }
 
-int HandleEvent(SDL_Event *event, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam)
+MessageHandleResult HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, ArnViewportData* avd)
 {
-	int done;
-	ArnSkeleton* skel = reinterpret_cast<ArnSkeleton*>(sceneGraph->findFirstNodeOfType(NDT_RT_SKELETON));
-	done = 0;
+	MessageHandleResult done = MHR_DO_NOTHING;
+	ArnSkeleton* skel = 0;
+	ArnCamera* activeCam = 0;
+	if (curSceneGraph)
+	{
+		activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
+		skel = reinterpret_cast<ArnSkeleton*>(curSceneGraph->findFirstNodeOfType(NDT_RT_SKELETON));
+	}
 	switch( event->type ) {
 		case SDL_MOUSEBUTTONUP:
 			{
-				SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), sceneGraph, avd, cam); // Y-coord flipped.
+				SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), curSceneGraph, avd, activeCam); // Y-coord flipped.
 
-				ArnMatrix modelview, projection;
-				glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-				modelview = modelview.transpose();
-				glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-				projection = projection.transpose();
-				ArnVec3 origin, direction;
-				ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
-				ArnMesh* mesh = reinterpret_cast<ArnMesh*>(sceneGraph->findFirstNodeOfType(NDT_RT_MESH));
-				if (mesh)
+				if (curSceneGraph)
 				{
-					bool bHit = false;
-					unsigned int faceIdx = 0;
-					ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-					if (bHit)
-						printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+					ArnMatrix modelview, projection;
+					glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+					modelview = modelview.transpose();
+					glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+					projection = projection.transpose();
+					ArnVec3 origin, direction;
+					ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
+					ArnMesh* mesh = reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH));
+					if (mesh)
+					{
+						bool bHit = false;
+						unsigned int faceIdx = 0;
+						ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
+						if (bHit)
+							printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+					}
 				}
 			}
 			break;
@@ -117,43 +134,57 @@ int HandleEvent(SDL_Event *event, ArnSceneGraph* sceneGraph, ArnViewportData* av
 		case SDL_KEYDOWN:
 			if ( event->key.keysym.sym == SDLK_ESCAPE )
 			{
-				done = 1;
+				done = MHR_EXIT_APP;
 			}
 			else if (event->key.keysym.sym == SDLK_1)
 			{
-				skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
-				skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
-				ARNTRACK_DESC desc;
-				skel->getAnimCtrl()->GetTrackDesc(0, &desc);
-				skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
-				skel->getAnimCtrl()->SetTrackWeight(0, 1);
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
+					skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(0, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(0, 1);
+				}
+				
 			}
 			else if (event->key.keysym.sym == SDLK_2)
 			{
-				skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
-				skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
-				ARNTRACK_DESC desc;
-				skel->getAnimCtrl()->GetTrackDesc(1, &desc);
-				skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
-				skel->getAnimCtrl()->SetTrackWeight(1, 1);
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
+					skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(1, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(1, 1);
+				}
 			}
 			else if (event->key.keysym.sym == SDLK_3)
 			{
-				skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
-				skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
-				ARNTRACK_DESC desc;
-				skel->getAnimCtrl()->GetTrackDesc(2, &desc);
-				skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
-				skel->getAnimCtrl()->SetTrackWeight(2, 1);
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
+					skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(2, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(2, 1);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_n)
+			{
+				done = MHR_NEXT_SCENE;
 			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
 		case SDL_QUIT:
-			done = 1;
+			done = MHR_EXIT_APP;
 			break;
 	}
-	return(done);
+	return done;
 }
 
 void DrawString(const char *str, int x, int y, float color[4], void *font)
@@ -343,10 +374,38 @@ void PrintRayCastingResultUsingGlu()
 	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
 }
 
+int ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, const char* sceneFileName, const ArnViewportData* avd)
+{
+	assert(curSceneGraph || activeCam || activeLight == 0);
+
+	curSceneGraph = ArnSceneGraph::createFrom(sceneFileName);
+	if (!curSceneGraph)
+	{
+		fprintf(stderr, " *** Scene graph file %s is not loaded correctly.\n", sceneFileName);
+		fprintf(stderr, "     Check your input XML scene file.\n");
+		return -5;
+	}
+	curSceneGraph->interconnect(curSceneGraph);
+	curSceneGraph->initRendererObjects();
+
+	// Camera setting
+	activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
+	assert(activeCam);
+	activeCam->recalcLocalXform();
+	activeCam->recalcAnimLocalXform();
+	activeCam->printCameraOrientation();
+	ArnConfigureViewportProjectionMatrixGl(avd, activeCam); // Projection matrix is not changed during runtime for now.
+
+	activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
+	assert(activeLight);
+	std::cout << "   Scene file " << sceneFileName << " loaded successfully." << std::endl;
+	return 0;
+}
+
 int main(int argc, char *argv[])
 {
-	const int windowWidth = 1024;
-	const int windowHeight = 768;
+	const int windowWidth = 640;
+	const int windowHeight = 480;
 	const int bpp = 32;
 	const int depthSize = 24;
 	bool bFullScreen = false;
@@ -492,22 +551,8 @@ int main(int argc, char *argv[])
 
 	// Create and init the scene graph instance from XML file
 	// and attach that one to the video manager.
-	InitializeXmlParser();
-	if (argc != 2)
-	{
-		fprintf(stderr, " *** Provide XML scene file path as the first argument.\n");
-		return -9;
-	}
-	ArnSceneGraph* curSceneGraph = ArnSceneGraph::createFrom(argv[1]);
-	if (!curSceneGraph)
-	{
-		fprintf(stderr, " *** Scene graph is not loaded correctly. Check your input XML scene file.\n");
-		return -5;
-	}
-	curSceneGraph->interconnect(curSceneGraph);
-	curSceneGraph->initRendererObjects();
+	ArnInitializeXmlParser();
 
-	// Viewport and camera setting
 	ArnViewportData avd;
 	avd.X = 0;
 	avd.Y = 0;
@@ -515,25 +560,51 @@ int main(int argc, char *argv[])
 	avd.Height = windowHeight;
 	avd.MinZ = 0;
 	avd.MaxZ = 1.0f;
-	ArnCamera* activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
-	assert(activeCam);
-	activeCam->recalcLocalXform();
-	activeCam->recalcAnimLocalXform();
-	activeCam->printCameraOrientation();
-	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 
-	ArnLight* activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
-	assert(activeLight);
+	std::vector<std::string> sceneList;
+	std::ifstream sceneListStream("SceneList.txt");
+	std::string sceneFile;
+	int curSceneIndex = -1;
+	if (!sceneListStream.is_open())
+	{
+		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
+		return -12;
+	}
+	while (sceneListStream >> sceneFile)
+	{
+		sceneList.push_back(sceneFile);
+	}
+	
+	ArnSceneGraph* curSceneGraph = 0;
+	ArnCamera* activeCam = 0;
+	ArnLight* activeLight = 0;
+	if (sceneFile.size() > 0)
+	{
+		curSceneIndex = 0;
+		if (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+		{
+			curSceneIndex = -1;
+			curSceneGraph = 0;
+			activeCam = 0;
+			activeLight = 0;
+		}
+		else
+		{
+			// Scene file load succeeded.
 
-	//
-	// DEBUG PURPOSE
-	// A little test on modelview, projection matrix
-	// by checking frustum corner points and ray casting.
-	//
-	PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
-	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
-	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
-	PrintRayCastingResultUsingGlu();
+			//
+			// DEBUG PURPOSE
+			// A little test on modelview, projection matrix
+			// by checking frustum corner points and ray casting.
+			//
+			/*
+			PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+			PrintFrustumCornersBasedOnGlMatrixStack(&avd);
+			PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
+			PrintRayCastingResultUsingGlu();
+			*/
+		}
+	}
 	
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
@@ -541,11 +612,11 @@ int main(int argc, char *argv[])
 	/* Loop until done. */
 	unsigned int start_time = SDL_GetTicks();
 	unsigned int frames = 0;
-	int done = 0;
+	MessageHandleResult done = MHR_DO_NOTHING;
 	unsigned int frameStartMs = 0;
 	unsigned int frameDurationMs = 0;
 	unsigned int frameEndMs = 0;
-	while( !done )
+	while( done != MHR_EXIT_APP )
 	{
 		frameDurationMs = frameEndMs - frameStartMs;
 		frameStartMs = SDL_GetTicks();
@@ -596,7 +667,27 @@ int main(int argc, char *argv[])
 
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
-			done = HandleEvent(&event, curSceneGraph, &avd, activeCam);
+			done = HandleEvent(&event, curSceneGraph, &avd);
+
+			if (done == MHR_NEXT_SCENE)
+			{
+				delete curSceneGraph;
+				curSceneIndex = (curSceneIndex + 1) % sceneList.size();
+				curSceneGraph = 0;
+				activeCam = 0;
+				activeLight = 0;
+				unsigned int retryCount = 0;
+				while (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+				{
+					curSceneIndex = (curSceneIndex + 1) % sceneList.size();
+					++retryCount;
+					if (retryCount >= sceneList.size())
+					{
+						std::cerr << " *** All provided scene files have errors. Aborting..." << std::endl;
+						done = MHR_EXIT_APP;
+					}
+				}
+			}
 		}
 		++frames;
 		frameEndMs = SDL_GetTicks();
@@ -612,7 +703,7 @@ int main(int argc, char *argv[])
 	curSceneGraph = 0;
 
 	glDeleteTextures(1, &fontTextureId);
-	DeallocateXmlParser();
+	ArnCleanupXmlParser();
 
 	/* Destroy our GL context, etc. */
 	SDL_Quit();
