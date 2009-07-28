@@ -412,11 +412,13 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	SetupArnNodeCommonPart(ret, elm);
 
 	std::string binaryFileName(xmlFile);
+	// Only the extension is differ from 'xml' to 'bin'.
 	binaryFileName[binaryFileName.size() - 3] = 'b';
 	binaryFileName[binaryFileName.size() - 2] = 'i';
 	binaryFileName[binaryFileName.size() - 1] = 'n';
 
-	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str());
+	unsigned int binUncompressedSize = (unsigned int)ParseIntFromAttr(elm, "binuncompressedsize");
+	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str(), true, binUncompressedSize);
 
 	DOMNodeList* childrenObj = GetElementsByTagName(elm, "object");
 	const XMLSize_t childrenCount = childrenObj->getLength();

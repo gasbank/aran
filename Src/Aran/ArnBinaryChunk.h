@@ -29,7 +29,7 @@ class ArnBinaryChunk
 public:
 										~ArnBinaryChunk();
 	static ArnBinaryChunk*				createFrom(DOMElement* elm, char* binaryChunkBasePtr);
-	static ArnBinaryChunk*				createFrom(const char* fileName);
+	static ArnBinaryChunk*				createFrom(const char* fileName, bool zlibCompressed, unsigned int uncompressedSize);
 	void								copyFieldArray(void* target, int targetSize, const char* usage) const;
 	unsigned int						getRecordCount() const;
 	unsigned int						getRecordSize() const;
