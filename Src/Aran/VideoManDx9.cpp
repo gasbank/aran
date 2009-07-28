@@ -927,8 +927,8 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 
 	D3DXHANDLE hTech            = this->lpEffectSkinning->GetTechniqueByName("VertexBlendingTech");
 
-	D3DXHANDLE hWorldViewProj   = this->lpEffectSkinning->GetParameterByName(0, "WorldViewProj");
-	D3DXHANDLE hFinalTransforms = this->lpEffectSkinning->GetParameterByName(0, "FinalTransforms");
+	//***D3DXHANDLE hWorldViewProj   = this->lpEffectSkinning->GetParameterByName(0, "WorldViewProj");
+	//***D3DXHANDLE hFinalTransforms = this->lpEffectSkinning->GetParameterByName(0, "FinalTransforms");
 	//D3DXHANDLE hTex             = this->lpEffectSkinning->GetParameterByName(0, "Tex");
 	D3DXHANDLE hNumVertInflu	= this->lpEffectSkinning->GetParameterByName(0, "NumVertInfluences");
 	D3DXHANDLE hTestFloatArray	= this->lpEffectSkinning->GetParameterByName(0, "TestFloatArray");
@@ -937,7 +937,7 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 
 	int numVertInfluences = 3;
 	V_OKAY( this->lpEffectSkinning->SetInt( hNumVertInflu, numVertInfluences ) );
-	V_OKAY( this->lpEffectSkinning->SetMatrix( hWorldViewProj, ArnMatrixGetConstDxPtr(matWorldViewProj) ) );
+	//***V_OKAY( this->lpEffectSkinning->SetMatrix( hWorldViewProj, ArnMatrixGetConstDxPtr(matWorldViewProj) ) );
 
 	V_OKAY( this->lpEffectSkinning->SetTechnique( hTech ) );
 	UINT numPasses;
@@ -967,7 +967,7 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 					finalTransforms[k] = ArnMatrixMultiply(finalTransforms[k], *worldTransformMatrix);
 				}
 			}
-			this->lpEffectSkinning->SetMatrixArray(hFinalTransforms, ArnMatrixGetConstDxPtr(finalTransforms[0]), (UINT)boneCount);
+			//***this->lpEffectSkinning->SetMatrixArray(hFinalTransforms, ArnMatrixGetConstDxPtr(finalTransforms[0]), (UINT)boneCount);
 			this->lpEffectSkinning->SetFloatArray(hTestFloatArray, &testFloatArray[0], 2000);
 
 			this->lpEffectSkinning->BeginPass(i);
@@ -1292,13 +1292,13 @@ VideoManDx9::InitCustomMesh()
 	}
 
 	rotationKeys[0].Time = 1.0f;
-	ArnQuaternionRotationAxis(&rotationKeys[0].Value, &ArnConsts::D3DXVEC3_X, D3DXToRadian(10));
+	ArnQuaternionRotationAxis(&rotationKeys[0].Value, &ArnConsts::ARNVEC3_X, D3DXToRadian(10));
 	rotationKeys[1].Time = 2.0f;
-	ArnQuaternionRotationAxis(&rotationKeys[1].Value, &ArnConsts::D3DXVEC3_Y, D3DXToRadian(90));
+	ArnQuaternionRotationAxis(&rotationKeys[1].Value, &ArnConsts::ARNVEC3_Y, D3DXToRadian(90));
 	rotationKeys[2].Time = 3.0f;
-	ArnQuaternionRotationAxis(&rotationKeys[2].Value, &ArnConsts::D3DXVEC3_Z, D3DXToRadian(120));
+	ArnQuaternionRotationAxis(&rotationKeys[2].Value, &ArnConsts::ARNVEC3_Z, D3DXToRadian(120));
 	rotationKeys[3].Time = 4.0f;
-	ArnQuaternionRotationAxis(&rotationKeys[3].Value, &ArnConsts::D3DXVEC3_X, D3DXToRadian(10));
+	ArnQuaternionRotationAxis(&rotationKeys[3].Value, &ArnConsts::ARNVEC3_X, D3DXToRadian(10));
 
 	translationKeys[0].Time = 1.0f;
 	translationKeys[0].Value = CreateArnVec3(1.0f, 1.0f, 1.0f);

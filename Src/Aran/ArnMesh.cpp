@@ -8,6 +8,10 @@
 #include "ArnBinaryChunk.h"
 #include "ArnTexture.h"
 
+static float lmodel_twoside[] = {GL_TRUE};
+static float lmodel_oneside[] = {GL_FALSE};
+
+
 ArnMesh::ArnMesh()
 : ArnXformable(NDT_RT_MESH)
 , m_d3dxMesh(0)
@@ -19,11 +23,13 @@ ArnMesh::ArnMesh()
 , m_arnVb(0)
 , m_arnIb(0)
 , m_triquadUvChunk(0)
+, m_bTwoSided(false)
 , m_vboId(0)
 , m_vboUv(0)
 , m_renderFunc(0)
 , m_initRendererObjectFunc(0)
 , m_nodeMesh3(0)
+, m_vertexChunk(0)
 {
 }
 
@@ -41,7 +47,7 @@ ArnMesh::~ArnMesh(void)
 	}
 	foreach (const VertexGroup& vg, m_vertexGroup)
 	{
-		delete vg.vertexChunk;
+		delete vg.vertGroupChunk;
 	}
 	delete m_triquadUvChunk;
 }
@@ -272,7 +278,7 @@ ArnMesh::initRendererObjectXml()
 
 		*/
 
-		const ArnBinaryChunk* vertexChunk = m_vertexGroup[0].vertexChunk;
+		const ArnBinaryChunk* vertexChunk = m_vertexChunk;
 		const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 		int uvRecordSize = 0;
 		if (m_triquadUvChunk)
@@ -429,7 +435,8 @@ ArnMesh::renderXml()
 
 	*/
 
-	const ArnBinaryChunk* vertexChunk = m_vertexGroup[0].vertexChunk;
+	//const ArnBinaryChunk* vertexChunk = m_vertexGroup[0].vertexChunk;
+	const ArnBinaryChunk* vertexChunk = m_vertexChunk;
 	const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 	int uvRecordSize = 0;
 	if (m_triquadUvChunk)
@@ -462,10 +469,21 @@ ArnMesh::renderXml()
 		glEnableClientState(GL_VERTEX_ARRAY);
 
 		glPushMatrix();
+		glPushAttrib(GL_ENABLE_BIT);
 		{
 			recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 			glMultTransposeMatrixf((float*)getFinalLocalXform().m);
-			glLoadName(getObjectId());
+			if (m_bTwoSided)
+			{
+				glDisable(GL_CULL_FACE);
+				//glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+			}
+			else
+			{
+				glEnable(GL_CULL_FACE);
+				//glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_oneside);
+			}
+			glLoadName(getObjectId()); // For screenspace rendering based picking
 			// 1. Draw tri faces
 			if (triFaceCount)
 			{
@@ -486,6 +504,7 @@ ArnMesh::renderXml()
 				glDrawArrays(GL_QUADS, 0, quadFaceCount * 4);
 			}
 		}
+		glPopAttrib();
 		glPopMatrix();
 
 		if (m_triquadUvChunk)
@@ -529,11 +548,11 @@ void ArnMesh::getQuadFace( unsigned int& faceIdx, unsigned int vind[4], unsigned
 	vind[3] = vert4Ind[4];
 }
 
-void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx, bool finalXformed )
+void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertIdx, bool finalXformed ) const
 {
 	assert(pos || nor);
 	struct PosNor { ArnVec3 pos; ArnVec3 nor; };
-	const PosNor* posnor = reinterpret_cast<const PosNor*>(m_vertexGroup[vertGroupIdx].vertexChunk->getRecordAt(vertIdx));
+	const PosNor* posnor = reinterpret_cast<const PosNor*>(m_vertexChunk->getRecordAt(vertIdx));
 	if (pos)
 	{
 		if (finalXformed)
@@ -550,9 +569,16 @@ void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int ver
 	}
 }
 
-unsigned int ArnMesh::getVertCount( unsigned int vertGroupIdx )
+unsigned int ArnMesh::getVertCountOfVertGroup( unsigned int vertGroupIdx ) const
 {
-	return m_vertexGroup[vertGroupIdx].vertexChunk->getRecordCount();
+	if (vertGroupIdx == 0)
+	{
+		return m_vertexChunk->getRecordCount();
+	}
+	else
+	{
+		ARN_THROW_NOT_IMPLEMENTED_ERROR
+	}
 }
 //////////////////////////////////////////////////////////////////////////
 
@@ -678,8 +704,9 @@ HRESULT arn_build_mesh( IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LP
 
 HRESULT ArnCreateMeshFVF(DWORD NumFaces, DWORD NumVertices, DWORD FVF, VideoMan* vman, LPD3DXMESH* ppMesh)
 {
-	V_OKAY( D3DXCreateMeshFVF(NumFaces, NumVertices, 0, FVF, vman->GetDev(), ppMesh) );
-	return S_OK;
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+	//***V_OKAY( D3DXCreateMeshFVF(NumFaces, NumVertices, 0, FVF, vman->GetDev(), ppMesh) );
+	//***return S_OK;
 }
 
 #endif // #ifdef WIN32

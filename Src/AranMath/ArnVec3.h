@@ -6,13 +6,13 @@ public:
 							ArnVec3();
 							ArnVec3(float _x, float _y, float _z);
 #ifdef WIN32
-							ArnVec3(const D3DXVECTOR3* dxvec);
+							ArnVec3(const D3DVECTOR* dxvec);
 #endif
 							~ArnVec3();
 
 #ifdef WIN32
-	const D3DXVECTOR3*		getConstDxPtr() const { return reinterpret_cast<const D3DXVECTOR3*>(this); }
-	D3DXVECTOR3*			getDxPtr() { return reinterpret_cast<D3DXVECTOR3*>(this); }
+	const D3DVECTOR*		getConstDxPtr() const { return reinterpret_cast<const D3DVECTOR*>(this); }
+	D3DVECTOR*			getDxPtr() { return reinterpret_cast<D3DVECTOR*>(this); }
 #endif
 
 	template <typename T>
@@ -46,8 +46,8 @@ ARANMATH_API ArnVec3 ArnVec3Substract(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API bool ArnVec3Equals(const ArnVec3& v1, const ArnVec3& v2);
 
 #ifdef WIN32
-ARANMATH_API const D3DXVECTOR3* ArnVec3GetConstDxPtr(const ArnVec3& v);
-ARANMATH_API D3DXVECTOR3* ArnVec3GetDxPtr(ArnVec3& v);
+ARANMATH_API const D3DVECTOR* ArnVec3GetConstDxPtr(const ArnVec3& v);
+ARANMATH_API D3DVECTOR* ArnVec3GetDxPtr(ArnVec3& v);
 #endif
 
 

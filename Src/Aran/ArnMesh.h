@@ -39,8 +39,11 @@ public:
 	void									getQuadFace(unsigned int& faceIdx, unsigned int vind[4], unsigned int faceGroupIdx, unsigned int quadFaceIndex) const;
 
 	unsigned int							getVertGroupCount() const { return m_vertexGroup.size(); }
-	unsigned int							getVertCount(unsigned int vertGroupIdx);
-	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertGroupIdx, unsigned int vertIdx, bool finalXformed);
+	unsigned int							getVertCountOfVertGroup(unsigned int vertGroupIdx) const;
+	unsigned int							getTotalVertCount() const { return getVertCountOfVertGroup(0); }
+	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertIdx, bool finalXformed) const;
+
+	void									setTwoSided(bool b) { m_bTwoSided = b; }
 
 	// ********************************* INTERNAL USE ONLY START *********************************
 	virtual void							interconnect(ArnNode* sceneRoot);
@@ -66,9 +69,10 @@ private:
 	struct VertexGroup
 	{
 		int mtrlIndex;
-		ArnBinaryChunk* vertexChunk;
+		ArnBinaryChunk* vertGroupChunk;
 	};
 	std::vector<VertexGroup>				m_vertexGroup;
+	ArnBinaryChunk*							m_vertexChunk; // Contains the entire vertices.
 
 
 	LPD3DXMESH								m_d3dxMesh;
@@ -101,6 +105,8 @@ private:
 	GLuint									m_vboId;
 	std::vector<GLuint>						m_vboIds;
 	GLuint									m_vboUv;
+	
+	bool									m_bTwoSided;
 
 	void									(ArnMesh::*m_renderFunc)();
 	bool									(ArnMesh::*m_initRendererObjectFunc)();

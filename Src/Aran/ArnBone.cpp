@@ -91,6 +91,7 @@ void ArnBone::render()
 		glMultTransposeMatrixf((const GLfloat*)matRot.m);
 		glPushMatrix();
 		{
+			glLoadName(getObjectId()); // For screenspace rendering based picking
 			glRotatef(-90, 1, 0, 0);
 			glLineWidth(1);
 			glDisable(GL_LIGHTING);

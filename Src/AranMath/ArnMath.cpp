@@ -317,14 +317,14 @@ ArnMatrixLookAt( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const
 			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }
-// Equivalent to D3DXMatrixLookAtRH()
+// Equivalent to D3DMatrixLookAtRH()
 ArnMatrix*
 ArnMatrixLookAtRH( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const ArnVec3 *pUp )
 {
 	return ArnMatrixLookAt(pOut, pEye, pAt, pUp, true);
 }
 
-// Equivalent to D3DXMatrixLookAtLH()
+// Equivalent to D3DMatrixLookAtLH()
 ArnMatrix*
 ArnMatrixLookAtLH( ArnMatrix *pOut, const ArnVec3 *pEye, const ArnVec3 *pAt, const ArnVec3 *pUp )
 {

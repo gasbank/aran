@@ -21,11 +21,6 @@ public:
 	void						normalize();
 	void						printEuler() const;
 	void						printAxisAngle() const;
-#ifdef WIN32
-	const D3DXQUATERNION*		getConstDxPtr() const { return reinterpret_cast<const D3DXQUATERNION*>(this); }
-	D3DXQUATERNION*				getDxPtr() { return reinterpret_cast<D3DXQUATERNION*>(this); }
-	D3DXQUATERNION				getDx() const { return D3DXQUATERNION(x, y, z, w); }
-#endif // #ifdef WIN32
 
 	float						x;
 	float						y;

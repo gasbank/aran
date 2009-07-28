@@ -105,7 +105,7 @@ public:
 	virtual HRESULT									StartMainLoop() = 0;
 	virtual void									DrawAtEditor(BOOL isReady, BOOL isRunning) = 0;
 	virtual void									setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix& matView, const ArnMatrix& matProj ) = 0;
-	virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY) = 0;
+	virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY) = 0;
 	virtual void									renderSceneGraph();
 	void											updateSceneGraph(double dTime, float fElapsedTime);
 	const ArnMatrix*								getArcballResult() const { return &modelArcBallRotation; }
@@ -144,7 +144,7 @@ public:
 	const ARN_CAMERA*								getMainCamera() const { return &mainCamera; }
 	const void										getScreenInfo(int& width, int& height) { width = screenWidth; height = screenHeight; }
 	const ArnMatrix*								getModelArcBallRotation() const { return &modelArcBallRotation; }
-	void											renderMeshesOnly(ArnNode* node, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY);
+	void											renderMeshesOnly(ArnNode* node, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY);
 	float											getFPS() const { return m_fFPS; }
 	void											setFrameMoveCallback(LPARNCALLBACKFRAMEMOVE pCallback);
 	void											setScreenSize(int width, int height) { screenWidth = width; screenHeight = height; }

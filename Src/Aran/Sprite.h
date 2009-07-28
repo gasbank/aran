@@ -16,7 +16,7 @@ public:
 	ArnVec3 center;
 	ArnVec3 position;
 	ArnMatrix xform;
-	D3DCOLOR color;
+	ArnColorValue color;
 	bool bRender;
 private:
 	DrawRequest operator = ( const DrawRequest& rhs )

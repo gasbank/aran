@@ -149,11 +149,11 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 		{
 			//float keyTime = (float)i/FPS;
 			rotKeys[i].Time = (float)i;
-			rotKeys[i].Value = ArnConsts::D3DXQUAT_IDENTITY;
+			rotKeys[i].Value = ArnConsts::ARNQUAT_IDENTITY;
 			scaleKeys[i].Time = (float)i;
-			scaleKeys[i].Value = ArnConsts::D3DXVEC3_ONE;
+			scaleKeys[i].Value = ArnConsts::ARNVEC3_ONE;
 			transKeys[i].Time = (float)i;
-			transKeys[i].Value = ArnConsts::D3DXVEC3_ZERO;
+			transKeys[i].Value = ArnConsts::ARNVEC3_ZERO;
 
 			float eulX = 0.0f, eulY = 0.0f, eulZ = 0.0f; // Euler rotation values
 

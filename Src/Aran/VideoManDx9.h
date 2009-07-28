@@ -51,7 +51,7 @@ private:
 	virtual HRESULT									StartMainLoop();
 	virtual void									DrawAtEditor(BOOL isReady, BOOL isRunning);
 	virtual int										Draw();
-	virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY);
+	virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY);
 	virtual HRESULT									InitLight_Internal();
 	HRESULT											TurnModelLightOn(ModelReader *pMR, ArnMatrix* worldTransformMatrix = 0);
 	virtual void									setClearColor_Internal();

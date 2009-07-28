@@ -398,7 +398,7 @@ struct BoneData
 {
 	BoneData()
 	: nameFixed("")
-	, offsetMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, offsetMatrix(ArnConsts::ARNMAT_IDENTITY)
 	, infVertexCount(0)
 	, indices()
 	, weights()
@@ -651,7 +651,7 @@ struct ArnFrame
 {
 	ArnFrame()
 	: Name(0)
-	, TransformationMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, TransformationMatrix(ArnConsts::ARNMAT_IDENTITY)
 	, pMeshContainer()
 	, pFrameSibling()
 	, pFrameFirstChild()
@@ -671,7 +671,7 @@ struct MyFrame : public ArnFrame
 {
 	MyFrame()
 	: isRoot(false)
-	, combinedMatrix(ArnConsts::D3DXMAT_IDENTITY)
+	, combinedMatrix(ArnConsts::ARNMAT_IDENTITY)
 	, sibling(0xffffffff)
 	, firstChild(0xffffffff)
 	{

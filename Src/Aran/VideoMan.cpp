@@ -179,7 +179,7 @@ VideoMan::SetWindowSize(int w, int h)
 HRESULT
 VideoMan::InitMainCamera()
 {
-	if (ArnVec3Equals(getMainCamera()->up, ArnConsts::D3DXVEC3_ZERO))
+	if (ArnVec3Equals(getMainCamera()->up, ArnConsts::ARNVEC3_ZERO))
 	{
 		this->mainCamera.eye = CreateArnVec3( 0.0f, 0.0f, -50.0f );
 		this->mainCamera.at = CreateArnVec3( 0.0f, 0.0f, 0.0f );
@@ -236,8 +236,8 @@ VideoMan::SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk )
 	this->mainCamera.eye.y = pCamChunk->pos.y;
 	this->mainCamera.eye.z = pCamChunk->pos.z;
 
-	ArnVec3 lookAtVector = ArnConsts::D3DXVEC3_Z;
-	ArnVec3 upVector = ArnConsts::D3DXVEC3_Y;
+	ArnVec3 lookAtVector = ArnConsts::ARNVEC3_Z;
+	ArnVec3 upVector = ArnConsts::ARNVEC3_Y;
 	ArnMatrix upVectorRot;
 	ArnQuat quat( pCamChunk->rot.x, pCamChunk->rot.y, pCamChunk->rot.z, pCamChunk->rot.w );
 	ArnMatrixRotationQuaternion( &upVectorRot, &quat );
@@ -356,7 +356,7 @@ VideoMan::InitLight()
 	this->defaultLight.Diffuse.g = 0.5f;
 	this->defaultLight.Diffuse.b = 0.5f;
 	this->defaultLight.Diffuse.a = 1.0f;
-	ArnVec3 dir = ArnConsts::D3DXVEC3_Z;
+	ArnVec3 dir = ArnConsts::ARNVEC3_Z;
 	this->defaultLight.Direction = dir;
 
 	/*ZeroMemory(&this->pointLight, sizeof(D3DLIGHT9));

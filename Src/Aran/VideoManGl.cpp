@@ -560,7 +560,7 @@ ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, 
 			ArnVec3 verts[3];
 			for (unsigned int v = 0; v < 3; ++v)
 			{
-				pMesh->getVert(&verts[v], 0, 0, 0, tinds[v], true);
+				pMesh->getVert(&verts[v], 0, 0, tinds[v], true);
 			}
 			float t = 0, u = 0, v = 0;
 			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))

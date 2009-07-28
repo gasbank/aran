@@ -222,7 +222,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib d3d9.lib d3dx9d.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib zlib1d.lib"
+				AdditionalDependencies="AranMath_D.lib d3d9.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib zlib1d.lib"
 				OutputFile="$(WORKING)\$(ProjectName)_D.dll"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;"
 				GenerateDebugInformation="true"
@@ -781,14 +781,6 @@
 			</File>
 			<File
 				RelativePath=".\ModelDrawer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelDrawerDx9.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelDrawerDx9.h"
 				>
 			</File>
 			<File

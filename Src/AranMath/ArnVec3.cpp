@@ -16,7 +16,7 @@ ArnVec3::ArnVec3( float _x, float _y, float _z )
 }
 
 #ifdef WIN32
-ArnVec3::ArnVec3( const D3DXVECTOR3* dxvec )
+ArnVec3::ArnVec3( const D3DVECTOR* dxvec )
 : x(dxvec->x)
 , y(dxvec->y)
 , z(dxvec->z)
@@ -56,12 +56,12 @@ bool ArnVec3Equals( const ArnVec3& v1, const ArnVec3& v2 )
 }
 
 #ifdef WIN32
-const D3DXVECTOR3* ArnVec3GetConstDxPtr( const ArnVec3& v )
+const D3DVECTOR* ArnVec3GetConstDxPtr( const ArnVec3& v )
 {
 	return v.getConstDxPtr();
 }
 
-D3DXVECTOR3* ArnVec3GetDxPtr( ArnVec3& v )
+D3DVECTOR* ArnVec3GetDxPtr( ArnVec3& v )
 {
 	return v.getDxPtr();
 }

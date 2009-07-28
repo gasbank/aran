@@ -3,6 +3,7 @@
 
 #include "zlib.h"
 
+// Copied and modified from zpipe.c example of zlib
 #if defined(MSDOS) || defined(OS2) || defined(WIN32) || defined(__CYGWIN__)
 #  include <fcntl.h>
 #  include <io.h>
@@ -12,23 +13,6 @@
 #endif
 
 #define CHUNK 16384
-
-/*
-using namespace std;
-using namespace boost;
-using namespace boost::lambda;
-
-void func(function<int(int, int)> f, int i, int j)
-{
-    cout << f(i, j) << endl;
-}
-
-void test()
-{
-    func(_1 + _2, 1, 2);
-    func(_1 - _2, 1, 2);
-}
-*/
 
 int inf(FILE *source, char *dest)
 {

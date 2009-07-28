@@ -16,7 +16,7 @@ ArnMatrix::ArnMatrix( float m00, float m01, float m02, float m03, float m10, flo
 }
 
 #ifdef WIN32
-ArnMatrix::ArnMatrix( const D3DXMATRIX* dxmat )
+ArnMatrix::ArnMatrix( const D3DMATRIX* dxmat )
 {
 	memcpy(this, dxmat, sizeof(float)*4*4);
 }
@@ -145,12 +145,12 @@ ArnMatrix ArnMatrixMultiply( const ArnMatrix& m0, const ArnMatrix m1, const ArnM
 }
 
 #ifdef WIN32
-const D3DXMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat)
+const D3DMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat)
 {
 	return mat.getConstDxPtr();
 }
 
-D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
+D3DMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
 {
 	return mat.getDxPtr();
 }

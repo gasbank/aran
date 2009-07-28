@@ -1,7 +1,6 @@
 #ifndef ARNMATRIX_H
 #define ARNMATRIX_H
 
-struct D3DXMATRIX;
 class ArnVec4;
 
 class ARANMATH_API ArnMatrix
@@ -13,7 +12,7 @@ public:
 												float m20, float m21, float m22, float m23,
 												float m30, float m31, float m32, float m33);
 #ifdef WIN32
-									ArnMatrix(const D3DXMATRIX* dxmat);
+									ArnMatrix(const D3DMATRIX* dxmat);
 #endif
 									~ArnMatrix();
 	ArnMatrix						transpose() const;
@@ -25,8 +24,8 @@ public:
 	ArnMatrix&						operator = (const ArnMatrix& rhs);
 #ifdef WIN32
 	ArnMatrix&						operator = (const D3DMATRIX& rhs);
-	const D3DXMATRIX*				getConstDxPtr() const { return reinterpret_cast<const D3DXMATRIX*>(this); }
-	D3DXMATRIX*						getDxPtr() { return reinterpret_cast<D3DXMATRIX*>(this); }
+	const D3DMATRIX*				getConstDxPtr() const { return reinterpret_cast<const D3DMATRIX*>(this); }
+	D3DMATRIX*						getDxPtr() { return reinterpret_cast<D3DMATRIX*>(this); }
 #endif
 	void							getFormatString(char* buf) const;
 
@@ -41,8 +40,8 @@ ARANMATH_API ArnMatrix ArnMatrixMultiply(const ArnMatrix& m0, const ArnMatrix m1
 ARANMATH_API ArnMatrix ArnMatrixMultiply(const ArnMatrix& m0, const ArnMatrix m1, const ArnMatrix m2);
 ARANMATH_API ArnMatrix ArnMatrixTranspose(const ArnMatrix& m);
 #ifdef WIN32
-ARANMATH_API const D3DXMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat);
-ARANMATH_API D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat);
+ARANMATH_API const D3DMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat);
+ARANMATH_API D3DMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat);
 #endif
 
 #endif // ARNMATRIX_H

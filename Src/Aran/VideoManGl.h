@@ -32,7 +32,7 @@ public:
 	virtual void									DrawAtEditor(BOOL isReady, BOOL isRunning) { ARN_THROW_NOT_IMPLEMENTED_ERROR }
 	virtual int										Draw()  { ARN_THROW_NOT_IMPLEMENTED_ERROR }
 	virtual void									setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix& matView, const ArnMatrix& matProj );
-    virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::D3DXMAT_IDENTITY) { ARN_THROW_NOT_IMPLEMENTED_ERROR }
+    virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY) { ARN_THROW_NOT_IMPLEMENTED_ERROR }
 	void											setupGlInfo();
 	bool											setupVboSupport() const;
 	virtual LPDIRECT3DDEVICE9						GetDev() const { ARN_THROW_UNEXPECTED_CASE_ERROR }

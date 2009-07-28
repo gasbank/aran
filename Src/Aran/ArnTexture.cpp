@@ -109,20 +109,16 @@ void ArnTexture::Release()
 	glDeleteTextures(1, &m_textureId);
 }
 
-#ifdef WIN32
-HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )
-{
-	LPDIRECT3DTEXTURE9 tex;
-	D3DXCreateTextureFromFileA(pDevice->GetDev(), pSrcFile, &tex);
-	(*ppTexture)->setDxTexture(tex);
-	return S_OK;
-}
-#else
+
 HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
+
+	//***LPDIRECT3DTEXTURE9 tex;
+	//***D3DXCreateTextureFromFileA(pDevice->GetDev(), pSrcFile, &tex);
+	//***(*ppTexture)->setDxTexture(tex);
+	//***return S_OK;
 }
-#endif
 
 void ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const char* fileName)
 {

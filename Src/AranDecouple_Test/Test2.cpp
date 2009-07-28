@@ -65,6 +65,7 @@ void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGrap
 	for (GLint h = 0; h < hits; ++h)
 	{
 		ArnNode* node = sceneGraph->getNodeById(buff[h].contents);
+		assert(node);
 		printf("[Object 0x%p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
 	}
 }
@@ -78,6 +79,7 @@ int HandleEvent(SDL_Event *event, ArnSceneGraph* sceneGraph, ArnViewportData* av
 		case SDL_MOUSEBUTTONUP:
 			{
 				SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), sceneGraph, avd, cam); // Y-coord flipped.
+
 				ArnMatrix modelview, projection;
 				glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
 				modelview = modelview.transpose();
@@ -92,7 +94,7 @@ int HandleEvent(SDL_Event *event, ArnSceneGraph* sceneGraph, ArnViewportData* av
 					unsigned int faceIdx = 0;
 					ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
 					if (bHit)
-						printf("Hit on Face %u\n", faceIdx);
+						printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
 				}
 			}
 			break;
@@ -246,6 +248,99 @@ GLuint ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int he
 	// build our texture MIP maps
 	gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data );
 	return texture;
+}
+
+void PrintMeshVertexList(const ArnMesh* mesh)
+{
+	if (!mesh)
+		return;
+	unsigned int vertCount = mesh->getTotalVertCount();
+	printf("====== First Mesh Vertex List =======\n");
+	for (unsigned int v = 0; v < vertCount; ++v)
+	{
+		ArnVec3 pos;
+		mesh->getVert(&pos, 0, 0, v, false);
+		printf("[%d] ", v);
+		pos.printFormatString();
+	}
+	const unsigned int faceGroupCount = mesh->getFaceGroupCount();
+	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
+	{
+		unsigned int triCount, quadCount;
+		mesh->getFaceCount(triCount, quadCount, fg);
+		for (unsigned int tc = 0; tc < triCount; ++tc)
+		{
+			unsigned int totalIndex;
+			unsigned int tinds[3];
+			mesh->getTriFace(totalIndex, tinds, fg, tc);
+			printf("Tri OrigInd/VertInds: %d / %d %d %d\n", totalIndex, tinds[0], tinds[1], tinds[2]);
+		}
+	}
+	printf("====== First Mesh Vertex List End =======\n");
+}
+
+void PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
+{
+	float frustumPlanes[6][4];
+	ArnVec3 frustumCorners[8];
+	ArnMatrix modelview, projection;
+	glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+	modelview = modelview.transpose();
+	glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+	projection = projection.transpose();
+	ArnExtractFrustumPlanes(frustumPlanes, &modelview, &projection);
+	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
+	printf("=== Eight Frustum Corder points (calculated from OpenGL matrix stacks) ===\n");
+	for (int i = 0; i < 8; ++i)
+	{
+		frustumCorners[i].printFormatString();
+	}
+	printf("=== Eight Frustum Corder Points End ===\n");
+
+	printf("     === Test Ray ===\n");
+	ArnVec3 origin, dir;
+	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &modelview, &projection, avd);
+	printf("Ray origin   : "); origin.printFormatString();
+	printf("Ray direction: "); dir.printFormatString();
+	printf("     === Test Ray End\n");
+}
+
+void PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const ArnViewportData* avd)
+{
+	float frustumPlanes[6][4];
+	ArnVec3 frustumCorners[8];
+	ArnMatrix camModelview, camProjection;
+	ArnVec3 eye(activeCam->getLocalXform().m[0][3], activeCam->getLocalXform().m[1][3], activeCam->getLocalXform().m[2][3]);
+	ArnVec3 at(activeCam->getLocalXform().m[0][3]-activeCam->getLocalXform().m[0][2], activeCam->getLocalXform().m[1][3]-activeCam->getLocalXform().m[1][2], activeCam->getLocalXform().m[2][3]-activeCam->getLocalXform().m[2][2]);
+	ArnVec3 up(activeCam->getLocalXform().m[0][1], activeCam->getLocalXform().m[1][1], activeCam->getLocalXform().m[2][1]);
+	ArnMatrixLookAtRH(&camModelview, &eye, &at, &up);
+	ArnMatrixPerspectiveYFov(&camProjection, activeCam->getFov(), (float)avd->Width / avd->Height, activeCam->getNearClip(), activeCam->getFarClip(), true);
+	ArnExtractFrustumPlanes(frustumPlanes, &camModelview, &camProjection);
+	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
+	printf("=== Eight Frustum Corder points (calculated from CML routines) ===\n");
+	for (int i = 0; i < 8; ++i)
+	{
+		frustumCorners[i].printFormatString();
+	}
+	printf("=== Eight Frustum Corder Points End ===\n");
+
+	printf("     === Test Ray ===\n");
+	ArnVec3 origin, dir;
+	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &camModelview, &camProjection, avd);
+	printf("Ray origin   : "); origin.printFormatString();
+	printf("Ray direction: "); dir.printFormatString();
+	printf("     === Test Ray End\n");
+}
+
+void PrintRayCastingResultUsingGlu()
+{
+	GLdouble glmv[16], glproj[16];
+	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
+	glGetDoublev(GL_PROJECTION_MATRIX, glproj);
+	GLint glvp[4] = { 0, 0, 640, 480 };
+	GLdouble objx, objy, objz;
+	gluUnProject(320, 240, 0, glmv, glproj, glvp, &objx, &objy, &objz);
+	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
 }
 
 int main(int argc, char *argv[])
@@ -403,20 +498,16 @@ int main(int argc, char *argv[])
 		fprintf(stderr, " *** Provide XML scene file path as the first argument.\n");
 		return -9;
 	}
-	ArnSceneGraph* sceneGraph = ArnSceneGraph::createFrom(argv[1]);
-	if (!sceneGraph)
+	ArnSceneGraph* curSceneGraph = ArnSceneGraph::createFrom(argv[1]);
+	if (!curSceneGraph)
 	{
 		fprintf(stderr, " *** Scene graph is not loaded correctly. Check your input XML scene file.\n");
 		return -5;
 	}
-	sceneGraph->interconnect(sceneGraph);
-	sceneGraph->initRendererObjects();
-	ArnCamera* cam = reinterpret_cast<ArnCamera*>(sceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
-	if (!cam)
-		cam = ArnCamera::createFrom("Auto-generated Camera", ArnQuat::createFromEuler(0, 0, 0), ArnVec3(0, 0, 30), (float)(ARN_PI / 4));
-	cam->recalcLocalXform();
-	cam->recalcAnimLocalXform();
-	cam->printCameraOrientation();
+	curSceneGraph->interconnect(curSceneGraph);
+	curSceneGraph->initRendererObjects();
+
+	// Viewport and camera setting
 	ArnViewportData avd;
 	avd.X = 0;
 	avd.Y = 0;
@@ -424,93 +515,27 @@ int main(int argc, char *argv[])
 	avd.Height = windowHeight;
 	avd.MinZ = 0;
 	avd.MaxZ = 1.0f;
-	ArnConfigureViewportProjectionMatrixGl(&avd, cam);
-	ArnConfigureViewMatrixGl(cam);
+	ArnCamera* activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
+	assert(activeCam);
+	activeCam->recalcLocalXform();
+	activeCam->recalcAnimLocalXform();
+	activeCam->printCameraOrientation();
+	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 
-	ArnLight* light = reinterpret_cast<ArnLight*>(sceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
-	assert(light);
-	ArnConfigureLightGl(0, light);
+	ArnLight* activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
+	assert(activeLight);
 
-	ArnMesh* mesh = reinterpret_cast<ArnMesh*>(sceneGraph->findFirstNodeOfType(NDT_RT_MESH));
-	/*
-	if (mesh)
-	{
-		unsigned int vertCount = mesh->getVertCount(0);
-		printf("====== First Mesh Vertex List =======\n");
-		for (unsigned int v = 0; v < vertCount; ++v)
-		{
-			ArnVec3 pos;
-			mesh->getVert(&pos, 0, 0, 0, v, false);
-			printf("[%d] ", v);
-			pos.printFormatString();
-		}
-		const unsigned int faceGroupCount = mesh->getFaceGroupCount();
-		for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
-		{
-			unsigned int triCount, quadCount;
-			mesh->getFaceCount(triCount, quadCount, fg);
-			for (unsigned int tc = 0; tc < triCount; ++tc)
-			{
-				unsigned int totalIndex;
-				unsigned int tinds[3];
-				mesh->getTriFace(totalIndex, tinds, fg, tc);
-				printf("Tri OrigInd/VertInds: %d / %d %d %d\n", totalIndex, tinds[0], tinds[1], tinds[2]);
-			}
-		}
-		printf("====== First Mesh Vertex List End =======\n");
-	}
-	*/
-
-
-	ArnMatrix modelview, projection;
-	glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-	modelview = modelview.transpose();
-	glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-	projection = projection.transpose();
-	float frustumPlanes[6][4];
-	ArnExtractFrustumPlanes(frustumPlanes, &modelview, &projection);
-	ArnVec3 frustumCorners[8];
-	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
-	printf("=== Eight Frustum Corder points (calculated from OpenGL matrix stacks) ===\n");
-	for (int i = 0; i < 8; ++i)
-	{
-		frustumCorners[i].printFormatString();
-	}
-	printf("=== Eight Frustum Corder Points End ===\n");
-
-	ArnMatrix camModelview, camProjection;
-	ArnVec3 eye(cam->getLocalXform().m[0][3], cam->getLocalXform().m[1][3], cam->getLocalXform().m[2][3]);
-	ArnVec3 at(cam->getLocalXform().m[0][3]-cam->getLocalXform().m[0][2], cam->getLocalXform().m[1][3]-cam->getLocalXform().m[1][2], cam->getLocalXform().m[2][3]-cam->getLocalXform().m[2][2]);
-	ArnVec3 up(cam->getLocalXform().m[0][1], cam->getLocalXform().m[1][1], cam->getLocalXform().m[2][1]);
-	ArnMatrixLookAtRH(&camModelview, &eye, &at, &up);
-	ArnMatrixPerspectiveYFov(&camProjection, cam->getFov(), (float)avd.Width / avd.Height, cam->getNearClip(), cam->getFarClip(), true);
-	ArnExtractFrustumPlanes(frustumPlanes, &camModelview, &camProjection);
-	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
-	printf("=== Eight Frustum Corder points (calculated from CML routines) ===\n");
-	for (int i = 0; i < 8; ++i)
-	{
-		frustumCorners[i].printFormatString();
-	}
-	printf("=== Eight Frustum Corder Points End ===\n");
-
-
-	printf("=== Test Ray ===\n");
-	ArnVec3 origin, dir;
-	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &modelview, &projection, &avd);
-	printf("Ray origin   : "); origin.printFormatString();
-	printf("Ray direction: "); dir.printFormatString();
-	printf("=== Test Ray End\n");
-
-	GLdouble glmv[16], glproj[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
-	glGetDoublev(GL_PROJECTION_MATRIX, glproj);
-	GLint glvp[4] = { 0, 0, 640, 480 };
-	GLdouble objx, objy, objz;
-	gluUnProject(320, 240, 0, glmv, glproj, glvp, &objx, &objy, &objz);
-	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
-
-
-	// TODO: Normalized cube map
+	//
+	// DEBUG PURPOSE
+	// A little test on modelview, projection matrix
+	// by checking frustum corner points and ray casting.
+	//
+	PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
+	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
+	PrintRayCastingResultUsingGlu();
+	
+	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
 
 	/* Loop until done. */
@@ -533,16 +558,21 @@ int main(int argc, char *argv[])
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		ArnConfigureViewMatrixGl(cam);
-		ArnConfigureLightGl(0, light);
+		if (activeCam)
+			ArnConfigureViewMatrixGl(activeCam);
+		if (activeLight)
+			ArnConfigureLightGl(0, activeLight);
 		
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 		glPushMatrix();
 		{
-			sceneGraph->render();
-			sceneGraph->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+			if (curSceneGraph)
+			{
+				curSceneGraph->render();
+				curSceneGraph->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+			}			
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTextureId);
 		}
 		glPopMatrix();
@@ -566,7 +596,7 @@ int main(int argc, char *argv[])
 
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
-			done = HandleEvent(&event, sceneGraph, &avd, cam);
+			done = HandleEvent(&event, curSceneGraph, &avd, activeCam);
 		}
 		++frames;
 		frameEndMs = SDL_GetTicks();
@@ -575,14 +605,11 @@ int main(int argc, char *argv[])
 	/* Print out the frames per second */
 	unsigned int this_time = SDL_GetTicks();
 	if ( this_time != start_time ) {
-		printf("%2.2f FPS\n",
-			((float)frames/(this_time-start_time))*1000.0);
+		printf("%2.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
 
-	delete cam;
-	cam = 0;
-	delete sceneGraph;
-	sceneGraph = 0;
+	delete curSceneGraph;
+	curSceneGraph = 0;
 
 	glDeleteTextures(1, &fontTextureId);
 	DeallocateXmlParser();
