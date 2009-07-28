@@ -27,7 +27,6 @@
 #include <fstream>
 #include <list>
 #include <vector>
-#include <tr1/memory> // TODO: EXPERIMENTAL
 
 #ifndef WIN32
 	#define GL_GLEXT_PROTOTYPES
@@ -71,7 +70,7 @@ XERCES_CPP_NAMESPACE_USE
 //
 // Aran Library
 //
-#include "../Macros.h"
+#include "Macros.h"
 #include "Structs.h"
 #include "Singleton.h"
 #include "Log.h"

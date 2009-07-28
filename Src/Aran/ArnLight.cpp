@@ -52,6 +52,7 @@ void ArnLight::buildFrom( const NodeLight2* nl )
 void ArnLight::interconnect( ArnNode* sceneRoot )
 {
 	setIpo(getIpoName());
+	configureAnimCtrl();
 
 	ArnNode::interconnect(sceneRoot);
 }

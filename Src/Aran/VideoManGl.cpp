@@ -262,7 +262,8 @@ void ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const 
 
 void ArnConfigureViewMatrixGl(ArnCamera* cam)
 {
-	ArnMatrix localTf = cam->getLocalXform();
+	//ArnMatrix localTf = cam->getLocalXform();
+	ArnMatrix localTf = cam->getFinalLocalXform();
 
 	ARN_CAMERA mainCamera;
 	mainCamera.eye.x = localTf.m[0][3];
@@ -299,7 +300,7 @@ void ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 		if (lightType == 1)
 		{
 			// Point light (e.g. bulb)
-			ArnVec4 pos(light->getD3DLightData().Position, 1);
+			ArnVec4 pos(light->getFinalLocalXform().getColumnVec3(3), 1);
 			float a0 = 0.001f;
 			float a1 = 0.1f;
 			float a2 = 0.00001f;

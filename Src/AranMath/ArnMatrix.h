@@ -17,6 +17,7 @@ public:
 #endif
 									~ArnMatrix();
 	ArnMatrix						transpose() const;
+	ArnVec3							getColumnVec3(unsigned int zeroindex) const;
 	ArnMatrix						operator * ( const ArnMatrix& rhs ) const;
 	ArnVec4							operator * ( const ArnVec4& rhs ) const;
 	ArnMatrix&						operator *= ( float f ); // Scalar multiplication
@@ -31,8 +32,6 @@ public:
 
 	float							m[4][4]; // First index is row index, second index is column index!!!
 };
-
-typedef std::tr1::shared_ptr<ArnMatrix> ArnMatrixPtr;
 
 ARANMATH_API ArnMatrix CreateArnMatrix(float m00, float m01, float m02, float m03,
 						  float m10, float m11, float m12, float m13,

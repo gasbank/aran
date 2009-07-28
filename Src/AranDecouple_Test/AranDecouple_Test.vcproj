@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../Aran;../AranMath;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"

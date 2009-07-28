@@ -187,7 +187,7 @@ void ArnSceneGraph::initRendererObjects()
 		{
 			ArnMesh* mesh = static_cast<ArnMesh*>(node);
 			mesh->initRendererObject();
-			mesh->configureIpo();
+			//mesh->configureIpo();
 		}
 		else if (node->getType() == NDT_RT_MATERIAL)
 		{

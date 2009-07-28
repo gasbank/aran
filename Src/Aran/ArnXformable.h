@@ -12,7 +12,7 @@ class ARAN_API ArnXformable : public ArnNode
 public:
 	virtual										~ArnXformable(void);
 	inline const STRING&						getIpoName() const;
-	inline const ArnMatrix&						getFinalLocalXform();
+	inline const ArnMatrix&						getFinalLocalXform() const;
 	inline const ArnVec3&						getLocalXform_Scale() const;
 	inline void									setLocalXform_Scale(const ArnVec3& scale);
 	inline const ArnQuat&						getLocalXform_Rot() const;
@@ -20,12 +20,16 @@ public:
 	inline const ArnVec3&						getLocalXform_Trans() const;
 	inline void									setLocalXform_Trans(const ArnVec3& trans);
 	inline const ArnQuat&						getAnimLocalXform_Rot() const;
-	void										setAnimLocalXform_Rot(const ArnQuat& q);
+	inline void									setAnimLocalXform_Rot(const ArnQuat& q);
+	inline void									setAnimLocalXform_Scale(const ArnVec3& scale);
+	inline void									setAnimLocalXform_Trans(const ArnVec3& trans);
+
 	inline bool									isAnimSeqEnded() const;
 	inline const ArnMatrix&						getLocalXform() const; // m_localXform will not be updated until recalcLocalXform() is called.
 	inline void									resetAnimSeqTime();
 	ArnMatrix									getFinalXform();
 	void										recalcLocalXform();
+	void										recalcAnimLocalXform();
 	double										getAnimCtrlTime() const;
 	void										setAnimCtrlTime( double dTime );
 	void										setDoAnim( bool bDoAnim );
@@ -65,6 +69,7 @@ private:
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
 	bool										m_bLocalXformDirty;
+	bool										m_bAnimLocalXformDirty;
 };
 
 #include "ArnXformable.inl"

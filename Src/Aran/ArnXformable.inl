@@ -86,3 +86,18 @@ bool ArnXformable::isLocalXformDirty() const
 {
 	return m_bLocalXformDirty;
 }
+
+void ArnXformable::setAnimLocalXform_Rot( const ArnQuat& q )
+{
+	m_animLocalXform_Rot = q;
+}
+
+void ArnXformable::setAnimLocalXform_Scale( const ArnVec3& scale )
+{
+	m_animLocalXform_Scale = scale;
+}
+
+void ArnXformable::setAnimLocalXform_Trans( const ArnVec3& trans )
+{
+	m_animLocalXform_Trans = trans;
+}

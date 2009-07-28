@@ -36,3 +36,11 @@ ArnAction::interconnect(ArnNode* sceneRoot)
 		m_objectIpoMap[obj] = ipo;
 	}
 }
+
+ArnAction* ArnAction::createFrom(ArnNode* obj, ArnIpo* ipo)
+{
+	ArnAction* ret = new ArnAction();
+	ret->addMap(obj->getName(), ipo->getName());
+	ret->m_objectIpoMap[obj] = ipo;
+	return ret;
+}

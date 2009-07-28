@@ -195,7 +195,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
 				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_USRDLL;ARAN_EXPORTS;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -659,14 +659,6 @@
 				RelativePath=".\ArnXmlLoader.h"
 				>
 			</File>
-			<File
-				RelativePath=".\ArnXmlString.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnXmlString.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Sources &amp; Headers"
@@ -677,6 +669,10 @@
 			</File>
 			<File
 				RelativePath=".\Animation.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AranApi.cpp"
 				>
 			</File>
 			<File
@@ -721,6 +717,14 @@
 			</File>
 			<File
 				RelativePath=".\AranPCH.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGlExt.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGlExt.h"
 				>
 			</File>
 			<File
@@ -896,14 +900,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\ArnGlExt.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnGlExt.h"
-			>
-		</File>
 		<File
 			RelativePath="..\Macros.h"
 			>

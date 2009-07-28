@@ -250,8 +250,8 @@ GLuint ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int he
 
 int main(int argc, char *argv[])
 {
-	const int windowWidth = 640;
-	const int windowHeight = 480;
+	const int windowWidth = 1024;
+	const int windowHeight = 768;
 	const int bpp = 32;
 	const int depthSize = 24;
 	bool bFullScreen = false;
@@ -321,7 +321,7 @@ int main(int argc, char *argv[])
 	ArnInitGlExtFunctions();
 
 	/* Set the window manager title bar */
-	SDL_WM_SetCaption( "Realtime User Control Biped", "RUCB" );
+	SDL_WM_SetCaption( "aran", "aran" );
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
@@ -365,7 +365,7 @@ int main(int argc, char *argv[])
 	pen_x = 0;
 	pen_y = 0;
 	wchar_t testString[128];
-	swprintf(testString, 128, L"RUCB (Aran build %ld)", ArnGetBuildCount());
+	swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
 	size_t testStringLen = wcslen(testString);
 	int textTextureSize = 256;
 	unsigned char* fontTexture = (unsigned char*)malloc( textTextureSize * textTextureSize * 4 ); // RGBA texture
@@ -415,6 +415,7 @@ int main(int argc, char *argv[])
 	if (!cam)
 		cam = ArnCamera::createFrom("Auto-generated Camera", ArnQuat::createFromEuler(0, 0, 0), ArnVec3(0, 0, 30), (float)(ARN_PI / 4));
 	cam->recalcLocalXform();
+	cam->recalcAnimLocalXform();
 	cam->printCameraOrientation();
 	ArnViewportData avd;
 	avd.X = 0;
@@ -423,7 +424,6 @@ int main(int argc, char *argv[])
 	avd.Height = windowHeight;
 	avd.MinZ = 0;
 	avd.MaxZ = 1.0f;
-	cam->recalcLocalXform();
 	ArnConfigureViewportProjectionMatrixGl(&avd, cam);
 	ArnConfigureViewMatrixGl(cam);
 
@@ -432,6 +432,7 @@ int main(int argc, char *argv[])
 	ArnConfigureLightGl(0, light);
 
 	ArnMesh* mesh = reinterpret_cast<ArnMesh*>(sceneGraph->findFirstNodeOfType(NDT_RT_MESH));
+	/*
 	if (mesh)
 	{
 		unsigned int vertCount = mesh->getVertCount(0);
@@ -458,6 +459,7 @@ int main(int argc, char *argv[])
 		}
 		printf("====== First Mesh Vertex List End =======\n");
 	}
+	*/
 
 
 	ArnMatrix modelview, projection;
@@ -529,8 +531,14 @@ int main(int argc, char *argv[])
 		/* Do our drawing, too. */
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		ArnConfigureViewMatrixGl(cam);
+		ArnConfigureLightGl(0, light);
+		
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
+
 		glPushMatrix();
 		{
 			sceneGraph->render();

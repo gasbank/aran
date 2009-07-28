@@ -14,6 +14,7 @@ public:
 											ArnAction();
 	virtual									~ArnAction();
 	static ArnAction*						createFrom(const DOMElement* elm);
+	static ArnAction*						createFrom(ArnNode* obj, ArnIpo* ipo);
 	const std::map<ArnNode*, ArnIpo*>&		getObjectIpoMap() const { return m_objectIpoMap; }
 	// *** INTERNAL USE ONLY START ***
 	virtual void							interconnect(ArnNode* sceneRoot);

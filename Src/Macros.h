@@ -1,5 +1,5 @@
 // Macros.h
-// 2007 Geoyeob Kim
+// 2007, 2008, 2009 Geoyeob Kim
 //
 // This file is shared between Aran and ModelExporter C++ Projects at VS2005 Solution.
 // Should have dependency on d3dx9.h but NOT have on any 3ds Max related headers

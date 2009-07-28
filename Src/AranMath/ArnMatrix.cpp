@@ -120,6 +120,11 @@ ArnMatrix::operator = (const D3DMATRIX& rhs)
 	return *this;
 }
 
+ArnVec3 ArnMatrix::getColumnVec3( unsigned int zeroindex ) const
+{
+	assert(zeroindex < 4);
+	return ArnVec3(m[0][zeroindex], m[1][zeroindex], m[2][zeroindex]);
+}
 #endif
 
 //////////////////////////////////////////////////////////////////////////

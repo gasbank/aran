@@ -48,7 +48,7 @@ ParseFloatFromAttr(const DOMElement* elm, const char* attrName)
 {
 	std::string val;
 	GetAttr(val, elm, attrName);
-	return atof(val.c_str());
+	return float(atof(val.c_str()));
 }
 
 static int
@@ -787,7 +787,7 @@ ArnAction::createFrom(const DOMElement* elm)
 		GetAttr(ssObjName, mapElm, "obj");
 		std::string ssIpoName;
 		GetAttr(ssIpoName, mapElm, "ipo");
-		ret->m_objectIpoNameMap[ssObjName.c_str()] = ssIpoName.c_str();
+		ret->addMap(ssObjName.c_str(), ssIpoName.c_str());
 	}
 	return ret;
 }

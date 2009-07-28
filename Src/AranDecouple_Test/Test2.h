@@ -12,7 +12,6 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <tr1/memory>
 
 #ifdef WIN32
 	#include <SDL.h>

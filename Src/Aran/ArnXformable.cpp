@@ -5,6 +5,7 @@
 #include "Animation.h"
 #include "ArnAnimationController.h"
 #include "ArnConsts.h"
+#include "ArnAction.h"
 
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 : ArnNode(ndt)
@@ -13,13 +14,17 @@ ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 , m_bDoAnim(false)
 , m_bAnimSeqEnded(false)
 , m_bLocalXformDirty(true)
+, m_bAnimLocalXformDirty(true)
+, m_localXform_Scale(ArnConsts::D3DXVEC3_ONE)
+, m_localXform_Trans(ArnConsts::D3DXVEC3_ZERO)
+, m_localXform_Rot(ArnConsts::D3DXQUAT_IDENTITY)
+, m_localXform(ArnConsts::D3DXMAT_IDENTITY)
+, m_animLocalXform_Scale(ArnConsts::D3DXVEC3_ONE)
+, m_animLocalXform_Trans(ArnConsts::D3DXVEC3_ZERO)
+, m_animLocalXform_Rot(ArnConsts::D3DXQUAT_IDENTITY)
+, m_animLocalXform(ArnConsts::D3DXMAT_IDENTITY)
+, m_localXformIpo(ArnConsts::D3DXMAT_IDENTITY)
 {
-	m_localXform_Scale	= ArnConsts::D3DXVEC3_ONE;
-	m_localXform_Trans	= ArnConsts::D3DXVEC3_ZERO;
-	m_localXform_Rot	= ArnConsts::D3DXQUAT_IDENTITY;
-	m_animLocalXform	= ArnConsts::D3DXMAT_IDENTITY;
-	m_localXform		= ArnConsts::D3DXMAT_IDENTITY;
-	m_localXformIpo		= ArnConsts::D3DXMAT_IDENTITY;
 }
 
 ArnXformable::~ArnXformable(void)
@@ -124,6 +129,10 @@ ArnXformable::configureAnimCtrl()
 	{
 		// Newer way
 		m_d3dxAnimCtrl->RegisterIpo(ipo);
+		// Need to create simple object-ipo mapping (ArnAction) instance
+		// since this is a single object with an animation.
+		ArnAction* action = ArnAction::createFrom(this, ipo);
+		m_d3dxAnimCtrl->RegisterAnimationSet(action);
 		m_d3dxAnimCtrl->SetTrackAnimationSet(0, 0);
 	}
 	m_d3dxAnimCtrl->SetTrackPosition(0, 0.0f);
@@ -131,9 +140,9 @@ ArnXformable::configureAnimCtrl()
 	m_d3dxAnimCtrl->SetTrackWeight(0, 1.0f);
 	m_d3dxAnimCtrl->SetTrackEnable(0, TRUE);
 	V_VERIFY(m_d3dxAnimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, &m_animLocalXform_Scale, &m_animLocalXform_Rot, &m_animLocalXform_Trans));
-	m_d3dxAnimCtrl->AdvanceTime( 0.0001 );
+	m_d3dxAnimCtrl->AdvanceTime(0); // Initialize animation matrix outputs
 
-	//setDoAnim(true); // Start Animation right now.
+	setDoAnim(true); // Start Animation right now.
 }
 
 void
@@ -141,7 +150,8 @@ ArnXformable::update( double fTime, float fElapsedTime )
 {
 	if (m_bDoAnim && m_d3dxAnimCtrl)
 	{
-		m_d3dxAnimCtrl->AdvanceTime(0.005, 0);
+		//m_d3dxAnimCtrl->AdvanceTime(0.005, 0);
+		m_d3dxAnimCtrl->AdvanceTime(fElapsedTime, 0);
 
 		/*
 		ARNTRACK_DESC trackDesc;
@@ -183,23 +193,31 @@ ArnXformable::recalcLocalXform()
 	m_bLocalXformDirty = false;
 }
 
-
 void
-ArnXformable::setAnimLocalXform_Rot( const ArnQuat& q )
+ArnXformable::recalcAnimLocalXform()
 {
-	m_animLocalXform_Rot = q;
+	m_animLocalXform_Rot.normalize();
+	ArnMatrixTransformation(&m_animLocalXform, 0, 0, &m_animLocalXform_Scale, 0, &m_animLocalXform_Rot, &m_animLocalXform_Trans);
+	m_bAnimLocalXformDirty = false;
 }
 
+
 const ArnMatrix&
-ArnXformable::getFinalLocalXform()
+ArnXformable::getFinalLocalXform() const
 {
 	// TODO: We need urgent transformation matrix cleanup -_-;
 
 	//m_finalLocalXform = m_animLocalXform * m_localXformIpo;
 	if (m_ipo)
+	{
+		assert(m_bAnimLocalXformDirty == false);
 		return m_animLocalXform;
+	}
 	else
+	{
+		assert(m_bLocalXformDirty == false);
 		return m_localXform;
+	}
 }
 
 double
@@ -247,3 +265,4 @@ ArnXformable::configureIpo()
 		setIpo(getIpoName());
 	configureAnimCtrl();
 }
+

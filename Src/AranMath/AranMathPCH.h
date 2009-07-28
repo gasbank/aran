@@ -23,7 +23,6 @@
 #include <fstream>
 #include <list>
 #include <vector>
-#include <tr1/memory> // TODO: EXPERIMENTAL
 
 //
 // Configurable Math Library (cml)
@@ -33,5 +32,5 @@
 //
 // Aran Library Global Macros
 //
-#include "../Macros.h"
+#include "Macros.h"
 #include "AranMathTypeDefs.h"
