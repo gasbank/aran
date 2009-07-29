@@ -740,23 +740,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\glext.h"
-				>
-			</File>
-			<File
 				RelativePath=".\glInfo.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\glInfo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\inotify-cxx.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\inotify-cxx.h"
 				>
 			</File>
 			<File
@@ -796,10 +784,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MyError.h"
-				>
-			</File>
-			<File
 				RelativePath=".\PreciseTimer.cpp"
 				>
 			</File>
@@ -825,10 +809,6 @@
 			</File>
 			<File
 				RelativePath=".\RenderLayer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
 				>
 			</File>
 			<File
@@ -892,10 +872,30 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath="..\Macros.h"
+		<Filter
+			Name="Headers only"
 			>
-		</File>
+			<File
+				RelativePath=".\ArnGlExtEntry.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glext.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Macros.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MyError.h"
+				>
+			</File>
+			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+		</Filter>
 	</Files>
 	<Globals>
 		<Global

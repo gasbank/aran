@@ -12,10 +12,12 @@ enum MessageHandleResult
 {
 	MHR_DO_NOTHING,
 	MHR_EXIT_APP,
-	MHR_NEXT_SCENE
+	MHR_NEXT_SCENE,
+	MHR_RELOAD_SCENE
 };
 
-void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam )
+static void
+SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam )
 {
 	if (!sceneGraph)
 		return;
@@ -79,7 +81,8 @@ void SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGrap
 	}
 }
 
-MessageHandleResult HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, ArnViewportData* avd)
+static MessageHandleResult
+HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, ArnViewportData* avd)
 {
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
@@ -92,25 +95,28 @@ MessageHandleResult HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, 
 	switch( event->type ) {
 		case SDL_MOUSEBUTTONUP:
 			{
-				SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), curSceneGraph, avd, activeCam); // Y-coord flipped.
-
-				if (curSceneGraph)
+				if (event->button.button == SDL_BUTTON_LEFT)
 				{
-					ArnMatrix modelview, projection;
-					glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-					modelview = modelview.transpose();
-					glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-					projection = projection.transpose();
-					ArnVec3 origin, direction;
-					ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
-					ArnMesh* mesh = reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH));
-					if (mesh)
+					SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), curSceneGraph, avd, activeCam); // Y-coord flipped.
+
+					if (curSceneGraph)
 					{
-						bool bHit = false;
-						unsigned int faceIdx = 0;
-						ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-						if (bHit)
-							printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+						ArnMatrix modelview, projection;
+						glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+						modelview = modelview.transpose();
+						glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+						projection = projection.transpose();
+						ArnVec3 origin, direction;
+						ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
+						ArnMesh* mesh = reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH));
+						if (mesh)
+						{
+							bool bHit = false;
+							unsigned int faceIdx = 0;
+							ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
+							if (bHit)
+								printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+						}
 					}
 				}
 			}
@@ -177,6 +183,10 @@ MessageHandleResult HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, 
 			{
 				done = MHR_NEXT_SCENE;
 			}
+			else if (event->key.keysym.sym == SDLK_r)
+			{
+				done = MHR_RELOAD_SCENE;
+			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
@@ -187,7 +197,8 @@ MessageHandleResult HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, 
 	return done;
 }
 
-void DrawString(const char *str, int x, int y, float color[4], void *font)
+static void
+DrawString(const char *str, int x, int y, float color[4], void *font)
 {
 	glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT); // lighting and color mask
 	glDisable(GL_LIGHTING);     // need to disable lighting for proper text color
@@ -206,7 +217,8 @@ void DrawString(const char *str, int x, int y, float color[4], void *font)
 	glPopAttrib();
 }
 
-void RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, GLuint fontTextureId)
+static void
+RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, GLuint fontTextureId)
 {
 	// backup current model-view matrix
 	glPushMatrix();                     // save current modelview matrix
@@ -253,7 +265,8 @@ void RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned i
 	glPopMatrix();                   // restore to previous modelview matrix
 }
 
-GLuint ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int height, bool wrap )
+static GLuint
+ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int height, bool wrap )
 {
 	GLuint texture;
 	// allocate a texture name
@@ -281,7 +294,8 @@ GLuint ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int he
 	return texture;
 }
 
-void PrintMeshVertexList(const ArnMesh* mesh)
+static void
+PrintMeshVertexList(const ArnMesh* mesh)
 {
 	if (!mesh)
 		return;
@@ -310,7 +324,8 @@ void PrintMeshVertexList(const ArnMesh* mesh)
 	printf("====== First Mesh Vertex List End =======\n");
 }
 
-void PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
+static void
+PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
 {
 	float frustumPlanes[6][4];
 	ArnVec3 frustumCorners[8];
@@ -336,7 +351,8 @@ void PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
 	printf("     === Test Ray End\n");
 }
 
-void PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const ArnViewportData* avd)
+static void
+PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const ArnViewportData* avd)
 {
 	float frustumPlanes[6][4];
 	ArnVec3 frustumCorners[8];
@@ -363,7 +379,8 @@ void PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const Ar
 	printf("     === Test Ray End\n");
 }
 
-void PrintRayCastingResultUsingGlu()
+static void
+PrintRayCastingResultUsingGlu()
 {
 	GLdouble glmv[16], glproj[16];
 	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
@@ -374,7 +391,8 @@ void PrintRayCastingResultUsingGlu()
 	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
 }
 
-int ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, const char* sceneFileName, const ArnViewportData* avd)
+static int
+ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, const char* sceneFileName, const ArnViewportData* avd)
 {
 	assert(curSceneGraph || activeCam || activeLight == 0);
 
@@ -401,6 +419,50 @@ int ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, Arn
 	std::cout << "   Scene file " << sceneFileName << " loaded successfully." << std::endl;
 	return 0;
 }
+
+static int
+ConfigureNextTestSceneWithRetry(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+{
+	assert(nextSceneIndex < (int)sceneList.size());
+	delete curSceneGraph;
+	curSceneIndex = nextSceneIndex;
+	curSceneGraph = 0;
+	activeCam = 0;
+	activeLight = 0;
+	unsigned int retryCount = 0;
+	while (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+	{
+		curSceneIndex = (curSceneIndex + 1) % sceneList.size();
+		++retryCount;
+		if (retryCount >= sceneList.size())
+		{
+			std::cerr << " *** All provided scene files have errors." << std::endl;
+			return -12;
+		}
+	}
+
+	// Note: Scene loaded successfully.
+
+	//
+	// DEBUG PURPOSE
+	// A little test on modelview, projection matrix
+	// by checking frustum corner points and ray casting.
+	//
+	/*
+	PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
+	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
+	PrintRayCastingResultUsingGlu();
+	*/
+	return 0;
+}
+
+static int
+ReloadCurrentScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+{
+	return ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, curSceneIndex, sceneList, avd);
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -564,7 +626,6 @@ int main(int argc, char *argv[])
 	std::vector<std::string> sceneList;
 	std::ifstream sceneListStream("SceneList.txt");
 	std::string sceneFile;
-	int curSceneIndex = -1;
 	if (!sceneListStream.is_open())
 	{
 		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
@@ -578,31 +639,13 @@ int main(int argc, char *argv[])
 	ArnSceneGraph* curSceneGraph = 0;
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
+	int curSceneIndex = -1;
 	if (sceneFile.size() > 0)
 	{
-		curSceneIndex = 0;
-		if (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+		if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, 0, sceneList, avd) < 0)
 		{
-			curSceneIndex = -1;
-			curSceneGraph = 0;
-			activeCam = 0;
-			activeLight = 0;
-		}
-		else
-		{
-			// Scene file load succeeded.
-
-			//
-			// DEBUG PURPOSE
-			// A little test on modelview, projection matrix
-			// by checking frustum corner points and ray casting.
-			//
-			/*
-			PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
-			PrintFrustumCornersBasedOnGlMatrixStack(&avd);
-			PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
-			PrintRayCastingResultUsingGlu();
-			*/
+			std::cerr << " *** Aborting..." << std::endl;
+			return -11;
 		}
 	}
 	
@@ -671,21 +714,19 @@ int main(int argc, char *argv[])
 
 			if (done == MHR_NEXT_SCENE)
 			{
-				delete curSceneGraph;
-				curSceneIndex = (curSceneIndex + 1) % sceneList.size();
-				curSceneGraph = 0;
-				activeCam = 0;
-				activeLight = 0;
-				unsigned int retryCount = 0;
-				while (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
+				if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
 				{
-					curSceneIndex = (curSceneIndex + 1) % sceneList.size();
-					++retryCount;
-					if (retryCount >= sceneList.size())
-					{
-						std::cerr << " *** All provided scene files have errors. Aborting..." << std::endl;
-						done = MHR_EXIT_APP;
-					}
+					std::cerr << " *** Aborting..." << std::endl;
+					done = MHR_EXIT_APP;
+				}
+			}
+			else if (done == MHR_RELOAD_SCENE)
+			{
+				if (ReloadCurrentScene(curSceneGraph, activeCam, activeLight, curSceneIndex, sceneList, avd) < 0)
+				{
+					std::cerr << " *** Aborting..." << std::endl;
+					done = MHR_EXIT_APP;
 				}
 			}
 		}
