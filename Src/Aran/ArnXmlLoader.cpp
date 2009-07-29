@@ -531,6 +531,20 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 	{
 		ret->m_triquadUvChunk = 0;
 	}
+
+	DOMElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
+	if (bbElm)
+	{
+		DOMElement* bbChunkElm = GetUniqueChildElement(bbElm, "chunk");
+		assert(bbChunkElm);
+		std::auto_ptr<ArnBinaryChunk> abc(ArnBinaryChunk::createFrom(bbChunkElm, binaryChunkBasePtr));
+		assert(abc->getRecordCount() == 8); // Should have 8 corner points of bounding box
+		ArnVec3 bb[8];
+		for (int i = 0; i < 8; ++i)
+			bb[i] = *reinterpret_cast<const ArnVec3*>(abc->getRecordAt(i));
+		ret->setBoundingBoxPoints(bb);
+	}
+
 	ret->m_renderFunc = &ArnMesh::renderXml;
 	ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectXml;
 	return ret;

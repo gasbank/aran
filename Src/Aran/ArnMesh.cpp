@@ -30,7 +30,10 @@ ArnMesh::ArnMesh()
 , m_initRendererObjectFunc(0)
 , m_nodeMesh3(0)
 , m_vertexChunk(0)
+, m_bBoundingBoxPointsDirty(true)
+, m_bRenderBoundingBox(true)
 {
+	memset(m_boundingBoxPoints, 0, sizeof(ArnVec3) * 8);
 }
 
 ArnMesh::~ArnMesh(void)
@@ -469,7 +472,7 @@ ArnMesh::renderXml()
 		glEnableClientState(GL_VERTEX_ARRAY);
 
 		glPushMatrix();
-		glPushAttrib(GL_ENABLE_BIT);
+		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		{
 			recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 			glMultTransposeMatrixf((float*)getFinalLocalXform().m);
@@ -502,6 +505,48 @@ ArnMesh::renderXml()
 				glNormalPointer(GL_FLOAT, vboEntrySize, (void*)((sizeof(float)*3 + triFaceVertSize)));
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, (void*)(0 + triFaceVertSize));
 				glDrawArrays(GL_QUADS, 0, quadFaceCount * 4);
+			}
+
+			// Bounding Box
+			if (!m_bBoundingBoxPointsDirty && m_bRenderBoundingBox)
+			{
+				glDisable(GL_LIGHTING);
+				glDisable(GL_CULL_FACE);
+				glLineWidth(0.5f);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glColor3f(1.0f, 1.0f, 1.0f);
+
+				glBegin(GL_QUADS);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
+				
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
+
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
+
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
+
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
+
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
+				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);				
+				glEnd();
 			}
 		}
 		glPopAttrib();
@@ -579,6 +624,12 @@ unsigned int ArnMesh::getVertCountOfVertGroup( unsigned int vertGroupIdx ) const
 	{
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
+}
+
+void ArnMesh::setBoundingBoxPoints( ArnVec3 bb[8] )
+{
+	memcpy(m_boundingBoxPoints, bb, sizeof(ArnVec3) * 8 );
+	m_bBoundingBoxPointsDirty = false;
 }
 //////////////////////////////////////////////////////////////////////////
 

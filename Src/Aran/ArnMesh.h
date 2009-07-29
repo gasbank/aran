@@ -50,12 +50,13 @@ public:
 	// *********************************  INTERNAL USE ONLY END  *********************************
 private:
 											ArnMesh();
-
 	void									buildFrom(const NodeMesh2* nm);
 	void									buildFrom(const NodeMesh3* nm);
-
 	bool									initRendererObjectVbIb();
 	bool									initRendererObjectXml();
+	void									setVertexBuffer(const ArnVertexBuffer* vb);
+	void									setIndexBuffer(const ArnIndexBuffer* ib);
+	void									setBoundingBoxPoints(ArnVec3 bb[8]);
 
 
 	struct FaceGroup
@@ -95,9 +96,6 @@ private:
 			indWeight;
 	};
 	std::vector<BoneDataInternal>			m_boneDataInt;
-
-	void									setVertexBuffer(const ArnVertexBuffer* vb);
-	void									setIndexBuffer(const ArnIndexBuffer* ib);
 	const ArnVertexBuffer*					m_arnVb;
 	const ArnIndexBuffer*					m_arnIb;
 	ArnBinaryChunk*							m_triquadUvChunk;
@@ -107,6 +105,10 @@ private:
 	GLuint									m_vboUv;
 	
 	bool									m_bTwoSided;
+	// In sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
+	ArnVec3									m_boundingBoxPoints[8];
+	bool									m_bBoundingBoxPointsDirty;
+	bool									m_bRenderBoundingBox;
 
 	void									(ArnMesh::*m_renderFunc)();
 	bool									(ArnMesh::*m_initRendererObjectFunc)();

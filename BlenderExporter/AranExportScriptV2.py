@@ -14,7 +14,8 @@ import zlib
 import os
 import math
 import Blender
-from Blender import sys, Window, Ipo, Armature, Modifier, Material, Constraint, Mesh
+from Blender import sys, Window, Ipo, Armature, Modifier
+from Blender import Material, Constraint, Mesh, Object
 from Blender.Armature import NLA
 import bpy
 import BPyMessages
@@ -265,7 +266,7 @@ def createMeshData(doc, ob):
 			appendToChunk(chunk, [ind[0], ind[1]])
 		finalizeChunk(chunk)
 		groupElm.appendChild(chunk)
-		meshData.appendChild(groupElm)	
+		meshData.appendChild(groupElm)
 	
 	# Vertex
 	vertex = doc.createElement('vertex')
@@ -538,6 +539,31 @@ for ob in sce.objects:
 		linkedActions.append(actionStrip.action.name)
 		obj.appendChild(actStripElm)
 	
+	if ob.boundingBox:
+		dimElm = doc.createElement('boundingbox')
+		textData = ''
+		boundbox = ob.getBoundBox(0)
+		chunk = createChunk(doc, exportPlace, [('coordinates', 'float3')])
+		for bb in boundbox:
+			appendToChunk(chunk, [bb.x, bb.y, bb.z])
+		finalizeChunk(chunk)
+		dimElm.appendChild(chunk)
+		obj.appendChild(dimElm)
+	
+	if ob.rbFlags & Object.RBFlags.ACTOR:
+		actorElm = doc.createElement('actor')
+		if ob.rbFlags & Object.RBFlags.RIGIDBODY:
+			rbElm = doc.createElement('rigidbody');
+			rbElm.setAttribute('mass', str(ob.rbMass))
+			actorElm.appendChild(rbElm)
+		
+		if ob.rbFlags & Object.RBFlags.BOUNDS:
+			bounds = 'others'
+			if ob.rbShapeBoundType is Object.RBShapes.BOX:
+				bounds = 'box'
+			actorElm.setAttribute('bounds', bounds)
+		obj.appendChild(actorElm)
+			
 	for c in ob.constraints:
 		if c.type is Constraint.Type.RIGIDBODYJOINT:
 			if c[Constraint.Settings.TARGET]:

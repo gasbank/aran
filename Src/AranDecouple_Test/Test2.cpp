@@ -343,9 +343,9 @@ PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
 	}
 	printf("=== Eight Frustum Corder Points End ===\n");
 
-	printf("     === Test Ray ===\n");
+	printf("     === Test Ray on center screen coordinates ===\n");
 	ArnVec3 origin, dir;
-	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &modelview, &projection, avd);
+	ArnMakePickRay(&origin, &dir, avd->Width / 2.0f, avd->Height / 2.0f, &modelview, &projection, avd);
 	printf("Ray origin   : "); origin.printFormatString();
 	printf("Ray direction: "); dir.printFormatString();
 	printf("     === Test Ray End\n");
@@ -371,24 +371,24 @@ PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const ArnView
 	}
 	printf("=== Eight Frustum Corder Points End ===\n");
 
-	printf("     === Test Ray ===\n");
+	printf("     === Test Ray on center screen coordinates ===\n");
 	ArnVec3 origin, dir;
-	ArnMakePickRay(&origin, &dir, 320.0f, 240.0f, &camModelview, &camProjection, avd);
+	ArnMakePickRay(&origin, &dir, avd->Width / 2.0f, avd->Height / 2.0f, &camModelview, &camProjection, avd);
 	printf("Ray origin   : "); origin.printFormatString();
 	printf("Ray direction: "); dir.printFormatString();
 	printf("     === Test Ray End\n");
 }
 
 static void
-PrintRayCastingResultUsingGlu()
+PrintRayCastingResultUsingGlu(const ArnViewportData* avd)
 {
 	GLdouble glmv[16], glproj[16];
 	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
 	glGetDoublev(GL_PROJECTION_MATRIX, glproj);
-	GLint glvp[4] = { 0, 0, 640, 480 };
 	GLdouble objx, objy, objz;
-	gluUnProject(320, 240, 0, glmv, glproj, glvp, &objx, &objy, &objz);
-	printf("gluUnproject result: %.3f, %.3f, %.3f\n", objx, objy, objz);
+	GLint viewport[4] = { avd->X, avd->Y, avd->Width, avd->Height };
+	gluUnProject(avd->Width / 2.0, avd->Height / 2.0, 0, glmv, glproj, viewport, &objx, &objy, &objz);
+	printf("gluUnproject of center screen point result: %.3f, %.3f, %.3f\n", objx, objy, objz);
 }
 
 static int
@@ -413,6 +413,7 @@ ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLigh
 	activeCam->recalcAnimLocalXform();
 	activeCam->printCameraOrientation();
 	ArnConfigureViewportProjectionMatrixGl(avd, activeCam); // Projection matrix is not changed during runtime for now.
+	ArnConfigureViewMatrixGl(activeCam);
 
 	activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
 	assert(activeLight);
@@ -448,12 +449,11 @@ ConfigureNextTestSceneWithRetry(ArnSceneGraph*& curSceneGraph, ArnCamera*& activ
 	// A little test on modelview, projection matrix
 	// by checking frustum corner points and ray casting.
 	//
-	/*
-	PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+
+	//PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
 	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
 	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
-	PrintRayCastingResultUsingGlu();
-	*/
+	PrintRayCastingResultUsingGlu(&avd);
 	return 0;
 }
 
@@ -534,7 +534,10 @@ int main(int argc, char *argv[])
 	//SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &value );
 	//printf( "SDL_GL_SWAP_CONTROL: requested 1, got %d\n", value );
 
-	ArnInitGlExtFunctions();
+	if (ArnInitGlExtFunctions() < 0)
+	{
+		std::cerr << "OpenGL extensions needed to run this program are not available." << std::endl;
+	}
 
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
@@ -631,7 +634,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
 		return -12;
 	}
-	while (sceneListStream >> sceneFile)
+	while (std::getline(sceneListStream, sceneFile))
 	{
 		sceneList.push_back(sceneFile);
 	}
@@ -640,13 +643,18 @@ int main(int argc, char *argv[])
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 	int curSceneIndex = -1;
-	if (sceneFile.size() > 0)
+	if (sceneList.size() > 0)
 	{
 		if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, 0, sceneList, avd) < 0)
 		{
 			std::cerr << " *** Aborting..." << std::endl;
 			return -11;
 		}
+	}
+	else
+	{
+		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
+		return -19;
 	}
 	
 	// TODO: Normalized cube map for normal mapping
