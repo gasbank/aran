@@ -33,4 +33,5 @@
 // Aran Library Global Macros
 //
 #include "Macros.h"
+#include "ArnCommonTypes.h"
 #include "AranMathTypeDefs.h"

@@ -272,10 +272,6 @@
 				RelativePath="..\Macros.h"
 				>
 			</File>
-			<File
-				RelativePath=".\RST_DATA.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
