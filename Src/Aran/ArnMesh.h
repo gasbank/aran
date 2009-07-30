@@ -44,6 +44,7 @@ public:
 	void									getVert(ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int vertIdx, bool finalXformed) const;
 
 	void									setTwoSided(bool b) { m_bTwoSided = b; }
+	void									getBoundingBoxDimension(ArnVec3* out, bool worldSpace) const;
 
 	// ********************************* INTERNAL USE ONLY START *********************************
 	virtual void							interconnect(ArnNode* sceneRoot);
@@ -57,8 +58,7 @@ private:
 	void									setVertexBuffer(const ArnVertexBuffer* vb);
 	void									setIndexBuffer(const ArnIndexBuffer* ib);
 	void									setBoundingBoxPoints(ArnVec3 bb[8]);
-
-
+	
 	struct FaceGroup
 	{
 		int mtrlIndex;

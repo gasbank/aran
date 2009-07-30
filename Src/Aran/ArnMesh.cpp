@@ -631,6 +631,21 @@ void ArnMesh::setBoundingBoxPoints( ArnVec3 bb[8] )
 	memcpy(m_boundingBoxPoints, bb, sizeof(ArnVec3) * 8 );
 	m_bBoundingBoxPointsDirty = false;
 }
+
+void ArnMesh::getBoundingBoxDimension( ArnVec3* out, bool worldSpace ) const
+{
+	assert(!m_bBoundingBoxPointsDirty);
+	ArnVec3DimensionFromBounds(out, m_boundingBoxPoints);
+	if (worldSpace)
+	{
+		// TODO: Animated scaling does not effect the bounding box dimension.
+		//       (It does effect the rendering of bounding box, though.)
+		out->x *= getLocalXform_Scale().x;
+		out->y *= getLocalXform_Scale().y;
+		out->z *= getLocalXform_Scale().z;
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 #ifdef WIN32

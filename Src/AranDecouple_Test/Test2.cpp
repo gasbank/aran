@@ -78,6 +78,14 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 		ArnNode* node = sceneGraph->getNodeById(buff[h].contents);
 		assert(node);
 		printf("[Object 0x%p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
+
+		ArnMesh* mesh = dynamic_cast<ArnMesh*>(node);
+		if (mesh)
+		{
+			ArnVec3 dim;
+			mesh->getBoundingBoxDimension(&dim, true);
+			printf("Mesh Dimension: "); dim.printFormatString();
+		}
 	}
 }
 
