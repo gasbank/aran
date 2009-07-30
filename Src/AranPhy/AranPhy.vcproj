@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="AranMath"
-	ProjectGUID="{4A2C1E91-BC81-4CAC-B266-D62E7904D112}"
-	RootNamespace="AranMath"
+	Name="AranPhy"
+	ProjectGUID="{AEC44099-4FE2-471B-BD32-7B3DED5BFEE5}"
+	RootNamespace="AranPhy"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -42,16 +42,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;&quot;$(CODEBASE)/cml-1_0_0&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANMATH_EXPORTS;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranMathPCH.h"
+				PrecompiledHeaderThrough="AranPhyPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -64,10 +63,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="ode_doubled.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;"
 				GenerateDebugInformation="true"
-				SubSystem="1"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
+				SubSystem="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -120,11 +120,12 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;&quot;$(CODEBASE)/cml-1_0_0&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANMATH_EXPORTS"
+				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranPhyPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -139,13 +140,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(WORKING)/$(ProjectName).dll"
+				AdditionalDependencies="ode_double.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/ReleaseDoubleDLL&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -180,7 +181,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\AranMathPCH.cpp"
+				RelativePath=".\AranPhy.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AranPhyPCH.cpp"
 				>
 				<FileConfiguration
 					Name="DebugDLL|Win32"
@@ -190,30 +195,36 @@
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ArnConsts.cpp"
+				RelativePath=".\dllmain.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\ArnMath.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMatrix.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnQuat.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec4.cpp"
-				>
+				<FileConfiguration
+					Name="DebugDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+						CompileAsManaged="0"
+					/>
+				</FileConfiguration>
+				<FileConfiguration
+					Name="ReleaseDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="0"
+						CompileAsManaged="0"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -222,59 +233,11 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\AranMathPCH.h"
+				RelativePath=".\AranPhyPCH.h"
 				>
 			</File>
 			<File
-				RelativePath=".\AranMathTypeDefs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnColorValue4f.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnConsts.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMath.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMath.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMatrix.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnQuat.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec3.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnVec4.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnViewportData.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Macros.h"
-				>
-			</File>
-			<File
-				RelativePath=".\RST_DATA.h"
+				RelativePath=".\targetver.h"
 				>
 			</File>
 		</Filter>
