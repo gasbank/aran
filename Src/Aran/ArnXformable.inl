@@ -74,12 +74,12 @@ const ArnQuat& ArnXformable::getAnimLocalXform_Rot() const
 
 ArnAnimationController* ArnXformable::getAnimCtrl()
 {
-	return m_d3dxAnimCtrl;
+	return m_aniimCtrl;
 }
 
 void ArnXformable::setAnimCtrl(ArnAnimationController* animCtrl)
 {
-	m_d3dxAnimCtrl = animCtrl;
+	m_aniimCtrl = animCtrl;
 }
 
 bool ArnXformable::isLocalXformDirty() const

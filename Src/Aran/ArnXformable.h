@@ -23,7 +23,6 @@ public:
 	inline void									setAnimLocalXform_Rot(const ArnQuat& q);
 	inline void									setAnimLocalXform_Scale(const ArnVec3& scale);
 	inline void									setAnimLocalXform_Trans(const ArnVec3& trans);
-
 	inline bool									isAnimSeqEnded() const;
 	inline const ArnMatrix&						getLocalXform() const; // m_localXform will not be updated until recalcLocalXform() is called.
 	inline void									resetAnimSeqTime();
@@ -42,34 +41,34 @@ public:
 	void										setIpo(const STRING& ipoName);
 	inline ArnAnimationController*				getAnimCtrl();
 	inline bool									isLocalXformDirty() const;
+
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);
 	virtual void								update(double fTime, float fElapsedTime);
 	inline void									setAnimCtrl(ArnAnimationController* animCtrl);
-
-	// *** INTERNAL USE ONLY START ***
 	void										configureAnimCtrl();
-	// *** INTERNAL USE ONLY END ***
+
 private:
 	inline void									setAnimSeqEnded(bool val);
 	ArnIpo*										m_ipo;
 	STRING										m_ipoName;
 	ArnMatrix  									m_localXform;
-	ArnMatrix  									m_localXformIpo;
 	ArnVec3 									m_localXform_Scale;
 	ArnQuat     								m_localXform_Rot;
 	ArnVec3	    								m_localXform_Trans;
+	bool										m_bLocalXformDirty;
 	ArnMatrix  									m_animLocalXform;
 	ArnVec3										m_animLocalXform_Scale;
 	ArnQuat										m_animLocalXform_Rot;
 	ArnVec3										m_animLocalXform_Trans;
-	ArnMatrix  									m_finalLocalXform;
-	ArnAnimationController*						m_d3dxAnimCtrl;
+	bool										m_bAnimLocalXformDirty;
+	ArnAnimationController*						m_aniimCtrl;
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
-	bool										m_bLocalXformDirty;
-	bool										m_bAnimLocalXformDirty;
+	
+	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
+	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear	
 };
 
 #include "ArnXformable.inl"

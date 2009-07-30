@@ -67,7 +67,6 @@
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool

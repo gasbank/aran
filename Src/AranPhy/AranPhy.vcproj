@@ -205,6 +205,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ArnPhyWorld.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
 				>
 				<FileConfiguration
@@ -233,7 +237,19 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\AranPhy.h"
+				>
+			</File>
+			<File
 				RelativePath=".\AranPhyPCH.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnPhyWorld.h"
+				>
+			</File>
+			<File
+				RelativePath="..\Macros.h"
 				>
 			</File>
 			<File

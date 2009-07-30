@@ -5,5 +5,14 @@
 //
 
 #include "AranPhyPCH.h"
+#include "AranPhy.h"
 
+int ArnInitializePhysics()
+{
+	return 0;
+}
 
+int ArnCleanupPhysics()
+{
+	return 0;
+}

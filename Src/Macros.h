@@ -83,7 +83,9 @@
 #define ARN_THROW_NOT_IMPLEMENTED_ERROR { throw new std::runtime_error("Not implemented!"); }
 #define ARN_THROW_UNEXPECTED_CASE_ERROR { throw new std::runtime_error("Unexpected error!"); }
 
+//
 // DLL export macro for Aran
+//
 #ifdef WIN32
 	#define ARAN_API_EXPORT __declspec(dllexport)
 	#define ARAN_API_IMPORT __declspec(dllimport)
@@ -100,7 +102,9 @@
 	#define ARAN_API_EXTERN		extern
 #endif
 
+//
 // DLL Export macro for AranMath
+//
 #ifdef WIN32
 	#define ARANMATH_API_EXPORT __declspec(dllexport)
 	#define ARANMATH_API_IMPORT __declspec(dllimport)
@@ -116,6 +120,26 @@
 	#define ARANMATH_API		ARANMATH_API_IMPORT
 	#define ARANMATH_API_EXTERN extern
 #endif
+
+//
+// DLL Export macro for AranPhy
+//
+#ifdef WIN32
+#define ARANPHY_API_EXPORT __declspec(dllexport)
+#define ARANPHY_API_IMPORT __declspec(dllimport)
+#else
+#define ARANPHY_API_EXPORT
+#define ARANPHY_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANPHY_EXPORTS)
+#define ARANPHY_API		ARANPHY_API_EXPORT
+#define ARANPHY_API_EXTERN
+#else
+#define ARANPHY_API		ARANPHY_API_IMPORT
+#define ARANPHY_API_EXTERN extern
+#endif
+
 
 // limits a value to low and high
 #define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}
