@@ -6,7 +6,6 @@
 #include "ArnVec3.h"
 #include "ArnVec4.h"
 #include "ArnColorValue4f.h"
-#include "RST_DATA.h"
 
 namespace std {
 #if defined _UNICODE || defined UNICODE
