@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnIpo.h"
-#include "ArnFile.h"
 #include "Animation.h"
 #include "ArnMath.h"
 #include "Animation.h"
@@ -194,7 +193,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 		}
 		DWORD animIdx;
 		V_VERIFY(d3dxAnimSet->RegisterAnimationSRTKeys(getName(), sampleCount, sampleCount, sampleCount, &scaleKeys[0], &rotKeys[0], &transKeys[0], &animIdx));
-		STRING debugMsg;
+		std::string debugMsg;
 		debugMsg = " - ";
 		debugMsg += getName();
 		debugMsg += " Registered.\n";

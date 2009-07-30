@@ -41,7 +41,7 @@ class ARNANIMATIONOUTPUT
 {
 public:
 										ARNANIMATIONOUTPUT() : name(), mat(), scale(), quat(), trans() {}
-	STRING								name;
+	std::string								name;
 	ArnMatrix*							mat;
 	ArnVec3*							scale;
 	ArnQuat*							quat;

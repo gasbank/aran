@@ -1,6 +1,6 @@
 #include "AranPCH.h"
 #include "ArnLight.h"
-#include "ArnFile.h"
+
 ArnLight::ArnLight()
 : ArnXformable(NDT_RT_LIGHT)
 {

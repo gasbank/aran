@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnMaterial.h"
-#include "ArnFile.h"
 #include "VideoMan.h"
 #include "ArnTexture.h"
 

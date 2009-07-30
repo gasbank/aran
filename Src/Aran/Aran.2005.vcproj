@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib AranPhy_D.lib d3d9.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib zlib1d.lib"
+				AdditionalDependencies="AranMath_D.lib AranPhy_D.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib zlib1d.lib"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -223,58 +223,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Character"
-			>
-			<File
-				RelativePath=".\Character.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Character.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoiterCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LoiterCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UndefinedCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UndefinedCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\WalkCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WalkCallback.h"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="Arn"
 			>
 			<File
@@ -283,22 +231,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnAction.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnActions.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnActions.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnAnim.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnAnim.h"
 				>
 			</File>
 			<File
@@ -342,14 +274,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnFile.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnGenericBuffer.cpp"
 				>
 			</File>
@@ -359,14 +283,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnGenericBuffer.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnHierarchy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnHierarchy.h"
 				>
 			</File>
 			<File
@@ -426,14 +342,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnNodeFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnNodeFactory.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnObject.cpp"
 				>
 			</File>
@@ -459,14 +367,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnSkeleton.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSkinInfo.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSkinInfo.h"
 				>
 			</File>
 			<File
@@ -578,14 +478,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\InputMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\InputMan.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Log.cpp"
 				>
 			</File>
@@ -606,11 +498,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ModelReader.cpp"
+				RelativePath=".\MyError.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelReader.h"
+				RelativePath=".\MyError.h"
 				>
 			</File>
 			<File
@@ -642,14 +534,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ResourceMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ResourceMan.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Singleton.h"
 				>
 			</File>
@@ -670,27 +554,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Structs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Structs.h"
-				>
-			</File>
-			<File
 				RelativePath=".\VideoMan.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\VideoMan.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoManDx9.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoManDx9.h"
 				>
 			</File>
 			<File
@@ -706,6 +574,10 @@
 			Name="Headers only"
 			>
 			<File
+				RelativePath="..\ArnCommonTypes.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnGlExtEntry.h"
 				>
 			</File>
@@ -718,14 +590,14 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MyError.h"
-				>
-			</File>
-			<File
-				RelativePath=".\resource.h"
+				RelativePath=".\Structs.h"
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath=".\resource.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 		<Global

@@ -3,7 +3,7 @@ ArnNode* ArnNode::getParent() const
 	return m_parent;
 }
 
-const STRING& ArnNode::getParentName() const
+const std::string& ArnNode::getParentName() const
 {
 	return m_parentName;
 }

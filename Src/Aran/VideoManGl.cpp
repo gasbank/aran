@@ -4,6 +4,7 @@
 #include "ArnLight.h"
 #include "ArnViewportData.h"
 #include "ArnMesh.h"
+#include "ArnMath.h"
 
 VideoManGl::VideoManGl()
 : m_glInfoValid(false)
@@ -309,7 +310,7 @@ void ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 			{
 				//glLoadIdentity();
 				glLightfv(GL_LIGHT0 + lightId, GL_POSITION, pos.getRawData());
-				glLightfv(GL_LIGHT0 + lightId, GL_SPOT_DIRECTION, (const GLfloat*)&POINT4FLOAT::ZERO);
+				glLightfv(GL_LIGHT0 + lightId, GL_SPOT_DIRECTION, (const GLfloat*)&ArnConsts::ARNVEC4_ZERO);
 			}
 			glPopMatrix();
 			glLightfv(GL_LIGHT0 + lightId, GL_CONSTANT_ATTENUATION, &a0);
@@ -541,55 +542,4 @@ GLuint ArnCreateNormalizationCubeMapGl()
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP_ARB, 0);
 	return tex;
-}
-
-
-HRESULT
-ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, unsigned int* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, unsigned int* pCountOfHits )
-{
-	const unsigned int faceGroupCount = pMesh->getFaceGroupCount();
-	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
-	{
-		unsigned int triCount, quadCount;
-		pMesh->getFaceCount(triCount, quadCount, fg);
-		for (unsigned int tc = 0; tc < triCount; ++tc)
-		{
-			unsigned int totalIndex;
-			unsigned int tinds[3];
-			pMesh->getTriFace(totalIndex, tinds, fg, tc);
-			ArnVec3 verts[3];
-			for (unsigned int v = 0; v < 3; ++v)
-			{
-				pMesh->getVert(&verts[v], 0, 0, tinds[v], true);
-			}
-			float t = 0, u = 0, v = 0;
-			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
-			{
-				if (pFaceIndex)
-					*pFaceIndex = totalIndex;
-				*pHit = true;
-				return S_OK;
-			}
-		}
-
-		/*
-		for (unsigned int qc = 0; qc < quadCount; ++qc)
-		{
-		unsigned int totalIndex;
-		unsigned int qinds[4];
-		pMesh->getQuadFace(totalIndex, qinds, fg, qc);
-		ArnVec3 verts[4];
-		for (unsigned int v = 0; v < 4; ++v)
-		pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
-		float t = 0, u = 0, v = 0;
-		if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
-		{
-		return S_OK;
-		}
-		}
-		*/
-	}
-
-	*pHit = false;
-	return S_OK;
 }

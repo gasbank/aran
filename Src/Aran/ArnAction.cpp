@@ -20,7 +20,7 @@ void
 ArnAction::interconnect(ArnNode* sceneRoot)
 {
 	m_objectIpoMap.clear();
-	typedef std::pair<STRING, STRING> StringStringPair;
+	typedef std::pair<std::string, std::string> StringStringPair;
 	foreach(StringStringPair p, m_objectIpoNameMap)
 	{
 		ArnXformable* obj = dynamic_cast<ArnXformable*>(sceneRoot->getNodeByName(p.first));

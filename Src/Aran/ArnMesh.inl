@@ -1,13 +1,3 @@
-const LPD3DXMESH& ArnMesh::getD3DXMesh() const
-{
-	return m_d3dxMesh;
-}
-
-void ArnMesh::setD3DXMesh(const LPD3DXMESH d3dxMesh)
-{
-	 m_d3dxMesh = d3dxMesh;
-}
-
 const MeshData& ArnMesh::getMeshData() const
 {
 	return m_data;

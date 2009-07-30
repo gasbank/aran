@@ -1,4 +1,4 @@
-const STRING& ArnXformable::getIpoName() const
+const std::string& ArnXformable::getIpoName() const
 {
 	return m_ipoName;
 }

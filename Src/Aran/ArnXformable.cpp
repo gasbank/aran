@@ -34,7 +34,7 @@ ArnXformable::~ArnXformable(void)
 }
 
 void
-ArnXformable::setIpo( const STRING& ipoName )
+ArnXformable::setIpo( const std::string& ipoName )
 {
 	if (ipoName.length())
 	{

@@ -13,7 +13,7 @@ public:
 									~ArnSceneGraph(void);
 
 	static ArnSceneGraph*			createFromEmptySceneGraph();
-	static ArnSceneGraph*			createFrom(const ArnFileData* afd);
+	
 	static ArnSceneGraph*			createFrom(const char* fileName);
 
 	void							attachToRoot(ArnNode* node);
@@ -26,15 +26,8 @@ public:
 	// *** INTERNAL USE ONLY END ***
 private:
 									ArnSceneGraph();
-									ArnSceneGraph(const ArnFileData* afd);
-
-	void							createEmptyRootNode();
-	void							postprocessingARN20();
-	void							buildBoneHierarchy( ArnHierarchy* hierNode, ArnNode* skelNode, ArnBone* parentBoneNode );
-	bool							m_bRendererObjectInited;
-	const ArnFileData*				m_afd;
 	EXPORT_VERSION					m_exportVersion;
-	//ArnNode*						m_sceneRoot;  // DEPRECATED
+	bool							m_bRendererObjectInited;
 	ArnBinaryChunk*					m_binaryChunk;
 };
 

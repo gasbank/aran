@@ -22,7 +22,7 @@ public:
 protected:
 private:
 	void									addMap(const char* objName, const char* ipoName) { m_objectIpoNameMap[objName] = ipoName; }
-	std::map<STRING, STRING>				m_objectIpoNameMap;
+	std::map<std::string, std::string>				m_objectIpoNameMap;
 	std::map<ArnNode*, ArnIpo*>				m_objectIpoMap;
 };
 

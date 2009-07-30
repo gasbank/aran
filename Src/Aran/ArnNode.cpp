@@ -52,7 +52,7 @@ ArnNode::getLastNode()
 }
 
 ArnNode*
-ArnNode::getNodeByName(const STRING& name) const
+ArnNode::getNodeByName(const std::string& name) const
 {
 	if (getName() == name)
 		return const_cast<ArnNode*>( this );
