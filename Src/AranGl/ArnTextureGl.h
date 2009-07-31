@@ -1,15 +1,19 @@
 #pragma once
 
-#include "ArnTexture.h"
-
-class ArnTextureGl : public ArnTexture
+#include "ArnRenderableObject.h"
+class ArnTexture;
+class ArnTextureGl : public ArnRenderableObject
 {
 public:
 											~ArnTextureGl(void);
-	virtual bool							initialize();
-	virtual void							Release();
+	static ArnTextureGl*					createFrom(const ArnTexture* tex);
+	//virtual int								initialize();
+	virtual int								render();
+	virtual void							cleanup();
 	GLuint									getTextureId() const { return m_textureId; }
 private:
 											ArnTextureGl(void);
+	int										init();
 	GLuint									m_textureId;
+	const ArnTexture*						m_target;
 };

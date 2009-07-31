@@ -5,15 +5,19 @@
 	Name="Environmental Variables"
 	>
 	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories="&quot;$(CODEBASE)/cml-1_0_1&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;;&quot;$(CODEBASE)/zlib-1.2.3&quot;"
+	/>
+	<Tool
 		Name="VCLinkerTool"
 		OutputFile=""
 	/>
 	<UserMacro
 		Name="CODEBASE"
-		Value="D:\Devel3"
+		Value="H:\Devel1"
 	/>
 	<UserMacro
 		Name="WORKING"
-		Value="D:\Devel3\Working"
+		Value="H:\Devel1\Working"
 	/>
 </VisualStudioPropertySheet>

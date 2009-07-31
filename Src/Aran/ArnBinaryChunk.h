@@ -24,16 +24,16 @@ static const int ArnChunkFieldTypeSize[] =
 	sizeof(int)		* 4
 };
 
-class ArnBinaryChunk
+class ARAN_API ArnBinaryChunk
 {
 public:
 										~ArnBinaryChunk();
-	static ArnBinaryChunk*				createFrom(DOMElement* elm, char* binaryChunkBasePtr);
+	static ArnBinaryChunk*				createFrom(DOMElement* elm, const char* binaryChunkBasePtr);
 	static ArnBinaryChunk*				createFrom(const char* fileName, bool zlibCompressed, unsigned int uncompressedSize);
 	void								copyFieldArray(void* target, int targetSize, const char* usage) const;
 	unsigned int						getRecordCount() const;
 	unsigned int						getRecordSize() const;
-	char*								getRawDataPtr();
+	const char*							getConstRawDataPtr() const;
 	const char*							getRecordAt(int i) const;
 	void								printFieldArray(const char* usage) const; // Debug purpose...
 
@@ -53,7 +53,7 @@ private:
 		int					offset; // offset in the record
 	};
 	std::vector<Field>					m_recordDef; // record definition
-	char*								m_data;
+	const char*							m_data; // Unmodifiable
 	bool								m_deallocateData; // Deallocation of m_data should be done in dtor if this flag is true.
 	int									m_recordCount;
 	int									m_recordSize;

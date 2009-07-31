@@ -1,6 +1,6 @@
 #pragma once
 
-class ArnGenericBuffer
+class ARAN_API ArnGenericBuffer
 {
 public:
 										~ArnGenericBuffer(void);

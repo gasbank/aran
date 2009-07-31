@@ -7,12 +7,6 @@
 
 #pragma once
 
-#include "DungeonInterface.h"
-#include "Singleton.h"
-#include "PreciseTimer.h"
-#include "ArnCamera.h"
-#include "ArnConsts.h"
-
 #ifndef SAFE_RELEASE
 #define SAFE_RELEASE(p) if((p)!=0) { (p)->Release(); (p) = 0; }
 #endif
@@ -41,7 +35,7 @@ typedef void    (*LPARNCALLBACKFRAMEMOVE)( double fTime, float fElapsedTime);
 typedef void	(*ARNUPDATEFRAME)(double dTime, float fElapsedTime);
 typedef void	(*ARNRENDERFRAME)();
 
-class VideoMan : public Singleton<VideoMan>
+class ARAN_API VideoMan : public Singleton<VideoMan>
 {
 
 public:

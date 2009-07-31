@@ -13,6 +13,8 @@
 #include "ArnMath.h"
 #include "ArnTexture.h"
 
+static bool gs_xmlInitialized = false;
+
 ArnXmlLoader::ArnXmlLoader()
 {
 	//ctor
@@ -246,10 +248,11 @@ SetupArnXformableCommonPart(ArnXformable* ret, const DOMElement* elm)
 typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
 
 template <typename T> void
-parseFromToken(char* target, int& dataOffset, Tokenizer::const_iterator& it,
+parseFromToken(const char* targetConst, int& dataOffset, Tokenizer::const_iterator& it,
                const int doCount, T func(const char*))
 {
 	assert(doCount >= 1);
+	char* target = const_cast<char*>(targetConst); // TODO: const_cast used.
 	for (int i = 0; i < doCount; ++i)
 	{
 		*(T*)(target + i*sizeof(T)) = func((*it).c_str());
@@ -265,7 +268,7 @@ atof2(const char* c)
 }
 
 ArnBinaryChunk*
-ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
+ArnBinaryChunk::createFrom(DOMElement* elm, const char* binaryChunkBasePtr)
 {
 	ArnBinaryChunk* ret = new ArnBinaryChunk();
 	DOMElement* templ = dynamic_cast<DOMElement*>(GetElementsByTagName(elm, "template")->item(0));
@@ -368,6 +371,10 @@ ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
 ArnSceneGraph*
 ArnSceneGraph::createFrom(const char* xmlFile)
 {
+	assert(xmlFile);
+	assert(strcmp(xmlFile + strlen(xmlFile) - 4, ".xml") == 0);
+	assert(gs_xmlInitialized);
+
 	XercesDOMParser* parser = new XercesDOMParser();
 	parser->setValidationScheme(XercesDOMParser::Val_Always);
 	parser->setDoNamespaces(true);    // optional
@@ -431,7 +438,7 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 		ArnNode* childObj = 0;
 		if (ret->m_binaryChunk)
 		{
-			char* binDataPtr = ret->m_binaryChunk->getRawDataPtr();
+			const char* binDataPtr = ret->m_binaryChunk->getConstRawDataPtr();
 			childObj = CreateArnNodeFromXmlElement(childElm, binDataPtr);
 		}
 
@@ -446,7 +453,7 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 }
 
 ArnMesh*
-ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
+ArnMesh::createFrom(const DOMElement* elm, const char* binaryChunkBasePtr)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnMesh");
 	ArnMesh* ret = new ArnMesh();
@@ -544,9 +551,6 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 			bb[i] = *reinterpret_cast<const ArnVec3*>(abc->getRecordAt(i));
 		ret->setBoundingBoxPoints(bb);
 	}
-
-	ret->m_renderFunc = &ArnMesh::renderXml;
-	ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectXml;
 	return ret;
 }
 
@@ -657,19 +661,19 @@ ArnLight::createFrom( const DOMElement* elm )
 	if (strcmp(lightTypeStr.c_str(), "point") == 0)
 	{
 		// Point light
-		ret->m_d3dLight.Type = 1;
+		ret->m_d3dLight.Type = ARNLIGHT_POINT;
 		ret->m_d3dLight.Position = ret->getLocalXform_Trans();
 	}
 	else if (strcmp(lightTypeStr.c_str(), "spot") == 0)
 	{
 		// Spot light
-		ret->m_d3dLight.Type = 2;
+		ret->m_d3dLight.Type = ARNLIGHT_SPOT;
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
 	else if (strcmp(lightTypeStr.c_str(), "directional") == 0)
 	{
 		// Directional light
-		ret->m_d3dLight.Type = 3;
+		ret->m_d3dLight.Type = ARNLIGHT_DIRECTIONAL;
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
 	else
@@ -758,7 +762,7 @@ ArnBone::createFrom( const DOMElement* elm )
 }
 
 ArnIpo*
-ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
+ArnIpo::createFrom(const DOMElement* elm, const char* binaryChunkBasePtr)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnIpo");
 	ArnIpo* ret = new ArnIpo();
@@ -795,7 +799,7 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		assert(controlPointChunk->getRecordSize() == sizeof(BezTripleData));
 		cd.pointCount = controlPointChunk->getRecordCount();
 		cd.points.resize(cd.pointCount);
-		memcpy(&cd.points[0], controlPointChunk->getRawDataPtr(), sizeof(BezTripleData) * cd.pointCount);
+		memcpy(&cd.points[0], controlPointChunk->getConstRawDataPtr(), sizeof(BezTripleData) * cd.pointCount);
 
 		foreach (const BezTripleData& btd, cd.points)
 		{
@@ -832,7 +836,7 @@ ArnAction::createFrom(const DOMElement* elm)
 }
 
 ArnNode*
-CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
+CreateArnNodeFromXmlElement(DOMElement* elm, const char* binaryChunkBasePtr)
 {
 	std::string rtclassStr;
 	GetAttr(rtclassStr, elm, "rtclass");
@@ -884,6 +888,7 @@ int ArnInitializeXmlParser()
 	try
 	{
 		XMLPlatformUtils::Initialize();
+		gs_xmlInitialized = true;
 		return 0;
 	}
 	catch (const XMLException& e)
@@ -898,5 +903,7 @@ int ArnInitializeXmlParser()
 
 void ArnCleanupXmlParser()
 {
+	assert(gs_xmlInitialized);
 	XMLPlatformUtils::Terminate();
+	gs_xmlInitialized = false;
 }

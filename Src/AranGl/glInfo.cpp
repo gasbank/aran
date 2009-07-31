@@ -14,7 +14,7 @@
 // Copyright (c) 2005 Song Ho Ahn
 ///////////////////////////////////////////////////////////////////////////////
 
-#include "AranPCH.h"
+#include "AranGlPCH.h"
 #include "glInfo.h"
 using std::string;
 using std::stringstream;

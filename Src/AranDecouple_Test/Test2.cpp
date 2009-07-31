@@ -620,11 +620,12 @@ int main(int argc, char *argv[])
 	}
 	GLuint fontTextureId = ArnCreateTextureFromArrayGl(fontTexture, textTextureSize, textTextureSize, false);
 
-	ilInit();
+	
 
 	// Create and init the scene graph instance from XML file
 	// and attach that one to the video manager.
 	ArnInitializeXmlParser();
+	ArnInitializeImageLibrary();
 
 	ArnViewportData avd;
 	avd.X = 0;
@@ -761,6 +762,7 @@ int main(int argc, char *argv[])
 
 	glDeleteTextures(1, &fontTextureId);
 	ArnCleanupXmlParser();
+	ArnCleanupImageLibrary();
 
 	/* Destroy our GL context, etc. */
 	SDL_Quit();

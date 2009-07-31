@@ -18,7 +18,7 @@ public:
 	unsigned int								getMaterialCount() const { return m_materialCount; }
 	const ArnMaterialData&						getD3DMaterialData() const { return m_data.m_d3dMaterial; }
 	unsigned int								getTexImgCount() const { return m_data.m_texImgList.size(); }
-	const std::string&								getTexImgName(unsigned int idx) const { return m_data.m_texImgList[idx]; }
+	const std::string&							getTexImgName(unsigned int idx) const { return m_data.m_texImgList[idx]; }
 	void										loadTexture();
 	void										attachTexture(ArnTexture* ARN_OWNERSHIP tex) { m_d3dTextureList.push_back(tex); }
 	const ArnTexture*							getFirstTexture() const { return *m_d3dTextureList.begin(); }
@@ -35,7 +35,6 @@ private:
 												ArnMaterial();
 	void										buildFrom(const NodeMaterial1* nm);
 	void										buildFrom(const NodeMaterial2* nm);
-
 	unsigned int								m_materialCount;
 	MaterialData								m_data;
 	const NodeMaterial2*						m_nodeMaterial; // Needed for late loading of texture images

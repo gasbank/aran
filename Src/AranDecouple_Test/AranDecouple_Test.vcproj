@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran_D.lib AranMath_D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib opengl32.lib glu32.lib DevIL.lib"
+				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib AranGl_D.lib SDL.lib SDLmain.lib freetype239MT_D.lib opengl32.lib glu32.lib"
 				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"

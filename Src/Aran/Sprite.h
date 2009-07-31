@@ -1,8 +1,7 @@
 #pragma once
 
-#ifdef WIN32
-
 class SpriteManager;
+class ArnTexture;
 
 typedef std::map<std::string, RECT> RectMap;
 class DrawRequest
@@ -52,11 +51,11 @@ public:
 	void registerRect( const char* rectName, const RECT& rect );
 	void registerRect( const char* rectName, long left, long top, long right, long bottom );
 	void resizeRect( const char* rectName, long left, long top, long right, long bottom );
-	DrawRequest* drawRequest( const char* rectName, const ArnVec3* center, const ArnVec3* position, D3DCOLOR color );
-	DrawRequest* drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, D3DCOLOR color );
-	DrawRequest* drawRequest( const char* rectName, ScreenPosition spe, D3DCOLOR color );
+	DrawRequest* drawRequest( const char* rectName, const ArnVec3* center, const ArnVec3* position, ArnColorValue color );
+	DrawRequest* drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, ArnColorValue color );
+	DrawRequest* drawRequest( const char* rectName, ScreenPosition spe, ArnColorValue color );
 	DrawRequest* drawRequestXformable( const char* rectName );
-	LPDIRECT3DTEXTURE9 getTexture() const { assert( m_d3dTex ); return m_d3dTex; }
+	ArnTexture* getTexture() const { assert( m_d3dTex ); return m_d3dTex; }
 
 	void clearDrawRequest();
 	void removeDrawRequest( DrawRequest*& dr );
@@ -64,8 +63,7 @@ public:
 	bool isCustomRendered() const { return m_bCustomRendered; }
 	void setCustomRendered(bool val) { m_bCustomRendered = val; }
 
-	HRESULT onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
-		                   void* pUserContext);
+	HRESULT onResetDevice();
 	void onLostDevice();
 private:
 	friend class SpriteManager;
@@ -77,7 +75,7 @@ private:
 	const DrawRequestList& getDrawReqXformableList() const { return m_drawReqXformableList; }
 
 	RectMap m_rectMap;
-	LPDIRECT3DTEXTURE9 m_d3dTex;
+	ArnTexture* m_d3dTex;
 
 	DrawRequestList m_drawReqList;				// Screen space sprite drawing
 	DrawRequestList m_drawReqXformableList;		// Object(3D) space sprite drawing
@@ -87,5 +85,3 @@ private:
 
 	Sprite& operator = ( const Sprite& );
 };
-
-#endif

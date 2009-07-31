@@ -134,12 +134,12 @@ HRESULT ArnCreateMeshFVF(IN DWORD NumFaces, IN DWORD NumVertices, IN DWORD FVF, 
 
 const D3DXVECTOR3* ArnVec3GetConstDxPtr( const ArnVec3& v )
 {
-	return reinterpret_cast<const D3DXVECTOR3*>(*v);
+	return reinterpret_cast<const D3DXVECTOR3*>(&v);
 }
 
 D3DXVECTOR3* ArnVec3GetDxPtr( ArnVec3& v )
 {
-	return reinterpret_cast<D3DXVECTOR3*>(*v);
+	return reinterpret_cast<D3DXVECTOR3*>(&v);
 }
 
 const D3DMATERIAL9* ArnMaterialGetConstDxPtr(const ArnMaterialData& amd)

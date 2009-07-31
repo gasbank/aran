@@ -31,16 +31,3 @@ private:
 
 	ARN_NDD_CAMERA_CHUNK				m_cameraData;
 };
-
-/////////////////////////////////////////////////////////////////////////////
-
-struct ARN_CAMERA
-{
-	// eye: Position of camera
-	// at: Look-at vector
-	// up: Up-vector
-
-	ArnVec3 eye, at, up;
-	float farClip, nearClip;
-	float angle; // in radian
-};

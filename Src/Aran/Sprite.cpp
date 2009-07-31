@@ -2,8 +2,6 @@
 #include "Sprite.h"
 #include "ArnConsts.h"
 
-#ifdef WIN32
-
 Sprite::Sprite( const char* texFileName )
 : m_d3dTex( 0 ), m_bCustomRendered( false ), m_texFileName( texFileName )
 {
@@ -14,7 +12,7 @@ Sprite::~Sprite(void)
 
 void Sprite::release()
 {
-	SAFE_RELEASE( m_d3dTex );
+	//***SAFE_RELEASE( m_d3dTex );
 	EpSafeReleaseAll( m_drawReqList );
 	EpSafeReleaseAll( m_drawReqXformableList );
 }
@@ -74,13 +72,13 @@ DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, c
 	return dr;
 }
 
-DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, D3DCOLOR color )
+DrawRequest* Sprite::drawRequest( const char* rectName, const ArnVec3* center, int posX, int posY, int posZ, ArnColorValue color )
 {
 	ArnVec3 vPos = CreateArnVec3( (float)posX, (float)posY, (float)posZ );
 	return drawRequest( rectName, center, &vPos, color );
 }
 
-DrawRequest* Sprite::drawRequest( const char* rectName, ScreenPosition spe, D3DCOLOR color )
+DrawRequest* Sprite::drawRequest( const char* rectName, ScreenPosition spe, ArnColorValue color )
 {
 	// TODO: Screen width and height
 	int scrWidth = 800;
@@ -118,7 +116,7 @@ DrawRequest* Sprite::drawRequestXformable( const char* rectName )
 	dr->center.x = (dr->srcRect.right - dr->srcRect.left + 1) * 0.5f;
 	dr->center.y = (dr->srcRect.bottom - dr->srcRect.top + 1) * 0.5f;
 	dr->center.z = 0;
-	dr->color = D3DCOLOR_RGBA( 255, 255, 255, 255 );
+	dr->color = 0xffffffff;
 	dr->position = ArnConsts::ARNVEC3_ZERO;
 	dr->xform = ArnConsts::ARNMAT_IDENTITY;
 
@@ -136,8 +134,7 @@ void Sprite::removeDrawRequest( DrawRequest*& dr )
 	EP_SAFE_RELEASE( dr );
 }
 
-HRESULT Sprite::onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
-							   void* pUserContext)
+HRESULT Sprite::onResetDevice()
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 
@@ -149,12 +146,10 @@ HRESULT Sprite::onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DE
 
 void Sprite::onLostDevice()
 {
-	SAFE_RELEASE( m_d3dTex );
+	//***SAFE_RELEASE( m_d3dTex );
 }
 
 void Sprite::clearDrawRequest()
 {
 	EpSafeReleaseAll( m_drawReqList );
 }
-
-#endif

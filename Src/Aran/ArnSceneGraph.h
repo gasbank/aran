@@ -27,7 +27,6 @@ public:
 private:
 									ArnSceneGraph();
 	EXPORT_VERSION					m_exportVersion;
-	bool							m_bRendererObjectInited;
 	ArnBinaryChunk*					m_binaryChunk;
 };
 

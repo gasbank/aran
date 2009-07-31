@@ -6,7 +6,7 @@ struct NodeSkeleton1;
 struct NodeHierarchy2;
 class ArnAction;
 
-class ArnSkeleton : public ArnXformable
+class ARAN_API ArnSkeleton : public ArnXformable
 {
 public:
 										~ArnSkeleton(void);

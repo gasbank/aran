@@ -128,7 +128,9 @@ enum ArnLightType
 {
 	ARNLIGHT_POINT = 1,
 	ARNLIGHT_SPOT = 2,
-	ARNLIGHT_DIRECTIONAL = 3
+	ARNLIGHT_DIRECTIONAL = 3,
+
+	ALT_FORCE_DWORD = 0x7fffffff
 };
 
 //
@@ -136,7 +138,7 @@ enum ArnLightType
 //
 struct ArnLightData
 {
-	DWORD					Type; // ArnLightType
+	ArnLightType			Type; // ArnLightType
 	ArnColorValue4f			Diffuse;
 	ArnColorValue4f			Specular;
 	ArnColorValue4f			Ambient;
@@ -373,6 +375,17 @@ struct SkeletonNode
 	int					maxWeightsPerVertex; // same as max bones per vertex
 	int					bonesCount;
 	std::vector<Bone>	bones;
+};
+
+struct ARN_CAMERA
+{
+	// eye: Position of camera
+	// at: Look-at vector
+	// up: Up-vector
+
+	ArnVec3 eye, at, up;
+	float farClip, nearClip;
+	float angle; // in radian
 };
 
 #endif // #ifndef __STRUCTS_H_

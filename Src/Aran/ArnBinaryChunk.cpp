@@ -128,11 +128,12 @@ ArnBinaryChunk::createFrom(const char* fileName, bool zlibCompressed, unsigned i
 			if (fileSize)
 			{
 				ret = new ArnBinaryChunk();
-				ret->m_data = new char[fileSize];
+				char* data = new char[fileSize]; // Since ret->m_data type is 'const char*', we use temporary variable named 'data'.
 				ret->m_deallocateData = true;
 				fseek(f, 0, SEEK_SET);
-				fread(ret->m_data, fileSize, 1, f);
+				fread(data, fileSize, 1, f); // TODO
 				fclose(f);
+				ret->m_data = data;
 				ret->m_recordSize = fileSize;
 				ret->m_recordCount = 1;
 			}
@@ -140,16 +141,18 @@ ArnBinaryChunk::createFrom(const char* fileName, bool zlibCompressed, unsigned i
 		else // zlib compressed binary file
 		{
 			ret = new ArnBinaryChunk();
-			ret->m_data = new char[uncompressedSize];
+			char* data = new char[uncompressedSize]; // Since ret->m_data type is 'const char*', we use temporary variable named 'data'.
+			int zret;
+			if ((zret = inf(f, data)) != Z_OK)
+			{
+				zerr(zret);
+				delete [] data;
+				throw MyError(MEE_FILE_ACCESS_ERROR);
+			}
+			ret->m_data = data;
 			ret->m_deallocateData = true;
 			ret->m_recordSize = uncompressedSize;
 			ret->m_recordCount = 1;
-			int zret;
-			if ((zret = inf(f, ret->m_data)) != Z_OK)
-			{
-				zerr(zret);
-				throw MyError(MEE_FILE_ACCESS_ERROR);
-			}
 		}
 	}
 	else
@@ -242,8 +245,8 @@ ArnBinaryChunk::getRecordSize() const
 	return m_recordSize;
 }
 
-char*
-ArnBinaryChunk::getRawDataPtr()
+const char*
+ArnBinaryChunk::getConstRawDataPtr() const
 {
 	return m_data;
 }

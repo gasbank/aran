@@ -38,8 +38,20 @@
 XERCES_CPP_NAMESPACE_USE
 
 
-#include "IL/il.h"
+//
+// Boost C++
+//
+#include <boost/lambda/lambda.hpp>
+#include <boost/function.hpp>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/shared_ptr.hpp>
+#define foreach BOOST_FOREACH
 
+//
+// Aran
+//
 #include "AranApi.h"
 #include "VideoManGl.h"
+#include "AranGl.h"
 #include "ArnGlExt.h"

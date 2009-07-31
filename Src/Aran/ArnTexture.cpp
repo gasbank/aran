@@ -1,23 +1,21 @@
 #include "AranPCH.h"
 #include "ArnTexture.h"
 #include "VideoMan.h"
-
+//
+// DevIL
+//
 #include "IL/il.h"
+
+static bool gs_ilInitialized = false;
 
 ArnTexture::ArnTexture(const char* texFileName)
 : ArnObject(NDT_RT_TEXTURE)
 , m_fileName(texFileName)
-, m_inited(false)
-, m_d3d9Tex(0)
 {
 }
 
 ArnTexture::~ArnTexture(void)
 {
-	Release();
-#ifdef WIN32
-	SAFE_RELEASE(m_d3d9Tex);
-#endif
 }
 
 ArnTexture* ArnTexture::createFrom(const char* texFileName)
@@ -27,6 +25,8 @@ ArnTexture* ArnTexture::createFrom(const char* texFileName)
 	//ArnCreateTextureFromFile(&GetVideoManager(), ret->m_fileName.c_str(), &ret);
 	return ret;
 }
+
+//////////////////////////////////////////////////////////////////////////
 
 HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )
 {
@@ -69,4 +69,41 @@ void ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const cha
 	assert(ftell(f) == (int)fileSize);
 	fclose(f);
 	return;
+}
+
+void ArnInitializeImageLibrary()
+{
+	ilInit();
+	gs_ilInitialized = true;
+}
+
+void ArnCleanupImageLibrary()
+{
+	assert(gs_ilInitialized);
+	//
+	// Insert cleanup code here
+	//
+	gs_ilInitialized = false;
+}
+
+void ArnTextureGetRawDataFromimageFile( unsigned char** data, int* width, int* height, const char* fileName )
+{
+	assert(gs_ilInitialized);
+	ILuint handle;
+	ilGenImages(1, &handle);
+	ilBindImage(handle);
+	ILboolean result = ilLoadImage(fileName);
+	if (result == IL_FALSE)
+	{
+		fprintf(stderr, " *** Texture file is not loaded correctly: %s\n", fileName);
+		*data = 0;
+		*width = -1;
+		*height = -1;
+		return;
+	}
+	*width = ilGetInteger(IL_IMAGE_WIDTH);
+	*height = ilGetInteger(IL_IMAGE_HEIGHT);
+	*data = (unsigned char*)malloc( (*width) * (*height) * 3 );
+	ilCopyPixels(0, 0, 0, *width, *height, 1, IL_RGB, IL_UNSIGNED_BYTE, *data);
+	ilDeleteImages(1, &handle);
 }

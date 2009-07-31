@@ -10,7 +10,6 @@
 
 ArnSceneGraph::ArnSceneGraph()
 : ArnNode(NDT_RT_SCENEGRAPH)
-, m_bRendererObjectInited(false)
 , m_exportVersion(EV_ARN30)
 , m_binaryChunk(0)
 {
@@ -56,26 +55,7 @@ void ArnSceneGraph::interconnect(ArnNode* sceneRoot)
 
 void ArnSceneGraph::initRendererObjects()
 {
-	foreach (ArnNode* node, getChildren())
-	{
-		if (node->getType() == NDT_RT_MESH)
-		{
-			ArnMesh* mesh = static_cast<ArnMesh*>(node);
-			mesh->initRendererObject();
-			//mesh->configureIpo();
-		}
-		else if (node->getType() == NDT_RT_MATERIAL)
-		{
-			ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
-			mtrl->initRendererObject();
-		}
-		else if (node->getType() == NDT_RT_SKELETON)
-		{
-			ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
-			skel->configureIpos();
-		}
-	}
-	m_bRendererObjectInited = true;
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 ArnNode* ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )

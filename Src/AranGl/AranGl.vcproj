@@ -17,12 +17,12 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
+			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -42,7 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANGL_EXPORTS"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANGL_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -50,6 +51,7 @@
 				PrecompiledHeaderThrough="AranGlPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -91,7 +93,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="ReleaseDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
@@ -182,7 +184,7 @@
 				RelativePath=".\AranGlPCH.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="DebugDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -190,13 +192,17 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="ReleaseDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ArnGlExt.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\ArnMeshGl.cpp"
@@ -210,7 +216,7 @@
 				RelativePath=".\dllmain.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="DebugDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -219,7 +225,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="ReleaseDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -227,6 +233,10 @@
 						CompileAsManaged="0"
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\glInfo.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\VideoManGl.cpp"
@@ -247,11 +257,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnGlExt.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGlExtEntry.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnMeshGl.h"
 				>
 			</File>
 			<File
 				RelativePath=".\ArnTextureGl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\glInfo.h"
 				>
 			</File>
 			<File

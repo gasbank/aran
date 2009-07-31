@@ -1,12 +1,28 @@
 #include "AranGlPCH.h"
 #include "ArnMeshGl.h"
+#include "ArnVertexBuffer.h"
+#include "ArnBinaryChunk.h"
+#include "ArnMaterial.h"
+#include "AranGl.h"
 
 static float lmodel_twoside[] = {GL_TRUE};
 static float lmodel_oneside[] = {GL_FALSE};
 
+void checkGlError()
+{
+	GLenum errCode;
+	const GLubyte* errString;
+	if ((errCode = glGetError()) != GL_NO_ERROR)
+	{
+		errString = gluErrorString(errCode);
+		fprintf(stderr, "OpenGL Error: %s\n", errString);
+	}
+}
+
 ArnMeshGl::ArnMeshGl(void)
 : m_vboId(0)
 , m_vboUv(0)
+, m_target(0)
 {
 }
 
@@ -17,26 +33,20 @@ ArnMeshGl::~ArnMeshGl(void)
 bool
 ArnMeshGl::initRendererObjectVbIb()
 {
-	if (m_arnVb)
-	{
-		glGenBuffersARB(1, &m_vboId);
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_vboId);
-		glBufferDataARB(GL_ARRAY_BUFFER_ARB, m_arnVb->getDataSize(), 0, GL_STATIC_DRAW_ARB);
-		glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, m_arnVb->getDataSize(), m_arnVb->getData());
-		return true;
-	}
-	else
-	{
-		return false;
-	}
+	assert(m_target);
+	assert(m_target->getVertexBuffer());
+	glGenBuffersARB(1, &m_vboId);
+	glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_vboId);
+	glBufferDataARB(GL_ARRAY_BUFFER_ARB, m_target->getVertexBuffer()->getDataSize(), 0, GL_STATIC_DRAW_ARB);
+	glBufferSubDataARB(GL_ARRAY_BUFFER_ARB, 0, m_target->getVertexBuffer()->getDataSize(), m_target->getVertexBuffer()->getData());
+	return true;
 }
 
 bool
 ArnMeshGl::initRendererObjectXml()
 {
-	if (m_faceGroup.size() && m_vertexGroup.size())
+	if (m_target->getFaceGroupCount() && m_target->getVertGroupCount())
 	{
-
 		/*
 
 		'm_vboIds[i]' buffer structure
@@ -52,14 +62,15 @@ ArnMeshGl::initRendererObjectXml()
 
 		*/
 
-		const ArnBinaryChunk* vertexChunk = m_vertexChunk;
+		const ArnBinaryChunk* vertexChunk = m_target->getVertexChunk();
+		const ArnBinaryChunk* triquadUvChunk = m_target->getTriquadUvChunk();
 		const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 		int uvRecordSize = 0;
-		if (m_triquadUvChunk)
+		if (triquadUvChunk)
 			uvRecordSize += sizeof(float) * 2; // Extend vertex size to include 2D UV coordinates.
 		int vboEntrySize = vertexRecordSize + uvRecordSize;
 
-		const size_t faceGroupCount = getFaceGroupCount();
+		const size_t faceGroupCount = m_target->getFaceGroupCount();
 		m_vboIds.resize(faceGroupCount);
 		glGenBuffersARB(faceGroupCount, &m_vboIds[0]);
 		checkGlError();
@@ -67,8 +78,8 @@ ArnMeshGl::initRendererObjectXml()
 		int totalQuadFaceCount = 0;
 		for (size_t i = 0; i < faceGroupCount; ++i)
 		{
-			ArnBinaryChunk* triFaceChunk = m_faceGroup[i].triFaceChunk;
-			ArnBinaryChunk* quadFaceChunk = m_faceGroup[i].quadFaceChunk;
+			const ArnBinaryChunk* triFaceChunk = m_target->getTriFaceChunkOfFaceGroup(i);
+			const ArnBinaryChunk* quadFaceChunk = m_target->getQuadFaceChunkOfFaceGroup(i);
 			int triFaceCount = triFaceChunk->getRecordCount();
 			int quadFaceCount = quadFaceChunk->getRecordCount();
 			int triFaceVertSize = triFaceCount * 3 * vboEntrySize;
@@ -82,7 +93,7 @@ ArnMeshGl::initRendererObjectXml()
 			{
 				char* buf = new char[triFaceVertSize];
 				int bufOffset = 0;
-				int* vert3Ind = (int*)triFaceChunk->getRawDataPtr(); // [face index][v0 index][v1 index][v2 index]
+				const int* vert3Ind = reinterpret_cast<const int*>(triFaceChunk->getConstRawDataPtr()); // [face index][v0 index][v1 index][v2 index]
 				for (int j = 0; j < triFaceCount; ++j)
 				{
 					for (int k = 0; k < 3; ++k)
@@ -90,10 +101,10 @@ ArnMeshGl::initRendererObjectXml()
 						const char* record = vertexChunk->getRecordAt( *(vert3Ind + j*(1+3) + k + 1) ); // Skip face index by adding 1 to vert3Ind ptr.
 						memcpy(&buf[bufOffset], record, vertexRecordSize);
 						bufOffset += vertexRecordSize;
-						if (m_triquadUvChunk)
+						if (triquadUvChunk)
 						{
 							assert(uvRecordSize);
-							const char* quadrupleUvCoordsRecord = m_triquadUvChunk->getRecordAt( *(vert3Ind + j*(1+3)) );
+							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt( *(vert3Ind + j*(1+3)) );
 							quadrupleUvCoordsRecord += uvRecordSize * k;
 							memcpy(&buf[bufOffset], quadrupleUvCoordsRecord, uvRecordSize);
 							bufOffset += uvRecordSize;
@@ -111,7 +122,7 @@ ArnMeshGl::initRendererObjectXml()
 			{
 				char* buf = new char[quadFaceVertSize];
 				int bufOffset = 0;
-				int* vert4Ind = (int*)quadFaceChunk->getRawDataPtr();  // [face index][v0 index][v1 index][v2 index][v3 index]
+				const int* vert4Ind = reinterpret_cast<const int*>(quadFaceChunk->getConstRawDataPtr());  // [face index][v0 index][v1 index][v2 index][v3 index]
 				for (int j = 0; j < quadFaceCount; ++j)
 				{
 					for (int k = 0; k < 4; ++k)
@@ -119,10 +130,10 @@ ArnMeshGl::initRendererObjectXml()
 						const char* record = vertexChunk->getRecordAt( *(vert4Ind + j*(1+4) + k + 1) ); // Skip face index by adding 1 to vert3Ind ptr.
 						memcpy(&buf[bufOffset], record, vertexRecordSize);
 						bufOffset += vertexRecordSize;
-						if (m_triquadUvChunk)
+						if (triquadUvChunk)
 						{
 							assert(uvRecordSize);
-							const char* quadrupleUvCoordsRecord = m_triquadUvChunk->getRecordAt( *(vert4Ind + j*(1+4)) );
+							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt( *(vert4Ind + j*(1+4)) );
 							quadrupleUvCoordsRecord += uvRecordSize * k;
 							memcpy(&buf[bufOffset], quadrupleUvCoordsRecord, uvRecordSize);
 							bufOffset += uvRecordSize;
@@ -151,7 +162,7 @@ ArnMeshGl::initRendererObjectXml()
 void
 ArnMeshGl::renderVbIb()
 {
-	assert(m_vboId && m_arnVb);
+	assert(m_vboId && m_target->getVertexBuffer());
 
 	// bind VBOs with IDs and set the buffer offsets of the bound VBOs
 	// When buffer object is bound with its ID, all pointers in gl*Pointer()
@@ -165,13 +176,10 @@ ArnMeshGl::renderVbIb()
 	glVertexPointer(3, GL_FLOAT, 0, 0);
 
 	glPushMatrix();
-	recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-#ifdef WIN32
-	glMultMatrixf((float*)getLocalXform().m);
-#else
-	glMultMatrixf((float*)getLocalXform().transpose().m);
-#endif
-	glDrawArrays(GL_TRIANGLES, 0, m_arnVb->getCount());
+	assert(m_target->isLocalXformDirty() == false);
+	//m_target->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
+	glMultMatrixf((float*)m_target->getLocalXform().transpose().m);
+	glDrawArrays(GL_TRIANGLES, 0, m_target->getVertexBuffer()->getCount());
 	glPopMatrix();
 	glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
 
@@ -184,7 +192,8 @@ ArnMeshGl::renderVbIb()
 void
 ArnMeshGl::renderXml()
 {
-	assert(m_faceGroup.size() && m_vertexGroup.size());
+	assert(m_target);
+	assert(m_target->getFaceGroupCount() && m_target->getVertGroupCount());
 
 	/*
 
@@ -201,27 +210,29 @@ ArnMeshGl::renderXml()
 
 	*/
 
-	//const ArnBinaryChunk* vertexChunk = m_vertexGroup[0].vertexChunk;
-	const ArnBinaryChunk* vertexChunk = m_vertexChunk;
+	const ArnBinaryChunk* vertexChunk = m_target->getVertexChunk();
+	const ArnBinaryChunk* triquadUvChunk = m_target->getTriquadUvChunk();
 	const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 	int uvRecordSize = 0;
-	if (m_triquadUvChunk)
+	if (triquadUvChunk)
 		uvRecordSize += sizeof(float) * 2; // Extend vertex size to include 2D UV coordinates.
 	int vboEntrySize = vertexRecordSize + uvRecordSize;
 
-	const size_t faceGroupCount = m_faceGroup.size();
+	const size_t faceGroupCount = m_target->getFaceGroupCount();
+	const int mtrlRefNameCount = static_cast<const int>(m_target->getMaterialReferenceNameCount());
 	for (size_t i = 0; i < faceGroupCount; ++i)
 	{
-		if (m_faceGroup[i].mtrlIndex < (int)m_mtrlRefNameList.size())
+		int mtrlIndex = m_target->getMaterialIndexOfFaceGroup(i);
+		if (mtrlIndex < mtrlRefNameCount)
 		{
-			ArnNode* sceneRoot = getSceneRoot();
-			ArnNode* mtrlNode = sceneRoot->getNodeByName(m_mtrlRefNameList[ m_faceGroup[i].mtrlIndex ]);
+			const ArnNode* sceneRoot = m_target->getConstSceneRoot();
+			ArnNode* mtrlNode = sceneRoot->getNodeByName( m_target->getMaterialReferenceName(mtrlIndex) );
 			ArnMaterial* mtrl = dynamic_cast<ArnMaterial*>(mtrlNode);
 			assert(mtrl);
 			ArnSetupMaterialGl(mtrl);
 		}
-		const ArnBinaryChunk* triFaceChunk = m_faceGroup[i].triFaceChunk;
-		const ArnBinaryChunk* quadFaceChunk = m_faceGroup[i].quadFaceChunk;
+		const ArnBinaryChunk* triFaceChunk = m_target->getTriFaceChunkOfFaceGroup(i);
+		const ArnBinaryChunk* quadFaceChunk = m_target->getQuadFaceChunkOfFaceGroup(i);
 		int triFaceCount = triFaceChunk->getRecordCount();
 		int quadFaceCount = quadFaceChunk->getRecordCount();
 		int triFaceVertSize = triFaceCount * 3 * vboEntrySize;
@@ -229,7 +240,7 @@ ArnMeshGl::renderXml()
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_vboIds[i]);
 
-		if (m_triquadUvChunk)
+		if (triquadUvChunk)
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
@@ -237,9 +248,10 @@ ArnMeshGl::renderXml()
 		glPushMatrix();
 		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		{
-			recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-			glMultTransposeMatrixf((float*)getFinalLocalXform().m);
-			if (m_bTwoSided)
+			assert(m_target->isLocalXformDirty() == false);
+			//m_target->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
+			glMultTransposeMatrixf((float*)m_target->getFinalLocalXform().m);
+			if (m_target->isTwoSided())
 			{
 				glDisable(GL_CULL_FACE);
 				//glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
@@ -253,7 +265,7 @@ ArnMeshGl::renderXml()
 			// 1. Draw tri faces
 			if (triFaceCount)
 			{
-				if (m_triquadUvChunk)
+				if (triquadUvChunk)
 					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*6));
 				glNormalPointer(GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*3));
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, 0);
@@ -263,7 +275,7 @@ ArnMeshGl::renderXml()
 			// 2. Draw quad faces
 			if (quadFaceCount)
 			{
-				if (m_triquadUvChunk)
+				if (triquadUvChunk)
 					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*6 + triFaceVertSize));
 				glNormalPointer(GL_FLOAT, vboEntrySize, (void*)((sizeof(float)*3 + triFaceVertSize)));
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, (void*)(0 + triFaceVertSize));
@@ -271,7 +283,7 @@ ArnMeshGl::renderXml()
 			}
 
 			// Bounding Box
-			if (!m_bBoundingBoxPointsDirty && m_bRenderBoundingBox)
+			if (m_target->isOkayToRenderBoundingBox())
 			{
 				glDisable(GL_LIGHTING);
 				glDisable(GL_CULL_FACE);
@@ -280,47 +292,80 @@ ArnMeshGl::renderXml()
 				glColor3f(1.0f, 1.0f, 1.0f);
 
 				glBegin(GL_QUADS);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
 
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
 
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[0]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
 
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[4]);
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
 
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[7]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[3]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
 
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[6]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[2]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[1]);
-				glVertex3fv((GLfloat*)&m_boundingBoxPoints[5]);				
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
+				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
 				glEnd();
 			}
 		}
 		glPopAttrib();
 		glPopMatrix();
 
-		if (m_triquadUvChunk)
+		if (triquadUvChunk)
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 	}
+}
 
+int ArnMeshGl::render()
+{
+	return -10;
+}
+
+void ArnMeshGl::cleanup()
+{
+
+}
+
+ArnMeshGl* ArnMeshGl::createFrom( const ArnMesh* mesh )
+{
+	ArnMeshGl* ret = new ArnMeshGl();
+	ret->m_target = mesh;
+	if (mesh->getVertexBuffer())
+	{
+		assert(mesh->getVertexChunk() == 0); // Should not have both property between VB/IB and XML loaded data.
+		ret->initRendererObjectVbIb();
+	}
+	else if (mesh->getVertexChunk())
+	{
+		assert(mesh->getVertexBuffer() == 0); // Should not have both property between VB/IB and XML loaded data.
+		ret->initRendererObjectXml();
+	}
+	else
+	{
+		delete ret;
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+	ret->setInitialized(true);
+	ret->setRendererType(RENDERER_GL);
+	return ret;
 }

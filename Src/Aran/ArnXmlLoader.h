@@ -15,6 +15,6 @@ private:
 ARAN_API int ArnInitializeXmlParser();
 ARAN_API void ArnCleanupXmlParser();
 
-ArnNode* CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr);
+ArnNode* CreateArnNodeFromXmlElement(DOMElement* elm, const char* binaryChunkBasePtr);
 
 #endif // ARNXMLLOADER_H

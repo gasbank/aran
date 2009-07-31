@@ -6,6 +6,7 @@
 #include "ArnBinaryChunk.h"
 #include "ArnTexture.h"
 #include "ArnMath.h"
+#include "ArnRenderableObject.h"
 
 ArnMesh::ArnMesh()
 : ArnXformable(NDT_RT_MESH)
@@ -16,8 +17,6 @@ ArnMesh::ArnMesh()
 , m_arnIb(0)
 , m_triquadUvChunk(0)
 , m_bTwoSided(false)
-, m_renderFunc(0)
-, m_initRendererObjectFunc(0)
 , m_nodeMesh3(0)
 , m_vertexChunk(0)
 , m_bBoundingBoxPointsDirty(true)
@@ -46,8 +45,8 @@ ArnMesh::createFromVbIb( const ArnVertexBuffer* vb, const ArnIndexBuffer* ib )
 	ArnMesh* ret = new ArnMesh();
 	ret->setVertexBuffer(vb);
 	ret->setIndexBuffer(ib);
-	ret->m_renderFunc = &ArnMesh::renderVbIb;
-	ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectVbIb;
+	//ret->m_renderFunc = &ArnMesh::renderVbIb;
+	//ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectVbIb;
 	return ret;
 }
 
@@ -103,35 +102,11 @@ ArnMesh::setIndexBuffer( const ArnIndexBuffer* ib )
 	m_arnIb = ib;
 }
 
-void checkGlError()
-{
-	GLenum errCode;
-	const GLubyte* errString;
-	if ((errCode = glGetError()) != GL_NO_ERROR)
-	{
-		errString = gluErrorString(errCode);
-		fprintf(stderr, "OpenGL Error: %s\n", errString);
-	}
-}
-
-bool
-ArnMesh::initRendererObject()
-{
-	bool ret = false;
-	if (m_initRendererObjectFunc)
-	{
-		ret = (this->*m_initRendererObjectFunc)();
-	}
-	return ret;
-}
-
 void
 ArnMesh::render()
 {
-	if (m_renderFunc)
-	{
-		(this->*m_renderFunc)();
-	}
+	assert(m_renderableObject.get());
+	m_renderableObject->render();
 }
 
 unsigned int
@@ -147,7 +122,7 @@ ArnMesh::getFaceCount( unsigned int& triCount, unsigned int& quadCount, unsigned
 void ArnMesh::getTriFace( unsigned int& faceIdx, unsigned int vind[3], unsigned int faceGroupIdx, unsigned int triFaceIndex ) const
 {
 	ArnBinaryChunk* triFaceChunk = m_faceGroup[faceGroupIdx].triFaceChunk;
-	const unsigned int* vert3Ind = reinterpret_cast<const unsigned int*>(triFaceChunk->getRawDataPtr()) + (1+3)*triFaceIndex; // [face index][v0 index][v1 index][v2 index]
+	const unsigned int* vert3Ind = reinterpret_cast<const unsigned int*>(triFaceChunk->getConstRawDataPtr()) + (1+3)*triFaceIndex; // [face index][v0 index][v1 index][v2 index]
 	faceIdx = vert3Ind[0];
 	vind[0] = vert3Ind[1];
 	vind[1] = vert3Ind[2];
@@ -157,7 +132,7 @@ void ArnMesh::getTriFace( unsigned int& faceIdx, unsigned int vind[3], unsigned 
 void ArnMesh::getQuadFace( unsigned int& faceIdx, unsigned int vind[4], unsigned int faceGroupIdx, unsigned int quadFaceIndex ) const
 {
 	ArnBinaryChunk* quadFaceChunk = m_faceGroup[faceGroupIdx].quadFaceChunk;
-	const unsigned int* vert4Ind = reinterpret_cast<const unsigned int*>(quadFaceChunk->getRawDataPtr()) + (1+4)*quadFaceIndex; // [face index][v0 index][v1 index][v2 index][v3 index]
+	const unsigned int* vert4Ind = reinterpret_cast<const unsigned int*>(quadFaceChunk->getConstRawDataPtr()) + (1+4)*quadFaceIndex; // [face index][v0 index][v1 index][v2 index][v3 index]
 	faceIdx = vert4Ind[0];
 	vind[0] = vert4Ind[1];
 	vind[1] = vert4Ind[2];

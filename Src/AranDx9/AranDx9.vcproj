@@ -283,6 +283,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\AranGl\ModelDrawer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ModelReader.cpp"
 				>
 			</File>
@@ -382,6 +386,10 @@
 			</File>
 			<File
 				RelativePath="..\Macros.h"
+				>
+			</File>
+			<File
+				RelativePath="..\AranGl\ModelDrawer.h"
 				>
 			</File>
 			<File

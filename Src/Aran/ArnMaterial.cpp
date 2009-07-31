@@ -99,10 +99,7 @@ void ArnMaterial::interconnect( ArnNode* sceneRoot )
 
 void ArnMaterial::initRendererObject()
 {
-	foreach(ArnTexture* tex, m_d3dTextureList)
-	{
-		tex->initialize();
-	}
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

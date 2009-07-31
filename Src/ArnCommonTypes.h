@@ -105,6 +105,7 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_RT_SYMLINK,
 	NDT_RT_SCENEGRAPH,
 	NDT_RT_TEXTURE,
+	NDT_RT_RENDERABLEOBJECT,
 
 	NDT_FORCE_DWORD = 0x7fffffff
 };
@@ -119,6 +120,7 @@ struct MY_COLOR_VERTEX
 //
 enum RendererType
 {
+	RENDERER_UNKNOWN,
 	RENDERER_DX9,
 	RENDERER_GL
 };
@@ -478,3 +480,4 @@ public:
 	std::string armatureName;
 	std::vector<std::string> boneMatIdxMap;
 };
+

@@ -11,7 +11,7 @@ class ARAN_API ArnXformable : public ArnNode
 {
 public:
 	virtual										~ArnXformable(void);
-	inline const std::string&						getIpoName() const;
+	inline const std::string&					getIpoName() const;
 	inline const ArnMatrix&						getFinalLocalXform() const;
 	inline const ArnVec3&						getLocalXform_Scale() const;
 	inline void									setLocalXform_Scale(const ArnVec3& scale);
@@ -52,7 +52,7 @@ protected:
 private:
 	inline void									setAnimSeqEnded(bool val);
 	ArnIpo*										m_ipo;
-	std::string										m_ipoName;
+	std::string									m_ipoName;
 	ArnMatrix  									m_localXform;
 	ArnVec3 									m_localXform_Scale;
 	ArnQuat     								m_localXform_Rot;

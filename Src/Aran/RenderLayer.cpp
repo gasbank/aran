@@ -4,7 +4,7 @@
 
 
 RenderLayer::RenderLayer( void )
-:m_lpDev(0), m_bVisible(TRUE)
+: m_bVisible(true)
 {
 
 }

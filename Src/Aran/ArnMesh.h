@@ -9,6 +9,7 @@ class ArnHierarchy;
 class ArnVertexBuffer;
 class ArnIndexBuffer;
 class ArnBinaryChunk;
+class ArnRenderableObject;
 
 class ARAN_API ArnMesh : public ArnXformable
 {
@@ -16,8 +17,7 @@ public:
 	typedef std::vector<ArnMaterial*>		MaterialRefList;
 											~ArnMesh();
 	static ArnMesh*							createFromVbIb(const ArnVertexBuffer* vb, const ArnIndexBuffer* ib);
-	static ArnMesh*							createFrom(const DOMElement* elm, char* binaryChunkBasePtr);
-	bool									initRendererObject();
+	static ArnMesh*							createFrom(const DOMElement* elm, const char* binaryChunkBasePtr);
 	inline const MeshData&					getMeshData() const;
 	const ArnMaterialData*					getMaterial(unsigned int i) const;
 	inline ArnMaterial*						getMaterialNode(unsigned int i) const;
@@ -41,6 +41,22 @@ public:
 	void									setTwoSided(bool b) { m_bTwoSided = b; }
 	void									getBoundingBoxDimension(ArnVec3* out, bool worldSpace) const;
 
+	const ArnVertexBuffer*					getVertexBuffer() const { return m_arnVb; }
+	const ArnIndexBuffer*					getIndexBuffer() const { return m_arnIb; }
+	const ArnBinaryChunk*					getVertexChunk() const { return m_vertexChunk; }
+	const ArnBinaryChunk*					getTriquadUvChunk() const { return m_triquadUvChunk; }
+	const ArnBinaryChunk*					getTriFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].triFaceChunk; }
+	const ArnBinaryChunk*					getQuadFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].quadFaceChunk; }
+
+	int										getMaterialIndexOfFaceGroup(unsigned int i) const { return m_faceGroup[i].mtrlIndex; }
+	unsigned int							getMaterialReferenceNameCount() const { return m_mtrlRefNameList.size(); }
+	const char*								getMaterialReferenceName(unsigned int i) const { assert(i < m_mtrlRefNameList.size()); return m_mtrlRefNameList[i].c_str(); }
+	bool									isTwoSided() const { return m_bTwoSided; }
+	bool									isOkayToRenderBoundingBox() const { return !m_bBoundingBoxPointsDirty && m_bRenderBoundingBox; }
+	const ArnVec3*							getBoundingBoxPoint(unsigned int i) const { assert(i < 8); return &m_boundingBoxPoints[i]; }
+
+	void									setRenderableObject(boost::shared_ptr<ArnRenderableObject> ptr) { m_renderableObject = ptr; }
+	boost::shared_ptr<ArnRenderableObject>	getRenderableObject() const { return m_renderableObject; }
 	// ********************************* INTERNAL USE ONLY START *********************************
 	virtual void							interconnect(ArnNode* sceneRoot);
 	// *********************************  INTERNAL USE ONLY END  *********************************
@@ -51,8 +67,6 @@ private:
 	void									setVertexBuffer(const ArnVertexBuffer* vb);
 	void									setIndexBuffer(const ArnIndexBuffer* ib);
 	void									setBoundingBoxPoints(ArnVec3 bb[8]);
-	virtual void							renderVbIb() = 0;
-	virtual void							renderXml() = 0;
 
 	struct FaceGroup
 	{
@@ -96,8 +110,7 @@ private:
 	bool									m_bRenderBoundingBox;
 	//@}
 
-	void									(ArnMesh::*m_renderFunc)();
-	bool									(ArnMesh::*m_initRendererObjectFunc)();
+	boost::shared_ptr<ArnRenderableObject>	m_renderableObject;
 
 	// Temporary code
 	const NodeMesh3*						m_nodeMesh3;

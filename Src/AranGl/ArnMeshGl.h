@@ -1,15 +1,23 @@
 #pragma once
 
-class ArnMeshGl
+#include "ArnRenderableObject.h"
+
+class ArnMeshGl : public ArnRenderableObject
 {
 public:
-	ArnMeshGl(void);
-	~ArnMeshGl(void);
-
+											~ArnMeshGl(void);
+	static ArnMeshGl*						createFrom(const ArnMesh* mesh);
+	//virtual int								initialize();
+	virtual int								render();
+	virtual void							cleanup();
 private:
-	virtual void							renderVbIb();
-	virtual void							renderXml();
+											ArnMeshGl(void);
+	bool									initRendererObjectVbIb();
+	bool									initRendererObjectXml();
+	void									renderVbIb();
+	void									renderXml();
 	GLuint									m_vboId;
 	std::vector<GLuint>						m_vboIds;
 	GLuint									m_vboUv;
+	const ArnMesh*							m_target; // Rendering object which has all the data
 };

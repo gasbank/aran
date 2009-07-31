@@ -8,10 +8,9 @@ typedef std::list<ArnNode*>					ArnNodeList;
 class ARAN_API ArnNode : public ArnObject
 {
 public:
-									ArnNode(NODE_DATA_TYPE type);
 	virtual							~ArnNode(void);
 	inline ArnNode*					getParent() const;
-	inline const std::string&			getParentName() const;
+	inline const std::string&		getParentName() const;
 	inline const char*				getName() const;
 	inline void						setName(const char* name);
 	void							attachChild(ArnNode* child);
@@ -23,6 +22,7 @@ public:
 	ArnNode*						getNodeById(unsigned int id);
 	inline unsigned int				getNodeCount() const;
 	inline ArnNode*					getSceneRoot();
+	inline const ArnNode*			getConstSceneRoot() const;
 	inline const ArnNodeList&		getChildren() const;
 	inline void						setParent(ArnNode* node);
 	inline void						detachParent();
@@ -32,12 +32,13 @@ public:
 	virtual void					interconnect(ArnNode* sceneRoot) = 0;
 	// *** INTERNAL USE ONLY END ***
 protected:
+									ArnNode(NODE_DATA_TYPE type);
 	inline void						setParentName(const char* name);
 
 private:
-	std::string							m_name;
+	std::string						m_name;
 	ArnNode*						m_parent;
-	std::string							m_parentName;
+	std::string						m_parentName;
 	ArnNodeList						m_children;
 };
 

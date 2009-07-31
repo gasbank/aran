@@ -4,7 +4,7 @@
 #include "VideoMan.h"
 #include "glInfo.h"
 
-class VideoManGl : public VideoMan
+class ARANGL_API VideoManGl : public VideoMan
 {
 public:
 	virtual											~VideoManGl() {}
@@ -47,12 +47,5 @@ private:
 	bool											m_vboSupported;
 
 };
-
-ARAN_API void ArnDrawAxesGl(float size);
-ARAN_API void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
-ARAN_API void ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
-ARAN_API void ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
-ARAN_API void ArnConfigureViewMatrixGl(ArnCamera* cam);
-ARAN_API GLuint ArnCreateNormalizationCubeMapGl();
 
 #endif // VIDEOMANGL_H

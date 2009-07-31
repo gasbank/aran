@@ -2,7 +2,7 @@
 
 class ArnVec3;
 
-class ArnVec4
+class ARANMATH_API ArnVec4
 {
 public:
 	float x, y, z, w;

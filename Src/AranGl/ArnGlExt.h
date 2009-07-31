@@ -8,9 +8,9 @@
 // Note: These externals should be declared in DllMain.cpp and set in ArnInitGlExtFunctions()
 //
 #ifdef WIN32
-	#define ARN_GL_EXT_ENTRY(type, var) extern ARAN_API type var;
+	#define ARN_GL_EXT_ENTRY(type, var) extern ARANGL_API type var;
 	#include "ArnGlExtEntry.h"
 	#undef ARN_GL_EXT_ENTRY
 #endif
 
-ARAN_API int ArnInitGlExtFunctions();
+ARANGL_API int ArnInitGlExtFunctions();
