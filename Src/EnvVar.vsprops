@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ks_c_5601-1987"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="Environmental Variables"
+	>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile=""
+	/>
+	<UserMacro
+		Name="CODEBASE"
+		Value="D:\Devel3"
+	/>
+	<UserMacro
+		Name="WORKING"
+		Value="D:\Devel3\Working"
+	/>
+</VisualStudioPropertySheet>
