@@ -1,6 +1,6 @@
 #include "AranPCH.h"
 #include "ArnLight.h"
-#include "ArnFile.h"
+
 ArnLight::ArnLight()
 : ArnXformable(NDT_RT_LIGHT)
 {
@@ -52,6 +52,7 @@ void ArnLight::buildFrom( const NodeLight2* nl )
 void ArnLight::interconnect( ArnNode* sceneRoot )
 {
 	setIpo(getIpoName());
+	configureAnimCtrl();
 
 	ArnNode::interconnect(sceneRoot);
 }

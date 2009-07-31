@@ -5,6 +5,7 @@
 #include "ArnMath.h"
 #include "ArnAction.h"
 #include "ArnBone.h"
+#include "ArnMesh.h"
 #include "ArnConsts.h"
 
 ArnAnimationController::ArnAnimationController()
@@ -144,8 +145,10 @@ ArnAnimationController::Release()
 void
 ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 {
+	/*
 	if (dTime == 0)
 		return;
+	*/
 	m_dTime += dTime;
 	float totalWeight = 0;
 	for (unsigned int i = 0; i < m_tracks.size(); ++i)
@@ -204,8 +207,21 @@ ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 			quat /= quat.getLength();
 			//ArnMatrix ipoResultMat;
 			//ArnMatrixTransformation(&ipoResultMat, 0, 0, &scaleKey, 0, &quat, &transKey);
-			static_cast<ArnBone*>(p.first)->setAnimLocalXform_Rot(quat);
-			assert(p.first->getType() == NDT_RT_BONE);
+			NODE_DATA_TYPE ndt = p.first->getType();
+			if (ndt == NDT_RT_BONE)
+			{
+				// Note: Bone should have rotational transform only.
+				ArnBone* bone = static_cast<ArnBone*>(p.first);
+				bone->setAnimLocalXform_Rot(quat);
+			}
+			else if (ndt == NDT_RT_MESH || ndt == NDT_RT_CAMERA || ndt == NDT_RT_LIGHT)
+			{
+				ArnXformable* xformable = static_cast<ArnXformable*>(p.first);
+				xformable->setAnimLocalXform_Scale(scaleKey);
+				xformable->setAnimLocalXform_Rot(quat);
+				xformable->setAnimLocalXform_Trans(transKey);
+				xformable->recalcAnimLocalXform();
+			}
 
 			if ((m_dTime > (track.Position + (float)ipo->getEndKeyframe()/FPS)) && ipo->getPlaybackType() == ARNPLAY_LOOP)
 			{

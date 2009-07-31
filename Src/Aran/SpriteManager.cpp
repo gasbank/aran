@@ -8,7 +8,7 @@
 IMPLEMENT_SINGLETON( SpriteManager )
 
 SpriteManager::SpriteManager()
-: m_d3dxSprite( 0 ), m_d3dxObjectSprite( 0 ), m_viewMat(ArnConsts::D3DXMAT_IDENTITY), m_projMat(ArnConsts::D3DXMAT_IDENTITY)
+: m_d3dxSprite( 0 ), m_d3dxObjectSprite( 0 ), m_viewMat(ArnConsts::ARNMAT_IDENTITY), m_projMat(ArnConsts::ARNMAT_IDENTITY)
 {
 	init();
 }
@@ -36,8 +36,7 @@ void SpriteManager::release()
 
 void SpriteManager::frameRender()
 {
-
-	m_d3dxSprite->Begin( D3DXSPRITE_ALPHABLEND );
+	//***m_d3dxSprite->Begin( D3DXSPRITE_ALPHABLEND );
 	{
 		SpriteMap::iterator it = m_spriteMap.begin();
 		for ( ; it != m_spriteMap.end(); ++it )
@@ -53,20 +52,22 @@ void SpriteManager::frameRender()
 				{
 					const DrawRequest* drawReq = *itDr;
 					if (drawReq->bRender)
-						m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
+					{
+						//***m_d3dxSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
+					}
 				}
 			}
 
 		}
 	}
-	m_d3dxSprite->End();
+	//***m_d3dxSprite->End();
 
 	//////////////////////////////////////////////////////////////////////////
 
-	m_d3dxObjectSprite->Begin( D3DXSPRITE_ALPHABLEND | D3DXSPRITE_OBJECTSPACE );
+	//***m_d3dxObjectSprite->Begin( D3DXSPRITE_ALPHABLEND | D3DXSPRITE_OBJECTSPACE );
 	{
-		m_dev->SetTransform( D3DTS_VIEW, ArnMatrixGetConstDxPtr(m_viewMat) );
-		m_dev->SetTransform( D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(m_projMat) );
+		//***m_dev->SetTransform( D3DTS_VIEW, ArnMatrixGetConstDxPtr(m_viewMat) );
+		//***m_dev->SetTransform( D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(m_projMat) );
 		SpriteMap::iterator it = m_spriteMap.begin();
 		for ( ; it != m_spriteMap.end(); ++it )
 		{
@@ -83,14 +84,13 @@ void SpriteManager::frameRender()
 					const DrawRequest* drawReq = *itDr;
 					ArnMatrix centerBiased = drawReq->xform;
 					*((ArnVec3*)&centerBiased.m[3][0]) = ArnVec3Substract(*((ArnVec3*)&centerBiased.m[3][0]), drawReq->center);
-					m_dev->SetTransform( D3DTS_WORLD, ArnMatrixGetConstDxPtr(drawReq->xform) );
-					m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
+					//***m_dev->SetTransform( D3DTS_WORLD, ArnMatrixGetConstDxPtr(drawReq->xform) );
+					//***m_d3dxObjectSprite->Draw( it->second->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
 				}
 			}
 		}
 	}
-	m_d3dxObjectSprite->End();
-
+	//***m_d3dxObjectSprite->End();
 }
 
 Sprite* SpriteManager::registerSprite( const char* spriteName, const char* spriteFileName )
@@ -122,7 +122,7 @@ Sprite* SpriteManager::getSprite( const char* spriteName ) const
 
 void SpriteManager::frameRenderSpecificSprite( const char* spriteName )
 {
-	m_d3dxSprite->Begin( D3DXSPRITE_ALPHABLEND );
+	//***m_d3dxSprite->Begin( D3DXSPRITE_ALPHABLEND );
 	Sprite* sprite = m_spriteMap[ spriteName ];
 	assert( sprite->isCustomRendered() );
 	const Sprite::DrawRequestList& dr = sprite->getDrawRequestList();
@@ -132,11 +132,11 @@ void SpriteManager::frameRenderSpecificSprite( const char* spriteName )
 		Sprite::DrawRequestList::const_iterator itDr = dr.begin();
 		for ( ; itDr != dr.end(); ++itDr )
 		{
-			const DrawRequest* drawReq = *itDr;
-			m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
+			//***const DrawRequest* drawReq = *itDr;
+			//***m_d3dxSprite->Draw( sprite->getTexture(), &drawReq->srcRect, ArnVec3GetConstDxPtr(drawReq->center), ArnVec3GetConstDxPtr(drawReq->position), drawReq->color );
 		}
 	}
-	m_d3dxSprite->End();
+	//***m_d3dxSprite->End();
 
 }
 
@@ -145,21 +145,21 @@ HRESULT SpriteManager::onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSUR
 {
 	HRESULT hr = S_OK;
 
-	V_RETURN( m_d3dxSprite->OnResetDevice() );
-	V_RETURN( m_d3dxObjectSprite->OnResetDevice() );
+	//***V_RETURN( m_d3dxSprite->OnResetDevice() );
+	//***V_RETURN( m_d3dxObjectSprite->OnResetDevice() );
 
 	SpriteMap::iterator it = m_spriteMap.begin();
 	for ( ; it != m_spriteMap.end(); ++it )
 	{
-		it->second->onResetDevice( m_dev, pBackBufferSurfaceDesc, pUserContext );
+		//***it->second->onResetDevice( m_dev, pBackBufferSurfaceDesc, pUserContext );
 	}
 	return hr;
 }
 
 void SpriteManager::onLostDevice()
 {
-	if ( m_d3dxSprite ) m_d3dxSprite->OnLostDevice();
-	if ( m_d3dxObjectSprite ) m_d3dxObjectSprite->OnLostDevice();
+	//***if ( m_d3dxSprite ) m_d3dxSprite->OnLostDevice();
+	//***if ( m_d3dxObjectSprite ) m_d3dxObjectSprite->OnLostDevice();
 
 	SpriteMap::iterator it = m_spriteMap.begin();
 	for ( ; it != m_spriteMap.end(); ++it )
@@ -171,18 +171,18 @@ void SpriteManager::onLostDevice()
 HRESULT SpriteManager::onCreateDevice( IDirect3DDevice9* pd3dDevice )
 {
 	HRESULT hr = S_OK;
-	m_dev = pd3dDevice;
+	//***m_dev = pd3dDevice;
 
-	V_RETURN( D3DXCreateSprite( m_dev, &m_d3dxSprite ) );
-	V_RETURN( D3DXCreateSprite( m_dev, &m_d3dxObjectSprite ) );
+	//***V_RETURN( D3DXCreateSprite( m_dev, &m_d3dxSprite ) );
+	//***V_RETURN( D3DXCreateSprite( m_dev, &m_d3dxObjectSprite ) );
 
 	return hr;
 }
 
 void SpriteManager::onDestroyDevice()
 {
-	SAFE_RELEASE( m_d3dxSprite );
-	SAFE_RELEASE( m_d3dxObjectSprite );
+	//***SAFE_RELEASE( m_d3dxSprite );
+	//***SAFE_RELEASE( m_d3dxObjectSprite );
 }
 
 #endif

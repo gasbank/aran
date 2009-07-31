@@ -4,7 +4,7 @@
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 	#include <tchar.h>
-	#include <d3dx9.h>
+	#include <d3d9.h>
 	#include <dxerr9.h>
 	#include <CommCtrl.h>
 #endif
@@ -23,7 +23,6 @@
 #include <fstream>
 #include <list>
 #include <vector>
-#include <tr1/memory> // TODO: EXPERIMENTAL
 
 //
 // Configurable Math Library (cml)
@@ -33,5 +32,6 @@
 //
 // Aran Library Global Macros
 //
-#include "../Macros.h"
+#include "Macros.h"
+#include "ArnCommonTypes.h"
 #include "AranMathTypeDefs.h"

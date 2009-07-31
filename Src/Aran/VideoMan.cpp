@@ -1,9 +1,7 @@
 // VideoMan.cpp
 // 2007 Geoyeob Kim
 #include "AranPCH.h"
-#include "VideoManDx9.h"
 #include "VideoManGl.h"
-#include "Character.h"
 #include "RenderLayer.h"
 #include "ArnCamera.h"
 #include "ArnMesh.h"
@@ -11,7 +9,6 @@
 #include "ArnMath.h"
 #include "Animation.h"
 #include "ArnTexture.h"
-#include "ArnSkinInfo.h"
 #include "ArnLight.h"
 #include "ArnSceneGraph.h"
 #include "ArnMath.h"
@@ -51,6 +48,7 @@ VideoMan::~VideoMan()
 	delete m_preciseTimer;
 }
 
+/*
 VideoMan*
 VideoMan::create(RendererType type, int width, int height, int argc, char** argv)
 {
@@ -69,6 +67,7 @@ VideoMan::create(RendererType type, int width, int height, int argc, char** argv
 	}
 	return vm;
 }
+*/
 
 HRESULT
 VideoMan::InitShader()
@@ -179,7 +178,7 @@ VideoMan::SetWindowSize(int w, int h)
 HRESULT
 VideoMan::InitMainCamera()
 {
-	if (ArnVec3Equals(getMainCamera()->up, ArnConsts::D3DXVEC3_ZERO))
+	if (ArnVec3Equals(getMainCamera()->up, ArnConsts::ARNVEC3_ZERO))
 	{
 		this->mainCamera.eye = CreateArnVec3( 0.0f, 0.0f, -50.0f );
 		this->mainCamera.at = CreateArnVec3( 0.0f, 0.0f, 0.0f );
@@ -236,8 +235,8 @@ VideoMan::SetCamera( ARN_NDD_CAMERA_CHUNK* pCamChunk )
 	this->mainCamera.eye.y = pCamChunk->pos.y;
 	this->mainCamera.eye.z = pCamChunk->pos.z;
 
-	ArnVec3 lookAtVector = ArnConsts::D3DXVEC3_Z;
-	ArnVec3 upVector = ArnConsts::D3DXVEC3_Y;
+	ArnVec3 lookAtVector = ArnConsts::ARNVEC3_Z;
+	ArnVec3 upVector = ArnConsts::ARNVEC3_Y;
 	ArnMatrix upVectorRot;
 	ArnQuat quat( pCamChunk->rot.x, pCamChunk->rot.y, pCamChunk->rot.z, pCamChunk->rot.w );
 	ArnMatrixRotationQuaternion( &upVectorRot, &quat );
@@ -356,7 +355,7 @@ VideoMan::InitLight()
 	this->defaultLight.Diffuse.g = 0.5f;
 	this->defaultLight.Diffuse.b = 0.5f;
 	this->defaultLight.Diffuse.a = 1.0f;
-	ArnVec3 dir = ArnConsts::D3DXVEC3_Z;
+	ArnVec3 dir = ArnConsts::ARNVEC3_Z;
 	this->defaultLight.Direction = dir;
 
 	/*ZeroMemory(&this->pointLight, sizeof(D3DLIGHT9));
@@ -414,18 +413,6 @@ VideoMan::InitAnimationController()
 	V_OKAY(ArnCreateAnimationController(MaxNumMatrices, MaxNumAnimationSets, MaxNumTracks, MaxNumEvents, &this->lpAnimationController));*/
 
 	return S_OK;
-}
-
-InputMan*
-VideoMan::GetInputMan()
-{
-	return this->pInputMan;
-}
-
-void
-VideoMan::AttachInputMan(InputMan* inputMan)
-{
-	this->pInputMan = inputMan;
 }
 
 HRESULT
@@ -649,4 +636,54 @@ ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, cons
 {
 	float aspect = (float)viewportData->Width / viewportData->Height;
 	return ArnMatrixPerspectiveYFov(out, cam->getFov(), aspect, cam->getNearClip(), cam->getFarClip(), rightHanded);
+}
+
+HRESULT
+ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, bool* pHit, unsigned int* pFaceIndex, FLOAT* pU, FLOAT* pV, FLOAT* pDist, ArnGenericBuffer* ppAllHits, unsigned int* pCountOfHits )
+{
+	const unsigned int faceGroupCount = pMesh->getFaceGroupCount();
+	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
+	{
+		unsigned int triCount, quadCount;
+		pMesh->getFaceCount(triCount, quadCount, fg);
+		for (unsigned int tc = 0; tc < triCount; ++tc)
+		{
+			unsigned int totalIndex;
+			unsigned int tinds[3];
+			pMesh->getTriFace(totalIndex, tinds, fg, tc);
+			ArnVec3 verts[3];
+			for (unsigned int v = 0; v < 3; ++v)
+			{
+				pMesh->getVert(&verts[v], 0, 0, tinds[v], true);
+			}
+			float t = 0, u = 0, v = 0;
+			if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
+			{
+				if (pFaceIndex)
+					*pFaceIndex = totalIndex;
+				*pHit = true;
+				return S_OK;
+			}
+		}
+
+		/*
+		for (unsigned int qc = 0; qc < quadCount; ++qc)
+		{
+		unsigned int totalIndex;
+		unsigned int qinds[4];
+		pMesh->getQuadFace(totalIndex, qinds, fg, qc);
+		ArnVec3 verts[4];
+		for (unsigned int v = 0; v < 4; ++v)
+		pMesh->getVert(&verts[v], 0, 0, 0, tinds[v]);
+		float t = 0, u = 0, v = 0;
+		if (ArnIntersectTriangle(&t, &u, &v, pRayPos, pRayDir, verts))
+		{
+		return S_OK;
+		}
+		}
+		*/
+	}
+
+	*pHit = false;
+	return S_OK;
 }

@@ -15,15 +15,6 @@ ArnVec3::ArnVec3( float _x, float _y, float _z )
 {
 }
 
-#ifdef WIN32
-ArnVec3::ArnVec3( const D3DXVECTOR3* dxvec )
-: x(dxvec->x)
-, y(dxvec->y)
-, z(dxvec->z)
-{
-}
-#endif
-
 ArnVec3::~ArnVec3()
 {
 }
@@ -55,14 +46,11 @@ bool ArnVec3Equals( const ArnVec3& v1, const ArnVec3& v2 )
 	return v1 == v2;
 }
 
-#ifdef WIN32
-const D3DXVECTOR3* ArnVec3GetConstDxPtr( const ArnVec3& v )
+void ArnVec3DimensionFromBounds( ArnVec3* out, const ArnVec3 bb[8] )
 {
-	return v.getConstDxPtr();
+	// In sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
+	out->x = abs(bb[0].x - bb[6].x);
+	out->y = abs(bb[0].y - bb[6].y);
+	out->z = abs(bb[0].z - bb[6].z);
 }
 
-D3DXVECTOR3* ArnVec3GetDxPtr( ArnVec3& v )
-{
-	return v.getDxPtr();
-}
-#endif // #ifdef WIN32

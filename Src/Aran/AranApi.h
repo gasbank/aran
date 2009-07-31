@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Macros.h"
+#include "ArnCommonTypes.h"
 #include "Structs.h"
 #include "Singleton.h"
 #include "ArnXmlLoader.h"
@@ -10,5 +11,6 @@
 #include "ArnAnimationController.h"
 #include "ArnMesh.h"
 #include "ArnViewportData.h"
+#include "ArnMath.h"
 
 ARAN_API long ArnGetBuildCount();

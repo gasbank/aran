@@ -12,8 +12,8 @@ protected:
 private:
 };
 
-ARAN_API int InitializeXmlParser();
-ARAN_API void DeallocateXmlParser();
+ARAN_API int ArnInitializeXmlParser();
+ARAN_API void ArnCleanupXmlParser();
 
 ArnNode* CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr);
 

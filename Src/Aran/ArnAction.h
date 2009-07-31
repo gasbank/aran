@@ -14,6 +14,7 @@ public:
 											ArnAction();
 	virtual									~ArnAction();
 	static ArnAction*						createFrom(const DOMElement* elm);
+	static ArnAction*						createFrom(ArnNode* obj, ArnIpo* ipo);
 	const std::map<ArnNode*, ArnIpo*>&		getObjectIpoMap() const { return m_objectIpoMap; }
 	// *** INTERNAL USE ONLY START ***
 	virtual void							interconnect(ArnNode* sceneRoot);
@@ -21,7 +22,7 @@ public:
 protected:
 private:
 	void									addMap(const char* objName, const char* ipoName) { m_objectIpoNameMap[objName] = ipoName; }
-	std::map<STRING, STRING>				m_objectIpoNameMap;
+	std::map<std::string, std::string>				m_objectIpoNameMap;
 	std::map<ArnNode*, ArnIpo*>				m_objectIpoMap;
 };
 

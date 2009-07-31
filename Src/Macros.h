@@ -1,5 +1,5 @@
 // Macros.h
-// 2007 Geoyeob Kim
+// 2007, 2008, 2009 Geoyeob Kim
 //
 // This file is shared between Aran and ModelExporter C++ Projects at VS2005 Solution.
 // Should have dependency on d3dx9.h but NOT have on any 3ds Max related headers
@@ -64,7 +64,7 @@
 { \
 	char lineNumber[8]; \
 	_itoa_s(__LINE__, lineNumber, 10); \
-	STRING ___file___Name___(__FILE__); \
+	std::string ___file___Name___(__FILE__); \
 	___file___Name___ += "("; \
 	___file___Name___ += lineNumber; \
 	___file___Name___ += ")\nFollowing statement is NOT TRUE or 0;\n"; \
@@ -83,7 +83,9 @@
 #define ARN_THROW_NOT_IMPLEMENTED_ERROR { throw new std::runtime_error("Not implemented!"); }
 #define ARN_THROW_UNEXPECTED_CASE_ERROR { throw new std::runtime_error("Unexpected error!"); }
 
+//
 // DLL export macro for Aran
+//
 #ifdef WIN32
 	#define ARAN_API_EXPORT __declspec(dllexport)
 	#define ARAN_API_IMPORT __declspec(dllimport)
@@ -100,7 +102,9 @@
 	#define ARAN_API_EXTERN		extern
 #endif
 
+//
 // DLL Export macro for AranMath
+//
 #ifdef WIN32
 	#define ARANMATH_API_EXPORT __declspec(dllexport)
 	#define ARANMATH_API_IMPORT __declspec(dllimport)
@@ -116,6 +120,65 @@
 	#define ARANMATH_API		ARANMATH_API_IMPORT
 	#define ARANMATH_API_EXTERN extern
 #endif
+
+//
+// DLL Export macro for AranPhy
+//
+#ifdef WIN32
+#define ARANPHY_API_EXPORT __declspec(dllexport)
+#define ARANPHY_API_IMPORT __declspec(dllimport)
+#else
+#define ARANPHY_API_EXPORT
+#define ARANPHY_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANPHY_EXPORTS)
+#define ARANPHY_API		ARANPHY_API_EXPORT
+#define ARANPHY_API_EXTERN
+#else
+#define ARANPHY_API		ARANPHY_API_IMPORT
+#define ARANPHY_API_EXTERN extern
+#endif
+
+
+//
+// DLL Export macro for AranDx9
+//
+#ifdef WIN32
+#define ARANDX9_API_EXPORT __declspec(dllexport)
+#define ARANDX9_API_IMPORT __declspec(dllimport)
+#else
+#define ARANDX9_API_EXPORT
+#define ARANDX9_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANDX9_EXPORTS)
+#define ARANDX9_API		ARANDX9_API_EXPORT
+#define ARANDX9_API_EXTERN
+#else
+#define ARANDX9_API		ARANDX9_API_IMPORT
+#define ARANDX9_API_EXTERN extern
+#endif
+
+//
+// DLL Export macro for AranGl
+//
+#ifdef WIN32
+#define ARANGL_API_EXPORT __declspec(dllexport)
+#define ARANGL_API_IMPORT __declspec(dllimport)
+#else
+#define ARANGL_API_EXPORT
+#define ARANGL_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANGL_EXPORTS)
+#define ARANGL_API		ARANGL_API_EXPORT
+#define ARANGL_API_EXTERN
+#else
+#define ARANGL_API		ARANGL_API_IMPORT
+#define ARANGL_API_EXTERN extern
+#endif
+
 
 // limits a value to low and high
 #define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}

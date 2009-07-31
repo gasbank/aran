@@ -15,6 +15,8 @@ public:
 	static ArnLight*				createFrom(const DOMElement* elm);
 
 	const ArnLightData&				getD3DLightData() const { return m_d3dLight; }
+	void							setD3DLightDataPosition(const ArnVec3& v) { m_d3dLight.Position = v; }
+
 
 	// *** INTERNAL USE ONLY START ***
 	virtual void					interconnect(ArnNode* sceneRoot);

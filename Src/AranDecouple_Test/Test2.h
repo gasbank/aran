@@ -12,7 +12,6 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
-#include <tr1/memory>
 
 #ifdef WIN32
 	#include <SDL.h>
@@ -29,6 +28,7 @@
 #ifdef WIN32
 #include <d3dx9.h>
 #endif
+
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/sax/HandlerBase.hpp>

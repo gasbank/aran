@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnMaterial.h"
-#include "ArnFile.h"
 #include "VideoMan.h"
 #include "ArnTexture.h"
 
@@ -102,7 +101,7 @@ void ArnMaterial::initRendererObject()
 {
 	foreach(ArnTexture* tex, m_d3dTextureList)
 	{
-		tex->initGl();
+		tex->initialize();
 	}
 }
 
@@ -114,42 +113,4 @@ void SetSimpleColoredMaterial(ArnMaterialData* material, ArnColorValue4f color)
 	material->Ambient.g = material->Diffuse.g = material->Emissive.g = material->Specular.g = color.g;
 	material->Ambient.b = material->Diffuse.b = material->Emissive.b = material->Specular.b = color.b;
 	material->Power = 1.0f;
-}
-
-void ArnSetupMaterialGl(const ArnMaterial* mtrl)
-{
-	// TODO: Material (ambient? specular?)
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&mtrl->getD3DMaterialData().Ambient);
-	//glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrl->getD3DMaterialData().Specular);
-	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrl->getD3DMaterialData().Emissive);
-
-	/*
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&POINT4FLOAT::ZERO);
-	*/
-
-	// TODO: Shininess...
-	float shininess = 100;
-	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
-
-	if (mtrl->getTextureCount())
-	{
-		const ArnTexture* tex = mtrl->getFirstTexture();
-		glBindTexture(GL_TEXTURE_2D, tex->getTextureId());
-		GLenum err = glGetError( );
-		assert(err == 0);
-	}
-	else
-	{
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	if (mtrl->isShadeless())
-		glDisable(GL_LIGHTING);
-	else
-		glEnable(GL_LIGHTING);
 }

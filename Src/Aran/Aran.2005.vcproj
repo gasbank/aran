@@ -16,162 +16,11 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="DebugLib|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="..\Global.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-				Description=""
-				CommandLine=""
-				Outputs=""
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="&quot;../cml-1_0_0&quot;;&quot;../DevIL-SDK-x86-1.7.8/include&quot;"
-				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				BufferSecurityCheck="true"
-				EnableEnhancedInstructionSet="0"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranPCH.h"
-				ProgramDataBaseFileName="$(OutDir)\$(ProjectName).pdb"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4127;4512;4100"
-				EnablePREfast="false"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalOptions="/MACHINE:x86"
-				OutputFile="$(OutDir)\$(ProjectName)_D.lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
-			Name="ReleaseLib|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="..\Global.vsprops"
-			CharacterSet="2"
-			WholeProgramOptimization="1"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-				Description=""
-				CommandLine=""
-				Outputs=""
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				Optimization="3"
-				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="&quot;../cml-1_0_0&quot;;&quot;../DevIL-SDK-x86-1.7.8/include&quot;"
-				PreprocessorDefinitions="WIN32;_WINDOWS;_LIB;_CRT_SECURE_NO_WARNINGS"
-				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranPCH.h"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="0"
-				EnablePREfast="false"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalOptions="/MACHINE:x86"
-				OutputFile="$(OutDir)\$(ProjectName).lib"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine=""
-			/>
-		</Configuration>
-		<Configuration
 			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\Global.vsprops"
+			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
 			CharacterSet="2"
 			>
 			<Tool
@@ -195,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../;../AranMath;../AranPhy;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;;&quot;$(CODEBASE)/zlib-1.2.3&quot;"
 				PreprocessorDefinitions="D3D_DEBUG_INFO;DEBUG_VS;WIN32;_USRDLL;ARAN_EXPORTS;_WINDOWS;_DEBUG;DEBUG;_LIB;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -222,12 +71,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib d3d9.lib d3dx9d.lib xerces-c_3D.lib DevIL.lib opengl32.lib glu32.lib"
-				OutputFile="$(WORKING)\$(ProjectName)_D.dll"
-				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				AdditionalDependencies="AranMath_D.lib AranPhy_D.lib xerces-c_3D.lib DevIL.lib zlib1d.lib"
+				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -258,7 +105,7 @@
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			InheritedPropertySheets="..\Global.vsprops"
+			InheritedPropertySheets="..\EnvVar.vsprops;..\ReleaseDLLProp.vsprops"
 			CharacterSet="2"
 			WholeProgramOptimization="1"
 			>
@@ -286,7 +133,7 @@
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
 				WholeProgramOptimization="true"
-				AdditionalIncludeDirectories="../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;"
+				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/cml-1_0_0&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include&quot;;&quot;$(CODEBASE)/zlib-1.2.3&quot;"
 				PreprocessorDefinitions="WIN32;_WINDOWS;_USRDLL;ARAN_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
 				EnableEnhancedInstructionSet="2"
@@ -308,9 +155,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath.lib d3d9.lib d3dx9.lib xerces-c_3.lib DevIL.lib opengl32.lib glu32.lib"
-				OutputFile="$(WORKING)\$(ProjectName).dll"
-				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				AdditionalDependencies="AranMath.lib d3d9.lib d3dx9.lib xerces-c_3.lib DevIL.lib opengl32.lib glu32.lib zlib1.lib"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release&quot;"
 				ImportLibrary="$(OutDir)/$(TargetName).lib"
 			/>
 			<Tool
@@ -377,58 +223,6 @@
 			</File>
 		</Filter>
 		<Filter
-			Name="Character"
-			>
-			<File
-				RelativePath=".\Character.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Character.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterAnimationCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\CharacterInterface.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LoiterCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LoiterCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UndefinedCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UndefinedCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\WalkCallback.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WalkCallback.h"
-				>
-			</File>
-		</Filter>
-		<Filter
 			Name="Arn"
 			>
 			<File
@@ -437,22 +231,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnAction.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnActions.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnActions.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnAnim.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnAnim.h"
 				>
 			</File>
 			<File
@@ -496,14 +274,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnFile.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnFile.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnGenericBuffer.cpp"
 				>
 			</File>
@@ -513,14 +283,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnGenericBuffer.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnHierarchy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnHierarchy.h"
 				>
 			</File>
 			<File
@@ -580,14 +342,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnNodeFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnNodeFactory.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnObject.cpp"
 				>
 			</File>
@@ -613,14 +367,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnSkeleton.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSkinInfo.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSkinInfo.h"
 				>
 			</File>
 			<File
@@ -659,14 +405,6 @@
 				RelativePath=".\ArnXmlLoader.h"
 				>
 			</File>
-			<File
-				RelativePath=".\ArnXmlString.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnXmlString.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Sources &amp; Headers"
@@ -680,28 +418,16 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AranApi.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\AranApi.h"
 				>
 			</File>
 			<File
 				RelativePath=".\AranPCH.cpp"
 				>
-				<FileConfiguration
-					Name="DebugLib|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseLib|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
 				<FileConfiguration
 					Name="DebugDLL|Win32"
 					>
@@ -724,6 +450,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnGlExt.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnGlExt.h"
+				>
+			</File>
+			<File
 				RelativePath=".\DllMain.cpp"
 				>
 			</File>
@@ -736,31 +470,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\glext.h"
-				>
-			</File>
-			<File
 				RelativePath=".\glInfo.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\glInfo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\inotify-cxx.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\inotify-cxx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\InputMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\InputMan.h"
 				>
 			</File>
 			<File
@@ -780,23 +494,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ModelDrawerDx9.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelDrawerDx9.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ModelDrawerGl.h"
 				>
 			</File>
 			<File
-				RelativePath=".\ModelReader.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ModelReader.h"
+				RelativePath=".\MyError.cpp"
 				>
 			</File>
 			<File
@@ -832,18 +534,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ResourceMan.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ResourceMan.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Singleton.h"
 				>
 			</File>
@@ -864,14 +554,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Structs.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Structs.h"
-				>
-			</File>
-			<File
 				RelativePath=".\VideoMan.cpp"
 				>
 			</File>
@@ -879,33 +561,33 @@
 				RelativePath=".\VideoMan.h"
 				>
 			</File>
+		</Filter>
+		<Filter
+			Name="Headers only"
+			>
 			<File
-				RelativePath=".\VideoManDx9.cpp"
+				RelativePath="..\ArnCommonTypes.h"
 				>
 			</File>
 			<File
-				RelativePath=".\VideoManDx9.h"
+				RelativePath=".\ArnGlExtEntry.h"
 				>
 			</File>
 			<File
-				RelativePath=".\VideoManGl.cpp"
+				RelativePath=".\glext.h"
 				>
 			</File>
 			<File
-				RelativePath=".\VideoManGl.h"
+				RelativePath="..\Macros.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Structs.h"
 				>
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\ArnGlExt.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnGlExt.h"
-			>
-		</File>
-		<File
-			RelativePath="..\Macros.h"
+			RelativePath=".\resource.h"
 			>
 		</File>
 	</Files>

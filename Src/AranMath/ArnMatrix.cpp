@@ -15,13 +15,6 @@ ArnMatrix::ArnMatrix( float m00, float m01, float m02, float m03, float m10, flo
 	m[3][0] = m30;		m[3][1] = m31;		m[3][2] = m32;		m[3][3] = m33;
 }
 
-#ifdef WIN32
-ArnMatrix::ArnMatrix( const D3DXMATRIX* dxmat )
-{
-	memcpy(this, dxmat, sizeof(float)*4*4);
-}
-#endif // #ifdef WIN32
-
 ArnMatrix::~ArnMatrix()
 {
 }
@@ -112,15 +105,11 @@ ArnMatrix& ArnMatrix::operator = (const ArnMatrix& rhs)
 	}
 }
 
-#ifdef WIN32
-ArnMatrix&
-ArnMatrix::operator = (const D3DMATRIX& rhs)
+ArnVec3 ArnMatrix::getColumnVec3( unsigned int zeroindex ) const
 {
-	memcpy(m, &rhs, sizeof(float)*4*4);
-	return *this;
+	assert(zeroindex < 4);
+	return ArnVec3(m[0][zeroindex], m[1][zeroindex], m[2][zeroindex]);
 }
-
-#endif
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -139,19 +128,7 @@ ArnMatrix ArnMatrixMultiply( const ArnMatrix& m0, const ArnMatrix m1, const ArnM
 	return m0 * m1 * m2;
 }
 
-#ifdef WIN32
-const D3DXMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat)
-{
-	return mat.getConstDxPtr();
-}
-
-D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
-{
-	return mat.getDxPtr();
-}
-
 ArnMatrix ArnMatrixTranspose( const ArnMatrix& m )
 {
 	return m.transpose();
 }
-#endif

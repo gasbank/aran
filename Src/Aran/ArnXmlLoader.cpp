@@ -48,7 +48,7 @@ ParseFloatFromAttr(const DOMElement* elm, const char* attrName)
 {
 	std::string val;
 	GetAttr(val, elm, attrName);
-	return atof(val.c_str());
+	return float(atof(val.c_str()));
 }
 
 static int
@@ -412,11 +412,13 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	SetupArnNodeCommonPart(ret, elm);
 
 	std::string binaryFileName(xmlFile);
+	// Only the extension is differ from 'xml' to 'bin'.
 	binaryFileName[binaryFileName.size() - 3] = 'b';
 	binaryFileName[binaryFileName.size() - 2] = 'i';
 	binaryFileName[binaryFileName.size() - 1] = 'n';
 
-	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str());
+	unsigned int binUncompressedSize = (unsigned int)ParseIntFromAttr(elm, "binuncompressedsize");
+	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str(), true, binUncompressedSize);
 
 	DOMNodeList* childrenObj = GetElementsByTagName(elm, "object");
 	const XMLSize_t childrenCount = childrenObj->getLength();
@@ -449,20 +451,37 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 	AssertAttrEquals(elm, "rtclass", "ArnMesh");
 	ArnMesh* ret = new ArnMesh();
 	SetupArnXformableCommonPart(ret, elm);
-
-	DOMNodeList* vertexNodes = GetElementsByTagName(elm, "vertex");
-	DOMNodeList* faceNodes = GetElementsByTagName(elm, "face");
-	assert(vertexNodes && faceNodes);
-	DOMElement* vertexElm  = dynamic_cast<DOMElement*>(vertexNodes->item(0));
-	DOMElement* faceElm = dynamic_cast<DOMElement*>(faceNodes->item(0));
+	
+	DOMElement* meshElm = GetUniqueChildElement(elm, "mesh");
+	DOMElement* vertexElm  = GetUniqueChildElement(meshElm, "vertex");
+	DOMElement* faceElm = GetUniqueChildElement(meshElm, "face");
 	assert(vertexElm && faceElm);
 
-	ArnMesh::VertexGroup vg;
-	DOMElement* vertexChunkElm = dynamic_cast<DOMElement*>(GetElementsByTagName(vertexElm, "chunk")->item(0));
-	vg.mtrlIndex = 0;
-	vg.vertexChunk = ArnBinaryChunk::createFrom(vertexChunkElm, binaryChunkBasePtr);
-	ret->m_vertexGroup.push_back(vg);
+	if (ParseIntFromAttr(meshElm, "twosided"))
+	{
+		ret->setTwoSided(true);
+	}
 
+	// vertex-chunk element (contains the whole vertices of this mesh)
+	DOMElement* vertexChunkElm = GetUniqueChildElement(vertexElm, "chunk");
+	ret->m_vertexChunk = ArnBinaryChunk::createFrom(vertexChunkElm, binaryChunkBasePtr);
+
+	// Process vertex groups
+	// Note: There is an implicitly created vertex group 0 which includes
+	//       the entire vertices having material 0 and unit-weights.
+	ArnMesh::VertexGroup vg0;
+	vg0.mtrlIndex = 0;
+	vg0.vertGroupChunk = 0;
+	ret->m_vertexGroup.push_back(vg0);
+	
+	// TODO: Vertex groups
+	DOMNodeList* vertGroupNodeList = GetElementsByTagName(elm, "vertgroup");
+	const XMLSize_t vertGroupCount = vertGroupNodeList->getLength();
+	for (XMLSize_t xx = 0; xx < vertGroupCount; ++xx)
+	{
+	}
+
+	// Process face groups
 	DOMNodeList* faceGroup = GetElementsByTagName(faceElm, "facegroup");
 	const XMLSize_t faceGroupCount = faceGroup->getLength();
 	for (XMLSize_t xx = 0; xx < faceGroupCount; ++xx)
@@ -512,6 +531,20 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 	{
 		ret->m_triquadUvChunk = 0;
 	}
+
+	DOMElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
+	if (bbElm)
+	{
+		DOMElement* bbChunkElm = GetUniqueChildElement(bbElm, "chunk");
+		assert(bbChunkElm);
+		std::auto_ptr<ArnBinaryChunk> abc(ArnBinaryChunk::createFrom(bbChunkElm, binaryChunkBasePtr));
+		assert(abc->getRecordCount() == 8); // Should have 8 corner points of bounding box
+		ArnVec3 bb[8];
+		for (int i = 0; i < 8; ++i)
+			bb[i] = *reinterpret_cast<const ArnVec3*>(abc->getRecordAt(i));
+		ret->setBoundingBoxPoints(bb);
+	}
+
 	ret->m_renderFunc = &ArnMesh::renderXml;
 	ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectXml;
 	return ret;
@@ -560,6 +593,12 @@ ArnMaterial::createFrom(const DOMElement* elm)
 		{
 			std::string texImageFileName;
 			GetAttr(texImageFileName, textureElm, "path");
+			// Preceding two slashes of file path indicate
+			// the present working directory; should be removed first.
+			if (strcmp(texImageFileName.substr(0, 2).c_str(), "//") == 0)
+			{
+				texImageFileName = texImageFileName.substr(2, texImageFileName.length() - 2);
+			}
 			ArnTexture* tex = ArnTexture::createFrom(texImageFileName.c_str());
 			ret->attachTexture(tex);
 		}
@@ -787,7 +826,7 @@ ArnAction::createFrom(const DOMElement* elm)
 		GetAttr(ssObjName, mapElm, "obj");
 		std::string ssIpoName;
 		GetAttr(ssIpoName, mapElm, "ipo");
-		ret->m_objectIpoNameMap[ssObjName.c_str()] = ssIpoName.c_str();
+		ret->addMap(ssObjName.c_str(), ssIpoName.c_str());
 	}
 	return ret;
 }
@@ -840,7 +879,7 @@ CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int InitializeXmlParser()
+int ArnInitializeXmlParser()
 {
 	try
 	{
@@ -857,7 +896,7 @@ int InitializeXmlParser()
 	}
 }
 
-void DeallocateXmlParser()
+void ArnCleanupXmlParser()
 {
 	XMLPlatformUtils::Terminate();
 }

@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnCamera.h"
-#include "ArnFile.h"
 #include "ArnConsts.h"
 #include "ArnMath.h"
 
@@ -10,11 +9,11 @@ ArnCamera::ArnCamera()
 	m_cameraData.farClip = 1000.0f;
 	m_cameraData.nearClip = 1.0f;
 	m_cameraData.fov = float(ARN_PI / 4);
-	m_cameraData.pos = ArnConsts::D3DXVEC3_ZERO;
-	m_cameraData.rot = ArnConsts::D3DXQUAT_IDENTITY;
+	m_cameraData.pos = ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.rot = ArnConsts::ARNQUAT_IDENTITY;
 	m_cameraData.lookAtVector = CreateArnVec3(0, 0, -1);
-	m_cameraData.targetPos = ArnConsts::D3DXVEC3_ZERO;
-	m_cameraData.upVector = ArnConsts::D3DXVEC3_Y;
+	m_cameraData.targetPos = ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.upVector = ArnConsts::ARNVEC3_Y;
 }
 
 ArnCamera::~ArnCamera(void)
@@ -54,7 +53,7 @@ ArnCamera::createFrom( const char* name, const ArnQuat& rot, const ArnVec3& tran
 {
 	ArnCamera* node = new ArnCamera();
 	node->setName(name);
-	node->setLocalXform_Scale(ArnConsts::D3DXVEC3_ONE);
+	node->setLocalXform_Scale(ArnConsts::ARNVEC3_ONE);
 	node->setLocalXform_Rot(rot);
 	node->setLocalXform_Trans(trans);
 	node->setFov(fov);
@@ -66,7 +65,7 @@ ArnCamera::createFrom( const char* name, const ArnVec3& eye, const ArnVec3& targ
 {
 	ArnCamera* node = new ArnCamera();
 	node->setName(name);
-	node->setLocalXform_Scale(ArnConsts::D3DXVEC3_ONE);
+	node->setLocalXform_Scale(ArnConsts::ARNVEC3_ONE);
 
 	ArnVec3 lookDir = ArnVec3Substract(target, eye);
 	ArnVec3NormalizeSelf(&lookDir);
@@ -118,10 +117,10 @@ ArnCamera::buildFrom( const NodeCamera2* nc )
 	m_cameraData.nearClip		= nc->m_clipStart;
 	m_cameraData.farClip		= nc->m_clipEnd;
 	m_cameraData.lookAtVector	= CreateArnVec3(0, 0, -1);
-	m_cameraData.pos			= ArnConsts::D3DXVEC3_ZERO;
-	m_cameraData.rot			= ArnConsts::D3DXQUAT_IDENTITY;
-	m_cameraData.targetPos		= ArnConsts::D3DXVEC3_ZERO;
-	m_cameraData.upVector		= ArnConsts::D3DXVEC3_Y;
+	m_cameraData.pos			= ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.rot			= ArnConsts::ARNQUAT_IDENTITY;
+	m_cameraData.targetPos		= ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.upVector		= ArnConsts::ARNVEC3_Y;
 }
 
 void

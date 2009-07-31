@@ -1,6 +1,5 @@
 #include "AranPCH.h"
 #include "ArnSkeleton.h"
-#include "ArnFile.h"
 #include "ArnBone.h"
 #include "VideoManGl.h"
 #include "ArnAction.h"
@@ -17,52 +16,12 @@ ArnSkeleton::~ArnSkeleton(void)
 {
 }
 
-ArnSkeleton*
-ArnSkeleton::createFrom( const NodeBase* nodeBase )
-{
-	ArnSkeleton* node = new ArnSkeleton();
-	node->setName(nodeBase->m_nodeName);
-	try
-	{
-		switch (nodeBase->m_ndt)
-		{
-		case NDT_SKELETON1:
-			node->buildFrom(static_cast<const NodeSkeleton1*>(nodeBase));
-			break;
-		default:
-			throw MyError(MEE_UNDEFINED_ERROR);
-		}
-	}
-	catch (const MyError& e)
-	{
-		delete node;
-		throw e;
-	}
-	return node;
-}
-
-void
-ArnSkeleton::buildFrom( const NodeSkeleton1* ns )
-{
-	m_data.name					= ns->m_nodeName;
-	m_data.associatedMeshName	= ns->m_associatedMeshName;
-	m_data.maxWeightsPerVertex	= ns->m_maxWeightsPerVertex;
-	m_data.bonesCount			= ns->m_boneCount;
-
-	assert(m_data.name == getName());
-
-	if (strncmp(getName(), "Skeleton-", 9) == 0)
-		setParentName(getName() + 9); // implicit parent
-	else
-		throw MyError(MEE_SKELETON1NODE_CORRUPTED);
-}
-
 void
 ArnSkeleton::interconnect( ArnNode* sceneRoot )
 {
 	m_defaultAction = dynamic_cast<ArnAction*>(sceneRoot->getNodeByName(m_actionName));
 
-	foreach(const STRING& actStripName, m_actionStripNames)
+	foreach(const std::string& actStripName, m_actionStripNames)
 		m_actionStrips.push_back(dynamic_cast<ArnAction*>(sceneRoot->getNodeByName(actStripName)));
 
 	ArnNode::interconnect(sceneRoot); // Do interconnect() of children nodes.

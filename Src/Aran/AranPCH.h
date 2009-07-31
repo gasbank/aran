@@ -5,12 +5,7 @@
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 	#include <tchar.h>
-	#include <d3dx9.h>
-	#include <dxerr9.h>
 	#include <CommCtrl.h>
-
-	//#pragma warning(disable:4505)
-	//#pragma warning( disable : 4100 ) // disable unreference formal parameter warnings for /W4 builds
 #endif
 
 #include <stdlib.h>
@@ -27,14 +22,6 @@
 #include <fstream>
 #include <list>
 #include <vector>
-#include <tr1/memory> // TODO: EXPERIMENTAL
-
-#ifndef WIN32
-	#define GL_GLEXT_PROTOTYPES
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include "glext.h"
 
 #ifndef WIN32
     #ifdef UNICODE
@@ -71,12 +58,12 @@ XERCES_CPP_NAMESPACE_USE
 //
 // Aran Library
 //
-#include "../Macros.h"
+#include "Macros.h"
+#include "ArnCommonTypes.h"
 #include "Structs.h"
 #include "Singleton.h"
 #include "Log.h"
 #include "MyError.h"
-#include "ArnGlExt.h"
 
 template <typename T>
 class ArrayDeleter
@@ -87,4 +74,3 @@ public:
 		delete [] d;
 	}
 };
-

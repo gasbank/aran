@@ -20,7 +20,7 @@ void
 ArnAction::interconnect(ArnNode* sceneRoot)
 {
 	m_objectIpoMap.clear();
-	typedef std::pair<STRING, STRING> StringStringPair;
+	typedef std::pair<std::string, std::string> StringStringPair;
 	foreach(StringStringPair p, m_objectIpoNameMap)
 	{
 		ArnXformable* obj = dynamic_cast<ArnXformable*>(sceneRoot->getNodeByName(p.first));
@@ -35,4 +35,12 @@ ArnAction::interconnect(ArnNode* sceneRoot)
 		}
 		m_objectIpoMap[obj] = ipo;
 	}
+}
+
+ArnAction* ArnAction::createFrom(ArnNode* obj, ArnIpo* ipo)
+{
+	ArnAction* ret = new ArnAction();
+	ret->addMap(obj->getName(), ipo->getName());
+	ret->m_objectIpoMap[obj] = ipo;
+	return ret;
 }
