@@ -105,8 +105,7 @@ ArnMesh::setIndexBuffer( const ArnIndexBuffer* ib )
 void
 ArnMesh::render()
 {
-	assert(m_renderableObject.get());
-	m_renderableObject->render();
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 unsigned int

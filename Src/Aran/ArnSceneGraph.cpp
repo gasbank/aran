@@ -33,19 +33,7 @@ void ArnSceneGraph::attachToRoot(ArnNode* node)
 
 void ArnSceneGraph::render()
 {
-	foreach (const ArnNode* node, getChildren())
-	{
-		if (node->getType() == NDT_RT_MESH)
-		{
-			ArnMesh* mesh = (ArnMesh*)node;
-			mesh->render();
-		}
-		else if (node->getType() == NDT_RT_SKELETON)
-		{
-			ArnSkeleton* skel = (ArnSkeleton*)node;
-			skel->render();
-		}
-	}
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 void ArnSceneGraph::interconnect(ArnNode* sceneRoot)

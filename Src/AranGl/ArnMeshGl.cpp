@@ -338,12 +338,12 @@ ArnMeshGl::renderXml()
 
 int ArnMeshGl::render()
 {
-	return -10;
+	renderXml();
+	return 0;
 }
 
 void ArnMeshGl::cleanup()
 {
-
 }
 
 ArnMeshGl* ArnMeshGl::createFrom( const ArnMesh* mesh )

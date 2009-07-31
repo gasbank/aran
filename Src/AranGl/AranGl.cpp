@@ -421,7 +421,7 @@ void ArnSetupMaterialGl(const ArnMaterial* mtrl)
 		glEnable(GL_LIGHTING);
 }
 
-ARANGL_API void ArnSkeletonRenderGl( const ArnSkeleton* skel )
+void ArnSkeletonRenderGl( const ArnSkeleton* skel )
 {
 	glPushMatrix();
 	{
@@ -483,4 +483,27 @@ void ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
 			skel->configureIpos();
 		}
 	}
+}
+
+void ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
+{
+	foreach (const ArnNode* node, sg->getChildren())
+	{
+		if (node->getType() == NDT_RT_MESH)
+		{
+			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
+			ArnMeshRenderGl(mesh);
+		}
+		else if (node->getType() == NDT_RT_SKELETON)
+		{
+			const ArnSkeleton* skel = reinterpret_cast<const ArnSkeleton*>(node);
+			ArnSkeletonRenderGl(skel);
+		}
+	}
+}
+
+void ArnMeshRenderGl( const ArnMesh* mesh )
+{
+	assert(mesh->getRenderableObject().get());
+	mesh->getRenderableObject()->render();
 }

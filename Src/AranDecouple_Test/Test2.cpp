@@ -412,17 +412,12 @@ ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLigh
 		return -5;
 	}
 	curSceneGraph->interconnect(curSceneGraph);
-	curSceneGraph->initRendererObjects();
 
-	// Camera setting
 	activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
 	assert(activeCam);
 	activeCam->recalcLocalXform();
 	activeCam->recalcAnimLocalXform();
 	activeCam->printCameraOrientation();
-	ArnConfigureViewportProjectionMatrixGl(avd, activeCam); // Projection matrix is not changed during runtime for now.
-	ArnConfigureViewMatrixGl(activeCam);
-
 	activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
 	assert(activeLight);
 	std::cout << "   Scene file " << sceneFileName << " loaded successfully." << std::endl;
@@ -457,11 +452,14 @@ ConfigureNextTestSceneWithRetry(ArnSceneGraph*& curSceneGraph, ArnCamera*& activ
 	// A little test on modelview, projection matrix
 	// by checking frustum corner points and ray casting.
 	//
+	// Should be performed after OpenGL context created.
 
 	//PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+	/*
 	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
 	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
 	PrintRayCastingResultUsingGlu(&avd);
+	*/
 	return 0;
 }
 
@@ -481,6 +479,117 @@ int main(int argc, char *argv[])
 	bool bFullScreen = false;
 	bool bNoFrame = false;
 
+	// FreeType font init
+	FT_Library library;
+	int ftError = FT_Init_FreeType(&library);
+	if (ftError)
+	{
+		std::cerr << "FreeType init failed. Aborting..." << std::endl;
+		return -34;
+	}
+	FT_Face face;
+	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
+	if (ftError)
+	{
+		std::cerr << "FreeType new face creation failed.(File not found?) Aborting..." << std::endl;
+		return -34;
+	}
+	ftError = FT_Set_Char_Size(face, 0, 16*64, 300, 300);
+	if (ftError)
+	{
+		std::cerr << "FreeType face char size  failed. Aborting..." << std::endl;
+		return -34;
+	}
+	ftError = FT_Set_Pixel_Sizes(face, 0, 16);
+	if (ftError)
+	{
+		std::cerr << "FreeType face pixel size  failed. Aborting..." << std::endl;
+		return -34;
+	}
+
+	FT_GlyphSlot slot = face->glyph; /* a small shortcut */
+	FT_UInt glyph_index;
+	int pen_x, pen_y;
+	pen_x = 0;
+	pen_y = 0;
+	wchar_t testString[128];
+	swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
+	size_t testStringLen = wcslen(testString);
+	int textTextureSize = 256;
+	unsigned char* fontTexture = (unsigned char*)malloc( textTextureSize * textTextureSize * 4 ); // RGBA texture
+	memset(fontTexture, 0, textTextureSize * textTextureSize* 4);
+	for ( size_t n = 0; n < testStringLen; n++ )
+	{
+		glyph_index = FT_Get_Char_Index( face, testString[n] ); /* load glyph image into the slot (erase previous one) */
+		ftError = FT_Load_Char(face, testString[n], FT_LOAD_RENDER);
+		if ( ftError )
+			continue; /* ignore errors */
+
+		for (int row = 1; row <= slot->bitmap.rows; ++row)
+		{
+			for (int w = 0; w < slot->bitmap.width; ++w)
+			{
+				const size_t fontTexOffset = 4 * (w + (row)*textTextureSize + pen_x + slot->bitmap_left);
+				char slotValue = slot->bitmap.buffer[w + (slot->bitmap.rows - row) * slot->bitmap.width];
+				fontTexture[fontTexOffset + 0] = slotValue; // RED color
+				fontTexture[fontTexOffset + 1] = 0; // GREEN color
+				fontTexture[fontTexOffset + 2] = 0; // BLUE color
+				fontTexture[fontTexOffset + 3] = 0xff; // ALPHA
+			}
+		}
+		pen_x += slot->advance.x >> 6;
+	}
+
+
+
+	// Create and init the scene graph instance from XML file
+	// and attach that one to the video manager.
+	ArnInitializeXmlParser();
+	ArnInitializeImageLibrary();
+
+	ArnViewportData avd;
+	avd.X = 0;
+	avd.Y = 0;
+	avd.Width = windowWidth;
+	avd.Height = windowHeight;
+	avd.MinZ = 0;
+	avd.MaxZ = 1.0f;
+
+	// Load first scene file from SceneList.txt
+	std::vector<std::string> sceneList;
+	std::ifstream sceneListStream("SceneList.txt");
+	std::string sceneFile;
+	if (!sceneListStream.is_open())
+	{
+		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
+		return -12;
+	}
+	while (std::getline(sceneListStream, sceneFile))
+	{
+		sceneList.push_back(sceneFile);
+	}
+
+	ArnSceneGraph* curSceneGraph = 0;
+	ArnCamera* activeCam = 0;
+	ArnLight* activeLight = 0;
+	int curSceneIndex = -1;
+	if (sceneList.size() > 0)
+	{
+		if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, 0, sceneList, avd) < 0)
+		{
+			std::cerr << " *** Aborting..." << std::endl;
+			return -11;
+		}
+	}
+	else
+	{
+		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
+		return -19;
+	}
+
+
+
+	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		exit(1);
@@ -571,101 +680,16 @@ int main(int argc, char *argv[])
 	}
 
 
-	FT_Library library;
-	int ftError = FT_Init_FreeType(&library);
-	if (ftError)
-		fprintf(stderr, "FreeType init failed.\n");
-	FT_Face face;
-	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
-	if (ftError)
-		fprintf(stderr, "FreeType new face creation failed.\n");
-	ftError = FT_Set_Char_Size(face, 0, 16*64, 300, 300);
-	if (ftError)
-		fprintf(stderr, "FreeType face char size  failed.\n");
-	ftError = FT_Set_Pixel_Sizes(face, 0, 16);
-	if (ftError)
-		fprintf(stderr, "FreeType face pixel size  failed.\n");
-
-	FT_GlyphSlot slot = face->glyph; /* a small shortcut */
-	FT_UInt glyph_index;
-	int pen_x, pen_y;
-	pen_x = 0;
-	pen_y = 0;
-	wchar_t testString[128];
-	swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
-	size_t testStringLen = wcslen(testString);
-	int textTextureSize = 256;
-	unsigned char* fontTexture = (unsigned char*)malloc( textTextureSize * textTextureSize * 4 ); // RGBA texture
-	memset(fontTexture, 0, textTextureSize * textTextureSize* 4);
-	for ( size_t n = 0; n < testStringLen; n++ )
-	{
-		glyph_index = FT_Get_Char_Index( face, testString[n] ); /* load glyph image into the slot (erase previous one) */
-		ftError = FT_Load_Char(face, testString[n], FT_LOAD_RENDER);
-		if ( ftError )
-			continue; /* ignore errors */
-
-		for (int row = 1; row <= slot->bitmap.rows; ++row)
-		{
-			for (int w = 0; w < slot->bitmap.width; ++w)
-			{
-				const size_t fontTexOffset = 4 * (w + (row)*textTextureSize + pen_x + slot->bitmap_left);
-				char slotValue = slot->bitmap.buffer[w + (slot->bitmap.rows - row) * slot->bitmap.width];
-				fontTexture[fontTexOffset + 0] = slotValue; // RED color
-				fontTexture[fontTexOffset + 1] = 0; // GREEN color
-				fontTexture[fontTexOffset + 2] = 0; // BLUE color
-				fontTexture[fontTexOffset + 3] = 0xff; // ALPHA
-			}
-		}
-		pen_x += slot->advance.x >> 6;
-	}
 	GLuint fontTextureId = ArnCreateTextureFromArrayGl(fontTexture, textTextureSize, textTextureSize, false);
 
 	
+	// Initialize OpenGL contexts of scene graph objects.
+	ArnInitializeRenderableObjectsGl(curSceneGraph);
+	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+	ArnConfigureViewMatrixGl(activeCam);
 
-	// Create and init the scene graph instance from XML file
-	// and attach that one to the video manager.
-	ArnInitializeXmlParser();
-	ArnInitializeImageLibrary();
 
-	ArnViewportData avd;
-	avd.X = 0;
-	avd.Y = 0;
-	avd.Width = windowWidth;
-	avd.Height = windowHeight;
-	avd.MinZ = 0;
-	avd.MaxZ = 1.0f;
 
-	std::vector<std::string> sceneList;
-	std::ifstream sceneListStream("SceneList.txt");
-	std::string sceneFile;
-	if (!sceneListStream.is_open())
-	{
-		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
-		return -12;
-	}
-	while (std::getline(sceneListStream, sceneFile))
-	{
-		sceneList.push_back(sceneFile);
-	}
-	
-	ArnSceneGraph* curSceneGraph = 0;
-	ArnCamera* activeCam = 0;
-	ArnLight* activeLight = 0;
-	int curSceneIndex = -1;
-	if (sceneList.size() > 0)
-	{
-		if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, 0, sceneList, avd) < 0)
-		{
-			std::cerr << " *** Aborting..." << std::endl;
-			return -11;
-		}
-	}
-	else
-	{
-		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
-		return -19;
-	}
-	
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
 
@@ -701,7 +725,7 @@ int main(int argc, char *argv[])
 		{
 			if (curSceneGraph)
 			{
-				curSceneGraph->render();
+				ArnSceneGraphRenderGl(curSceneGraph);
 				curSceneGraph->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
 			}			
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTextureId);
@@ -737,6 +761,13 @@ int main(int argc, char *argv[])
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
 				}
+				else
+				{
+					// Initialize OpenGL contexts of scene graph objects.
+					ArnInitializeRenderableObjectsGl(curSceneGraph);
+					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+					ArnConfigureViewMatrixGl(activeCam);
+				}
 			}
 			else if (done == MHR_RELOAD_SCENE)
 			{
@@ -744,6 +775,13 @@ int main(int argc, char *argv[])
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
+				}
+				else
+				{
+					// Initialize OpenGL contexts of scene graph objects.
+					ArnInitializeRenderableObjectsGl(curSceneGraph);
+					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+					ArnConfigureViewMatrixGl(activeCam);
 				}
 			}
 		}
