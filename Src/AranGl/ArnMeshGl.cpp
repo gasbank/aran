@@ -291,7 +291,8 @@ ArnMeshGl::renderXml() const
 				glLineWidth(0.5f);
 				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 				glColor3f(1.0f, 1.0f, 1.0f);
-
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+				glBindTexture(GL_TEXTURE_2D, 0);
 				glBegin(GL_QUADS);
 				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
 				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));

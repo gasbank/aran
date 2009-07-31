@@ -580,12 +580,20 @@ ArnMaterial::createFrom(const DOMElement* elm)
 	ret->m_data.m_materialName = mtrlName.c_str();
 	ParseRgbaFromElement(&r, &g, &b, &a, diffuseElm);
 	ret->m_data.m_d3dMaterial.Diffuse = ArnColorValue4f(r, g, b, a);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " diffuse alpha is zero." << std::endl;
 	ParseRgbaFromElement(&r, &g, &b, &a, ambientElm);
 	ret->m_data.m_d3dMaterial.Ambient = ArnColorValue4f(r, g, b, a);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " ambient alpha is zero." << std::endl;
 	ParseRgbaFromElement(&r, &g, &b, &a, specularElm);
 	ret->m_data.m_d3dMaterial.Specular = ArnColorValue4f(r, g, b, a);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " specular alpha is zero." << std::endl;
 	ParseRgbaFromElement(&r, &g, &b, &a, emissiveElm);
 	ret->m_data.m_d3dMaterial.Emissive = ArnColorValue4f(r, g, b, 1);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " emissive alpha is zero." << std::endl;
 	ret->m_data.m_d3dMaterial.Power = ParseFloatFromAttr(powerElm, "value");
 
 	DOMNodeList* textureList = GetElementsByTagName(materialElm, "texture");

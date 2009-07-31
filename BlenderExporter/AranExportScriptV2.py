@@ -527,6 +527,8 @@ for ob in sce.objects:
 	elif ob.type == 'Armature':
 		skeletonData = createSkeletonData(doc, ob)
 		obj.appendChild(skeletonData)
+	else:
+		errorerror
 		
 	if ob.action:
 		actElm = doc.createElement('action')
