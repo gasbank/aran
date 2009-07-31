@@ -318,7 +318,7 @@ def createMeshData(doc, ob):
 	# Linked materials
 	for mtrl in mesh.materials:
 		mtrlElm = doc.createElement('material')
-		mtrlElm.setAttribute('name', mtrl.name)
+		mtrlElm.setAttribute('name', 'MTRL_' + mtrl.name)
 		#mtrlElm.setIdAttribute('name')
 		linkedMaterials.append(mtrl.name) # Remember actually used materials and export them only.
 		meshData.appendChild(mtrlElm)
@@ -411,7 +411,7 @@ def exportMaterials(doc, mtrlNames):
 	for mtrl in bpy.data.materials:
 		if mtrl.name in mtrlNames:
 			objElm = doc.createElement('object')
-			objElm.setAttribute('name', mtrl.name)
+			objElm.setAttribute('name', 'MTRL_' + mtrl.name)
 			objElm.setAttribute('rtclass', 'ArnMaterial')
 			mtrlElm = doc.createElement('material')
 			objElm.appendChild(mtrlElm)
