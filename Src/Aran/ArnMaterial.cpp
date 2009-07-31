@@ -16,7 +16,8 @@ ArnMaterial::~ArnMaterial(void)
 		delete tex;
 }
 
-ArnMaterial* ArnMaterial::createFrom( const NodeBase* nodeBase )
+ArnMaterial*
+ArnMaterial::createFrom( const NodeBase* nodeBase )
 {
 	ArnMaterial* node = new ArnMaterial();
 	node->setName(nodeBase->m_nodeName);
@@ -42,14 +43,16 @@ ArnMaterial* ArnMaterial::createFrom( const NodeBase* nodeBase )
 	return node;
 }
 
-void ArnMaterial::buildFrom( const NodeMaterial1* nm )
+void
+ArnMaterial::buildFrom( const NodeMaterial1* nm )
 {
 	m_materialCount = nm->m_materialCount;
 
 	m_bTextureLoaded = true; // No texture loading is needed.
 }
 
-void ArnMaterial::buildFrom( const NodeMaterial2* nm )
+void
+ArnMaterial::buildFrom( const NodeMaterial2* nm )
 {
 	// Deep copying from ARN data buffer
 	setParentName(nm->m_parentName);
@@ -63,8 +66,11 @@ void ArnMaterial::buildFrom( const NodeMaterial2* nm )
 	m_bTextureLoaded = false;
 }
 
-void ArnMaterial::loadTexture()
+void
+ArnMaterial::loadTexture()
 {
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+	/*
 	if (!m_bTextureLoaded)
 	{
 		unsigned int i;
@@ -90,16 +96,50 @@ void ArnMaterial::loadTexture()
 		}
 		m_bTextureLoaded = true;
 	}
+	*/
 }
 
-void ArnMaterial::interconnect( ArnNode* sceneRoot )
+void
+ArnMaterial::interconnect( ArnNode* sceneRoot )
 {
 	ArnNode::interconnect(sceneRoot);
 }
 
-void ArnMaterial::initRendererObject()
+void
+ArnMaterial::initRendererObject()
 {
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+}
+
+const ArnTexture*
+ArnMaterial::getFirstTexture() const
+{
+	if (getChildren().size())
+	{
+		const ArnTexture* ret = dynamic_cast<const ArnTexture*>(*getChildren().begin());
+		assert(ret);
+		return ret;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+ArnTexture*
+ArnMaterial::getD3DTexture( unsigned int idx ) const
+{
+	ArnTexture* ret = dynamic_cast<ArnTexture*>(getNodeAt(idx));
+	if (ret)
+		return ret;
+	else
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+void
+ArnMaterial::attachTexture( ArnTexture* ARN_OWNERSHIP tex )
+{
+	attachChild(tex);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////

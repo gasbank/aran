@@ -60,7 +60,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	SDL_GL_SwapBuffers();
-	sceneGraph->render();
+	ArnSceneGraphRenderGl(sceneGraph);
 
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -75,17 +75,37 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	printf("---------------------\n");
 	for (GLint h = 0; h < hits; ++h)
 	{
-		ArnNode* node = sceneGraph->getNodeById(buff[h].contents);
-		assert(node);
-		printf("[Object 0x%p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
-
-		ArnMesh* mesh = dynamic_cast<ArnMesh*>(node);
-		if (mesh)
+		if (buff[h].contents) // Zero means that ray hit on bounding box area.
 		{
-			ArnVec3 dim;
-			mesh->getBoundingBoxDimension(&dim, true);
-			printf("Mesh Dimension: "); dim.printFormatString();
-		}
+			const ArnNode* node = sceneGraph->getConstNodeById(buff[h].contents);
+			assert(node);
+			const ArnNode* parentNode = node->getParent();
+			const char* name = node->getName();
+			if (strlen(name) == 0)
+				name = "<Unnamed>";
+			if (parentNode)
+			{
+				const char* parentName = parentNode->getName();
+				if (strlen(parentName) == 0)
+					parentName = "<Unnamed>";
+				printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
+					node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
+			}
+			else
+			{
+				printf("[Object 0x%p ID %d %s]\n",
+					node, node->getObjectId(), name);
+			}
+
+
+			const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(node);
+			if (mesh)
+			{
+				ArnVec3 dim;
+				mesh->getBoundingBoxDimension(&dim, true);
+				printf("Mesh Dimension: "); dim.printFormatString();
+			}
+		}		
 	}
 }
 

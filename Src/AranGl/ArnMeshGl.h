@@ -7,15 +7,14 @@ class ArnMeshGl : public ArnRenderableObject
 public:
 											~ArnMeshGl(void);
 	static ArnMeshGl*						createFrom(const ArnMesh* mesh);
-	//virtual int								initialize();
-	virtual int								render();
+	virtual int								render() const;
 	virtual void							cleanup();
 private:
 											ArnMeshGl(void);
 	bool									initRendererObjectVbIb();
 	bool									initRendererObjectXml();
-	void									renderVbIb();
-	void									renderXml();
+	void									renderVbIb() const;
+	void									renderXml() const;
 	GLuint									m_vboId;
 	std::vector<GLuint>						m_vboIds;
 	GLuint									m_vboUv;

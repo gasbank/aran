@@ -314,7 +314,7 @@ GLuint ArnCreateNormalizationCubeMapGl()
 	return tex;
 }
 
-void ArnBoneRenderGl( const ArnBone* bone )
+static void ArnBoneRenderGl( const ArnBone* bone )
 {
 	//bone->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 	assert(bone->isLocalXformDirty() == false);
@@ -400,8 +400,8 @@ void ArnSetupMaterialGl(const ArnMaterial* mtrl)
 	if (mtrl->getTextureCount())
 	{
 		const ArnTexture* tex = mtrl->getFirstTexture();
-		boost::shared_ptr<ArnRenderableObject> renderable = tex->getRenderableObject();
-		assert(renderable.get());
+		const ArnRenderableObject* renderable = tex->getRenderableObject();
+		assert(renderable);
 		renderable->render();
 		// 'Rendering texture' has meaning of 'binding texture'
 		//
@@ -421,7 +421,7 @@ void ArnSetupMaterialGl(const ArnMaterial* mtrl)
 		glEnable(GL_LIGHTING);
 }
 
-void ArnSkeletonRenderGl( const ArnSkeleton* skel )
+static void ArnSkeletonRenderGl( const ArnSkeleton* skel )
 {
 	glPushMatrix();
 	{
@@ -441,21 +441,19 @@ void ArnSkeletonRenderGl( const ArnSkeleton* skel )
 	glPopMatrix();
 }
 
-void InitializeArnTextureRenderableObjectGl( INOUT ArnTexture* tex )
+static void InitializeArnTextureRenderableObjectGl( INOUT ArnTexture* tex )
 {
-	boost::shared_ptr<ArnRenderableObject> renderable( ArnTextureGl::createFrom(tex) );
-	tex->setRenderableObject(renderable);
+	tex->attachChild( ArnTextureGl::createFrom(tex) );
 }
 
-void InitializeArnMeshRenderableObjectGl( INOUT ArnMesh* mesh )
+static void InitializeArnMeshRenderableObjectGl( INOUT ArnMesh* mesh )
 {
-	boost::shared_ptr<ArnRenderableObject> renderable( ArnMeshGl::createFrom(mesh) );
-	mesh->setRenderableObject(renderable);
+	mesh->attachChild( ArnMeshGl::createFrom(mesh) );
 }
 
-void InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
+static void InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
 {
-	unsigned int texCount = mtrl->getTexImgCount();
+	unsigned int texCount = mtrl->getTextureCount();
 	for (unsigned int i = 0; i < texCount; ++i)
 	{
 		ArnTexture* tex = mtrl->getD3DTexture(i);
@@ -502,8 +500,9 @@ void ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
 	}
 }
 
-void ArnMeshRenderGl( const ArnMesh* mesh )
+static void ArnMeshRenderGl( const ArnMesh* mesh )
 {
-	assert(mesh->getRenderableObject().get());
-	mesh->getRenderableObject()->render();
+	const ArnRenderableObject* renderable = mesh->getRenderableObject();
+	assert(renderable);
+	renderable->render();
 }

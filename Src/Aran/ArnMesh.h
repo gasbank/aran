@@ -54,12 +54,14 @@ public:
 	bool									isTwoSided() const { return m_bTwoSided; }
 	bool									isOkayToRenderBoundingBox() const { return !m_bBoundingBoxPointsDirty && m_bRenderBoundingBox; }
 	const ArnVec3*							getBoundingBoxPoint(unsigned int i) const { assert(i < 8); return &m_boundingBoxPoints[i]; }
-
-	void									setRenderableObject(boost::shared_ptr<ArnRenderableObject> ptr) { m_renderableObject = ptr; }
-	boost::shared_ptr<ArnRenderableObject>	getRenderableObject() const { return m_renderableObject; }
-	// ********************************* INTERNAL USE ONLY START *********************************
+	
+	/*! @name Internal use only methods
+	These methods are exposed in order to make internal linkage between objects or initialization.
+	Clients should aware that these are not for client-side APIs.
+	*/
+	//@{
 	virtual void							interconnect(ArnNode* sceneRoot);
-	// *********************************  INTERNAL USE ONLY END  *********************************
+	//@}
 private:
 											ArnMesh();
 	bool									initRendererObjectVbIb();
@@ -109,8 +111,6 @@ private:
 	bool									m_bBoundingBoxPointsDirty;
 	bool									m_bRenderBoundingBox;
 	//@}
-
-	boost::shared_ptr<ArnRenderableObject>	m_renderableObject;
 
 	// Temporary code
 	const NodeMesh3*						m_nodeMesh3;

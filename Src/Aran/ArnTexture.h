@@ -1,24 +1,29 @@
 #pragma once
 
-#include "ArnObject.h"
+#include "ArnNode.h"
 
 class ArnRenderableObject;
 
 // Aran library compartment for LPD3DTEXTURE9
-class ARAN_API ArnTexture : public ArnObject
+class ARAN_API ArnTexture : public ArnNode
 {
 public:
 											~ArnTexture(void);
 	static ArnTexture*						createFrom(const char* texFileName);
 	virtual const char*						getName() const { return m_name.c_str(); }
 	const char*								getFileName() const { return m_fileName.c_str(); }
-	void									setRenderableObject(boost::shared_ptr<ArnRenderableObject> ptr) { m_renderableObject = ptr; }
-	boost::shared_ptr<ArnRenderableObject>	getRenderableObject() const { return m_renderableObject; }
+	
+	/*! @name Internal use only methods
+	These methods are exposed in order to make internal linkage between objects or initialization.
+	Clients should aware that these are not for client-side APIs.
+	*/
+	//@{
+	virtual void							interconnect(ArnNode* sceneRoot);
+	//@}
 private:
 											ArnTexture(const char* texFileName);
 	std::string								m_name;
 	std::string								m_fileName;
-	boost::shared_ptr<ArnRenderableObject>	m_renderableObject;
 };
 
 class VideoMan;

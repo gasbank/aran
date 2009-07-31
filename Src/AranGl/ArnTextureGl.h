@@ -7,13 +7,12 @@ class ArnTextureGl : public ArnRenderableObject
 public:
 											~ArnTextureGl(void);
 	static ArnTextureGl*					createFrom(const ArnTexture* tex);
-	//virtual int								initialize();
-	virtual int								render();
+	virtual int								render() const;
 	virtual void							cleanup();
-	GLuint									getTextureId() const { return m_textureId; }
 private:
 											ArnTextureGl(void);
 	int										init();
+	GLuint									getTextureId() const { return m_textureId; }
 	GLuint									m_textureId;
 	const ArnTexture*						m_target;
 };

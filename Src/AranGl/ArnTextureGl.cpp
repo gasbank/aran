@@ -50,9 +50,12 @@ ArnTextureGl::init()
 }
 
 int
-ArnTextureGl::render()
+ArnTextureGl::render() const
 {
-	ARN_THROW_UNEXPECTED_CASE_ERROR
+	glBindTexture(GL_TEXTURE_2D, getTextureId());
+	GLenum err = glGetError( );
+	assert(err == 0);
+	return 0;
 }
 
 void

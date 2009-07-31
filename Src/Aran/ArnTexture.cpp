@@ -9,7 +9,7 @@
 static bool gs_ilInitialized = false;
 
 ArnTexture::ArnTexture(const char* texFileName)
-: ArnObject(NDT_RT_TEXTURE)
+: ArnNode(NDT_RT_TEXTURE)
 , m_fileName(texFileName)
 {
 }
@@ -26,6 +26,10 @@ ArnTexture* ArnTexture::createFrom(const char* texFileName)
 	return ret;
 }
 
+void ArnTexture::interconnect( ArnNode* sceneRoot )
+{
+
+}
 //////////////////////////////////////////////////////////////////////////
 
 HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )

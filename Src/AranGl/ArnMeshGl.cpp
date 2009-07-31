@@ -160,7 +160,7 @@ ArnMeshGl::initRendererObjectXml()
 
 
 void
-ArnMeshGl::renderVbIb()
+ArnMeshGl::renderVbIb() const
 {
 	assert(m_vboId && m_target->getVertexBuffer());
 
@@ -190,7 +190,7 @@ ArnMeshGl::renderVbIb()
 }
 
 void
-ArnMeshGl::renderXml()
+ArnMeshGl::renderXml() const
 {
 	assert(m_target);
 	assert(m_target->getFaceGroupCount() && m_target->getVertGroupCount());
@@ -226,8 +226,8 @@ ArnMeshGl::renderXml()
 		if (mtrlIndex < mtrlRefNameCount)
 		{
 			const ArnNode* sceneRoot = m_target->getConstSceneRoot();
-			ArnNode* mtrlNode = sceneRoot->getNodeByName( m_target->getMaterialReferenceName(mtrlIndex) );
-			ArnMaterial* mtrl = dynamic_cast<ArnMaterial*>(mtrlNode);
+			const ArnNode* mtrlNode = sceneRoot->getConstNodeByName( m_target->getMaterialReferenceName(mtrlIndex) );
+			const ArnMaterial* mtrl = dynamic_cast<const ArnMaterial*>(mtrlNode);
 			assert(mtrl);
 			ArnSetupMaterialGl(mtrl);
 		}
@@ -283,6 +283,7 @@ ArnMeshGl::renderXml()
 			}
 
 			// Bounding Box
+			glLoadName(0); // Bounding box portion is not selectable.
 			if (m_target->isOkayToRenderBoundingBox())
 			{
 				glDisable(GL_LIGHTING);
@@ -336,7 +337,7 @@ ArnMeshGl::renderXml()
 	}
 }
 
-int ArnMeshGl::render()
+int ArnMeshGl::render() const
 {
 	renderXml();
 	return 0;

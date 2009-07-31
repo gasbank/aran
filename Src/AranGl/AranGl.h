@@ -16,9 +16,9 @@ ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnSceneGraph* sg);
 ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl); // Bind OpenGL with the first texture of this material object
 ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg);
 
-void								ArnMeshRenderGl(const ArnMesh* mesh);
-void								ArnSkeletonRenderGl(const ArnSkeleton* skel);
-void								ArnBoneRenderGl(const ArnBone* bone);
+static void							ArnMeshRenderGl(const ArnMesh* mesh);
+static void							ArnSkeletonRenderGl(const ArnSkeleton* skel);
+static void							ArnBoneRenderGl(const ArnBone* bone);
 
 
 //ARANGL_API void						ArnInitializeMaterialGl(const ArnMaterial* mtrl);
