@@ -673,7 +673,8 @@ int main(int argc, char *argv[])
 
 	if (ArnInitGlExtFunctions() < 0)
 	{
-		std::cerr << "OpenGL extensions needed to run this program are not available." << std::endl;
+		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
+		std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
 	}
 
 	/* Set the window manager title bar */

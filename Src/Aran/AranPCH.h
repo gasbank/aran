@@ -53,7 +53,6 @@ XERCES_CPP_NAMESPACE_USE
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/shared_ptr.hpp>
 #define foreach BOOST_FOREACH
 
 //
