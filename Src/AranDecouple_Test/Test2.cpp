@@ -607,6 +607,14 @@ int main(int argc, char *argv[])
 		return -19;
 	}
 
+	delete curSceneGraph;
+	curSceneGraph = 0;
+
+	free(fontTexture);
+	ArnCleanupXmlParser();
+	ArnCleanupImageLibrary();
+	return 0;
+
 
 
 	// SDL Window init start
@@ -748,7 +756,7 @@ int main(int argc, char *argv[])
 			{
 				ArnSceneGraphRenderGl(curSceneGraph);
 				curSceneGraph->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
-			}			
+			}
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTextureId);
 		}
 		glPopMatrix();
@@ -820,6 +828,7 @@ int main(int argc, char *argv[])
 	curSceneGraph = 0;
 
 	glDeleteTextures(1, &fontTextureId);
+	free(fontTexture);
 	ArnCleanupXmlParser();
 	ArnCleanupImageLibrary();
 

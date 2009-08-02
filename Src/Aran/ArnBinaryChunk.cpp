@@ -101,7 +101,7 @@ void zerr(int ret)
 ArnBinaryChunk::ArnBinaryChunk()
 : m_recordDef()
 , m_data()
-, m_deallocateData(0)
+, m_deallocateData(true)
 , m_recordCount(0)
 , m_recordSize(0)
 {
@@ -110,7 +110,7 @@ ArnBinaryChunk::ArnBinaryChunk()
 ArnBinaryChunk::~ArnBinaryChunk()
 {
 	if (m_deallocateData)
-		delete m_data;
+		delete [] m_data;
 }
 
 ArnBinaryChunk*
