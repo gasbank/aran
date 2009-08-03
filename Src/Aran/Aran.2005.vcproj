@@ -352,6 +352,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnRenderableObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnRenderableObject.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnSceneGraph.cpp"
 				>
 			</File>
@@ -500,6 +508,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\RenderLayer.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RenderLayer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Singleton.h"
 				>
 			</File>
@@ -544,30 +560,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\resource.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Structs.h"
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\ArnRenderableObject.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\ArnRenderableObject.h"
-			>
-		</File>
-		<File
-			RelativePath=".\RenderLayer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\RenderLayer.h"
-			>
-		</File>
-		<File
-			RelativePath=".\resource.h"
-			>
-		</File>
 	</Files>
 	<Globals>
 		<Global

@@ -11,6 +11,8 @@ private:
 
 };
 
+#define ARNOBJECT_MEMORY_LEAK_CHECK
+
 class ARAN_API ArnObject : private Uncopyable
 {
 public:
