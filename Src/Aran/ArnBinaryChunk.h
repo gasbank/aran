@@ -30,7 +30,7 @@ class ARAN_API ArnBinaryChunk : public ArnObject
 {
 public:
 										~ArnBinaryChunk();
-	static ArnBinaryChunk*				createFrom(DOMElement* elm, const char* binaryChunkBasePtr);
+	static ArnBinaryChunk*				createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr);
 	static ArnBinaryChunk*				createFrom(const char* fileName, bool zlibCompressed, unsigned int uncompressedSize);
 	virtual const char*					getName() const { return m_name.c_str(); }
 	void								copyFieldArray(void* target, int targetSize, const char* usage) const;
@@ -39,7 +39,7 @@ public:
 	const char*							getConstRawDataPtr() const;
 	const char*							getRecordAt(int i) const;
 	void								printFieldArray(const char* usage) const; // Debug purpose...
-
+	unsigned int						getFieldCount() const { return m_recordDef.size(); }
 private:
 										ArnBinaryChunk();
 	void								addField(const char* type, const char* usage);

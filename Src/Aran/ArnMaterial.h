@@ -12,7 +12,7 @@ public:
 	virtual										~ArnMaterial(void);
 	typedef std::vector<ArnTexture*>			TextureList;
 	static ArnMaterial*							createFrom(const NodeBase* nodeBase);
-	static ArnMaterial*							createFrom(const DOMElement* elm);
+	static ArnMaterial*							createFrom(const TiXmlElement* elm);
 	void										attachTexture(ArnTexture* ARN_OWNERSHIP tex);
 	const ArnTexture*							getFirstTexture() const;
 	ArnTexture*									getD3DTexture(unsigned int idx) const;

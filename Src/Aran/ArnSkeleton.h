@@ -11,7 +11,7 @@ class ARAN_API ArnSkeleton : public ArnXformable
 public:
 										~ArnSkeleton(void);
 	
-	static ArnSkeleton*					createFrom(const DOMElement* elm);
+	static ArnSkeleton*					createFrom(const TiXmlElement* elm);
 	void								render();
 	void								configureIpos();
 	void								setDefaultActionName(const char* name) { m_actionName = name; }

@@ -17,7 +17,7 @@ public:
 	typedef std::vector<ArnMaterial*>		MaterialRefList;
 											~ArnMesh();
 	static ArnMesh*							createFromVbIb(const ArnVertexBuffer* vb, const ArnIndexBuffer* ib);
-	static ArnMesh*							createFrom(const DOMElement* elm, const char* binaryChunkBasePtr);
+	static ArnMesh*							createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr);
 	inline const MeshData&					getMeshData() const;
 	const ArnMaterialData*					getMaterial(unsigned int i) const;
 	inline ArnMaterial*						getMaterialNode(unsigned int i) const;

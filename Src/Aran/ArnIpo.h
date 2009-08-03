@@ -27,7 +27,7 @@ class ArnIpo : public ArnNode
 public:
 											~ArnIpo(void);
 	static ArnIpo*							createFrom(const NodeBase* nodeBase);
-	static ArnIpo*							createFrom(const DOMElement* elm, const char* binaryChunkBasePtr);
+	static ArnIpo*							createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr);
 	static ArnIpo*							create(const char* name, unsigned int curveCount);
 	unsigned int							getIpoCount() const { return m_ipoCount; }
 	unsigned int							getCurveCount() const { return m_curveCount; }

@@ -11,7 +11,7 @@ public:
 											~ArnBone(void);
 
 	static ArnBone*							createFrom(const NodeBase* nodeBase);
-	static ArnBone*							createFrom(const DOMElement* elm);
+	static ArnBone*							createFrom(const TiXmlElement* elm);
 	void									setFrameData(const MyFrameData* frameData) { m_frameData = frameData; }
 	const MyFrameData*						getFrameData() const { return m_frameData; }
 	const BoneData&							getBoneData() const { return m_data; }
