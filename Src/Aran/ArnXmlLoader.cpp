@@ -441,9 +441,10 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 			const char* binDataPtr = ret->m_binaryChunk->getConstRawDataPtr();
 			childObj = CreateArnNodeFromXmlElement(childElm, binDataPtr);
 		}
-
 		else
+		{
 			childObj = CreateArnNodeFromXmlElement(childElm, 0);
+		}
 		ret->attachChild(childObj);
 	}
 

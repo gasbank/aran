@@ -20,33 +20,39 @@ ArnSceneGraph::~ArnSceneGraph(void)
 	delete m_binaryChunk;
 }
 
-ArnSceneGraph* ArnSceneGraph::createFromEmptySceneGraph()
+ArnSceneGraph*
+ArnSceneGraph::createFromEmptySceneGraph()
 {
 	ArnSceneGraph* sg = new ArnSceneGraph();
 	return sg;
 }
 
-void ArnSceneGraph::attachToRoot(ArnNode* node)
+void
+ArnSceneGraph::attachToRoot(ArnNode* node)
 {
 	attachChild(node);
 }
 
-void ArnSceneGraph::render()
+void
+ArnSceneGraph::render()
 {
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-void ArnSceneGraph::interconnect(ArnNode* sceneRoot)
+void
+ArnSceneGraph::interconnect(ArnNode* sceneRoot)
 {
 	ArnNode::interconnect(sceneRoot);
 }
 
-void ArnSceneGraph::initRendererObjects()
+void
+ArnSceneGraph::initRendererObjects()
 {
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-ArnNode* ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )
+ArnNode*
+ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )
 {
 	foreach (ArnNode* node, getChildren())
 	{

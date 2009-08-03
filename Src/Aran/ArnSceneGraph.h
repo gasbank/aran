@@ -11,19 +11,19 @@ class ARAN_API ArnSceneGraph : public ArnNode
 {
 public:
 									~ArnSceneGraph(void);
-
 	static ArnSceneGraph*			createFromEmptySceneGraph();
-	
 	static ArnSceneGraph*			createFrom(const char* fileName);
-
 	void							attachToRoot(ArnNode* node);
 	void							render();
 	void							initRendererObjects();
-	ArnNode* findFirstNodeOfType(NODE_DATA_TYPE ndt);
-
-	// *** INTERNAL USE ONLY START ***
+	ArnNode*						findFirstNodeOfType(NODE_DATA_TYPE ndt);
+	/*! @name Internal use only methods
+	These methods are exposed in order to make internal linkage between objects or initialization.
+	Clients should aware that these are not for client-side APIs.
+	*/
+	//@{
 	virtual void					interconnect(ArnNode* sceneRoot);
-	// *** INTERNAL USE ONLY END ***
+	//@}
 private:
 									ArnSceneGraph();
 	EXPORT_VERSION					m_exportVersion;

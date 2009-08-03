@@ -24,12 +24,11 @@ ArnAnimationController::ArnAnimationController()
 
 ArnAnimationController::~ArnAnimationController()
 {
-	/*
-	foreach(ArnIpo* aas, m_animSets)
+	foreach (ArnAction* act, m_actions)
 	{
-		delete aas;
+		delete act;
 	}
-	*/
+	m_actions.clear();
 }
 
 ArnAnimationController*
@@ -44,7 +43,7 @@ ArnAnimationController::create( UINT MaxNumAnimationOutputs, UINT MaxNumAnimatio
 }
 
 unsigned int
-ArnAnimationController::RegisterAnimationSet( ArnAction* action )
+ArnAnimationController::RegisterAnimationSet( ArnAction* ARN_OWNERSHIP action )
 {
 	if (m_actionCount < m_actions.size())
 	{

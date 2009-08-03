@@ -14,10 +14,10 @@
 	/>
 	<UserMacro
 		Name="CODEBASE"
-		Value="H:\Devel1"
+		Value="D:\Devel3"
 	/>
 	<UserMacro
 		Name="WORKING"
-		Value="H:\Devel1\Working"
+		Value="D:\Devel3\Working"
 	/>
 </VisualStudioPropertySheet>

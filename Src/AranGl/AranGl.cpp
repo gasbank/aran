@@ -457,6 +457,7 @@ static void InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
 	for (unsigned int i = 0; i < texCount; ++i)
 	{
 		ArnTexture* tex = mtrl->getD3DTexture(i);
+		tex->init();
 		InitializeArnTextureRenderableObjectGl(tex);
 	}
 }

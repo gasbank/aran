@@ -46,7 +46,7 @@ bool ArnVec3Equals( const ArnVec3& v1, const ArnVec3& v2 )
 	return v1 == v2;
 }
 
-void ArnVec3DimensionFromBounds( ArnVec3* out, const ArnVec3 bb[8] )
+void ArnVec3DimensionFromBounds( ArnVec3* out, const boost::array<ArnVec3, 8>& bb )
 {
 	// In sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
 	out->x = abs(bb[0].x - bb[6].x);

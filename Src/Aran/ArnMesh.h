@@ -107,7 +107,7 @@ private:
 	Coordinates should be in the sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
 	*/
 	//@{
-	ArnVec3									m_boundingBoxPoints[8];
+	boost::array<ArnVec3, 8>				m_boundingBoxPoints;
 	bool									m_bBoundingBoxPointsDirty;
 	bool									m_bRenderBoundingBox;
 	//@}

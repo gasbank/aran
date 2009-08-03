@@ -59,7 +59,7 @@ public:
 	void											Release();
 	void											AdvanceTime(double  dTime, void* callBack = 0);
 	HRESULT											RegisterIpo(ArnIpo* ipo);
-	unsigned int									RegisterAnimationSet(ArnAction* action);
+	unsigned int									RegisterAnimationSet(ArnAction* ARN_OWNERSHIP action);
 	void											SetAction(unsigned int idx) { m_curActionIdx = idx; }
 	void											SetActionToNext();
 	void											SetTrackAnimationSet(UINT trackNum, UINT actionIdx);

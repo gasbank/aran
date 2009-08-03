@@ -22,6 +22,7 @@
 #include <fstream>
 #include <list>
 #include <vector>
+#include <set>
 
 #ifndef WIN32
 	#define GL_GLEXT_PROTOTYPES
@@ -47,6 +48,7 @@ XERCES_CPP_NAMESPACE_USE
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/array.hpp>
 #define foreach BOOST_FOREACH
 
 //

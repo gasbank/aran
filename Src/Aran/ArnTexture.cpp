@@ -8,9 +8,13 @@
 
 static bool gs_ilInitialized = false;
 
-ArnTexture::ArnTexture(const char* texFileName)
+ArnTexture::ArnTexture()
 : ArnNode(NDT_RT_TEXTURE)
-, m_fileName(texFileName)
+, m_rawData(0)
+, m_width(0)
+, m_height(0)
+, m_bWrap(false)
+, m_bInitialized(false)
 {
 }
 
@@ -18,21 +22,55 @@ ArnTexture::~ArnTexture(void)
 {
 }
 
-ArnTexture* ArnTexture::createFrom(const char* texFileName)
+ArnTexture*
+ArnTexture::createFrom(const char* texFileName)
 {
-	ArnTexture* ret = new ArnTexture(texFileName);
-	// TODO: Texture instantiation should not be done at this stage...
-	//ArnCreateTextureFromFile(&GetVideoManager(), ret->m_fileName.c_str(), &ret);
+	ArnTexture* ret = new ArnTexture();
+	ret->m_fileName = texFileName;
 	return ret;
 }
 
-void ArnTexture::interconnect( ArnNode* sceneRoot )
+ArnTexture*
+ArnTexture::createFrom(const unsigned char* data, unsigned int width, unsigned int height, unsigned int bpp, bool wrap)
 {
+	assert(data && width && height && (bpp == 3 || bpp == 4));
+	ArnTexture* ret = new ArnTexture();
+	// m_rawData has a deep copy of the texture image data.
+	ret->m_rawData.resize(width * height * bpp);
+	memcpy(&ret->m_rawData[0], data, width * height * bpp);
+	ret->m_width = width;
+	ret->m_height = height;
+	ret->m_bpp = bpp;
+	ret->m_bWrap = wrap;
+	return ret;
+}
 
+void
+ArnTexture::interconnect( ArnNode* sceneRoot )
+{
+}
+
+void
+ArnTexture::init()
+{
+	assert(m_bInitialized == false);
+	if (m_fileName.size() && m_rawData.size() == 0) // The path of a texture image is provided.
+	{
+		ArnTextureGetRawDataFromimageFile(m_rawData, &m_width, &m_height, &m_bpp, m_fileName.c_str());
+	}
+	else if (m_fileName.size() == 0 && m_rawData.size() && m_width && m_height && m_bpp) // In-memory pointer to raw image data is provided.
+	{
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+	m_bInitialized = true;
 }
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )
+HRESULT
+ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture )
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 
@@ -42,7 +80,8 @@ HRESULT ArnCreateTextureFromFile( VideoMan* pDevice, const char* pSrcFile, ArnTe
 	//***return S_OK;
 }
 
-void ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const char* fileName)
+void
+ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const char* fileName)
 {
 	assert(*buff == 0);
 	FILE* f = 0;
@@ -75,13 +114,15 @@ void ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const cha
 	return;
 }
 
-void ArnInitializeImageLibrary()
+void
+ArnInitializeImageLibrary()
 {
 	ilInit();
 	gs_ilInitialized = true;
 }
 
-void ArnCleanupImageLibrary()
+void
+ArnCleanupImageLibrary()
 {
 	assert(gs_ilInitialized);
 	//
@@ -90,9 +131,11 @@ void ArnCleanupImageLibrary()
 	gs_ilInitialized = false;
 }
 
-void ArnTextureGetRawDataFromimageFile( unsigned char** data, int* width, int* height, const char* fileName )
+void
+ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, unsigned int* bpp, const char* fileName )
 {
 	assert(gs_ilInitialized);
+	assert(data.size() == 0);
 	ILuint handle;
 	ilGenImages(1, &handle);
 	ilBindImage(handle);
@@ -100,14 +143,37 @@ void ArnTextureGetRawDataFromimageFile( unsigned char** data, int* width, int* h
 	if (result == IL_FALSE)
 	{
 		fprintf(stderr, " *** Texture file is not loaded correctly: %s\n", fileName);
-		*data = 0;
-		*width = -1;
-		*height = -1;
+		data.resize(0);
+		*width = 0;
+		*height = 0;
 		return;
 	}
 	*width = ilGetInteger(IL_IMAGE_WIDTH);
 	*height = ilGetInteger(IL_IMAGE_HEIGHT);
-	*data = (unsigned char*)malloc( (*width) * (*height) * 3 );
-	ilCopyPixels(0, 0, 0, *width, *height, 1, IL_RGB, IL_UNSIGNED_BYTE, *data);
+	ILint fmt = ilGetInteger(IL_IMAGE_FORMAT);
+	ILint type = ilGetInteger(IL_IMAGE_TYPE);
+	assert(type == IL_UNSIGNED_BYTE);
+	switch (fmt)
+	{
+	case IL_RGB:
+		*bpp = 3;
+		break;
+	case IL_RGBA:
+		*bpp = 4;
+		break;
+	default:
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+		break;
+	}
+	data.resize( (*width) * (*height) * (*bpp) );
+	ilCopyPixels(0, 0, 0, *width, *height, 1, fmt, type, &data[0]);
 	ilDeleteImages(1, &handle);
+}
+
+ArnTexture*
+ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsigned int height, unsigned int bpp, bool wrap )
+{
+	ArnTexture* ret = ArnTexture::createFrom(data, width, height, bpp, wrap);
+	ret->init();
+	return ret;
 }

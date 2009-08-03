@@ -32,12 +32,17 @@ ArnNode::detachChild( ArnNode* child )
 void
 ArnNode::deleteAllChildren()
 {
+	const size_t totalChildCount = m_children.size();
+	size_t deletedChildCount = 0;
 	while (m_children.size())
 	{
 		ArnNodeList::iterator it = m_children.begin();
 		delete (*it);
-		if (m_children.size())
-			m_children.pop_front();
+		++deletedChildCount;
+		if (deletedChildCount > totalChildCount)
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
 	}
 }
 

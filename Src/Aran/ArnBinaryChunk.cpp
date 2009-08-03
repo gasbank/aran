@@ -99,7 +99,8 @@ void zerr(int ret)
 //////////////////////////////////////////////////////////////////////////
 
 ArnBinaryChunk::ArnBinaryChunk()
-: m_recordDef()
+: ArnObject(NDT_RT_BINARYCHUNK)
+, m_recordDef()
 , m_data()
 , m_deallocateData(true)
 , m_recordCount(0)

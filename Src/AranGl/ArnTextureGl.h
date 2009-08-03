@@ -16,3 +16,5 @@ private:
 	GLuint									m_textureId;
 	const ArnTexture*						m_target;
 };
+
+ARANGL_API void ConfigureRenderableObjectOf( ArnTexture* tex );

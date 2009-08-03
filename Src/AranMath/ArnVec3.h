@@ -36,11 +36,7 @@ ARANMATH_API void ArnVec3GetFormatString(char* buf, size_t bufSize, const ArnVec
 ARANMATH_API ArnVec3 ArnVec3Add(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API ArnVec3 ArnVec3Substract(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API bool ArnVec3Equals(const ArnVec3& v1, const ArnVec3& v2);
-ARANMATH_API void ArnVec3DimensionFromBounds(ArnVec3* out, const ArnVec3 bb[8]);
-
-
-
-
+ARANMATH_API void ArnVec3DimensionFromBounds(ArnVec3* out, const boost::array<ArnVec3, 8>& bb);
 
 #include "ArnVec3.inl"
 

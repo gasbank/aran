@@ -22,7 +22,7 @@ ArnMesh::ArnMesh()
 , m_bBoundingBoxPointsDirty(true)
 , m_bRenderBoundingBox(true)
 {
-	memset(m_boundingBoxPoints, 0, sizeof(ArnVec3) * 8);
+	memset(&m_boundingBoxPoints[0], 0, sizeof(m_boundingBoxPoints));
 }
 
 ArnMesh::~ArnMesh(void)
@@ -37,6 +37,7 @@ ArnMesh::~ArnMesh(void)
 		delete vg.vertGroupChunk;
 	}
 	delete m_triquadUvChunk;
+	delete m_vertexChunk;
 }
 
 ArnMesh*
@@ -174,7 +175,7 @@ unsigned int ArnMesh::getVertCountOfVertGroup( unsigned int vertGroupIdx ) const
 
 void ArnMesh::setBoundingBoxPoints( ArnVec3 bb[8] )
 {
-	memcpy(m_boundingBoxPoints, bb, sizeof(ArnVec3) * 8 );
+	memcpy(&m_boundingBoxPoints[0], bb, sizeof(m_boundingBoxPoints));
 	m_bBoundingBoxPointsDirty = false;
 }
 
