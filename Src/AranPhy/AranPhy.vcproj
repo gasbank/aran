@@ -42,8 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS;dDOUBLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -63,9 +63,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ode_doubled.lib"
+				AdditionalDependencies="Aran_D.lib ode_doubled.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;"
+				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -182,6 +182,10 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\AngularJoint.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\AranPhy.cpp"
 				>
 			</File>
@@ -206,7 +210,19 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\ArnPhyBox.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnPhyWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BallSocketJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Biped.cpp"
 				>
 			</File>
 			<File
@@ -231,12 +247,52 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\EulerAngles.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GeneralBody.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\GeneralJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\HingeJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SimWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\SliderJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UniversalJoint.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilFunc.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\AngularJoint.h"
+				>
+			</File>
 			<File
 				RelativePath=".\AranPhy.h"
 				>
@@ -246,7 +302,43 @@
 				>
 			</File>
 			<File
+				RelativePath=".\AranPhyStructs.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnPhyBox.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnPhyWorld.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BallSocketJoint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Biped.h"
+				>
+			</File>
+			<File
+				RelativePath=".\EulerAngles.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GeneralBody.h"
+				>
+			</File>
+			<File
+				RelativePath=".\GeneralJoint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\HingeJoint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearJoint.h"
 				>
 			</File>
 			<File
@@ -254,7 +346,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\QuatTypes.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SimWorld.h"
+				>
+			</File>
+			<File
+				RelativePath=".\SliderJoint.h"
+				>
+			</File>
+			<File
 				RelativePath=".\targetver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UniversalJoint.h"
+				>
+			</File>
+			<File
+				RelativePath=".\UtilFunc.h"
 				>
 			</File>
 		</Filter>

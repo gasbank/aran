@@ -26,14 +26,10 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
-#ifdef WIN32
-#include <d3dx9.h>
-#endif
-
 //
-// TinyXML
+// ODE
 //
-#include <tinyxml/tinyxml.h>
+#include <ode/ode.h>
 
 //
 // Boost C++
@@ -46,25 +42,6 @@
 #include <boost/array.hpp>
 #define foreach BOOST_FOREACH
 
-
-
-// Visual Studio memory leak detection C runtime library
-// This feature is implemented somewhat different way in MFC library,
-// therefore we should remove these on MFC related projects
-#ifndef _AFXDLL
-#ifdef _DEBUG
-#include <crtdbg.h>
-#define DEBUG_NEW new(_NORMAL_BLOCK ,__FILE__, __LINE__)
-#else
-#define DEBUG_NEW new
-#endif
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
-#endif
-
-
 //
 // Aran
 //
@@ -73,3 +50,6 @@
 #include "AranGl.h"
 #include "ArnTextureGl.h"
 #include "ArnGlExt.h"
+#include "AranPhy.h"
+#include "ArnPhyBox.h"
+#include "SimWorld.h"

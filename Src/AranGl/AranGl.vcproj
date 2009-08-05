@@ -64,8 +64,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib"
+				AdditionalDependencies="AranMath_D.lib opengl32.lib glu32.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../DebugDLL"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -217,6 +218,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\BasicObjects.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dllmain.cpp"
 				>
 				<FileConfiguration
@@ -274,6 +279,10 @@
 			</File>
 			<File
 				RelativePath=".\ArnTextureGl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BasicObjects.h"
 				>
 			</File>
 			<File

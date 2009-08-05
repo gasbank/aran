@@ -1,3 +1,10 @@
+/*!
+@file ArnCommonTypes.h
+@author Geoyeob Kim
+@date 2009
+모든 하부 라이브러리를 포함한 ARAN 라이브러리 전체에 통용되는
+열거형(enumeration)과 구조체를 정의해 놓은 파일입니다.
+*/
 #pragma once
 
 //
@@ -116,14 +123,43 @@ struct MY_COLOR_VERTEX
 	float x, y, z;
 	DWORD color;
 };
-//
-// Classes and Structures
-//
+
+/*!
+@brief 렌더러 종류
+*/
 enum RendererType
 {
 	RENDERER_UNKNOWN,
-	RENDERER_DX9,
-	RENDERER_GL
+	RENDERER_DX9,			///< Direct3D
+	RENDERER_GL				///< OpenGL
+};
+
+/*!
+@brief 물리 충돌 확인을 위한 물체 모양 종류
+*/
+enum ArnBoundingBoxType
+{
+	ABBT_UNKNOWN,		///< 알 수 없음
+	ABBT_BOX,			///< 직육면체 상자
+	ABBT_CAPSULE		///< 캡슐
+};
+
+/*!
+@brief 물리 질량 분포 종류
+*/
+enum ArnMassDistributionType
+{
+	AMDT_UNKNOWN,		///< 알 수 없음
+	AMDT_BOX,			///< 직육면체 상자
+	AMDT_CAPSULE		///< 캡슐
+};
+
+enum AxisEnum
+{
+	AXIS_NONE = 0,
+	AXIS_X,
+	AXIS_Y,
+	AXIS_Z
 };
 
 // Vertex Data Definition (VDD) for ARN format

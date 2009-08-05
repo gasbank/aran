@@ -507,3 +507,141 @@ static void ArnMeshRenderGl( const ArnMesh* mesh )
 	assert(renderable);
 	renderable->render();
 }
+
+void ArnRenderSphereGl()
+{
+	GLUquadric* myQuad = gluNewQuadric();
+	gluSphere(myQuad, 1.0, 8, 4);
+	gluDeleteQuadric(myQuad);
+}
+
+void setTransformGl (const double pos[3], const double R[12])
+{
+	GLdouble matrix[16];
+	matrix[0]=R[0];
+	matrix[1]=R[4];
+	matrix[2]=R[8];
+	matrix[3]=0;
+	matrix[4]=R[1];
+	matrix[5]=R[5];
+	matrix[6]=R[9];
+	matrix[7]=0;
+	matrix[8]=R[2];
+	matrix[9]=R[6];
+	matrix[10]=R[10];
+	matrix[11]=0;
+	matrix[12]=pos[0];
+	matrix[13]=pos[1];
+	matrix[14]=pos[2];
+	matrix[15]=1;
+	glMultMatrixd (matrix);
+}
+
+void ArnRenderGeneralBodyGl()
+{
+
+}
+
+/*
+
+
+GLfloat hatAmbient[4] = { 0.3, 0.3, 1.0, 1.0 };
+GLfloat hatDiffuse[4] = { 0.3, 0.3, 1.0, 1.0 };
+GLfloat hatSpecular[4] = { 0, 0, 0, 0 };
+GLfloat hatShininess[3] = { 0, 0, 0 };
+
+GLfloat leftLegAmbient[4] = { 0.2, 1.0, 0.2, 1.0 };
+GLfloat leftLegDiffuse[4] = { 0.2, 1.0, 0.2, 1.0 };
+GLfloat leftLegSpecular[4] = { 0, 0, 0, 0 };
+GLfloat leftLegShininess[3] = { 0, 0, 0 };
+
+GLfloat rightLegAmbient[4] = { 1.0, 0.3, 0.2, 1.0 };
+GLfloat rightLegDiffuse[4] = { 1.0, 0.3, 0.2, 1.0 };
+GLfloat rightLegSpecular[4] = { 0, 0, 0, 0 };
+GLfloat rightLegShininess[3] = { 0, 0, 0 };
+
+*/
+
+
+
+//void GeneralBody::render(BasicObjects& basicObjects) const
+//{
+//	const dReal* pos = getPosition();//
+//	const dReal* rot = getRotation();
+//	glPushMatrix();
+//	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+//	{
+//		setTransformGl(pos, rot);
+//		dVector3 boxSize;
+//		getGeomSize(boxSize);
+//		glScaled(boxSize[0], boxSize[1], boxSize[2]);
+//
+//		if (m_rm == RM_WIREFRAME)
+//		{
+//			glDisable(GL_LIGHTING);
+//			glDisable(GL_CULL_FACE);
+//			glLineWidth(1.5);
+//			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+//			glColor3fv(m_ambient);
+//		}
+//		else if (m_rm == RM_SOLID)
+//		{
+//			glEnable(GL_LIGHTING);
+//			glPolygonMode(GL_FRONT, GL_FILL);
+//
+//			glMaterialfv(GL_FRONT, GL_AMBIENT, m_ambient);
+//			glMaterialfv(GL_FRONT, GL_DIFFUSE, m_diffuse);
+//			glMaterialfv(GL_FRONT, GL_SPECULAR, m_specular);
+//			glMaterialfv(GL_FRONT, GL_SHININESS, m_shininess);
+//		}
+//		else
+//		{
+//			abort();
+//		}
+//
+//		glCallList(basicObjects.unitBox);
+//	}
+//	glPopAttrib();
+//	glPopMatrix();
+//}
+//
+//void GeneralBody::renderComAxis() const
+//{
+//	const dReal* pos = getPosition();//
+//	const dReal* rot = getRotation();
+//	glPushMatrix();
+//	{
+//		setTransformGl(pos, rot);
+//
+//		const double scale = 0.25;
+//
+//		glDisable(GL_LIGHTING);
+//		glColor3f(1, 0, 0);
+//		glBegin(GL_LINES);
+//		glVertex3d(0, 0, 0);
+//		glVertex3d(scale * 1, 0, 0);
+//		glEnd();
+//
+//		glColor3f(0, 1, 0);
+//		glBegin(GL_LINES);
+//		glVertex3d(0, 0, 0);
+//		glVertex3d(0, scale * 1, 0);
+//		glEnd();
+//
+//		glColor3f(0, 0, 1);
+//		glBegin(GL_LINES);
+//		glVertex3d(0, 0, 0);
+//		glVertex3d(0, 0, scale * 1);
+//		glEnd();
+//		glEnable(GL_LIGHTING);
+//	}
+//	glPopMatrix();
+//}
+//
+//void GeneralBody::setColor(GLfloat ambient[4], GLfloat diffuse[4], GLfloat specular[4], GLfloat shininess[3])
+//{
+//	memcpy(m_ambient, ambient, sizeof(GLfloat) * 4);
+//	memcpy(m_diffuse, diffuse, sizeof(GLfloat) * 4);
+//	memcpy(m_specular, specular, sizeof(GLfloat) * 4);
+//	memcpy(m_shininess, shininess, sizeof(GLfloat) * 3);
+//}

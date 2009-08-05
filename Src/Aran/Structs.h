@@ -39,12 +39,6 @@ namespace std {
 	typedef DWORD				WPARAM;
 	typedef DWORD				LPARAM;
 	typedef void*				HWND;
-	typedef void*				LPDIRECT3DDEVICE9;
-	typedef void*				LPDIRECT3DTEXTURE9;
-	typedef void*				LPD3DXANIMATIONCONTROLLER;
-	typedef void*				LPD3DXMESH;
-	typedef void*				LPDIRECT3DVERTEXBUFFER9;
-	typedef void*				LPDIRECT3DINDEXBUFFER9;
 #endif
 
 #ifndef FAILED

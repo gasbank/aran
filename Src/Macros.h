@@ -204,10 +204,18 @@
 #define	SQR(x)		( (x) * (x) )
 #define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
 
-#ifndef WIN32
+#ifndef DWORD
 	#define DWORD unsigned int
+#endif
+#ifndef HRESULT
 	#define HRESULT int
+#endif
+#ifndef BOOL
 	#define BOOL int
+#endif
+#ifndef S_OK
 	#define S_OK (0)
+#endif
+#ifndef E_FAIL
 	#define E_FAIL (-1)
 #endif

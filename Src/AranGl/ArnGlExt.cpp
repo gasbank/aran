@@ -1,4 +1,5 @@
 #include "AranGlPCH.h"
+#include "ArnGlExt.h"
 
 #ifdef WIN32
 
@@ -14,12 +15,11 @@ int ArnInitGlExtFunctions()
 	return 0;
 }
 
-#endif
+#else // #ifdef WIN32
 
-#ifndef WIN32
 ARAN_API int ArnInitGlExtFunctions()
 {
 	// Do nothing on linux
 	return 0;
 }
-#endif
+#endif // #ifdef WIN32

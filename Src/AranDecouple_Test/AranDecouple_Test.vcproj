@@ -42,8 +42,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;TIXML_USE_STL"
+				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;TIXML_USE_STL;dDOUBLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -193,6 +193,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\Test2.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

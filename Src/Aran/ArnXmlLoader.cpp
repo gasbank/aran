@@ -503,6 +503,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		ret->m_triquadUvChunk = ArnBinaryChunk::createFrom(triquadUvElm, binaryChunkBasePtr);
 	}
 
+	// Physics related
 	const TiXmlElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
 	if (bbElm)
 	{
@@ -514,6 +515,25 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		for (int i = 0; i < 8; ++i)
 			bb[i] = *reinterpret_cast<const ArnVec3*>(abc->getRecordAt(i));
 		ret->setBoundingBoxPoints(bb);
+	}
+	const TiXmlElement* actorElm = GetUniqueChildElement(elm, "actor");
+	if (actorElm)
+	{
+		std::string s;
+		GetAttr(s, actorElm, "bounds");
+		if (s == "box")
+		{
+			ret->m_abbt = ABBT_BOX;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+		const TiXmlElement* rigidbodyElm = GetUniqueChildElement(actorElm, "rigidbody");
+		if (rigidbodyElm)
+		{
+			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass");
+		}
 	}
 	return ret;
 }

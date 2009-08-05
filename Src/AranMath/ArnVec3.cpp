@@ -54,3 +54,20 @@ void ArnVec3DimensionFromBounds( ArnVec3* out, const boost::array<ArnVec3, 8>& b
 	out->z = abs(bb[0].z - bb[6].z);
 }
 
+ArnVec3* ArnVec3Assign(ArnVec3* v1, const float* v2)
+{
+	assert(v1);
+	v1->x = v2[0];
+	v1->y = v2[1];
+	v1->z = v2[2];
+	return v1;
+}
+
+ArnVec3* ArnVec3Assign(ArnVec3* v1, const double* v2)
+{
+	assert(v1);
+	v1->x = static_cast<float>(v2[0]);
+	v1->y = static_cast<float>(v2[1]);
+	v1->z = static_cast<float>(v2[2]);
+	return v1;
+}

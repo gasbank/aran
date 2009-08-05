@@ -29,5 +29,9 @@ public:
 };
 
 ARANMATH_API ArnQuat CreateArnQuat(float x, float y, float z, float w);
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarLast(ArnQuat* q, const float* v);
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarLast(ArnQuat* q, const double* v);
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarFirst(ArnQuat* q, const float* v);
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarFirst(ArnQuat* q, const double* v);
 
 #endif // ARNQUAT_H

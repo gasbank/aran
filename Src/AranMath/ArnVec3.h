@@ -37,6 +37,7 @@ ARANMATH_API ArnVec3 ArnVec3Add(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API ArnVec3 ArnVec3Substract(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API bool ArnVec3Equals(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API void ArnVec3DimensionFromBounds(ArnVec3* out, const boost::array<ArnVec3, 8>& bb);
-
+ARANMATH_API ArnVec3* ArnVec3Assign(ArnVec3* v1, const float* v2);
+ARANMATH_API ArnVec3* ArnVec3Assign(ArnVec3* v1, const double* v2);
 #include "ArnVec3.inl"
 

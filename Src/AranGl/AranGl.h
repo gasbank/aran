@@ -1,3 +1,8 @@
+/**
+* \file AranGl.h
+* \author Geoyeob Kim
+* \date 2009
+*/
 #pragma once
 
 class ArnTexture;
@@ -15,11 +20,11 @@ ARANGL_API GLuint					ArnCreateNormalizationCubeMapGl();
 ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnSceneGraph* sg);
 ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl); // Bind OpenGL with the first texture of this material object
 ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg);
-
+ARANGL_API void						ArnRenderSphereGl();
+ARANGL_API void						setTransformGl (const double pos[3], const double R[12]);
 static void							ArnMeshRenderGl(const ArnMesh* mesh);
 static void							ArnSkeletonRenderGl(const ArnSkeleton* skel);
 static void							ArnBoneRenderGl(const ArnBone* bone);
-
 
 //ARANGL_API void						ArnInitializeMaterialGl(const ArnMaterial* mtrl);
 //ARANGL_API void						CreateArnTextureRenderableObjectGl(INOUT ArnTexture* tex);

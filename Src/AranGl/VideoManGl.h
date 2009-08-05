@@ -35,8 +35,6 @@ public:
     virtual void									renderSingleMesh(ArnMesh* mesh, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY) { ARN_THROW_NOT_IMPLEMENTED_ERROR }
 	void											setupGlInfo();
 	bool											setupVboSupport() const;
-	virtual LPDIRECT3DDEVICE9						GetDev() const { ARN_THROW_UNEXPECTED_CASE_ERROR }
-	virtual void									SetDev(LPDIRECT3DDEVICE9 dev) { ARN_THROW_UNEXPECTED_CASE_ERROR }
 private:
 													VideoManGl();
 	virtual HRESULT									InitLight_Internal() { ARN_THROW_NOT_IMPLEMENTED_ERROR }

@@ -126,3 +126,39 @@ ARANMATH_API ArnQuat CreateArnQuat( float x, float y, float z, float w )
 {
 	return ArnQuat(x, y, z, w);
 }
+
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarLast( ArnQuat* q, const float* v )
+{
+	q->x = v[0]; // Scalar component
+	q->y = v[1];
+	q->z = v[2];
+	q->w = v[3];
+	return q;
+}
+
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarLast( ArnQuat* q, const double* v )
+{
+	q->x = static_cast<float>(v[0]); // Scalar component
+	q->y = static_cast<float>(v[1]);
+	q->z = static_cast<float>(v[2]);
+	q->w = static_cast<float>(v[3]);
+	return q;
+}
+
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarFirst( ArnQuat* q, const float* v )
+{
+	q->x = v[1];
+	q->y = v[2];
+	q->z = v[3];
+	q->w = v[0]; // Scalar component
+	return q;
+}
+
+ARANMATH_API ArnQuat* ArnQuatAssign_ScalarFirst( ArnQuat* q, const double* v )
+{
+	q->x = static_cast<float>(v[1]);
+	q->y = static_cast<float>(v[2]);
+	q->z = static_cast<float>(v[3]);
+	q->w = static_cast<float>(v[0]); // Scalar component
+	return q;
+}

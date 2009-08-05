@@ -97,7 +97,6 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 					node, node->getObjectId(), name);
 			}
 
-
 			const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(node);
 			if (mesh)
 			{
@@ -555,7 +554,8 @@ DoMain()
 	// and attach that one to the video manager.
 	ArnInitializeXmlParser();
 	ArnInitializeImageLibrary();
-
+	ArnInitializePhysics();
+	
 	ArnViewportData avd;
 	avd.X = 0;
 	avd.Y = 0;
@@ -579,14 +579,14 @@ DoMain()
 		sceneList.push_back(sceneFile);
 	}
 
-	boost::shared_ptr<ArnSceneGraph> curSceneGraph(reinterpret_cast<ArnSceneGraph*>(0));
+	boost::shared_ptr<ArnSceneGraph> curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
 	boost::shared_ptr<ArnTexture> fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 	int curSceneIndex = -1;
 	if (sceneList.size() > 0)
 	{
-		if (ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
+		if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
 		{
 			std::cerr << " *** Aborting..." << std::endl;
 			Cleanup();
@@ -699,12 +699,13 @@ DoMain()
 	}
 
 	// Initialize OpenGL contexts of scene graph objects.
-
+	SimWorldPtr swPtr(SimWorld::createFrom(curSgPtr.get()));
 	ConfigureRenderableObjectOf(fontTexturePtr.get());
-	GetActiveCamAndLight(activeCam, activeLight, curSceneGraph.get());
-	ArnInitializeRenderableObjectsGl(curSceneGraph.get());
+	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+	ArnInitializeRenderableObjectsGl(curSgPtr.get());
 	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 	ArnConfigureViewMatrixGl(activeCam);
+	
 
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
@@ -737,12 +738,19 @@ DoMain()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+		double stepSize = (double)frameDurationMs / 1000.0;
+		if (stepSize)
+		{
+			swPtr->updateFrame(stepSize);
+			//swPtr->updateFrame(0.01);
+		}
+
 		glPushMatrix();
 		{
-			if (curSceneGraph)
+			if (curSgPtr)
 			{
-				ArnSceneGraphRenderGl(curSceneGraph.get());
-				curSceneGraph.get()->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+				ArnSceneGraphRenderGl(curSgPtr.get());
+				curSgPtr.get()->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
 			}
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTexturePtr);
 		}
@@ -767,12 +775,12 @@ DoMain()
 
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
-			done = HandleEvent(&event, curSceneGraph.get(), &avd);
+			done = HandleEvent(&event, curSgPtr.get(), &avd);
 
 			if (done == MHR_NEXT_SCENE)
 			{
 				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
-				if (ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
+				if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
@@ -780,16 +788,18 @@ DoMain()
 				else
 				{
 					// Initialize OpenGL contexts of scene graph objects.
+					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSceneGraph.get());
-					ArnInitializeRenderableObjectsGl(curSceneGraph.get());
+					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+					ArnInitializeRenderableObjectsGl(curSgPtr.get());
 					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 					ArnConfigureViewMatrixGl(activeCam);
+					
 				}
 			}
 			else if (done == MHR_RELOAD_SCENE)
 			{
-				if (ReloadCurrentScene(curSceneGraph, fontTexturePtr, curSceneIndex, sceneList, avd) < 0)
+				if (ReloadCurrentScene(curSgPtr, fontTexturePtr, curSceneIndex, sceneList, avd) < 0)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
@@ -797,9 +807,10 @@ DoMain()
 				else
 				{
 					// Initialize OpenGL contexts of scene graph objects.
+					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSceneGraph.get());
-					ArnInitializeRenderableObjectsGl(curSceneGraph.get());
+					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+					ArnInitializeRenderableObjectsGl(curSgPtr.get());
 					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 					ArnConfigureViewMatrixGl(activeCam);
 				}
