@@ -156,8 +156,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath.lib d3d9.lib d3dx9.lib xerces-c_3.lib DevIL.lib opengl32.lib glu32.lib zlib1.lib"
-				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release&quot;"
+				AdditionalDependencies="AranMath.lib tinyxmlSTL.lib DevIL.lib zlib1.lib"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release&quot;;&quot;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Release_STL&quot;"
 				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>

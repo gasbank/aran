@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
