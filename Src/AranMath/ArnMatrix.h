@@ -31,5 +31,8 @@ ARANMATH_API ArnMatrix CreateArnMatrix(float m00, float m01, float m02, float m0
 ARANMATH_API ArnMatrix ArnMatrixMultiply(const ArnMatrix& m0, const ArnMatrix m1);
 ARANMATH_API ArnMatrix ArnMatrixMultiply(const ArnMatrix& m0, const ArnMatrix m1, const ArnMatrix m2);
 ARANMATH_API ArnMatrix ArnMatrixTranspose(const ArnMatrix& m);
+ARANMATH_API void ArnMatrixIdentity(ArnMatrix* out);
+ARANMATH_API void ArnMatrixTranslation(ArnMatrix* out, float x, float y, float z);
+ARANMATH_API void ArnMatrixScaling(ArnMatrix* out, float x, float y, float z);
 
 #endif // ARNMATRIX_H

@@ -1,5 +1,6 @@
 #include "AranMathPCH.h"
 #include "ArnVec3.h"
+#include "ArnMath.h"
 
 ArnVec3::ArnVec3()
 : x(0)
@@ -17,6 +18,11 @@ ArnVec3::ArnVec3( float _x, float _y, float _z )
 
 ArnVec3::~ArnVec3()
 {
+}
+
+float ArnVec3::compare( const ArnVec3& v ) const
+{
+	return ArnVec3Length(ArnVec3Substract(*this, v));
 }
 
 //////////////////////////////////////////////////////////////////////////

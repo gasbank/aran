@@ -1,8 +1,8 @@
-/**
-* \file AranGl.h
-* \author Geoyeob Kim
-* \date 2009
-*/
+/*!
+ * @file AranGl.h
+ * @author Geoyeob Kim
+ * @date 2009
+ */
 #pragma once
 
 class ArnTexture;
@@ -11,6 +11,14 @@ class ArnMesh;
 class ArnMeshGl;
 class ArnSceneGraph;
 
+/*!
+ * @brief AranGl 라이브러리 초기화
+ */
+ARANGL_API void						ArnInitializeGl();
+/*!
+ * @brief AranGl 라이브러리 해제
+ */
+ARANGL_API void						ArnCleanupGl();
 ARANGL_API void						ArnDrawAxesGl(float size);
 ARANGL_API void						ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
 ARANGL_API void						ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);

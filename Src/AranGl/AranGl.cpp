@@ -11,6 +11,8 @@
 #include "ArnLight.h"
 #include "ArnMaterial.h"
 
+static GLUquadric* gs_quadricSphere = 0;
+
 void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam)
 {
 	glViewport(viewportData->X, viewportData->Y, viewportData->Width, viewportData->Height);
@@ -510,9 +512,8 @@ static void ArnMeshRenderGl( const ArnMesh* mesh )
 
 void ArnRenderSphereGl()
 {
-	GLUquadric* myQuad = gluNewQuadric();
-	gluSphere(myQuad, 1.0, 8, 4);
-	gluDeleteQuadric(myQuad);
+	assert(gs_quadricSphere); // Did you initialize AranGl library by calling ArnInitializeGl() before use this function?
+	gluSphere(gs_quadricSphere, 1, 8, 4);
 }
 
 void setTransformGl (const double pos[3], const double R[12])
@@ -540,6 +541,19 @@ void setTransformGl (const double pos[3], const double R[12])
 void ArnRenderGeneralBodyGl()
 {
 
+}
+
+void ArnInitializeGl()
+{
+	assert(!gs_quadricSphere);
+	gs_quadricSphere = gluNewQuadric();
+	assert(gs_quadricSphere);
+}
+
+void ArnCleanupGl()
+{
+	assert(gs_quadricSphere);
+	gluDeleteQuadric(gs_quadricSphere);	
 }
 
 /*

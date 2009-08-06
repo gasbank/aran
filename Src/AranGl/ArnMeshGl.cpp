@@ -281,7 +281,15 @@ ArnMeshGl::renderXml() const
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, (void*)(0 + triFaceVertSize));
 				glDrawArrays(GL_QUADS, 0, quadFaceCount * 4);
 			}
-
+			// Render anchor point if there is a rigid body joint constraint.
+			foreach (const ArnJointData& ajd, m_target->getJointData())
+			{
+				glPushMatrix();
+				glTranslated(ajd.pivot.x, ajd.pivot.y, ajd.pivot.z);
+				glScaled(0.02, 0.02, 0.02);
+				ArnRenderSphereGl();
+				glPopMatrix();
+			}
 			// Bounding Box
 			glLoadName(0); // Bounding box portion is not selectable.
 			if (m_target->isOkayToRenderBoundingBox())

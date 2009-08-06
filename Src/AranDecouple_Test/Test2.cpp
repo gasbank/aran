@@ -526,6 +526,8 @@ Cleanup()
 {
 	ArnCleanupXmlParser();
 	ArnCleanupImageLibrary();
+	ArnCleanupPhysics();
+	ArnCleanupGl();
 }
 
 void
@@ -555,7 +557,8 @@ DoMain()
 	ArnInitializeXmlParser();
 	ArnInitializeImageLibrary();
 	ArnInitializePhysics();
-	
+	ArnInitializeGl();
+
 	ArnViewportData avd;
 	avd.X = 0;
 	avd.Y = 0;
@@ -625,7 +628,7 @@ DoMain()
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 ); // Swap Control On --> Refresh rate to 60 Hz
+	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 ); // Swap Control On --> Refresh rate to 60 Hz
 
 	if ( SDL_SetVideoMode( windowWidth, windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
@@ -741,8 +744,8 @@ DoMain()
 		double stepSize = (double)frameDurationMs / 1000.0;
 		if (stepSize)
 		{
-			swPtr->updateFrame(stepSize);
-			//swPtr->updateFrame(0.01);
+			//swPtr->updateFrame(stepSize);
+			swPtr->updateFrame(0.001);
 		}
 
 		glPushMatrix();

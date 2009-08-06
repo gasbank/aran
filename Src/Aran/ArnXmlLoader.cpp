@@ -547,6 +547,11 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		{
 			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass");
 		}
+		if (ret->getLocalXform_Scale().compare(ArnConsts::ARNVEC3_ONE) > 0.001)
+		{
+			// When a mesh is governed by dynamics, there is no scaling to make valid bounding volume.
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
 	}
 
 	// Process constraints

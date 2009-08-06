@@ -26,6 +26,7 @@ public:
 	inline bool				operator != ( const ArnVec3& v ) const;
 	inline void				getFormatString(char* buf, size_t bufSize) const;
 	inline void				printFormatString() const;
+	float					compare(const ArnVec3& v) const;
 	float					x;
 	float					y;
 	float					z;
