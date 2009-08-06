@@ -74,7 +74,7 @@ ParseIntFromAttr(const TiXmlElement* elm, const char* attrName)
 }
 
 static void
-ParseRgbFromElement(float* r, float* g, float* b, const TiXmlElement* elm)
+ParseRgbFromElementAttr(float* r, float* g, float* b, const TiXmlElement* elm)
 {
 	*r = ParseFloatFromAttr(elm, "r");
 	*g = ParseFloatFromAttr(elm, "g");
@@ -82,18 +82,25 @@ ParseRgbFromElement(float* r, float* g, float* b, const TiXmlElement* elm)
 }
 
 static void
-ParseRgbaFromElement(float* r, float* g, float* b, float* a, const TiXmlElement* elm)
+ParseRgbaFromElementAttr(float* r, float* g, float* b, float* a, const TiXmlElement* elm)
 {
-	ParseRgbFromElement(r, g, b, elm);
+	ParseRgbFromElementAttr(r, g, b, elm);
 	*a = ParseFloatFromAttr(elm, "a");
+}
+
+static void
+ParseArnVec3FromElementAttr(ArnVec3* v, const TiXmlElement* elm)
+{
+	v->x = ParseFloatFromAttr(elm, "x");
+	v->y = ParseFloatFromAttr(elm, "y");
+	v->z = ParseFloatFromAttr(elm, "z");
 }
 
 static void
 ParseArnVec3FromElement(ArnVec3* v, const TiXmlElement* elm)
 {
-	v->x = ParseFloatFromAttr(elm, "x");
-	v->y = ParseFloatFromAttr(elm, "y");
-	v->z = ParseFloatFromAttr(elm, "z");
+	if (sscanf(elm->GetText(), "%f %f %f", &v->x, &v->y, &v->z) != 3)
+		ARN_THROW_UNEXPECTED_CASE_ERROR
 }
 
 static void
@@ -163,7 +170,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 		ArnVec3 t(0,0,0);
 		if (scaling)
 		{
-			ParseArnVec3FromElement(&s, scaling);
+			ParseArnVec3FromElementAttr(&s, scaling);
 		}
 		else
 		{
@@ -174,7 +181,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 		{
 			AssertAttrEquals(rotation, "type", "euler");
 			AssertAttrEquals(rotation, "unit", "deg");
-			ParseArnVec3FromElement(&r, rotation);
+			ParseArnVec3FromElementAttr(&r, rotation);
 			r.x = ArnToRadian(r.x);
 			r.y = ArnToRadian(r.y);
 			r.z = ArnToRadian(r.z);
@@ -186,7 +193,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 
 		if (translation)
 		{
-			ParseArnVec3FromElement(&t, translation);
+			ParseArnVec3FromElementAttr(&t, translation);
 		}
 
 		ArnQuat rQ;
@@ -382,7 +389,11 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	assert(gs_xmlInitialized);
 
 	TiXmlDocument xmlDoc(xmlFile);
-	xmlDoc.LoadFile();
+	if (!xmlDoc.LoadFile())
+	{
+		std::cerr << "Scene file " << xmlFile << " not found." << std::endl;
+		return 0;
+	}
 	const TiXmlElement* elm = xmlDoc.RootElement();
 	AssertTagNameEquals(elm, "object");
 	std::string sceneNameStr;
@@ -488,6 +499,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		ret->m_faceGroup.push_back(fg);
 	}
 
+	// Process materials
 	for (const TiXmlElement* e = meshElm->FirstChildElement("material"); e; e = e->NextSiblingElement("material"))
 	{
 		std::string ss;
@@ -495,6 +507,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		ret->m_mtrlRefNameList.push_back(ss.c_str());
 	}
 
+	// Process UV coordinates
 	ret->m_triquadUvChunk = 0;
 	for (const TiXmlElement* e = meshElm->FirstChildElement("uv"); e; e = e->NextSiblingElement("uv"))
 	{
@@ -503,7 +516,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		ret->m_triquadUvChunk = ArnBinaryChunk::createFrom(triquadUvElm, binaryChunkBasePtr);
 	}
 
-	// Physics related
+	// Process physics-related
 	const TiXmlElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
 	if (bbElm)
 	{
@@ -535,6 +548,28 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass");
 		}
 	}
+
+	// Process constraints
+	for (const TiXmlElement* e = elm->FirstChildElement("constraint"); e; e = e->NextSiblingElement("constraint"))
+	{
+		const char* type = e->Attribute("type");
+		if (strcmp(type, "rigidbodyjoint") == 0)
+		{
+			const TiXmlElement* targetElm = e->FirstChildElement("target");
+			const TiXmlElement* pivotElm = e->FirstChildElement("pivot");
+			const TiXmlElement* axElm = e->FirstChildElement("ax");
+			assert(targetElm && pivotElm && axElm);
+			ArnJointData ajd;
+			ajd.target = targetElm->GetText();
+			ParseArnVec3FromElement(&ajd.pivot, pivotElm);
+			ParseArnVec3FromElement(&ajd.ax, axElm);
+			ret->addJointData(ajd);
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+	}
 	return ret;
 }
 
@@ -562,19 +597,19 @@ ArnMaterial::createFrom(const TiXmlElement* elm)
 	std::string mtrlName;
 	GetAttr(mtrlName, elm, "name");
 	ret->m_data.m_materialName = mtrlName.c_str();
-	ParseRgbaFromElement(&r, &g, &b, &a, diffuseElm);
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, diffuseElm);
 	ret->m_data.m_d3dMaterial.Diffuse = ArnColorValue4f(r, g, b, a);
 	if (a == 0)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " diffuse alpha is zero." << std::endl;
-	ParseRgbaFromElement(&r, &g, &b, &a, ambientElm);
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, ambientElm);
 	ret->m_data.m_d3dMaterial.Ambient = ArnColorValue4f(r, g, b, a);
 	if (a == 0)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " ambient alpha is zero." << std::endl;
-	ParseRgbaFromElement(&r, &g, &b, &a, specularElm);
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, specularElm);
 	ret->m_data.m_d3dMaterial.Specular = ArnColorValue4f(r, g, b, a);
 	if (a == 0)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " specular alpha is zero." << std::endl;
-	ParseRgbaFromElement(&r, &g, &b, &a, emissiveElm);
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, emissiveElm);
 	ret->m_data.m_d3dMaterial.Emissive = ArnColorValue4f(r, g, b, 1);
 	if (a == 0)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " emissive alpha is zero." << std::endl;
@@ -642,7 +677,7 @@ ArnLight::createFrom( const TiXmlElement* elm )
 
 	const TiXmlElement* lightElm = GetUniqueChildElement(elm, "light");
 	float r, g, b;
-	ParseRgbFromElement(&r, &g, &b, lightElm);
+	ParseRgbFromElementAttr(&r, &g, &b, lightElm);
 	ret->m_d3dLight.Ambient = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Diffuse = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Specular = ArnColorValue4f(r, g, b, 1);
@@ -726,8 +761,8 @@ ArnBone::createFrom( const TiXmlElement* elm )
 	const TiXmlElement* rollElm = GetUniqueChildElement(boneElm, "roll");
 
 	ArnVec3 headPos, tailPos;
-	ParseArnVec3FromElement(&headPos, headElm);
-	ParseArnVec3FromElement(&tailPos, tailElm);
+	ParseArnVec3FromElementAttr(&headPos, headElm);
+	ParseArnVec3FromElementAttr(&tailPos, tailElm);
 	float roll = ParseFloatFromAttr(rollElm, "value");
 	ret->setHeadPos(headPos);
 	ret->setTailPos(tailPos);

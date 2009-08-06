@@ -1,4 +1,5 @@
 #include "AranPhyPCH.h"
+#include "GeneralBody.h"
 #include "AngularJoint.h"
 
 AngularJoint::AngularJoint(const OdeSpaceContext* osc)

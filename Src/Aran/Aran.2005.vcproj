@@ -569,6 +569,14 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\ArnJoint.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ArnJoint.h"
+			>
+		</File>
+		<File
 			RelativePath=".\doxygen_main.h"
 			>
 		</File>

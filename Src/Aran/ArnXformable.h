@@ -3,6 +3,14 @@
 #include "ArnNode.h"
 class ArnAnimationController;
 class ArnIpo;
+struct ArnJointData;
+
+struct ArnJointData
+{
+	std::string target;
+	ArnVec3 pivot;
+	ArnVec3 ax;
+};
 
 /**
 @brief A superclass of renderer objects which have position and orientation.
@@ -41,13 +49,14 @@ public:
 	void										setIpo(const std::string& ipoName);
 	inline ArnAnimationController*				getAnimCtrl();
 	inline bool									isLocalXformDirty() const;
-
+	const std::vector<ArnJointData>&			getJointData() const { return m_jointData; }
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);
 	virtual void								update(double fTime, float fElapsedTime);
 	inline void									setAnimCtrl(ArnAnimationController* animCtrl);
 	void										configureAnimCtrl();
+	void										addJointData(const ArnJointData& data);
 
 private:
 	inline void									setAnimSeqEnded(bool val);
@@ -66,6 +75,7 @@ private:
 	ArnAnimationController*						m_aniimCtrl;
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
+	std::vector<ArnJointData>					m_jointData;
 	
 	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
 	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear	

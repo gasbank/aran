@@ -1,10 +1,11 @@
 #include "AranPhyPCH.h"
-#include "GeneralJoint.h"
 #include "GeneralBody.h"
+#include "GeneralJoint.h"
 
 GeneralJoint::GeneralJoint(const OdeSpaceContext* osc)
 : m_osc(osc)
 , m_jcm(JCM_REST)
+, m_joint(0)
 {
 	//ctor
 	m_name[0] = 0;
@@ -15,6 +16,7 @@ GeneralJoint::GeneralJoint(const OdeSpaceContext* osc)
 GeneralJoint::~GeneralJoint()
 {
 	//dtor
+	dJointDestroy(m_joint);
 }
 
 void GeneralJoint::attach(GeneralBody& body1, GeneralBody& body2)
@@ -78,11 +80,11 @@ void GeneralJoint::controlWithinRange_P(int anum, double min, double max, double
 
 void GeneralJoint::setName(const char* name)
 {
-	strcpy(m_name, name);
+	m_name = name;
 }
 const char* GeneralJoint::getName() const
 {
-	return m_name;
+	return m_name.c_str();
 }
 
 void GeneralJoint::render(const BasicObjects& bo) const
@@ -173,4 +175,8 @@ void GeneralJoint::reset()
 	m_maxTargetValue[0] = m_maxTargetValue[1] = m_maxTargetValue[2] = 0;
 
 	doReset();
+}
+
+void GeneralJoint::configureOdeContext( const OdeSpaceContext* osc )
+{
 }

@@ -334,6 +334,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\GeneralJoint.inl"
+				>
+			</File>
+			<File
 				RelativePath=".\HingeJoint.h"
 				>
 			</File>

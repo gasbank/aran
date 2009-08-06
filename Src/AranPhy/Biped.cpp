@@ -361,9 +361,8 @@ const dReal* Biped::getBodyQuaternion(int id)
 
 void Biped::getHipJointsMidpoint(dVector3 point) const
 {
-	dVector3 a, b;
-	m_joints[JE_L1]->getAnchor(a);
-	m_joints[JE_R1]->getAnchor(b);
+	const ArnVec3& a = m_joints[JE_L1]->getAnchor();
+	const ArnVec3& b = m_joints[JE_R1]->getAnchor();
 	point[0] = (a[0] + b[0]) / 2;
 	point[1] = (a[1] + b[1]) / 2;
 	point[2] = (a[2] + b[2]) / 2;

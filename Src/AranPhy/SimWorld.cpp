@@ -6,7 +6,8 @@
 #include "Biped.h"
 #include "ArnSceneGraph.h"
 #include "ArnMesh.h"
-#include <memory>
+#include "BallSocketJoint.h"
+#include "ArnConsts.h"
 
 SimWorld::SimWorld()
 : m_totalElapsedTime(0)
@@ -48,10 +49,13 @@ SimWorld::createFromEmpty()
 	return ret;
 }
 
-SimWorld* SimWorld::createFrom( ArnSceneGraph* sg )
+SimWorld*
+SimWorld::createFrom( ArnSceneGraph* sg )
 {
 	SimWorld* ret = new SimWorld();
-	unsigned int nodeCount = sg->getNodeCount();
+	const unsigned int nodeCount = sg->getNodeCount();
+
+	// Find rigid bodies of the scene and make physical instances of them.
 	for (unsigned int i = 0; i < nodeCount; ++i)
 	{
 		ArnNode* node = sg->getNodeAt(i);
@@ -69,16 +73,44 @@ SimWorld* SimWorld::createFrom( ArnSceneGraph* sg )
 			}
 		}
 	}
+
+	// Find joints of the scene and make joint instances of them.
+	for (unsigned int i = 0; i < nodeCount; ++i)
+	{
+		ArnNode* node = sg->getNodeAt(i);
+		if (node->getType() == NDT_RT_MESH)
+		{
+			ArnMesh* mesh = reinterpret_cast<ArnMesh*>(node);
+			if (mesh->getBoundingBoxType() == ABBT_BOX && mesh->getMass())
+			{
+				foreach (const ArnJointData& ajd, mesh->getJointData())
+				{
+					std::string jointName(mesh->getName());
+					jointName += '-';
+					jointName += ajd.target;
+					const GeneralBodyPtr gb1 = ret->getBodyByNameFromSet(mesh->getName());
+					const GeneralBodyPtr gb2 = ret->getBodyByNameFromSet(ajd.target.c_str());
+					assert(gb1.get() && gb2.get());
+					ArnVec3 anchor(mesh->getLocalXform_Trans());
+					anchor += ajd.pivot;
+					BallSocketJointPtr bsjPtr(BallSocketJoint::createFrom(0, jointName.c_str(), gb1, gb2, anchor, ArnConsts::ARNVEC3_X, ArnConsts::ARNVEC3_Y, ArnConsts::ARNVEC3_Z));
+					ret->registerJoint(bsjPtr);
+				}
+			}
+		}
+	}
 	return ret;
 }
-GeneralBody* SimWorld::placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
+GeneralBody*
+SimWorld::placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
 {
 	ArnPhyBox* gb = ArnPhyBox::createFrom(m_osc, name, com, size, mass);
 	m_bodies.push_back(gb);
 	return gb;
 }
 
-void SimWorld::render() const
+void
+SimWorld::render() const
 {
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 
@@ -91,7 +123,8 @@ void SimWorld::render() const
 	}
 }
 
-void SimWorld::placePiston(const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
+void
+SimWorld::placePiston(const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
 {
 	GeneralBody* gb1 = placeBox(name, ArnVec3(com.x, com.y, size.z/2), size, mass);
 	GeneralBody* gb2 = placeBox(name, ArnVec3(com.x, com.y, size.z + size.z/2), size, mass);
@@ -138,7 +171,8 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 	
 }
 
-void SimWorld::updateFrame(double elapsedTime)
+void
+SimWorld::updateFrame(double elapsedTime)
 {
 	m_totalElapsedTime += elapsedTime;
 	
@@ -193,7 +227,8 @@ void SimWorld::updateFrame(double elapsedTime)
 	//m_footStepMaxHeight = m_nextFootStepMaxHeight;
 }
 
-void SimWorld::reset()
+void
+SimWorld::reset()
 {
 	m_footStep = 0.8;
 	m_nextFootStep = m_footStep;
@@ -213,7 +248,8 @@ void SimWorld::reset()
 	m_totalElapsedTime = 0;
 }
 
-void SimWorld::placeSupport(Biped* biped)
+void
+SimWorld::placeSupport(Biped* biped)
 {
 	const BipedParameters& bp = biped->getBipedParameters();
 
@@ -314,7 +350,8 @@ void SimWorld::placeSupport(Biped* biped)
 	}
 }
 
-SliderJoint* SimWorld::getJointByName(const char* name) const
+SliderJoint*
+SimWorld::getJointByName(const char* name) const
 {
 	SliderJointVector::const_iterator cit = m_sliderJoints.begin();
 	SliderJointVector::const_iterator citEnd = m_sliderJoints.end();
@@ -326,7 +363,8 @@ SliderJoint* SimWorld::getJointByName(const char* name) const
 	return 0;
 }
 
-GeneralBody* SimWorld::getBodyByName(const char* name) const
+GeneralBody*
+SimWorld::getBodyByName(const char* name) const
 {
 	GeneralBodyVector::const_iterator cit = m_bodies.begin();
 	GeneralBodyVector::const_iterator citEnd = m_bodies.end();
@@ -336,6 +374,15 @@ GeneralBody* SimWorld::getBodyByName(const char* name) const
 			return *cit;
 	}
 	return 0;
+}
+const GeneralBodyPtr SimWorld::getBodyByNameFromSet( const char* name ) const
+{
+	foreach (const GeneralBodyPtr& b, m_bodiesPtr)
+	{
+		if (strcmp(b->getName(), name) == 0)
+			return b;
+	}
+	return GeneralBodyPtr(reinterpret_cast<GeneralBody*>(0));
 }
 /*
 GeneralBody* SimWorld::getBodyByGeomID(dGeomID g) const
@@ -350,7 +397,8 @@ GeneralBody* SimWorld::getBodyByGeomID(dGeomID g) const
 	return 0;
 }
 */
-void SimWorld::clearBodyContact()
+void
+SimWorld::clearBodyContact()
 {
 	GeneralBodyVector::const_iterator cit = m_bodies.begin();
 	GeneralBodyVector::const_iterator citEnd = m_bodies.end();
@@ -360,9 +408,18 @@ void SimWorld::clearBodyContact()
 	}
 }
 
-bool SimWorld::registerBody( const GeneralBodyPtr& gbPtr )
+bool
+SimWorld::registerBody( const GeneralBodyPtr& gbPtr )
 {
 	gbPtr->configureOdeContext(m_osc);
 	m_bodiesPtr.insert(gbPtr);
+	return true;
+}
+
+bool
+SimWorld::registerJoint( const GeneralJointPtr& gjPtr )
+{
+	gjPtr->configureOdeContext(m_osc);
+	m_jointsPtr.insert(gjPtr);
 	return true;
 }

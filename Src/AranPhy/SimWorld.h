@@ -15,8 +15,12 @@ class StateController;
 class ArnSceneGraph;
 struct OdeSpaceContext;
 
+TYPEDEF_SHARED_PTR(GeneralBody);
+TYPEDEF_SHARED_PTR(GeneralJoint);
+
 typedef std::vector<GeneralBody*>						GeneralBodyVector;
 typedef std::set<GeneralBodyPtr>						GeneralBodyPtrSet;
+typedef std::set<GeneralJointPtr>						GeneralJointPtrSet;
 typedef std::vector<SliderJoint*>						SliderJointVector;
 
 TYPEDEF_SHARED_PTR(SimWorld);
@@ -48,6 +52,7 @@ public:
 												~SimWorld();
 	const OdeSpaceContext*						getOsc() const { return m_osc; }
 	bool										registerBody(const GeneralBodyPtr& gbPtr);
+	bool										registerJoint(const GeneralJointPtr& gjPtr);
 	void										placeGround();
 	GeneralBody*								placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
 	void										placePiston(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
@@ -58,6 +63,7 @@ public:
 	const SliderJointVector&					getJoints() const { return m_sliderJoints; }
 	SliderJoint*								getJointByName(const char* name) const;
 	GeneralBody*								getBodyByName(const char* name) const;
+	const GeneralBodyPtr						getBodyByNameFromSet(const char* name) const;
 	//GeneralBody*								getBodyByGeomID(dGeomID g) const;
 	void										clearBodyContact();
 	void										setBiped(Biped* biped) { m_biped = biped; }
@@ -82,6 +88,7 @@ private:
 	OdeSpaceContext*							m_osc;
 	GeneralBodyVector							m_bodies;
 	GeneralBodyPtrSet							m_bodiesPtr;
+	GeneralJointPtrSet							m_jointsPtr;
 	SliderJointVector							m_sliderJoints;
 	double										m_leftSupportPosZ;
 	double										m_leftSupportPosY;

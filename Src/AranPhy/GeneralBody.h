@@ -20,12 +20,16 @@ struct GeneralBodyState
 TYPEDEF_SHARED_PTR(GeneralBody);
 
 /*!
-@brief 강체 하나를 나타내는 최상위 클래스
+@brief ODE 강체 관련 함수에 대한 래퍼 최상위 클래스
 */
 class ARANPHY_API GeneralBody
 {
 public:
 	virtual							~GeneralBody();
+
+	const char*						getName() const { return m_name.c_str(); }
+	void							setName(const char* val) { m_name = val; }
+
 	/*! @name 강체의 모양과 크기
 	모든 강체마다 아래의 값이 정의되어야 합니다.
 	- 충돌 체크를 위한 Bounding volume의 모양과 크기
@@ -108,7 +112,6 @@ public:
 	*/
 	void							notify();
 	void							setXformableTarget(ArnXformable* xformable) { m_xformable = xformable; }
-	void							setName(const char* name) { m_name = name; }
 	void							addExternalForceOnCom(double x, double y, double z);
 	bool							isContactGround() const;
 	void							setContactGround(bool b) { m_isContactGround = b; }
