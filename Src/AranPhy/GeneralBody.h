@@ -17,6 +17,8 @@ struct GeneralBodyState
 	ArnVec3 angVel;
 };
 
+TYPEDEF_SHARED_PTR(GeneralBody);
+
 /*!
 @brief 강체 하나를 나타내는 최상위 클래스
 */
@@ -143,7 +145,5 @@ private:
 	ArnMassDistributionType			m_amdt;					///< 질량 분포 종류
 	ArnXformable*					m_xformable;			///< 강체 시뮬레이션 결과를 적용받을 인스턴스
 };
-
-typedef boost::shared_ptr<GeneralBody> GeneralBodyPtr;
 
 #endif // GENERALBODY_H

@@ -219,3 +219,6 @@
 #ifndef E_FAIL
 	#define E_FAIL (-1)
 #endif
+
+
+#define TYPEDEF_SHARED_PTR(type) class type; typedef std::tr1::shared_ptr<type> type##Ptr

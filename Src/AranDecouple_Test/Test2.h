@@ -13,6 +13,7 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
+#include <memory>
 
 #ifdef WIN32
 	#include <SDL.h>
@@ -38,7 +39,6 @@
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/array.hpp>
 #define foreach BOOST_FOREACH
 

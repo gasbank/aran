@@ -7,6 +7,8 @@ class ArnBone;
 class ArnBinaryChunk;
 class ArnLight;
 
+TYPEDEF_SHARED_PTR(ArnSceneGraph);
+
 class ARAN_API ArnSceneGraph : public ArnNode
 {
 public:

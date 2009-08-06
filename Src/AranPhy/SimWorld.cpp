@@ -6,6 +6,7 @@
 #include "Biped.h"
 #include "ArnSceneGraph.h"
 #include "ArnMesh.h"
+#include <memory>
 
 SimWorld::SimWorld()
 : m_totalElapsedTime(0)
@@ -17,6 +18,8 @@ SimWorld::SimWorld()
 , m_footSupportHeight(0.01)
 , m_osc(new OdeSpaceContext)
 {
+	std::tr1::shared_ptr<int> a(new int[100]);
+
 	m_osc->world = dWorldCreate();
 	dWorldSetGravity(m_osc->world, 0, 0, -9.8);
 	//dWorldSetERP(m_osc->world, 0.1);
@@ -357,7 +360,7 @@ void SimWorld::clearBodyContact()
 	}
 }
 
-bool SimWorld::registerBody( const boost::shared_ptr<GeneralBody>& gbPtr )
+bool SimWorld::registerBody( const GeneralBodyPtr& gbPtr )
 {
 	gbPtr->configureOdeContext(m_osc);
 	m_bodiesPtr.insert(gbPtr);

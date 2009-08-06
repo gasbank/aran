@@ -314,7 +314,7 @@ CreateFontTextureWithFreeType(const char* sceneFileName)
 }
 
 static void
-RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, boost::shared_ptr<ArnTexture> fontTexturePtr)
+RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, ArnTexturePtr fontTexturePtr)
 {
 	// backup current model-view matrix
 	glPushMatrix();                     // save current modelview matrix
@@ -464,7 +464,7 @@ PrintRayCastingResultUsingGlu(const ArnViewportData* avd)
 }
 
 static int
-ConfigureTestScene(boost::shared_ptr<ArnSceneGraph>& curSceneGraph, boost::shared_ptr<ArnTexture>& fontTexturePtr, const char* sceneFileName, const ArnViewportData* avd)
+ConfigureTestScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, const char* sceneFileName, const ArnViewportData* avd)
 {
 	curSceneGraph.reset(ArnSceneGraph::createFrom(sceneFileName));
 	if (!curSceneGraph)
@@ -481,7 +481,7 @@ ConfigureTestScene(boost::shared_ptr<ArnSceneGraph>& curSceneGraph, boost::share
 }
 
 static int
-ConfigureNextTestSceneWithRetry(boost::shared_ptr<ArnSceneGraph>& curSceneGraph, boost::shared_ptr<ArnTexture>& fontTexturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	assert(nextSceneIndex < (int)sceneList.size());
 	curSceneIndex = nextSceneIndex;
@@ -516,7 +516,7 @@ ConfigureNextTestSceneWithRetry(boost::shared_ptr<ArnSceneGraph>& curSceneGraph,
 }
 
 static int
-ReloadCurrentScene(boost::shared_ptr<ArnSceneGraph>& curSceneGraph, boost::shared_ptr<ArnTexture>& fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ReloadCurrentScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	return ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, curSceneIndex, sceneList, avd);
 }
@@ -579,8 +579,8 @@ DoMain()
 		sceneList.push_back(sceneFile);
 	}
 
-	boost::shared_ptr<ArnSceneGraph> curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
-	boost::shared_ptr<ArnTexture> fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
+	ArnSceneGraphPtr curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
+	ArnTexturePtr fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 	int curSceneIndex = -1;

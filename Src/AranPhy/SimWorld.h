@@ -19,6 +19,8 @@ typedef std::vector<GeneralBody*>						GeneralBodyVector;
 typedef std::set<GeneralBodyPtr>						GeneralBodyPtrSet;
 typedef std::vector<SliderJoint*>						SliderJointVector;
 
+TYPEDEF_SHARED_PTR(SimWorld);
+
 /**
 \brief 독립된 하나의 물리 시뮬레이션 공간
 */
@@ -45,7 +47,7 @@ public:
 	static SimWorld*							createFrom(ArnSceneGraph* sg);
 												~SimWorld();
 	const OdeSpaceContext*						getOsc() const { return m_osc; }
-	bool										registerBody(const boost::shared_ptr<GeneralBody>& gbPtr);
+	bool										registerBody(const GeneralBodyPtr& gbPtr);
 	void										placeGround();
 	GeneralBody*								placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
 	void										placePiston(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
@@ -93,7 +95,5 @@ private:
 	bool										m_bRenderSupports;
 	double										m_footSupportHeight;
 };
-
-typedef boost::shared_ptr<SimWorld> SimWorldPtr;
 
 #endif // SIMWORLD_H

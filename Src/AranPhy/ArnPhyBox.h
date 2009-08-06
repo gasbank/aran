@@ -6,6 +6,8 @@
 #pragma once
 #include "GeneralBody.h"
 
+TYPEDEF_SHARED_PTR(ArnPhyBox);
+
 /**
 @brief 직육면체의 bounding volume과 질량 분포를 가지는 물리 시뮬레이션 개체
 */
@@ -28,5 +30,3 @@ protected:
 private:
 							ArnPhyBox(const OdeSpaceContext* osc);
 };
-
-typedef boost::shared_ptr<ArnPhyBox> ArnPhyBoxPtr;
