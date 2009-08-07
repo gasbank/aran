@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ks_c_5601-1987"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="DebugDLLProp"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalIncludeDirectories=""
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		OutputFile="$(WORKING)/$(ProjectName)_D.dll"
+		ImportLibrary="$(OutDir)/$(TargetName).lib"
+	/>
+</VisualStudioPropertySheet>
