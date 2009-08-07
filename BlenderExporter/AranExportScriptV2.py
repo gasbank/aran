@@ -450,8 +450,12 @@ def exportMaterials(doc, mtrlNames):
 					texElm = doc.createElement('texture')
 					texElm.setAttribute('type', 'image')
 					texElm.setAttribute('path', tex.tex.image.filename)
-					if tex.tex.normalMap:
-						texElm.setAttribute('normalmap', '1')
+					if tex.mtAlpha:
+						texElm.setAttribute('alpha', '1')
+					if tex.mtCol:
+						texElm.setAttribute('color', '1')
+					if tex.mtNor:
+						texElm.setAttribute('normal', '1')
 					mtrlElm.appendChild(texElm)
 			
 			scene.appendChild(objElm)
