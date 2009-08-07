@@ -60,7 +60,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	SDL_GL_SwapBuffers();
-	sceneGraph->render();
+	ArnSceneGraphRenderGl(sceneGraph);
 
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -75,17 +75,36 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	printf("---------------------\n");
 	for (GLint h = 0; h < hits; ++h)
 	{
-		ArnNode* node = sceneGraph->getNodeById(buff[h].contents);
-		assert(node);
-		printf("[Object 0x%p ID %d : %s]\n", static_cast<void*>(node), node->getObjectId(), node->getName());
-
-		ArnMesh* mesh = dynamic_cast<ArnMesh*>(node);
-		if (mesh)
+		if (buff[h].contents) // Zero means that ray hit on bounding box area.
 		{
-			ArnVec3 dim;
-			mesh->getBoundingBoxDimension(&dim, true);
-			printf("Mesh Dimension: "); dim.printFormatString();
-		}
+			const ArnNode* node = sceneGraph->getConstNodeById(buff[h].contents);
+			assert(node);
+			const ArnNode* parentNode = node->getParent();
+			const char* name = node->getName();
+			if (strlen(name) == 0)
+				name = "<Unnamed>";
+			if (parentNode)
+			{
+				const char* parentName = parentNode->getName();
+				if (strlen(parentName) == 0)
+					parentName = "<Unnamed>";
+				printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
+					node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
+			}
+			else
+			{
+				printf("[Object 0x%p ID %d %s]\n",
+					node, node->getObjectId(), name);
+			}
+
+			const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(node);
+			if (mesh)
+			{
+				ArnVec3 dim;
+				mesh->getBoundingBoxDimension(&dim, true);
+				printf("Mesh Dimension: "); dim.printFormatString();
+			}
+		}		
 	}
 }
 
@@ -225,8 +244,77 @@ DrawString(const char *str, int x, int y, float color[4], void *font)
 	glPopAttrib();
 }
 
+static ArnTexture*
+CreateFontTextureWithFreeType(const char* sceneFileName)
+{
+	// FreeType font init
+	FT_Library library;
+	int ftError = FT_Init_FreeType(&library);
+	if (ftError)
+	{
+		std::cerr << "FreeType init failed." << std::endl;
+		return 0;
+	}
+	FT_Face face;
+	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
+	if (ftError)
+	{
+		std::cerr << "FreeType new face creation failed.(File not found?)" << std::endl;
+		return 0;
+	}
+	ftError = FT_Set_Char_Size(face, 0, 16*64, 300, 300);
+	if (ftError)
+	{
+		std::cerr << "FreeType face char size  failed." << std::endl;
+		return 0;
+	}
+	ftError = FT_Set_Pixel_Sizes(face, 0, 20);
+	if (ftError)
+	{
+		std::cerr << "FreeType face pixel size  failed." << std::endl;
+		return 0;
+	}
+	FT_GlyphSlot slot = face->glyph; /* a small shortcut */
+	FT_UInt glyph_index;
+	int pen_x, pen_y;
+	pen_x = 0;
+	pen_y = 0;
+	wchar_t testString[128];
+	wchar_t sceneFileNameW[128];
+	int requiredSize = mbstowcs(0, sceneFileName, 0);
+	assert(requiredSize + 1 < 128);
+	mbstowcs(sceneFileNameW, sceneFileName, requiredSize + 1);
+	swprintf(testString, 128, L"build %ld - %s", ArnGetBuildCount(), sceneFileNameW);
+	//swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
+	size_t testStringLen = wcslen(testString);
+	const int textTextureSize = 1024;
+	std::vector<unsigned char> fontTexture(textTextureSize * textTextureSize * 4);
+	for ( size_t n = 0; n < testStringLen; n++ )
+	{
+		glyph_index = FT_Get_Char_Index( face, testString[n] ); /* load glyph image into the slot (erase previous one) */
+		ftError = FT_Load_Char(face, testString[n], FT_LOAD_RENDER);
+		if ( ftError )
+			continue; /* ignore errors */
+
+		for (int row = 1; row <= slot->bitmap.rows; ++row)
+		{
+			for (int w = 0; w < slot->bitmap.width; ++w)
+			{
+				const size_t fontTexOffset = 4 * (w + (row)*textTextureSize + pen_x + slot->bitmap_left);
+				char slotValue = slot->bitmap.buffer[w + (slot->bitmap.rows - row) * slot->bitmap.width];
+				fontTexture[fontTexOffset + 0] = slotValue; // RED color
+				fontTexture[fontTexOffset + 1] = 0; // GREEN color
+				fontTexture[fontTexOffset + 2] = 0; // BLUE color
+				fontTexture[fontTexOffset + 3] = slotValue; // ALPHA
+			}
+		}
+		pen_x += slot->advance.x >> 6;
+	}
+	return ArnCreateTextureFromArray(&fontTexture[0], textTextureSize, textTextureSize, 4, false);
+}
+
 static void
-RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, GLuint fontTextureId)
+RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, ArnTexturePtr fontTexturePtr)
 {
 	// backup current model-view matrix
 	glPushMatrix();                     // save current modelview matrix
@@ -252,10 +340,15 @@ RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int du
 	//DrawString(ss.str().c_str(), 1, 14, color, GLUT_BITMAP_8_BY_13);
 
 	glDisable(GL_LIGHTING);
-	glBindTexture(GL_TEXTURE_2D, fontTextureId);
+	const ArnRenderableObject* textureRenderable = fontTexturePtr.get()->getRenderableObject();
+	assert(textureRenderable);
+	
+	textureRenderable->render(); // glBindTexture(GL_TEXTURE_2D, fontTextureId);
+
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBlendFunc(GL_ONE, GL_ONE);
 	glColor4d(1, 1, 1, 1);
-	glScaled(256, 256, 1);
+	glScaled(512, 512, 1);
 	glBegin(GL_QUADS);
 	glTexCoord2d(1, 1); glVertex3d(1, 1, 0);
 	glTexCoord2d(0, 1); glVertex3d(0, 1, 0);
@@ -271,35 +364,6 @@ RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int du
 	// restore modelview matrix
 	glMatrixMode(GL_MODELVIEW);      // switch to modelview matrix
 	glPopMatrix();                   // restore to previous modelview matrix
-}
-
-static GLuint
-ArnCreateTextureFromArrayGl( const unsigned char* data, int width, int height, bool wrap )
-{
-	GLuint texture;
-	// allocate a texture name
-	glGenTextures( 1, &texture );
-
-	// select our current texture
-	glBindTexture( GL_TEXTURE_2D, texture );
-
-	// select modulate to mix texture with color for shading
-	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-
-	// when texture area is small, bilinear filter the closest MIP map
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
-	// when texture area is large, bilinear filter the first MIP map
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-	// if wrap is true, the texture wraps over at the edges (repeat)
-	//       ... false, the texture ends at the edges (clamp)
-
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<GLfloat>(wrap ? GL_REPEAT : GL_CLAMP) );
-	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<GLfloat>(wrap ? GL_REPEAT : GL_CLAMP) );
-
-	// build our texture MIP maps
-	gluBuild2DMipmaps( GL_TEXTURE_2D, 3, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data );
-	return texture;
 }
 
 static void
@@ -400,46 +464,29 @@ PrintRayCastingResultUsingGlu(const ArnViewportData* avd)
 }
 
 static int
-ConfigureTestScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, const char* sceneFileName, const ArnViewportData* avd)
+ConfigureTestScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, const char* sceneFileName, const ArnViewportData* avd)
 {
-	assert(curSceneGraph || activeCam || activeLight == 0);
-
-	curSceneGraph = ArnSceneGraph::createFrom(sceneFileName);
+	curSceneGraph.reset(ArnSceneGraph::createFrom(sceneFileName));
 	if (!curSceneGraph)
 	{
 		fprintf(stderr, " *** Scene graph file %s is not loaded correctly.\n", sceneFileName);
 		fprintf(stderr, "     Check your input XML scene file.\n");
 		return -5;
 	}
-	curSceneGraph->interconnect(curSceneGraph);
-	curSceneGraph->initRendererObjects();
-
-	// Camera setting
-	activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
-	assert(activeCam);
-	activeCam->recalcLocalXform();
-	activeCam->recalcAnimLocalXform();
-	activeCam->printCameraOrientation();
-	ArnConfigureViewportProjectionMatrixGl(avd, activeCam); // Projection matrix is not changed during runtime for now.
-	ArnConfigureViewMatrixGl(activeCam);
-
-	activeLight = reinterpret_cast<ArnLight*>(curSceneGraph->findFirstNodeOfType(NDT_RT_LIGHT));
-	assert(activeLight);
+	curSceneGraph.get()->interconnect(curSceneGraph.get());
 	std::cout << "   Scene file " << sceneFileName << " loaded successfully." << std::endl;
+	fontTexturePtr.reset( CreateFontTextureWithFreeType(sceneFileName) );
+	assert(fontTexturePtr.get());
 	return 0;
 }
 
 static int
-ConfigureNextTestSceneWithRetry(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	assert(nextSceneIndex < (int)sceneList.size());
-	delete curSceneGraph;
 	curSceneIndex = nextSceneIndex;
-	curSceneGraph = 0;
-	activeCam = 0;
-	activeLight = 0;
 	unsigned int retryCount = 0;
-	while (ConfigureTestScene(curSceneGraph, activeCam, activeLight, sceneList[curSceneIndex].c_str(), &avd) < 0)
+	while (ConfigureTestScene(curSceneGraph, fontTexturePtr, sceneList[curSceneIndex].c_str(), &avd) < 0)
 	{
 		curSceneIndex = (curSceneIndex + 1) % sceneList.size();
 		++retryCount;
@@ -457,22 +504,46 @@ ConfigureNextTestSceneWithRetry(ArnSceneGraph*& curSceneGraph, ArnCamera*& activ
 	// A little test on modelview, projection matrix
 	// by checking frustum corner points and ray casting.
 	//
+	// Should be performed after OpenGL context created.
 
 	//PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
+	/*
 	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
 	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
 	PrintRayCastingResultUsingGlu(&avd);
+	*/
 	return 0;
 }
 
 static int
-ReloadCurrentScene(ArnSceneGraph*& curSceneGraph, ArnCamera*& activeCam, ArnLight*& activeLight, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ReloadCurrentScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
-	return ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, curSceneIndex, sceneList, avd);
+	return ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, curSceneIndex, sceneList, avd);
 }
 
+static void
+Cleanup()
+{
+	ArnCleanupXmlParser();
+	ArnCleanupImageLibrary();
+	ArnCleanupPhysics();
+	ArnCleanupGl();
+}
 
-int main(int argc, char *argv[])
+void
+GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGraph* sg)
+{
+	activeCam = reinterpret_cast<ArnCamera*>(sg->findFirstNodeOfType(NDT_RT_CAMERA));
+	assert(activeCam);
+	activeCam->recalcLocalXform();
+	activeCam->recalcAnimLocalXform();
+	//activeCam->printCameraOrientation();
+	activeLight = reinterpret_cast<ArnLight*>(sg->findFirstNodeOfType(NDT_RT_LIGHT));
+	assert(activeLight);
+}
+
+int
+DoMain()
 {
 	const int windowWidth = 640;
 	const int windowHeight = 480;
@@ -481,9 +552,62 @@ int main(int argc, char *argv[])
 	bool bFullScreen = false;
 	bool bNoFrame = false;
 
+	// Create and init the scene graph instance from XML file
+	// and attach that one to the video manager.
+	ArnInitializeXmlParser();
+	ArnInitializeImageLibrary();
+	ArnInitializePhysics();
+	ArnInitializeGl();
+
+	ArnViewportData avd;
+	avd.X = 0;
+	avd.Y = 0;
+	avd.Width = windowWidth;
+	avd.Height = windowHeight;
+	avd.MinZ = 0;
+	avd.MaxZ = 1.0f;
+
+	// Load first scene file from SceneList.txt
+	std::vector<std::string> sceneList;
+	std::ifstream sceneListStream("SceneList.txt");
+	std::string sceneFile;
+	if (!sceneListStream.is_open())
+	{
+		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
+		Cleanup();
+		return -12;
+	}
+	while (std::getline(sceneListStream, sceneFile))
+	{
+		sceneList.push_back(sceneFile);
+	}
+
+	ArnSceneGraphPtr curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
+	ArnTexturePtr fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
+	ArnCamera* activeCam = 0;
+	ArnLight* activeLight = 0;
+	int curSceneIndex = -1;
+	if (sceneList.size() > 0)
+	{
+		if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
+		{
+			std::cerr << " *** Aborting..." << std::endl;
+			Cleanup();
+			return -11;
+		}
+	}
+	else
+	{
+		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
+		Cleanup();
+		return -19;
+	}
+	
+	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-		exit(1);
+		Cleanup();
+		return -304;
 	}
 
 	/* Set the flags we want to use for setting the video mode */
@@ -492,7 +616,6 @@ int main(int argc, char *argv[])
 		video_flags |= SDL_FULLSCREEN;
 	if (bNoFrame)
 		video_flags |= SDL_NOFRAME;
-
 
 	/* Initialize the display */
 	int rgb_size[3];
@@ -505,13 +628,16 @@ int main(int argc, char *argv[])
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 ); // Swap Control On --> Refresh rate to 60 Hz
+	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 ); // Swap Control On --> Refresh rate to 60 Hz
 
 	if ( SDL_SetVideoMode( windowWidth, windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
+		Cleanup();
 		SDL_Quit();
-		exit(1);
+		return -2039;
 	}
+	// OpenGL context available from this line.
+
 	printf("Screen BPP: %d\n", SDL_GetVideoSurface()->format->BitsPerPixel);
 	printf("\n");
 	printf( "Vendor     : %s\n", glGetString( GL_VENDOR ) );
@@ -519,7 +645,7 @@ int main(int argc, char *argv[])
 	printf( "Version    : %s\n", glGetString( GL_VERSION ) );
 	printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
 	printf("\n");
-
+	
 	int value;
 	SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &value );
 	printf( "SDL_GL_RED_SIZE: requested %d, got %d\n", rgb_size[0],value);
@@ -544,7 +670,12 @@ int main(int argc, char *argv[])
 
 	if (ArnInitGlExtFunctions() < 0)
 	{
-		std::cerr << "OpenGL extensions needed to run this program are not available." << std::endl;
+		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
+		std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
+		std::cerr << "     Aborting..." << std::endl;
+		Cleanup();
+		SDL_Quit();
+		return -102;
 	}
 
 	/* Set the window manager title bar */
@@ -570,101 +701,16 @@ int main(int argc, char *argv[])
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-
-	FT_Library library;
-	int ftError = FT_Init_FreeType(&library);
-	if (ftError)
-		fprintf(stderr, "FreeType init failed.\n");
-	FT_Face face;
-	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
-	if (ftError)
-		fprintf(stderr, "FreeType new face creation failed.\n");
-	ftError = FT_Set_Char_Size(face, 0, 16*64, 300, 300);
-	if (ftError)
-		fprintf(stderr, "FreeType face char size  failed.\n");
-	ftError = FT_Set_Pixel_Sizes(face, 0, 16);
-	if (ftError)
-		fprintf(stderr, "FreeType face pixel size  failed.\n");
-
-	FT_GlyphSlot slot = face->glyph; /* a small shortcut */
-	FT_UInt glyph_index;
-	int pen_x, pen_y;
-	pen_x = 0;
-	pen_y = 0;
-	wchar_t testString[128];
-	swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
-	size_t testStringLen = wcslen(testString);
-	int textTextureSize = 256;
-	unsigned char* fontTexture = (unsigned char*)malloc( textTextureSize * textTextureSize * 4 ); // RGBA texture
-	memset(fontTexture, 0, textTextureSize * textTextureSize* 4);
-	for ( size_t n = 0; n < testStringLen; n++ )
-	{
-		glyph_index = FT_Get_Char_Index( face, testString[n] ); /* load glyph image into the slot (erase previous one) */
-		ftError = FT_Load_Char(face, testString[n], FT_LOAD_RENDER);
-		if ( ftError )
-			continue; /* ignore errors */
-
-		for (int row = 1; row <= slot->bitmap.rows; ++row)
-		{
-			for (int w = 0; w < slot->bitmap.width; ++w)
-			{
-				const size_t fontTexOffset = 4 * (w + (row)*textTextureSize + pen_x + slot->bitmap_left);
-				char slotValue = slot->bitmap.buffer[w + (slot->bitmap.rows - row) * slot->bitmap.width];
-				fontTexture[fontTexOffset + 0] = slotValue; // RED color
-				fontTexture[fontTexOffset + 1] = 0; // GREEN color
-				fontTexture[fontTexOffset + 2] = 0; // BLUE color
-				fontTexture[fontTexOffset + 3] = 0xff; // ALPHA
-			}
-		}
-		pen_x += slot->advance.x >> 6;
-	}
-	GLuint fontTextureId = ArnCreateTextureFromArrayGl(fontTexture, textTextureSize, textTextureSize, false);
-
-	ilInit();
-
-	// Create and init the scene graph instance from XML file
-	// and attach that one to the video manager.
-	ArnInitializeXmlParser();
-
-	ArnViewportData avd;
-	avd.X = 0;
-	avd.Y = 0;
-	avd.Width = windowWidth;
-	avd.Height = windowHeight;
-	avd.MinZ = 0;
-	avd.MaxZ = 1.0f;
-
-	std::vector<std::string> sceneList;
-	std::ifstream sceneListStream("SceneList.txt");
-	std::string sceneFile;
-	if (!sceneListStream.is_open())
-	{
-		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
-		return -12;
-	}
-	while (std::getline(sceneListStream, sceneFile))
-	{
-		sceneList.push_back(sceneFile);
-	}
+	// Initialize OpenGL contexts of scene graph objects.
+	SimWorldPtr swPtr(SimWorld::createFrom(curSgPtr.get()));
+	ConfigureRenderableObjectOf(fontTexturePtr.get());
+	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+	ArnInitializeRenderableObjectsGl(curSgPtr.get());
+	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+	ArnConfigureViewMatrixGl(activeCam);
 	
-	ArnSceneGraph* curSceneGraph = 0;
-	ArnCamera* activeCam = 0;
-	ArnLight* activeLight = 0;
-	int curSceneIndex = -1;
-	if (sceneList.size() > 0)
-	{
-		if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, 0, sceneList, avd) < 0)
-		{
-			std::cerr << " *** Aborting..." << std::endl;
-			return -11;
-		}
-	}
-	else
-	{
-		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
-		return -19;
-	}
-	
+	std::cout << "Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
+
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
 
@@ -692,18 +738,25 @@ int main(int argc, char *argv[])
 			ArnConfigureViewMatrixGl(activeCam);
 		if (activeLight)
 			ArnConfigureLightGl(0, activeLight);
-		
+
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
+		double stepSize = (double)frameDurationMs / 1000.0;
+		if (stepSize)
+		{
+			//swPtr->updateFrame(stepSize);
+			swPtr->updateFrame(0.001);
+		}
+
 		glPushMatrix();
 		{
-			if (curSceneGraph)
+			if (curSgPtr)
 			{
-				curSceneGraph->render();
-				curSceneGraph->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
-			}			
-			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTextureId);
+				ArnSceneGraphRenderGl(curSgPtr.get());
+				curSgPtr.get()->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+			}
+			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTexturePtr);
 		}
 		glPopMatrix();
 		SDL_GL_SwapBuffers();
@@ -726,23 +779,44 @@ int main(int argc, char *argv[])
 
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
-			done = HandleEvent(&event, curSceneGraph, &avd);
+			done = HandleEvent(&event, curSgPtr.get(), &avd);
 
 			if (done == MHR_NEXT_SCENE)
 			{
 				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
-				if (ConfigureNextTestSceneWithRetry(curSceneGraph, activeCam, activeLight, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
+				if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
 				}
+				else
+				{
+					// Initialize OpenGL contexts of scene graph objects.
+					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
+					ConfigureRenderableObjectOf(fontTexturePtr.get());
+					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+					ArnInitializeRenderableObjectsGl(curSgPtr.get());
+					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+					ArnConfigureViewMatrixGl(activeCam);
+					
+				}
 			}
 			else if (done == MHR_RELOAD_SCENE)
 			{
-				if (ReloadCurrentScene(curSceneGraph, activeCam, activeLight, curSceneIndex, sceneList, avd) < 0)
+				if (ReloadCurrentScene(curSgPtr, fontTexturePtr, curSceneIndex, sceneList, avd) < 0)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
+				}
+				else
+				{
+					// Initialize OpenGL contexts of scene graph objects.
+					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
+					ConfigureRenderableObjectOf(fontTexturePtr.get());
+					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+					ArnInitializeRenderableObjectsGl(curSgPtr.get());
+					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+					ArnConfigureViewMatrixGl(activeCam);
 				}
 			}
 		}
@@ -755,14 +829,20 @@ int main(int argc, char *argv[])
 	if ( this_time != start_time ) {
 		printf("%2.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
-
-	delete curSceneGraph;
-	curSceneGraph = 0;
-
-	glDeleteTextures(1, &fontTextureId);
-	ArnCleanupXmlParser();
-
-	/* Destroy our GL context, etc. */
+	Cleanup();
 	SDL_Quit();
 	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	int retCode = DoMain();
+
+#ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+	// Simple check for the memory leak of ArnObjects.
+	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
+	std::cout << "ArnObject dtor count: " << ArnObject::getDtorCount() << std::endl;
+	ArnObject::printInstances();
+#endif // #ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+	return retCode;
 }

@@ -12,6 +12,8 @@
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+#include <set>
+#include <memory>
 
 #ifdef WIN32
 	#include <SDL.h>
@@ -25,21 +27,29 @@
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
-#ifdef WIN32
-#include <d3dx9.h>
-#endif
+//
+// ODE
+//
+#include <ode/ode.h>
 
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
+//
+// Boost C++
+//
+#include <boost/lambda/lambda.hpp>
+#include <boost/function.hpp>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/array.hpp>
+#define foreach BOOST_FOREACH
 
-XERCES_CPP_NAMESPACE_USE
-
-
-#include "IL/il.h"
-
+//
+// Aran
+//
 #include "AranApi.h"
 #include "VideoManGl.h"
+#include "AranGl.h"
+#include "ArnTextureGl.h"
 #include "ArnGlExt.h"
+#include "AranPhy.h"
+#include "ArnPhyBox.h"
+#include "SimWorld.h"
