@@ -1,5 +1,6 @@
 #include "AranMathPCH.h"
 #include "ArnVec3.h"
+#include "ArnMath.h"
 
 ArnVec3::ArnVec3()
 : x(0)
@@ -15,17 +16,13 @@ ArnVec3::ArnVec3( float _x, float _y, float _z )
 {
 }
 
-#ifdef WIN32
-ArnVec3::ArnVec3( const D3DVECTOR* dxvec )
-: x(dxvec->x)
-, y(dxvec->y)
-, z(dxvec->z)
-{
-}
-#endif
-
 ArnVec3::~ArnVec3()
 {
+}
+
+float ArnVec3::compare( const ArnVec3& v ) const
+{
+	return ArnVec3Length(ArnVec3Substract(*this, v));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -55,7 +52,7 @@ bool ArnVec3Equals( const ArnVec3& v1, const ArnVec3& v2 )
 	return v1 == v2;
 }
 
-void ArnVec3DimensionFromBounds( ArnVec3* out, const ArnVec3 bb[8] )
+void ArnVec3DimensionFromBounds( ArnVec3* out, const boost::array<ArnVec3, 8>& bb )
 {
 	// In sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
 	out->x = abs(bb[0].x - bb[6].x);
@@ -63,16 +60,20 @@ void ArnVec3DimensionFromBounds( ArnVec3* out, const ArnVec3 bb[8] )
 	out->z = abs(bb[0].z - bb[6].z);
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-#ifdef WIN32
-const D3DVECTOR* ArnVec3GetConstDxPtr( const ArnVec3& v )
+ArnVec3* ArnVec3Assign(ArnVec3* v1, const float* v2)
 {
-	return v.getConstDxPtr();
+	assert(v1);
+	v1->x = v2[0];
+	v1->y = v2[1];
+	v1->z = v2[2];
+	return v1;
 }
 
-D3DVECTOR* ArnVec3GetDxPtr( ArnVec3& v )
+ArnVec3* ArnVec3Assign(ArnVec3* v1, const double* v2)
 {
-	return v.getDxPtr();
+	assert(v1);
+	v1->x = static_cast<float>(v2[0]);
+	v1->y = static_cast<float>(v2[1]);
+	v1->z = static_cast<float>(v2[2]);
+	return v1;
 }
-#endif // #ifdef WIN32

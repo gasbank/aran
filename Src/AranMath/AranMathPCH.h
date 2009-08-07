@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef WIN32
+	#define NOMINMAX
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
 	#include <tchar.h>
@@ -23,6 +24,11 @@
 #include <fstream>
 #include <list>
 #include <vector>
+
+//
+// Boost
+//
+#include <boost/array.hpp>
 
 //
 // Configurable Math Library (cml)

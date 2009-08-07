@@ -2,7 +2,7 @@
 
 class ArnVec3;
 
-class ArnVec4
+class ARANMATH_API ArnVec4
 {
 public:
 	float x, y, z, w;
@@ -10,6 +10,8 @@ public:
 	ArnVec4() : x(0), y(0), z(0), w(0) {}
 	ArnVec4(float _x, float _y, float _z, float _w) : x(_x), y(_y), z(_z), w(_w) {}
 	ArnVec4(const ArnVec3& vec3, float _w) : x(vec3.x), y(vec3.y), z(vec3.z), w(_w) {}
+
+	float operator[](size_t i) const { switch(i) { case 0: return x; case 1: return y; case 2: return z; case 3: return w; default: ARN_THROW_UNEXPECTED_CASE_ERROR } }
 
 	const float* getRawData() const { return (const float*)&x; }
 	void printFormatString() const

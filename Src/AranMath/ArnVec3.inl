@@ -84,7 +84,8 @@ ArnVec3::operator / (float f) const
 	return ArnVec3(x/f, y/f, z/f);
 }
 
-ArnVec3& ArnVec3::operator*=( float f )
+ArnVec3&
+ArnVec3::operator*=( float f )
 {
 	x *= f;
 	y *= f;
@@ -92,20 +93,20 @@ ArnVec3& ArnVec3::operator*=( float f )
 	return *this;
 }
 
-template <typename T>
-ArnVec3 ArnVec3::operator + ( const T& v ) const
+template <typename T> ArnVec3
+ArnVec3::operator + ( const T& v ) const
 {
 	return ArnVec3(x + v.x, y + v.y, z + v.z);
 }
 
-template <typename T>
-ArnVec3 ArnVec3::operator - ( const T& v ) const
+template <typename T> ArnVec3
+ArnVec3::operator - ( const T& v ) const
 {
 	return ArnVec3(x - v.x, y - v.y, z - v.z);
 }
 
-template <typename T>
-ArnVec3& ArnVec3::operator = ( const T& v )
+template <typename T> ArnVec3&
+ArnVec3::operator = ( const T& v )
 {
 	x = v.x;
 	y = v.y;
@@ -113,7 +114,8 @@ ArnVec3& ArnVec3::operator = ( const T& v )
 	return *this;
 }
 
-template<typename V1, typename V2> void ArnVec3Assign(V1& v1, const V2& v2)
+template<typename V1, typename V2> void
+ArnVec3Assign(V1& v1, const V2& v2)
 {
 	v1.x = v2.x;
 	v1.y = v2.y;

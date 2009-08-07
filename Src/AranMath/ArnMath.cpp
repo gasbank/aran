@@ -18,7 +18,7 @@ ArnQuatToEuler( const ArnQuat* quat )
 {
 	cml_quat q(quat->w, quat->x, quat->y, quat->z);
 	double rx, ry, rz;
-	quaternion_to_euler(q, rx, ry, rz, cml::euler_order_xyz);
+	cml::quaternion_to_euler(q, rx, ry, rz, cml::euler_order_xyz);
 	return ArnVec3(float(rx), float(ry), float(rz));
 }
 

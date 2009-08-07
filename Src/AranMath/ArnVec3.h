@@ -5,15 +5,7 @@ class ARANMATH_API ArnVec3
 public:
 							ArnVec3();
 							ArnVec3(float _x, float _y, float _z);
-#ifdef WIN32
-							ArnVec3(const D3DVECTOR* dxvec);
-#endif
 							~ArnVec3();
-
-#ifdef WIN32
-	const D3DVECTOR*		getConstDxPtr() const { return reinterpret_cast<const D3DVECTOR*>(this); }
-	D3DVECTOR*			getDxPtr() { return reinterpret_cast<D3DVECTOR*>(this); }
-#endif
 
 	template <typename T>
 	inline ArnVec3			operator + (const T& v) const;
@@ -34,6 +26,7 @@ public:
 	inline bool				operator != ( const ArnVec3& v ) const;
 	inline void				getFormatString(char* buf, size_t bufSize) const;
 	inline void				printFormatString() const;
+	float					compare(const ArnVec3& v) const;
 	float					x;
 	float					y;
 	float					z;
@@ -44,13 +37,8 @@ ARANMATH_API void ArnVec3GetFormatString(char* buf, size_t bufSize, const ArnVec
 ARANMATH_API ArnVec3 ArnVec3Add(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API ArnVec3 ArnVec3Substract(const ArnVec3& v1, const ArnVec3& v2);
 ARANMATH_API bool ArnVec3Equals(const ArnVec3& v1, const ArnVec3& v2);
-ARANMATH_API void ArnVec3DimensionFromBounds(ArnVec3* out, const ArnVec3 bb[8]);
-
-#ifdef WIN32
-ARANMATH_API const D3DVECTOR* ArnVec3GetConstDxPtr(const ArnVec3& v);
-ARANMATH_API D3DVECTOR* ArnVec3GetDxPtr(ArnVec3& v);
-#endif
-
-
+ARANMATH_API void ArnVec3DimensionFromBounds(ArnVec3* out, const boost::array<ArnVec3, 8>& bb);
+ARANMATH_API ArnVec3* ArnVec3Assign(ArnVec3* v1, const float* v2);
+ARANMATH_API ArnVec3* ArnVec3Assign(ArnVec3* v1, const double* v2);
 #include "ArnVec3.inl"
 
