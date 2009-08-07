@@ -64,7 +64,7 @@
 { \
 	char lineNumber[8]; \
 	_itoa_s(__LINE__, lineNumber, 10); \
-	STRING ___file___Name___(__FILE__); \
+	std::string ___file___Name___(__FILE__); \
 	___file___Name___ += "("; \
 	___file___Name___ += lineNumber; \
 	___file___Name___ += ")\nFollowing statement is NOT TRUE or 0;\n"; \
@@ -79,9 +79,26 @@
 // For annotation purpose
 #define ARN_REMOVED
 #define ARN_OWNERSHIP
-#define ARN_THROW_REMOVE_FUNCTION_ERROR { throw new std::runtime_error("This function should not be called because it was removed by the design issue!"); }
-#define ARN_THROW_NOT_IMPLEMENTED_ERROR { throw new std::runtime_error("Not implemented!"); }
-#define ARN_THROW_UNEXPECTED_CASE_ERROR { throw new std::runtime_error("Unexpected error!"); }
+#ifndef IN
+#define IN
+#endif
+#ifndef OUT
+#define OUT
+#endif
+#ifndef INOUT
+#define INOUT
+#endif
+
+// Throws
+#define ARN_THROW_REMOVE_FUNCTION_ERROR \
+	{ throw new std::runtime_error("This function should not be called because it was removed by the design issue!"); }
+#define ARN_THROW_NOT_IMPLEMENTED_ERROR \
+	{ throw new std::runtime_error("Not implemented!"); }
+#define ARN_THROW_UNEXPECTED_CASE_ERROR \
+	{ throw new std::runtime_error("Unexpected error!"); }
+#define ARN_THROW_SHOULD_NOT_BE_USED_ERROR \
+	{ throw new std::runtime_error("This code should not be used!"); }
+
 
 //
 // DLL export macro for Aran
@@ -141,6 +158,45 @@
 #endif
 
 
+//
+// DLL Export macro for AranDx9
+//
+#ifdef WIN32
+#define ARANDX9_API_EXPORT __declspec(dllexport)
+#define ARANDX9_API_IMPORT __declspec(dllimport)
+#else
+#define ARANDX9_API_EXPORT
+#define ARANDX9_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANDX9_EXPORTS)
+#define ARANDX9_API		ARANDX9_API_EXPORT
+#define ARANDX9_API_EXTERN
+#else
+#define ARANDX9_API		ARANDX9_API_IMPORT
+#define ARANDX9_API_EXTERN extern
+#endif
+
+//
+// DLL Export macro for AranGl
+//
+#ifdef WIN32
+#define ARANGL_API_EXPORT __declspec(dllexport)
+#define ARANGL_API_IMPORT __declspec(dllimport)
+#else
+#define ARANGL_API_EXPORT
+#define ARANGL_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANGL_EXPORTS)
+#define ARANGL_API		ARANGL_API_EXPORT
+#define ARANGL_API_EXTERN
+#else
+#define ARANGL_API		ARANGL_API_IMPORT
+#define ARANGL_API_EXTERN extern
+#endif
+
+
 // limits a value to low and high
 #define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}
 #define ZERO_CLAMP(x)	( (EPSILON > fabs(x))?0.0f:(x) )						// set float to 0 if within tolerance
@@ -148,10 +204,21 @@
 #define	SQR(x)		( (x) * (x) )
 #define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
 
-#ifndef WIN32
+#ifndef DWORD
 	#define DWORD unsigned int
+#endif
+#ifndef HRESULT
 	#define HRESULT int
+#endif
+#ifndef BOOL
 	#define BOOL int
+#endif
+#ifndef S_OK
 	#define S_OK (0)
+#endif
+#ifndef E_FAIL
 	#define E_FAIL (-1)
 #endif
+
+
+#define TYPEDEF_SHARED_PTR(type) class type; typedef std::tr1::shared_ptr<type> type##Ptr
