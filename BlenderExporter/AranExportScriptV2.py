@@ -318,7 +318,7 @@ def createMeshData(doc, ob):
 	# Linked materials
 	for mtrl in mesh.materials:
 		mtrlElm = doc.createElement('material')
-		mtrlElm.setAttribute('name', mtrl.name)
+		mtrlElm.setAttribute('name', 'MTRL_' + mtrl.name)
 		#mtrlElm.setIdAttribute('name')
 		linkedMaterials.append(mtrl.name) # Remember actually used materials and export them only.
 		meshData.appendChild(mtrlElm)
@@ -411,7 +411,7 @@ def exportMaterials(doc, mtrlNames):
 	for mtrl in bpy.data.materials:
 		if mtrl.name in mtrlNames:
 			objElm = doc.createElement('object')
-			objElm.setAttribute('name', mtrl.name)
+			objElm.setAttribute('name', 'MTRL_' + mtrl.name)
 			objElm.setAttribute('rtclass', 'ArnMaterial')
 			mtrlElm = doc.createElement('material')
 			objElm.appendChild(mtrlElm)
@@ -457,6 +457,12 @@ def exportMaterials(doc, mtrlNames):
 			scene.appendChild(objElm)
 
 
+def CreateLimitElm(doc, name, v0, v1):
+	limitElm = doc.createElement('limit')
+	limitElm.setAttribute('type', name)
+	limitStr = '%f %f' % (v0, v1)
+	limitElm.appendChild(doc.createTextNode(limitStr))
+	return limitElm
 
 #
 #
@@ -527,6 +533,8 @@ for ob in sce.objects:
 	elif ob.type == 'Armature':
 		skeletonData = createSkeletonData(doc, ob)
 		obj.appendChild(skeletonData)
+	else:
+		errorerror
 		
 	if ob.action:
 		actElm = doc.createElement('action')
@@ -563,7 +571,7 @@ for ob in sce.objects:
 				bounds = 'box'
 			actorElm.setAttribute('bounds', bounds)
 		obj.appendChild(actorElm)
-			
+
 	for c in ob.constraints:
 		if c.type is Constraint.Type.RIGIDBODYJOINT:
 			if c[Constraint.Settings.TARGET]:
@@ -581,6 +589,10 @@ for ob in sce.objects:
 					cTypeStr = 'hinge'
 				elif cType is Constraint.Settings.CONSTR_RB_GENERIC6DOF:
 					cTypeStr = 'generic'
+				print Constraint.Settings.CONSTR_RB_BALL
+				print Constraint.Settings.CONSTR_RB_HINGE
+				print Constraint.Settings.CONSTR_RB_GENERIC6DOF
+				print c[Constraint.Settings.CONSTR_RB_TYPE]
 				"""
 				pivotElm = doc.createElement('pivot')
 				pivotElm.appendChild(doc.createTextNode('%f %f %f' % (c[Constraint.Settings.CONSTR_RB_PIVX], c[Constraint.Settings.CONSTR_RB_PIVY], c[Constraint.Settings.CONSTR_RB_PIVZ])))
@@ -589,10 +601,31 @@ for ob in sce.objects:
 				axElm.appendChild(doc.createTextNode('%f %f %f' % (c[Constraint.Settings.CONSTR_RB_AXX], c[Constraint.Settings.CONSTR_RB_AXY], c[Constraint.Settings.CONSTR_RB_AXZ])))
 				cElm.appendChild(pivotElm)
 				cElm.appendChild(axElm)
+
+				limitFlags = c[Constraint.Settings.LIMIT]
+				if limitFlags & 1:
+					limitElm = CreateLimitElm(doc, 'LinX', c[Constraint.Settings.CONSTR_RB_MINLIMIT0], c[Constraint.Settings.CONSTR_RB_MAXLIMIT0])
+					cElm.appendChild(limitElm)
+				if limitFlags & 2:
+					limitElm = CreateLimitElm(doc, 'LinY', c[Constraint.Settings.CONSTR_RB_MINLIMIT1], c[Constraint.Settings.CONSTR_RB_MAXLIMIT1])
+					cElm.appendChild(limitElm)
+				if limitFlags & 4:
+					limitElm = CreateLimitElm(doc, 'LinZ', c[Constraint.Settings.CONSTR_RB_MINLIMIT2], c[Constraint.Settings.CONSTR_RB_MAXLIMIT2])
+					cElm.appendChild(limitElm)
+				if limitFlags & 8:
+					limitElm = CreateLimitElm(doc, 'AngX', c[Constraint.Settings.CONSTR_RB_MINLIMIT3], c[Constraint.Settings.CONSTR_RB_MAXLIMIT3])
+					cElm.appendChild(limitElm)
+				if limitFlags & 16:
+					limitElm = CreateLimitElm(doc, 'AngY', c[Constraint.Settings.CONSTR_RB_MINLIMIT4], c[Constraint.Settings.CONSTR_RB_MAXLIMIT4])
+					cElm.appendChild(limitElm)
+				if limitFlags & 32:
+					limitElm = CreateLimitElm(doc, 'AngZ', c[Constraint.Settings.CONSTR_RB_MINLIMIT5], c[Constraint.Settings.CONSTR_RB_MAXLIMIT5])
+					cElm.appendChild(limitElm)
 				obj.appendChild(cElm)
 	
 	scene.appendChild(obj)
 
+#print Constraint.Settings
 
 # Export only actucally used materials, actions and ipos.
 # (Actions should be exported first to resolve dependencies between
