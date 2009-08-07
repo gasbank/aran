@@ -1,7 +1,6 @@
 #include "AranPCH.h"
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
-#include "VideoManGl.h"
 #include "ArnAction.h"
 #include "ArnIpo.h"
 #include "ArnAnimationController.h"
@@ -30,20 +29,7 @@ ArnSkeleton::interconnect( ArnNode* sceneRoot )
 void
 ArnSkeleton::render()
 {
-	glPushMatrix();
-	{
-		recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-		glMultTransposeMatrixf((float*)getLocalXform().m);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		ArnDrawAxesGl(0.5);
-		foreach (ArnNode* node, getChildren())
-		{
-			assert(node->getType() == NDT_RT_BONE);
-			ArnBone* bone = (ArnBone*)node;
-			bone->render();
-		}
-	}
-	glPopMatrix();
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 void

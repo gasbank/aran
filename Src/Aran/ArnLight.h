@@ -12,7 +12,7 @@ public:
 
 	static ArnLight*				createPointLight(const ArnVec3& pos, const ArnColorValue4f& color, const ArnVec3& att);
 	static ArnLight*				createFrom(const NodeBase* nodeBase);
-	static ArnLight*				createFrom(const DOMElement* elm);
+	static ArnLight*				createFrom(const TiXmlElement* elm);
 
 	const ArnLightData&				getD3DLightData() const { return m_d3dLight; }
 	void							setD3DLightDataPosition(const ArnVec3& v) { m_d3dLight.Position = v; }

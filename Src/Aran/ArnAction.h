@@ -13,7 +13,7 @@ class ArnAction : public ArnNode
 public:
 											ArnAction();
 	virtual									~ArnAction();
-	static ArnAction*						createFrom(const DOMElement* elm);
+	static ArnAction*						createFrom(const TiXmlElement* elm);
 	static ArnAction*						createFrom(ArnNode* obj, ArnIpo* ipo);
 	const std::map<ArnNode*, ArnIpo*>&		getObjectIpoMap() const { return m_objectIpoMap; }
 	// *** INTERNAL USE ONLY START ***

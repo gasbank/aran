@@ -11,13 +11,12 @@ public:
 											~ArnBone(void);
 
 	static ArnBone*							createFrom(const NodeBase* nodeBase);
-	static ArnBone*							createFrom(const DOMElement* elm);
+	static ArnBone*							createFrom(const TiXmlElement* elm);
 	void									setFrameData(const MyFrameData* frameData) { m_frameData = frameData; }
 	const MyFrameData*						getFrameData() const { return m_frameData; }
 	const BoneData&							getBoneData() const { return m_data; }
-	void									render();
 	unsigned int							getChildBoneCount() const;
-
+	ArnVec3									getBoneDirection() const { return ArnVec3Substract(m_tailPos, m_headPos); }
 	// *** INTERNAL USE ONLY START ***
 	virtual void							interconnect(ArnNode* sceneRoot) { ArnNode::interconnect(sceneRoot); }
 	// *** INTERNAL USE ONLY END ***

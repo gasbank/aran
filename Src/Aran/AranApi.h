@@ -12,5 +12,6 @@
 #include "ArnMesh.h"
 #include "ArnViewportData.h"
 #include "ArnMath.h"
+#include "ArnTexture.h"
 
 ARAN_API long ArnGetBuildCount();

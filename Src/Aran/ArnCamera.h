@@ -12,7 +12,7 @@ public:
 	static ArnCamera*					createFrom(const NodeBase* nodeBase);
 	static ArnCamera*					createFrom(const char* name, const ArnQuat& rot, const ArnVec3& trans, float fov);
 	static ArnCamera*					createFrom(const char* name, const ArnVec3& eye, const ArnVec3& target, const ArnVec3& up, float fov);
-	static ArnCamera*					createFrom(xercesc::DOMElement* elm);
+	static ArnCamera*					createFrom(const TiXmlElement* elm);
 	ARN_NDD_CAMERA_CHUNK&				getCameraData() { return m_cameraData; }
 	float								getFarClip() const { return m_cameraData.farClip; }
 	float								getNearClip() const { return m_cameraData.nearClip; }
@@ -30,17 +30,4 @@ private:
 	void								buildFrom(const NodeCamera2* nc);
 
 	ARN_NDD_CAMERA_CHUNK				m_cameraData;
-};
-
-/////////////////////////////////////////////////////////////////////////////
-
-struct ARN_CAMERA
-{
-	// eye: Position of camera
-	// at: Look-at vector
-	// up: Up-vector
-
-	ArnVec3 eye, at, up;
-	float farClip, nearClip;
-	float angle; // in radian
 };

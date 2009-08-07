@@ -1,8 +1,7 @@
 // VideoMan.cpp
-// 2007 Geoyeob Kim
+// 2007, 2008, 2009 Geoyeob Kim
 #include "AranPCH.h"
-#include "VideoManGl.h"
-#include "RenderLayer.h"
+#include "VideoMan.h"
 #include "ArnCamera.h"
 #include "ArnMesh.h"
 #include "ArnMaterial.h"
@@ -13,7 +12,8 @@
 #include "ArnSceneGraph.h"
 #include "ArnMath.h"
 #include "ArnViewportData.h"
-
+#include "PreciseTimer.h"
+#include "RenderLayer.h"
 IMPLEMENT_SINGLETON(VideoMan)
 
 VideoMan::VideoMan()
@@ -350,7 +350,7 @@ HRESULT
 VideoMan::InitLight()
 {
 	ZeroMemory(&this->defaultLight, sizeof(ArnLightData));
-	this->defaultLight.Type = ArnLightData::ARNLIGHT_DIRECTIONAL;
+	this->defaultLight.Type = ARNLIGHT_DIRECTIONAL;
 	this->defaultLight.Diffuse.r = 0.5f;
 	this->defaultLight.Diffuse.g = 0.5f;
 	this->defaultLight.Diffuse.b = 0.5f;
@@ -548,7 +548,7 @@ VideoMan::setupLightsFromSceneGraph()
 	// Apply lights. This will override existing light values of OpenGL.
 	if (m_sceneGraph)
 	{
-		GLuint lightId = 0;
+		unsigned int lightId = 0;
 		foreach(ArnNode* sgRootNode, m_sceneGraph->getChildren())
 		{
 			if (sgRootNode->getType() == NDT_RT_LIGHT)
@@ -559,7 +559,7 @@ VideoMan::setupLightsFromSceneGraph()
 				++lightId;
 			}
 		}
-		for (GLuint lightId2 = lightId; lightId2 < 8; ++lightId2)
+		for (unsigned int lightId2 = lightId; lightId2 < 8; ++lightId2)
 		{
 			setLight(lightId2, 0);
 		}
@@ -569,7 +569,7 @@ VideoMan::setupLightsFromSceneGraph()
 void
 VideoMan::disableAllLights()
 {
-	for (GLuint lightId2 = 0; lightId2 < 8; ++lightId2)
+	for (unsigned int lightId2 = 0; lightId2 < 8; ++lightId2)
 	{
 		setLight(lightId2, 0);
 	}

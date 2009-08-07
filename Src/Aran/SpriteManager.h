@@ -21,9 +21,8 @@ public:
 	Sprite* getSprite( const char* spriteName ) const;
 	Sprite* getSpriteRenerer() const { return m_d3dxSprite; }
 
-	HRESULT onCreateDevice( IDirect3DDevice9* pd3dDevice );
-	HRESULT onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
-							void* pUserContext );
+	HRESULT onCreateDevice( VideoMan* vm);
+	HRESULT onResetDevice( VideoMan* vm );
 	void onLostDevice();
 	void onDestroyDevice();
 

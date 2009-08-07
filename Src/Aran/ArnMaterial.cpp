@@ -16,7 +16,8 @@ ArnMaterial::~ArnMaterial(void)
 		delete tex;
 }
 
-ArnMaterial* ArnMaterial::createFrom( const NodeBase* nodeBase )
+ArnMaterial*
+ArnMaterial::createFrom( const NodeBase* nodeBase )
 {
 	ArnMaterial* node = new ArnMaterial();
 	node->setName(nodeBase->m_nodeName);
@@ -42,14 +43,16 @@ ArnMaterial* ArnMaterial::createFrom( const NodeBase* nodeBase )
 	return node;
 }
 
-void ArnMaterial::buildFrom( const NodeMaterial1* nm )
+void
+ArnMaterial::buildFrom( const NodeMaterial1* nm )
 {
 	m_materialCount = nm->m_materialCount;
 
 	m_bTextureLoaded = true; // No texture loading is needed.
 }
 
-void ArnMaterial::buildFrom( const NodeMaterial2* nm )
+void
+ArnMaterial::buildFrom( const NodeMaterial2* nm )
 {
 	// Deep copying from ARN data buffer
 	setParentName(nm->m_parentName);
@@ -63,8 +66,11 @@ void ArnMaterial::buildFrom( const NodeMaterial2* nm )
 	m_bTextureLoaded = false;
 }
 
-void ArnMaterial::loadTexture()
+void
+ArnMaterial::loadTexture()
 {
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+	/*
 	if (!m_bTextureLoaded)
 	{
 		unsigned int i;
@@ -90,19 +96,50 @@ void ArnMaterial::loadTexture()
 		}
 		m_bTextureLoaded = true;
 	}
+	*/
 }
 
-void ArnMaterial::interconnect( ArnNode* sceneRoot )
+void
+ArnMaterial::interconnect( ArnNode* sceneRoot )
 {
 	ArnNode::interconnect(sceneRoot);
 }
 
-void ArnMaterial::initRendererObject()
+void
+ArnMaterial::initRendererObject()
 {
-	foreach(ArnTexture* tex, m_d3dTextureList)
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+}
+
+const ArnTexture*
+ArnMaterial::getFirstTexture() const
+{
+	if (getChildren().size())
 	{
-		tex->initGl();
+		const ArnTexture* ret = dynamic_cast<const ArnTexture*>(*getChildren().begin());
+		assert(ret);
+		return ret;
 	}
+	else
+	{
+		return 0;
+	}
+}
+
+ArnTexture*
+ArnMaterial::getD3DTexture( unsigned int idx ) const
+{
+	ArnTexture* ret = dynamic_cast<ArnTexture*>(getNodeAt(idx));
+	if (ret)
+		return ret;
+	else
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+void
+ArnMaterial::attachTexture( ArnTexture* ARN_OWNERSHIP tex )
+{
+	attachChild(tex);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,42 +150,4 @@ void SetSimpleColoredMaterial(ArnMaterialData* material, ArnColorValue4f color)
 	material->Ambient.g = material->Diffuse.g = material->Emissive.g = material->Specular.g = color.g;
 	material->Ambient.b = material->Diffuse.b = material->Emissive.b = material->Specular.b = color.b;
 	material->Power = 1.0f;
-}
-
-void ArnSetupMaterialGl(const ArnMaterial* mtrl)
-{
-	// TODO: Material (ambient? specular?)
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&mtrl->getD3DMaterialData().Ambient);
-	//glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrl->getD3DMaterialData().Specular);
-	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrl->getD3DMaterialData().Emissive);
-
-	/*
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&POINT4FLOAT::ZERO);
-	*/
-
-	// TODO: Shininess...
-	float shininess = 100;
-	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
-
-	if (mtrl->getTextureCount())
-	{
-		const ArnTexture* tex = mtrl->getFirstTexture();
-		glBindTexture(GL_TEXTURE_2D, tex->getTextureId());
-		GLenum err = glGetError( );
-		assert(err == 0);
-	}
-	else
-	{
-		glBindTexture(GL_TEXTURE_2D, 0);
-	}
-
-	if (mtrl->isShadeless())
-		glDisable(GL_LIGHTING);
-	else
-		glEnable(GL_LIGHTING);
 }

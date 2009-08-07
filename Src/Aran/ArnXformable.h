@@ -3,6 +3,21 @@
 #include "ArnNode.h"
 class ArnAnimationController;
 class ArnIpo;
+struct ArnJointData;
+
+struct ArnJointData
+{
+	std::string target;
+	ArnVec3 pivot;
+	ArnVec3 ax;
+	struct ArnJointLimit
+	{
+		std::string type;
+		float minimum;
+		float maximum;
+	};
+	std::list<ArnJointLimit> limits;
+};
 
 /**
 @brief A superclass of renderer objects which have position and orientation.
@@ -11,7 +26,7 @@ class ARAN_API ArnXformable : public ArnNode
 {
 public:
 	virtual										~ArnXformable(void);
-	inline const std::string&						getIpoName() const;
+	inline const std::string&					getIpoName() const;
 	inline const ArnMatrix&						getFinalLocalXform() const;
 	inline const ArnVec3&						getLocalXform_Scale() const;
 	inline void									setLocalXform_Scale(const ArnVec3& scale);
@@ -41,18 +56,19 @@ public:
 	void										setIpo(const std::string& ipoName);
 	inline ArnAnimationController*				getAnimCtrl();
 	inline bool									isLocalXformDirty() const;
-
+	const std::vector<ArnJointData>&			getJointData() const { return m_jointData; }
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);
 	virtual void								update(double fTime, float fElapsedTime);
 	inline void									setAnimCtrl(ArnAnimationController* animCtrl);
 	void										configureAnimCtrl();
+	void										addJointData(const ArnJointData& data);
 
 private:
 	inline void									setAnimSeqEnded(bool val);
 	ArnIpo*										m_ipo;
-	std::string										m_ipoName;
+	std::string									m_ipoName;
 	ArnMatrix  									m_localXform;
 	ArnVec3 									m_localXform_Scale;
 	ArnQuat     								m_localXform_Rot;
@@ -66,6 +82,7 @@ private:
 	ArnAnimationController*						m_aniimCtrl;
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
+	std::vector<ArnJointData>					m_jointData;
 	
 	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
 	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear	

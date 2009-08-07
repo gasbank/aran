@@ -13,6 +13,8 @@
 #include "ArnMath.h"
 #include "ArnTexture.h"
 
+static bool gs_xmlInitialized = false;
+
 ArnXmlLoader::ArnXmlLoader()
 {
 	//ctor
@@ -26,41 +28,53 @@ ArnXmlLoader::~ArnXmlLoader()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
-GetAttr(std::string& val, const DOMElement* elm, const char* attrName)
+GetAttr(std::string& val, const TiXmlElement* elm, const char* attrName)
 {
-	XMLCh* a = XMLString::transcode(attrName);
-	const XMLCh* v = elm->getAttribute(a);
-	XMLString::release(&a);
-	if (v)
-	{
-		char* value = XMLString::transcode(v);
-		val = value;
-		XMLString::release(&value);
-	}
-	else
-	{
-		val = "";
-	}
+	const char* str = elm->Attribute(attrName);
+	assert(str);
+	val = str;
 }
 
 static float
-ParseFloatFromAttr(const DOMElement* elm, const char* attrName)
+ParseFloatFromAttr(const TiXmlElement* elm, const char* attrName)
 {
-	std::string val;
-	GetAttr(val, elm, attrName);
-	return float(atof(val.c_str()));
+	float f;
+	int ret = elm->QueryFloatAttribute(attrName, &f);
+	if (ret == TIXML_SUCCESS)
+	{
+	}
+	else if (ret == TIXML_NO_ATTRIBUTE)
+	{
+		f = 0;
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+	return f;
 }
 
 static int
-ParseIntFromAttr(const DOMElement* elm, const char* attrName)
+ParseIntFromAttr(const TiXmlElement* elm, const char* attrName)
 {
-	std::string val;
-	GetAttr(val, elm, attrName);
-	return atoi(val.c_str());
+	int i;
+	int ret = elm->QueryIntAttribute(attrName, &i);
+	if (ret == TIXML_SUCCESS)
+	{
+	}
+	else if (ret == TIXML_NO_ATTRIBUTE)
+	{
+		i = 0;
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+	return i;
 }
 
 static void
-ParseRgbFromElement(float* r, float* g, float* b, const DOMElement* elm)
+ParseRgbFromElementAttr(float* r, float* g, float* b, const TiXmlElement* elm)
 {
 	*r = ParseFloatFromAttr(elm, "r");
 	*g = ParseFloatFromAttr(elm, "g");
@@ -68,14 +82,14 @@ ParseRgbFromElement(float* r, float* g, float* b, const DOMElement* elm)
 }
 
 static void
-ParseRgbaFromElement(float* r, float* g, float* b, float* a, const DOMElement* elm)
+ParseRgbaFromElementAttr(float* r, float* g, float* b, float* a, const TiXmlElement* elm)
 {
-	ParseRgbFromElement(r, g, b, elm);
+	ParseRgbFromElementAttr(r, g, b, elm);
 	*a = ParseFloatFromAttr(elm, "a");
 }
 
 static void
-ParseArnVec3FromElement(ArnVec3* v, const DOMElement* elm)
+ParseArnVec3FromElementAttr(ArnVec3* v, const TiXmlElement* elm)
 {
 	v->x = ParseFloatFromAttr(elm, "x");
 	v->y = ParseFloatFromAttr(elm, "y");
@@ -83,19 +97,30 @@ ParseArnVec3FromElement(ArnVec3* v, const DOMElement* elm)
 }
 
 static void
-AssertTagNameEquals(const DOMElement* elm, const char* tagName)
+ParseArnVec3FromElement(ArnVec3* v, const TiXmlElement* elm)
 {
-	XMLCh* x = XMLString::transcode(tagName);
-	if (!XMLString::equals(elm->getTagName(), x))
+	if (sscanf(elm->GetText(), "%f %f %f", &v->x, &v->y, &v->z) != 3)
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+static void
+Parse2FloatsFromElement(float* f0, float* f1, const TiXmlElement* elm)
+{
+	if (sscanf(elm->GetText(), "%f %f", f0, f1) != 2)
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+static void
+AssertTagNameEquals(const TiXmlElement* elm, const char* tagName)
+{
+	if (strcmp(elm->Value(), tagName) != 0)
 	{
-		XMLString::release(&x);
 		ARN_THROW_UNEXPECTED_CASE_ERROR
 	}
-	XMLString::release(&x);
 }
 
 static bool
-AttrEquals(const DOMElement* elm, const char* attrName, const char* attrVal)
+AttrEquals(const TiXmlElement* elm, const char* attrName, const char* attrVal)
 {
 	std::string val;
 	GetAttr(val, elm, attrName);
@@ -103,63 +128,56 @@ AttrEquals(const DOMElement* elm, const char* attrName, const char* attrVal)
 }
 
 static void
-AssertAttrEquals(const DOMElement* elm, const char* attrName, const char* attrVal)
+AssertAttrEquals(const TiXmlElement* elm, const char* attrName, const char* attrVal)
 {
 	if (!AttrEquals(elm, attrName, attrVal))
-		ARN_THROW_UNEXPECTED_CASE_ERROR
-}
-
-
-static DOMNodeList*
-GetElementsByTagName(const DOMElement* elm, const char* tagName)
-{
-	XMLCh* x = XMLString::transcode(tagName);
-	DOMNodeList* ret = elm->getElementsByTagName(x);
-	XMLString::release(&x);
-	return ret;
-}
-
-static DOMElement*
-GetUniqueChildElement(const DOMElement* elm, const char* tagName)
-{
-	DOMNodeList* children = GetElementsByTagName(elm, tagName);
-	const XMLSize_t childrenCount = children->getLength();
-	int directChildrenCount = 0;
-	DOMNode* uniqueChildren = 0;
-	for (XMLSize_t xx = 0; xx < childrenCount; ++xx)
 	{
-		DOMNode::NodeType nt = (DOMNode::NodeType)children->item(xx)->getNodeType();
-		if (nt == DOMNode::ELEMENT_NODE && children->item(xx)->getParentNode() == elm)
-		{
-			++directChildrenCount;
-			uniqueChildren = children->item(xx);
-		}
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+}
+
+static const TiXmlElement*
+GetUniqueChildElement(const TiXmlElement* elm, const char* tagName)
+{
+	int directChildrenCount = 0;
+	const TiXmlElement* uniqueChildren = 0;
+	for (const TiXmlElement* e = elm->FirstChildElement(tagName); e; e = e->NextSiblingElement(tagName))
+	{
+		assert(e->Parent() == elm);
+		++directChildrenCount;
+		uniqueChildren = e;
 	}
 	if (directChildrenCount == 1)
-		return dynamic_cast<DOMElement*>(uniqueChildren);
+	{
+		return uniqueChildren;
+	}
 	else if (directChildrenCount == 0)
+	{
 		return 0;
+	}
 	else
+	{
 		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
 }
 
 static void
 ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec3* trans,
-                          const DOMElement* elm)
+                          const TiXmlElement* elm)
 {
 	AssertTagNameEquals(elm, "transform");
 	if (AttrEquals(elm, "type", "srt"))
 	{
-		DOMElement* scaling = GetUniqueChildElement(elm, "scaling");
-		DOMElement* rotation = GetUniqueChildElement(elm, "rotation");
-		DOMElement* translation = GetUniqueChildElement(elm, "translation");
+		const TiXmlElement* scaling = GetUniqueChildElement(elm, "scaling");
+		const TiXmlElement* rotation = GetUniqueChildElement(elm, "rotation");
+		const TiXmlElement* translation = GetUniqueChildElement(elm, "translation");
 
 		ArnVec3 s(1,1,1);
 		ArnVec3 r(0,0,0);
 		ArnVec3 t(0,0,0);
 		if (scaling)
 		{
-			ParseArnVec3FromElement(&s, scaling);
+			ParseArnVec3FromElementAttr(&s, scaling);
 		}
 		else
 		{
@@ -170,7 +188,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 		{
 			AssertAttrEquals(rotation, "type", "euler");
 			AssertAttrEquals(rotation, "unit", "deg");
-			ParseArnVec3FromElement(&r, rotation);
+			ParseArnVec3FromElementAttr(&r, rotation);
 			r.x = ArnToRadian(r.x);
 			r.y = ArnToRadian(r.y);
 			r.z = ArnToRadian(r.z);
@@ -182,7 +200,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 
 		if (translation)
 		{
-			ParseArnVec3FromElement(&t, translation);
+			ParseArnVec3FromElementAttr(&t, translation);
 		}
 
 		ArnQuat rQ;
@@ -204,7 +222,7 @@ ParseTransformFromElement(ArnMatrix* mat, ArnVec3* scale, ArnQuat* rQuat, ArnVec
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void
-SetupArnNodeCommonPart(ArnNode* ret, const DOMElement* elm)
+SetupArnNodeCommonPart(ArnNode* ret, const TiXmlElement* elm)
 {
 	std::string name;
 	GetAttr(name, elm, "name");
@@ -212,7 +230,7 @@ SetupArnNodeCommonPart(ArnNode* ret, const DOMElement* elm)
 }
 
 static void
-SetupArnXformableCommonPart(ArnXformable* ret, const DOMElement* elm)
+SetupArnXformableCommonPart(ArnXformable* ret, const TiXmlElement* elm)
 {
 	// Setup ArnXformable common part.
 	// This includes ArnNode part and
@@ -221,14 +239,14 @@ SetupArnXformableCommonPart(ArnXformable* ret, const DOMElement* elm)
 
 	ArnVec3 trans, scale;
 	ArnQuat rot;
-	DOMElement* transformElm = GetUniqueChildElement(elm, "transform");
+	const TiXmlElement* transformElm = GetUniqueChildElement(elm, "transform");
 	ParseTransformFromElement(0, &scale, &rot, &trans, transformElm);
 	ret->setLocalXform_Scale(scale);
 	ret->setLocalXform_Rot(rot);
 	ret->setLocalXform_Trans(trans);
 	ret->recalcLocalXform();
 
-	DOMElement* ipoElm = GetUniqueChildElement(elm, "ipo");
+	const TiXmlElement* ipoElm = GetUniqueChildElement(elm, "ipo");
 	if (ipoElm)
 	{
 		std::string ipoName;
@@ -246,10 +264,11 @@ SetupArnXformableCommonPart(ArnXformable* ret, const DOMElement* elm)
 typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
 
 template <typename T> void
-parseFromToken(char* target, int& dataOffset, Tokenizer::const_iterator& it,
+parseFromToken(const char* targetConst, int& dataOffset, Tokenizer::const_iterator& it,
                const int doCount, T func(const char*))
 {
 	assert(doCount >= 1);
+	char* target = const_cast<char*>(targetConst); // TODO: const_cast used.
 	for (int i = 0; i < doCount; ++i)
 	{
 		*(T*)(target + i*sizeof(T)) = func((*it).c_str());
@@ -265,51 +284,55 @@ atof2(const char* c)
 }
 
 ArnBinaryChunk*
-ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
+ArnBinaryChunk::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 {
 	ArnBinaryChunk* ret = new ArnBinaryChunk();
-	DOMElement* templ = dynamic_cast<DOMElement*>(GetElementsByTagName(elm, "template")->item(0));
+	const TiXmlElement* templ = elm->FirstChildElement("template");
 	assert(templ);
-	DOMNodeList* templChildren = GetElementsByTagName(templ, "field");
-	const XMLSize_t childCount = templChildren->getLength();
-	assert(childCount);
-	for (XMLSize_t xx = 0; xx < childCount; ++xx)
+	
+	for (const TiXmlElement* e = templ->FirstChildElement("field"); e; e = e->NextSiblingElement("field"))
 	{
-		DOMElement* childElm = dynamic_cast<DOMElement*>(templChildren->item(xx));
 		std::string typeStr, usageStr;
-		GetAttr(typeStr, childElm, "type");
-		GetAttr(usageStr, childElm, "usage");
+		GetAttr(typeStr, e, "type");
+		GetAttr(usageStr, e, "usage");
 		ret->addField( typeStr.c_str(), usageStr.c_str() );
 	}
+	assert(ret->getFieldCount());
 
 	std::string placeStr;
 	GetAttr(placeStr, elm, "place");
 	if (strcmp(placeStr.c_str(), "xml") == 0)
 	{
-		DOMElement* arraydata = dynamic_cast<DOMElement*>(GetElementsByTagName(elm, "arraydata")->item(0));
-		DOMNodeList* arraydataChildren = GetElementsByTagName(arraydata, "data");
-		ret->m_recordCount = arraydataChildren->getLength();
-		assert(ret->m_recordCount >= 0); // There can be no record in the chunk.
-		ret->m_data = new char[ ret->m_recordCount * ret->m_recordSize ];
+		const TiXmlElement* arraydata = elm->FirstChildElement("arraydata");
+		ret->m_recordCount = 0;
+		for (const TiXmlElement* e = arraydata->FirstChildElement("data"); e; e = e->NextSiblingElement("data"))
+		{
+			++ret->m_recordCount;
+		}
+
+		if (ret->m_recordCount > 0)
+		{
+			ret->m_data = new char[ ret->m_recordCount * ret->m_recordSize ];
+		}
+		else if (ret->m_recordCount == 0)
+		{
+			ret->m_data = 0;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
 		ret->m_deallocateData = true;
 		int dataOffset = 0;
-		for (XMLSize_t xx = 0; xx < (XMLSize_t)ret->m_recordCount; ++xx)
+		for (const TiXmlElement* e = arraydata->FirstChildElement("data"); e; e = e->NextSiblingElement("data"))
 		{
-			DOMElement* data = dynamic_cast<DOMElement*>(arraydataChildren->item(xx));
 			std::string attrStr;
-			GetAttr(attrStr, data, "value");
-			//std::cout << "Original string: " << attrStr.c_str() << std::endl;
+			GetAttr(attrStr, e, "value");
 		    boost::char_separator<char> sep(";");
 			Tokenizer tok(attrStr, sep);
 			Tokenizer::const_iterator it = tok.begin();
-			/*
-			for (; it != tok.end(); ++it)
-			{
-				std::cout << "<" << *it << ">" << std::endl;
-			}
-			*/
 
-			foreach(const Field& field, ret->m_recordDef)
+			foreach (const Field& field, ret->m_recordDef)
 			{
 				switch (field.type)
 				{
@@ -368,41 +391,18 @@ ArnBinaryChunk::createFrom(DOMElement* elm, char* binaryChunkBasePtr)
 ArnSceneGraph*
 ArnSceneGraph::createFrom(const char* xmlFile)
 {
-	XercesDOMParser* parser = new XercesDOMParser();
-	parser->setValidationScheme(XercesDOMParser::Val_Always);
-	parser->setDoNamespaces(true);    // optional
+	assert(xmlFile);
+	assert(strcmp(xmlFile + strlen(xmlFile) - 4, ".xml") == 0);
+	assert(gs_xmlInitialized);
 
-	ErrorHandler* errHandler = (ErrorHandler*) new HandlerBase();
-	parser->setErrorHandler(errHandler);
-
-	try
+	TiXmlDocument xmlDoc(xmlFile);
+	if (!xmlDoc.LoadFile())
 	{
-		parser->parse(xmlFile);
-	}
-	catch (const XMLException& toCatch)
-	{
-		char* message = XMLString::transcode(toCatch.getMessage());
-		std::cout << "Exception message is: \n"
-			<< message << "\n";
-		XMLString::release(&message);
+		std::cerr << "Scene file " << xmlFile << " not found." << std::endl;
 		return 0;
 	}
-	catch (const DOMException& toCatch)
-	{
-		char* message = XMLString::transcode(toCatch.msg);
-		std::cout << "Exception message is: \n"
-			<< message << "\n";
-		XMLString::release(&message);
-		return 0;
-	}
-	catch (...)
-	{
-		std::cout << "Exception: XML file opening error? - " << xmlFile << std::endl;
-		return 0;
-	}
-
-	xercesc::DOMDocument* xmlDoc = parser->getDocument();
-	DOMElement* elm = xmlDoc->getDocumentElement();
+	const TiXmlElement* elm = xmlDoc.RootElement();
+	AssertTagNameEquals(elm, "object");
 	std::string sceneNameStr;
 	GetAttr(sceneNameStr, elm, "name");
 	std::cout << " - Root scene name: " << sceneNameStr.c_str() << std::endl;
@@ -420,41 +420,35 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	unsigned int binUncompressedSize = (unsigned int)ParseIntFromAttr(elm, "binuncompressedsize");
 	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str(), true, binUncompressedSize);
 
-	DOMNodeList* childrenObj = GetElementsByTagName(elm, "object");
-	const XMLSize_t childrenCount = childrenObj->getLength();
-	for (XMLSize_t xx = 0; xx < childrenCount; ++xx)
+	for (const TiXmlElement* e = elm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
 	{
-		DOMNode* child = childrenObj->item(xx);
-		DOMElement* childElm = dynamic_cast<DOMElement*>(child);
+		const TiXmlElement* childElm = e;
 		assert(childElm);
-
 		ArnNode* childObj = 0;
 		if (ret->m_binaryChunk)
 		{
-			char* binDataPtr = ret->m_binaryChunk->getRawDataPtr();
+			const char* binDataPtr = ret->m_binaryChunk->getConstRawDataPtr();
 			childObj = CreateArnNodeFromXmlElement(childElm, binDataPtr);
 		}
-
 		else
+		{
 			childObj = CreateArnNodeFromXmlElement(childElm, 0);
+		}
 		ret->attachChild(childObj);
 	}
-
-	delete parser;
-	delete errHandler;
 	return ret;
 }
 
 ArnMesh*
-ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
+ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnMesh");
 	ArnMesh* ret = new ArnMesh();
 	SetupArnXformableCommonPart(ret, elm);
 	
-	DOMElement* meshElm = GetUniqueChildElement(elm, "mesh");
-	DOMElement* vertexElm  = GetUniqueChildElement(meshElm, "vertex");
-	DOMElement* faceElm = GetUniqueChildElement(meshElm, "face");
+	const TiXmlElement* meshElm = GetUniqueChildElement(elm, "mesh");
+	const TiXmlElement* vertexElm  = GetUniqueChildElement(meshElm, "vertex");
+	const TiXmlElement* faceElm = GetUniqueChildElement(meshElm, "face");
 	assert(vertexElm && faceElm);
 
 	if (ParseIntFromAttr(meshElm, "twosided"))
@@ -463,7 +457,7 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 	}
 
 	// vertex-chunk element (contains the whole vertices of this mesh)
-	DOMElement* vertexChunkElm = GetUniqueChildElement(vertexElm, "chunk");
+	const TiXmlElement* vertexChunkElm = GetUniqueChildElement(vertexElm, "chunk");
 	ret->m_vertexChunk = ArnBinaryChunk::createFrom(vertexChunkElm, binaryChunkBasePtr);
 
 	// Process vertex groups
@@ -475,18 +469,14 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 	ret->m_vertexGroup.push_back(vg0);
 	
 	// TODO: Vertex groups
-	DOMNodeList* vertGroupNodeList = GetElementsByTagName(elm, "vertgroup");
-	const XMLSize_t vertGroupCount = vertGroupNodeList->getLength();
-	for (XMLSize_t xx = 0; xx < vertGroupCount; ++xx)
+	for (const TiXmlElement* e = elm->FirstChildElement("vertgroup"); e; e = e->NextSiblingElement("vertgroup"))
 	{
 	}
 
 	// Process face groups
-	DOMNodeList* faceGroup = GetElementsByTagName(faceElm, "facegroup");
-	const XMLSize_t faceGroupCount = faceGroup->getLength();
-	for (XMLSize_t xx = 0; xx < faceGroupCount; ++xx)
+	for (const TiXmlElement* e = faceElm->FirstChildElement("facegroup"); e; e = e->NextSiblingElement("facegroup"))
 	{
-		DOMElement* faceGroupElm = dynamic_cast<DOMElement*>(faceGroup->item(xx));
+		const TiXmlElement* faceGroupElm = e;
 		std::string ssMtrl;
 		GetAttr(ssMtrl, faceGroupElm, "mtrl");
 		ArnMesh::FaceGroup fg;
@@ -495,47 +485,49 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		fg.quadFaceChunk = 0;
 		assert(fg.mtrlIndex >= 0);
 
-		DOMNodeList* chunk = GetElementsByTagName(faceGroupElm, "chunk");
-		const XMLSize_t chunkCount = chunk->getLength();
+		int chunkCount = 0;
+		for (const TiXmlElement* e2 = faceGroupElm->FirstChildElement("chunk"); e2; e2 = e2->NextSiblingElement("chunk"))
+		{
+			switch (chunkCount)
+			{
+			case 0:
+				fg.triFaceChunk = ArnBinaryChunk::createFrom(e2, binaryChunkBasePtr);
+				break;
+			case 1:
+				fg.quadFaceChunk = ArnBinaryChunk::createFrom(e2, binaryChunkBasePtr);
+				break;
+			default:
+				ARN_THROW_UNEXPECTED_CASE_ERROR
+			}
+			++chunkCount;
+		}
 		assert(chunkCount == 2);
-
-		DOMElement* chunkElm;
-		chunkElm = dynamic_cast<DOMElement*>(chunk->item(0));
-		fg.triFaceChunk = ArnBinaryChunk::createFrom(chunkElm, binaryChunkBasePtr);
-		chunkElm = dynamic_cast<DOMElement*>(chunk->item(1));
-		fg.quadFaceChunk = ArnBinaryChunk::createFrom(chunkElm, binaryChunkBasePtr);
 		assert(fg.triFaceChunk && fg.quadFaceChunk);
-
 		ret->m_faceGroup.push_back(fg);
 	}
 
-	DOMNodeList* mtrlRefs = GetElementsByTagName(elm, "material");
-	const XMLSize_t mtrlRefsCount = mtrlRefs->getLength();
-	for (XMLSize_t xx = 0; xx < mtrlRefsCount; ++xx)
+	// Process materials
+	for (const TiXmlElement* e = meshElm->FirstChildElement("material"); e; e = e->NextSiblingElement("material"))
 	{
-		DOMElement* mtrlElm = dynamic_cast<DOMElement*>( mtrlRefs->item(xx) );
 		std::string ss;
-		GetAttr(ss, mtrlElm, "name");
+		GetAttr(ss, e, "name");
 		ret->m_mtrlRefNameList.push_back(ss.c_str());
 	}
 
-	DOMNodeList* uvElmList = GetElementsByTagName(elm, "uv");
-	if (uvElmList->getLength())
+	// Process UV coordinates
+	ret->m_triquadUvChunk = 0;
+	for (const TiXmlElement* e = meshElm->FirstChildElement("uv"); e; e = e->NextSiblingElement("uv"))
 	{
-		DOMElement* uvElm = static_cast<DOMElement*>(GetElementsByTagName(elm, "uv")->item(0));
-		DOMElement* triquadUvElm = dynamic_cast<DOMElement*>(GetElementsByTagName(uvElm, "chunk")->item(0));
+		const TiXmlElement* triquadUvElm = e->FirstChildElement("chunk");
 		assert(triquadUvElm);
 		ret->m_triquadUvChunk = ArnBinaryChunk::createFrom(triquadUvElm, binaryChunkBasePtr);
 	}
-	else
-	{
-		ret->m_triquadUvChunk = 0;
-	}
 
-	DOMElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
+	// Process physics-related
+	const TiXmlElement* bbElm = GetUniqueChildElement(elm, "boundingbox");
 	if (bbElm)
 	{
-		DOMElement* bbChunkElm = GetUniqueChildElement(bbElm, "chunk");
+		const TiXmlElement* bbChunkElm = GetUniqueChildElement(bbElm, "chunk");
 		assert(bbChunkElm);
 		std::auto_ptr<ArnBinaryChunk> abc(ArnBinaryChunk::createFrom(bbChunkElm, binaryChunkBasePtr));
 		assert(abc->getRecordCount() == 8); // Should have 8 corner points of bounding box
@@ -544,25 +536,77 @@ ArnMesh::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 			bb[i] = *reinterpret_cast<const ArnVec3*>(abc->getRecordAt(i));
 		ret->setBoundingBoxPoints(bb);
 	}
+	const TiXmlElement* actorElm = GetUniqueChildElement(elm, "actor");
+	if (actorElm)
+	{
+		std::string s;
+		GetAttr(s, actorElm, "bounds");
+		if (s == "box")
+		{
+			ret->m_abbt = ABBT_BOX;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+		const TiXmlElement* rigidbodyElm = GetUniqueChildElement(actorElm, "rigidbody");
+		if (rigidbodyElm)
+		{
+			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass");
+		}
+		if (ret->getLocalXform_Scale().compare(ArnConsts::ARNVEC3_ONE) > 0.001)
+		{
+			// When a mesh is governed by dynamics, there is no scaling to make valid bounding volume.
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+	}
 
-	ret->m_renderFunc = &ArnMesh::renderXml;
-	ret->m_initRendererObjectFunc = &ArnMesh::initRendererObjectXml;
+	// Process constraints
+	for (const TiXmlElement* e = elm->FirstChildElement("constraint"); e; e = e->NextSiblingElement("constraint"))
+	{
+		const char* type = e->Attribute("type");
+		if (strcmp(type, "rigidbodyjoint") == 0)
+		{
+			const TiXmlElement* targetElm = e->FirstChildElement("target");
+			const TiXmlElement* pivotElm = e->FirstChildElement("pivot");
+			const TiXmlElement* axElm = e->FirstChildElement("ax");
+			assert(targetElm && pivotElm && axElm);
+			ArnJointData ajd;
+			ajd.target = targetElm->GetText();
+			ParseArnVec3FromElement(&ajd.pivot, pivotElm);
+			ParseArnVec3FromElement(&ajd.ax, axElm);
+
+			for (const TiXmlElement* ee = e->FirstChildElement("limit"); ee; ee = ee->NextSiblingElement("limit"))
+			{
+				const char* limitType = ee->Attribute("type");
+				ArnJointData::ArnJointLimit ajl;
+				ajl.type = limitType;
+				Parse2FloatsFromElement(&ajl.minimum, &ajl.maximum, ee);
+				ajd.limits.push_back(ajl);
+			}
+			ret->addJointData(ajd);
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+	}
 	return ret;
 }
 
 ArnMaterial*
-ArnMaterial::createFrom(const DOMElement* elm)
+ArnMaterial::createFrom(const TiXmlElement* elm)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnMaterial");
 	ArnMaterial* ret = new ArnMaterial();
 	SetupArnNodeCommonPart(ret, elm);
 
-	DOMElement* materialElm = GetUniqueChildElement(elm, "material");
-	DOMElement* diffuseElm = GetUniqueChildElement(materialElm, "diffuse");
-	DOMElement* ambientElm = GetUniqueChildElement(materialElm, "ambient");
-	DOMElement* specularElm = GetUniqueChildElement(materialElm, "specular");
-	DOMElement* emissiveElm = GetUniqueChildElement(materialElm, "emissive");
-	DOMElement* powerElm = GetUniqueChildElement(materialElm, "power");
+	const TiXmlElement* materialElm = GetUniqueChildElement(elm, "material");
+	const TiXmlElement* diffuseElm = GetUniqueChildElement(materialElm, "diffuse");
+	const TiXmlElement* ambientElm = GetUniqueChildElement(materialElm, "ambient");
+	const TiXmlElement* specularElm = GetUniqueChildElement(materialElm, "specular");
+	const TiXmlElement* emissiveElm = GetUniqueChildElement(materialElm, "emissive");
+	const TiXmlElement* powerElm = GetUniqueChildElement(materialElm, "power");
 	assert(diffuseElm && ambientElm && specularElm && emissiveElm && powerElm);
 
 	int shadeless = ParseIntFromAttr(materialElm, "shadeless");
@@ -574,21 +618,27 @@ ArnMaterial::createFrom(const DOMElement* elm)
 	std::string mtrlName;
 	GetAttr(mtrlName, elm, "name");
 	ret->m_data.m_materialName = mtrlName.c_str();
-	ParseRgbaFromElement(&r, &g, &b, &a, diffuseElm);
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, diffuseElm);
 	ret->m_data.m_d3dMaterial.Diffuse = ArnColorValue4f(r, g, b, a);
-	ParseRgbaFromElement(&r, &g, &b, &a, ambientElm);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " diffuse alpha is zero." << std::endl;
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, ambientElm);
 	ret->m_data.m_d3dMaterial.Ambient = ArnColorValue4f(r, g, b, a);
-	ParseRgbaFromElement(&r, &g, &b, &a, specularElm);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " ambient alpha is zero." << std::endl;
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, specularElm);
 	ret->m_data.m_d3dMaterial.Specular = ArnColorValue4f(r, g, b, a);
-	ParseRgbaFromElement(&r, &g, &b, &a, emissiveElm);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " specular alpha is zero." << std::endl;
+	ParseRgbaFromElementAttr(&r, &g, &b, &a, emissiveElm);
 	ret->m_data.m_d3dMaterial.Emissive = ArnColorValue4f(r, g, b, 1);
+	if (a == 0)
+		std::cerr << " *** Warning: material " << mtrlName.c_str() << " emissive alpha is zero." << std::endl;
 	ret->m_data.m_d3dMaterial.Power = ParseFloatFromAttr(powerElm, "value");
 
-	DOMNodeList* textureList = GetElementsByTagName(materialElm, "texture");
-	const XMLSize_t textureCount = textureList->getLength();
-	for (XMLSize_t xx = 0; xx < textureCount; ++xx)
+	for (const TiXmlElement* e = materialElm->FirstChildElement("texture"); e; e = e->NextSiblingElement("texture"))
 	{
-		DOMElement* textureElm = static_cast<DOMElement*>(textureList->item(xx));
+		const TiXmlElement* textureElm = e;
 		if (AttrEquals(textureElm, "type", "image"))
 		{
 			std::string texImageFileName;
@@ -611,13 +661,13 @@ ArnMaterial::createFrom(const DOMElement* elm)
 }
 
 ArnCamera*
-ArnCamera::createFrom( DOMElement* elm )
+ArnCamera::createFrom(const TiXmlElement* elm)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnCamera");
 	ArnCamera* ret = new ArnCamera();
 	SetupArnXformableCommonPart(ret, elm);
 
-	DOMElement* cameraElm = GetUniqueChildElement(elm, "camera");
+	const TiXmlElement* cameraElm = GetUniqueChildElement(elm, "camera");
 	float farClip = ParseFloatFromAttr(cameraElm, "farclip");
 	float nearClip = ParseFloatFromAttr(cameraElm, "nearclip");
 	float fovdeg = ParseFloatFromAttr(cameraElm, "fovdeg");
@@ -640,15 +690,15 @@ ArnCamera::createFrom( DOMElement* elm )
 }
 
 ArnLight*
-ArnLight::createFrom( const DOMElement* elm )
+ArnLight::createFrom( const TiXmlElement* elm )
 {
 	AssertAttrEquals(elm, "rtclass", "ArnLight");
 	ArnLight* ret = new ArnLight();
 	SetupArnXformableCommonPart(ret, elm);
 
-	DOMElement* lightElm = GetUniqueChildElement(elm, "light");
+	const TiXmlElement* lightElm = GetUniqueChildElement(elm, "light");
 	float r, g, b;
-	ParseRgbFromElement(&r, &g, &b, lightElm);
+	ParseRgbFromElementAttr(&r, &g, &b, lightElm);
 	ret->m_d3dLight.Ambient = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Diffuse = ArnColorValue4f(r, g, b, 1);
 	ret->m_d3dLight.Specular = ArnColorValue4f(r, g, b, 1);
@@ -657,19 +707,19 @@ ArnLight::createFrom( const DOMElement* elm )
 	if (strcmp(lightTypeStr.c_str(), "point") == 0)
 	{
 		// Point light
-		ret->m_d3dLight.Type = 1;
+		ret->m_d3dLight.Type = ARNLIGHT_POINT;
 		ret->m_d3dLight.Position = ret->getLocalXform_Trans();
 	}
 	else if (strcmp(lightTypeStr.c_str(), "spot") == 0)
 	{
 		// Spot light
-		ret->m_d3dLight.Type = 2;
+		ret->m_d3dLight.Type = ARNLIGHT_SPOT;
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
 	else if (strcmp(lightTypeStr.c_str(), "directional") == 0)
 	{
 		// Directional light
-		ret->m_d3dLight.Type = 3;
+		ret->m_d3dLight.Type = ARNLIGHT_DIRECTIONAL;
 		ARN_THROW_NOT_IMPLEMENTED_ERROR
 	}
 	else
@@ -680,22 +730,20 @@ ArnLight::createFrom( const DOMElement* elm )
 }
 
 ArnSkeleton*
-ArnSkeleton::createFrom( const DOMElement* elm )
+ArnSkeleton::createFrom( const TiXmlElement* elm )
 {
 	AssertAttrEquals(elm, "rtclass", "ArnSkeleton");
 	ArnSkeleton* ret = new ArnSkeleton();
 	SetupArnXformableCommonPart(ret, elm);
 
-	DOMNodeList* actionstrips = GetElementsByTagName(elm, "actionstrip");
-	const XMLSize_t actionstripCount = actionstrips->getLength();
-	for (XMLSize_t xx = 0; xx < actionstripCount; ++xx)
+	for (const TiXmlElement* e = elm->FirstChildElement("actionstrip"); e; e = e->NextSiblingElement("actionstrip"))
 	{
-		DOMElement* actStripElm = reinterpret_cast<DOMElement*>(actionstrips->item(xx));
+		const TiXmlElement* actStripElm = e;
 		std::string asName;
 		GetAttr(asName, actStripElm, "name");
 		ret->m_actionStripNames.push_back(asName);
 	}
-	DOMElement* actionElm = GetUniqueChildElement(elm, "action");
+	const TiXmlElement* actionElm = GetUniqueChildElement(elm, "action");
 	if (actionElm)
 	{
 		std::string defActName;
@@ -707,13 +755,11 @@ ArnSkeleton::createFrom( const DOMElement* elm )
 		ret->setDefaultActionName("");
 	}
 
-	DOMElement* skelElm = GetUniqueChildElement(elm, "skeleton");
-	DOMNodeList* boneList = GetElementsByTagName(skelElm, "object");
-	const XMLSize_t rootBoneCount = boneList->getLength();
-	for (XMLSize_t xx = 0; xx < rootBoneCount; ++xx)
+	const TiXmlElement* skelElm = GetUniqueChildElement(elm, "skeleton");
+	for (const TiXmlElement* e = skelElm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
 	{
-		DOMElement* boneElm = dynamic_cast<DOMElement*>( boneList->item(xx) );
-		if (boneElm->getParentNode() == skelElm)
+		const TiXmlElement* boneElm = e;
+		if (boneElm->Parent() == skelElm)
 		{
 			ArnNode* bone = CreateArnNodeFromXmlElement(boneElm, 0);
 			ret->attachChild(bone);
@@ -724,31 +770,29 @@ ArnSkeleton::createFrom( const DOMElement* elm )
 }
 
 ArnBone*
-ArnBone::createFrom( const DOMElement* elm )
+ArnBone::createFrom( const TiXmlElement* elm )
 {
 	AssertAttrEquals(elm, "rtclass", "ArnBone");
 	ArnBone* ret = new ArnBone();
 	SetupArnXformableCommonPart(ret, elm);
 
-	DOMElement* boneElm = GetUniqueChildElement(elm, "bone");
-	DOMElement* headElm = GetUniqueChildElement(boneElm, "head");
-	DOMElement* tailElm = GetUniqueChildElement(boneElm, "tail");
-	DOMElement* rollElm = GetUniqueChildElement(boneElm, "roll");
+	const TiXmlElement* boneElm = GetUniqueChildElement(elm, "bone");
+	const TiXmlElement* headElm = GetUniqueChildElement(boneElm, "head");
+	const TiXmlElement* tailElm = GetUniqueChildElement(boneElm, "tail");
+	const TiXmlElement* rollElm = GetUniqueChildElement(boneElm, "roll");
 
 	ArnVec3 headPos, tailPos;
-	ParseArnVec3FromElement(&headPos, headElm);
-	ParseArnVec3FromElement(&tailPos, tailElm);
+	ParseArnVec3FromElementAttr(&headPos, headElm);
+	ParseArnVec3FromElementAttr(&tailPos, tailElm);
 	float roll = ParseFloatFromAttr(rollElm, "value");
 	ret->setHeadPos(headPos);
 	ret->setTailPos(tailPos);
 	ret->setRoll(ArnToRadian(roll));
 
-	DOMNodeList* boneList = GetElementsByTagName(elm, "object");
-	const XMLSize_t boneCount = boneList->getLength();
-	for (XMLSize_t xx = 0; xx < boneCount; ++xx)
+	for (const TiXmlElement* e = elm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
 	{
-		DOMElement* boneElm = dynamic_cast<DOMElement*>( boneList->item(xx) );
-		if (boneElm->getParentNode() == elm)
+		const TiXmlElement* boneElm = e;
+		if (boneElm->Parent() == elm)
 		{
 			ArnNode* bone = CreateArnNodeFromXmlElement(boneElm, 0);
 			ret->attachChild(bone);
@@ -758,24 +802,23 @@ ArnBone::createFrom( const DOMElement* elm )
 }
 
 ArnIpo*
-ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
+ArnIpo::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnIpo");
 	ArnIpo* ret = new ArnIpo();
 	SetupArnNodeCommonPart(ret, elm);
 
-	DOMElement* ipoElm = dynamic_cast<DOMElement*>(GetElementsByTagName(elm, "ipo")->item(0));
+	const TiXmlElement* ipoElm = elm->FirstChildElement("ipo");
 	assert(ipoElm);
-	DOMNodeList* curveList = GetElementsByTagName(ipoElm, "curve");
-	const XMLSize_t curveListSize = curveList->getLength();
-	for (XMLSize_t xx = 0; xx < curveListSize; ++xx)
+	unsigned int curveListSize = 0;
+	for (const TiXmlElement* e = ipoElm->FirstChildElement("curve"); e; e = e->NextSiblingElement("curve"))
 	{
-		DOMElement* curveElm = dynamic_cast<DOMElement*>( curveList->item(xx) );
+		const TiXmlElement* curveElm = e;
 		std::string curveTypeStr;
 		GetAttr(curveTypeStr, curveElm, "type");
 		std::string curveNameStr;
 		GetAttr(curveNameStr, curveElm, "name");
-		DOMElement* controlPointElm = GetUniqueChildElement(curveElm, "controlpoint");
+		const TiXmlElement* controlPointElm = GetUniqueChildElement(curveElm, "controlpoint");
 
 		ret->m_curves.push_back(CurveData());
 		CurveData& cd = ret->m_curves.back();
@@ -790,12 +833,12 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 		else
 			ARN_THROW_UNEXPECTED_CASE_ERROR
 
-		DOMElement* cpChunk = GetUniqueChildElement(controlPointElm, "chunk");
+		const TiXmlElement* cpChunk = GetUniqueChildElement(controlPointElm, "chunk");
 		ArnBinaryChunk* controlPointChunk = ArnBinaryChunk::createFrom(cpChunk, binaryChunkBasePtr);
 		assert(controlPointChunk->getRecordSize() == sizeof(BezTripleData));
 		cd.pointCount = controlPointChunk->getRecordCount();
 		cd.points.resize(cd.pointCount);
-		memcpy(&cd.points[0], controlPointChunk->getRawDataPtr(), sizeof(BezTripleData) * cd.pointCount);
+		memcpy(&cd.points[0], controlPointChunk->getConstRawDataPtr(), sizeof(BezTripleData) * cd.pointCount);
 
 		foreach (const BezTripleData& btd, cd.points)
 		{
@@ -803,6 +846,7 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 				ret->setEndKeyframe((int)btd.vec[1][0]);
 		}
 		delete controlPointChunk;
+		++curveListSize;
 	}
 	ret->m_curveCount = curveListSize;
 	ret->m_ipoCount = 1; // TODO: Is semantically correct one?
@@ -810,18 +854,16 @@ ArnIpo::createFrom(const DOMElement* elm, char* binaryChunkBasePtr)
 }
 
 ArnAction*
-ArnAction::createFrom(const DOMElement* elm)
+ArnAction::createFrom(const TiXmlElement* elm)
 {
 	AssertAttrEquals(elm, "rtclass", "ArnAction");
 	ArnAction* ret = new ArnAction();
 	SetupArnNodeCommonPart(ret, elm);
 
-	DOMElement* actionElm = GetUniqueChildElement(elm, "action");
-	DOMNodeList* list = GetElementsByTagName(actionElm, "objectipomap");
-	const XMLSize_t listCount = list->getLength();
-	for (XMLSize_t xx = 0; xx < listCount; ++xx)
+	const TiXmlElement* actionElm = GetUniqueChildElement(elm, "action");
+	for (const TiXmlElement* e = actionElm->FirstChildElement("objectipomap"); e; e = e->NextSiblingElement("objectipomap"))
 	{
-		DOMElement* mapElm = dynamic_cast<DOMElement*>(list->item(xx));
+		const TiXmlElement* mapElm = e;
 		std::string ssObjName;
 		GetAttr(ssObjName, mapElm, "obj");
 		std::string ssIpoName;
@@ -832,7 +874,7 @@ ArnAction::createFrom(const DOMElement* elm)
 }
 
 ArnNode*
-CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
+CreateArnNodeFromXmlElement(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 {
 	std::string rtclassStr;
 	GetAttr(rtclassStr, elm, "rtclass");
@@ -881,22 +923,12 @@ CreateArnNodeFromXmlElement(DOMElement* elm, char* binaryChunkBasePtr)
 
 int ArnInitializeXmlParser()
 {
-	try
-	{
-		XMLPlatformUtils::Initialize();
-		return 0;
-	}
-	catch (const XMLException& e)
-	{
-		char* message = XMLString::transcode(e.getMessage());
-		std::cout << "Error during initialization! :\n";
-		std::cout << message << "\n";
-		XMLString::release(&message);
-		return -1;
-	}
+	gs_xmlInitialized = true;
+	return 0;
 }
 
 void ArnCleanupXmlParser()
 {
-	XMLPlatformUtils::Terminate();
+	assert(gs_xmlInitialized);
+	gs_xmlInitialized = false;
 }

@@ -32,12 +32,17 @@ ArnNode::detachChild( ArnNode* child )
 void
 ArnNode::deleteAllChildren()
 {
+	const size_t totalChildCount = m_children.size();
+	size_t deletedChildCount = 0;
 	while (m_children.size())
 	{
 		ArnNodeList::iterator it = m_children.begin();
 		delete (*it);
-		if (m_children.size())
-			m_children.pop_front();
+		++deletedChildCount;
+		if (deletedChildCount > totalChildCount)
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
 	}
 }
 
@@ -52,10 +57,10 @@ ArnNode::getLastNode()
 }
 
 ArnNode*
-ArnNode::getNodeByName(const std::string& name) const
+ArnNode::getNodeByName(const std::string& name)
 {
 	if (getName() == name)
-		return const_cast<ArnNode*>( this );
+		return this;
 
 	ArnNodeList::const_iterator it = m_children.begin();
 	for (; it != m_children.end(); ++it)
@@ -68,8 +73,25 @@ ArnNode::getNodeByName(const std::string& name) const
 	return 0;
 }
 
+const ArnNode*
+ArnNode::getConstNodeByName(const std::string& name) const
+{
+	if (getName() == name)
+		return this;
+
+	ArnNodeList::const_iterator it = m_children.begin();
+	for (; it != m_children.end(); ++it)
+	{
+		const ArnNode* ret = (*it)->getConstNodeByName(name);
+		if (ret != 0)
+			return ret;
+	}
+
+	return 0;
+}
+
 ArnNode*
-ArnNode::getNodeAt( unsigned int idx )
+ArnNode::getNodeAt( unsigned int idx ) const
 {
 	if (idx < m_children.size())
 	{
@@ -94,6 +116,19 @@ ArnNode::getNodeById(unsigned int id)
 	{
 		if (n->getNodeById(id))
 			return n->getNodeById(id);
+	}
+	return 0;
+}
+
+const ArnNode*
+ArnNode::getConstNodeById( unsigned int id ) const
+{
+	if (getObjectId() == id)
+		return this;
+	foreach (const ArnNode* n, m_children)
+	{
+		if (n->getConstNodeById(id))
+			return n->getConstNodeById(id);
 	}
 	return 0;
 }
@@ -129,4 +164,15 @@ ArnNode::printNodeHierarchy(int depth) const
 		printf("%s\n", (*cit)->getName());
 		(*cit)->printNodeHierarchy(depth + 1);
 	}
+}
+
+const ArnRenderableObject*
+ArnNode::getRenderableObject() const
+{
+	foreach(ArnNode* n, m_children)
+	{
+		if (n->getType() == NDT_RT_RENDERABLEOBJECT)
+			return reinterpret_cast<const ArnRenderableObject*>(n);
+	}
+	return 0;
 }

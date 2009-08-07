@@ -39,12 +39,6 @@ namespace std {
 	typedef DWORD				WPARAM;
 	typedef DWORD				LPARAM;
 	typedef void*				HWND;
-	typedef void*				LPDIRECT3DDEVICE9;
-	typedef void*				LPDIRECT3DTEXTURE9;
-	typedef void*				LPD3DXANIMATIONCONTROLLER;
-	typedef void*				LPD3DXMESH;
-	typedef void*				LPDIRECT3DVERTEXBUFFER9;
-	typedef void*				LPDIRECT3DINDEXBUFFER9;
 #endif
 
 #ifndef FAILED
@@ -96,38 +90,6 @@ inline static void MessageBoxW(void* noUse, const wchar_t* title, const wchar_t*
 
 //////////////////////////////////////////////////////////////////////////
 
-class MY_CUSTOM_MESH_VERTEX
-{
-public:
-	MY_CUSTOM_MESH_VERTEX()
-	: x(0)
-	, y(0)
-	, z(0)
-	, nx(0)
-	, ny(0)
-	, nz(1)
-	, u(0)
-	, v(0)
-	{
-	}
-	MY_CUSTOM_MESH_VERTEX(float x, float y, float z, float nx, float ny, float nz, float u, float v)
-	: x(x)
-	, y(y)
-	, z(z)
-	, nx(nx)
-	, ny(ny)
-	, nz(nz)
-	, u(u)
-	, v(v)
-	{
-	}
-	float x, y, z, nx, ny, nz, u, v;
-#ifdef WIN32
-	static const DWORD MY_CUSTOM_MESH_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_TEX1;
-#endif
-};
-
-
 class CurveData
 {
 public:
@@ -146,20 +108,23 @@ template<typename V1, typename V2> void ArnRgbaAssign(V1& v1, const V2& v2)
 	v1.a = v2.a;
 }
 
-
-class ArnMaterialData
+// Should have the same layout compared to D3DMATERIAL9
+struct ArnMaterialData
 {
-public:
 	ArnColorValue4f Diffuse;
 	ArnColorValue4f Ambient;
 	ArnColorValue4f Specular;
 	ArnColorValue4f Emissive;
 	float Power;
+};
 
-#ifdef WIN32
-	const D3DMATERIAL9* getConstDxPtr() const { return reinterpret_cast<const D3DMATERIAL9*>(this); }
-	D3DMATERIAL9* getDxPtr() { return reinterpret_cast<D3DMATERIAL9*>(this); }
-#endif
+enum ArnLightType
+{
+	ARNLIGHT_POINT = 1,
+	ARNLIGHT_SPOT = 2,
+	ARNLIGHT_DIRECTIONAL = 3,
+
+	ALT_FORCE_DWORD = 0x7fffffff
 };
 
 //
@@ -167,18 +132,7 @@ public:
 //
 struct ArnLightData
 {
-#ifdef WIN32
-	const D3DLIGHT9*		getConstDxPtr() const { return reinterpret_cast<const D3DLIGHT9*>(this); }
-	D3DLIGHT9*				getDxPtr() { return reinterpret_cast<D3DLIGHT9*>(this); }
-#endif
-
-	enum
-	{
-		ARNLIGHT_POINT = 1,
-		ARNLIGHT_SPOT = 2,
-		ARNLIGHT_DIRECTIONAL = 3
-	};
-	DWORD					Type;
+	ArnLightType			Type; // ArnLightType
 	ArnColorValue4f			Diffuse;
 	ArnColorValue4f			Specular;
 	ArnColorValue4f			Ambient;
@@ -415,6 +369,17 @@ struct SkeletonNode
 	int					maxWeightsPerVertex; // same as max bones per vertex
 	int					bonesCount;
 	std::vector<Bone>	bones;
+};
+
+struct ARN_CAMERA
+{
+	// eye: Position of camera
+	// at: Look-at vector
+	// up: Up-vector
+
+	ArnVec3 eye, at, up;
+	float farClip, nearClip;
+	float angle; // in radian
 };
 
 #endif // #ifndef __STRUCTS_H_

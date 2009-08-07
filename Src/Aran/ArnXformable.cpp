@@ -266,3 +266,7 @@ ArnXformable::configureIpo()
 	configureAnimCtrl();
 }
 
+void ArnXformable::addJointData( const ArnJointData& data )
+{
+	m_jointData.push_back(data);
+}

@@ -140,8 +140,7 @@ void SpriteManager::frameRenderSpecificSprite( const char* spriteName )
 
 }
 
-HRESULT SpriteManager::onResetDevice( IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
-									 void* pUserContext )
+HRESULT SpriteManager::onResetDevice( VideoMan* vm )
 {
 	HRESULT hr = S_OK;
 
@@ -168,7 +167,7 @@ void SpriteManager::onLostDevice()
 	}
 }
 
-HRESULT SpriteManager::onCreateDevice( IDirect3DDevice9* pd3dDevice )
+HRESULT SpriteManager::onCreateDevice( VideoMan* vm )
 {
 	HRESULT hr = S_OK;
 	//***m_dev = pd3dDevice;

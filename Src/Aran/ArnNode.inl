@@ -31,6 +31,14 @@ ArnNode* ArnNode::getSceneRoot()
 		return this;
 }
 
+const ArnNode* ArnNode::getConstSceneRoot() const
+{
+	if (m_parent)
+		return m_parent->getConstSceneRoot();
+	else
+		return this;
+}
+
 const ArnNodeList& ArnNode::getChildren() const
 {
 	return m_children;

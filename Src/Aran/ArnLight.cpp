@@ -65,7 +65,7 @@ ArnLight* ArnLight::createPointLight( const ArnVec3& pos, const ArnColorValue4f&
 	ret->m_d3dLight.Diffuse = color;
 	ret->m_d3dLight.Specular = color;
 	ret->m_d3dLight.Position = pos;
-	ret->m_d3dLight.Type = 1;
+	ret->m_d3dLight.Type = ARNLIGHT_POINT;
 	ret->m_d3dLight.Attenuation0 = att.x; // const attenuation
 	ret->m_d3dLight.Attenuation1 = att.y; // linear attenuation
 	ret->m_d3dLight.Attenuation2 = att.z; // quadratic attenuation

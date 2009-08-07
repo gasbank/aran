@@ -6,7 +6,6 @@
 	#include <windows.h>
 	#include <tchar.h>
 	#include <CommCtrl.h>
-	#include <d3d9.h>
 #endif
 
 #include <stdlib.h>
@@ -23,13 +22,7 @@
 #include <fstream>
 #include <list>
 #include <vector>
-
-#ifndef WIN32
-	#define GL_GLEXT_PROTOTYPES
-#endif
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include "glext.h"
+#include <set>
 
 #ifndef WIN32
     #ifdef UNICODE
@@ -45,14 +38,9 @@
 #endif
 
 //
-// xerces C++ XML Parser
+// TinyXML
 //
-#include <xercesc/parsers/XercesDOMParser.hpp>
-#include <xercesc/dom/DOM.hpp>
-#include <xercesc/sax/HandlerBase.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/util/PlatformUtils.hpp>
-XERCES_CPP_NAMESPACE_USE
+#include <tinyxml/tinyxml.h>
 
 //
 // Boost C++
@@ -61,6 +49,7 @@ XERCES_CPP_NAMESPACE_USE
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
+#include <boost/array.hpp>
 #define foreach BOOST_FOREACH
 
 //
@@ -72,7 +61,6 @@ XERCES_CPP_NAMESPACE_USE
 #include "Singleton.h"
 #include "Log.h"
 #include "MyError.h"
-#include "ArnGlExt.h"
 
 template <typename T>
 class ArrayDeleter
@@ -83,4 +71,3 @@ public:
 		delete [] d;
 	}
 };
-

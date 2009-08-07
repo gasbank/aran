@@ -1,6 +1,8 @@
 #ifndef ARNBINARYCHUNK_H
 #define ARNBINARYCHUNK_H
 
+#include "ArnObject.h"
+
 enum ArnChunkFieldType
 {
 	ACFT_UNKNOWN = 0,	// Unknown type
@@ -24,19 +26,20 @@ static const int ArnChunkFieldTypeSize[] =
 	sizeof(int)		* 4
 };
 
-class ArnBinaryChunk
+class ARAN_API ArnBinaryChunk : public ArnObject
 {
 public:
 										~ArnBinaryChunk();
-	static ArnBinaryChunk*				createFrom(DOMElement* elm, char* binaryChunkBasePtr);
+	static ArnBinaryChunk*				createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr);
 	static ArnBinaryChunk*				createFrom(const char* fileName, bool zlibCompressed, unsigned int uncompressedSize);
+	virtual const char*					getName() const { return m_name.c_str(); }
 	void								copyFieldArray(void* target, int targetSize, const char* usage) const;
 	unsigned int						getRecordCount() const;
 	unsigned int						getRecordSize() const;
-	char*								getRawDataPtr();
+	const char*							getConstRawDataPtr() const;
 	const char*							getRecordAt(int i) const;
 	void								printFieldArray(const char* usage) const; // Debug purpose...
-
+	unsigned int						getFieldCount() const { return m_recordDef.size(); }
 private:
 										ArnBinaryChunk();
 	void								addField(const char* type, const char* usage);
@@ -52,8 +55,9 @@ private:
 		std::string			usage;
 		int					offset; // offset in the record
 	};
+	std::string							m_name;
 	std::vector<Field>					m_recordDef; // record definition
-	char*								m_data;
+	const char*							m_data; // Unmodifiable
 	bool								m_deallocateData; // Deallocation of m_data should be done in dtor if this flag is true.
 	int									m_recordCount;
 	int									m_recordSize;
