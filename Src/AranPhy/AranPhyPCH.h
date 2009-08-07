@@ -1,19 +1,22 @@
-// stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
-//
-
 #pragma once
 
 #ifdef WIN32
-#include "targetver.h"
-
-#define WIN32_LEAN_AND_MEAN             // Exclude rarely-used stuff from Windows headers
-// Windows Header Files:
 #include <windows.h>
-#endif // #ifdef WIN32
+#endif
 
-// TODO: reference additional headers your program requires here
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <math.h>
+#include <string>
+#include <vector>
+#include <list>
+#include <map>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <set>
 
 //
 // Open Dynamics Engine (ode)
@@ -21,6 +24,23 @@
 #include <ode/ode.h>
 
 //
-// Aran
+// Boost C++
+//
+#include <boost/lambda/lambda.hpp>
+#include <boost/function.hpp>
+#include <boost/foreach.hpp>
+#include <boost/tokenizer.hpp>
+#include <boost/array.hpp>
+#define foreach BOOST_FOREACH
+
+//
+// AranMath
 //
 #include "Macros.h"
+#include "ArnCommonTypes.h"
+#include "ArnVec3.h"
+#include "ArnVec4.h"
+#include "ArnQuat.h"
+#include "ArnMatrix.h"
+#include "ArnMath.h"
+#include "AranPhyStructs.h"
