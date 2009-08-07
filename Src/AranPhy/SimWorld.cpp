@@ -19,8 +19,6 @@ SimWorld::SimWorld()
 , m_footSupportHeight(0.01)
 , m_osc(new OdeSpaceContext)
 {
-	std::tr1::shared_ptr<int> a(new int[100]);
-
 	m_osc->world = dWorldCreate();
 	dWorldSetGravity(m_osc->world, 0, 0, -9.8);
 	//dWorldSetERP(m_osc->world, 0.1);
@@ -95,6 +93,20 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 					anchor += ajd.pivot;
 					BallSocketJointPtr bsjPtr(BallSocketJoint::createFrom(0, jointName.c_str(), gb1, gb2, anchor, ArnConsts::ARNVEC3_X, ArnConsts::ARNVEC3_Y, ArnConsts::ARNVEC3_Z));
 					ret->registerJoint(bsjPtr);
+					foreach (const ArnJointData::ArnJointLimit& ajl, ajd.limits)
+					{
+						int anum = 0;
+						dReal minimum = 0;
+						dReal maximum = 0;
+						if (ajl.type.compare("AngX") == 0)
+							bsjPtr->setParamLoHiStop(1, ajl.minimum, ajl.maximum);
+						else if (ajl.type.compare("AngY") == 0)
+							bsjPtr->setParamLoHiStop(2, ajl.minimum, ajl.maximum);
+						else if (ajl.type.compare("AngZ") == 0)
+							bsjPtr->setParamLoHiStop(3, ajl.minimum, ajl.maximum);
+						else
+							ARN_THROW_UNEXPECTED_CASE_ERROR
+					}
 				}
 			}
 		}

@@ -10,6 +10,13 @@ struct ArnJointData
 	std::string target;
 	ArnVec3 pivot;
 	ArnVec3 ax;
+	struct ArnJointLimit
+	{
+		std::string type;
+		float minimum;
+		float maximum;
+	};
+	std::list<ArnJointLimit> limits;
 };
 
 /**

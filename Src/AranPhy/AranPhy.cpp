@@ -9,5 +9,6 @@ int ArnInitializePhysics()
 
 int ArnCleanupPhysics()
 {
+	dCloseODE();
 	return 0;
 }

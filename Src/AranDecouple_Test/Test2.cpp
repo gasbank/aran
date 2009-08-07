@@ -709,6 +709,7 @@ DoMain()
 	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 	ArnConfigureViewMatrixGl(activeCam);
 	
+	std::cout << "Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();

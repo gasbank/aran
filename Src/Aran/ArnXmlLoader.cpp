@@ -104,6 +104,13 @@ ParseArnVec3FromElement(ArnVec3* v, const TiXmlElement* elm)
 }
 
 static void
+Parse2FloatsFromElement(float* f0, float* f1, const TiXmlElement* elm)
+{
+	if (sscanf(elm->GetText(), "%f %f", f0, f1) != 2)
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+static void
 AssertTagNameEquals(const TiXmlElement* elm, const char* tagName)
 {
 	if (strcmp(elm->Value(), tagName) != 0)
@@ -568,6 +575,15 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 			ajd.target = targetElm->GetText();
 			ParseArnVec3FromElement(&ajd.pivot, pivotElm);
 			ParseArnVec3FromElement(&ajd.ax, axElm);
+
+			for (const TiXmlElement* ee = e->FirstChildElement("limit"); ee; ee = ee->NextSiblingElement("limit"))
+			{
+				const char* limitType = ee->Attribute("type");
+				ArnJointData::ArnJointLimit ajl;
+				ajl.type = limitType;
+				Parse2FloatsFromElement(&ajl.minimum, &ajl.maximum, ee);
+				ajd.limits.push_back(ajl);
+			}
 			ret->addJointData(ajd);
 		}
 		else
