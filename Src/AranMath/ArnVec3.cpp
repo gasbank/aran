@@ -55,9 +55,9 @@ bool ArnVec3Equals( const ArnVec3& v1, const ArnVec3& v2 )
 void ArnVec3DimensionFromBounds( ArnVec3* out, const boost::array<ArnVec3, 8>& bb )
 {
 	// In sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
-	out->x = abs(bb[0].x - bb[6].x);
-	out->y = abs(bb[0].y - bb[6].y);
-	out->z = abs(bb[0].z - bb[6].z);
+	out->x = fabs(bb[0].x - bb[6].x);
+	out->y = fabs(bb[0].y - bb[6].y);
+	out->z = fabs(bb[0].z - bb[6].z);
 }
 
 ArnVec3* ArnVec3Assign(ArnVec3* v1, const float* v2)
