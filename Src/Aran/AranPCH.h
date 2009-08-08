@@ -23,6 +23,11 @@
 #include <list>
 #include <vector>
 #include <set>
+#ifdef WIN32
+	#include <memory>
+#else
+	#include <tr1/memory>
+#endif
 
 #ifndef WIN32
     #ifdef UNICODE

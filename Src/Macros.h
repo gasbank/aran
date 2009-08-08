@@ -38,25 +38,26 @@
 #define TCHAR char
 #endif
 
-#ifdef WIN32
-	#ifndef EP_SAFE_RELEASE
-	#define EP_SAFE_RELEASE(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
-	#endif
-
-	template<typename T> void EpSafeReleaseAll( T& obj ) {
-		T::iterator it = obj.begin();
-		for ( ; it != obj.end(); ++it )
-		{
-			EP_SAFE_RELEASE( *it );
-		}
-		obj.clear();
-	};
-
-
-	#ifndef V_RETURN
-	#define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
-	#endif
+#ifndef EP_SAFE_RELEASE
+#define EP_SAFE_RELEASE(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
 #endif
+
+template<typename T> void
+EpSafeReleaseAll( T& obj )
+{
+	typename T::iterator it = obj.begin();
+	for ( ; it != obj.end(); ++it )
+	{
+		EP_SAFE_RELEASE( *it );
+	}
+	obj.clear();
+}
+
+
+#ifndef V_RETURN
+#define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
+#endif
+
 
 #if defined(DEBUG) | defined(_DEBUG)
 #define ASSERTCHECK(x) \

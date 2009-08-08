@@ -518,3 +518,12 @@ public:
 	std::vector<std::string> boneMatIdxMap;
 };
 
+#ifndef WIN32
+struct RECT
+{
+	int left;
+	int right;
+	int top;
+	int bottom;
+};
+#endif // #ifndef WIN32

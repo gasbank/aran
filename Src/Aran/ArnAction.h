@@ -6,8 +6,6 @@
 class ArnNode;
 class ArnIpo;
 
-class ArnIpo;
-
 class ArnAction : public ArnNode
 {
 public:

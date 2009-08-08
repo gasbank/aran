@@ -13,7 +13,11 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
-#include <memory>
+#ifdef WIN32
+	#include <memory>
+#else
+	#include <tr1/memory>
+#endif
 
 #ifdef WIN32
 	#include <SDL.h>

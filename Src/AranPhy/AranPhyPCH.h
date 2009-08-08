@@ -17,6 +17,11 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
+#ifdef WIN32
+	#include <memory>
+#else
+	#include <tr1/memory>
+#endif
 
 //
 // Open Dynamics Engine (ode)

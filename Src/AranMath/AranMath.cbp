@@ -33,10 +33,10 @@
 			</Target>
 		</Build>
 		<Compiler>
-			<Add option="-pedantic" />
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
-			<Add directory="../../../cml-1_0_0" />
+			<Add directory="../" />
+			<Add directory="../../../cml-1_0_1" />
 		</Compiler>
 		<Unit filename="AranMathPCH.cpp" />
 		<Unit filename="AranMathPCH.h" />
@@ -63,7 +63,6 @@
 		<Unit filename="ArnVec4.cpp" />
 		<Unit filename="ArnVec4.h" />
 		<Unit filename="ArnViewportData.h" />
-		<Unit filename="RST_DATA.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

@@ -23,6 +23,11 @@
 #include <list>
 #include <vector>
 #include <set>
+#ifdef WIN32
+	#include <memory>
+#else
+	#include <tr1/memory>
+#endif
 
 #ifndef WIN32
 	#define GL_GLEXT_PROTOTYPES
@@ -30,11 +35,6 @@
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "glext.h"
-
-//
-// TinyXML
-//
-#include <tinyxml/tinyxml.h>
 
 //
 // Boost C++

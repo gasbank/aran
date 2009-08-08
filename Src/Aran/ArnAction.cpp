@@ -37,7 +37,8 @@ ArnAction::interconnect(ArnNode* sceneRoot)
 	}
 }
 
-ArnAction* ArnAction::createFrom(ArnNode* obj, ArnIpo* ipo)
+ArnAction*
+ArnAction::createFrom(ArnNode* obj, ArnIpo* ipo)
 {
 	ArnAction* ret = new ArnAction();
 	ret->addMap(obj->getName(), ipo->getName());
