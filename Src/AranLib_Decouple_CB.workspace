@@ -8,9 +8,6 @@
 			<Depends filename="AranGl/AranGl.cbp" />
 			<Depends filename="AranPhy/AranPhy.cbp" />
 		</Project>
-		<Project filename="AranMathTest/AranMathTest.cbp">
-			<Depends filename="Aran/AranCB.cbp" />
-		</Project>
 		<Project filename="AranMath/AranMath.cbp" />
 		<Project filename="AranGl/AranGl.cbp" />
 		<Project filename="AranPhy/AranPhy.cbp" />

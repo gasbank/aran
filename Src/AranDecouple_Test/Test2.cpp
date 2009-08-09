@@ -1,23 +1,7 @@
 #include "Test2.h"
 
-struct HitRecord
-{
-	GLuint numNames;	// Number of names in the name stack for this hit record
-	GLuint minDepth;	// Minimum depth value of primitives (range 0 to 2^32-1)
-	GLuint maxDepth;	// Maximum depth value of primitives (range 0 to 2^32-1)
-	GLuint contents;	// Name stack contents
-};
-
-enum MessageHandleResult
-{
-	MHR_DO_NOTHING,
-	MHR_EXIT_APP,
-	MHR_NEXT_SCENE,
-	MHR_RELOAD_SCENE
-};
-
 static void
-SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, ArnViewportData* avd, ArnCamera* cam )
+SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, const ArnViewportData* avd, ArnCamera* cam )
 {
 	if (!sceneGraph)
 		return;
@@ -104,12 +88,12 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 				mesh->getBoundingBoxDimension(&dim, true);
 				printf("Mesh Dimension: "); dim.printFormatString();
 			}
-		}		
+		}
 	}
 }
 
 static MessageHandleResult
-HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, ArnViewportData* avd)
+HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd)
 {
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
@@ -180,7 +164,7 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, ArnViewportData* avd
 					skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
 					skel->getAnimCtrl()->SetTrackWeight(0, 1);
 				}
-				
+
 			}
 			else if (event->key.keysym.sym == SDLK_2)
 			{
@@ -342,7 +326,7 @@ RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int du
 	glDisable(GL_LIGHTING);
 	const ArnRenderableObject* textureRenderable = fontTexturePtr.get()->getRenderableObject();
 	assert(textureRenderable);
-	
+
 	textureRenderable->render(); // glBindTexture(GL_TEXTURE_2D, fontTextureId);
 
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -543,66 +527,75 @@ GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGrap
 }
 
 int
-DoMain()
+LoadSceneList(std::vector<std::string>& sceneList)
 {
-	const int windowWidth = 640;
-	const int windowHeight = 480;
-	const int bpp = 32;
-	const int depthSize = 24;
-	bool bFullScreen = false;
-	bool bNoFrame = false;
-
-	// Create and init the scene graph instance from XML file
-	// and attach that one to the video manager.
-	ArnInitializeXmlParser();
-	ArnInitializeImageLibrary();
-	ArnInitializePhysics();
-	ArnInitializeGl();
-
-	ArnViewportData avd;
-	avd.X = 0;
-	avd.Y = 0;
-	avd.Width = windowWidth;
-	avd.Height = windowHeight;
-	avd.MinZ = 0;
-	avd.MaxZ = 1.0f;
-
 	// Load first scene file from SceneList.txt
-	std::vector<std::string> sceneList;
+	assert(sceneList.size() == 0);
 	std::ifstream sceneListStream("SceneList.txt");
 	std::string sceneFile;
 	if (!sceneListStream.is_open())
 	{
-		fprintf(stderr, " *** SceneList.txt file corrupted or not available. Aborting...\n");
+		fprintf(stderr, " *** SceneList.txt file corrupted or not available.\n");
 		Cleanup();
 		return -12;
 	}
+	int sceneCount = 0;
 	while (std::getline(sceneListStream, sceneFile))
 	{
 		sceneList.push_back(sceneFile);
+		++sceneCount;
+	}
+	return sceneCount;
+}
+
+int
+DoMain()
+{
+	int							curSceneIndex		= -1;
+	std::vector<std::string>	sceneList;
+	ArnSceneGraphPtr			curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
+
+	ArnInitializeXmlParser();
+	ArnInitializeImageLibrary();
+	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
+	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
+
+	if (LoadSceneList(sceneList) < 0)
+	{
+		std::cerr << " *** Aborting..." << std::endl;
+		Cleanup();
+		return -113;
 	}
 
-	ArnSceneGraphPtr curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
-	ArnTexturePtr fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
-	ArnCamera* activeCam = 0;
-	ArnLight* activeLight = 0;
-	int curSceneIndex = -1;
-	if (sceneList.size() > 0)
+	//////////////////////////////////////////////////////////////////////////////////////////////
+
+	const int					windowWidth			= 800;
+	const int					windowHeight		= 600;
+	const int					bpp					= 32;
+	const int					depthSize			= 24;
+	bool						bFullScreen			= false;
+	bool						bNoFrame			= false;
+	ArnViewportData				avd;
+	ArnTexturePtr				fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
+	SimWorldPtr					swPtr(reinterpret_cast<SimWorld*>(0));
+
+	avd.X		= 0;
+	avd.Y		= 0;
+	avd.Width	= windowWidth;
+	avd.Height	= windowHeight;
+	avd.MinZ	= 0;
+	avd.MaxZ	= 1.0f;
+
+	// Load first scene file into memory.
+	assert(sceneList.size() > 0);
+	assert(curSceneIndex == -1);
+	if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
 	{
-		if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
-		{
-			std::cerr << " *** Aborting..." << std::endl;
-			Cleanup();
-			return -11;
-		}
-	}
-	else
-	{
-		std::cerr << " *** No scene file available on scene list file. Aborting..." << std::endl;
+		std::cerr << " *** Aborting..." << std::endl;
 		Cleanup();
-		return -19;
+		return -11;
 	}
-	
+
 	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
@@ -618,10 +611,7 @@ DoMain()
 		video_flags |= SDL_NOFRAME;
 
 	/* Initialize the display */
-	int rgb_size[3];
-	rgb_size[0] = 8;
-	rgb_size[1] = 8;
-	rgb_size[2] = 8;
+	int rgb_size[3] = { 8, 8, 8 };
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, rgb_size[0] );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, rgb_size[1] );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, rgb_size[2] );
@@ -643,9 +633,9 @@ DoMain()
 	printf( "Vendor     : %s\n", glGetString( GL_VENDOR ) );
 	printf( "Renderer   : %s\n", glGetString( GL_RENDERER ) );
 	printf( "Version    : %s\n", glGetString( GL_VERSION ) );
-	printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
+	//printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
 	printf("\n");
-	
+
 	int value;
 	SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &value );
 	printf( "SDL_GL_RED_SIZE: requested %d, got %d\n", rgb_size[0],value);
@@ -677,6 +667,8 @@ DoMain()
 		SDL_Quit();
 		return -102;
 	}
+	ArnInitializePhysics();
+	ArnInitializeGl();
 
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
@@ -701,22 +693,24 @@ DoMain()
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
+	unsigned int frames = 0;
+	unsigned int start_time = SDL_GetTicks();
+	assert(curSgPtr.get() && fontTexturePtr.get());
+	ArnCamera* activeCam = 0;
+	ArnLight* activeLight = 0;
+
 	// Initialize OpenGL contexts of scene graph objects.
-	SimWorldPtr swPtr(SimWorld::createFrom(curSgPtr.get()));
+	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 	ConfigureRenderableObjectOf(fontTexturePtr.get());
 	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
 	ArnInitializeRenderableObjectsGl(curSgPtr.get());
 	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 	ArnConfigureViewMatrixGl(activeCam);
-	
-	std::cout << "Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
 	// TODO: Normalized cube map for normal mapping
 	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
 
 	/* Loop until done. */
-	unsigned int start_time = SDL_GetTicks();
-	unsigned int frames = 0;
 	MessageHandleResult done = MHR_DO_NOTHING;
 	unsigned int frameStartMs = 0;
 	unsigned int frameDurationMs = 0;
@@ -798,7 +792,7 @@ DoMain()
 					ArnInitializeRenderableObjectsGl(curSgPtr.get());
 					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 					ArnConfigureViewMatrixGl(activeCam);
-					
+
 				}
 			}
 			else if (done == MHR_RELOAD_SCENE)

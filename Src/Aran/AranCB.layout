@@ -1,10 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
+	<File name="Animation.cpp" open="1" top="0" tabpos="4">
+		<Cursor position="1646" topLine="56" />
+	</File>
 	<File name="ArnGenericBuffer.cpp" open="1" top="0" tabpos="1">
 		<Cursor position="55" topLine="0" />
 	</File>
+	<File name="ArnMesh.cpp" open="1" top="0" tabpos="3">
+		<Cursor position="840" topLine="0" />
+	</File>
 	<File name="ArnSceneGraph.h" open="1" top="0" tabpos="2">
 		<Cursor position="233" topLine="0" />
+	</File>
+	<File name="ArnTexture.cpp" open="1" top="0" tabpos="6">
+		<Cursor position="1049" topLine="28" />
+	</File>
+	<File name="ArnXmlLoader.cpp" open="1" top="0" tabpos="5">
+		<Cursor position="1087" topLine="27" />
 	</File>
 </CodeBlocks_layout_file>

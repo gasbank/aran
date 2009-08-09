@@ -249,7 +249,7 @@ ArnMeshGl::renderXml() const
 		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		{
 			assert(m_target->isLocalXformDirty() == false);
-			//m_target->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
+
 			glMultTransposeMatrixf((float*)m_target->getFinalLocalXform().m);
 			if (m_target->isTwoSided())
 			{

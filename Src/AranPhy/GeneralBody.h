@@ -34,7 +34,7 @@ public:
 	모든 강체마다 아래의 값이 정의되어야 합니다.
 	- 충돌 체크를 위한 Bounding volume의 모양과 크기
 	- 질량 분포를 위한 모양과 크기
-	
+
 	충돌 체크를 위한 모양과 질량 분포를 위한 모양이 반드시 같아야 할 필요는 없습니다.
 	두 경우 모두 크기는 ArnVec3 형태를 사용하는데, 모양에 따라 값의 의미가 다릅니다.
 	반드시 형태를 먼저 설정 한 후 크기를 설정해야 합니다.
@@ -104,7 +104,7 @@ public:
 	@brief ODE 컨텍스트를 이용해 강체의 ODE 인스턴스를 생성
 	@param osc ODE 컨텍스트
 	@remark 호출하는 전에 ODE 컨텍스트가 \c NULL 로 설정되어 있어야 합니다.
-	\c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.	
+	\c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.
 	*/
 	void							configureOdeContext(const OdeSpaceContext* osc);
 	/*!

@@ -93,7 +93,7 @@ static const char* BodyEnumStrings[] = {
 };
 
 /*!
-ODE 컨텍스트
+@brief ODE 컨텍스트
 */
 struct OdeSpaceContext
 {

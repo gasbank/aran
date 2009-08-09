@@ -3,6 +3,8 @@
 #include "ArnTexture.h"
 
 ArnTextureGl::ArnTextureGl(void)
+: m_textureId(0)
+, m_target(0)
 {
 }
 

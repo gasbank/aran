@@ -20,7 +20,7 @@ ArnMesh::ArnMesh()
 , m_nodeMesh3(0)
 , m_vertexChunk(0)
 , m_bBoundingBoxPointsDirty(true)
-, m_bRenderBoundingBox(true)
+, m_bRenderBoundingBox(false)
 , m_abbt(ABBT_UNKNOWN)
 , m_mass(0)
 {

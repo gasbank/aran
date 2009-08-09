@@ -289,7 +289,7 @@ ArnBinaryChunk::createFrom(const TiXmlElement* elm, const char* binaryChunkBaseP
 	ArnBinaryChunk* ret = new ArnBinaryChunk();
 	const TiXmlElement* templ = elm->FirstChildElement("template");
 	assert(templ);
-	
+
 	for (const TiXmlElement* e = templ->FirstChildElement("field"); e; e = e->NextSiblingElement("field"))
 	{
 		std::string typeStr, usageStr;
@@ -392,6 +392,8 @@ ArnSceneGraph*
 ArnSceneGraph::createFrom(const char* xmlFile)
 {
 	assert(xmlFile);
+	if (strlen(xmlFile) == 0)
+		return 0;
 	assert(strcmp(xmlFile + strlen(xmlFile) - 4, ".xml") == 0);
 	assert(gs_xmlInitialized);
 
@@ -445,7 +447,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 	AssertAttrEquals(elm, "rtclass", "ArnMesh");
 	ArnMesh* ret = new ArnMesh();
 	SetupArnXformableCommonPart(ret, elm);
-	
+
 	const TiXmlElement* meshElm = GetUniqueChildElement(elm, "mesh");
 	const TiXmlElement* vertexElm  = GetUniqueChildElement(meshElm, "vertex");
 	const TiXmlElement* faceElm = GetUniqueChildElement(meshElm, "face");
@@ -467,7 +469,7 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 	vg0.mtrlIndex = 0;
 	vg0.vertGroupChunk = 0;
 	ret->m_vertexGroup.push_back(vg0);
-	
+
 	// TODO: Vertex groups
 	for (const TiXmlElement* e = elm->FirstChildElement("vertgroup"); e; e = e->NextSiblingElement("vertgroup"))
 	{

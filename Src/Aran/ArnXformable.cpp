@@ -104,7 +104,7 @@ ArnXformable::configureAnimCtrl()
 	ArnIpo* ipo = getIpo();
 	if (!ipo)
 	{
-		fprintf(stderr, " ** [Node: %s] Animation controller cannot be configured since there is no IPO associated.\n", getName());
+		//fprintf(stderr, " ** [Node: %s] Animation controller cannot be configured since there is no IPO associated.\n", getName());
 		return;
 	}
 	assert(!m_aniimCtrl);

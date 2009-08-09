@@ -1,3 +1,12 @@
+/*!
+@file Test2.h
+@author Geoyeob Kim
+@date 2009
+
+ARAN 라이브러리의 각종 기능을 시험해볼 수 있는 scene graph renderer 예제 코드입니다.
+이 예제에서는 Blender 익스포터로 만들어진 XML 파일을 읽어서 화면에 보여줍니다.
+사용자와의 상호작용은 없습니다.
+*/
 #pragma once
 
 #include <stdlib.h>
@@ -57,3 +66,20 @@
 #include "AranPhy.h"
 #include "ArnPhyBox.h"
 #include "SimWorld.h"
+
+
+struct HitRecord
+{
+	GLuint numNames;	// Number of names in the name stack for this hit record
+	GLuint minDepth;	// Minimum depth value of primitives (range 0 to 2^32-1)
+	GLuint maxDepth;	// Maximum depth value of primitives (range 0 to 2^32-1)
+	GLuint contents;	// Name stack contents
+};
+
+enum MessageHandleResult
+{
+	MHR_DO_NOTHING,
+	MHR_EXIT_APP,
+	MHR_NEXT_SCENE,
+	MHR_RELOAD_SCENE
+};
