@@ -8,7 +8,10 @@
 		<Cursor position="55" topLine="0" />
 	</File>
 	<File name="ArnMesh.cpp" open="1" top="0" tabpos="3">
-		<Cursor position="840" topLine="0" />
+		<Cursor position="572" topLine="0" />
+	</File>
+	<File name="ArnMesh.h" open="1" top="0" tabpos="28">
+		<Cursor position="4793" topLine="65" />
 	</File>
 	<File name="ArnSceneGraph.h" open="1" top="0" tabpos="2">
 		<Cursor position="233" topLine="0" />
@@ -17,6 +20,6 @@
 		<Cursor position="1049" topLine="28" />
 	</File>
 	<File name="ArnXmlLoader.cpp" open="1" top="0" tabpos="5">
-		<Cursor position="1087" topLine="27" />
+		<Cursor position="26145" topLine="888" />
 	</File>
 </CodeBlocks_layout_file>

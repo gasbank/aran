@@ -564,8 +564,8 @@ for ob in sce.objects:
 	
 	if ob.rbFlags & Object.RBFlags.ACTOR:
 		actorElm = doc.createElement('actor')
-		if ob.rbFlags & Object.RBFlags.RIGIDBODY:
-			rbElm = doc.createElement('rigidbody');
+		if ob.rbFlags & Object.RBFlags.DYNAMIC and ob.rbFlags & Object.RBFlags.RIGIDBODY:
+			rbElm = doc.createElement('rigidbody')
 			rbElm.setAttribute('mass', str(ob.rbMass))
 			actorElm.appendChild(rbElm)
 		

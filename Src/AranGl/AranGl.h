@@ -13,6 +13,7 @@ class ArnSceneGraph;
 
 /*!
  * @brief AranGl 라이브러리 초기화
+ * @remark 반드시 OpenGL 컨텍스트가 생성된 후에 호출해야 합니다.
  */
 ARANGL_API void						ArnInitializeGl();
 /*!
@@ -34,8 +35,3 @@ ARANGL_API void						ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb);
 static void							ArnMeshRenderGl(const ArnMesh* mesh);
 static void							ArnSkeletonRenderGl(const ArnSkeleton* skel);
 static void							ArnBoneRenderGl(const ArnBone* bone);
-
-
-//ARANGL_API void						ArnInitializeMaterialGl(const ArnMaterial* mtrl);
-//ARANGL_API void						CreateArnTextureRenderableObjectGl(INOUT ArnTexture* tex);
-//ARANGL_API void						CreateArnMeshRenderableObjectGl(INOUT ArnMesh* mesh);

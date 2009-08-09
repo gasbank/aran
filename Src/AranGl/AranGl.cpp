@@ -512,8 +512,9 @@ static void ArnMeshRenderGl( const ArnMesh* mesh )
 
 void ArnRenderSphereGl()
 {
-	assert(gs_quadricSphere); // Did you initialize AranGl library by calling ArnInitializeGl() before use this function?
-	gluSphere(gs_quadricSphere, 1, 8, 4);
+	// Did you initialize AranGl library by calling ArnInitializeGl() before use this function?
+	assert(gs_quadricSphere);
+	gluSphere(gs_quadricSphere, 1, 16, 16);
 }
 
 void ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb)
