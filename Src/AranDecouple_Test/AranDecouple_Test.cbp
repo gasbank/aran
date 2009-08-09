@@ -37,7 +37,6 @@
 		<Compiler>
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
-			<Add option="-fopenmp" />
 			<Add directory="../" />
 			<Add directory="../Aran" />
 			<Add directory="../AranGl" />
@@ -53,7 +52,6 @@
 			<Add library="GL" />
 			<Add library="GLU" />
 			<Add library="ode" />
-			<Add library="gomp" />
 			<Add library="AranD" />
 			<Add library="AranGlD" />
 			<Add library="AranPhyD" />

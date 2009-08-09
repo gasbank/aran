@@ -320,7 +320,7 @@ static void ArnBoneRenderGl( const ArnBone* bone )
 {
 	//bone->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 	assert(bone->isLocalXformDirty() == false);
-	
+
 	ArnVec3 boneDir(bone->getBoneDirection());
 	float boneLength = ArnVec3GetLength(boneDir);
 	glPushMatrix();
@@ -516,6 +516,41 @@ void ArnRenderSphereGl()
 	gluSphere(gs_quadricSphere, 1, 8, 4);
 }
 
+void ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb)
+{
+	glBegin(GL_QUADS);
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[0]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[1]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[2]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[3]));
+
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[0]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[4]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[5]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[1]));
+
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[0]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[3]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[7]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[4]));
+
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[7]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[6]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[5]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[4]));
+
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[7]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[3]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[2]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[6]));
+
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[6]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[2]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[1]));
+	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[5]));
+	glEnd();
+}
+
 void setTransformGl (const double pos[3], const double R[12])
 {
 	GLdouble matrix[16];
@@ -553,7 +588,7 @@ void ArnInitializeGl()
 void ArnCleanupGl()
 {
 	assert(gs_quadricSphere);
-	gluDeleteQuadric(gs_quadricSphere);	
+	gluDeleteQuadric(gs_quadricSphere);
 }
 
 /*

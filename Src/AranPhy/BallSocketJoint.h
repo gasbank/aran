@@ -32,6 +32,7 @@ public:
 	virtual void				renderJointAxis() const;
 	virtual void				updateFrame();
 	virtual void				configureOdeContext(const OdeSpaceContext* osc);
+	virtual void				addTorque(AxisEnum anum, float torque);
 protected:
 	virtual void				doReset();
 private:

@@ -127,9 +127,11 @@ public:
 	dGeomID							getGeomID() const { return m_geom; }
 	dBodyID							getBodyId() const { return m_body; }
 	//@}
+	bool							isFixed() const { return m_bFixed; }
 protected:
 									GeneralBody(const OdeSpaceContext* osc);
 	void							setInitialCom(const ArnVec3& com0) { m_com0 = com0; }
+	void							setFixed(bool b) { m_bFixed = b; }
 private:
 	void							createGeomBox(const ArnVec3& dim);
 	void							createGeomCapsule(double radius, double height);
@@ -147,6 +149,7 @@ private:
 	ArnBoundingBoxType				m_abbt;					///< bounding volume의 종류
 	ArnMassDistributionType			m_amdt;					///< 질량 분포 종류
 	ArnXformable*					m_xformable;			///< 강체 시뮬레이션 결과를 적용받을 인스턴스
+	bool							m_bFixed;				///< 강체의 고정 여부
 };
 
 #endif // GENERALBODY_H

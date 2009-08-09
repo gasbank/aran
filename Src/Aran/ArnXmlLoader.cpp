@@ -541,6 +541,8 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 	const TiXmlElement* actorElm = GetUniqueChildElement(elm, "actor");
 	if (actorElm)
 	{
+		assert(ret->m_bPhyActor == false);
+		ret->m_bPhyActor = true;
 		std::string s;
 		GetAttr(s, actorElm, "bounds");
 		if (s == "box")
@@ -554,7 +556,11 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 		const TiXmlElement* rigidbodyElm = GetUniqueChildElement(actorElm, "rigidbody");
 		if (rigidbodyElm)
 		{
-			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass");
+			ret->m_mass = ParseFloatFromAttr(rigidbodyElm, "mass"); // Have dynamics property
+		}
+		else
+		{
+			ret->m_mass = 0; // This object will be completely fixed in dynamics environment.
 		}
 		if (ret->getLocalXform_Scale().compare(ArnConsts::ARNVEC3_ONE) > 0.001)
 		{

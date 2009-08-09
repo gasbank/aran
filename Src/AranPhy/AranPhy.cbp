@@ -49,14 +49,10 @@
 		<Unit filename="AranPhyStructs.h" />
 		<Unit filename="ArnPhyBox.cpp" />
 		<Unit filename="ArnPhyBox.h" />
-		<Unit filename="ArnPhyWorld.cpp" />
-		<Unit filename="ArnPhyWorld.h" />
 		<Unit filename="BallSocketJoint.cpp" />
 		<Unit filename="BallSocketJoint.h" />
 		<Unit filename="Biped.cpp" />
 		<Unit filename="Biped.h" />
-		<Unit filename="EulerAngles.cpp" />
-		<Unit filename="EulerAngles.h" />
 		<Unit filename="GeneralBody.cpp" />
 		<Unit filename="GeneralBody.h" />
 		<Unit filename="GeneralJoint.cpp" />
@@ -65,7 +61,6 @@
 		<Unit filename="HingeJoint.h" />
 		<Unit filename="LinearJoint.cpp" />
 		<Unit filename="LinearJoint.h" />
-		<Unit filename="QuatTypes.h" />
 		<Unit filename="SimWorld.cpp" />
 		<Unit filename="SimWorld.h" />
 		<Unit filename="SliderJoint.cpp" />

@@ -66,7 +66,7 @@ ARAN 라이브러리의 각종 기능을 시험해볼 수 있는 scene graph ren
 #include "AranPhy.h"
 #include "ArnPhyBox.h"
 #include "SimWorld.h"
-
+#include "GeneralJoint.h"
 
 struct HitRecord
 {

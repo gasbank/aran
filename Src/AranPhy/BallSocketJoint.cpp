@@ -51,8 +51,8 @@ BallSocketJoint::setParamLoHiStop(int anum, dReal lo, dReal hi)
 	{
 		ARN_THROW_UNEXPECTED_CASE_ERROR
 	}
-	dJointSetBallParam(getId(), loStopEnum, lo);
-	dJointSetBallParam(getId(), hiStopEnum, hi);
+	//dJointSetBallParam(getId(), loStopEnum, lo);
+	//dJointSetBallParam(getId(), hiStopEnum, hi);
 	dJointSetAMotorParam(m_amotorId, loStopEnum, lo);
 	dJointSetAMotorParam(m_amotorId, hiStopEnum, hi);
 }
@@ -126,13 +126,15 @@ BallSocketJoint::setParamFMax( int anum, dReal v )
 	else assert(!"Invalid axis number.");
 }
 
-void BallSocketJoint::attach( GeneralBody& body1, GeneralBody& body2 )
+void
+BallSocketJoint::attach( GeneralBody& body1, GeneralBody& body2 )
 {
 	GeneralJoint::attach(body1, body2);
 	dJointAttach(m_amotorId, body1.getBodyId(), body2.getBodyId());
 }
 
-void BallSocketJoint::configureOdeContext( const OdeSpaceContext* osc )
+void
+BallSocketJoint::configureOdeContext( const OdeSpaceContext* osc )
 {
 	assert(!getId() && !m_amotorId);
 	assert(getBody1()->getBodyId() && getBody2()->getBodyId());
@@ -146,9 +148,22 @@ void BallSocketJoint::configureOdeContext( const OdeSpaceContext* osc )
 	dJointSetAMotorAxis(m_amotorId, 0 /* X-AXIS */, 1 /* Anchored to the first body */, m_xAxis.x, m_xAxis.y, m_xAxis.z);
 	//dJointSetAMotorAxis(m_amotorId, 1 /* Y-AXIS */, 1 /* Anchored to the first body */, m_yAxis.x, m_yAxis.y, m_yAxis.z);
 	dJointSetAMotorAxis(m_amotorId, 2 /* Z-AXIS */, 2 /* Anchored to the second body */, m_zAxis.x, m_zAxis.y, m_zAxis.z);
-	
+
 	//dJointSetAMotorAngle(m_amotorId, 0 /* X-AXIS */, 0);
 	//dJointSetAMotorAngle(m_amotorId, 1 /* Y-AXIS */, 0);
 	//dJointSetAMotorAngle(m_amotorId, 2 /* Z-AXIS */, 0);
+	//dJointSetAMotorParam(m_amotorId, dParamFMax, 100000000);
+}
 
+void
+BallSocketJoint::addTorque(AxisEnum anum, float torque)
+{
+	if (anum == AXIS_X)
+		dJointAddAMotorTorques(m_amotorId, torque, 0, 0);
+	else if (anum == AXIS_Y)
+		dJointAddAMotorTorques(m_amotorId, 0, torque, 0);
+	else if (anum == AXIS_Z)
+		dJointAddAMotorTorques(m_amotorId, 0, 0, torque);
+	else
+		ARN_THROW_UNEXPECTED_CASE_ERROR
 }

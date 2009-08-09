@@ -62,38 +62,44 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 		if (buff[h].contents) // Zero means that ray hit on bounding box area.
 		{
 			const ArnNode* node = sceneGraph->getConstNodeById(buff[h].contents);
-			assert(node);
-			const ArnNode* parentNode = node->getParent();
-			const char* name = node->getName();
-			if (strlen(name) == 0)
-				name = "<Unnamed>";
-			if (parentNode)
+			if (node)
 			{
-				const char* parentName = parentNode->getName();
-				if (strlen(parentName) == 0)
-					parentName = "<Unnamed>";
-				printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
-					node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
+				const ArnNode* parentNode = node->getParent();
+				const char* name = node->getName();
+				if (strlen(name) == 0)
+					name = "<Unnamed>";
+				if (parentNode)
+				{
+					const char* parentName = parentNode->getName();
+					if (strlen(parentName) == 0)
+						parentName = "<Unnamed>";
+					printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
+						node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
+				}
+				else
+				{
+					printf("[Object 0x%p ID %d %s]\n",
+						node, node->getObjectId(), name);
+				}
+
+				const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(parentNode);
+				if (mesh)
+				{
+					ArnVec3 dim;
+					mesh->getBoundingBoxDimension(&dim, true);
+					printf("Mesh Dimension: "); dim.printFormatString();
+				}
 			}
 			else
 			{
-				printf("[Object 0x%p ID %d %s]\n",
-					node, node->getObjectId(), name);
-			}
-
-			const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(node);
-			if (mesh)
-			{
-				ArnVec3 dim;
-				mesh->getBoundingBoxDimension(&dim, true);
-				printf("Mesh Dimension: "); dim.printFormatString();
+				printf("[Selection buffer name 0x%08x]\n", buff[h].contents);
 			}
 		}
 	}
 }
 
 static MessageHandleResult
-HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd)
+HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd, SimWorldPtr swPtr)
 {
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
@@ -198,6 +204,38 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			{
 				done = MHR_RELOAD_SCENE;
 			}
+			else if (event->key.keysym.sym == SDLK_t)
+			{
+				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+				if (gbPtr)
+				{
+					gbPtr->addTorque(AXIS_Y, 1000.0f);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_y)
+			{
+				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+				if (gbPtr)
+				{
+					gbPtr->addTorque(AXIS_Y, -1000.0f);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_g)
+			{
+				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+				if (gbPtr)
+				{
+					gbPtr->addTorque(AXIS_X, 1000.0f);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_h)
+			{
+				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+				if (gbPtr)
+				{
+					gbPtr->addTorque(AXIS_X, -1000.0f);
+				}
+			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
@@ -268,9 +306,13 @@ CreateFontTextureWithFreeType(const char* sceneFileName)
 	int requiredSize = mbstowcs(0, sceneFileName, 0);
 	assert(requiredSize + 1 < 128);
 	mbstowcs(sceneFileNameW, sceneFileName, requiredSize + 1);
-	swprintf(testString, 128, L"build %ld - %s", ArnGetBuildCount(), sceneFileNameW);
-	//swprintf(testString, 128, L"build %ld", ArnGetBuildCount());
+	std::swprintf(testString, 128, L"build %ld - %ls", ArnGetBuildCount(), sceneFileNameW);
 	size_t testStringLen = wcslen(testString);
+	/*
+	wprintf(L"Result string: %ls\n", testString);
+	std::wcout << L"testString     = " << testString << std::endl;
+	std::wcout << L"sceneFileNameW = " << sceneFileNameW << std::endl;
+	*/
 	const int textTextureSize = 1024;
 	std::vector<unsigned char> fontTexture(textTextureSize * textTextureSize * 4);
 	for ( size_t n = 0; n < testStringLen; n++ )
@@ -553,7 +595,7 @@ DoMain()
 {
 	int							curSceneIndex		= -1;
 	std::vector<std::string>	sceneList;
-	ArnSceneGraphPtr			curSgPtr(reinterpret_cast<ArnSceneGraph*>(0));
+	ArnSceneGraphPtr			curSgPtr;
 
 	ArnInitializeXmlParser();
 	ArnInitializeImageLibrary();
@@ -574,10 +616,10 @@ DoMain()
 	const int					bpp					= 32;
 	const int					depthSize			= 24;
 	bool						bFullScreen			= false;
-	bool						bNoFrame			= false;
+	bool						bNoFrame			= true;
 	ArnViewportData				avd;
-	ArnTexturePtr				fontTexturePtr(reinterpret_cast<ArnTexture*>(0));
-	SimWorldPtr					swPtr(reinterpret_cast<SimWorld*>(0));
+	ArnTexturePtr				fontTexturePtr;
+	SimWorldPtr					swPtr;
 
 	avd.X		= 0;
 	avd.Y		= 0;
@@ -618,7 +660,7 @@ DoMain()
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 0 ); // Swap Control On --> Refresh rate to 60 Hz
+	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 ); // Swap Control On --> Refresh rate to 60 Hz
 
 	if ( SDL_SetVideoMode( windowWidth, windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
@@ -740,7 +782,7 @@ DoMain()
 		if (stepSize)
 		{
 			//swPtr->updateFrame(stepSize);
-			swPtr->updateFrame(0.001);
+			swPtr->updateFrame(0.01);
 		}
 
 		glPushMatrix();
@@ -773,7 +815,7 @@ DoMain()
 
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
-			done = HandleEvent(&event, curSgPtr.get(), &avd);
+			done = HandleEvent(&event, curSgPtr.get(), &avd, swPtr);
 
 			if (done == MHR_NEXT_SCENE)
 			{

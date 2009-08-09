@@ -126,14 +126,14 @@ void Biped::initialize(const BipedParameters& bp, ArnVec4 bo)
 	// Crate a HAT(torso-arm-trunk)
 	ArnVec3 hatCom(m_bp.bodyCenters[BE_HAT][0], m_bp.bodyCenters[BE_HAT][1], m_bp.bodyCenters[BE_HAT][2]);
 	ArnVec3 hatSize(m_bp.torso_w, m_bp.torso_d, m_bp.torso_h);
-	m_bodies[BE_HAT] = ArnPhyBox::createFrom(m_osc, "HAT", hatCom, hatSize, m_bp.bodyWeights[BE_HAT]);
+	m_bodies[BE_HAT] = ArnPhyBox::createFrom(m_osc, "HAT", hatCom, hatSize, m_bp.bodyWeights[BE_HAT], false);
 
 	// Create groins, calves (HAT and feet are excluded)
 	for (int i = 1; i < BE_COUNT - 2; i++)
 	{
 		ArnVec3 com(m_bp.bodyCenters[i][0], m_bp.bodyCenters[i][1], m_bp.bodyCenters[i][2]);
 		ArnVec3 size(m_bp.bodyRadiusAndHeight[i][0], m_bp.bodyRadiusAndHeight[i][1], 0);
-		m_bodies[i] = ArnPhyBox::createFrom(m_osc, BodyEnumStrings[i], com, size, m_bp.bodyWeights[i]);
+		m_bodies[i] = ArnPhyBox::createFrom(m_osc, BodyEnumStrings[i], com, size, m_bp.bodyWeights[i], false);
 	}
 
 	// Create feet
@@ -141,7 +141,7 @@ void Biped::initialize(const BipedParameters& bp, ArnVec4 bo)
 	{
 		ArnVec3 com(m_bp.bodyCenters[i][0], m_bp.bodyCenters[i][1], m_bp.bodyCenters[i][2]);
 		ArnVec3 size(m_bp.bodyRadiusAndHeight[i][0], m_bp.bodyRadiusAndHeight[i][1], 0);
-		m_bodies[i] = ArnPhyBox::createFrom(m_osc, BodyEnumStrings[i], com, size, m_bp.bodyWeights[i]);
+		m_bodies[i] = ArnPhyBox::createFrom(m_osc, BodyEnumStrings[i], com, size, m_bp.bodyWeights[i], false);
 	}
 
 	// Configure joints

@@ -62,6 +62,7 @@ public:
 	void										reset();
 	const SliderJointVector&					getJoints() const { return m_sliderJoints; }
 	SliderJoint*								getJointByName(const char* name) const;
+	GeneralJointPtr								getGeneralJointByName(const char* name) const;
 	GeneralBody*								getBodyByName(const char* name) const;
 	const GeneralBodyPtr						getBodyByNameFromSet(const char* name) const;
 	//GeneralBody*								getBodyByGeomID(dGeomID g) const;

@@ -11,6 +11,7 @@ GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 , m_abbt(ABBT_UNKNOWN)
 , m_amdt(AMDT_UNKNOWN)
 , m_xformable(0)
+, m_bFixed(false)
 {
 	if (osc)
 		m_body = dBodyCreate(m_osc->world);
@@ -213,6 +214,11 @@ void GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 
 	dQuaternion odeQ = { m_quat0.w, m_quat0.x, m_quat0.y, m_quat0.z };
 	dBodySetQuaternion(m_body, odeQ);
+
+	if (isFixed())
+	{
+		dBodySetKinematic(m_body);
+	}
 }
 
 void GeneralBody::notify()

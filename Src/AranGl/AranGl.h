@@ -30,9 +30,11 @@ ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl); // Bind OpenGL
 ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg);
 ARANGL_API void						ArnRenderSphereGl();
 ARANGL_API void						setTransformGl (const double pos[3], const double R[12]);
+ARANGL_API void						ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb);
 static void							ArnMeshRenderGl(const ArnMesh* mesh);
 static void							ArnSkeletonRenderGl(const ArnSkeleton* skel);
 static void							ArnBoneRenderGl(const ArnBone* bone);
+
 
 //ARANGL_API void						ArnInitializeMaterialGl(const ArnMaterial* mtrl);
 //ARANGL_API void						CreateArnTextureRenderableObjectGl(INOUT ArnTexture* tex);

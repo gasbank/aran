@@ -7,9 +7,6 @@ GeneralJoint::GeneralJoint(const OdeSpaceContext* osc)
 , m_jcm(JCM_REST)
 , m_joint(0)
 {
-	//ctor
-	m_name[0] = 0;
-
 	// Must not call reset() here...
 }
 
@@ -19,23 +16,27 @@ GeneralJoint::~GeneralJoint()
 	dJointDestroy(m_joint);
 }
 
-void GeneralJoint::attach(GeneralBody& body1, GeneralBody& body2)
+void
+GeneralJoint::attach(GeneralBody& body1, GeneralBody& body2)
 {
 	dJointAttach(m_joint, body1.getBodyId(), body2.getBodyId());
 }
 
-void GeneralJoint::rest(int anum)
+void
+GeneralJoint::rest(int anum)
 {
 	m_jcm = JCM_REST;
 }
 
-void GeneralJoint::controlToStayStill_P(int anum, double fMax)
+void
+GeneralJoint::controlToStayStill_P(int anum, double fMax)
 {
 	m_jcm = JCM_STAY_STILL;
 	m_forceMax[anum-1] = fMax;
 }
 
-void GeneralJoint::controlIncr_P(int anum, double incrVal, double proGain, double forceMax)
+void
+GeneralJoint::controlIncr_P(int anum, double incrVal, double proGain, double forceMax)
 {
 	m_jcm = JCM_INCREMENTAL_P;
 	m_incrValue[anum-1] = incrVal;
@@ -43,7 +44,8 @@ void GeneralJoint::controlIncr_P(int anum, double incrVal, double proGain, doubl
 	m_forceMax[anum-1] = forceMax;
 }
 
-void GeneralJoint::controlIncr_PD(int anum, double incrVal, double proGain, double derGain, double forceMax)
+void
+GeneralJoint::controlIncr_PD(int anum, double incrVal, double proGain, double derGain, double forceMax)
 {
 	m_jcm = JCM_INCREMENTAL_PD;
 	m_incrValue[anum-1] = incrVal;
@@ -52,7 +54,8 @@ void GeneralJoint::controlIncr_PD(int anum, double incrVal, double proGain, doub
 	m_forceMax[anum-1] = forceMax;
 }
 
-void GeneralJoint::control_P(int anum, double target, double gain, double fMax)
+void
+GeneralJoint::control_P(int anum, double target, double gain, double fMax)
 {
 	m_jcm = JCM_TARGET_VALUE_P;
 	m_targetValue[anum-1] = target;
@@ -60,7 +63,8 @@ void GeneralJoint::control_P(int anum, double target, double gain, double fMax)
 	m_forceMax[anum-1] = fMax;
 }
 
-void GeneralJoint::control_PD(int anum, double target, double proGain, double derGain, double forceMax)
+void
+GeneralJoint::control_PD(int anum, double target, double proGain, double derGain, double forceMax)
 {
 	m_jcm = JCM_TARGET_VALUE_PD;
 	m_targetValue[anum-1] = target;
@@ -69,7 +73,8 @@ void GeneralJoint::control_PD(int anum, double target, double proGain, double de
 	m_forceMax[anum-1] = forceMax;
 }
 
-void GeneralJoint::controlWithinRange_P(int anum, double min, double max, double pGain, double fMax)
+void
+GeneralJoint::controlWithinRange_P(int anum, double min, double max, double pGain, double fMax)
 {
 	m_jcm = JCM_WITHIN_RANGE;
 	m_minTargetValue[anum-1] = min;
@@ -78,20 +83,24 @@ void GeneralJoint::controlWithinRange_P(int anum, double min, double max, double
 	m_forceMax[anum-1] = fMax;
 }
 
-void GeneralJoint::setName(const char* name)
+void
+GeneralJoint::setName(const char* name)
 {
 	m_name = name;
 }
-const char* GeneralJoint::getName() const
+const char*
+GeneralJoint::getName() const
 {
 	return m_name.c_str();
 }
 
-void GeneralJoint::render(const BasicObjects& bo) const
+void
+GeneralJoint::render(const BasicObjects& bo) const
 {
 }
 
-void GeneralJoint::updateFrameInternal(int anum)
+void
+GeneralJoint::updateFrameInternal(int anum)
 {
 	switch (m_jcm)
 	{
@@ -145,7 +154,8 @@ void GeneralJoint::updateFrameInternal(int anum)
 	}
 }
 
-void GeneralJoint::controlP(int anum, double targetValue, double proGain, double forceMax)
+void
+GeneralJoint::controlP(int anum, double targetValue, double proGain, double forceMax)
 {
 	dReal cur = getValue(anum);
 	dReal z1 = getTargetValue(anum) - cur;
@@ -154,7 +164,8 @@ void GeneralJoint::controlP(int anum, double targetValue, double proGain, double
 	setParamFMax(anum, forceMax);
 }
 
-void GeneralJoint::controlPD(int anum, double targetValue, double proGain, double derGain, double forceMax)
+void
+GeneralJoint::controlPD(int anum, double targetValue, double proGain, double derGain, double forceMax)
 {
 	dReal cur = getValue(anum);
 	dReal curVel = getVelocity(anum);
@@ -164,7 +175,8 @@ void GeneralJoint::controlPD(int anum, double targetValue, double proGain, doubl
 	setParamFMax(anum, forceMax);
 }
 
-void GeneralJoint::reset()
+void
+GeneralJoint::reset()
 {
 	m_targetValue[0] = m_targetValue[1] = m_targetValue[2] = 0;
 	m_incrValue[0] = m_incrValue[1] = m_incrValue[2] = 0;
@@ -177,6 +189,13 @@ void GeneralJoint::reset()
 	doReset();
 }
 
-void GeneralJoint::configureOdeContext( const OdeSpaceContext* osc )
+void
+GeneralJoint::configureOdeContext( const OdeSpaceContext* osc )
 {
+}
+
+void
+GeneralJoint::addTorque(AxisEnum anum, float torque)
+{
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }

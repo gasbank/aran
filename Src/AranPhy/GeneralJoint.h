@@ -72,7 +72,7 @@ public:
 	@brief ODE 컨텍스트를 이용해 강체의 ODE 인스턴스를 생성
 	@param osc ODE 컨텍스트
 	@remark 호출하는 전에 ODE 컨텍스트가 \c NULL 로 설정되어 있어야 합니다.
-	\c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.	
+	\c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.
 	*/
 	virtual void				configureOdeContext(const OdeSpaceContext* osc);
 	/*!
@@ -90,11 +90,12 @@ public:
 	virtual void				render(const BasicObjects& bo) const;
 	virtual void				renderJointAxis() const = 0;
 
-	// Update this joint	
+	// Update this joint
 	virtual void				updateFrame() = 0;
 	void						reset();
 	dJointFeedback*				getSetJointFeedback() { return dJointGetFeedback(m_joint); }
 	void						enableJointFeedback() { dJointSetFeedback(m_joint, &m_jointFeedback); }
+	virtual void				addTorque(AxisEnum anum, float torque);
 protected:
 								GeneralJoint(const OdeSpaceContext* osc);
 	dJointID					getId() const { return m_joint; }

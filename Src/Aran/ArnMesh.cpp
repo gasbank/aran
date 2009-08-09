@@ -22,6 +22,7 @@ ArnMesh::ArnMesh()
 , m_bBoundingBoxPointsDirty(true)
 , m_bRenderBoundingBox(false)
 , m_abbt(ABBT_UNKNOWN)
+, m_bPhyActor(false)
 , m_mass(0)
 {
 	memset(&m_boundingBoxPoints[0], 0, sizeof(m_boundingBoxPoints));

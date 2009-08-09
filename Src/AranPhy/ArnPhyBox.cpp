@@ -11,7 +11,7 @@ ArnPhyBox::~ArnPhyBox()
 }
 
 ArnPhyBox*
-ArnPhyBox::createFrom(const OdeSpaceContext* osc, const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
+ArnPhyBox::createFrom(const OdeSpaceContext* osc, const char* name, const ArnVec3& com, const ArnVec3& size, float mass, bool fixed)
 {
 	ArnPhyBox* ret = new ArnPhyBox(osc);
 	ret->setName(name);
@@ -21,5 +21,6 @@ ArnPhyBox::createFrom(const OdeSpaceContext* osc, const char* name, const ArnVec
 	ret->setBoundingBoxType(ABBT_BOX);
 	ret->setBoundingBoxSize(size);
 	ret->setInitialCom(com);
+	ret->setFixed(fixed);
 	return ret;
 }

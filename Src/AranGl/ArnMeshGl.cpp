@@ -284,16 +284,17 @@ ArnMeshGl::renderXml() const
 			// Render anchor point if there is a rigid body joint constraint.
 			foreach (const ArnJointData& ajd, m_target->getJointData())
 			{
+				glLoadName(0x10000000); // Bounding box portion is not selectable.
 				glPushMatrix();
 				glTranslated(ajd.pivot.x, ajd.pivot.y, ajd.pivot.z);
-				glScaled(0.02, 0.02, 0.02);
+				glScaled(0.2, 0.2, 0.2);
 				ArnRenderSphereGl();
 				glPopMatrix();
 			}
 			// Bounding Box
-			glLoadName(0); // Bounding box portion is not selectable.
 			if (m_target->isOkayToRenderBoundingBox())
 			{
+				glLoadName(0); // Bounding box portion is not selectable.
 				glDisable(GL_LIGHTING);
 				glDisable(GL_CULL_FACE);
 				glLineWidth(0.5f);
@@ -301,37 +302,7 @@ ArnMeshGl::renderXml() const
 				glColor3f(1.0f, 1.0f, 1.0f);
 				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				glBindTexture(GL_TEXTURE_2D, 0);
-				glBegin(GL_QUADS);
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
-
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
-
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(0)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
-
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(4)));
-
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(7)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(3)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
-
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(6)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(2)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(1)));
-				glVertex3fv(reinterpret_cast<const GLfloat*>(m_target->getBoundingBoxPoint(5)));
-				glEnd();
+				ArnRenderBoundingBox(m_target->getBoundingBoxPoints());
 			}
 		}
 		glPopAttrib();

@@ -11,18 +11,18 @@
 
 SimWorld::SimWorld()
 : m_totalElapsedTime(0)
+, m_osc(new OdeSpaceContext)
 , m_leftSupportPosZ(0)
 , m_leftSupportPosY(0)
 , m_trunkSupportPosZ(0)
 , m_trunkSupportPosY(0)
 , m_bRenderSupports(false)
 , m_footSupportHeight(0.01)
-, m_osc(new OdeSpaceContext)
 {
 	m_osc->world = dWorldCreate();
 	dWorldSetGravity(m_osc->world, 0, 0, -9.8);
-	//dWorldSetERP(m_osc->world, 0.1);
-	//dWorldSetCFM(m_osc->world, 0.00001);
+	dWorldSetERP(m_osc->world, 0.4);
+	dWorldSetCFM(m_osc->world, 0.00001);
 	// Set up the collision environment
 	m_osc->space = dHashSpaceCreate(0);
 	m_osc->contactGroup = dJointGroupCreate(0);
@@ -54,17 +54,28 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 	const unsigned int nodeCount = sg->getNodeCount();
 
 	// Find rigid bodies of the scene and make physical instances of them.
+	// Also we make fixed joints of rigid bodies which have 0-mass.
 	for (unsigned int i = 0; i < nodeCount; ++i)
 	{
 		ArnNode* node = sg->getNodeAt(i);
 		if (node->getType() == NDT_RT_MESH)
 		{
 			ArnMesh* mesh = reinterpret_cast<ArnMesh*>(node);
-			if (mesh->getBoundingBoxType() == ABBT_BOX && mesh->getMass())
+			if (mesh->isPhyActor() && mesh->getBoundingBoxType() == ABBT_BOX)
 			{
 				ArnVec3 size;
 				mesh->getBoundingBoxDimension(&size, false);
-				ArnPhyBoxPtr boxPtr(ArnPhyBox::createFrom(0, mesh->getName(), mesh->getLocalXform_Trans(), size, mesh->getMass()));
+				ArnPhyBoxPtr boxPtr;
+				if (mesh->getMass())
+				{
+					// Normal rigid bodies which have nonzero mass.
+					boxPtr.reset(ArnPhyBox::createFrom(0, mesh->getName(), mesh->getLocalXform_Trans(), size, mesh->getMass(), false));
+				}
+				else
+				{
+					// Fixed rigid bodies.
+					boxPtr.reset(ArnPhyBox::createFrom(0, mesh->getName(), mesh->getLocalXform_Trans(), size, 1.0f, true));
+				}
 				boxPtr->setInitialQuaternion(mesh->getLocalXform_Rot());
 				boxPtr->setXformableTarget(mesh);
 				ret->registerBody(boxPtr);
@@ -79,7 +90,7 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 		if (node->getType() == NDT_RT_MESH)
 		{
 			ArnMesh* mesh = reinterpret_cast<ArnMesh*>(node);
-			if (mesh->getBoundingBoxType() == ABBT_BOX && mesh->getMass())
+			if (mesh->isPhyActor() && mesh->getBoundingBoxType() == ABBT_BOX)
 			{
 				foreach (const ArnJointData& ajd, mesh->getJointData())
 				{
@@ -95,9 +106,6 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 					ret->registerJoint(bsjPtr);
 					foreach (const ArnJointData::ArnJointLimit& ajl, ajd.limits)
 					{
-						int anum = 0;
-						dReal minimum = 0;
-						dReal maximum = 0;
 						if (ajl.type.compare("AngX") == 0)
 							bsjPtr->setParamLoHiStop(1, ajl.minimum, ajl.maximum);
 						else if (ajl.type.compare("AngY") == 0)
@@ -116,7 +124,7 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 GeneralBody*
 SimWorld::placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass)
 {
-	ArnPhyBox* gb = ArnPhyBox::createFrom(m_osc, name, com, size, mass);
+	ArnPhyBox* gb = ArnPhyBox::createFrom(m_osc, name, com, size, mass, false);
 	m_bodies.push_back(gb);
 	return gb;
 }
@@ -180,14 +188,14 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 		dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &contact[i]);
 		dJointAttach(c, b1, b2);
 	}
-	
+
 }
 
 void
 SimWorld::updateFrame(double elapsedTime)
 {
 	m_totalElapsedTime += elapsedTime;
-	
+
 	dSpaceCollide(m_osc->space, m_osc, &NearCallback);
 	dWorldStep(m_osc->world, elapsedTime);
 	dJointGroupEmpty(m_osc->contactGroup);
@@ -375,6 +383,17 @@ SimWorld::getJointByName(const char* name) const
 	return 0;
 }
 
+GeneralJointPtr
+SimWorld::getGeneralJointByName(const char* name) const
+{
+	foreach (const GeneralJointPtr& gbPtr, m_jointsPtr)
+	{
+		if (strcmp(gbPtr->getName(), name) == 0)
+			return gbPtr;
+	}
+	return GeneralJointPtr();
+}
+
 GeneralBody*
 SimWorld::getBodyByName(const char* name) const
 {
@@ -387,14 +406,16 @@ SimWorld::getBodyByName(const char* name) const
 	}
 	return 0;
 }
-const GeneralBodyPtr SimWorld::getBodyByNameFromSet( const char* name ) const
+
+const GeneralBodyPtr
+SimWorld::getBodyByNameFromSet( const char* name ) const
 {
 	foreach (const GeneralBodyPtr& b, m_bodiesPtr)
 	{
 		if (strcmp(b->getName(), name) == 0)
 			return b;
 	}
-	return GeneralBodyPtr(reinterpret_cast<GeneralBody*>(0));
+	return GeneralBodyPtr();
 }
 /*
 GeneralBody* SimWorld::getBodyByGeomID(dGeomID g) const

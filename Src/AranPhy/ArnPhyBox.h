@@ -21,10 +21,12 @@ public:
 	@param name		이름
 	@param com		질량 중심(center of mass)
 	@param size		가로, 세로, 높이 순의 크기
-	@param mass		질량
-	@remark			ODE 컨텍스트 파라미터를 \c NULL 로 설정했을 경우에는 이 개체가 SimWorld에 등록될 때 ODE 컨텍스트가 설정됩니다. 
+	@param mass		질량 (0 보다 큰 값이어야 함)
+	@param fixed	강체의 고정 여부
+	@remark			ODE 컨텍스트 파라미터를 \c NULL 로 설정했을 경우에는
+					이 개체가 SimWorld에 등록될 때 ODE 컨텍스트가 설정됩니다.
 	*/
-	static ArnPhyBox*		createFrom(const OdeSpaceContext* osc, const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
+	static ArnPhyBox*		createFrom(const OdeSpaceContext* osc, const char* name, const ArnVec3& com, const ArnVec3& size, float mass, bool fixed);
 	virtual					~ArnPhyBox();
 protected:
 private:
