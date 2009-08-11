@@ -1,4 +1,4 @@
-#include "Test2.h"
+#include "IkTest.h"
 
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, const ArnViewportData* avd, ArnCamera* cam )
