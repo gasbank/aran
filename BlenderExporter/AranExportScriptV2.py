@@ -584,24 +584,24 @@ for ob in sce.objects:
 				targetElm = doc.createElement('target')
 				targetElm.appendChild(doc.createTextNode(c[Constraint.Settings.TARGET].name))
 				cElm.appendChild(targetElm)
-				"""
+				
 				cType = c[Constraint.Settings.CONSTR_RB_TYPE]
-				cTypeStr = ''
-				if cType is Constraint.Settings.CONSTR_RB_BALL:
+				if cType is 1:
 					cTypeStr = 'ball'
-				elif cType is Constraint.Settings.CONSTR_RB_HINGE:
+				elif cType is 2:
 					cTypeStr = 'hinge'
-				elif cType is Constraint.Settings.CONSTR_RB_GENERIC6DOF:
+				elif cType is 12:
 					cTypeStr = 'generic'
-				print Constraint.Settings.CONSTR_RB_BALL
-				print Constraint.Settings.CONSTR_RB_HINGE
-				print Constraint.Settings.CONSTR_RB_GENERIC6DOF
-				print c[Constraint.Settings.CONSTR_RB_TYPE]
-				"""
+				else:
+					errorerror
+				jointTypeElm = doc.createElement('type')
+				jointTypeElm.appendChild(doc.createTextNode(cTypeStr))
+				cElm.appendChild(jointTypeElm)
+
 				pivotElm = doc.createElement('pivot')
 				pivotElm.appendChild(doc.createTextNode('%f %f %f' % (c[Constraint.Settings.CONSTR_RB_PIVX], c[Constraint.Settings.CONSTR_RB_PIVY], c[Constraint.Settings.CONSTR_RB_PIVZ])))
 				axElm = doc.createElement('ax')
-				axElm.setAttribute('unit', 'deg')
+				axElm.setAttribute('unit', 'rad')
 				axElm.appendChild(doc.createTextNode('%f %f %f' % (c[Constraint.Settings.CONSTR_RB_AXX], c[Constraint.Settings.CONSTR_RB_AXY], c[Constraint.Settings.CONSTR_RB_AXZ])))
 				cElm.appendChild(pivotElm)
 				cElm.appendChild(axElm)

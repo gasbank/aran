@@ -11,7 +11,8 @@
 			<Depends filename="AranGl/AranGl.cbp" />
 			<Depends filename="AranPhy/AranPhy.cbp" />
 		</Project>
-		<Project filename="AranIk_Test/AranIk_Test.cbp" active="1" />
+		<Project filename="AranIk_Test/AranIk_Test.cbp" />
 		<Project filename="AranMath_Test/AranMath_Test.cbp" />
+		<Project filename="AranIk/AranIk.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>

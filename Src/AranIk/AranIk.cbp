@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="AranIk" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/AranIk" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/AranIk" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Unit filename="AranIk.cpp" />
+		<Unit filename="AranIk.h" />
+		<Unit filename="Jacobian.cpp" />
+		<Unit filename="Jacobian.h" />
+		<Unit filename="LinearR2.cpp" />
+		<Unit filename="LinearR2.h" />
+		<Unit filename="LinearR3.cpp" />
+		<Unit filename="LinearR3.h" />
+		<Unit filename="LinearR4.cpp" />
+		<Unit filename="LinearR4.h" />
+		<Unit filename="MathMisc.h" />
+		<Unit filename="MatrixRmn.cpp" />
+		<Unit filename="MatrixRmn.h" />
+		<Unit filename="Misc.cpp" />
+		<Unit filename="Node.cpp" />
+		<Unit filename="Node.h" />
+		<Unit filename="RgbImage.cpp" />
+		<Unit filename="RgbImage.h" />
+		<Unit filename="Spherical.h" />
+		<Unit filename="Tree.cpp" />
+		<Unit filename="Tree.h" />
+		<Unit filename="VectorRn.cpp" />
+		<Unit filename="VectorRn.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

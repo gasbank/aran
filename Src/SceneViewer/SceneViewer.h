@@ -1,18 +1,18 @@
 /*!
-@file SceneViewer.h
-@author Geoyeob Kim
-@date 2009
-
-ARAN scene graph XML 파일을 렌더링해 주는 예제 프로젝트입니다.
-SDL을 사용해 윈도우를 관리하며 SceneList.txt에 명시된 XML 파일을 읽어들여
-사용자에게 보여줍니다. scene graph간의 전환은 N 키를 사용하고,
-현재 scene graph 파일을 다시 로딩하고 싶은 경우에는 R 키를 사용합니다.
-Action이 포함된 scene graph의 1, 2, 3번 키를 이용해 Action을 활성화시키거나
-비활성화시킬 수 있습니다.
-또한 마우스로 화면을 클릭하면 어떤 노드를 클릭했는지를 콘솔창에 나타내 줍니다.
-FreeType의 기능을 조금 사용해 현재 로딩된 XML 파일 이름을 보여주는 시험적인
-기능도 포함하고 있습니다.
-*/
+ * @file SceneViewer.h
+ * @author Geoyeob Kim
+ * @date 2009
+ *
+ * ARAN scene graph XML 파일을 렌더링해 주는 예제 프로젝트입니다.
+ * SDL을 사용해 윈도우를 관리하며 SceneList.txt에 명시된 XML 파일을 읽어들여
+ * 사용자에게 보여줍니다. scene graph간의 전환은 N 키를 사용하고,
+ * 현재 scene graph 파일을 다시 로딩하고 싶은 경우에는 R 키를 사용합니다.
+ * Action이 포함된 scene graph의 1, 2, 3번 키를 이용해 Action을 활성화시키거나
+ * 비활성화시킬 수 있습니다.
+ * 또한 마우스로 화면을 클릭하면 어떤 노드를 클릭했는지를 콘솔창에 나타내 줍니다.
+ * FreeType의 기능을 조금 사용해 현재 로딩된 XML 파일 이름을 보여주는 시험적인
+ * 기능도 포함하고 있습니다.
+ */
 #pragma once
 
 #include <stdlib.h>
