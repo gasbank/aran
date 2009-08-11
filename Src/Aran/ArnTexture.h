@@ -1,3 +1,7 @@
+/*! @file ArnTexture.h
+ *  @author Geoyeob Kim
+ *  @date 2009
+ */
 #pragma once
 
 #include "ArnNode.h"
@@ -43,8 +47,17 @@ private:
 
 class VideoMan;
 
-ARAN_API void			ArnInitializeImageLibrary();
-ARAN_API void			ArnCleanupImageLibrary();
+/*!
+ * @brief 이미지 라이브러리(DevIL) 초기화
+ * @return 성공 시 0, 실패(재 초기화 포함) 시 음수
+ */
+ARAN_API int			ArnInitializeImageLibrary();
+/*!
+ * @brief 이미지 라이브러리(DevIL) 해제
+ * @return 성공 시 0, 실패(미 초기화 후 호출 포함) 시 음수
+ */
+ARAN_API int			ArnCleanupImageLibrary();
+
 ARAN_API ArnTexture*	ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsigned int height, unsigned int bpp, bool wrap );
 void					ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, unsigned int* bpp, const char* fileName );
 HRESULT					ArnCreateTextureFromFile(VideoMan* pDevice, const char* pSrcFile, ArnTexture** ppTexture);

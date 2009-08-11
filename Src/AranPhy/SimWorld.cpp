@@ -177,12 +177,16 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 	int n = dCollide(o1, o2, MAXIMUM_CONTACT_COUNT, &contact[0].geom, sizeof(dContact));
 	for (int i = 0; i < n; i++)
 	{
-		//contact[i].surface.mode = dContactSoftERP | dContactSoftCFM;
+		//contact[i].surface.mode = dContactSoftERP; // | dContactSoftCFM;
 		contact[i].surface.mode = 0;
+
 		contact[i].surface.mu   = dInfinity; //2.0;
-		//contact[i].surface.mu   = 5000;
+		//contact[i].surface.mu   = 2.0;
+		//contact[i].surface.mu   = 0;
+
+		//contact[i].surface.mu   = 500;
 		//contact[i].surface.soft_erp = 0.9;
-		//contact[i].surface.soft_erp = 0.01;
+		//contact[i].surface.soft_erp = 0.0001;
 		//contact[i].surface.soft_cfm = 0.01;
 
 		dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &contact[i]);

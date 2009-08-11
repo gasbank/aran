@@ -12,6 +12,7 @@
 #include "ArnMaterial.h"
 
 static GLUquadric* gs_quadricSphere = 0;
+static bool gs_bAranGlInitialized = false;
 
 void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam)
 {
@@ -579,17 +580,37 @@ void ArnRenderGeneralBodyGl()
 
 }
 
-void ArnInitializeGl()
+int ArnInitializeGl()
 {
-	assert(!gs_quadricSphere);
-	gs_quadricSphere = gluNewQuadric();
-	assert(gs_quadricSphere);
+	if (gs_bAranGlInitialized == false)
+	{
+		assert(!gs_quadricSphere);
+		gs_quadricSphere = gluNewQuadric();
+		assert(gs_quadricSphere);
+		gs_bAranGlInitialized = true;
+		return 0;
+	}
+	else
+	{
+		// Already initialized.
+		return -1;
+	}
 }
 
-void ArnCleanupGl()
+int ArnCleanupGl()
 {
-	assert(gs_quadricSphere);
-	gluDeleteQuadric(gs_quadricSphere);
+	if (gs_bAranGlInitialized)
+	{
+		assert(gs_quadricSphere);
+		gluDeleteQuadric(gs_quadricSphere);
+		gs_bAranGlInitialized = false;
+		return 0;
+	}
+	else
+	{
+		// Not initialized, but cleanup called.
+		return -1;
+	}
 }
 
 /*

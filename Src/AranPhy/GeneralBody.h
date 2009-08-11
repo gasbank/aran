@@ -80,11 +80,14 @@ public:
 	void							setInitialQuaternion(const ArnQuat& q) { m_quat0 = q; }
 	//@}
 	/*! @name 각속도와 선속도
-	강체의 각속도와 선속도를 읽어올 수 있습니다.
+	강체의 각속도와 선속도를 읽어오거나 설정할 수 있습니다.
+	Kinematic 물체에 대해서 선속도나 각속도를 설정하는 것은 문제가 없을 수 있으나
+	dynamics 물체에 대해 이러한 값을 시뮬레이션 도중에 직접 설정하는 것은 불안정성을 높입니다.
 	*/
 	//@{
 	ArnVec3*						getLinearVel(ArnVec3* linVel) const;
 	const dReal*					getLinearVel() const { return dBodyGetLinearVel(m_body); }
+	void							setLinearVel(float x, float y, float z);
 	ArnVec3*						getAngularVel(ArnVec3* angVel) const;
 	const dReal*					getAngularVel() const { return dBodyGetAngularVel(m_body); }
 	//@}

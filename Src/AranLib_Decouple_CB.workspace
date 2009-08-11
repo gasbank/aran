@@ -2,7 +2,7 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
 		<Project filename="Aran/AranCB.cbp" />
-		<Project filename="AranDecouple_Test/AranDecouple_Test.cbp" active="1">
+		<Project filename="AranDecouple_Test/AranDecouple_Test.cbp">
 			<Depends filename="Aran/AranCB.cbp" />
 			<Depends filename="AranMath/AranMath.cbp" />
 			<Depends filename="AranGl/AranGl.cbp" />
@@ -11,5 +11,6 @@
 		<Project filename="AranMath/AranMath.cbp" />
 		<Project filename="AranGl/AranGl.cbp" />
 		<Project filename="AranPhy/AranPhy.cbp" />
+		<Project filename="SceneViewer/SceneViewer.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>

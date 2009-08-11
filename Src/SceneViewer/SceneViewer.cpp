@@ -1,4 +1,4 @@
-#include "Test2.h"
+#include "SceneViewer.h"
 
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, const ArnViewportData* avd, ArnCamera* cam )
@@ -98,6 +98,12 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	}
 }
 
+
+static float gs_linVelX = 0;
+static float gs_linVelZ = 0;
+static float gs_torque = 0;
+static float gs_torqueAnkle = 0;
+
 static MessageHandleResult
 HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd, SimWorldPtr swPtr)
 {
@@ -159,6 +165,14 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			{
 				done = MHR_EXIT_APP;
 			}
+			else if (event->key.keysym.sym == SDLK_n)
+			{
+				done = MHR_NEXT_SCENE;
+			}
+			else if (event->key.keysym.sym == SDLK_r)
+			{
+				done = MHR_RELOAD_SCENE;
+			}
 			else if (event->key.keysym.sym == SDLK_1)
 			{
 				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
@@ -196,48 +210,7 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 					skel->getAnimCtrl()->SetTrackWeight(2, 1);
 				}
 			}
-			else if (event->key.keysym.sym == SDLK_n)
-			{
-				done = MHR_NEXT_SCENE;
-			}
-			else if (event->key.keysym.sym == SDLK_r)
-			{
-				done = MHR_RELOAD_SCENE;
-			}
-			else if (event->key.keysym.sym == SDLK_t)
-			{
-				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gbPtr)
-				{
-					gbPtr->addTorque(AXIS_Y, 1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_y)
-			{
-				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gbPtr)
-				{
-					gbPtr->addTorque(AXIS_Y, -1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_g)
-			{
-				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gbPtr)
-				{
-					gbPtr->addTorque(AXIS_X, 1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_h)
-			{
-				GeneralJointPtr gbPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gbPtr)
-				{
-					gbPtr->addTorque(AXIS_X, -1000.0f);
-				}
-			}
-			printf("key '%s' pressed\n",
-				SDL_GetKeyName(event->key.keysym.sym));
+			printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
 			break;
 		case SDL_QUIT:
 			done = MHR_EXIT_APP;
@@ -556,7 +529,7 @@ Cleanup()
 	ArnCleanupGl();
 }
 
-void
+static void
 GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGraph* sg)
 {
 	activeCam = reinterpret_cast<ArnCamera*>(sg->findFirstNodeOfType(NDT_RT_CAMERA));
@@ -568,7 +541,7 @@ GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGrap
 	assert(activeLight);
 }
 
-int
+static int
 LoadSceneList(std::vector<std::string>& sceneList)
 {
 	// Load first scene file from SceneList.txt
@@ -590,7 +563,7 @@ LoadSceneList(std::vector<std::string>& sceneList)
 	return sceneCount;
 }
 
-int
+static int
 DoMain()
 {
 	int							curSceneIndex		= -1;
@@ -639,11 +612,12 @@ DoMain()
 	}
 
 	// SDL Window init start
-	if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		Cleanup();
 		return -304;
 	}
+	SDL_JoystickOpen(0);
 
 	/* Set the flags we want to use for setting the video mode */
 	int video_flags = SDL_OPENGL;
@@ -660,7 +634,8 @@ DoMain()
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 ); // Swap Control On --> Refresh rate to 60 Hz
+	// Swap Control On --> Refresh rate not exceeds Vsync(60 Hz mostly)
+	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
 
 	if ( SDL_SetVideoMode( windowWidth, windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
@@ -778,11 +753,22 @@ DoMain()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		double stepSize = (double)frameDurationMs / 1000.0;
-		if (stepSize)
+
+		// Physical simulation update
+		GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+		if (gjPtr)
 		{
-			//swPtr->updateFrame(stepSize);
-			swPtr->updateFrame(0.01);
+			gjPtr->addTorque(AXIS_Y, gs_torque);
+		}
+		gjPtr = swPtr->getGeneralJointByName("Stick2-Foot");
+		if (gjPtr)
+		{
+			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
+		}
+		//double stepSize = (double)frameDurationMs / 1000.0;
+		for (unsigned int step = 0; step < frameDurationMs; ++step)
+		{
+			swPtr->updateFrame(0.001);
 		}
 
 		glPushMatrix();
@@ -870,7 +856,8 @@ DoMain()
 	return 0;
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
 	int retCode = DoMain();
 

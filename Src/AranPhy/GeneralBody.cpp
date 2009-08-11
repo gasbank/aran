@@ -21,26 +21,30 @@ GeneralBody::~GeneralBody()
 {
 }
 
-void GeneralBody::createGeomBox(const ArnVec3& dim)
+void
+GeneralBody::createGeomBox(const ArnVec3& dim)
 {
 	assert(m_geom == 0);
 	m_geom = dCreateBox(m_osc->space, dim.x, dim.y, dim.z);
 	dGeomSetBody(m_geom, m_body);
 }
 
-void GeneralBody::createGeomCapsule(double radius, double height)
+void
+GeneralBody::createGeomCapsule(double radius, double height)
 {
 	assert(m_geom == 0);
 	m_geom = dCreateCapsule(m_osc->space, radius, height);
 	dGeomSetBody(m_geom, m_body);
 }
 
-void GeneralBody::setBodyPosition(const ArnVec3& comPos)
+void
+GeneralBody::setBodyPosition(const ArnVec3& comPos)
 {
 	dBodySetPosition(m_body, comPos.x, comPos.y, comPos.z);
 }
 
-void GeneralBody::getGeomSize(dVector3 out) const
+void
+GeneralBody::getGeomSize(dVector3 out) const
 {
 	switch (dGeomGetClass(m_geom))
 	{
@@ -62,7 +66,8 @@ void GeneralBody::getGeomSize(dVector3 out) const
 	return;
 }
 
-void GeneralBody::getState(GeneralBodyState& gbs) const
+void
+GeneralBody::getState(GeneralBodyState& gbs) const
 {
 	getPosition(&gbs.pos);
 	getQuaternion(&gbs.quat);
@@ -70,7 +75,8 @@ void GeneralBody::getState(GeneralBodyState& gbs) const
 	getAngularVel(&gbs.angVel);
 }
 
-void GeneralBody::setState(const GeneralBodyState& gbs)
+void
+GeneralBody::setState(const GeneralBodyState& gbs)
 {
 	dQuaternion odeQ = { gbs.quat.w, gbs.quat.x, gbs.quat.y, gbs.quat.z }; // ODE quaternion sequence is scalar first
 	dBodySetPosition(m_body, gbs.pos[0], gbs.pos[1], gbs.pos[2]);
@@ -79,7 +85,8 @@ void GeneralBody::setState(const GeneralBodyState& gbs)
 	dBodySetAngularVel(m_body, gbs.angVel[0], gbs.angVel[1], gbs.angVel[2]);
 }
 
-ArnVec3 GeneralBody::getRotationEuler() const
+ArnVec3
+GeneralBody::getRotationEuler() const
 {
 	const dReal* odeQuat = dBodyGetQuaternion(m_body);
 	// TODO: ODE quaternion sequence
@@ -87,12 +94,14 @@ ArnVec3 GeneralBody::getRotationEuler() const
 	return ArnQuatToEuler(&q);
 }
 
-void GeneralBody::addExternalForceOnCom(double x, double y, double z)
+void
+GeneralBody::addExternalForceOnCom(double x, double y, double z)
 {
 	dBodyAddForce(m_body, x, y, z);
 }
 
-void GeneralBody::reset()
+void
+GeneralBody::reset()
 {
 	dBodyID body = getBodyId();
 	dQuaternion q = {1.0, 0.0, 0.0, 0.0};
@@ -105,44 +114,52 @@ void GeneralBody::reset()
 	setContactGround(false);
 }
 
-bool GeneralBody::isContactGround() const
+bool
+GeneralBody::isContactGround() const
 {
 	return m_isContactGround;
 }
 
-void GeneralBody::render()
+void
+GeneralBody::render()
 {
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-ArnVec3* GeneralBody::getPosition( ArnVec3* pos ) const
+ArnVec3*
+GeneralBody::getPosition( ArnVec3* pos ) const
 {
 	return ArnVec3Assign(pos, dBodyGetPosition(m_body));
 }
 
-ArnMatrix* GeneralBody::getRotationMatrix( ArnMatrix* rotMat ) const
+ArnMatrix*
+GeneralBody::getRotationMatrix( ArnMatrix* rotMat ) const
 {
 	// TODO: ODE Matrix row or columnwise not clear
 	return OdeMatrixToDx(rotMat, dBodyGetRotation(m_body));
 }
 
-ArnQuat* GeneralBody::getQuaternion( ArnQuat* q ) const
+ArnQuat*
+GeneralBody::getQuaternion( ArnQuat* q ) const
 {
 	// TODO: ODE Quaternion order not clear
 	return ArnQuatAssign_ScalarLast(q, dBodyGetQuaternion(m_body));
 }
 
-ArnVec3* GeneralBody::getLinearVel( ArnVec3* linVel ) const
+ArnVec3*
+GeneralBody::getLinearVel( ArnVec3* linVel ) const
 {
 	return ArnVec3Assign(linVel, dBodyGetLinearVel(m_body));
 }
 
-ArnVec3* GeneralBody::getAngularVel( ArnVec3* angVel ) const
+ArnVec3*
+GeneralBody::getAngularVel( ArnVec3* angVel ) const
 {
 	return ArnVec3Assign(angVel, dBodyGetAngularVel(m_body));
 }
 
-void GeneralBody::setBoundingBoxSize( const ArnVec3& size )
+void
+GeneralBody::setBoundingBoxSize( const ArnVec3& size )
 {
 	switch (m_abbt)
 	{
@@ -154,7 +171,8 @@ void GeneralBody::setBoundingBoxSize( const ArnVec3& size )
 	}
 }
 
-void GeneralBody::setMassDistributionSize( const ArnVec3& size )
+void
+GeneralBody::setMassDistributionSize( const ArnVec3& size )
 {
 	switch (m_amdt)
 	{
@@ -170,7 +188,8 @@ void GeneralBody::setMassDistributionSize( const ArnVec3& size )
 	}
 }
 
-void GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
+void
+GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 {
 	assert(m_osc == 0);
 	assert(m_body == 0);
@@ -214,6 +233,7 @@ void GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 
 	dQuaternion odeQ = { m_quat0.w, m_quat0.x, m_quat0.y, m_quat0.z };
 	dBodySetQuaternion(m_body, odeQ);
+	dBodySetAngularDamping(m_body, 0.1);
 
 	if (isFixed())
 	{
@@ -221,7 +241,8 @@ void GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 	}
 }
 
-void GeneralBody::notify()
+void
+GeneralBody::notify()
 {
 	if (m_xformable)
 	{
@@ -233,17 +254,26 @@ void GeneralBody::notify()
 	}
 }
 
-void GeneralBody::setBodyData( void* data )
+void
+GeneralBody::setBodyData( void* data )
 {
 	dBodySetData(m_body, data);
 }
 
-void GeneralBody::setGeomData( void* data )
+void
+GeneralBody::setGeomData( void* data )
 {
 	dGeomSetData(m_geom, data);
 }
 
-void* GeneralBody::getGeomData() const
+void*
+GeneralBody::getGeomData() const
 {
 	return dGeomGetData(m_geom);
+}
+
+void
+GeneralBody::setLinearVel(float x, float y, float z)
+{
+	dBodySetLinearVel(m_body, x, y, z);
 }

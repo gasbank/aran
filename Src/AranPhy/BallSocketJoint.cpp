@@ -153,6 +153,7 @@ BallSocketJoint::configureOdeContext( const OdeSpaceContext* osc )
 	//dJointSetAMotorAngle(m_amotorId, 1 /* Y-AXIS */, 0);
 	//dJointSetAMotorAngle(m_amotorId, 2 /* Z-AXIS */, 0);
 	//dJointSetAMotorParam(m_amotorId, dParamFMax, 100000000);
+	//dJointSetAMotorParam(m_amotorId, dParamStopCFM, 0.1);
 }
 
 void

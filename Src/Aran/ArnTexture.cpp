@@ -114,21 +114,34 @@ ArnLoadFromPpmFile(unsigned char** buff, int* width, int* height, const char* fi
 	return;
 }
 
-void
+int
 ArnInitializeImageLibrary()
 {
-	ilInit();
-	gs_ilInitialized = true;
+	if (gs_ilInitialized == false)
+	{
+		ilInit();
+		gs_ilInitialized = true;
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
-void
+int
 ArnCleanupImageLibrary()
 {
-	assert(gs_ilInitialized);
-	//
-	// Insert cleanup code here
-	//
-	gs_ilInitialized = false;
+	if (gs_ilInitialized)
+	{
+		gs_ilInitialized = false;
+		// TODO: No cleanup function for DevIL?
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }
 
 void

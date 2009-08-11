@@ -931,12 +931,27 @@ CreateArnNodeFromXmlElement(const TiXmlElement* elm, const char* binaryChunkBase
 
 int ArnInitializeXmlParser()
 {
-	gs_xmlInitialized = true;
-	return 0;
+	if (gs_xmlInitialized == false)
+	{
+		gs_xmlInitialized = true;
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
+
 }
 
-void ArnCleanupXmlParser()
+int ArnCleanupXmlParser()
 {
-	assert(gs_xmlInitialized);
-	gs_xmlInitialized = false;
+	if (gs_xmlInitialized)
+	{
+		gs_xmlInitialized = false;
+		return 0;
+	}
+	else
+	{
+		return -1;
+	}
 }

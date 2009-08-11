@@ -61,7 +61,9 @@
 		<Unit filename="Test2.cpp" />
 		<Unit filename="Test2.h" />
 		<Extensions>
-			<code_completion />
+			<code_completion>
+				<search_path add="/usr/include/SDL" />
+			</code_completion>
 			<debugger />
 			<envvars />
 		</Extensions>
