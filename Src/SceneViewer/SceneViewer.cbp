@@ -7,7 +7,8 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="bin/Debug/SceneViewer" prefix_auto="1" extension_auto="1" />
+				<Option output="../../../Working/SceneViewerD" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../../../Working" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />

@@ -6,6 +6,13 @@
 #include <string.h>
 #include <math.h>
 
+//
+// Boost C++
+//
+#include <boost/foreach.hpp>
+#include <boost/array.hpp>
+#define foreach BOOST_FOREACH
+
 #include "Macros.h"
 #include "ArnVec3.h"
 #include "ArnVec4.h"
