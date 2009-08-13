@@ -79,12 +79,12 @@ ArnBone::buildFrom( const NodeBone2* nb )
 unsigned int
 ArnBone::getChildBoneCount() const
 {
-	unsigned int ret = 1;
+	unsigned int ret = 0;
 	foreach(const ArnNode* node, getChildren())
 	{
 		if (node->getType() == NDT_RT_BONE)
 		{
-			ret += static_cast<const ArnBone*>(node)->getChildBoneCount();
+			ret += 1 + static_cast<const ArnBone*>(node)->getChildBoneCount();
 		}
 	}
 	return ret;

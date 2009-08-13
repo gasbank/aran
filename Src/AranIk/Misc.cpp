@@ -1,17 +1,8 @@
-#include <math.h>
+#include "AranIkPCH.h"
 #include "LinearR3.h"
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
-#include <GL/glui.h>
-
 /****************************************************************
-							 Axes 
+							 Axes
 *****************************************************************/
 static float xx[] = {
 		0., 1., 0., 1.
@@ -79,7 +70,7 @@ void Axes( float length )
 			j = xorder[i];
 			if( j < 0 )
 			{
-				
+
 				glEnd();
 				glBegin( GL_LINE_STRIP );
 				j = -j;
@@ -95,7 +86,7 @@ void Axes( float length )
 			j = yorder[i];
 			if( j < 0 )
 			{
-				
+
 				glEnd();
 				glBegin( GL_LINE_STRIP );
 				j = -j;
@@ -111,7 +102,7 @@ void Axes( float length )
 			j = zorder[i];
 			if( j < 0 )
 			{
-				
+
 				glEnd();
 				glBegin( GL_LINE_STRIP );
 				j = -j;
@@ -125,7 +116,7 @@ void Axes( float length )
 
 
 /****************************************************************
-							 Arrow 
+							 Arrow
 *****************************************************************/
 
 /* size of wings as fraction of length:					*/
@@ -163,7 +154,7 @@ void	Arrow( const VectorR3& tail, const VectorR3& head )
 	tail.Dump( t );
 	head.Dump( h );
 	Arrow( t, h );
-} 
+}
 
 
 void Arrow( float tail[3], float head[3] )

@@ -1,15 +1,4 @@
-
-#include <iostream>
-using namespace std;
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
-
+#include "AranIkPCH.h"
 #include "LinearR3.h"
 #include "Tree.h"
 #include "Node.h"
@@ -22,14 +11,16 @@ Tree::Tree()
 
 void Tree::SetSeqNum(Node* node)
 {
-	switch (node->purpose) {
+	switch (node->getPurpose()) {
 	case JOINT:
-		node->seqNumJoint = nJoint++;
-		node->seqNumEffector = -1;
+		node->setSeqNumJoint(nJoint);
+		nJoint++;
+		node->setSeqNumEffector(-1);
 		break;
 	case EFFECTOR:
-		node->seqNumJoint = -1;
-		node->seqNumEffector = nEffector++;
+		node->setSeqNumJoint(-1);
+		node->setSeqNumEffector(nEffector);
+		nEffector++;
 		break;
 	}
 }
@@ -74,15 +65,17 @@ Node* Tree::SearchJoint(Node* node, int index)
 		if (node->seqNumJoint == index) {
 			return node;
 		} else {
-			if (ret = SearchJoint(node->left, index)) {
+			ret = SearchJoint(node->left, index);
+			if (ret) {
 				return ret;
 			}
-			if (ret = SearchJoint(node->right, index)) {
+			ret = SearchJoint(node->right, index);
+			if (ret) {
 				return ret;
 			}
 			return NULL;
 		}
-	} 
+	}
 	else {
 		return NULL;
 	}
@@ -103,10 +96,12 @@ Node* Tree::SearchEffector(Node* node, int index)
 		if (node->seqNumEffector == index) {
 			return node;
 		} else {
-			if (ret = SearchEffector(node->left, index)) {
+			ret = SearchEffector(node->left, index);
+			if (ret) {
 				return ret;
 			}
-			if (ret = SearchEffector(node->right, index)) {
+			ret = SearchEffector(node->right, index);
+			if (ret) {
 				return ret;
 			}
 			return NULL;
@@ -128,7 +123,7 @@ const VectorR3& Tree::GetEffectorPosition(int index)
 {
 	Node* effector = GetEffector(index);
 	assert(effector);
-	return (effector->s);  
+	return (effector->s);
 }
 
 void Tree::ComputeTree(Node* node)
@@ -142,31 +137,11 @@ void Tree::ComputeTree(Node* node)
 }
 
 void Tree::Compute(void)
-{ 
-	ComputeTree(root); 
-}
-
-void Tree::DrawTree(Node* node)
 {
-	if (node != 0) {
-		glPushMatrix();
-		node->DrawNode( node==root );	// Recursively draw node and update ModelView matrix
-		if (node->left) {
-			DrawTree(node->left);		// Draw tree of children recursively
-		}
-		glPopMatrix();
-		if (node->right) {
-			DrawTree(node->right);		// Draw right siblings recursively
-		}
-	}
+	ComputeTree(root);
 }
 
-void Tree::Draw(void) 
-{
-	DrawTree(root);
-}
-
-void Tree::PrintTree(Node* node)
+void Tree::PrintTree(const Node* node) const
 {
 	if (node != 0) {
 		node->PrintNode();
@@ -175,9 +150,9 @@ void Tree::PrintTree(Node* node)
 	}
 }
 
-void Tree::Print(void) 
-{ 
-	PrintTree(root);  
+void Tree::Print(void)
+{
+	PrintTree(root);
 	cout << "\n";
 }
 
@@ -209,4 +184,111 @@ void Tree::UnFreezeTree(Node* node)
 void Tree::UnFreeze(void)
 {
 	UnFreezeTree(root);
+}
+
+void Tree::printHierarchy() const
+{
+	root->printNodeHierarchy(0);
+}
+
+bool Tree::hasNode(const Node* node) const
+{
+	if (root == node)
+		return true;
+	else
+		return root->hasNode(node);
+}
+
+Node* Tree::getPrevSiblingNode(Node* node)
+{
+	Node* realParent = node->getRealParent();
+	if (!realParent)
+		return 0;
+	Node* prevSibling = realParent->getLeftNode();
+	while (prevSibling && prevSibling->getRightNode() != node)
+	{
+		prevSibling = prevSibling->getRightNode();
+	}
+	return prevSibling;
+}
+
+void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, bool childOrSibling /* false = child, true = sibling */, Node* skipNode)
+{
+	assert(node);
+
+	if (node == skipNode)
+		return;
+
+	Node* createdNode = new Node(*node);
+
+	if (!prevInsertedNode && !root)
+	{
+		InsertRoot(createdNode);
+	}
+	else if (prevInsertedNode && !childOrSibling)
+	{
+		// Insert child to 'prevInsertedNode'.
+		Node* leftNode = prevInsertedNode->getLeftNode();
+		if (!leftNode)
+		{
+			InsertLeftChild(prevInsertedNode, createdNode);
+		}
+		else
+		{
+			Node* lastChild = leftNode;
+			while (lastChild->getRightNode())
+			{
+				lastChild = lastChild->getRightNode();
+			}
+			InsertRightSibling(lastChild, createdNode);
+		}
+	}
+	else if (prevInsertedNode && childOrSibling)
+	{
+		InsertRightSibling(prevInsertedNode, createdNode);
+	}
+
+	Node* child = node->getLeftNode();
+	if (child)
+	{
+		InsertCopiedNodesBySwitchingRoot(createdNode, child, false, skipNode);
+
+		while (child->getRightNode())
+		{
+			child = child->getRightNode();
+			InsertCopiedNodesBySwitchingRoot(createdNode, child, false, skipNode);
+		}
+	}
+
+	if (node->realparent)
+	{
+		if (!getNodeByName(node->realparent->getName()))
+		{
+			InsertCopiedNodesBySwitchingRoot(createdNode, node->realparent, false, node);
+		}
+	}
+}
+
+Node* Tree::getNodeByName(const char* name)
+{
+	return root->getNodeByName(name);
+}
+
+void Tree::updatePurpose()
+{
+	root->updatePurpose();
+
+	nJoint = 0;
+	nEffector = 0;
+	resetSeqNum(root);
+	assert(nJoint + nEffector == nNode);
+}
+
+void Tree::resetSeqNum(Node* node)
+{
+	SetSeqNum(node);
+	if (node->getLeftNode())
+		resetSeqNum(node->getLeftNode());
+	if (node->getRightNode())
+		resetSeqNum(node->getRightNode());
 }

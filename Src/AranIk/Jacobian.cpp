@@ -1,25 +1,13 @@
-
-#include <stdlib.h>
-#include <math.h>
-#include <assert.h>
-#include <iostream>
-using namespace std;
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
-#include <GL/glui.h>
-
+#include "AranIkPCH.h"
 #include "Jacobian.h"
 
 void Arrow(const VectorR3& tail, const VectorR3& head);
 
-extern int RestPositionOn;
-extern VectorR3 target[];
+///////////////////extern int RestPositionOn;
+int RestPositionOn;
+///////////////////extern VectorR3 target[];
+
+//VectorR3 target[10];
 
 // Optimal damping values have to be determined in an ad hoc manner  (Yuck!)
 // const double Jacobian::DefaultDampingLambda = 0.6;		// Optimal for the "Y" shape (any lower gives jitter)
@@ -48,7 +36,7 @@ Jacobian::Jacobian(Tree* tree)
 	SetJendActive();
 
 	U.SetSize(nRow, nRow);				// The U matrix for SVD calculations
-	w .SetLength(Min(nRow, nCol));
+	w.SetLength(Min(nRow, nCol));
 	V.SetSize(nCol, nCol);				// The V matrix for SVD calculations
 
 	dS.SetLength(nRow);			// (Target positions) - (End effector positions)
@@ -132,7 +120,12 @@ void Jacobian::UpdateThetas()
 	while ( n ) {
 		if ( n->IsJoint() ) {
 			int i = n->GetJointNum();
-			n->AddToTheta( dTheta[i] );
+			double nextTheta = n->GetTheta() + dTheta[i];
+			// Check joint limits
+			if (n->GetMinTheta() < nextTheta && nextTheta < n->GetMaxTheta())
+			{
+				n->AddToTheta( dTheta[i] );
+			}
 		}
 		n = tree->GetSuccessor( n );
 	}
@@ -530,92 +523,8 @@ void Jacobian::CountErrors( const Jacobian& j1, const Jacobian& j2, int* numBett
 	*numTies = tie;
 }
 
-/* THIS VERSION IS NOT AS GOOD.  DO NOT USE!
-void Jacobian::CalcDeltaThetasSDLSrev2()
+void Jacobian::setTarget(unsigned int i, const VectorR3& v)
 {
-	const MatrixRmn& J = ActiveJacobian();
-
-	// Compute Singular Value Decomposition
-
-	J.ComputeSVD( U, w, V );
-
-	// Next line for debugging only
-    assert(J.DebugCheckSVD(U, w , V));
-
-	// Calculate response vector dTheta that is the SDLS solution.
-	//	Delta target values are the dS values
-	int nRows = J.GetNumRows();
-	int numEndEffectors = tree->GetNumEffector();		// Equals the number of rows of J divided by three
-	int nCols = J.GetNumColumns();
-	dTheta.SetZero();
-
-	// Calculate the norms of the 3-vectors in the Jacobian
-	long i;
-	const double *jx = J.GetPtr();
-	double *jnx = Jnorms.GetPtr();
-	for ( i=nCols*numEndEffectors; i>0; i-- ) {
-		double accumSq = Square(*(jx++));
-		accumSq += Square(*(jx++));
-		accumSq += Square(*(jx++));
-		*(jnx++) = sqrt(accumSq);
-	}
-
-	// Loop over each singular vector
-	for ( i=0; i<nRows; i++ ) {
-
-		double wiInv = w[i];
-		if ( NearZero(wiInv,1.0e-10) ) {
-			continue;
-		}
-
-		double N = 0.0;						// N is the quasi-1-norm of the i-th column of U
-		double alpha = 0.0;					// alpha is the dot product of dS and the i-th column of U
-
-		const double *dSx = dS.GetPtr();
-		const double *ux = U.GetColumnPtr(i);
-		long j;
-		for ( j=numEndEffectors; j>0; j-- ) {
-			double tmp;
-			alpha += (*ux)*(*(dSx++));
-			tmp = Square( *(ux++) );
-			alpha += (*ux)*(*(dSx++));
-			tmp += Square(*(ux++));
-			alpha += (*ux)*(*(dSx++));
-			tmp += Square(*(ux++));
-			N += sqrt(tmp);
-		}
-
-		// P is the quasi-1-norm of the response to angles changing according to the i-th column of V
-		double P = 0.0;
-		double *vx = V.GetColumnPtr(i);
-		jnx = Jnorms.GetPtr();
-		for ( j=nCols; j>0; j-- ) {
-			double accum=0.0;
-			for ( long k=numEndEffectors; k>0; k-- ) {
-				accum += *(jnx++);
-			}
-			P += fabs((*(vx++)))*accum;
-		}
-
-		double lambda = 1.0;
-		if ( N<P ) {
-			lambda -= N/P;				// Scale back maximum permissable joint angle
-		}
-		lambda *= lambda;
-		lambda *= DampingLambdaSDLS;
-
-		// Calculate the dTheta from pure pseudoinverse considerations
-		double scale = alpha*wiInv/(Square(wiInv)+Square(lambda));			// This times i-th column of V is the SDLS response
-		MatrixRmn::AddArrayScale(nCols, V.GetColumnPtr(i), 1, dTheta.GetPtr(), 1, scale );
-	}
-
-	// Scale back to not exceed maximum angle changes
-	double maxChange = dTheta.MaxAbs();
-	if ( maxChange>MaxAngleSDLS ) {
-		dTheta *= MaxAngleSDLS/maxChange;
-	}
-} */
-
-
-
-
+	assert(i < 10);
+	target[i] = v;
+}

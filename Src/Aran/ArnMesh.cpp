@@ -16,14 +16,14 @@ ArnMesh::ArnMesh()
 , m_arnVb(0)
 , m_arnIb(0)
 , m_triquadUvChunk(0)
-, m_bTwoSided(false)
-, m_nodeMesh3(0)
 , m_vertexChunk(0)
+, m_bTwoSided(false)
 , m_bBoundingBoxPointsDirty(true)
 , m_bRenderBoundingBox(false)
 , m_abbt(ABBT_UNKNOWN)
 , m_bPhyActor(false)
 , m_mass(0)
+, m_nodeMesh3(0)
 {
 	memset(&m_boundingBoxPoints[0], 0, sizeof(m_boundingBoxPoints));
 }

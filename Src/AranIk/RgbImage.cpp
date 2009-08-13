@@ -17,15 +17,17 @@
  * Web page: http://math.ucsd.edu/~sbuss/MathCG
  *
  */
-
+#include "AranIkPCH.h"
 #include "RgbImage.h"
 
+/*
 #ifndef RGBIMAGE_DONT_USE_OPENGL
 #ifdef WIN32
 #include <windows.h>
 #endif
 #include "GL/gl.h"
 #endif
+*/
 
 RgbImage::RgbImage( int numRows, int numCols )
 {

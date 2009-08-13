@@ -49,7 +49,13 @@ almostEqualFloat4(float* floatArray1, float* floatArray2)
 static inline float
 ArnToRadian(float deg)
 {
-	return float(ARN_PI/180*deg);
+	return float(ARN_PI/180.0f*deg);
+}
+
+static inline double
+ArnToRadian(double deg)
+{
+	return double(ARN_PI/180.0*deg);
 }
 
 static inline float

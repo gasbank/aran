@@ -67,8 +67,6 @@ protected:
 
 private:
 	inline void									setAnimSeqEnded(bool val);
-	ArnIpo*										m_ipo;
-	std::string									m_ipoName;
 	ArnMatrix  									m_localXform;
 	ArnVec3 									m_localXform_Scale;
 	ArnQuat     								m_localXform_Rot;
@@ -83,9 +81,11 @@ private:
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
 	std::vector<ArnJointData>					m_jointData;
-	
+	std::string									m_ipoName;
+	ArnIpo*										m_ipo;
+
 	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
-	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear	
+	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear
 };
 
 #include "ArnXformable.inl"

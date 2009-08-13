@@ -19,10 +19,8 @@
  * Web page: http://math.ucsd.edu/~sbuss/MathCG
  *
  */
-
+#include "AranIkPCH.h"
 #include "LinearR4.h"
-
-#include <assert.h>
 
 const VectorR4 VectorR4::Zero(0.0, 0.0, 0.0, 0.0);
 const VectorR4 VectorR4::UnitX( 1.0, 0.0, 0.0, 0.0);
@@ -280,7 +278,7 @@ LinearMapR4& LinearMapR4::Invert() 			// Converts into inverse.
 }
 
 VectorR4 LinearMapR4::Solve(const VectorR4& u) const	// Returns solution
-{												
+{
 	// Just uses Inverse() for now.
 	return ( Inverse()*u );
 }
@@ -302,7 +300,7 @@ LinearMapR4 TimesTranspose( const VectorR4& u, const VectorR4& v)
 	return result;
 }
 
-// The following routines are use to obtain 
+// The following routines are use to obtain
 // a righthanded orthonormal basis to complement vectors u,v,w.
 //		The vectors u,v,w must be unit and orthonormal.
 // The value is returned in "rotmat" with the first column(s) of
@@ -352,7 +350,7 @@ void GetOrtho( int j, RotationMapR4& rotmat)
 
 	// 2x2 subdeterminants in first 2 columns
 
-	double d12 = rotmat.m11*rotmat.m22-rotmat.m12*rotmat.m21;	
+	double d12 = rotmat.m11*rotmat.m22-rotmat.m12*rotmat.m21;
 	double d13 = rotmat.m11*rotmat.m32-rotmat.m12*rotmat.m31;
 	double d14 = rotmat.m11*rotmat.m42-rotmat.m12*rotmat.m41;
 	double d23 = rotmat.m21*rotmat.m32-rotmat.m22*rotmat.m31;
@@ -361,7 +359,7 @@ void GetOrtho( int j, RotationMapR4& rotmat)
 	VectorR4 vec3;
 
 	if ( j==2 ) {
-		if ( d12>0.4 || d12<-0.4 || d13>0.4 || d13<-0.4 
+		if ( d12>0.4 || d12<-0.4 || d13>0.4 || d13<-0.4
 								 || d23>0.4 || d23<-0.4 ) {
 			vec3.Set( d23, -d13, d12, 0.0);
 		}
@@ -397,7 +395,7 @@ void GetOrtho( int j, RotationMapR4& rotmat)
 // Rotate unit vector x in the direction of "dir": length of dir is rotation angle.
 //		x must be a unit vector.  dir must be perpindicular to x.
 VectorR4& VectorR4::RotateUnitInDirection ( const VectorR4& dir)
-{	
+{
 	assert ( this->Norm()<1.0001 && this->Norm()>0.9999 &&
 				(dir^(*this))<0.0001 && (dir^(*this))>-0.0001 );
 
@@ -421,7 +419,7 @@ VectorR4& VectorR4::RotateUnitInDirection ( const VectorR4& dir)
 // fromVec and toVec should be unit vectors
 RotationMapR4 RotateToMap( const VectorR4& fromVec, const VectorR4& toVec)
 {
-	LinearMapR4 result;		
+	LinearMapR4 result;
 	result.SetIdentity();
 	LinearMapR4 temp;
 	VectorR4 vPerp = ProjectPerpUnitDiff( toVec, fromVec );
@@ -437,7 +435,7 @@ RotationMapR4 RotateToMap( const VectorR4& fromVec, const VectorR4& toVec)
 	else {
 		vPerp /= sintheta;						// Normalize
 		VectorProjectMap ( fromVec, temp );		// project in fromVec direction
-		temp *= (costheta-1.0);		
+		temp *= (costheta-1.0);
 		result += temp;
 		VectorProjectMap ( vPerp, temp );		// Project in vPerp direction
 		temp *= (costheta-1.0);

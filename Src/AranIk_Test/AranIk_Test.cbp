@@ -39,6 +39,7 @@
 			<Add option="-Wall" />
 			<Add directory="../" />
 			<Add directory="../Aran" />
+			<Add directory="../AranIk" />
 			<Add directory="../AranGl" />
 			<Add directory="../AranPhy" />
 			<Add directory="../AranMath" />
@@ -53,6 +54,7 @@
 			<Add library="GLU" />
 			<Add library="ode" />
 			<Add library="AranD" />
+			<Add library="AranIkD" />
 			<Add library="AranGlD" />
 			<Add library="AranPhyD" />
 			<Add library="AranMathD" />

@@ -38,6 +38,7 @@
 			<Add directory="../" />
 			<Add directory="../Aran" />
 			<Add directory="../AranMath" />
+			<Add directory="../AranIk" />
 		</Compiler>
 		<Unit filename="AranGl.cpp" />
 		<Unit filename="AranGl.h" />

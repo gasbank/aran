@@ -10,17 +10,21 @@
 #include "ArnBone.h"
 #include "ArnLight.h"
 #include "ArnMaterial.h"
+#include "Node.h"
+#include "Tree.h"
 
 static GLUquadric* gs_quadricSphere = 0;
 static bool gs_bAranGlInitialized = false;
 
-void ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam)
+void
+ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam)
 {
 	glViewport(viewportData->X, viewportData->Y, viewportData->Width, viewportData->Height);
 	ArnConfigureProjectionMatrixGl(viewportData, cam);
 }
 
-void ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const ArnCamera* cam )
+void
+ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const ArnCamera* cam )
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -34,7 +38,8 @@ void ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const 
 }
 
 
-void ArnConfigureViewMatrixGl(ArnCamera* cam)
+void
+ArnConfigureViewMatrixGl(ArnCamera* cam)
 {
 	//ArnMatrix localTf = cam->getLocalXform();
 	ArnMatrix localTf = cam->getFinalLocalXform();
@@ -65,7 +70,8 @@ void ArnConfigureViewMatrixGl(ArnCamera* cam)
 		mainCamera.up.x, mainCamera.up.y, mainCamera.up.z );
 }
 
-void ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
+void
+ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 {
 	assert(lightId < 8);
 	if (light)
@@ -141,7 +147,8 @@ void ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 	}
 }
 
-void ArnDrawAxesGl(float size)
+void
+ArnDrawAxesGl(float size)
 {
 	glPushMatrix();
 	glPushAttrib(GL_LINE_BIT);
@@ -159,7 +166,8 @@ void ArnDrawAxesGl(float size)
 	glPopMatrix();
 }
 
-GLuint ArnCreateNormalizationCubeMapGl()
+GLuint
+ArnCreateNormalizationCubeMapGl()
 {
 	GLuint tex;
 	glGenTextures(1, &tex);
@@ -317,13 +325,14 @@ GLuint ArnCreateNormalizationCubeMapGl()
 	return tex;
 }
 
-static void ArnBoneRenderGl( const ArnBone* bone )
+static void
+ArnBoneRenderGl( const ArnBone* bone )
 {
-	//bone->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 	assert(bone->isLocalXformDirty() == false);
 
 	ArnVec3 boneDir(bone->getBoneDirection());
 	float boneLength = ArnVec3GetLength(boneDir);
+	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	{
 		ArnQuat q = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
@@ -368,6 +377,12 @@ static void ArnBoneRenderGl( const ArnBone* bone )
 		glPopMatrix();
 		glTranslatef(0, boneLength, 0);
 		ArnDrawAxesGl(0.25);
+		if (bone->getChildBoneCount() == 0)
+		{
+			// Draw an end-effector indicator.
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
+			ArnRenderSphereGl(0.1);
+		}
 
 		foreach (const ArnNode* node, bone->getChildren())
 		{
@@ -377,27 +392,26 @@ static void ArnBoneRenderGl( const ArnBone* bone )
 		}
 	}
 	glPopMatrix();
+	glEnable(GL_CULL_FACE);
 }
 
-void ArnSetupMaterialGl(const ArnMaterial* mtrl)
+void
+ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData)
 {
-	// TODO: Material (ambient? specular?)
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&mtrl->getD3DMaterialData().Ambient);
-	//glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrl->getD3DMaterialData().Specular);
-	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrl->getD3DMaterialData().Emissive);
-
-	/*
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&POINT4FLOAT::ZERO);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrl->getD3DMaterialData().Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&POINT4FLOAT::ZERO);
-	*/
-
+	// TODO: Material
+	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&mtrlData->Ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrlData->Diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrlData->Specular);
+	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrlData->Emissive);
 	// TODO: Shininess...
-	float shininess = 100;
+	const static float shininess = 100.0f;
 	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
+}
+
+void
+ArnSetupMaterialGl(const ArnMaterial* mtrl)
+{
+	ArnSetupBasicMaterialGl(&mtrl->getD3DMaterialData());
 
 	// TODO: Handling of multiple textures on a single material is missing.
 	if (mtrl->getTextureCount())
@@ -424,7 +438,8 @@ void ArnSetupMaterialGl(const ArnMaterial* mtrl)
 		glEnable(GL_LIGHTING);
 }
 
-static void ArnSkeletonRenderGl( const ArnSkeleton* skel )
+static void
+ArnSkeletonRenderGl( const ArnSkeleton* skel )
 {
 	glPushMatrix();
 	{
@@ -444,17 +459,20 @@ static void ArnSkeletonRenderGl( const ArnSkeleton* skel )
 	glPopMatrix();
 }
 
-static void InitializeArnTextureRenderableObjectGl( INOUT ArnTexture* tex )
+static void
+InitializeArnTextureRenderableObjectGl( INOUT ArnTexture* tex )
 {
 	tex->attachChild( ArnTextureGl::createFrom(tex) );
 }
 
-static void InitializeArnMeshRenderableObjectGl( INOUT ArnMesh* mesh )
+static void
+InitializeArnMeshRenderableObjectGl( INOUT ArnMesh* mesh )
 {
 	mesh->attachChild( ArnMeshGl::createFrom(mesh) );
 }
 
-static void InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
+static void
+InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
 {
 	unsigned int texCount = mtrl->getTextureCount();
 	for (unsigned int i = 0; i < texCount; ++i)
@@ -465,7 +483,8 @@ static void InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
 	}
 }
 
-void ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
+void
+ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
 {
 	foreach (ArnNode* node, sg->getChildren())
 	{
@@ -487,7 +506,16 @@ void ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
 	}
 }
 
-void ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
+static void
+ArnMeshRenderGl( const ArnMesh* mesh )
+{
+	const ArnRenderableObject* renderable = mesh->getRenderableObject();
+	assert(renderable);
+	renderable->render();
+}
+
+void
+ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
 {
 	foreach (const ArnNode* node, sg->getChildren())
 	{
@@ -504,21 +532,16 @@ void ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
 	}
 }
 
-static void ArnMeshRenderGl( const ArnMesh* mesh )
-{
-	const ArnRenderableObject* renderable = mesh->getRenderableObject();
-	assert(renderable);
-	renderable->render();
-}
-
-void ArnRenderSphereGl()
+void
+ArnRenderSphereGl(double radius, unsigned int slices, unsigned int stacks)
 {
 	// Did you initialize AranGl library by calling ArnInitializeGl() before use this function?
 	assert(gs_quadricSphere);
-	gluSphere(gs_quadricSphere, 1, 16, 16);
+	gluSphere(gs_quadricSphere, radius, slices, stacks);
 }
 
-void ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb)
+void
+ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb)
 {
 	glBegin(GL_QUADS);
 	glVertex3fv(reinterpret_cast<const GLfloat*>(&bb[0]));
@@ -553,34 +576,37 @@ void ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb)
 	glEnd();
 }
 
-void setTransformGl (const double pos[3], const double R[12])
+void
+setTransformGl (const double pos[3], const double R[12])
 {
 	GLdouble matrix[16];
-	matrix[0]=R[0];
-	matrix[1]=R[4];
-	matrix[2]=R[8];
-	matrix[3]=0;
-	matrix[4]=R[1];
-	matrix[5]=R[5];
-	matrix[6]=R[9];
-	matrix[7]=0;
-	matrix[8]=R[2];
-	matrix[9]=R[6];
-	matrix[10]=R[10];
-	matrix[11]=0;
-	matrix[12]=pos[0];
-	matrix[13]=pos[1];
-	matrix[14]=pos[2];
-	matrix[15]=1;
+	matrix[0]	= R[0];
+	matrix[1]	= R[4];
+	matrix[2]	= R[8];
+	matrix[3]	= 0;
+	matrix[4]	= R[1];
+	matrix[5]	= R[5];
+	matrix[6]	= R[9];
+	matrix[7]	= 0;
+	matrix[8]	= R[2];
+	matrix[9]	= R[6];
+	matrix[10]	= R[10];
+	matrix[11]	= 0;
+	matrix[12]	= pos[0];
+	matrix[13]	= pos[1];
+	matrix[14]	= pos[2];
+	matrix[15]	= 1;
 	glMultMatrixd (matrix);
 }
 
-void ArnRenderGeneralBodyGl()
+void
+ArnRenderGeneralBodyGl()
 {
-
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
 
-int ArnInitializeGl()
+int
+ArnInitializeGl()
 {
 	if (gs_bAranGlInitialized == false)
 	{
@@ -597,7 +623,8 @@ int ArnInitializeGl()
 	}
 }
 
-int ArnCleanupGl()
+int
+ArnCleanupGl()
 {
 	if (gs_bAranGlInitialized)
 	{
@@ -613,106 +640,124 @@ int ArnCleanupGl()
 	}
 }
 
-/*
 
+// Draw the box from the origin to point r.
+static void
+NodeDrawBox(const Node& node)
+{
+	const VectorR3& r = node.getRelativePosition();
+	//const VectorR3& v = node.getRotationAxis();
+	glDisable(GL_CULL_FACE);
+	glPushMatrix();
+	{
+		if ( r.z!=0.0 || r.x!=0.0 ) {
+			double alpha = atan2(r.z, r.x);
+			glRotatef(alpha*RadiansToDegrees, 0.0f, -1.0f, 0.0f);
+		}
 
-GLfloat hatAmbient[4] = { 0.3, 0.3, 1.0, 1.0 };
-GLfloat hatDiffuse[4] = { 0.3, 0.3, 1.0, 1.0 };
-GLfloat hatSpecular[4] = { 0, 0, 0, 0 };
-GLfloat hatShininess[3] = { 0, 0, 0 };
+		if ( r.y!=0.0 ) {
+			double beta = atan2(r.y, sqrt(r.x*r.x+r.z*r.z));
+			glRotatef( beta*RadiansToDegrees, 0.0f, 0.0f, 1.0f );
+		}
 
-GLfloat leftLegAmbient[4] = { 0.2, 1.0, 0.2, 1.0 };
-GLfloat leftLegDiffuse[4] = { 0.2, 1.0, 0.2, 1.0 };
-GLfloat leftLegSpecular[4] = { 0, 0, 0, 0 };
-GLfloat leftLegShininess[3] = { 0, 0, 0 };
+		double length = r.Norm();
 
-GLfloat rightLegAmbient[4] = { 1.0, 0.3, 0.2, 1.0 };
-GLfloat rightLegDiffuse[4] = { 1.0, 0.3, 0.2, 1.0 };
-GLfloat rightLegSpecular[4] = { 0, 0, 0, 0 };
-GLfloat rightLegShininess[3] = { 0, 0, 0 };
+		glPushMatrix();
+		{
+			glRotatef(90, 0, 1, 0);
+			glLineWidth(1);
+			glDisable(GL_LIGHTING);
+			glColor3f(1, 1, 1);
 
-*/
+			glScaled(0.25, 0.25, length);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			glBegin(GL_QUADS);
+			glVertex3d(0.5, 0.5, 0);
+			glVertex3d(-0.5, 0.5, 0);
+			glVertex3d(-0.5, -0.5, 0);
+			glVertex3d(0.5, -0.5, 0);
+			glEnd();
+			glBegin(GL_TRIANGLES);
+			glVertex3d(0.5, 0.5, 0);
+			glVertex3d(-0.5, 0.5, 0);
+			glVertex3d(0, 0, 1);
+			glVertex3d(-0.5, 0.5, 0);
+			glVertex3d(-0.5, -0.5, 0);
+			glVertex3d(0, 0, 1);
+			glVertex3d(-0.5, -0.5, 0);
+			glVertex3d(0.5, -0.5, 0);
+			glVertex3d(0, 0, 1);
+			glVertex3d(0.5, -0.5, 0);
+			glVertex3d(0.5, 0.5, 0);
+			glVertex3d(0, 0, 1);
+			glEnd();
 
+			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+			glEnable(GL_LIGHTING);
+		}
+		glPopMatrix();
 
-//void GeneralBody::render(BasicObjects& basicObjects) const
-//{
-//	const dReal* pos = getPosition();//
-//	const dReal* rot = getRotation();
-//	glPushMatrix();
-//	glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
-//	{
-//		setTransformGl(pos, rot);
-//		dVector3 boxSize;
-//		getGeomSize(boxSize);
-//		glScaled(boxSize[0], boxSize[1], boxSize[2]);
-//
-//		if (m_rm == RM_WIREFRAME)
-//		{
-//			glDisable(GL_LIGHTING);
-//			glDisable(GL_CULL_FACE);
-//			glLineWidth(1.5);
-//			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-//			glColor3fv(m_ambient);
-//		}
-//		else if (m_rm == RM_SOLID)
-//		{
-//			glEnable(GL_LIGHTING);
-//			glPolygonMode(GL_FRONT, GL_FILL);
-//
-//			glMaterialfv(GL_FRONT, GL_AMBIENT, m_ambient);
-//			glMaterialfv(GL_FRONT, GL_DIFFUSE, m_diffuse);
-//			glMaterialfv(GL_FRONT, GL_SPECULAR, m_specular);
-//			glMaterialfv(GL_FRONT, GL_SHININESS, m_shininess);
-//		}
-//		else
-//		{
-//			abort();
-//		}
-//
-//		glCallList(basicObjects.unitBox);
-//	}
-//	glPopAttrib();
-//	glPopMatrix();
-//}
-//
-//void GeneralBody::renderComAxis() const
-//{
-//	const dReal* pos = getPosition();//
-//	const dReal* rot = getRotation();
-//	glPushMatrix();
-//	{
-//		setTransformGl(pos, rot);
-//
-//		const double scale = 0.25;
-//
-//		glDisable(GL_LIGHTING);
-//		glColor3f(1, 0, 0);
-//		glBegin(GL_LINES);
-//		glVertex3d(0, 0, 0);
-//		glVertex3d(scale * 1, 0, 0);
-//		glEnd();
-//
-//		glColor3f(0, 1, 0);
-//		glBegin(GL_LINES);
-//		glVertex3d(0, 0, 0);
-//		glVertex3d(0, scale * 1, 0);
-//		glEnd();
-//
-//		glColor3f(0, 0, 1);
-//		glBegin(GL_LINES);
-//		glVertex3d(0, 0, 0);
-//		glVertex3d(0, 0, scale * 1);
-//		glEnd();
-//		glEnable(GL_LIGHTING);
-//	}
-//	glPopMatrix();
-//}
-//
-//void GeneralBody::setColor(GLfloat ambient[4], GLfloat diffuse[4], GLfloat specular[4], GLfloat shininess[3])
-//{
-//	memcpy(m_ambient, ambient, sizeof(GLfloat) * 4);
-//	memcpy(m_diffuse, diffuse, sizeof(GLfloat) * 4);
-//	memcpy(m_specular, specular, sizeof(GLfloat) * 4);
-//	memcpy(m_shininess, shininess, sizeof(GLfloat) * 3);
-//}
+	}
+	glPopMatrix();
+	glEnable(GL_CULL_FACE);
+}
+
+void
+NodeDrawNode(const Node& node, bool isRoot)
+{
+	if (!isRoot) {
+		NodeDrawBox(node);
+	}
+
+	/*
+	if (RotAxesOn) {
+		const double rotAxisLen = 1.3;
+		glDisable(GL_LIGHTING);
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glLineWidth(2.0);
+		glBegin(GL_LINES);
+		VectorR3 temp = r;
+		temp.AddScaled(v,rotAxisLen*size);
+		glVertex3f( temp.x, temp.y, temp.z );
+		temp.AddScaled(v,-2.0*rotAxisLen*size);
+		glVertex3f( temp.x, temp.y, temp.z );
+		glEnd();
+		glLineWidth(1.0);
+		glEnable(GL_LIGHTING);
+	}
+	*/
+
+	const VectorR3& r = node.getRelativePosition();
+	const VectorR3& v = node.getRotationAxis();
+	glTranslatef(r.x, r.y, r.z);
+	glRotatef(ArnToDegree(node.getJointAngle()), v.x, v.y, v.z);
+}
+
+static void
+TreeDrawTree(const Tree& tree, const Node* node)
+{
+	if (node)
+	{
+		glPushMatrix();
+		{
+			NodeDrawNode(*node, tree.GetRoot() == node); // Recursively draw node and update ModelView matrix
+			if (node->getLeftNode())
+			{
+				TreeDrawTree(tree, node->getLeftNode()); // Draw tree of children recursively
+			}
+		}
+		glPopMatrix();
+
+		if (node->getRightNode())
+		{
+			TreeDrawTree(tree, node->getRightNode()); // Draw right siblings recursively
+		}
+	}
+}
+
+void
+TreeDraw(const Tree& tree)
+{
+	TreeDrawTree(tree, tree.GetRoot());
+}

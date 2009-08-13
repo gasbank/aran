@@ -18,6 +18,20 @@ class ArnRenderableObject;
 class TiXmlElement;
 typedef std::vector<ArnMaterial*>		MaterialRefList;
 
+// Coordinates should be in the sequence of ---, --+, -++, -+-, +--, +-+, +++, ++-.
+typedef boost::array<ArnVec3, 8> Arn8Points;
+
+static const Arn8Points ArnUnitBoundingBox = {{
+
+	ArnVec3(-0.5f, -0.5f, -0.5f),
+	ArnVec3(-0.5f, -0.5f,  0.5f),
+	ArnVec3(-0.5f,  0.5f,  0.5f),
+	ArnVec3(-0.5f,  0.5f, -0.5f),
+	ArnVec3( 0.5f, -0.5f, -0.5f),
+	ArnVec3( 0.5f, -0.5f,  0.5f),
+	ArnVec3( 0.5f,  0.5f,  0.5f),
+	ArnVec3( 0.5f,  0.5f, -0.5f) }};
+
 /*!
  * @brief 메시
  */
@@ -138,11 +152,10 @@ public:
 	const ArnBinaryChunk*					getTriFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].triFaceChunk; }
 	const ArnBinaryChunk*					getQuadFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].quadFaceChunk; }
 
-
 	/*!
 	 * @name Internal use only methods
-	 * These methods are exposed in order to make internal linkage between objects or initialization.
-	 * Clients should aware that these are not for client-side APIs.
+	 * These methods are exposed in order to make internal linkage between objects.
+	 * You should aware that these are not for client-side APIs.
 	 */
 	//@{
 	virtual void							interconnect(ArnNode* sceneRoot);
@@ -173,19 +186,19 @@ private:
 							indWeight;
 	};
 
+	bool									m_bVisible;
+	bool									m_bCollide;
+	ArnHierarchy*							m_skeleton;
+	const ArnVertexBuffer*					m_arnVb;
+	const ArnIndexBuffer*					m_arnIb;
 	std::vector<FaceGroup>					m_faceGroup;
 	std::vector<VertexGroup>				m_vertexGroup;
+	ArnBinaryChunk*							m_triquadUvChunk;
 	ArnBinaryChunk*							m_vertexChunk; // Contains the entire vertices.
 	std::vector<std::string>				m_mtrlRefNameList;
 	MaterialRefList							m_materialRefList;
 	MeshData								m_data;
-	bool									m_bVisible;
-	bool									m_bCollide;
-	ArnHierarchy*							m_skeleton;
 	std::vector<BoneDataInternal>			m_boneDataInt;
-	const ArnVertexBuffer*					m_arnVb;
-	const ArnIndexBuffer*					m_arnIb;
-	ArnBinaryChunk*							m_triquadUvChunk;
 	bool									m_bTwoSided;
 
 	/*!

@@ -4,8 +4,8 @@
 
 GeneralJoint::GeneralJoint(const OdeSpaceContext* osc)
 : m_osc(osc)
-, m_jcm(JCM_REST)
 , m_joint(0)
+, m_jcm(JCM_REST)
 {
 	// Must not call reset() here...
 }

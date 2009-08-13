@@ -13,13 +13,14 @@ public:
 	typedef std::vector<ArnTexture*>			TextureList;
 	static ArnMaterial*							createFrom(const NodeBase* nodeBase);
 	static ArnMaterial*							createFrom(const TiXmlElement* elm);
+	static ArnMaterial*							createFrom(const ArnMaterialData* amd);
 	void										attachTexture(ArnTexture* ARN_OWNERSHIP tex);
 	const ArnTexture*							getFirstTexture() const;
 	ArnTexture*									getD3DTexture(unsigned int idx) const;
 	size_t										getTextureCount() const { return getChildren().size(); }
 	void										initRendererObject();
 	bool										isShadeless() const { return m_bShadeless; }
-	
+
 	/*! @name Deprecated methods
 	These methods are not recommended after ARN30 and will be removed in the next version.
 	*/
@@ -42,14 +43,14 @@ private:
 												ArnMaterial();
 	void										buildFrom(const NodeMaterial1* nm);
 	void										buildFrom(const NodeMaterial2* nm);
-	bool										m_bShadeless; // Does not effected by lights
 
-	// TODO: The following variables should be removed.
 	MaterialData								m_data;
-	const NodeMaterial2*						m_nodeMaterial; // Needed for late loading of texture images
+	bool										m_bShadeless; // Does not effected by lights
 	bool										m_bTextureLoaded;
-	unsigned int								m_materialCount;
 	TextureList ARN_OWNERSHIP					m_d3dTextureList; // This class takes the ownership of ArnTexture* instances.
+
+	const NodeMaterial2*						m_nodeMaterial; // Needed for late loading of texture images
+	unsigned int								m_materialCount;
 };
 
 void SetSimpleColoredMaterial(ArnMaterialData* material, ArnColorValue4f color);

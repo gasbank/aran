@@ -4,10 +4,12 @@
 #include "ArnAction.h"
 #include "ArnIpo.h"
 #include "ArnAnimationController.h"
+#include "ArnMath.h"
 
 ArnSkeleton::ArnSkeleton()
 : ArnXformable(NDT_RT_SKELETON)
 , m_defaultAction(0)
+, m_ikSolver(0)
 {
 }
 
@@ -84,7 +86,7 @@ ArnSkeleton::getChildBoneCount() const
 	{
 		if (node->getType() == NDT_RT_BONE)
 		{
-			ret += static_cast<ArnBone*>(node)->getChildBoneCount();
+			ret += 1 + static_cast<ArnBone*>(node)->getChildBoneCount();
 		}
 	}
 	return ret;
@@ -100,4 +102,51 @@ void ArnSkeleton::setActionToNext()
 {
 	if (getAnimCtrl())
 		getAnimCtrl()->SetActionToNext();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+ArnGetGlobalBonePosition(ArnVec3* head, ArnVec3* tail, const ArnSkeleton* skel, const ArnBone* bone)
+{
+	assert(head && tail && skel && bone);
+
+	std::list<const ArnBone*> parentList;
+	{
+		const ArnBone* parent = dynamic_cast<const ArnBone*>(bone->getParent());
+		while (parent)
+		{
+			parentList.push_front(parent);
+			parent = dynamic_cast<const ArnBone*>(parent->getParent());
+		}
+	}
+
+	// 먼저 skeleton 자체의 위치와 회전을 설정
+	ArnMatrix matRot;
+	*head = skel->getLocalXform_Trans();
+	ArnQuat qSkel = skel->getLocalXform_Rot();
+	qSkel.getRotationMatrix(&matRot);
+
+	foreach (const ArnBone* p, parentList)
+	{
+		ArnVec3 boneDir = p->getBoneDirection();
+		ArnVec4 boneDirXformed;
+		ArnVec3Transform(&boneDirXformed, &boneDir, &matRot);
+		head->x += boneDirXformed.x / boneDirXformed.w;
+		head->y += boneDirXformed.y / boneDirXformed.w;
+		head->z += boneDirXformed.z / boneDirXformed.w;
+
+		ArnQuat q = p->getLocalXform_Rot();
+		ArnMatrix matRot2;
+		q.getRotationMatrix(&matRot2);
+		matRot = matRot * matRot2;
+	}
+
+	// Tail position goes one step further.
+	ArnVec3 boneDir = bone->getBoneDirection();
+	ArnVec4 boneDirXformed;
+	ArnVec3Transform(&boneDirXformed, &boneDir, &matRot);
+	tail->x = head->x + boneDirXformed.x / boneDirXformed.w;
+	tail->y = head->y + boneDirXformed.y / boneDirXformed.w;
+	tail->z = head->z + boneDirXformed.z / boneDirXformed.w;
 }

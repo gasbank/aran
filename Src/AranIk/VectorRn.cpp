@@ -23,7 +23,7 @@
 //
 // VectorRn:  Vector over Rn  (Variable length vector)
 //
-
+#include "AranIkPCH.h"
 #include "VectorRn.h"
 
 VectorRn VectorRn::WorkVector;

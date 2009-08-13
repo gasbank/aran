@@ -14,9 +14,9 @@ class Node {
 
 public:
 	Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
+	Node(const Node& node);
 
-	void DrawNode(bool);
-	void PrintNode();
+	void PrintNode() const;
 	void InitNode();
 
 	const VectorR3& GetAttach() const { return attach; }
@@ -28,13 +28,13 @@ public:
 	const VectorR3& GetW() const { return w; }
 
 	double GetMinTheta() const { return minTheta; }
-	double GetMaxTheta() const { return maxTheta; } 
+	double GetMaxTheta() const { return maxTheta; }
 	double GetRestAngle() const { return restAngle; } ;
 	void SetTheta(double newTheta) { theta = newTheta; }
 	void ComputeS(void);
 	void ComputeW(void);
 
-	bool IsEffector() const { return purpose==EFFECTOR; } 
+	bool IsEffector() const { return purpose==EFFECTOR; }
 	bool IsJoint() const { return purpose==JOINT; }
 	int GetEffectorNum() const { return seqNumEffector; }
 	int GetJointNum() const { return seqNumJoint; }
@@ -43,7 +43,29 @@ public:
 	void Freeze() { freezed = true; }
 	void UnFreeze() { freezed = false; }
 
+	const VectorR3& getRelativePosition() const { return r; }
+	double getJointAngle() const { return theta; }
+	const VectorR3& getRotationAxis() const { return v; }
+	double getSize() const { return size; }
+	Node* getLeftNode() const { return left; }
+	Node* getRightNode() const { return right; }
+
+	const char* getName() const { return m_name.c_str(); }
+	void setName(const char* name) { m_name = name; }
+
+	Node* getRealParent() const { return realparent; }
+	Purpose getPurpose() const { return purpose; }
+	int getSeqNumJoint() const { return seqNumJoint; }
+	int getSeqNumEffector() const { return seqNumEffector; }
+	void setSeqNumJoint(int v) { seqNumJoint = v; }
+	void setSeqNumEffector(int v) { seqNumEffector = v; }
+
+	void printNodeHierarchy(int step) const;
+	bool hasNode(const Node* node) const;
+	Node* getNodeByName(const char* name);
+	void updatePurpose();
 private:
+	std::string m_name;
 	bool freezed;			// Is this node frozen?
 	int seqNumJoint;		// sequence number if this node is a joint
 	int seqNumEffector;		// sequence number if this node is an effector
@@ -61,8 +83,6 @@ private:
 	Node* left;				// left child
 	Node* right;			// right sibling
 	Node* realparent;		// pointer to real parent
-
-	void DrawBox() const;
 };
 
 #endif

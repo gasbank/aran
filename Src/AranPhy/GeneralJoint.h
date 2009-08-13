@@ -111,8 +111,8 @@ private:
 	void						controlP(int anum, double targetValue, double proGain, double forceMax);
 	void						controlPD(int anum, double target, double proGain, double derGain, double forceMax);
 	std::string					m_name;
-	dJointID					m_joint;
 	const OdeSpaceContext*		m_osc;
+	dJointID					m_joint;
 	JointControlMode			m_jcm;
 	double						m_targetValue[3];
 	double						m_incrValue[3];

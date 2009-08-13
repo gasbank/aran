@@ -1,10 +1,11 @@
 /*!
-@file ArnCommonTypes.h
-@author Geoyeob Kim
-@date 2009
-모든 하부 라이브러리를 포함한 ARAN 라이브러리 전체에 통용되는
-열거형(enumeration)과 구조체를 정의해 놓은 파일입니다.
-*/
+ * @file ArnCommonTypes.h
+ * @author Geoyeob Kim
+ * @date 2009
+ *
+ * 모든 하부 라이브러리를 포함한 ARAN 라이브러리 전체에 통용되는
+ * 열거형(enumeration)과 구조체를 정의해 놓은 파일입니다.
+ */
 #pragma once
 
 //
@@ -507,15 +508,45 @@ struct ArnFileData
 	ArnBinaryFile m_file;
 };
 
-class MeshData
+struct MeshData
 {
-public:
 	unsigned int vertexCount;
 	unsigned int faceCount;
 	unsigned int materialCount;
 	std::vector<std::string> matNameList;
 	std::string armatureName;
 	std::vector<std::string> boneMatIdxMap;
+};
+
+/*!
+ * @brief 4-float(RGBA) 구조의 색깔 구조체
+ */
+struct ArnColorValue4f
+{
+	ArnColorValue4f() : r(0), g(0), b(0), a(1.0f)
+	{
+	}
+	ArnColorValue4f(float _r, float _g, float _b, float _a) : r(_r), g(_g), b(_b), a(_a)
+	{
+	}
+	float r;
+	float g;
+	float b;
+	float a;
+};
+
+typedef DWORD ArnColorValue;
+
+/*!
+ * @brief 기본적인 물질 정보를 담고 있는 D3DMATERIAL9과 동일한 자료 구조
+ */
+struct ArnMaterialData
+{
+	ArnColorValue4f Diffuse;
+	ArnColorValue4f Ambient;
+	ArnColorValue4f Specular;
+	ArnColorValue4f Emissive;
+	float Power;
 };
 
 #ifndef WIN32

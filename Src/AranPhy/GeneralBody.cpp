@@ -5,9 +5,10 @@
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 : m_osc(osc)
-, m_isContactGround(false)
 , m_body(0)
 , m_geom(0)
+, m_isContactGround(false)
+, m_mass(0)
 , m_abbt(ABBT_UNKNOWN)
 , m_amdt(AMDT_UNKNOWN)
 , m_xformable(0)

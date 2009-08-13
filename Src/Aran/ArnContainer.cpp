@@ -9,3 +9,10 @@ ArnContainer::ArnContainer(void)
 ArnContainer::~ArnContainer(void)
 {
 }
+
+ArnContainerPtr
+ArnContainer::createFromEmpty()
+{
+	ArnContainerPtr retPtr(new ArnContainer());
+	return retPtr;
+}

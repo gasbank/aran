@@ -1,4 +1,3 @@
-
 /*
  *
  * RayTrace Software Package, prerelease 0.1.0.   June 2003
@@ -27,7 +26,7 @@
 //    Not very sophisticated yet.  Needs more functionality
 //		To do: better handling of resizing.
 //
-
+#include "AranIkPCH.h"
 #include "MatrixRmn.h"
 
 MatrixRmn MatrixRmn::WorkMatrix;		// Temporary work matrix

@@ -787,13 +787,13 @@ DoMain()
 		gl_error = glGetError( );
 
 		if( gl_error != GL_NO_ERROR ) {
-			fprintf( stderr, "testgl: OpenGL error: %d\n", gl_error );
+			fprintf( stderr, "ARAN: OpenGL error: %d\n", gl_error );
 		}
 
 		sdl_error = SDL_GetError( );
 
 		if( sdl_error[0] != '\0' ) {
-			fprintf(stderr, "testgl: SDL error '%s'\n", sdl_error);
+			fprintf(stderr, "ARAN: SDL error '%s'\n", sdl_error);
 			SDL_ClearError();
 		}
 

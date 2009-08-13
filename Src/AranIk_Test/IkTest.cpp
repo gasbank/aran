@@ -642,7 +642,7 @@ Cleanup()
 	ArnCleanupGl();
 }
 
-void
+static void
 GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGraph* sg)
 {
 	activeCam = reinterpret_cast<ArnCamera*>(sg->findFirstNodeOfType(NDT_RT_CAMERA));
@@ -654,7 +654,7 @@ GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGrap
 	assert(activeLight);
 }
 
-int
+static int
 LoadSceneList(std::vector<std::string>& sceneList)
 {
 	// Load first scene file from SceneList.txt
@@ -682,6 +682,10 @@ DoMain()
 	int							curSceneIndex		= -1;
 	std::vector<std::string>	sceneList;
 	ArnSceneGraphPtr			curSgPtr;
+	Tree						tree;
+	std::vector<Node*>			node;
+
+	//ConfigureJacobianTree(tree, jacob, node);
 
 	ArnInitializeXmlParser();
 	ArnInitializeImageLibrary();
@@ -722,6 +726,20 @@ DoMain()
 		std::cerr << " *** Aborting..." << std::endl;
 		Cleanup();
 		return -11;
+	}
+
+	ArnIkSolver* ikSolver = 0;
+	if (curSgPtr)
+	{
+		ArnSkeleton* skel1 = reinterpret_cast<ArnSkeleton*>(curSgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
+		if (skel1)
+		{
+			CreateArnIkSolver(&ikSolver, skel1);
+
+			Node* newRoot = ikSolver->getNodeByName("Bone_L");
+			assert(newRoot);
+			ikSolver->reconfigureRoot(newRoot);
+		}
 	}
 
 	// SDL Window init start
@@ -853,7 +871,51 @@ DoMain()
 		SDL_Event event;
 		char* sdl_error;
 
-		/* Do our drawing, too. */
+		// Update phase
+		// Physical simulation update
+		GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
+		if (gjPtr)
+		{
+			gjPtr->addTorque(AXIS_Y, gs_torque);
+		}
+		gjPtr = swPtr->getGeneralJointByName("Stick2-Foot");
+		if (gjPtr)
+		{
+			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
+		}
+
+		unsigned int simLoop = 1000;
+		if (frameDurationMs > 100)
+			simLoop = 100;
+		else
+			simLoop = frameDurationMs;
+
+		for (unsigned int step = 0; step < simLoop; ++step)
+		{
+			swPtr->updateFrame(0.001);
+		}
+		if (curSgPtr)
+			curSgPtr->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+
+
+		ArnVec3 t1 = ArnVec3(-1, 1.5 + gs_linVelX, -6.5 + gs_linVelZ);
+		ArnVec3 t2 = ArnVec3( 1, 1.5, -6.5);
+
+		ArnVec3 t3 = ArnVec3(1, 0, -6.5);
+		ArnVec3 t4 = ArnVec3(1, 1, -3.5);
+
+		if (ikSolver)
+		{
+			ikSolver->setTarget(0, t1);
+			ikSolver->setTarget(1, t2);
+
+			ikSolver->setTarget(2, t3);
+			ikSolver->setTarget(3, t4);
+
+			//ikSolver->update();
+		}
+
+		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glMatrixMode(GL_MODELVIEW);
@@ -867,46 +929,64 @@ DoMain()
 		glBindTexture(GL_TEXTURE_2D, 0);
 
 
-		// Physical simulation update
-		GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-		if (gjPtr)
+		ArnMaterial* defMtrl = reinterpret_cast<ArnMaterial*>(curSgPtr->findFirstNodeOfType(NDT_RT_MATERIAL));
+		if (defMtrl)
+			ArnSetupMaterialGl(defMtrl);
+
+		if (ikSolver)
 		{
-			gjPtr->addTorque(AXIS_Y, gs_torque);
+			TreeDraw(*ikSolver->getTree());
 		}
-		gjPtr = swPtr->getGeneralJointByName("Stick2-Foot");
-		if (gjPtr)
-		{
-			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
-		}
-		//double stepSize = (double)frameDurationMs / 1000.0;
-		for (unsigned int step = 0; step < frameDurationMs; ++step)
-		{
-			swPtr->updateFrame(0.001);
-		}
+
+		glPushMatrix();
+		glTranslated(t1.x, t1.y, t1.z);
+		glScaled(0.1, 0.1, 0.1);
+		ArnRenderSphereGl();
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(t2.x, t2.y, t2.z);
+		glScaled(0.1, 0.1, 0.1);
+		ArnRenderSphereGl();
+		glPopMatrix();
+
+		/*
+		glPushMatrix();
+		glTranslated(t3.x, t3.y, t3.z);
+		glScaled(0.1, 0.1, 0.1);
+		ArnRenderSphereGl();
+		glPopMatrix();
+
+		glPushMatrix();
+		glTranslated(t4.x, t4.y, t4.z);
+		glScaled(0.1, 0.1, 0.1);
+		ArnRenderSphereGl();
+		glPopMatrix();
+		*/
 
 		glPushMatrix();
 		{
 			if (curSgPtr)
 			{
-				ArnSceneGraphRenderGl(curSgPtr.get());
-				curSgPtr.get()->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
+				//ArnSceneGraphRenderGl(curSgPtr.get());
 			}
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTexturePtr);
 		}
 		glPopMatrix();
+
 		SDL_GL_SwapBuffers();
 
 		/* Check for error conditions. */
 		gl_error = glGetError( );
 
 		if( gl_error != GL_NO_ERROR ) {
-			fprintf( stderr, "testgl: OpenGL error: %d\n", gl_error );
+			fprintf( stderr, "ARAN: OpenGL error: %d\n", gl_error );
 		}
 
 		sdl_error = SDL_GetError( );
 
 		if( sdl_error[0] != '\0' ) {
-			fprintf(stderr, "testgl: SDL error '%s'\n", sdl_error);
+			fprintf(stderr, "ARAN: SDL error '%s'\n", sdl_error);
 			SDL_ClearError();
 		}
 
@@ -971,7 +1051,8 @@ DoMain()
 
 int main(int argc, char *argv[])
 {
-	int retCode = DoMain();
+	int retCode = 0;
+	retCode = DoMain();
 
 #ifdef ARNOBJECT_MEMORY_LEAK_CHECK
 	// Simple check for the memory leak of ArnObjects.

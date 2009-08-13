@@ -102,7 +102,7 @@ EpSafeReleaseAll( T& obj )
 
 
 //
-// DLL export macro for Aran
+// DLL export macro for Aran (ARAN Core Package)
 //
 #ifdef WIN32
 	#define ARAN_API_EXPORT __declspec(dllexport)
@@ -121,7 +121,7 @@ EpSafeReleaseAll( T& obj )
 #endif
 
 //
-// DLL Export macro for AranMath
+// DLL Export macro for AranMath (ARAN Math Package)
 //
 #ifdef WIN32
 	#define ARANMATH_API_EXPORT __declspec(dllexport)
@@ -140,7 +140,7 @@ EpSafeReleaseAll( T& obj )
 #endif
 
 //
-// DLL Export macro for AranPhy
+// DLL Export macro for AranPhy (ARAN Physics Package)
 //
 #ifdef WIN32
 #define ARANPHY_API_EXPORT __declspec(dllexport)
@@ -160,7 +160,7 @@ EpSafeReleaseAll( T& obj )
 
 
 //
-// DLL Export macro for AranDx9
+// DLL Export macro for AranDx9 (ARAN Direct3D 9 Renderer Package)
 //
 #ifdef WIN32
 #define ARANDX9_API_EXPORT __declspec(dllexport)
@@ -179,7 +179,7 @@ EpSafeReleaseAll( T& obj )
 #endif
 
 //
-// DLL Export macro for AranGl
+// DLL Export macro for AranGl (ARAN OpenGL Renderer Package)
 //
 #ifdef WIN32
 #define ARANGL_API_EXPORT __declspec(dllexport)
@@ -197,6 +197,25 @@ EpSafeReleaseAll( T& obj )
 #define ARANGL_API_EXTERN extern
 #endif
 
+
+//
+// DLL Export macro for AranIk (ARAN Inverse Kinematics Package)
+//
+#ifdef WIN32
+#define ARANIK_API_EXPORT __declspec(dllexport)
+#define ARANIK_API_IMPORT __declspec(dllimport)
+#else
+#define ARANIK_API_EXPORT
+#define ARANIK_API_IMPORT
+#endif
+
+#if defined(_USRDLL) && defined(ARANIK_EXPORTS)
+#define ARANIK_API		ARANIK_API_EXPORT
+#define ARANIK_API_EXTERN
+#else
+#define ARANIK_API		ARANIK_API_IMPORT
+#define ARANIK_API_EXTERN extern
+#endif
 
 // limits a value to low and high
 #define LIMIT_RANGE(low, value, high)	{	if (value < low)	value = low;	else if(value > high)	value = high;	}

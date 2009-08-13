@@ -59,39 +59,6 @@ static const int JointAxisEnumStringsCorr[] = {
 	JE_L3
 };
 
-static const char* JointEnumStrings[] = {
-	"R1XY",
-	"L1XY",
-	"R2X",
-	"L2X",
-	"R3XY",
-	"L3XY"
-};
-
-static const char* JointAxisEnumStrings[] = {
-	"R1X",
-	"R1Y",
-	"L1X",
-	"L1Y",
-	"R2X",
-	"L2X",
-	"R3X",
-	"R3Y",
-	"L3X",
-	"L3Y"
-};
-
-static const char* BodyEnumStrings[] = {
-	"HAT",
-	"GROIN_R",
-	"GROIN_L",
-	"CALF_R",
-	"CALF_L",
-	"FOOT_R",
-	"FOOT_L",
-	"NOT_BODY"
-};
-
 /*!
 @brief ODE 컨텍스트
 */

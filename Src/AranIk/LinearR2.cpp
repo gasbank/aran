@@ -19,11 +19,8 @@
  * Web page: http://math.ucsd.edu/~sbuss/MathCG
  *
  */
-
+#include "AranIkPCH.h"
 #include "LinearR2.h"
-
-
-#include <assert.h>
 
 // ******************************************************
 // * VectorR2 class - math library functions			*
@@ -71,7 +68,7 @@ LinearMapR2& LinearMapR2::Invert() 			// Converts into inverse.
 }
 
 VectorR2 LinearMapR2::Solve(const VectorR2& u) const	// Returns solution
-{												
+{
 	// Just uses Inverse() for now.
 	return ( Inverse()*u );
 }

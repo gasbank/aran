@@ -16,6 +16,7 @@ public:
 	void InsertRoot(Node*);
 	void InsertLeftChild(Node* parent, Node* child);
 	void InsertRightSibling(Node* parent, Node* child);
+	void InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, bool childOrSibling, Node* skipNode);
 
 	// Accessors based on node numbers
 	Node* GetJoint(int);
@@ -25,42 +26,53 @@ public:
 	// Accessors for tree traversal
 	Node* GetRoot() const { return root; }
 	Node* GetSuccessor ( const Node* ) const;
-	Node* GetParent( const Node* node ) const { return node->realparent; }
+	Node* GetParent( const Node* node ) const { return node->getRealParent(); }
 
 	void Compute();
-	void Draw();
 	void Print();
 	void Init();
 	void UnFreeze();
 
+	//void Draw();
+	void printHierarchy() const; // Name only, tree style
+	void PrintTree(const Node*) const; // Detailed information, list style
+	bool hasNode(const Node* node) const;
+	Node* getPrevSiblingNode(Node* node);
+	Node* getNodeByName(const char* name);
+	void updatePurpose();
 private:
 	Node* root;
 	int nNode;			// nNode = nEffector + nJoint
 	int nEffector;
 	int nJoint;
 	void SetSeqNum(Node*);
+	void resetSeqNum(Node* node);
 	Node* SearchJoint(Node*, int);
 	Node* SearchEffector(Node*, int);
 	void ComputeTree(Node*);
-	void DrawTree(Node*);
-	void PrintTree(Node*);
+
+	//void DrawTree(Node*);
+
 	void InitTree(Node*);
 	void UnFreezeTree(Node*);
 };
 
+typedef std::tr1::shared_ptr<Tree> TreePtr;
+
+
 inline Node* Tree::GetSuccessor ( const Node* node ) const
 {
-	if ( node->left ) {
-		return node->left;
+	if ( node->getLeftNode() ) {
+		return node->getLeftNode();
 	}
 	while ( true ) {
-		if ( node->right ) {
-			return ( node->right );
+		if ( node->getRightNode() ) {
+			return ( node->getRightNode() );
 		}
-		node = node->realparent;
+		node = node->getRealParent();
 		if ( !node ) {
 			return 0;		// Back to root, finished traversal
-		} 
+		}
 	}
 }
 

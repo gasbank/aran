@@ -10,19 +10,59 @@
 
 std::vector<dContact> g_contactsWithGround;
 
+
+static const char* JointEnumStrings[] = {
+	"R1XY",
+	"L1XY",
+	"R2X",
+	"L2X",
+	"R3XY",
+	"L3XY"
+};
+
+/*
+static const char* JointAxisEnumStrings[] = {
+	"R1X",
+	"R1Y",
+	"L1X",
+	"L1Y",
+	"R2X",
+	"L2X",
+	"R3X",
+	"R3Y",
+	"L3X",
+	"L3Y"
+};
+*/
+
+static const char* BodyEnumStrings[] = {
+	"HAT",
+	"GROIN_R",
+	"GROIN_L",
+	"CALF_R",
+	"CALF_L",
+	"FOOT_R",
+	"FOOT_L",
+	"NOT_BODY"
+};
+
+
 Biped::Biped(const OdeSpaceContext* osc)
 : m_bInitialized(false)
 , m_osc(osc)
 , m_bSimulate(false)
 , m_bWidenFeet(false)
 , m_bBendTrunk(false)
-, m_bNarrowFeet(false)
 , m_bRStepForward(false)
 , m_bLStepForward(false)
 , m_bRStepForward_Secondary(false)
+, m_bNarrowFeet(false)
 , m_bStandOnSingleFoot(false)
 , m_bCrouch(false)
 , m_bStayAllJoints(false)
+, m_stance1(0)
+, m_stance2(0)
+, m_stance3(0)
 , m_curControlState(CSE_BIPED_DO_NOTHING)
 , m_nextControlState(CSE_BIPED_DO_NOTHING)
 {
@@ -402,8 +442,6 @@ void Biped::controlLeftLeg(double leftSupportHeight, double leftSupportForward)
 	double theta1 = atan2(z, y) - atan2(k2, k1);
 	double theta3 = M_PI - theta1 - theta2;
 
-	double rFootPosY = m_bodies[BE_FOOT_R]->getPosition()[1];
-	double lFootPosY = m_bodies[BE_FOOT_L]->getPosition()[1];
 	theta1 += M_PI/2;
 	theta3 = M_PI - theta1 - theta2;
 
@@ -536,10 +574,6 @@ void Biped::controlFirstStepForward()
 	m_joints[JE_L3]->control_P(2, 0, 1, 100 );
 	///
 
-	const dReal* swingRFootPos = m_bodies[BE_FOOT_R]->getPosition();
-	const dReal* swingLFootPos = m_bodies[BE_FOOT_L]->getPosition();
-
-
 	//if (m_bodyContacts[BE_FOOT_R] && dDISTANCE(swingRFootPos, swingLFootPos) > 0.4 && swingRFootPos[1] > swingLFootPos[1])
 	if (m_bodyContacts[BE_FOOT_R] && getBody(BE_FOOT_R)->getLinearVel()[2] < -0.3)
 	{
@@ -575,7 +609,6 @@ void Biped::controlRestAnkles()
 void Biped::controlCorrectTrunkOrientation()
 {
 	double trunkY = getBody(BE_HAT)->getRotationEuler().y;
-	double trunkZ = getBody(BE_HAT)->getRotationEuler().z;
 
 	if (fabs(trunkY) > 0.01)
 	{

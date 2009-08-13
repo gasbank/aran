@@ -1,20 +1,10 @@
-
-#include <math.h>
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glut.h>
-#include <GL/glui.h>
-
+#include "AranIkPCH.h"
 #include "LinearR3.h"
 #include "MathMisc.h"
 #include "Node.h"
 
-extern int RotAxesOn;
+//////////////////extern int RotAxesOn;
+//int RotAxesOn;
 
 Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
 {
@@ -31,6 +21,24 @@ Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpo
 	Node::maxTheta = maxTheta;
 	Node::restAngle = restAngle;
 	left = right = realparent = 0;
+}
+
+Node::Node(const Node& node)
+{
+	Node::freezed = false;
+	Node::size = node.size;
+	Node::purpose = node.purpose;
+	seqNumJoint = -1;
+	seqNumEffector = -1;
+	Node::attach = node.attach;		// Global attachment point when joints are at zero angle
+	r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
+	Node::v = node.v;				// Rotation axis when joints at zero angles
+	theta = 0.0;
+	Node::minTheta = node.minTheta;
+	Node::maxTheta = node.maxTheta;
+	Node::restAngle = node.restAngle;
+	left = right = realparent = 0;
+	m_name = node.m_name;
 }
 
 // Compute the global position of a single node
@@ -58,71 +66,7 @@ void Node::ComputeW(void)
 	}
 }
 
-// Draw the box from the origin to point r.
-void Node::DrawBox() const
-{
-
-	glPushMatrix();
-
-	/*	if (r.getx()) {
-		beta = atan2(r.gety(), sqrt(r.getx()*r.getx()+r.getz()*r.getz()));
-		glRotatef(beta*180./M_PI, -r.getz(), 0.0f, r.getx());
-	} else if (r.getz()) {
-		beta = atan2(r.gety(), r.getz());
-		glRotatef(beta*180./M_PI, -1.0f, 0.0f, 0.0f);			
-	} else {
-		if (r.gety() >= 0) {
-			glRotatef(90., -1.0f, 0.0f, 0.0f);
-		} else {
-			glRotatef(90., 1.0f, 0.0f, 0.0f);
-		}
-	} */
-	
-	if ( r.z!=0.0 || r.x!=0.0 ) {
-		double alpha = atan2(r.z, r.x);
-		glRotatef(alpha*RadiansToDegrees, 0.0f, -1.0f, 0.0f);
-	}
-
-	if ( r.y!=0.0 ) {
-		double beta = atan2(r.y, sqrt(r.x*r.x+r.z*r.z));
-		glRotatef( beta*RadiansToDegrees, 0.0f, 0.0f, 1.0f );
-	}
-
-	double length = r.Norm();
-	glScalef(length/size, 1.0f, 1.0f);
-	glTranslatef(size/2, 0.0f, 0.0f);
-
-	glutSolidCube(size);
-
-	glPopMatrix();
-}
-
-void Node::DrawNode(bool isRoot)
-{
-	if (!isRoot) {
-		DrawBox();
-	}
-
-	if (RotAxesOn) {
-		const double rotAxisLen = 1.3;
-		glDisable(GL_LIGHTING);
-		glColor3f(1.0f, 1.0f, 0.0f);
-		glLineWidth(2.0);
-		glBegin(GL_LINES);
-		VectorR3 temp = r;
-		temp.AddScaled(v,rotAxisLen*size);
-		glVertex3f( temp.x, temp.y, temp.z );
-		temp.AddScaled(v,-2.0*rotAxisLen*size);
-		glVertex3f( temp.x, temp.y, temp.z );
-		glEnd();
-		glLineWidth(1.0);
-		glEnable(GL_LIGHTING);
-	}
-	glTranslatef(r.x, r.y, r.z);
-	glRotatef(theta*RadiansToDegrees, v.x, v.y, v.z);
-}
-
-void Node::PrintNode()
+void Node::PrintNode() const
 {
 	cerr << "Attach : (" << attach << ")\n";
 	cerr << "r : (" << r << ")\n";
@@ -134,4 +78,67 @@ void Node::PrintNode()
 void Node::InitNode()
 {
 	theta = 0.0;
+}
+
+void Node::printNodeHierarchy(int step) const
+{
+	for (int i = 0; i < step; ++i)
+		std::cout << "  ";
+	std::cout << getName() << std::endl;
+
+	if (left)
+		left->printNodeHierarchy(step + 1);
+
+	if (right)
+		right->printNodeHierarchy(step);
+}
+
+bool Node::hasNode(const Node* node) const
+{
+	if (this == node)
+		return true;
+	if (left)
+	{
+		bool ret = left->hasNode(node);
+		if (ret)
+			return true;
+	}
+	if (right)
+	{
+		bool ret = right->hasNode(node);
+		if (ret)
+			return true;
+	}
+	return false;
+}
+
+Node* Node::getNodeByName(const char* name)
+{
+	if (strcmp(m_name.c_str(), name) == 0)
+		return this;
+
+	Node* ret = 0;
+	if (right)
+		ret = right->getNodeByName(name);
+	if (ret)
+		return ret;
+	else if (left)
+		return left->getNodeByName(name);
+	else
+		return 0;
+}
+
+void Node::updatePurpose()
+{
+	if (left)
+	{
+		purpose = JOINT;
+		left->updatePurpose();
+	}
+	else
+	{
+		purpose = EFFECTOR;
+	}
+	if (right)
+		right->updatePurpose();
 }

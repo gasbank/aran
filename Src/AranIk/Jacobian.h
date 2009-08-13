@@ -30,7 +30,7 @@ public:
 	Jacobian(Tree*);
 
 	void ComputeJacobian();
-	const MatrixRmn& ActiveJacobian() const { return *Jactive; } 
+	const MatrixRmn& ActiveJacobian() const { return *Jactive; }
 	void SetJendActive() { Jactive = &Jend; }						// The default setting is Jend.
 	void SetJtargetActive() { Jactive = &Jtarget; }
 
@@ -57,6 +57,7 @@ public:
 	static void CompareErrors( const Jacobian& j1, const Jacobian& j2, double* weightedDist1, double* weightedDist2 );
 	static void CountErrors( const Jacobian& j1, const Jacobian& j2, int* numBetter1, int* numBetter2, int* numTies );
 
+	void setTarget(unsigned int i, const VectorR3& v);
 private:
 	Tree* tree;			// tree associated with this Jacobian matrix
 	int nEffector;		// Number of end effectors
@@ -69,7 +70,7 @@ private:
 	MatrixRmn Jnorms;	// Norms of 3-vectors in active Jacobian (SDLS only)
 
 	MatrixRmn U;		// J = U * Diag(w) * V^T	(Singular Value Decomposition)
-	VectorRn w;			
+	VectorRn w;
 	MatrixRmn V;
 
 	UpdateMode CurrentUpdateMode;
@@ -80,7 +81,7 @@ private:
 	VectorRn dTheta;		// delta theta
 	VectorRn dPreTheta;		// delta theta for single eigenvalue  (SDLS only)
 
-	VectorRn errorArray;	// Distance of end effectors from target after updating 
+	VectorRn errorArray;	// Distance of end effectors from target after updating
 
 	// Parameters for pseudoinverses
 	static const double PseudoInverseThresholdFactor;		// Threshold for treating eigenvalue as zero (fraction of largest eigenvalue)
@@ -90,17 +91,20 @@ private:
 	double DampingLambda;
 	double DampingLambdaSq;
 	//double DampingLambdaSDLS;
-	
+
 	// Cap on max. value of changes in angles in single update step
 	static const double MaxAngleJtranspose;
 	static const double MaxAnglePseudoinverse;
-	static const double MaxAngleDLS;	
-	static const double MaxAngleSDLS;	
+	static const double MaxAngleDLS;
+	static const double MaxAngleSDLS;
 	MatrixRmn* Jactive;
 
 	void CalcdTClampedFromdS();
 	static const double BaseMaxTargetDist;
 
+	VectorR3 target[10];
 };
+
+typedef std::tr1::shared_ptr<Jacobian> JacobianPtr;
 
 #endif

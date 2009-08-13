@@ -108,16 +108,6 @@ template<typename V1, typename V2> void ArnRgbaAssign(V1& v1, const V2& v2)
 	v1.a = v2.a;
 }
 
-// Should have the same layout compared to D3DMATERIAL9
-struct ArnMaterialData
-{
-	ArnColorValue4f Diffuse;
-	ArnColorValue4f Ambient;
-	ArnColorValue4f Specular;
-	ArnColorValue4f Emissive;
-	float Power;
-};
-
 enum ArnLightType
 {
 	ARNLIGHT_POINT = 1,

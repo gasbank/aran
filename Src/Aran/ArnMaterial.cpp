@@ -5,8 +5,10 @@
 
 ArnMaterial::ArnMaterial()
 : ArnNode(NDT_RT_MATERIAL)
-, m_bTextureLoaded(false)
 , m_bShadeless(false)
+, m_bTextureLoaded(false)
+, m_nodeMaterial(0)
+, m_materialCount(0)
 {
 }
 
@@ -40,6 +42,14 @@ ArnMaterial::createFrom( const NodeBase* nodeBase )
 		delete node;
 		throw e;
 	}
+	return node;
+}
+
+ArnMaterial*
+ArnMaterial::createFrom(const ArnMaterialData* amd)
+{
+	ArnMaterial* node = new ArnMaterial();
+	node->m_data.m_d3dMaterial = *amd;
 	return node;
 }
 

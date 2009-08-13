@@ -31,11 +31,30 @@ ARANGL_API void						ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
 ARANGL_API void						ArnConfigureViewMatrixGl(ArnCamera* cam);
 ARANGL_API GLuint					ArnCreateNormalizationCubeMapGl();
 ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnSceneGraph* sg);
-ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl); // Bind OpenGL with the first texture of this material object
+/*!
+ * @brief 기본적인 물질 정보를 OpenGL 컨텍스트에 적용
+ *
+ * ambient, diffuse, specular, emission 및 shininess 값을 OpenGL 컨텍스트에 적용합니다.
+ */
+ARANGL_API void						ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData);
+/*!
+ * @brief ArnMaterial 물질 정보를 OpenGL 컨텍스트에 적용
+ * @sa ArnSetupBasicMaterialGl
+ *
+ * 기본적인 물질 정보를 포함해 텍스처 정보까지 OpenGL 컨텍스트에 적용합니다.
+ * 현재는 ArnMaterial에 정의된 첫 번째 텍스처만 적용시킵니다.
+ */
+ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl);
+/*!
+ * @brief radius, slices, stacks를 설정하여 구를 렌더링
+ */
+ARANGL_API void						ArnRenderSphereGl(double radius = 1.0, unsigned int slices = 16, unsigned int stacks = 16);
+
 ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg);
-ARANGL_API void						ArnRenderSphereGl();
 ARANGL_API void						setTransformGl (const double pos[3], const double R[12]);
 ARANGL_API void						ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb);
-static void							ArnMeshRenderGl(const ArnMesh* mesh);
-static void							ArnSkeletonRenderGl(const ArnSkeleton* skel);
-static void							ArnBoneRenderGl(const ArnBone* bone);
+
+class Node;
+class Tree;
+ARANGL_API void						NodeDrawNode(const Node& node, bool isRoot);
+ARANGL_API void						TreeDraw(const Tree& tree);

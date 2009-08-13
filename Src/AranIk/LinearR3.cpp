@@ -20,7 +20,7 @@
  *
  */
 
-
+#include "AranIkPCH.h"
 #include "MathMisc.h"
 #include "LinearR3.h"
 #include "Spherical.h"
@@ -75,9 +75,9 @@ VectorR3& VectorR3::Set( const Quaternion& q )
 // Rotation routines												   *
 // *********************************************************************
 
-// s.Rotate(theta, u) rotates s and returns s 
+// s.Rotate(theta, u) rotates s and returns s
 //        rotated theta degrees around unit vector w.
-VectorR3& VectorR3::Rotate( double theta, const VectorR3& w) 
+VectorR3& VectorR3::Rotate( double theta, const VectorR3& w)
 {
 	double c = cos(theta);
 	double s = sin(theta);
@@ -91,7 +91,7 @@ VectorR3& VectorR3::Rotate( double theta, const VectorR3& w)
 	double v2x = w.y*v1z - w.z*v1y;
 	double v2y = w.z*v1x - w.x*v1z;	// v2 = w * v1 (cross product)
 	double v2z = w.x*v1y - w.y*v1x;
-	
+
 	x = v0x + c*v1x + s*v2x;
 	y = v0y + c*v1y + s*v2y;
 	z = v0z	+ c*v1z + s*v2z;
@@ -102,7 +102,7 @@ VectorR3& VectorR3::Rotate( double theta, const VectorR3& w)
 // Rotate unit vector x in the direction of "dir": length of dir is rotation angle.
 //		x must be a unit vector.  dir must be perpindicular to x.
 VectorR3& VectorR3::RotateUnitInDirection ( const VectorR3& dir)
-{	
+{
 	double theta = dir.NormSq();
 	if ( theta==0.0 ) {
 		return *this;
@@ -322,7 +322,7 @@ LinearMapR3 operator* ( const LinearMapR3& A, const LinearMapR3& B)
 
 double LinearMapR3::Determinant () const		// Returns the determinant
 {
-	return ( m11*(m22*m33-m23*m32) 
+	return ( m11*(m22*m33-m23*m32)
 				- m12*(m21*m33-m31*m23)
 				+ m13*(m21*m23-m31*m22) );
 }
@@ -410,7 +410,7 @@ AffineMapR3 operator* ( const LinearMapR3& A, const AffineMapR3& B )
 							A.m31*B.m14 + A.m32*B.m24 + A.m33*B.m34  ));
 
 }
- 
+
 AffineMapR3 operator* ( const AffineMapR3& A, const LinearMapR3& B )
 {
 	return( AffineMapR3( A.m11*B.m11 + A.m12*B.m21 + A.m13*B.m31,
@@ -426,7 +426,7 @@ AffineMapR3 operator* ( const AffineMapR3& A, const LinearMapR3& B )
 							A.m24,
 							A.m34   ) );
 }
- 
+
 
 AffineMapR3 AffineMapR3::Inverse() const				// Returns inverse
 {
@@ -499,7 +499,7 @@ AffineMapR3& AffineMapR3::Invert()					// Converts into inverse.
 // * RotationMapR3 class - math library functions				*
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **
 
-RotationMapR3 operator*(const RotationMapR3& A, const RotationMapR3& B) 
+RotationMapR3 operator*(const RotationMapR3& A, const RotationMapR3& B)
 										// Matrix product (composition)
 {
 	return(RotationMapR3(A.m11*B.m11 + A.m12*B.m21 + A.m13*B.m31,
@@ -556,7 +556,7 @@ RotationMapR3& RotationMapR3::Set( const VectorR3& u, double theta )
 	return *this;
 }
 
-// The rotation axis vector u MUST be a UNIT vector!!! 
+// The rotation axis vector u MUST be a UNIT vector!!!
 RotationMapR3& RotationMapR3::Set( const VectorR3& u, double s, double c )
 {
 	assert ( fabs(u.NormSq()-1.0)<2.0e-6 );
@@ -625,9 +625,9 @@ RotationMapR3 VrRotateAlign( const VectorR3& fromVec, const VectorR3& toVec)
 	crossVec *= toVec;
 	double sinetheta = crossVec.Norm();	// Not yet normalized!
 	if ( sinetheta < 1.0e-40 ) {
-		return ( RotationMapR3( 
-					1.0, 0.0, 0.0, 
-					0.0, 1.0, 0.0, 
+		return ( RotationMapR3(
+					1.0, 0.0, 0.0,
+					0.0, 1.0, 0.0,
 					0.0, 0.0, 1.0) );
 	}
 	crossVec /= sinetheta;				// Normalize the vector
@@ -648,16 +648,16 @@ RotationMapR3 RotateToMap( const VectorR3& fromVec, const VectorR3& toVec)
 	double costheta = fromVec^toVec;
 	if ( sintheta <= 1.0e-40 ) {
 		if ( costheta>0.0 ) {
-			return ( RotationMapR3( 
-						1.0, 0.0, 0.0, 
-						0.0, 1.0, 0.0, 
+			return ( RotationMapR3(
+						1.0, 0.0, 0.0,
+						0.0, 1.0, 0.0,
 						0.0, 0.0, 1.0) );
 		}
 		else {
 			GetOrtho ( toVec, crossVec );		// Get arbitrary orthonormal vector
 			return( VrRotate(costheta, sintheta, crossVec ) );
 		}
-	}	
+	}
 	else {
 		crossVec /= sintheta;				// Normalize the vector
 		return ( VrRotate( costheta, sintheta, crossVec) );
@@ -668,7 +668,7 @@ RotationMapR3 RotateToMap( const VectorR3& fromVec, const VectorR3& toVec)
 // * RigidMapR3 class - math library functions					*
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **
 
-// The rotation axis vector u MUST be a UNIT vector!!! 
+// The rotation axis vector u MUST be a UNIT vector!!!
 RigidMapR3& RigidMapR3::SetRotationPart( const VectorR3& u, double theta )
 {
 	assert ( fabs(u.NormSq()-1.0)<2.0e-6 );
@@ -688,7 +688,7 @@ RigidMapR3& RigidMapR3::SetRotationPart( const VectorR3& u, double theta )
 	return *this;
 }
 
-// The rotation axis vector u MUST be a UNIT vector!!! 
+// The rotation axis vector u MUST be a UNIT vector!!!
 RigidMapR3& RigidMapR3::SetRotationPart( const VectorR3& u, double s, double c )
 {
 	assert ( fabs(u.NormSq()-1.0)<2.0e-6 );
@@ -710,13 +710,13 @@ RigidMapR3& RigidMapR3::SetRotationPart( const VectorR3& u, double s, double c )
 // CalcGlideRotation - converts a rigid map into an equivalent
 //	glide rotation (screw motion).  It returns the rotation axis
 //  as base point u, and a rotation axis v.  The vectors u and v are
-//  always orthonormal.  v will be a unit vector.  
+//  always orthonormal.  v will be a unit vector.
 //  It also returns the glide distance, which is the translation parallel
-//  to v.  Further, it returns the signed rotation angle theta (right hand rule 
+//  to v.  Further, it returns the signed rotation angle theta (right hand rule
 //  specifies the direction.
 // The glide rotation means a rotation around the point u with axis direction v.
 // Return code "true" if the rotation amount is non-zero.  "false" if pure translation.
-bool RigidMapR3::CalcGlideRotation( VectorR3* u, VectorR3* v, 
+bool RigidMapR3::CalcGlideRotation( VectorR3* u, VectorR3* v,
 								    double *glideDist, double *rotation ) const
 {
 	// Compare to the code for ToAxisAndAngle.
@@ -810,11 +810,11 @@ ostream& operator<< ( ostream& os, const Matrix3x3& A )
 
 ostream& operator<< ( ostream& os, const Matrix3x4& A )
 {
-	os << " <" << A.m11 << ", " << A.m12 << ", " << A.m13 
+	os << " <" << A.m11 << ", " << A.m12 << ", " << A.m13
 			<< "; " << A.m14 << ">\n"
-	   << " <" << A.m21 << ", " << A.m22 << ", " << A.m23 
+	   << " <" << A.m21 << ", " << A.m22 << ", " << A.m23
 			<< "; " << A.m24 << ">\n"
-	   << " <" << A.m31 << ", " << A.m32 << ", " << A.m33 
+	   << " <" << A.m31 << ", " << A.m32 << ", " << A.m33
 			<< "; " << A.m34 << ">\n" ;
 	return (os);
 }
