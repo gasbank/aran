@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="AranGl"
-	ProjectGUID="{F1E30172-634A-467D-8CE7-C86B8603AD64}"
-	RootNamespace="AranGl"
+	Name="AranIk_Test"
+	ProjectGUID="{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}"
+	RootNamespace="AranDecouple_Test"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -17,12 +17,12 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="DebugDLL|Win32"
+			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
-			CharacterSet="2"
+			ConfigurationType="1"
+			InheritedPropertySheets="..\EnvVar.vsprops"
+			CharacterSet="1"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -42,16 +42,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath;../AranIk"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANGL_EXPORTS;_CRT_SECURE_NO_WARNINGS"
+				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranIk;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;TIXML_USE_STL;dDOUBLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranGlPCH.h"
-				WarningLevel="3"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4251"
+				DisableSpecificWarnings="4100;4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -64,11 +63,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib AranIk_D.lib opengl32.lib glu32.lib"
+				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib AranGl_D.lib AranIk_D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib opengl32.lib glu32.lib"
+				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugDLL"
+				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -94,11 +95,11 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="ReleaseDLL|Win32"
+			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="..\EnvVar.vsprops;..\ReleaseDLLProp.vsprops"
+			ConfigurationType="1"
+			InheritedPropertySheets="..\EnvVar.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -119,14 +120,14 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="2"
+				Optimization="3"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANGL_EXPORTS"
+				FavorSizeOrSpeed="1"
+				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranGlPCH.h"
+				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -141,13 +142,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="opengl32.lib glu32.lib"
+				AdditionalDependencies="Aran.lib AranMath.lib AranPhy.lib AranGl.lib SDL.lib SDLmain.lib freetype239MT.lib opengl32.lib glu32.lib DevIL.lib"
+				OutputFile="$(WORKING)/$(ProjectName).exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -182,73 +184,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\AranGl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\AranGlPCH.cpp"
-				>
-				<FileConfiguration
-					Name="DebugDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ArnGlExt.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMeshGl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnTextureGl.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BasicObjects.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\dllmain.cpp"
-				>
-				<FileConfiguration
-					Name="DebugDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						CompileAsManaged="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						CompileAsManaged="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\glInfo.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoManGl.cpp"
+				RelativePath=".\IkTest.cpp"
 				>
 			</File>
 		</Filter>
@@ -258,43 +194,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\AranGl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AranGlPCH.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnGlExt.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnGlExtEntry.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnMeshGl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnTextureGl.h"
-				>
-			</File>
-			<File
-				RelativePath=".\BasicObjects.h"
-				>
-			</File>
-			<File
-				RelativePath=".\glInfo.h"
-				>
-			</File>
-			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\VideoManGl.h"
+				RelativePath=".\IkTest.h"
 				>
 			</File>
 		</Filter>

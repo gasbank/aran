@@ -214,10 +214,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnPhyWorld.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\BallSocketJoint.cpp"
 				>
 			</File>
@@ -246,10 +242,6 @@
 						CompileAsManaged="0"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\EulerAngles.cpp"
-				>
 			</File>
 			<File
 				RelativePath=".\GeneralBody.cpp"
@@ -310,19 +302,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnPhyWorld.h"
-				>
-			</File>
-			<File
 				RelativePath=".\BallSocketJoint.h"
 				>
 			</File>
 			<File
 				RelativePath=".\Biped.h"
-				>
-			</File>
-			<File
-				RelativePath=".\EulerAngles.h"
 				>
 			</File>
 			<File
@@ -347,10 +331,6 @@
 			</File>
 			<File
 				RelativePath="..\Macros.h"
-				>
-			</File>
-			<File
-				RelativePath=".\QuatTypes.h"
 				>
 			</File>
 			<File

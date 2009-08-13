@@ -19,7 +19,7 @@ ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 , m_animLocalXform_Rot(ArnConsts::ARNQUAT_IDENTITY)
 , m_animLocalXform_Trans(ArnConsts::ARNVEC3_ZERO)
 , m_bAnimLocalXformDirty(true)
-, m_aniimCtrl(0)
+, m_animCtrl(0)
 , m_bDoAnim(false)
 , m_bAnimSeqEnded(false)
 , m_ipo(0)
@@ -31,7 +31,7 @@ ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 ArnXformable::~ArnXformable(void)
 {
 	//SAFE_RELEASE(m_d3dxAnimCtrl);
-	delete m_aniimCtrl;
+	delete m_animCtrl;
 }
 
 void
@@ -54,7 +54,7 @@ ArnXformable::setIpo( const std::string& ipoName )
 void
 ArnXformable::advanceTime(float fTime)
 {
-	m_aniimCtrl->AdvanceTime( fTime );
+	m_animCtrl->AdvanceTime( fTime );
 }
 
 void
@@ -108,13 +108,13 @@ ArnXformable::configureAnimCtrl()
 		//fprintf(stderr, " ** [Node: %s] Animation controller cannot be configured since there is no IPO associated.\n", getName());
 		return;
 	}
-	assert(!m_aniimCtrl);
+	assert(!m_animCtrl);
 	V_VERIFY( ArnCreateAnimationController(
 		1, /* MaxNumMatrices */
 		1, /* MaxNumAnimationSets */
 		1, /* MaxNumTracks */
 		10, /* MaxNumEvents */
-		&m_aniimCtrl
+		&m_animCtrl
 		) );
 
 	ArnIpo* globalIpoNode = static_cast<ArnIpo*>(getSceneRoot()->getNodeByName("Global IPOs Node"));
@@ -123,25 +123,25 @@ ArnXformable::configureAnimCtrl()
 		// Older way (does not use XML file.)
 		assert(globalIpoNode->getType() == NDT_RT_IPO);
 		ArnIpo* animSet = globalIpoNode->getD3DXAnimSet();
-		V_VERIFY(m_aniimCtrl->RegisterIpo(animSet));
-		m_aniimCtrl->SetTrackAnimationSet(0, 0);
+		V_VERIFY(m_animCtrl->RegisterIpo(animSet));
+		m_animCtrl->SetTrackAnimationSet(0, 0);
 	}
 	else
 	{
 		// Newer way
-		m_aniimCtrl->RegisterIpo(ipo);
+		m_animCtrl->RegisterIpo(ipo);
 		// Need to create simple object-ipo mapping (ArnAction) instance
 		// since this is a single object with an animation.
 		ArnAction* action = ArnAction::createFrom(this, ipo);
-		m_aniimCtrl->RegisterAnimationSet(action);
-		m_aniimCtrl->SetTrackAnimationSet(0, 0);
+		m_animCtrl->RegisterAnimationSet(action);
+		m_animCtrl->SetTrackAnimationSet(0, 0);
 	}
-	m_aniimCtrl->SetTrackPosition(0, 0.0f);
-	m_aniimCtrl->SetTrackSpeed(0, 1.0f);
-	m_aniimCtrl->SetTrackWeight(0, 1.0f);
-	m_aniimCtrl->SetTrackEnable(0, TRUE);
-	V_VERIFY(m_aniimCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, &m_animLocalXform_Scale, &m_animLocalXform_Rot, &m_animLocalXform_Trans));
-	m_aniimCtrl->AdvanceTime(0); // Initialize animation matrix outputs
+	m_animCtrl->SetTrackPosition(0, 0.0f);
+	m_animCtrl->SetTrackSpeed(0, 1.0f);
+	m_animCtrl->SetTrackWeight(0, 1.0f);
+	m_animCtrl->SetTrackEnable(0, TRUE);
+	V_VERIFY(m_animCtrl->RegisterAnimationOutput(getIpoName().c_str(), &m_animLocalXform, &m_animLocalXform_Scale, &m_animLocalXform_Rot, &m_animLocalXform_Trans));
+	m_animCtrl->AdvanceTime(0); // Initialize animation matrix outputs
 
 	setDoAnim(true); // Start Animation right now.
 }
@@ -149,10 +149,10 @@ ArnXformable::configureAnimCtrl()
 void
 ArnXformable::update( double fTime, float fElapsedTime )
 {
-	if (m_bDoAnim && m_aniimCtrl)
+	if (m_bDoAnim && m_animCtrl)
 	{
 		//m_d3dxAnimCtrl->AdvanceTime(0.005, 0);
-		m_aniimCtrl->AdvanceTime(fElapsedTime, 0);
+		m_animCtrl->AdvanceTime(fElapsedTime, 0);
 
 		/*
 		ARNTRACK_DESC trackDesc;
@@ -224,17 +224,17 @@ ArnXformable::getFinalLocalXform() const
 double
 ArnXformable::getAnimCtrlTime() const
 {
-	if ( m_aniimCtrl )
-		return m_aniimCtrl->GetTime();
+	if ( m_animCtrl )
+		return m_animCtrl->GetTime();
 	else return -1.0;
 }
 
 void
 ArnXformable::setAnimCtrlTime( double dTime )
 {
-	if ( m_aniimCtrl )
+	if ( m_animCtrl )
 	{
-		m_aniimCtrl->SetTrackPosition( 0, dTime );
+		m_animCtrl->SetTrackPosition( 0, dTime );
 		//m_d3dxAnimCtrl->AdvanceTime( dTime, 0 );
 	}
 	else

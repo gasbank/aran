@@ -317,39 +317,41 @@ unsigned char RgbImage::doubleToUnsignedChar( double x )
 
 bool RgbImage::LoadFromOpenglBuffer()					// Load the bitmap from the current OpenGL buffer
 {
-	int viewportData[4];
-	glGetIntegerv( GL_VIEWPORT, viewportData );
-	int& vWidth = viewportData[2];
-	int& vHeight = viewportData[3];
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 
-	if ( ImagePtr==0 ) { // If no memory allocated
-		NumRows = vHeight;
-		NumCols = vWidth;
-		ImagePtr = new unsigned char[NumRows*GetNumBytesPerRow()];
-		if ( !ImagePtr ) {
-			fprintf(stderr, "Unable to allocate memory for %ld x %ld buffer.\n",
-					NumRows, NumCols);
-			Reset();
-			ErrorCode = MemoryError;
-			return false;
-		}
-	}
-	assert ( vWidth>=NumCols && vHeight>=NumRows );
-	int oldGlRowLen;
-	if ( vWidth>=NumCols ) {
-		glGetIntegerv( GL_UNPACK_ROW_LENGTH, &oldGlRowLen );
-		glPixelStorei( GL_UNPACK_ROW_LENGTH, NumCols );
-	}
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+	//int viewportData[4];
+	//glGetIntegerv( GL_VIEWPORT, viewportData );
+	//int& vWidth = viewportData[2];
+	//int& vHeight = viewportData[3];
 
-	// Get the frame buffer data.
-	glReadPixels( 0, 0, NumCols, NumRows, GL_RGB, GL_UNSIGNED_BYTE, ImagePtr);
+	//if ( ImagePtr==0 ) { // If no memory allocated
+	//	NumRows = vHeight;
+	//	NumCols = vWidth;
+	//	ImagePtr = new unsigned char[NumRows*GetNumBytesPerRow()];
+	//	if ( !ImagePtr ) {
+	//		fprintf(stderr, "Unable to allocate memory for %ld x %ld buffer.\n",
+	//				NumRows, NumCols);
+	//		Reset();
+	//		ErrorCode = MemoryError;
+	//		return false;
+	//	}
+	//}
+	//assert ( vWidth>=NumCols && vHeight>=NumRows );
+	//int oldGlRowLen;
+	//if ( vWidth>=NumCols ) {
+	//	glGetIntegerv( GL_UNPACK_ROW_LENGTH, &oldGlRowLen );
+	//	glPixelStorei( GL_UNPACK_ROW_LENGTH, NumCols );
+	//}
+	//glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
-	// Restore the row length in glPixelStorei  (really ought to restore alignment too).
-	if ( vWidth>=NumCols ) {
-		glPixelStorei( GL_UNPACK_ROW_LENGTH, oldGlRowLen );
-	}
-	return true;
+	//// Get the frame buffer data.
+	//glReadPixels( 0, 0, NumCols, NumRows, GL_RGB, GL_UNSIGNED_BYTE, ImagePtr);
+
+	//// Restore the row length in glPixelStorei  (really ought to restore alignment too).
+	//if ( vWidth>=NumCols ) {
+	//	glPixelStorei( GL_UNPACK_ROW_LENGTH, oldGlRowLen );
+	//}
+	//return true;
 }
 
 #endif   // RGB_IMAGE_DONT_USE_OPENGL

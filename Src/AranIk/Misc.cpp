@@ -47,70 +47,72 @@ static int zorder[] = {
 
 void Axes( float length )
 {
-	int i, j;			/* counters			*/
-	float fact;			/* character scale factor	*/
-	float base;			/* character start location	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 
-	glBegin( GL_LINE_STRIP );
-		glVertex3f( length, 0., 0. );
-		glVertex3f( 0., 0., 0. );
-		glVertex3f( 0., length, 0. );
-	glEnd();
-	glBegin( GL_LINE_STRIP );
-		glVertex3f( 0., 0., 0. );
-		glVertex3f( 0., 0., length );
-	glEnd();
+	//int i, j;			/* counters			*/
+	//float fact;			/* character scale factor	*/
+	//float base;			/* character start location	*/
 
-	fact = LENFRAC * length;
-	base = BASEFRAC * length;
+	//glBegin( GL_LINE_STRIP );
+	//	glVertex3f( length, 0., 0. );
+	//	glVertex3f( 0., 0., 0. );
+	//	glVertex3f( 0., length, 0. );
+	//glEnd();
+	//glBegin( GL_LINE_STRIP );
+	//	glVertex3f( 0., 0., 0. );
+	//	glVertex3f( 0., 0., length );
+	//glEnd();
 
-	glBegin( GL_LINE_STRIP );
-		for( i = 0; i < 4; i++ )
-		{
-			j = xorder[i];
-			if( j < 0 )
-			{
+	//fact = LENFRAC * length;
+	//base = BASEFRAC * length;
 
-				glEnd();
-				glBegin( GL_LINE_STRIP );
-				j = -j;
-			}
-			j--;
-			glVertex3f( base + fact*xx[j], fact*xy[j], 0.0 );
-		}
-	glEnd();
+	//glBegin( GL_LINE_STRIP );
+	//	for( i = 0; i < 4; i++ )
+	//	{
+	//		j = xorder[i];
+	//		if( j < 0 )
+	//		{
 
-	glBegin( GL_LINE_STRIP );
-		for( i = 0; i < 5; i++ )
-		{
-			j = yorder[i];
-			if( j < 0 )
-			{
+	//			glEnd();
+	//			glBegin( GL_LINE_STRIP );
+	//			j = -j;
+	//		}
+	//		j--;
+	//		glVertex3f( base + fact*xx[j], fact*xy[j], 0.0 );
+	//	}
+	//glEnd();
 
-				glEnd();
-				glBegin( GL_LINE_STRIP );
-				j = -j;
-			}
-			j--;
-			glVertex3f( fact*yx[j], base + fact*yy[j], 0.0 );
-		}
-	glEnd();
+	//glBegin( GL_LINE_STRIP );
+	//	for( i = 0; i < 5; i++ )
+	//	{
+	//		j = yorder[i];
+	//		if( j < 0 )
+	//		{
 
-	glBegin( GL_LINE_STRIP );
-		for( i = 0; i < 6; i++ )
-		{
-			j = zorder[i];
-			if( j < 0 )
-			{
+	//			glEnd();
+	//			glBegin( GL_LINE_STRIP );
+	//			j = -j;
+	//		}
+	//		j--;
+	//		glVertex3f( fact*yx[j], base + fact*yy[j], 0.0 );
+	//	}
+	//glEnd();
 
-				glEnd();
-				glBegin( GL_LINE_STRIP );
-				j = -j;
-			}
-			j--;
-			glVertex3f( 0.0, fact*zy[j], base + fact*zx[j] );
-		}
-	glEnd();
+	//glBegin( GL_LINE_STRIP );
+	//	for( i = 0; i < 6; i++ )
+	//	{
+	//		j = zorder[i];
+	//		if( j < 0 )
+	//		{
+
+	//			glEnd();
+	//			glBegin( GL_LINE_STRIP );
+	//			j = -j;
+	//		}
+	//		j--;
+	//		glVertex3f( 0.0, fact*zy[j], base + fact*zx[j] );
+	//	}
+	//glEnd();
 
 }
 
@@ -159,117 +161,119 @@ void	Arrow( const VectorR3& tail, const VectorR3& head )
 
 void Arrow( float tail[3], float head[3] )
 {
-	float u[3], v[3], w[3];		/* arrow coordinate system	*/
-	float d;			/* wing distance		*/
-	float x, y, z;			/* point to plot		*/
-	float mag;			/* magnitude of major direction	*/
-	float f;			/* fabs of magnitude		*/
-	int axis;			/* which axis is the major	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+
+	//float u[3], v[3], w[3];		/* arrow coordinate system	*/
+	//float d;			/* wing distance		*/
+	//float x, y, z;			/* point to plot		*/
+	//float mag;			/* magnitude of major direction	*/
+	//float f;			/* fabs of magnitude		*/
+	//int axis;			/* which axis is the major	*/
 
 
-	/* set w direction in u-v-w coordinate system:			*/
+	///* set w direction in u-v-w coordinate system:			*/
 
-	w[0] = head[0] - tail[0];
-	w[1] = head[1] - tail[1];
-	w[2] = head[2] - tail[2];
-
-
-	/* determine major direction:					*/
-
-	axis = X;
-	mag = fabs( w[0] );
-	if( (f=fabs(w[1]))  > mag )
-	{
-		axis = Y;
-		mag = f;
-	}
-	if( (f=fabs(w[2]))  > mag )
-	{
-		axis = Z;
-		mag = f;
-	}
+	//w[0] = head[0] - tail[0];
+	//w[1] = head[1] - tail[1];
+	//w[2] = head[2] - tail[2];
 
 
-	/* set size of wings and turn w into a unit vector:		*/
+	///* determine major direction:					*/
 
-	d = WINGS * unit( w, w );
-
-
-	/* draw the shaft of the arrow:					*/
-
-	glBegin( GL_LINE_STRIP );
-		glVertex3fv( tail );
-		glVertex3fv( head );
-	glEnd();
-
-	/* draw two sets of wings in the non-major directions:		*/
-
-	if( axis != X )
-	{
-		cross( w, axx, v );
-		(void) unit( v, v );
-		cross( v, w, u  );
-		x = head[0] + d * ( u[0] - w[0] );
-		y = head[1] + d * ( u[1] - w[1] );
-		z = head[2] + d * ( u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-		x = head[0] + d * ( -u[0] - w[0] );
-		y = head[1] + d * ( -u[1] - w[1] );
-		z = head[2] + d * ( -u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-	}
+	//axis = X;
+	//mag = fabs( w[0] );
+	//if( (f=fabs(w[1]))  > mag )
+	//{
+	//	axis = Y;
+	//	mag = f;
+	//}
+	//if( (f=fabs(w[2]))  > mag )
+	//{
+	//	axis = Z;
+	//	mag = f;
+	//}
 
 
-	if( axis != Y )
-	{
-		cross( w, ayy, v );
-		(void) unit( v, v );
-		cross( v, w, u  );
-		x = head[0] + d * ( u[0] - w[0] );
-		y = head[1] + d * ( u[1] - w[1] );
-		z = head[2] + d * ( u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-		x = head[0] + d * ( -u[0] - w[0] );
-		y = head[1] + d * ( -u[1] - w[1] );
-		z = head[2] + d * ( -u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-	}
+	///* set size of wings and turn w into a unit vector:		*/
 
-	if( axis != Z )
-	{
-		cross( w, azz, v );
-		(void) unit( v, v );
-		cross( v, w, u  );
-		x = head[0] + d * ( u[0] - w[0] );
-		y = head[1] + d * ( u[1] - w[1] );
-		z = head[2] + d * ( u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-		x = head[0] + d * ( -u[0] - w[0] );
-		y = head[1] + d * ( -u[1] - w[1] );
-		z = head[2] + d * ( -u[2] - w[2] );
-		glBegin( GL_LINE_STRIP );
-			glVertex3fv( head );
-			glVertex3f( x, y, z );
-		glEnd();
-	}
+	//d = WINGS * unit( w, w );
 
 
-	/* done:							*/
+	///* draw the shaft of the arrow:					*/
+
+	//glBegin( GL_LINE_STRIP );
+	//	glVertex3fv( tail );
+	//	glVertex3fv( head );
+	//glEnd();
+
+	///* draw two sets of wings in the non-major directions:		*/
+
+	//if( axis != X )
+	//{
+	//	cross( w, axx, v );
+	//	(void) unit( v, v );
+	//	cross( v, w, u  );
+	//	x = head[0] + d * ( u[0] - w[0] );
+	//	y = head[1] + d * ( u[1] - w[1] );
+	//	z = head[2] + d * ( u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//	x = head[0] + d * ( -u[0] - w[0] );
+	//	y = head[1] + d * ( -u[1] - w[1] );
+	//	z = head[2] + d * ( -u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//}
+
+
+	//if( axis != Y )
+	//{
+	//	cross( w, ayy, v );
+	//	(void) unit( v, v );
+	//	cross( v, w, u  );
+	//	x = head[0] + d * ( u[0] - w[0] );
+	//	y = head[1] + d * ( u[1] - w[1] );
+	//	z = head[2] + d * ( u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//	x = head[0] + d * ( -u[0] - w[0] );
+	//	y = head[1] + d * ( -u[1] - w[1] );
+	//	z = head[2] + d * ( -u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//}
+
+	//if( axis != Z )
+	//{
+	//	cross( w, azz, v );
+	//	(void) unit( v, v );
+	//	cross( v, w, u  );
+	//	x = head[0] + d * ( u[0] - w[0] );
+	//	y = head[1] + d * ( u[1] - w[1] );
+	//	z = head[2] + d * ( u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//	x = head[0] + d * ( -u[0] - w[0] );
+	//	y = head[1] + d * ( -u[1] - w[1] );
+	//	z = head[2] + d * ( -u[2] - w[2] );
+	//	glBegin( GL_LINE_STRIP );
+	//		glVertex3fv( head );
+	//		glVertex3f( x, y, z );
+	//	glEnd();
+	//}
+
+
+	///* done:							*/
 
 }
 

@@ -5,7 +5,7 @@
 #ifndef _CLASS_TREE
 #define _CLASS_TREE
 
-class Tree {
+class ARANIK_API Tree {
 
 public:
 	Tree();

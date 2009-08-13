@@ -10,7 +10,7 @@ TYPEDEF_SHARED_PTR(Jacobian);
 /*!
  * @brief IK 솔버
  */
-class ArnIkSolver
+class ARANIK_API ArnIkSolver
 {
 public:
 									~ArnIkSolver();

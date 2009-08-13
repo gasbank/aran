@@ -2,7 +2,6 @@
 
 class ArnVec4;
 class ArnVec3;
-class ArnColorValue4f;
 class ArnQuat;
 class ArnMatrix;
 class ArnMesh;

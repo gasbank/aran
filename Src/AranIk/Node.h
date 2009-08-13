@@ -8,7 +8,7 @@ enum Purpose {JOINT, EFFECTOR};
 
 class VectorR3;
 
-class Node {
+class ARANIK_API Node {
 
 	friend class Tree;
 

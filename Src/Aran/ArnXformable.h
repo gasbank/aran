@@ -77,7 +77,7 @@ private:
 	ArnQuat										m_animLocalXform_Rot;
 	ArnVec3										m_animLocalXform_Trans;
 	bool										m_bAnimLocalXformDirty;
-	ArnAnimationController*						m_aniimCtrl;
+	ArnAnimationController*						m_animCtrl;
 	bool										m_bDoAnim;
 	bool										m_bAnimSeqEnded;
 	std::vector<ArnJointData>					m_jointData;

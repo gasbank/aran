@@ -1,10 +1,10 @@
-<?xml version="1.0" encoding="ks_c_5601-1987"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="AranDecouple_Test"
-	ProjectGUID="{4A0FDD1E-87DE-4444-8C48-F92B6D01EC89}"
-	RootNamespace="AranDecouple_Test"
+	Name="AranIk"
+	ProjectGUID="{5184DA9F-00DE-4923-93D6-460636E85BCA}"
+	RootNamespace="AranIk"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -17,11 +17,11 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
+			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
-			InheritedPropertySheets="..\EnvVar.vsprops"
+			ConfigurationType="2"
+			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -42,15 +42,15 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;TIXML_USE_STL;dDOUBLE"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANIK_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				WarningLevel="4"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="AranIkPCH.h"
+				WarningLevel="3"
 				DebugInformationFormat="4"
-				DisableSpecificWarnings="4100;4251"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,13 +63,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib AranGl_D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib opengl32.lib glu32.lib"
-				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
+				AdditionalDependencies="AranMath_D.lib Aran_D.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
-				IgnoreAllDefaultLibraries="false"
+				AdditionalLibraryDirectories="../DebugDLL"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -95,10 +93,10 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="ReleaseDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="1"
+			ConfigurationType="2"
 			InheritedPropertySheets="..\EnvVar.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -120,14 +118,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="3"
+				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANIK_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -142,12 +138,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran.lib AranMath.lib AranPhy.lib AranGl.lib SDL.lib SDLmain.lib freetype239MT.lib opengl32.lib glu32.lib DevIL.lib"
-				OutputFile="$(WORKING)/$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
 				GenerateDebugInformation="true"
-				SubSystem="1"
+				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
@@ -184,7 +177,63 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Test2.cpp"
+				RelativePath=".\AranIk.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\AranIkPCH.cpp"
+				>
+				<FileConfiguration
+					Name="DebugDLL|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						UsePrecompiledHeader="1"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\ArnIkSolver.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Jacobian.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR2.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR3.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR4.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MatrixRmn.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Misc.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Node.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\RgbImage.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Tree.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\VectorRn.cpp"
 				>
 			</File>
 		</Filter>
@@ -194,7 +243,59 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\Test2.h"
+				RelativePath=".\AranIk.h"
+				>
+			</File>
+			<File
+				RelativePath=".\AranIkPCH.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnIkSolver.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Jacobian.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR3.h"
+				>
+			</File>
+			<File
+				RelativePath=".\LinearR4.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MathMisc.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MatrixRmn.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Node.h"
+				>
+			</File>
+			<File
+				RelativePath=".\RgbImage.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Spherical.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Tree.h"
+				>
+			</File>
+			<File
+				RelativePath=".\VectorRn.h"
 				>
 			</File>
 		</Filter>

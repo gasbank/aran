@@ -13,7 +13,7 @@ struct NodeBone2;
 /*!
  * @brief ArnSkeleton 구성하는 하나의 뼈를 나타내는 클래스
  */
-class ArnBone : public ArnXformable
+class ARAN_API ArnBone : public ArnXformable
 {
 public:
 											~ArnBone(void);

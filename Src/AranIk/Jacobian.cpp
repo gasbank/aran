@@ -444,6 +444,9 @@ void Jacobian::UpdatedSClampValue()
 
 void Jacobian::DrawEigenVectors() const
 {
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+
+	/*
 	int i, j;
 	VectorR3 tail;
 	VectorR3 head;
@@ -470,6 +473,7 @@ void Jacobian::DrawEigenVectors() const
 			glEnable(GL_LIGHTING);
 		}
 	}
+	*/
 }
 
 void Jacobian::CompareErrors( const Jacobian& j1, const Jacobian& j2, double* weightedDist1, double* weightedDist2 )
