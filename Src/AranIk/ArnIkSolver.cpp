@@ -207,24 +207,3 @@ ArnIkSolver::getNodeByName(const char* name)
 {
 	return m_tree->getNodeByName(name);
 }
-
-//////////////////////////////////////////////////////////////////////////
-
-unsigned int
-ArnCreateArnIkSolversOnSceneGraph( ArnSceneGraphPtr sg )
-{
-	unsigned int count = 0;
-	foreach(ArnNode* node, sg->getChildren())
-	{
-		if (node->getType() == NDT_RT_SKELETON)
-		{
-			ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
-			ArnIkSolver* ikSolver = 0;
-			CreateArnIkSolver(&ikSolver, skel);
-			skel->setVisible(false);
-			assert(ikSolver);
-			++count;
-		}
-	}
-	return count;
-}

@@ -534,12 +534,14 @@ ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
 		if (node->getType() == NDT_RT_MESH)
 		{
 			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
-			ArnMeshRenderGl(mesh);
+			if (mesh->isVisible())
+				ArnMeshRenderGl(mesh);
 		}
 		else if (node->getType() == NDT_RT_SKELETON)
 		{
 			const ArnSkeleton* skel = reinterpret_cast<const ArnSkeleton*>(node);
-			ArnSkeletonRenderGl(skel);
+			if (skel->isVisible())
+				ArnSkeletonRenderGl(skel);
 		}
 	}
 }
@@ -662,16 +664,44 @@ NodeDrawBox(const Node& node)
 	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	{
+		glPushMatrix();
+		{
+			glTranslated(node.getR().x, node.getR().y, node.getR().z);
+			if (!node.getRealParent())
+			{
+				// Draw a root node indicator.
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+				ArnRenderSphereGl(0.1);
+			}
+			else if (node.getRealParent() && node.getLeftNode())
+			{
+				// Draw a joint indicator.
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+				ArnRenderSphereGl(0.1);
+			}
+			else if (node.getRealParent() && !node.getLeftNode())
+			{
+				// Draw an end-effector indicator.
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_RED);
+				ArnRenderSphereGl(0.1);
+			}
+			else
+			{
+				ARN_THROW_UNEXPECTED_CASE_ERROR
+			}
+		}
+		glPopMatrix();
+
 		if ( r.z!=0.0 || r.x!=0.0 )
 		{
 			double alpha = atan2(r.z, r.x);
-			glRotated(ArnToDegree(alpha), 0.0f, -1.0f, 0.0f);
+			glRotated(ArnToDegree(alpha), 0.0, -1.0, 0.0);
 		}
 
 		if ( r.y!=0.0 )
 		{
 			double beta = atan2(r.y, sqrt(r.x*r.x+r.z*r.z));
-			glRotated( ArnToDegree(beta), 0.0f, 0.0f, 1.0f );
+			glRotated( ArnToDegree(beta), 0.0, 0.0, 1.0 );
 		}
 
 		double length = r.Norm();
@@ -707,11 +737,9 @@ NodeDrawBox(const Node& node)
 			glEnd();
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
 			glEnable(GL_LIGHTING);
 		}
 		glPopMatrix();
-
 	}
 	glPopMatrix();
 	glEnable(GL_CULL_FACE);
@@ -720,12 +748,19 @@ NodeDrawBox(const Node& node)
 void
 NodeDrawNode(const Node& node, bool isRoot)
 {
-	if (!isRoot) {
+	if (!isRoot)
+	{
 		NodeDrawBox(node);
+	}
+	else
+	{
+		// Draw a root node indicator.
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+		ArnRenderSphereGl(0.1);
 	}
 
 	// Draw rotation axis
-	const double rotAxisLen = 1.3;
+	const double rotAxisLen = 0.5;
 	glDisable(GL_LIGHTING);
 	glColor3f(1.0f, 1.0f, 0.0f);
 	glLineWidth(2.0);

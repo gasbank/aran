@@ -38,13 +38,4 @@ private:
 	const ArnSkeleton*				m_skel;
 };
 
-class ArnSceneGraph;
-
-/*!
- * @brief ArnSceneGraph에 있는 모든 ArnSkeleton에 대해 ArnIkSolver를 생성
- * @return 생성된 ArnIkSolver 개수
- * @remark ArnSkeleton을 재귀적으로 모두 찾는 것이 아니라 최상위 노드(root)에서만 검색합니다.
- */
-ARANIK_API unsigned int ArnCreateArnIkSolversOnSceneGraph(ArnSceneGraphPtr sg);
-
 #endif // ARANIKSOLVER_H

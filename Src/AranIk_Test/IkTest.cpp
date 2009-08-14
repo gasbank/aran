@@ -391,27 +391,16 @@ DoMain()
 		return -11;
 	}
 	assert(curSgPtr);
-	/*
-	if (curSgPtr)
-	{
-		ArnSkeleton* skel1 = reinterpret_cast<ArnSkeleton*>(curSgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
-		if (skel1 && skel1->getIkSolver())
-		{
-			NodePtr newRoot = skel1->getIkSolver()->getNodeByName("Bone_L");
-			assert(newRoot);
-			skel1->getIkSolver()->reconfigureRoot(newRoot);
-		}
-	}
-	*/
-
-	assert(curSgPtr);
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
+	std::vector<ArnIkSolver*> ikSolvers;
 
 	// Initialize renderer-independent data in scene graph objects.
 	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-	ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
+	foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
+	ikSolvers.clear();
+	ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
 
 	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
@@ -549,7 +538,7 @@ DoMain()
 		}
 		if (curSgPtr)
 			curSgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
-
+		
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -563,16 +552,12 @@ DoMain()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-		/*
-		ArnMaterial* defMtrl = reinterpret_cast<ArnMaterial*>(curSgPtr->findFirstNodeOfType(NDT_RT_MATERIAL));
-		if (defMtrl)
-			ArnSetupMaterialGl(defMtrl);
-
-		if (ikSolver)
+		foreach (ArnIkSolver* ikSolver, ikSolvers)
 		{
+			glPushMatrix();
 			TreeDraw(*ikSolver->getTree());
+			glPopMatrix();
 		}
-		*/
 
 		glPushMatrix();
 		{
@@ -636,7 +621,9 @@ DoMain()
 				// Initialize renderer-independent data in scene graph objects.
 				swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 				GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-				ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
+				foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
+				ikSolvers.clear();
+				ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
 
 				// Initialize renderer-dependent data in scene graph objects.
 				ArnInitializeRenderableObjectsGl(curSgPtr.get());

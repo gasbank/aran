@@ -83,7 +83,7 @@ void Node::printNodeHierarchy(int step) const
 {
 	for (int i = 0; i < step; ++i)
 		std::cout << "  ";
-	std::cout << getName() << std::endl;
+	std::cout << getName() << " [" << getAttach().x << " " << getAttach().y << " " << getAttach().z << "]" << std::endl;
 
 	if (m_left)
 		m_left->printNodeHierarchy(step + 1);

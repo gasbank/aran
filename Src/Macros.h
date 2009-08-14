@@ -244,6 +244,5 @@ EpSafeReleaseAll( T& obj )
 #define TYPEDEF_SHARED_PTR(type) \
 	class type; \
 	typedef std::tr1::shared_ptr<type> type##Ptr; \
-	typedef std::tr1::shared_ptr<type##Ptr> type##PtrPtr; \
 	typedef std::tr1::shared_ptr<const type> type##ConstPtr;
 
