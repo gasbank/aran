@@ -96,41 +96,6 @@ VideoManGl::setupVboSupport() const
 	}
 	bool ret = false;
 
-#ifdef _WIN32
-	/*
-	// check VBO is supported by your video card
-	if(m_glInfo.isExtensionSupported("GL_ARB_vertex_buffer_object"))
-	{
-		// get pointers to GL functions
-		glGenBuffersARB = (PFNGLGENBUFFERSARBPROC)wglGetProcAddress("glGenBuffersARB");
-		glBindBufferARB = (PFNGLBINDBUFFERARBPROC)wglGetProcAddress("glBindBufferARB");
-		glBufferDataARB = (PFNGLBUFFERDATAARBPROC)wglGetProcAddress("glBufferDataARB");
-		glBufferSubDataARB = (PFNGLBUFFERSUBDATAARBPROC)wglGetProcAddress("glBufferSubDataARB");
-		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC)wglGetProcAddress("glDeleteBuffersARB");
-		glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC)wglGetProcAddress("glGetBufferParameterivARB");
-		glMapBufferARB = (PFNGLMAPBUFFERARBPROC)wglGetProcAddress("glMapBufferARB");
-		glUnmapBufferARB = (PFNGLUNMAPBUFFERARBPROC)wglGetProcAddress("glUnmapBufferARB");
-
-		// check once again VBO extension
-		if(glGenBuffersARB && glBindBufferARB && glBufferDataARB && glBufferSubDataARB &&
-			glMapBufferARB && glUnmapBufferARB && glDeleteBuffersARB && glGetBufferParameterivARB)
-		{
-			ret = true;
-			std::cout << "Video card supports GL_ARB_vertex_buffer_object." << std::endl;
-		}
-		else
-		{
-			ret = false;
-			std::cout << "Video card does NOT support GL_ARB_vertex_buffer_object." << std::endl;
-		}
-	}
-	else
-	{
-		ret = false;
-		std::cout << "Video card does NOT support GL_ARB_vertex_buffer_object." << std::endl;
-	}
-	*/
-#else // for linux, do not need to get function pointers, it is up-to-date
 	if(m_glInfo.isExtensionSupported("GL_ARB_vertex_buffer_object"))
 	{
 		ret = true;
@@ -141,7 +106,6 @@ VideoManGl::setupVboSupport() const
 		ret = false;
 		std::cout << "Video card does NOT support GL_ARB_vertex_buffer_object." << std::endl;
 	}
-#endif
 
 	if (!ret)
 	{
