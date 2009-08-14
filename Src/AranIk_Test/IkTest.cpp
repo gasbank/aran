@@ -531,25 +531,18 @@ DoMain()
 		char* sdl_error;
 
 		// Update phase
-		// Physical simulation update
-		GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-		if (gjPtr)
-		{
-			gjPtr->addTorque(AXIS_Y, gs_torque);
-		}
-		gjPtr = swPtr->getGeneralJointByName("Stick2-Foot");
-		if (gjPtr)
-		{
-			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
-		}
 
 		// Physics simulation frequency (Hz)
 		// higher --> accurate, stable, slow
 		// lower  --> errors, unstable, fast
 		static const unsigned int simFreq = 200;
+		// Maximum simulation step iteration count for clamping
+		// to keep app from advocating all resources to step further.
+		static const unsigned int simMaxIteration = 500;
+
 		unsigned int simLoop = unsigned int(frameDurationMs / 1000.0 * simFreq);
-		if (simLoop > 500)
-			simLoop = 500; // Clamp simulation iteration count to make app more responsive
+		if (simLoop > simMaxIteration)
+			simLoop = simMaxIteration; 
 		for (unsigned int step = 0; step < simLoop; ++step)
 		{
 			swPtr->updateFrame(1.0 / simFreq);
@@ -663,9 +656,12 @@ DoMain()
 
 			if (reconfigScene)
 			{
-				// Initialize OpenGL contexts of scene graph objects.
+				// Initialize renderer-independent data in scene graph objects.
 				swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
 				GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+				ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
+
+				// Initialize renderer-dependent data in scene graph objects.
 				ArnInitializeRenderableObjectsGl(curSgPtr.get());
 				ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
 				ArnConfigureViewMatrixGl(activeCam);

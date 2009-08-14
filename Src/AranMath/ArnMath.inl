@@ -58,6 +58,12 @@ ArnToRadian(double deg)
 	return double(ARN_PI/180.0*deg);
 }
 
+static inline double
+ArnToDegree(double rad)
+{
+	return double(rad * (180.0 / ARN_PI));
+}
+
 static inline float
 ArnToDegree(float rad)
 {
