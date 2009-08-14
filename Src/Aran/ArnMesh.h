@@ -44,8 +44,6 @@ public:
 	inline const MeshData&					getMeshData() const;
 	const ArnMaterialData*					getMaterial(unsigned int i) const;
 	inline ArnMaterial*						getMaterialNode(unsigned int i) const;
-	inline bool								isVisible() const;
-	inline void								setVisible(bool val);
 	inline bool								isCollide() const;
 	inline void								setCollide(bool val);
 	inline const NodeMesh3*					getNodeMesh3() const;
@@ -186,7 +184,6 @@ private:
 							indWeight;
 	};
 
-	bool									m_bVisible;
 	bool									m_bCollide;
 	ArnHierarchy*							m_skeleton;
 	const ArnVertexBuffer*					m_arnVb;

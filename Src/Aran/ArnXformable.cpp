@@ -9,6 +9,7 @@
 
 ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 : ArnNode(ndt)
+, m_bVisible(true)
 , m_localXform(ArnConsts::ARNMAT_IDENTITY)
 , m_localXform_Scale(ArnConsts::ARNVEC3_ONE)
 , m_localXform_Rot(ArnConsts::ARNQUAT_IDENTITY)

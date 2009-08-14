@@ -8,11 +8,13 @@
 #include "AranIk.h"
 
 ArnIkSolver::ArnIkSolver()
+: m_skel(0)
 {
 }
 
 ArnIkSolver::~ArnIkSolver()
 {
+	// Do not release m_skel.
 }
 
 ArnIkSolver*
@@ -42,6 +44,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 			<< ret->getTree()->GetNumEffector() << " end-effector(s) and "
 			<< ret->getTree()->GetNumJoint() << " joint(s)." << std::endl;
 	ret->printHierarchy();
+	ret->m_skel = skel;
 	return ret;
 }
 
@@ -218,11 +221,9 @@ ArnCreateArnIkSolversOnSceneGraph( ArnSceneGraphPtr sg )
 			ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
 			ArnIkSolver* ikSolver = 0;
 			CreateArnIkSolver(&ikSolver, skel);
-			if (ikSolver)
-			{
-				skel->setIkSolver(ikSolver);
-				++count;
-			}
+			skel->setVisible(false);
+			assert(ikSolver);
+			++count;
 		}
 	}
 	return count;

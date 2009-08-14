@@ -572,29 +572,6 @@ DoMain()
 		{
 			TreeDraw(*ikSolver->getTree());
 		}
-		glPushMatrix();
-		glTranslated(t1.x, t1.y, t1.z);
-		glScaled(0.1, 0.1, 0.1);
-		ArnRenderSphereGl();
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(t2.x, t2.y, t2.z);
-		glScaled(0.1, 0.1, 0.1);
-		ArnRenderSphereGl();
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(t3.x, t3.y, t3.z);
-		glScaled(0.1, 0.1, 0.1);
-		ArnRenderSphereGl();
-		glPopMatrix();
-
-		glPushMatrix();
-		glTranslated(t4.x, t4.y, t4.z);
-		glScaled(0.1, 0.1, 0.1);
-		ArnRenderSphereGl();
-		glPopMatrix();
 		*/
 
 		glPushMatrix();

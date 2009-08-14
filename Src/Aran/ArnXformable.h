@@ -41,6 +41,8 @@ public:
 	inline bool									isAnimSeqEnded() const;
 	inline const ArnMatrix&						getLocalXform() const; // m_localXform will not be updated until recalcLocalXform() is called.
 	inline void									resetAnimSeqTime();
+	inline bool									isVisible() const;
+	inline void									setVisible(bool val);
 	ArnMatrix									getFinalXform();
 	void										recalcLocalXform();
 	void										recalcAnimLocalXform();
@@ -67,6 +69,7 @@ protected:
 
 private:
 	inline void									setAnimSeqEnded(bool val);
+	bool										m_bVisible;
 	ArnMatrix  									m_localXform;
 	ArnVec3 									m_localXform_Scale;
 	ArnQuat     								m_localXform_Rot;
@@ -83,7 +86,6 @@ private:
 	std::vector<ArnJointData>					m_jointData;
 	std::string									m_ipoName;
 	ArnIpo*										m_ipo;
-
 	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
 	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear
 };

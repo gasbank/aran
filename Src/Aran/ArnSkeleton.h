@@ -11,7 +11,6 @@ struct NodeSkeleton1;
 struct NodeHierarchy2;
 class ArnAction;
 class ArnBone;
-class ArnIkSolver;
 
 /*!
  * @brief 뼈대 구조를 정의하는 클래스 (블랜더의 Armature)
@@ -32,8 +31,6 @@ public:
 	 */
 	unsigned int						getChildBoneCount() const;
 	void								setActionToNext();
-	ArnIkSolver*						getIkSolver() const { return m_ikSolver; }
-	void								setIkSolver(ArnIkSolver* val) { m_ikSolver = val; }
 	/*!
 	 * @name Internal use only methods
 	 * These methods are exposed in order to make internal linkage between objects.
@@ -50,7 +47,6 @@ private:
 	ArnAction*							m_defaultAction;
 	std::vector<std::string>			m_actionStripNames;
 	std::vector<ArnAction*>				m_actionStrips;
-	ArnIkSolver*						m_ikSolver;
 };
 
 /*!

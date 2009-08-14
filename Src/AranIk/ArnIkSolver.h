@@ -35,6 +35,7 @@ private:
 	JacobianPtr						getJacobian() { return m_jacobian; }
 	TreePtr							m_tree;
 	JacobianPtr						m_jacobian;
+	const ArnSkeleton*				m_skel;
 };
 
 class ArnSceneGraph;

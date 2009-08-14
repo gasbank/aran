@@ -10,7 +10,6 @@
 
 ArnMesh::ArnMesh()
 : ArnXformable(NDT_RT_MESH)
-, m_bVisible(true)
 , m_bCollide(true)
 , m_skeleton(0)
 , m_arnVb(0)

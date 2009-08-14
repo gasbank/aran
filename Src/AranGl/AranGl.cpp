@@ -665,13 +665,13 @@ NodeDrawBox(const Node& node)
 		if ( r.z!=0.0 || r.x!=0.0 )
 		{
 			double alpha = atan2(r.z, r.x);
-			glRotatef(ArnToDegree(alpha), 0.0f, -1.0f, 0.0f);
+			glRotated(ArnToDegree(alpha), 0.0f, -1.0f, 0.0f);
 		}
 
 		if ( r.y!=0.0 )
 		{
 			double beta = atan2(r.y, sqrt(r.x*r.x+r.z*r.z));
-			glRotatef( ArnToDegree(beta), 0.0f, 0.0f, 1.0f );
+			glRotated( ArnToDegree(beta), 0.0f, 0.0f, 1.0f );
 		}
 
 		double length = r.Norm();
@@ -733,9 +733,9 @@ NodeDrawNode(const Node& node, bool isRoot)
 	{
 		VectorR3 temp = node.getR();
 		temp.AddScaled(node.getRotationAxis(), rotAxisLen * node.getSize());
-		glVertex3f( temp.x, temp.y, temp.z );
+		glVertex3d( temp.x, temp.y, temp.z );
 		temp.AddScaled(node.getRotationAxis(),-2.0*rotAxisLen*node.getSize());
-		glVertex3f( temp.x, temp.y, temp.z );
+		glVertex3d( temp.x, temp.y, temp.z );
 	}
 	glEnd();
 	glLineWidth(1.0);

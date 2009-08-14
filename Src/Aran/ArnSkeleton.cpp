@@ -9,13 +9,11 @@
 ArnSkeleton::ArnSkeleton()
 : ArnXformable(NDT_RT_SKELETON)
 , m_defaultAction(0)
-, m_ikSolver(0)
 {
 }
 
 ArnSkeleton::~ArnSkeleton(void)
 {
-	delete m_ikSolver;
 }
 
 void
