@@ -383,6 +383,12 @@ ArnBoneRenderGl( const ArnBone* bone )
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
 			ArnRenderSphereGl(0.1);
 		}
+		else
+		{
+			// Draw a joint indicator.
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+			ArnRenderSphereGl(0.1);
+		}
 
 		foreach (const ArnNode* node, bone->getChildren())
 		{
@@ -403,6 +409,17 @@ ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData)
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrlData->Diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrlData->Specular);
 	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrlData->Emissive);
+	const static float shininess = 100.0f;
+	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
+}
+
+void
+ArnSetupBasicMaterialGl(const ArnColorValue4f* color)
+{
+	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)color);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)color);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)color);
+	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)color);
 	const static float shininess = 100.0f;
 	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
 }
@@ -441,7 +458,9 @@ ArnSkeletonRenderGl( const ArnSkeleton* skel )
 		assert(skel->isLocalXformDirty() == false);
 		glMultTransposeMatrixf((float*)skel->getLocalXform().m);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		ArnDrawAxesGl(0.5);
+		ArnDrawAxesGl(0.75);
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+		ArnRenderSphereGl(0.1);
 		foreach (const ArnNode* node, skel->getChildren())
 		{
 			assert(node->getType() == NDT_RT_BONE);
@@ -643,14 +662,16 @@ NodeDrawBox(const Node& node)
 	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	{
-		if ( r.z!=0.0 || r.x!=0.0 ) {
+		if ( r.z!=0.0 || r.x!=0.0 )
+		{
 			double alpha = atan2(r.z, r.x);
-			glRotatef(alpha*RadiansToDegrees, 0.0f, -1.0f, 0.0f);
+			glRotatef(ArnToDegree(alpha), 0.0f, -1.0f, 0.0f);
 		}
 
-		if ( r.y!=0.0 ) {
+		if ( r.y!=0.0 )
+		{
 			double beta = atan2(r.y, sqrt(r.x*r.x+r.z*r.z));
-			glRotatef( beta*RadiansToDegrees, 0.0f, 0.0f, 1.0f );
+			glRotatef( ArnToDegree(beta), 0.0f, 0.0f, 1.0f );
 		}
 
 		double length = r.Norm();
@@ -703,28 +724,27 @@ NodeDrawNode(const Node& node, bool isRoot)
 		NodeDrawBox(node);
 	}
 
-	/*
-	if (RotAxesOn) {
-		const double rotAxisLen = 1.3;
-		glDisable(GL_LIGHTING);
-		glColor3f(1.0f, 1.0f, 0.0f);
-		glLineWidth(2.0);
-		glBegin(GL_LINES);
-		VectorR3 temp = r;
-		temp.AddScaled(v,rotAxisLen*size);
+	// Draw rotation axis
+	const double rotAxisLen = 1.3;
+	glDisable(GL_LIGHTING);
+	glColor3f(1.0f, 1.0f, 0.0f);
+	glLineWidth(2.0);
+	glBegin(GL_LINES);
+	{
+		VectorR3 temp = node.getR();
+		temp.AddScaled(node.getRotationAxis(), rotAxisLen * node.getSize());
 		glVertex3f( temp.x, temp.y, temp.z );
-		temp.AddScaled(v,-2.0*rotAxisLen*size);
+		temp.AddScaled(node.getRotationAxis(),-2.0*rotAxisLen*node.getSize());
 		glVertex3f( temp.x, temp.y, temp.z );
-		glEnd();
-		glLineWidth(1.0);
-		glEnable(GL_LIGHTING);
 	}
-	*/
+	glEnd();
+	glLineWidth(1.0);
+	glEnable(GL_LIGHTING);
 
 	const VectorR3& r = node.getRelativePosition();
 	const VectorR3& v = node.getRotationAxis();
-	glTranslatef(r.x, r.y, r.z);
-	glRotatef(ArnToDegree(node.getJointAngle()), v.x, v.y, v.z);
+	glTranslated(r.x, r.y, r.z);
+	glRotated(ArnToDegree(node.getJointAngle()), v.x, v.y, v.z);
 }
 
 static void

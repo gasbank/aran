@@ -21,8 +21,8 @@ SimWorld::SimWorld()
 {
 	m_osc->world = dWorldCreate();
 	dWorldSetGravity(m_osc->world, 0, 0, -9.8);
-	dWorldSetERP(m_osc->world, 0.4);
-	dWorldSetCFM(m_osc->world, 0.00001);
+	//dWorldSetERP(m_osc->world, 0.4);
+	//dWorldSetCFM(m_osc->world, 0.00001);
 	// Set up the collision environment
 	m_osc->space = dHashSpaceCreate(0);
 	m_osc->contactGroup = dJointGroupCreate(0);

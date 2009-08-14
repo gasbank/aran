@@ -38,6 +38,12 @@ ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnSceneGraph* sg);
  */
 ARANGL_API void						ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData);
 /*!
+ * @brief 하나의 색으로 물질 정보를 통일해서 OpenGL 컨텍스트에 적용
+ *
+ * ambient, diffuse, specular, emission 값을 하나의 색으로 통일해서 적용시킵니다.
+ */
+ARANGL_API void						ArnSetupBasicMaterialGl(const ArnColorValue4f* color);
+/*!
  * @brief ArnMaterial 물질 정보를 OpenGL 컨텍스트에 적용
  * @sa ArnSetupBasicMaterialGl
  *

@@ -272,8 +272,15 @@ ConfigureNextTestSceneWithRetry(int& curSceneIndex, int nextSceneIndex, const st
 	while (!ret)
 	{
 		ret = ConfigureTestScene(sceneList[curSceneIndex].c_str(), &avd);
-		curSceneIndex = (curSceneIndex + 1) % sceneList.size();
-		++retryCount;
+		if (ret)
+		{
+			return ret;
+		}
+		else
+		{
+			curSceneIndex = (curSceneIndex + 1) % sceneList.size();
+			++retryCount;
+		}
 		if (retryCount >= sceneList.size())
 		{
 			std::cerr << " *** All provided scene files have errors." << std::endl;
@@ -384,7 +391,7 @@ DoMain()
 		return -11;
 	}
 	assert(curSgPtr);
-	ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
+	/*
 	if (curSgPtr)
 	{
 		ArnSkeleton* skel1 = reinterpret_cast<ArnSkeleton*>(curSgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
@@ -395,6 +402,16 @@ DoMain()
 			skel1->getIkSolver()->reconfigureRoot(newRoot);
 		}
 	}
+	*/
+
+	assert(curSgPtr);
+	ArnCamera* activeCam = 0;
+	ArnLight* activeLight = 0;
+
+	// Initialize renderer-independent data in scene graph objects.
+	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
+	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+	ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
 
 	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
@@ -457,9 +474,6 @@ DoMain()
 	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &value );
 	printf( "SDL_GL_ACCELERATED_VISUAL: requested 1, got %d\n", value );
 
-	//SDL_GL_GetAttribute( SDL_GL_SWAP_CONTROL, &value );
-	//printf( "SDL_GL_SWAP_CONTROL: requested 1, got %d\n", value );
-
 	if (ArnInitGlExtFunctions() < 0)
 	{
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
@@ -471,6 +485,11 @@ DoMain()
 	}
 	ArnInitializePhysics();
 	ArnInitializeGl();
+
+	// Initialize renderer-dependent data in scene graph objects.
+	ArnInitializeRenderableObjectsGl(curSgPtr.get());
+	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+	ArnConfigureViewMatrixGl(activeCam);
 
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
@@ -497,19 +516,6 @@ DoMain()
 
 	unsigned int frames = 0;
 	unsigned int start_time = SDL_GetTicks();
-	assert(curSgPtr);
-	ArnCamera* activeCam = 0;
-	ArnLight* activeLight = 0;
-
-	// Initialize OpenGL contexts of scene graph objects.
-	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-	ArnInitializeRenderableObjectsGl(curSgPtr.get());
-	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-	ArnConfigureViewMatrixGl(activeCam);
-
-	// TODO: Normalized cube map for normal mapping
-	//GLuint norCubeMap = ArnCreateNormalizationCubeMapGl();
 
 	/* Loop until done. */
 	MessageHandleResult done = MHR_DO_NOTHING;
@@ -537,37 +543,19 @@ DoMain()
 			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
 		}
 
-		unsigned int simLoop = 1000;
-		if (frameDurationMs > 100)
-			simLoop = 100;
-		else
-			simLoop = frameDurationMs;
-
+		// Physics simulation frequency (Hz)
+		// higher --> accurate, stable, slow
+		// lower  --> errors, unstable, fast
+		static const unsigned int simFreq = 200;
+		unsigned int simLoop = unsigned int(frameDurationMs / 1000.0 * simFreq);
+		if (simLoop > 500)
+			simLoop = 500; // Clamp simulation iteration count to make app more responsive
 		for (unsigned int step = 0; step < simLoop; ++step)
 		{
-			swPtr->updateFrame(0.001);
+			swPtr->updateFrame(1.0 / simFreq);
 		}
 		if (curSgPtr)
-			curSgPtr->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
-
-		/*
-		ArnVec3 t1 = ArnVec3(-1.0f, 1.5f + gs_linVelX, -6.5f + gs_linVelZ);
-		ArnVec3 t2 = ArnVec3( 1.0f, 1.5f, -6.5f);
-
-		ArnVec3 t3 = ArnVec3(1.0f, 0, -6.5f);
-		ArnVec3 t4 = ArnVec3(1.0f, 1.0f, -3.5f);
-
-		if (ikSolver)
-		{
-			ikSolver->setTarget(0, t1);
-			ikSolver->setTarget(1, t2);
-
-			ikSolver->setTarget(2, t3);
-			ikSolver->setTarget(3, t4);
-
-			ikSolver->update();
-		}
-		*/
+			curSgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
 
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
@@ -582,12 +570,11 @@ DoMain()
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
 
-
+		/*
 		ArnMaterial* defMtrl = reinterpret_cast<ArnMaterial*>(curSgPtr->findFirstNodeOfType(NDT_RT_MATERIAL));
 		if (defMtrl)
 			ArnSetupMaterialGl(defMtrl);
 
-		/*
 		if (ikSolver)
 		{
 			TreeDraw(*ikSolver->getTree());
@@ -630,22 +617,19 @@ DoMain()
 
 		/* Check for error conditions. */
 		gl_error = glGetError( );
-
-		if( gl_error != GL_NO_ERROR ) {
+		if( gl_error != GL_NO_ERROR )
+		{
 			fprintf( stderr, "ARAN: OpenGL error: %d\n", gl_error );
 		}
-
 		sdl_error = SDL_GetError( );
-
-		if( sdl_error[0] != '\0' ) {
+		if( sdl_error[0] != '\0' )
+		{
 			fprintf(stderr, "ARAN: SDL error '%s'\n", sdl_error);
 			SDL_ClearError();
 		}
 
-		/* Allow the user to see what's happening */
-
-		/* Check if there's a pending event. */
-		while( SDL_PollEvent( &event ) ) {
+		while( SDL_PollEvent( &event ) )
+		{
 			done = HandleEvent(&event, curSgPtr.get(), &avd, swPtr);
 			
 			int reconfigScene = false;
@@ -693,7 +677,8 @@ DoMain()
 
 	/* Print out the frames per second */
 	unsigned int this_time = SDL_GetTicks();
-	if ( this_time != start_time ) {
+	if ( this_time != start_time )
+	{
 		printf("%2.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
 	Cleanup();

@@ -15,6 +15,7 @@ ArnSkeleton::ArnSkeleton()
 
 ArnSkeleton::~ArnSkeleton(void)
 {
+	delete m_ikSolver;
 }
 
 void

@@ -283,11 +283,10 @@ ArnMeshGl::renderXml() const
 			// Render anchor point if there is a rigid body joint constraint.
 			foreach (const ArnJointData& ajd, m_target->getJointData())
 			{
-				glLoadName(0x10000000); // Bounding box portion is not selectable.
+				glLoadName(0);
 				glPushMatrix();
 				glTranslated(ajd.pivot.x, ajd.pivot.y, ajd.pivot.z);
-				glScaled(0.2, 0.2, 0.2);
-				ArnRenderSphereGl();
+				ArnRenderSphereGl(0.01);
 				glPopMatrix();
 			}
 			// Bounding Box
