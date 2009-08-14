@@ -4,6 +4,7 @@ static float gs_linVelX = 0;
 static float gs_linVelZ = 0;
 static float gs_torque = 0;
 static float gs_torqueAnkle = 0;
+static bool gs_bHoldingShift = false;
 
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr sceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, ArnCamera* cam )
@@ -107,7 +108,8 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 				{
 					printf("[Object 0x%p ID %d %s]\n",
 						node.get(), node->getObjectId(), node->getName());
-					ikSolver->reconfigureRoot(node);
+					if (gs_bHoldingShift)
+						ikSolver->reconfigureRoot(node);
 				}
 			}
 		}
@@ -249,8 +251,18 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				done = MHR_RELOAD_SCENE;
 			}
+			else if (event->key.keysym.sym == SDLK_RSHIFT || event->key.keysym.sym == SDLK_LSHIFT)
+			{
+				gs_bHoldingShift = true;
+			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
+			break;
+		case SDL_KEYUP:
+			if (event->key.keysym.sym == SDLK_RSHIFT || event->key.keysym.sym == SDLK_LSHIFT)
+			{
+				gs_bHoldingShift = false;
+			}
 			break;
 		case SDL_QUIT:
 			done = MHR_EXIT_APP;
@@ -548,7 +560,13 @@ DoMain()
 			swPtr->updateFrame(1.0 / simFreq);
 		}
 		if (curSgPtr)
+		{
 			curSgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
+		}
+		foreach (ArnIkSolver* ikSolver, ikSolvers)
+		{
+			ikSolver->update();
+		}
 		
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
