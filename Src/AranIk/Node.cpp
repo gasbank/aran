@@ -5,34 +5,34 @@
 
 Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
 {
-	Node::freezed = false;
-	Node::size = size;
-	Node::purpose = purpose;
-	seqNumJoint = -1;
-	seqNumEffector = -1;
-	Node::attach = attach;		// Global attachment point when joints are at zero angle
-	r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
-	Node::v = v;				// Rotation axis when joints at zero angles
-	theta = 0.0;
-	Node::minTheta = minTheta;
-	Node::maxTheta = maxTheta;
-	Node::restAngle = restAngle;
+	Node::m_freezed = false;
+	Node::m_size = size;
+	Node::m_purpose = purpose;
+	m_seqNumJoint = -1;
+	m_seqNumEffector = -1;
+	Node::m_attach = attach;		// Global attachment point when joints are at zero angle
+	m_r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
+	Node::m_v = v;				// Rotation axis when joints at zero angles
+	m_theta = 0.0;
+	Node::m_minTheta = minTheta;
+	Node::m_maxTheta = maxTheta;
+	Node::m_restAngle = restAngle;
 }
 
 Node::Node(const Node& node)
 {
-	Node::freezed = false;
-	Node::size = node.size;
-	Node::purpose = node.purpose;
-	seqNumJoint = -1;
-	seqNumEffector = -1;
-	Node::attach = node.attach;		// Global attachment point when joints are at zero angle
-	r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
-	Node::v = node.v;				// Rotation axis when joints at zero angles
-	theta = 0.0;
-	Node::minTheta = node.minTheta;
-	Node::maxTheta = node.maxTheta;
-	Node::restAngle = node.restAngle;
+	Node::m_freezed = false;
+	Node::m_size = node.m_size;
+	Node::m_purpose = node.m_purpose;
+	m_seqNumJoint = -1;
+	m_seqNumEffector = -1;
+	Node::m_attach = node.m_attach;		// Global attachment point when joints are at zero angle
+	m_r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
+	Node::m_v = node.m_v;				// Rotation axis when joints at zero angles
+	m_theta = 0.0;
+	Node::m_minTheta = node.m_minTheta;
+	Node::m_maxTheta = node.m_maxTheta;
+	Node::m_restAngle = node.m_restAngle;
 	m_name = node.m_name;
 }
 
@@ -43,40 +43,40 @@ Node::~Node()
 // Compute the global position of a single node
 void Node::ComputeS(void)
 {
-	NodePtr y = this->realparent;
+	NodePtr y = this->m_realParent;
 	Node* w = this;
-	s = r;							// Initialize to local (relative) position
+	m_s = m_r;							// Initialize to local (relative) position
 	while ( y ) {
-		s.Rotate( y->theta, y->v );
+		m_s.Rotate( y->m_theta, y->m_v );
 		y = y->getRealParent();
 		w = w->getRealParent().get();
-		s += w->getR();
+		m_s += w->getR();
 	}
 }
 
 // Compute the global rotation axis of a single node
 void Node::ComputeW(void)
 {
-	NodePtr y = this->realparent;
-	w = v;							// Initialize to local rotation axis
+	NodePtr y = this->m_realParent;
+	m_w = m_v;							// Initialize to local rotation axis
 	while (y) {
-		w.Rotate(y->theta, y->v);
-		y = y->realparent;
+		m_w.Rotate(y->m_theta, y->m_v);
+		y = y->m_realParent;
 	}
 }
 
 void Node::PrintNode() const
 {
-	cerr << "Attach : (" << attach << ")\n";
-	cerr << "r : (" << r << ")\n";
-	cerr << "s : (" << s << ")\n";
-	cerr << "w : (" << w << ")\n";
-	cerr << "realparent : " << realparent->seqNumJoint << "\n";
+	cerr << "Attach : (" << m_attach << ")\n";
+	cerr << "r : (" << m_r << ")\n";
+	cerr << "s : (" << m_s << ")\n";
+	cerr << "w : (" << m_w << ")\n";
+	cerr << "realparent : " << m_realParent->m_seqNumJoint << "\n";
 }
 
 void Node::InitNode()
 {
-	theta = 0.0;
+	m_theta = 0.0;
 }
 
 void Node::printNodeHierarchy(int step) const
@@ -85,26 +85,26 @@ void Node::printNodeHierarchy(int step) const
 		std::cout << "  ";
 	std::cout << getName() << std::endl;
 
-	if (left)
-		left->printNodeHierarchy(step + 1);
+	if (m_left)
+		m_left->printNodeHierarchy(step + 1);
 
-	if (right)
-		right->printNodeHierarchy(step);
+	if (m_right)
+		m_right->printNodeHierarchy(step);
 }
 
 bool Node::hasNode(const NodeConstPtr node) const
 {
 	if (this == node.get())
 		return true;
-	if (left)
+	if (m_left)
 	{
-		bool ret = left->hasNode(node);
+		bool ret = m_left->hasNode(node);
 		if (ret)
 			return true;
 	}
-	if (right)
+	if (m_right)
 	{
-		bool ret = right->hasNode(node);
+		bool ret = m_right->hasNode(node);
 		if (ret)
 			return true;
 	}
@@ -117,12 +117,12 @@ NodePtr Node::getNodeByName(const char* name)
 		return shared_from_this();
 
 	NodePtr ret;
-	if (right)
-		ret = right->getNodeByName(name);
+	if (m_right)
+		ret = m_right->getNodeByName(name);
 	if (ret)
 		return ret;
-	else if (left)
-		return left->getNodeByName(name);
+	else if (m_left)
+		return m_left->getNodeByName(name);
 	else
 	{
 		assert(!ret);
@@ -132,17 +132,17 @@ NodePtr Node::getNodeByName(const char* name)
 
 void Node::updatePurpose()
 {
-	if (left)
+	if (m_left)
 	{
-		purpose = JOINT;
-		left->updatePurpose();
+		m_purpose = JOINT;
+		m_left->updatePurpose();
 	}
 	else
 	{
-		purpose = EFFECTOR;
+		m_purpose = EFFECTOR;
 	}
-	if (right)
-		right->updatePurpose();
+	if (m_right)
+		m_right->updatePurpose();
 }
 
 NodePtr

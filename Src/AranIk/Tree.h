@@ -14,9 +14,9 @@ class ARANIK_API Tree
 {
 public:
 								Tree();
-	int							GetNumNode() const { return nNode; }
-	int							GetNumEffector() const { return nEffector; }
-	int							GetNumJoint() const { return nJoint; }
+	int							GetNumNode() const { return m_nNode; }
+	int							GetNumEffector() const { return m_nEffector; }
+	int							GetNumJoint() const { return m_nJoint; }
 	void						InsertRoot(NodePtr);
 	void						InsertLeftChild(NodePtr parent, NodePtr child);
 	void						InsertRightSibling(NodePtr parent, NodePtr child);
@@ -26,7 +26,7 @@ public:
 	NodePtr						GetEffector(int);
 	const VectorR3&				GetEffectorPosition(int);
 	// Accessors for tree traversal
-	NodePtr						GetRoot() const { return root; }
+	NodePtr						GetRoot() const { return m_root; }
 	NodePtr						GetSuccessor ( NodeConstPtr ) const;
 	NodePtr						GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
 	void						Compute();
@@ -47,10 +47,10 @@ private:
 	void						ComputeTree(NodePtr);
 	void						InitTree(NodePtr);
 	void						UnFreezeTree(NodePtr);
-	NodePtr						root;
-	int							nNode;			// nNode = nEffector + nJoint
-	int							nEffector;
-	int							nJoint;
+	NodePtr						m_root;
+	int							m_nNode;			// nNode = nEffector + nJoint
+	int							m_nEffector;
+	int							m_nJoint;
 };
 
 typedef std::tr1::shared_ptr<Tree> TreePtr;

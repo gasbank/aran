@@ -4,9 +4,9 @@
 #include "Node.h"
 
 Tree::Tree()
-: nNode(0)
-, nEffector(0)
-, nJoint(0)
+: m_nNode(0)
+, m_nEffector(0)
+, m_nJoint(0)
 {
 }
 
@@ -14,23 +14,23 @@ void Tree::SetSeqNum(NodePtr node)
 {
 	switch (node->getPurpose()) {
 	case JOINT:
-		node->setSeqNumJoint(nJoint);
-		nJoint++;
+		node->setSeqNumJoint(m_nJoint);
+		m_nJoint++;
 		node->setSeqNumEffector(-1);
 		break;
 	case EFFECTOR:
 		node->setSeqNumJoint(-1);
-		node->setSeqNumEffector(nEffector);
-		nEffector++;
+		node->setSeqNumEffector(m_nEffector);
+		m_nEffector++;
 		break;
 	}
 }
 
 void Tree::InsertRoot(NodePtr root)
 {
-	assert( nNode==0 );
-	nNode++;
-	Tree::root = root;
+	assert( m_nNode==0 );
+	m_nNode++;
+	Tree::m_root = root;
 	root->setR(root->getAttach());
 	assert( !(root->getLeftNode() || root->getRightNode()) );
 	SetSeqNum(root);
@@ -39,7 +39,7 @@ void Tree::InsertRoot(NodePtr root)
 void Tree::InsertLeftChild(NodePtr parent, NodePtr child)
 {
 	assert(parent);
-	nNode++;
+	m_nNode++;
 	parent->setLeftNode(child);
 	child->setRealParent(parent);
 	child->setR(child->getAttach() - child->getRealParent()->getAttach());
@@ -50,7 +50,7 @@ void Tree::InsertLeftChild(NodePtr parent, NodePtr child)
 void Tree::InsertRightSibling(NodePtr parent, NodePtr child)
 {
 	assert(parent);
-	nNode++;
+	m_nNode++;
 	parent->setRightNode(child);
 	child->setRealParent(parent->getRealParent());
 	child->setR(child->getAttach() - child->getRealParent()->getAttach());
@@ -86,7 +86,7 @@ NodePtr Tree::SearchJoint(NodePtr node, int index)
 // Get the joint with the index value
 NodePtr Tree::GetJoint(int index)
 {
-	return SearchJoint(root, index);
+	return SearchJoint(m_root, index);
 }
 
 // Search recursively below node for the end effector with the index value
@@ -116,7 +116,7 @@ NodePtr Tree::SearchEffector(NodePtr node, int index)
 // Get the end effector for the index value
 NodePtr Tree::GetEffector(int index)
 {
-	return SearchEffector(root, index);
+	return SearchEffector(m_root, index);
 }
 
 // Returns the global position of the effector.
@@ -139,7 +139,7 @@ void Tree::ComputeTree(NodePtr node)
 
 void Tree::Compute(void)
 {
-	ComputeTree(root);
+	ComputeTree(m_root);
 }
 
 void Tree::PrintTree(NodeConstPtr node) const
@@ -154,7 +154,7 @@ void Tree::PrintTree(NodeConstPtr node) const
 
 void Tree::Print(void)
 {
-	PrintTree(root);
+	PrintTree(m_root);
 	cout << "\n";
 }
 
@@ -172,7 +172,7 @@ void Tree::InitTree(NodePtr node)
 // Initialize all nodes in the tree
 void Tree::Init(void)
 {
-	InitTree(root);
+	InitTree(m_root);
 }
 
 void Tree::UnFreezeTree(NodePtr node)
@@ -186,20 +186,20 @@ void Tree::UnFreezeTree(NodePtr node)
 
 void Tree::UnFreeze(void)
 {
-	UnFreezeTree(root);
+	UnFreezeTree(m_root);
 }
 
 void Tree::printHierarchy() const
 {
-	root->printNodeHierarchy(0);
+	m_root->printNodeHierarchy(0);
 }
 
 bool Tree::hasNode(const NodeConstPtr node) const
 {
-	if (root == node)
+	if (m_root == node)
 		return true;
 	else
-		return root->hasNode(node);
+		return m_root->hasNode(node);
 }
 
 NodePtr Tree::getPrevSiblingNode(NodePtr node)
@@ -224,7 +224,7 @@ void Tree::InsertCopiedNodesBySwitchingRoot(NodePtr prevInsertedNode, NodePtr no
 
 	NodePtr createdNode = Node::createCloneWithoutLink(node);
 
-	if (!prevInsertedNode && !root)
+	if (!prevInsertedNode && !m_root)
 	{
 		InsertRoot(createdNode);
 	}
@@ -274,17 +274,17 @@ void Tree::InsertCopiedNodesBySwitchingRoot(NodePtr prevInsertedNode, NodePtr no
 
 NodePtr Tree::getNodeByName(const char* name)
 {
-	return root->getNodeByName(name);
+	return m_root->getNodeByName(name);
 }
 
 void Tree::updatePurpose()
 {
-	root->updatePurpose();
+	m_root->updatePurpose();
 
-	nJoint = 0;
-	nEffector = 0;
-	resetSeqNum(root);
-	assert(nJoint + nEffector == nNode);
+	m_nJoint = 0;
+	m_nEffector = 0;
+	resetSeqNum(m_root);
+	assert(m_nJoint + m_nEffector == m_nNode);
 }
 
 void Tree::resetSeqNum(NodePtr node)

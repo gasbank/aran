@@ -26,69 +26,69 @@ public:
 	static NodePtr						createCloneWithoutLink(NodePtr node);
 	void								PrintNode() const;
 	void								InitNode();
-	const VectorR3&						GetAttach() const { return attach; }
-	double								GetTheta() const { return theta; }
-	double								AddToTheta( double delta ) { theta += delta; return theta; }
-	const VectorR3&						GetS() const { return s; }
-	const VectorR3&						GetW() const { return w; }
-	double								GetMinTheta() const { return minTheta; }
-	double								GetMaxTheta() const { return maxTheta; }
-	double								GetRestAngle() const { return restAngle; } ;
-	void								SetTheta(double newTheta) { theta = newTheta; }
+	const VectorR3&						GetAttach() const { return m_attach; }
+	double								GetTheta() const { return m_theta; }
+	double								AddToTheta( double delta ) { m_theta += delta; return m_theta; }
+	const VectorR3&						GetS() const { return m_s; }
+	const VectorR3&						GetW() const { return m_w; }
+	double								GetMinTheta() const { return m_minTheta; }
+	double								GetMaxTheta() const { return m_maxTheta; }
+	double								GetRestAngle() const { return m_restAngle; } ;
+	void								SetTheta(double newTheta) { m_theta = newTheta; }
 	void								ComputeS(void);
 	void								ComputeW(void);
-	bool								IsEffector() const { return purpose==EFFECTOR; }
-	bool								IsJoint() const { return purpose==JOINT; }
-	int									GetEffectorNum() const { return seqNumEffector; }
-	int									GetJointNum() const { return seqNumJoint; }
-	bool								IsFrozen() const { return freezed; }
-	void								Freeze() { freezed = true; }
-	void								UnFreeze() { freezed = false; }
-	const VectorR3&						getRelativePosition() const { return r; }
-	double								getJointAngle() const { return theta; }
-	const VectorR3&						getRotationAxis() const { return v; }
-	double								getSize() const { return size; }
-	NodePtr								getLeftNode() const { return left; }
-	void								setLeftNode(NodePtr v) { left = v; }
-	NodePtr								getRightNode() const { return right; }
-	void								setRightNode(NodePtr v) { right = v; }
+	bool								IsEffector() const { return m_purpose==EFFECTOR; }
+	bool								IsJoint() const { return m_purpose==JOINT; }
+	int									GetEffectorNum() const { return m_seqNumEffector; }
+	int									GetJointNum() const { return m_seqNumJoint; }
+	bool								IsFrozen() const { return m_freezed; }
+	void								Freeze() { m_freezed = true; }
+	void								UnFreeze() { m_freezed = false; }
+	const VectorR3&						getRelativePosition() const { return m_r; }
+	double								getJointAngle() const { return m_theta; }
+	const VectorR3&						getRotationAxis() const { return m_v; }
+	double								getSize() const { return m_size; }
+	NodePtr								getLeftNode() const { return m_left; }
+	void								setLeftNode(NodePtr v) { m_left = v; }
+	NodePtr								getRightNode() const { return m_right; }
+	void								setRightNode(NodePtr v) { m_right = v; }
 	const char*							getName() const { return m_name.c_str(); }
 	void								setName(const char* name) { m_name = name; }
-	NodePtr								getRealParent() const { return realparent; }
-	void								setRealParent(NodePtr v) { realparent = v; }
-	Purpose								getPurpose() const { return purpose; }
-	int									getSeqNumJoint() const { return seqNumJoint; }
-	int									getSeqNumEffector() const { return seqNumEffector; }
-	void								setSeqNumJoint(int v) { seqNumJoint = v; }
-	void								setSeqNumEffector(int v) { seqNumEffector = v; }
+	NodePtr								getRealParent() const { return m_realParent; }
+	void								setRealParent(NodePtr v) { m_realParent = v; }
+	Purpose								getPurpose() const { return m_purpose; }
+	int									getSeqNumJoint() const { return m_seqNumJoint; }
+	int									getSeqNumEffector() const { return m_seqNumEffector; }
+	void								setSeqNumJoint(int v) { m_seqNumJoint = v; }
+	void								setSeqNumEffector(int v) { m_seqNumEffector = v; }
 	void								printNodeHierarchy(int step) const;
 	bool								hasNode(const NodeConstPtr node) const;
 	NodePtr								getNodeByName(const char* name);
 	void								updatePurpose();
-	const VectorR3&						getAttach() const { return attach; }
-	const VectorR3&						getR() const { return r; }
-	void								setR(const VectorR3& v) { r = v; }
+	const VectorR3&						getAttach() const { return m_attach; }
+	const VectorR3&						getR() const { return m_r; }
+	void								setR(const VectorR3& v) { m_r = v; }
 private:
 										Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 										Node(const Node& node);
 	std::string							m_name;
-	bool								freezed;			// Is this node frozen?
-	int									seqNumJoint;		// sequence number if this node is a joint
-	int									seqNumEffector;		// sequence number if this node is an effector
-	double								size;				// size
-	Purpose								purpose;			// joint / effector / both
-	VectorR3							attach;				// attachment point
-	VectorR3							r;					// relative position vector
-	VectorR3							v;					// rotation axis
-	double								theta;				// joint angle (radian)
-	double								minTheta;			// lower limit of joint angle
-	double								maxTheta;			// upper limit of joint angle
-	double								restAngle;			// rest position angle
-	VectorR3							s;					// GLobal Position
-	VectorR3							w;					// Global rotation axis
-	NodePtr								left;				// left child
-	NodePtr								right;				// right sibling
-	NodePtr								realparent;			// pointer to real parent
+	bool								m_freezed;			// Is this node frozen?
+	int									m_seqNumJoint;		// sequence number if this node is a joint
+	int									m_seqNumEffector;	// sequence number if this node is an effector
+	double								m_size;				// size
+	Purpose								m_purpose;			// joint / effector / both
+	VectorR3							m_attach;			// attachment point
+	VectorR3							m_r;				// relative position vector
+	VectorR3							m_v;				// rotation axis
+	double								m_theta;			// joint angle (radian)
+	double								m_minTheta;			// lower limit of joint angle
+	double								m_maxTheta;			// upper limit of joint angle
+	double								m_restAngle;		// rest position angle
+	VectorR3							m_s;				// Global Position
+	VectorR3							m_w;				// Global rotation axis
+	NodePtr								m_left;				// left child
+	NodePtr								m_right;			// right sibling
+	NodePtr								m_realParent;		// pointer to real parent
 };
 
 #endif
