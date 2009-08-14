@@ -4,12 +4,13 @@
 #include "Node.h"
 
 Tree::Tree()
+: nNode(0)
+, nEffector(0)
+, nJoint(0)
 {
-	root = 0;
-	nNode = nEffector = nJoint = 0;
 }
 
-void Tree::SetSeqNum(Node* node)
+void Tree::SetSeqNum(NodePtr node)
 {
 	switch (node->getPurpose()) {
 	case JOINT:
@@ -25,95 +26,95 @@ void Tree::SetSeqNum(Node* node)
 	}
 }
 
-void Tree::InsertRoot(Node* root)
+void Tree::InsertRoot(NodePtr root)
 {
 	assert( nNode==0 );
 	nNode++;
 	Tree::root = root;
-	root->r = root->attach;
-	assert( !(root->left || root->right) );
+	root->setR(root->getAttach());
+	assert( !(root->getLeftNode() || root->getRightNode()) );
 	SetSeqNum(root);
 }
 
-void Tree::InsertLeftChild(Node* parent, Node* child)
+void Tree::InsertLeftChild(NodePtr parent, NodePtr child)
 {
 	assert(parent);
 	nNode++;
-	parent->left = child;
-	child->realparent = parent;
-	child->r = child->attach - child->realparent->attach;
-	assert( !(child->left || child->right) );
+	parent->setLeftNode(child);
+	child->setRealParent(parent);
+	child->setR(child->getAttach() - child->getRealParent()->getAttach());
+	assert( !(child->getLeftNode() || child->getRightNode()) );
 	SetSeqNum(child);
 }
 
-void Tree::InsertRightSibling(Node* parent, Node* child)
+void Tree::InsertRightSibling(NodePtr parent, NodePtr child)
 {
 	assert(parent);
 	nNode++;
-	parent->right = child;
-	child->realparent = parent->realparent;
-	child->r = child->attach - child->realparent->attach;
-	assert( !(child->left || child->right) );
+	parent->setRightNode(child);
+	child->setRealParent(parent->getRealParent());
+	child->setR(child->getAttach() - child->getRealParent()->getAttach());
+	assert( !(child->getLeftNode() || child->getRightNode()) );
 	SetSeqNum(child);
 }
 
 // Search recursively below "node" for the node with index value.
-Node* Tree::SearchJoint(Node* node, int index)
+NodePtr Tree::SearchJoint(NodePtr node, int index)
 {
-	Node* ret;
+	NodePtr ret;
 	if (node != 0) {
-		if (node->seqNumJoint == index) {
+		if (node->getSeqNumJoint() == index) {
 			return node;
 		} else {
-			ret = SearchJoint(node->left, index);
+			ret = SearchJoint(node->getLeftNode(), index);
 			if (ret) {
 				return ret;
 			}
-			ret = SearchJoint(node->right, index);
+			ret = SearchJoint(node->getRightNode(), index);
 			if (ret) {
 				return ret;
 			}
-			return NULL;
+			return NodePtr();
 		}
 	}
 	else {
-		return NULL;
+		return NodePtr();
 	}
 }
 
 
 // Get the joint with the index value
-Node* Tree::GetJoint(int index)
+NodePtr Tree::GetJoint(int index)
 {
 	return SearchJoint(root, index);
 }
 
 // Search recursively below node for the end effector with the index value
-Node* Tree::SearchEffector(Node* node, int index)
+NodePtr Tree::SearchEffector(NodePtr node, int index)
 {
-	Node* ret;
+	NodePtr ret;
 	if (node != 0) {
-		if (node->seqNumEffector == index) {
+		if (node->getSeqNumEffector() == index) {
 			return node;
 		} else {
-			ret = SearchEffector(node->left, index);
+			ret = SearchEffector(node->getLeftNode(), index);
 			if (ret) {
 				return ret;
 			}
-			ret = SearchEffector(node->right, index);
+			ret = SearchEffector(node->getRightNode(), index);
 			if (ret) {
 				return ret;
 			}
-			return NULL;
+			return NodePtr();
 		}
 	} else {
-		return NULL;
+		return NodePtr();
 	}
 }
 
 
 // Get the end effector for the index value
-Node* Tree::GetEffector(int index)
+NodePtr Tree::GetEffector(int index)
 {
 	return SearchEffector(root, index);
 }
@@ -121,18 +122,18 @@ Node* Tree::GetEffector(int index)
 // Returns the global position of the effector.
 const VectorR3& Tree::GetEffectorPosition(int index)
 {
-	Node* effector = GetEffector(index);
+	NodePtr effector = GetEffector(index);
 	assert(effector);
-	return (effector->s);
+	return (effector->GetS());
 }
 
-void Tree::ComputeTree(Node* node)
+void Tree::ComputeTree(NodePtr node)
 {
 	if (node != 0) {
 		node->ComputeS();
 		node->ComputeW();
-		ComputeTree(node->left);
-		ComputeTree(node->right);
+		ComputeTree(node->getLeftNode());
+		ComputeTree(node->getRightNode());
 	}
 }
 
@@ -141,12 +142,13 @@ void Tree::Compute(void)
 	ComputeTree(root);
 }
 
-void Tree::PrintTree(const Node* node) const
+void Tree::PrintTree(NodeConstPtr node) const
 {
-	if (node != 0) {
+	if (node)
+	{
 		node->PrintNode();
-		PrintTree(node->left);
-		PrintTree(node->right);
+		PrintTree(node->getLeftNode());
+		PrintTree(node->getRightNode());
 	}
 }
 
@@ -157,12 +159,13 @@ void Tree::Print(void)
 }
 
 // Recursively initialize tree below the node
-void Tree::InitTree(Node* node)
+void Tree::InitTree(NodePtr node)
 {
-	if (node != 0) {
+	if (node)
+	{
 		node->InitNode();
-		InitTree(node->left);
-		InitTree(node->right);
+		InitTree(node->getLeftNode());
+		InitTree(node->getRightNode());
 	}
 }
 
@@ -172,12 +175,12 @@ void Tree::Init(void)
 	InitTree(root);
 }
 
-void Tree::UnFreezeTree(Node* node)
+void Tree::UnFreezeTree(NodePtr node)
 {
 	if (node != 0) {
 		node->UnFreeze();
-		UnFreezeTree(node->left);
-		UnFreezeTree(node->right);
+		UnFreezeTree(node->getLeftNode());
+		UnFreezeTree(node->getRightNode());
 	}
 }
 
@@ -191,7 +194,7 @@ void Tree::printHierarchy() const
 	root->printNodeHierarchy(0);
 }
 
-bool Tree::hasNode(const Node* node) const
+bool Tree::hasNode(const NodeConstPtr node) const
 {
 	if (root == node)
 		return true;
@@ -199,12 +202,12 @@ bool Tree::hasNode(const Node* node) const
 		return root->hasNode(node);
 }
 
-Node* Tree::getPrevSiblingNode(Node* node)
+NodePtr Tree::getPrevSiblingNode(NodePtr node)
 {
-	Node* realParent = node->getRealParent();
+	NodePtr realParent = node->getRealParent();
 	if (!realParent)
-		return 0;
-	Node* prevSibling = realParent->getLeftNode();
+		return NodePtr();
+	NodePtr prevSibling = realParent->getLeftNode();
 	while (prevSibling && prevSibling->getRightNode() != node)
 	{
 		prevSibling = prevSibling->getRightNode();
@@ -212,14 +215,14 @@ Node* Tree::getPrevSiblingNode(Node* node)
 	return prevSibling;
 }
 
-void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, bool childOrSibling /* false = child, true = sibling */, Node* skipNode)
+void Tree::InsertCopiedNodesBySwitchingRoot(NodePtr prevInsertedNode, NodePtr node, bool childOrSibling /* false = child, true = sibling */, NodePtr skipNode)
 {
 	assert(node);
 
 	if (node == skipNode)
 		return;
 
-	Node* createdNode = new Node(*node);
+	NodePtr createdNode = Node::createCloneWithoutLink(node);
 
 	if (!prevInsertedNode && !root)
 	{
@@ -228,14 +231,14 @@ void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, 
 	else if (prevInsertedNode && !childOrSibling)
 	{
 		// Insert child to 'prevInsertedNode'.
-		Node* leftNode = prevInsertedNode->getLeftNode();
+		NodePtr leftNode = prevInsertedNode->getLeftNode();
 		if (!leftNode)
 		{
 			InsertLeftChild(prevInsertedNode, createdNode);
 		}
 		else
 		{
-			Node* lastChild = leftNode;
+			NodePtr lastChild = leftNode;
 			while (lastChild->getRightNode())
 			{
 				lastChild = lastChild->getRightNode();
@@ -248,7 +251,7 @@ void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, 
 		InsertRightSibling(prevInsertedNode, createdNode);
 	}
 
-	Node* child = node->getLeftNode();
+	NodePtr child = node->getLeftNode();
 	if (child)
 	{
 		InsertCopiedNodesBySwitchingRoot(createdNode, child, false, skipNode);
@@ -260,16 +263,16 @@ void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, 
 		}
 	}
 
-	if (node->realparent)
+	if (node->getRealParent())
 	{
-		if (!getNodeByName(node->realparent->getName()))
+		if (!getNodeByName(node->getRealParent()->getName()))
 		{
-			InsertCopiedNodesBySwitchingRoot(createdNode, node->realparent, false, node);
+			InsertCopiedNodesBySwitchingRoot(createdNode, node->getRealParent(), false, node);
 		}
 	}
 }
 
-Node* Tree::getNodeByName(const char* name)
+NodePtr Tree::getNodeByName(const char* name)
 {
 	return root->getNodeByName(name);
 }
@@ -284,7 +287,7 @@ void Tree::updatePurpose()
 	assert(nJoint + nEffector == nNode);
 }
 
-void Tree::resetSeqNum(Node* node)
+void Tree::resetSeqNum(NodePtr node)
 {
 	SetSeqNum(node);
 	if (node->getLeftNode())

@@ -24,6 +24,7 @@ struct ARANMATH_API ArnConsts
 	static const ArnColorValue4f		ARNCOLOR_WHITE;
 
 	static const ArnMaterialData		ARNMTRLDATA_RED;
+	static const ArnMaterialData		ARNMTRLDATA_WHITE;
 };
 
 static const unsigned int FPS = 60;

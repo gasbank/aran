@@ -88,16 +88,13 @@ ArnMesh::setVertexBuffer( const ArnVertexBuffer* vb )
 {
 	if (m_arnVb)
 	{
-		// TODO: Deallocate existing vertex buffer
+		// This buffer already has valid data.
 		abort();
 	}
 	else
 	{
 		m_arnVb = vb;
-
-		//glGenBuffersARB()
 	}
-
 }
 
 void

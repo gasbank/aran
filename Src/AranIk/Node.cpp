@@ -3,9 +3,6 @@
 #include "MathMisc.h"
 #include "Node.h"
 
-//////////////////extern int RotAxesOn;
-//int RotAxesOn;
-
 Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
 {
 	Node::freezed = false;
@@ -20,7 +17,6 @@ Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpo
 	Node::minTheta = minTheta;
 	Node::maxTheta = maxTheta;
 	Node::restAngle = restAngle;
-	left = right = realparent = 0;
 }
 
 Node::Node(const Node& node)
@@ -37,28 +33,31 @@ Node::Node(const Node& node)
 	Node::minTheta = node.minTheta;
 	Node::maxTheta = node.maxTheta;
 	Node::restAngle = node.restAngle;
-	left = right = realparent = 0;
 	m_name = node.m_name;
+}
+
+Node::~Node()
+{
 }
 
 // Compute the global position of a single node
 void Node::ComputeS(void)
 {
-	Node* y = this->realparent;
+	NodePtr y = this->realparent;
 	Node* w = this;
 	s = r;							// Initialize to local (relative) position
 	while ( y ) {
 		s.Rotate( y->theta, y->v );
-		y = y->realparent;
-		w = w->realparent;
-		s += w->r;
+		y = y->getRealParent();
+		w = w->getRealParent().get();
+		s += w->getR();
 	}
 }
 
 // Compute the global rotation axis of a single node
 void Node::ComputeW(void)
 {
-	Node* y = this->realparent;
+	NodePtr y = this->realparent;
 	w = v;							// Initialize to local rotation axis
 	while (y) {
 		w.Rotate(y->theta, y->v);
@@ -93,9 +92,9 @@ void Node::printNodeHierarchy(int step) const
 		right->printNodeHierarchy(step);
 }
 
-bool Node::hasNode(const Node* node) const
+bool Node::hasNode(const NodeConstPtr node) const
 {
-	if (this == node)
+	if (this == node.get())
 		return true;
 	if (left)
 	{
@@ -112,12 +111,12 @@ bool Node::hasNode(const Node* node) const
 	return false;
 }
 
-Node* Node::getNodeByName(const char* name)
+NodePtr Node::getNodeByName(const char* name)
 {
 	if (strcmp(m_name.c_str(), name) == 0)
-		return this;
+		return shared_from_this();
 
-	Node* ret = 0;
+	NodePtr ret;
 	if (right)
 		ret = right->getNodeByName(name);
 	if (ret)
@@ -125,7 +124,10 @@ Node* Node::getNodeByName(const char* name)
 	else if (left)
 		return left->getNodeByName(name);
 	else
-		return 0;
+	{
+		assert(!ret);
+		return NodePtr();
+	}
 }
 
 void Node::updatePurpose()
@@ -141,4 +143,16 @@ void Node::updatePurpose()
 	}
 	if (right)
 		right->updatePurpose();
+}
+
+NodePtr
+Node::create(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
+{
+	return NodePtr(new Node(attach, v, size, purpose, minTheta, maxTheta, restAngle));
+}
+
+NodePtr
+Node::createCloneWithoutLink( NodePtr node )
+{
+	return NodePtr(new Node(*node));
 }

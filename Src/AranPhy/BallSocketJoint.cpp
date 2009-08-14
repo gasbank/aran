@@ -14,7 +14,7 @@ BallSocketJoint::~BallSocketJoint()
 }
 
 BallSocketJoint*
-BallSocketJoint::createFrom( const OdeSpaceContext* osc, const char* name, const GeneralBodyPtr& b1, const GeneralBodyPtr& b2, const ArnVec3& anchor, const ArnVec3& xAxis, const ArnVec3& yAxis, const ArnVec3& zAxis)
+BallSocketJoint::createFrom( const OdeSpaceContext* osc, const char* name, const GeneralBodyPtr b1, const GeneralBodyPtr b2, const ArnVec3& anchor, const ArnVec3& xAxis, const ArnVec3& yAxis, const ArnVec3& zAxis)
 {
 	BallSocketJoint* bsj = new BallSocketJoint(osc);
 	bsj->setBody1(b1);

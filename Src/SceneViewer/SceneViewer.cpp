@@ -480,12 +480,12 @@ ConfigureTestScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePt
 }
 
 static int
-ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSgPtr, ArnTexturePtr& texturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	assert(nextSceneIndex < (int)sceneList.size());
 	curSceneIndex = nextSceneIndex;
 	unsigned int retryCount = 0;
-	while (ConfigureTestScene(curSceneGraph, fontTexturePtr, sceneList[curSceneIndex].c_str(), &avd) < 0)
+	while (ConfigureTestScene(curSgPtr, texturePtr, sceneList[curSceneIndex].c_str(), &avd) < 0)
 	{
 		curSceneIndex = (curSceneIndex + 1) % sceneList.size();
 		++retryCount;
@@ -515,7 +515,7 @@ ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& 
 }
 
 static int
-ReloadCurrentScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+ReloadCurrentScene(ArnSceneGraphPtr curSceneGraph, ArnTexturePtr fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	return ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, curSceneIndex, sceneList, avd);
 }
@@ -589,7 +589,7 @@ DoMain()
 	const int					bpp					= 32;
 	const int					depthSize			= 24;
 	bool						bFullScreen			= false;
-	bool						bNoFrame			= true;
+	bool						bNoFrame			= false;
 	ArnViewportData				avd;
 	ArnTexturePtr				fontTexturePtr;
 	SimWorldPtr					swPtr;
@@ -765,8 +765,14 @@ DoMain()
 		{
 			gjPtr->addTorque(AXIS_Y, gs_torqueAnkle);
 		}
-		//double stepSize = (double)frameDurationMs / 1000.0;
-		for (unsigned int step = 0; step < frameDurationMs; ++step)
+
+		unsigned int simLoop = 1000;
+		if (frameDurationMs > 100)
+			simLoop = 100;
+		else
+			simLoop = frameDurationMs;
+
+		for (unsigned int step = 0; step < simLoop; ++step)
 		{
 			swPtr->updateFrame(0.001);
 		}
@@ -803,6 +809,7 @@ DoMain()
 		while( SDL_PollEvent( &event ) ) {
 			done = HandleEvent(&event, curSgPtr.get(), &avd, swPtr);
 
+			bool reconfigScene = false;
 			if (done == MHR_NEXT_SCENE)
 			{
 				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
@@ -813,14 +820,7 @@ DoMain()
 				}
 				else
 				{
-					// Initialize OpenGL contexts of scene graph objects.
-					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-					ArnInitializeRenderableObjectsGl(curSgPtr.get());
-					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-					ArnConfigureViewMatrixGl(activeCam);
-
+					reconfigScene = true;
 				}
 			}
 			else if (done == MHR_RELOAD_SCENE)
@@ -832,14 +832,19 @@ DoMain()
 				}
 				else
 				{
-					// Initialize OpenGL contexts of scene graph objects.
-					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-					ArnInitializeRenderableObjectsGl(curSgPtr.get());
-					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-					ArnConfigureViewMatrixGl(activeCam);
+					reconfigScene = true;
 				}
+			}
+
+			if (reconfigScene)
+			{
+				// Initialize OpenGL contexts of scene graph objects.
+				swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
+				ConfigureRenderableObjectOf(fontTexturePtr.get());
+				GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+				ArnInitializeRenderableObjectsGl(curSgPtr.get());
+				ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+				ArnConfigureViewMatrixGl(activeCam);
 			}
 		}
 		++frames;

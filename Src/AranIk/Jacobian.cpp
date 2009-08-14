@@ -71,7 +71,7 @@ void Jacobian::ComputeJacobian()
 {
 	// Traverse tree to find all end effectors
 	VectorR3 temp;
-	Node* n = tree->GetRoot();
+	NodePtr n = tree->GetRoot();
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();
@@ -84,7 +84,7 @@ void Jacobian::ComputeJacobian()
 
 			// Find all ancestors (they will usually all be joints)
 			// Set the corresponding entries in the Jacobians J, K.
-			Node* m = tree->GetParent(n);
+			NodePtr m = tree->GetParent(n);
 			while ( m ) {
 				int j = m->GetJointNum();
 				assert ( 0 <=i && i<nEffector && 0<=j && j<nJoint );
@@ -116,7 +116,7 @@ void Jacobian::UpdateThetas()
 {
 	// Traverse the tree to find all joints
 	// Update the joint angles
-	Node* n = tree->GetRoot();
+	NodePtr n = tree->GetRoot();
 	while ( n ) {
 		if ( n->IsJoint() ) {
 			int i = n->GetJointNum();
@@ -399,7 +399,7 @@ double Jacobian::UpdateErrorArray()
 
 	// Traverse tree to find all end effectors
 	VectorR3 temp;
-	Node* n = tree->GetRoot();
+	NodePtr n = tree->GetRoot();
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();
@@ -419,7 +419,7 @@ void Jacobian::UpdatedSClampValue()
 {
 	// Traverse tree to find all end effectors
 	VectorR3 temp;
-	Node* n = tree->GetRoot();
+	NodePtr n = tree->GetRoot();
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();

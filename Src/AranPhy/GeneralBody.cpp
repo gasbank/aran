@@ -79,7 +79,7 @@ GeneralBody::getState(GeneralBodyState& gbs) const
 void
 GeneralBody::setState(const GeneralBodyState& gbs)
 {
-	dQuaternion odeQ = { gbs.quat.w, gbs.quat.x, gbs.quat.y, gbs.quat.z }; // ODE quaternion sequence is scalar first
+	dQuaternion odeQ = { gbs.quat.w, gbs.quat.x, gbs.quat.y, gbs.quat.z }; // odeQ[0] is the scalar component
 	dBodySetPosition(m_body, gbs.pos[0], gbs.pos[1], gbs.pos[2]);
 	dBodySetQuaternion(m_body, odeQ);
 	dBodySetLinearVel(m_body, gbs.linVel[0], gbs.linVel[1], gbs.linVel[2]);
@@ -90,8 +90,7 @@ ArnVec3
 GeneralBody::getRotationEuler() const
 {
 	const dReal* odeQuat = dBodyGetQuaternion(m_body);
-	// TODO: ODE quaternion sequence
-	ArnQuat q(odeQuat[1], odeQuat[2], odeQuat[3], odeQuat[0]); // ODE quaternion sequence is scalar first
+	ArnQuat q(odeQuat[1], odeQuat[2], odeQuat[3], odeQuat[0]); // odeQuat[0] is the scalar component
 	return ArnQuatToEuler(&q);
 }
 
@@ -143,8 +142,7 @@ GeneralBody::getRotationMatrix( ArnMatrix* rotMat ) const
 ArnQuat*
 GeneralBody::getQuaternion( ArnQuat* q ) const
 {
-	// TODO: ODE Quaternion order not clear
-	return ArnQuatAssign_ScalarLast(q, dBodyGetQuaternion(m_body));
+	return ArnQuatAssign_ScalarFirst(q, dBodyGetQuaternion(m_body));
 }
 
 ArnVec3*

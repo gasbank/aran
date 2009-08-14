@@ -51,8 +51,8 @@ public:
 	static SimWorld*							createFrom(ArnSceneGraph* sg);
 												~SimWorld();
 	const OdeSpaceContext*						getOsc() const { return m_osc; }
-	bool										registerBody(const GeneralBodyPtr& gbPtr);
-	bool										registerJoint(const GeneralJointPtr& gjPtr);
+	bool										registerBody(const GeneralBodyPtr gbPtr);
+	bool										registerJoint(const GeneralJointPtr gjPtr);
 	void										placeGround();
 	GeneralBody*								placeBox(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);
 	void										placePiston(const char* name, const ArnVec3& com, const ArnVec3& size, float mass);

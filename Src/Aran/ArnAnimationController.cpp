@@ -10,11 +10,6 @@
 
 ArnAnimationController::ArnAnimationController()
 : m_dTime(0)
-, m_outputs()
-, m_ipos()
-, m_actions()
-, m_tracks()
-, m_events()
 , m_outputCount(0)
 , m_actionCount(0)
 , m_eventCount(0)
@@ -204,8 +199,6 @@ ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 			// TODO: Quaternion should be normalized before a making composed transformation matrix.
 			//       Any way to make this routine faster?
 			quat /= quat.getLength();
-			//ArnMatrix ipoResultMat;
-			//ArnMatrixTransformation(&ipoResultMat, 0, 0, &scaleKey, 0, &quat, &transKey);
 			NODE_DATA_TYPE ndt = p.first->getType();
 			if (ndt == NDT_RT_BONE)
 			{

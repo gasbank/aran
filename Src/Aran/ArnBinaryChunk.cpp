@@ -132,7 +132,7 @@ ArnBinaryChunk::createFrom(const char* fileName, bool zlibCompressed, unsigned i
 				char* data = new char[fileSize]; // Since ret->m_data type is 'const char*', we use temporary variable named 'data'.
 				ret->m_deallocateData = true;
 				fseek(f, 0, SEEK_SET);
-				fread(data, fileSize, 1, f); // TODO
+				fread(data, 1, fileSize, f);
 				fclose(f);
 				ret->m_data = data;
 				ret->m_recordSize = fileSize;

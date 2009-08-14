@@ -1,77 +1,77 @@
-
+/*!
+ * @file Tree.h
+ * @author http://math.ucsd.edu/~sbuss/ResearchWeb/ikmethods/index.html
+ * @author Geoyeob Kim
+ */
 #include "LinearR3.h"
 #include "Node.h"
 
 #ifndef _CLASS_TREE
 #define _CLASS_TREE
+TYPEDEF_SHARED_PTR(Node);
 
-class ARANIK_API Tree {
-
+class ARANIK_API Tree
+{
 public:
-	Tree();
-
-	int GetNumNode() const { return nNode; }
-	int GetNumEffector() const { return nEffector; }
-	int GetNumJoint() const { return nJoint; }
-	void InsertRoot(Node*);
-	void InsertLeftChild(Node* parent, Node* child);
-	void InsertRightSibling(Node* parent, Node* child);
-	void InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, bool childOrSibling, Node* skipNode);
-
+								Tree();
+	int							GetNumNode() const { return nNode; }
+	int							GetNumEffector() const { return nEffector; }
+	int							GetNumJoint() const { return nJoint; }
+	void						InsertRoot(NodePtr);
+	void						InsertLeftChild(NodePtr parent, NodePtr child);
+	void						InsertRightSibling(NodePtr parent, NodePtr child);
+	void						InsertCopiedNodesBySwitchingRoot(NodePtr prevInsertedNode, NodePtr node, bool childOrSibling, NodePtr skipNode);
 	// Accessors based on node numbers
-	Node* GetJoint(int);
-	Node* GetEffector(int);
-	const VectorR3& GetEffectorPosition(int);
-
+	NodePtr						GetJoint(int);
+	NodePtr						GetEffector(int);
+	const VectorR3&				GetEffectorPosition(int);
 	// Accessors for tree traversal
-	Node* GetRoot() const { return root; }
-	Node* GetSuccessor ( const Node* ) const;
-	Node* GetParent( const Node* node ) const { return node->getRealParent(); }
-
-	void Compute();
-	void Print();
-	void Init();
-	void UnFreeze();
-
-	//void Draw();
-	void printHierarchy() const; // Name only, tree style
-	void PrintTree(const Node*) const; // Detailed information, list style
-	bool hasNode(const Node* node) const;
-	Node* getPrevSiblingNode(Node* node);
-	Node* getNodeByName(const char* name);
-	void updatePurpose();
+	NodePtr						GetRoot() const { return root; }
+	NodePtr						GetSuccessor ( NodeConstPtr ) const;
+	NodePtr						GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
+	void						Compute();
+	void						Print();
+	void						Init();
+	void						UnFreeze();
+	void						printHierarchy() const; // Name only, tree style
+	void						PrintTree(NodeConstPtr) const; // Detailed information, list style
+	bool						hasNode(const NodeConstPtr node) const;
+	NodePtr						getPrevSiblingNode(NodePtr node);
+	NodePtr						getNodeByName(const char* name);
+	void						updatePurpose();
 private:
-	Node* root;
-	int nNode;			// nNode = nEffector + nJoint
-	int nEffector;
-	int nJoint;
-	void SetSeqNum(Node*);
-	void resetSeqNum(Node* node);
-	Node* SearchJoint(Node*, int);
-	Node* SearchEffector(Node*, int);
-	void ComputeTree(Node*);
-
-	//void DrawTree(Node*);
-
-	void InitTree(Node*);
-	void UnFreezeTree(Node*);
+	void						SetSeqNum(NodePtr);
+	void						resetSeqNum(NodePtr node);
+	NodePtr						SearchJoint(NodePtr, int);
+	NodePtr						SearchEffector(NodePtr, int);
+	void						ComputeTree(NodePtr);
+	void						InitTree(NodePtr);
+	void						UnFreezeTree(NodePtr);
+	NodePtr						root;
+	int							nNode;			// nNode = nEffector + nJoint
+	int							nEffector;
+	int							nJoint;
 };
 
 typedef std::tr1::shared_ptr<Tree> TreePtr;
 
 
-inline Node* Tree::GetSuccessor ( const Node* node ) const
+inline NodePtr Tree::GetSuccessor ( NodeConstPtr node ) const
 {
-	if ( node->getLeftNode() ) {
+	if ( node->getLeftNode() )
+	{
 		return node->getLeftNode();
 	}
-	while ( true ) {
-		if ( node->getRightNode() ) {
+	while ( true )
+	{
+		if ( node->getRightNode() )
+		{
 			return ( node->getRightNode() );
 		}
 		node = node->getRealParent();
-		if ( !node ) {
-			return 0;		// Back to root, finished traversal
+		if ( !node )
+		{
+			return NodePtr();		// Back to root, finished traversal
 		}
 	}
 }

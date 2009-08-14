@@ -176,7 +176,7 @@ void ArnIpo::interconnect( ArnNode* sceneRoot )
 				case CN_QuatX:
 				case CN_QuatY:
 				case CN_QuatZ:
-					/*** TODO: NOT IMPLEMENTED YET ***/
+					ARN_THROW_NOT_IMPLEMENTED_ERROR
 					break;
 
 				default:		throw MyError(MEE_UNSUPPORTED_CURVENAME);

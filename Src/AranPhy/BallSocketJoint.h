@@ -17,7 +17,7 @@ TYPEDEF_SHARED_PTR(GeneralBody);
 class ARANPHY_API BallSocketJoint : public AngularJoint
 {
 public:
-	static BallSocketJoint*		createFrom(const OdeSpaceContext* osc, const char* name, const GeneralBodyPtr& b1, const GeneralBodyPtr& b2, const ArnVec3& anchor, const ArnVec3& xAxis, const ArnVec3& yAxis, const ArnVec3& zAxis);
+	static BallSocketJoint*		createFrom(const OdeSpaceContext* osc, const char* name, const GeneralBodyPtr b1, const GeneralBodyPtr b2, const ArnVec3& anchor, const ArnVec3& xAxis, const ArnVec3& yAxis, const ArnVec3& zAxis);
 								~BallSocketJoint();
 	virtual void				attach(GeneralBody& body1, GeneralBody& body2);
 	virtual const char*			getJointTypeName() const { return "BallSocket"; }

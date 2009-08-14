@@ -398,12 +398,11 @@ ArnBoneRenderGl( const ArnBone* bone )
 void
 ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData)
 {
-	// TODO: Material
+	// TODO: Material and shininess settings on OpenGL context
 	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)&mtrlData->Ambient);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrlData->Diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrlData->Specular);
 	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrlData->Emissive);
-	// TODO: Shininess...
 	const static float shininess = 100.0f;
 	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
 }
@@ -419,23 +418,19 @@ ArnSetupMaterialGl(const ArnMaterial* mtrl)
 		const ArnTexture* tex = mtrl->getFirstTexture();
 		const ArnRenderableObject* renderable = tex->getRenderableObject();
 		assert(renderable);
-		renderable->render();
 		// 'Rendering texture' has meaning of 'binding texture'
-		//
-		// glBindTexture(GL_TEXTURE_2D, tex->getTextureId());
-		// GLenum err = glGetError( );
-		// assert(err == 0);
-		//
+		renderable->render();
 	}
 	else
 	{
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
+	// TODO: Shadeless material
 	if (mtrl->isShadeless())
-		glDisable(GL_LIGHTING);
-	else
-		glEnable(GL_LIGHTING);
+	{
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_WHITE);
+	}
 }
 
 static void
@@ -444,8 +439,6 @@ ArnSkeletonRenderGl( const ArnSkeleton* skel )
 	glPushMatrix();
 	{
 		assert(skel->isLocalXformDirty() == false);
-		//skel->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
-
 		glMultTransposeMatrixf((float*)skel->getLocalXform().m);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		ArnDrawAxesGl(0.5);
@@ -735,7 +728,7 @@ NodeDrawNode(const Node& node, bool isRoot)
 }
 
 static void
-TreeDrawTree(const Tree& tree, const Node* node)
+TreeDrawTree(const Tree& tree, NodeConstPtr node)
 {
 	if (node)
 	{

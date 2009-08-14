@@ -24,3 +24,4 @@ const ArnColorValue4f			ArnConsts::ARNCOLOR_MAGENTA		= ArnColorValue4f( 1.0f, 0.
 const ArnColorValue4f			ArnConsts::ARNCOLOR_CYAN		= ArnColorValue4f( 0.0f, 1.0f, 1.0f, 1.0f );
 const ArnColorValue4f			ArnConsts::ARNCOLOR_WHITE		= ArnColorValue4f( 1.0f, 1.0f, 1.0f, 1.0f );
 const ArnMaterialData			ArnConsts::ARNMTRLDATA_RED		= { ArnConsts::ARNCOLOR_RED, ArnConsts::ARNCOLOR_RED, ArnConsts::ARNCOLOR_RED, ArnConsts::ARNCOLOR_RED, 1.0f };
+const ArnMaterialData			ArnConsts::ARNMTRLDATA_WHITE	= { ArnConsts::ARNCOLOR_WHITE, ArnConsts::ARNCOLOR_WHITE, ArnConsts::ARNCOLOR_WHITE, ArnConsts::ARNCOLOR_WHITE, 1.0f };

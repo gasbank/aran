@@ -126,8 +126,8 @@ struct MY_COLOR_VERTEX
 };
 
 /*!
-@brief 렌더러 종류
-*/
+ * @brief 렌더러 종류
+ */
 enum RendererType
 {
 	RENDERER_UNKNOWN,
@@ -136,8 +136,8 @@ enum RendererType
 };
 
 /*!
-@brief 물리 충돌 확인을 위한 물체 모양 종류
-*/
+ * @brief 물리 충돌 확인을 위한 물체 모양 종류
+ */
 enum ArnBoundingBoxType
 {
 	ABBT_UNKNOWN,		///< 알 수 없음
@@ -146,8 +146,8 @@ enum ArnBoundingBoxType
 };
 
 /*!
-@brief 물리 질량 분포 종류
-*/
+ * @brief 물리 질량 분포 종류
+ */
 enum ArnMassDistributionType
 {
 	AMDT_UNKNOWN,		///< 알 수 없음

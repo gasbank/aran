@@ -101,10 +101,10 @@ protected:
 	dJointID					getId() const { return m_joint; }
 	void						setId(dJointID id) { m_joint = id; }
 	void						updateFrameInternal(int anum);
-	void						setBody1(const GeneralBodyPtr& b) { m_body1 = b; }
-	void						setBody2(const GeneralBodyPtr& b) { m_body2 = b; }
-	const GeneralBodyPtr&		getBody1() const { return m_body1; }
-	const GeneralBodyPtr&		getBody2() const { return m_body2; }
+	void						setBody1(const GeneralBodyPtr b) { m_body1 = b; }
+	void						setBody2(const GeneralBodyPtr b) { m_body2 = b; }
+	const GeneralBodyPtr		getBody1() const { return m_body1; }
+	const GeneralBodyPtr		getBody2() const { return m_body2; }
 	virtual void				doReset() = 0;
 private:
 	void						setTargetValue(int anum, double v) { m_targetValue[anum - 1] = v; }

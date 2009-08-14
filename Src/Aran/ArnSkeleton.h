@@ -32,9 +32,16 @@ public:
 	 */
 	unsigned int						getChildBoneCount() const;
 	void								setActionToNext();
-	// *** INTERNAL USE ONLY START ***
+	ArnIkSolver*						getIkSolver() const { return m_ikSolver; }
+	void								setIkSolver(ArnIkSolver* val) { m_ikSolver = val; }
+	/*!
+	 * @name Internal use only methods
+	 * These methods are exposed in order to make internal linkage between objects.
+	 * You should aware that these are not for client-side APIs.
+	 */
+	//@{
 	virtual void						interconnect(ArnNode* sceneRoot);
-	// *** INTERNAL USE ONLY END ***
+	//@}
 protected:
 	virtual void						update(double fTime, float fElapsedTime);
 private:

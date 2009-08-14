@@ -203,52 +203,10 @@ SimWorld::updateFrame(double elapsedTime)
 	dSpaceCollide(m_osc->space, m_osc, &NearCallback);
 	dWorldStep(m_osc->world, elapsedTime);
 	dJointGroupEmpty(m_osc->contactGroup);
-	foreach (const GeneralBodyPtr& gbPtr, m_bodiesPtr)
+	foreach (const GeneralBodyPtr gbPtr, m_bodiesPtr)
 	{
 		gbPtr->notify();
 	}
-
-	//SliderJoint* sj = 0;
-	//sj = getJointByName("TrunkSupportJoint");
-
-	//double torsoBase = m_footStep / 8 * 0.5;
-	//double torsoSwing = torsoBase * 0.4;
-	//sj->control_P(1, -torsoBase + torsoSwing * cos(2*M_PI*getBiped()->getFeetDist() / ( 2 * m_footStep ) ), 20, 5000);
-	////sj->controlWithinRange_P(1, -0.05 + m_trunkSupportPosZ, -0.01 + m_trunkSupportPosZ, 2, 5000);
-
-	//sj = getJointByName("TrunkSupportJoint2");
-
-	///*
-	// *   Foot                        Foot
-	// *    COM                         COM
-	// *     |---------|--------|--------|
-	// *               |<------>|
-	// *                 Trunk COM should lie here
-	// *
-	// */
-	//const double& feetDist =  m_biped->getFeetDist();
-	//dVector3 feetMidpoint;
-	//m_biped->getFeetMidpoint(feetMidpoint);
-	//ArnVec3 hatPos;
-	//m_biped->getBody(BE_HAT)->getPosition(&hatPos);
-	//const float hatYPos = hatPos.y;
-	//if ( m_biped->getFeetDist() > 0.15 )
-	//{
-	//	double bodyOffsetY = 0;
-	//	sj->control_P(1, m_trunkSupportPosY + bodyOffsetY, 10, 5000);
-	//}
-	//else
-	//{
-	//	sj->rest(1);
-	//}
-
-	//foreach(SliderJoint* sj, m_sliderJoints)
-	//{
-	//	sj->updateFrame();
-	//}
-
-	//m_footStep = m_nextFootStep;
-	//m_footStepMaxHeight = m_nextFootStepMaxHeight;
 }
 
 void
@@ -390,7 +348,7 @@ SimWorld::getJointByName(const char* name) const
 GeneralJointPtr
 SimWorld::getGeneralJointByName(const char* name) const
 {
-	foreach (const GeneralJointPtr& gbPtr, m_jointsPtr)
+	foreach (const GeneralJointPtr gbPtr, m_jointsPtr)
 	{
 		if (strcmp(gbPtr->getName(), name) == 0)
 			return gbPtr;
@@ -414,7 +372,7 @@ SimWorld::getBodyByName(const char* name) const
 const GeneralBodyPtr
 SimWorld::getBodyByNameFromSet( const char* name ) const
 {
-	foreach (const GeneralBodyPtr& b, m_bodiesPtr)
+	foreach (const GeneralBodyPtr b, m_bodiesPtr)
 	{
 		if (strcmp(b->getName(), name) == 0)
 			return b;
@@ -446,7 +404,7 @@ SimWorld::clearBodyContact()
 }
 
 bool
-SimWorld::registerBody( const GeneralBodyPtr& gbPtr )
+SimWorld::registerBody( const GeneralBodyPtr gbPtr )
 {
 	gbPtr->configureOdeContext(m_osc);
 	m_bodiesPtr.insert(gbPtr);
@@ -454,7 +412,7 @@ SimWorld::registerBody( const GeneralBodyPtr& gbPtr )
 }
 
 bool
-SimWorld::registerJoint( const GeneralJointPtr& gjPtr )
+SimWorld::registerJoint( const GeneralJointPtr gjPtr )
 {
 	gjPtr->configureOdeContext(m_osc);
 	m_jointsPtr.insert(gjPtr);

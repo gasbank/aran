@@ -177,7 +177,6 @@ ArnMeshGl::renderVbIb() const
 
 	glPushMatrix();
 	assert(m_target->isLocalXformDirty() == false);
-	//m_target->recalcLocalXform(); // TODO: Is this necessary? -- maybe yes...
 	glMultMatrixf((float*)m_target->getLocalXform().transpose().m);
 	glDrawArrays(GL_TRIANGLES, 0, m_target->getVertexBuffer()->getCount());
 	glPopMatrix();

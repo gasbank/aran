@@ -6,6 +6,7 @@ class ArnBone;
 class Node;
 TYPEDEF_SHARED_PTR(Tree);
 TYPEDEF_SHARED_PTR(Jacobian);
+TYPEDEF_SHARED_PTR(Node);
 
 /*!
  * @brief IK 솔버
@@ -23,17 +24,26 @@ public:
 	void							setTarget(unsigned int i, const ArnVec3& v);
 	void							update();
 	void							printHierarchy() const;
-	void							reconfigureRoot(Node* newRoot);
-	bool							hasNode(const Node* node);
-	Node*							getNodeByName(const char* name);
+	void							reconfigureRoot(NodePtr newRoot);
+	bool							hasNode(const NodeConstPtr node);
+	NodePtr							getNodeByName(const char* name);
 protected:
 private:
 									ArnIkSolver();
-	Node*							addToTree(Node* prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild);
+	NodePtr							addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild);
 	void							initializeJacobian();
 	JacobianPtr						getJacobian() { return m_jacobian; }
 	TreePtr							m_tree;
 	JacobianPtr						m_jacobian;
 };
+
+class ArnSceneGraph;
+
+/*!
+ * @brief ArnSceneGraph에 있는 모든 ArnSkeleton에 대해 ArnIkSolver를 생성
+ * @return 생성된 ArnIkSolver 개수
+ * @remark ArnSkeleton을 재귀적으로 모두 찾는 것이 아니라 최상위 노드(root)에서만 검색합니다.
+ */
+ARANIK_API unsigned int ArnCreateArnIkSolversOnSceneGraph(ArnSceneGraphPtr sg);
 
 #endif // ARANIKSOLVER_H

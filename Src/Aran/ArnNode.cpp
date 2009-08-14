@@ -10,7 +10,7 @@ ArnNode::ArnNode(NODE_DATA_TYPE type)
 ArnNode::~ArnNode(void)
 {
 	deleteAllChildren();
-	detachParent(); // TODO: Is this safe?
+	detachParent();
 }
 
 void

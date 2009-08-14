@@ -122,7 +122,7 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			{
 				if (abs(event->jaxis.value) > 9000)
 				{
-					gs_linVelX = event->jaxis.value / 16000.0;
+					gs_linVelX = float(event->jaxis.value / 16000.0);
 				}
 				else
 				{
@@ -133,7 +133,7 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			{
 				if (abs(event->jaxis.value) > 9000)
 				{
-					gs_linVelZ = -event->jaxis.value / 16000.0;
+					gs_linVelZ = float(-event->jaxis.value / 16000.0);
 
 				}
 				else
@@ -223,64 +223,12 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 				}
 			}
 			break;
-
-		/*
-		case SDL_ACTIVEEVENT:
-
-			printf( "app %s ", event->active.gain ? "gained" : "lost" );
-			if ( event->active.state & SDL_APPACTIVE ) {
-				printf( "active " );
-			} else if ( event->active.state & SDL_APPMOUSEFOCUS ) {
-				printf( "mouse " );
-			} else if ( event->active.state & SDL_APPINPUTFOCUS ) {
-				printf( "input " );
-			}
-			printf( "focus\n" );
-			break;
-		*/
-
 		case SDL_KEYDOWN:
 			if ( event->key.keysym.sym == SDLK_ESCAPE )
 			{
 				done = MHR_EXIT_APP;
 			}
-			else if (event->key.keysym.sym == SDLK_1)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
-					skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(0, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(0, 1);
-				}
-
-			}
-			else if (event->key.keysym.sym == SDLK_2)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
-					skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(1, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(1, 1);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_3)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
-					skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(2, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(2, 1);
-				}
-			}
+			
 			else if (event->key.keysym.sym == SDLK_n)
 			{
 				done = MHR_NEXT_SCENE;
@@ -288,38 +236,6 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			else if (event->key.keysym.sym == SDLK_r)
 			{
 				done = MHR_RELOAD_SCENE;
-			}
-			else if (event->key.keysym.sym == SDLK_t)
-			{
-				GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gjPtr)
-				{
-					gjPtr->addTorque(AXIS_Y, 1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_y)
-			{
-				GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gjPtr)
-				{
-					gjPtr->addTorque(AXIS_Y, -1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_g)
-			{
-				GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gjPtr)
-				{
-					gjPtr->addTorque(AXIS_X, 1000.0f);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_h)
-			{
-				GeneralJointPtr gjPtr = swPtr->getGeneralJointByName("Pedestal-Stick");
-				if (gjPtr)
-				{
-					gjPtr->addTorque(AXIS_X, -1000.0f);
-				}
 			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
@@ -331,305 +247,46 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 	return done;
 }
 
-static void
-DrawString(const char *str, int x, int y, float color[4], void *font)
+static ArnSceneGraphPtr
+ConfigureTestScene(const char* sceneFileName, const ArnViewportData* avd)
 {
-	glPushAttrib(GL_LIGHTING_BIT | GL_CURRENT_BIT); // lighting and color mask
-	glDisable(GL_LIGHTING);     // need to disable lighting for proper text color
-
-	glColor4fv(color);          // set text color
-	glRasterPos2i(x, y);        // place text position
-
-	// loop all characters in the string
-	while(*str)
-	{
-		//glutBitmapCharacter(font, *str);
-		++str;
-	}
-
-	glEnable(GL_LIGHTING);
-	glPopAttrib();
-}
-
-static ArnTexture*
-CreateFontTextureWithFreeType(const char* sceneFileName)
-{
-	// FreeType font init
-	FT_Library library;
-	int ftError = FT_Init_FreeType(&library);
-	if (ftError)
-	{
-		std::cerr << "FreeType init failed." << std::endl;
-		return 0;
-	}
-	FT_Face face;
-	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
-	if (ftError)
-	{
-		std::cerr << "FreeType new face creation failed.(File not found?)" << std::endl;
-		return 0;
-	}
-	ftError = FT_Set_Char_Size(face, 0, 16*64, 300, 300);
-	if (ftError)
-	{
-		std::cerr << "FreeType face char size  failed." << std::endl;
-		return 0;
-	}
-	ftError = FT_Set_Pixel_Sizes(face, 0, 20);
-	if (ftError)
-	{
-		std::cerr << "FreeType face pixel size  failed." << std::endl;
-		return 0;
-	}
-	FT_GlyphSlot slot = face->glyph; /* a small shortcut */
-	FT_UInt glyph_index;
-	int pen_x, pen_y;
-	pen_x = 0;
-	pen_y = 0;
-	wchar_t testString[128];
-	wchar_t sceneFileNameW[128];
-	int requiredSize = mbstowcs(0, sceneFileName, 0);
-	assert(requiredSize + 1 < 128);
-	mbstowcs(sceneFileNameW, sceneFileName, requiredSize + 1);
-	std::swprintf(testString, 128, L"build %ld - %ls", ArnGetBuildCount(), sceneFileNameW);
-	size_t testStringLen = wcslen(testString);
-	/*
-	wprintf(L"Result string: %ls\n", testString);
-	std::wcout << L"testString     = " << testString << std::endl;
-	std::wcout << L"sceneFileNameW = " << sceneFileNameW << std::endl;
-	*/
-	const int textTextureSize = 1024;
-	std::vector<unsigned char> fontTexture(textTextureSize * textTextureSize * 4);
-	for ( size_t n = 0; n < testStringLen; n++ )
-	{
-		glyph_index = FT_Get_Char_Index( face, testString[n] ); /* load glyph image into the slot (erase previous one) */
-		ftError = FT_Load_Char(face, testString[n], FT_LOAD_RENDER);
-		if ( ftError )
-			continue; /* ignore errors */
-
-		for (int row = 1; row <= slot->bitmap.rows; ++row)
-		{
-			for (int w = 0; w < slot->bitmap.width; ++w)
-			{
-				const size_t fontTexOffset = 4 * (w + (row)*textTextureSize + pen_x + slot->bitmap_left);
-				char slotValue = slot->bitmap.buffer[w + (slot->bitmap.rows - row) * slot->bitmap.width];
-				fontTexture[fontTexOffset + 0] = slotValue; // RED color
-				fontTexture[fontTexOffset + 1] = 0; // GREEN color
-				fontTexture[fontTexOffset + 2] = 0; // BLUE color
-				fontTexture[fontTexOffset + 3] = slotValue; // ALPHA
-			}
-		}
-		pen_x += slot->advance.x >> 6;
-	}
-	return ArnCreateTextureFromArray(&fontTexture[0], textTextureSize, textTextureSize, 4, false);
-}
-
-static void
-RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int durationMs, ArnTexturePtr fontTexturePtr)
-{
-	// backup current model-view matrix
-	glPushMatrix();                     // save current modelview matrix
-	glLoadIdentity();                   // reset modelview matrix
-
-	// set to 2D orthogonal projection
-	glMatrixMode(GL_PROJECTION);     // switch to projection matrix
-	glPushMatrix();                  // save current projection matrix
-	glLoadIdentity();                // reset projection matrix
-	gluOrtho2D(viewport->X, viewport->Width, viewport->Y, viewport->Height);  // set to orthogonal projection
-
-	std::stringstream ss;
-	ss.str("");
-	ss << std::fixed << std::setprecision(1);
-	ss << 1.0f / ((float)durationMs / 1000) << " FPS" << std::ends; // update fps string
-	ss << std::resetiosflags(std::ios_base::fixed | std::ios_base::floatfield);
-	//DrawString(ss.str().c_str(), 1, 1, color, GLUT_BITMAP_8_BY_13);
-
-	ss.str("");
-	ss << std::fixed << std::setprecision(3);
-	ss << "Running time: " << ((float)durationMs / 1000) << " s" << std::ends; // update fps string
-	ss << std::resetiosflags(std::ios_base::fixed | std::ios_base::floatfield);
-	//DrawString(ss.str().c_str(), 1, 14, color, GLUT_BITMAP_8_BY_13);
-
-	glDisable(GL_LIGHTING);
-	const ArnRenderableObject* textureRenderable = fontTexturePtr.get()->getRenderableObject();
-	assert(textureRenderable);
-
-	textureRenderable->render(); // glBindTexture(GL_TEXTURE_2D, fontTextureId);
-
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glBlendFunc(GL_ONE, GL_ONE);
-	glColor4d(1, 1, 1, 1);
-	glScaled(512, 512, 1);
-	glBegin(GL_QUADS);
-	glTexCoord2d(1, 1); glVertex3d(1, 1, 0);
-	glTexCoord2d(0, 1); glVertex3d(0, 1, 0);
-	glTexCoord2d(0, 0); glVertex3d(0, 0, 0);
-	glTexCoord2d(1, 0); glVertex3d(1, 0, 0);
-	glEnd();
-	glEnable(GL_LIGHTING);
-
-
-	// restore projection matrix
-	glPopMatrix();                   // restore to previous projection matrix
-
-	// restore modelview matrix
-	glMatrixMode(GL_MODELVIEW);      // switch to modelview matrix
-	glPopMatrix();                   // restore to previous modelview matrix
-}
-
-static void
-PrintMeshVertexList(const ArnMesh* mesh)
-{
-	if (!mesh)
-		return;
-	unsigned int vertCount = mesh->getTotalVertCount();
-	printf("====== First Mesh Vertex List =======\n");
-	for (unsigned int v = 0; v < vertCount; ++v)
-	{
-		ArnVec3 pos;
-		mesh->getVert(&pos, 0, 0, v, false);
-		printf("[%d] ", v);
-		pos.printFormatString();
-	}
-	const unsigned int faceGroupCount = mesh->getFaceGroupCount();
-	for (unsigned int fg = 0; fg < faceGroupCount; ++fg)
-	{
-		unsigned int triCount, quadCount;
-		mesh->getFaceCount(triCount, quadCount, fg);
-		for (unsigned int tc = 0; tc < triCount; ++tc)
-		{
-			unsigned int totalIndex;
-			unsigned int tinds[3];
-			mesh->getTriFace(totalIndex, tinds, fg, tc);
-			printf("Tri OrigInd/VertInds: %d / %d %d %d\n", totalIndex, tinds[0], tinds[1], tinds[2]);
-		}
-	}
-	printf("====== First Mesh Vertex List End =======\n");
-}
-
-static void
-PrintFrustumCornersBasedOnGlMatrixStack(const ArnViewportData* avd)
-{
-	float frustumPlanes[6][4];
-	ArnVec3 frustumCorners[8];
-	ArnMatrix modelview, projection;
-	glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-	modelview = modelview.transpose();
-	glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-	projection = projection.transpose();
-	ArnExtractFrustumPlanes(frustumPlanes, &modelview, &projection);
-	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
-	printf("=== Eight Frustum Corder points (calculated from OpenGL matrix stacks) ===\n");
-	for (int i = 0; i < 8; ++i)
-	{
-		frustumCorners[i].printFormatString();
-	}
-	printf("=== Eight Frustum Corder Points End ===\n");
-
-	printf("     === Test Ray on center screen coordinates ===\n");
-	ArnVec3 origin, dir;
-	ArnMakePickRay(&origin, &dir, avd->Width / 2.0f, avd->Height / 2.0f, &modelview, &projection, avd);
-	printf("Ray origin   : "); origin.printFormatString();
-	printf("Ray direction: "); dir.printFormatString();
-	printf("     === Test Ray End\n");
-}
-
-static void
-PrintFrustumCornersBasedOnActiveCamera(const ArnCamera* activeCam, const ArnViewportData* avd)
-{
-	float frustumPlanes[6][4];
-	ArnVec3 frustumCorners[8];
-	ArnMatrix camModelview, camProjection;
-	ArnVec3 eye(activeCam->getLocalXform().m[0][3], activeCam->getLocalXform().m[1][3], activeCam->getLocalXform().m[2][3]);
-	ArnVec3 at(activeCam->getLocalXform().m[0][3]-activeCam->getLocalXform().m[0][2], activeCam->getLocalXform().m[1][3]-activeCam->getLocalXform().m[1][2], activeCam->getLocalXform().m[2][3]-activeCam->getLocalXform().m[2][2]);
-	ArnVec3 up(activeCam->getLocalXform().m[0][1], activeCam->getLocalXform().m[1][1], activeCam->getLocalXform().m[2][1]);
-	ArnMatrixLookAtRH(&camModelview, &eye, &at, &up);
-	ArnMatrixPerspectiveYFov(&camProjection, activeCam->getFov(), (float)avd->Width / avd->Height, activeCam->getNearClip(), activeCam->getFarClip(), true);
-	ArnExtractFrustumPlanes(frustumPlanes, &camModelview, &camProjection);
-	ArnGetFrustumCorners(frustumCorners, frustumPlanes);
-	printf("=== Eight Frustum Corder points (calculated from CML routines) ===\n");
-	for (int i = 0; i < 8; ++i)
-	{
-		frustumCorners[i].printFormatString();
-	}
-	printf("=== Eight Frustum Corder Points End ===\n");
-
-	printf("     === Test Ray on center screen coordinates ===\n");
-	ArnVec3 origin, dir;
-	ArnMakePickRay(&origin, &dir, avd->Width / 2.0f, avd->Height / 2.0f, &camModelview, &camProjection, avd);
-	printf("Ray origin   : "); origin.printFormatString();
-	printf("Ray direction: "); dir.printFormatString();
-	printf("     === Test Ray End\n");
-}
-
-static void
-PrintRayCastingResultUsingGlu(const ArnViewportData* avd)
-{
-	GLdouble glmv[16], glproj[16];
-	glGetDoublev(GL_MODELVIEW_MATRIX, glmv);
-	glGetDoublev(GL_PROJECTION_MATRIX, glproj);
-	GLdouble objx, objy, objz;
-	GLint viewport[4] = { avd->X, avd->Y, avd->Width, avd->Height };
-	gluUnProject(avd->Width / 2.0, avd->Height / 2.0, 0, glmv, glproj, viewport, &objx, &objy, &objz);
-	printf("gluUnproject of center screen point result: %.3f, %.3f, %.3f\n", objx, objy, objz);
-}
-
-static int
-ConfigureTestScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, const char* sceneFileName, const ArnViewportData* avd)
-{
-	curSceneGraph.reset(ArnSceneGraph::createFrom(sceneFileName));
-	if (!curSceneGraph)
+	ArnSceneGraphPtr ret(ArnSceneGraph::createFrom(sceneFileName));
+	if (!ret)
 	{
 		fprintf(stderr, " *** Scene graph file %s is not loaded correctly.\n", sceneFileName);
 		fprintf(stderr, "     Check your input XML scene file.\n");
-		return -5;
+		return ArnSceneGraphPtr();
 	}
-	curSceneGraph.get()->interconnect(curSceneGraph.get());
+	ret->interconnect(ret.get());
 	std::cout << "   Scene file " << sceneFileName << " loaded successfully." << std::endl;
-	fontTexturePtr.reset( CreateFontTextureWithFreeType(sceneFileName) );
-	assert(fontTexturePtr.get());
-	return 0;
+	return ret;
 }
 
-static int
-ConfigureNextTestSceneWithRetry(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+static ArnSceneGraphPtr
+ConfigureNextTestSceneWithRetry(int& curSceneIndex, int nextSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
 	assert(nextSceneIndex < (int)sceneList.size());
 	curSceneIndex = nextSceneIndex;
 	unsigned int retryCount = 0;
-	while (ConfigureTestScene(curSceneGraph, fontTexturePtr, sceneList[curSceneIndex].c_str(), &avd) < 0)
+	ArnSceneGraphPtr ret;
+	while (!ret)
 	{
+		ret = ConfigureTestScene(sceneList[curSceneIndex].c_str(), &avd);
 		curSceneIndex = (curSceneIndex + 1) % sceneList.size();
 		++retryCount;
 		if (retryCount >= sceneList.size())
 		{
 			std::cerr << " *** All provided scene files have errors." << std::endl;
-			return -12;
+			return ArnSceneGraphPtr();
 		}
 	}
-
-	// Note: Scene loaded successfully.
-
-	//
-	// DEBUG PURPOSE
-	// A little test on modelview, projection matrix
-	// by checking frustum corner points and ray casting.
-	//
-	// Should be performed after OpenGL context created.
-
-	//PrintMeshVertexList(reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH)));
-	/*
-	PrintFrustumCornersBasedOnGlMatrixStack(&avd);
-	PrintFrustumCornersBasedOnActiveCamera(activeCam, &avd);
-	PrintRayCastingResultUsingGlu(&avd);
-	*/
-	return 0;
+	return ret;
 }
 
-static int
-ReloadCurrentScene(ArnSceneGraphPtr& curSceneGraph, ArnTexturePtr& fontTexturePtr, int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
+static ArnSceneGraphPtr
+ReloadCurrentScene(int& curSceneIndex, const std::vector<std::string>& sceneList,  const ArnViewportData& avd)
 {
-	return ConfigureNextTestSceneWithRetry(curSceneGraph, fontTexturePtr, curSceneIndex, curSceneIndex, sceneList, avd);
+	return ConfigureNextTestSceneWithRetry(curSceneIndex, curSceneIndex, sceneList, avd);
 }
 
 static void
@@ -707,7 +364,6 @@ DoMain()
 	bool						bFullScreen			= false;
 	bool						bNoFrame			= false;
 	ArnViewportData				avd;
-	ArnTexturePtr				fontTexturePtr;
 	SimWorldPtr					swPtr;
 
 	avd.X		= 0;
@@ -720,24 +376,23 @@ DoMain()
 	// Load first scene file into memory.
 	assert(sceneList.size() > 0);
 	assert(curSceneIndex == -1);
-	if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, 0, sceneList, avd) < 0)
+	curSgPtr = ConfigureNextTestSceneWithRetry(curSceneIndex, 0, sceneList, avd);
+	if (!curSgPtr)
 	{
 		std::cerr << " *** Aborting..." << std::endl;
 		Cleanup();
 		return -11;
 	}
-
-	ArnIkSolver* ikSolver = 0;
+	assert(curSgPtr);
+	ArnCreateArnIkSolversOnSceneGraph(curSgPtr);
 	if (curSgPtr)
 	{
 		ArnSkeleton* skel1 = reinterpret_cast<ArnSkeleton*>(curSgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
-		if (skel1)
+		if (skel1 && skel1->getIkSolver())
 		{
-			CreateArnIkSolver(&ikSolver, skel1);
-
-			Node* newRoot = ikSolver->getNodeByName("Bone_L");
+			NodePtr newRoot = skel1->getIkSolver()->getNodeByName("Bone_L");
 			assert(newRoot);
-			ikSolver->reconfigureRoot(newRoot);
+			skel1->getIkSolver()->reconfigureRoot(newRoot);
 		}
 	}
 
@@ -842,13 +497,12 @@ DoMain()
 
 	unsigned int frames = 0;
 	unsigned int start_time = SDL_GetTicks();
-	assert(curSgPtr.get() && fontTexturePtr.get());
+	assert(curSgPtr);
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 
 	// Initialize OpenGL contexts of scene graph objects.
 	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-	ConfigureRenderableObjectOf(fontTexturePtr.get());
 	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
 	ArnInitializeRenderableObjectsGl(curSgPtr.get());
 	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
@@ -896,12 +550,12 @@ DoMain()
 		if (curSgPtr)
 			curSgPtr->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
 
+		/*
+		ArnVec3 t1 = ArnVec3(-1.0f, 1.5f + gs_linVelX, -6.5f + gs_linVelZ);
+		ArnVec3 t2 = ArnVec3( 1.0f, 1.5f, -6.5f);
 
-		ArnVec3 t1 = ArnVec3(-1, 1.5 + gs_linVelX, -6.5 + gs_linVelZ);
-		ArnVec3 t2 = ArnVec3( 1, 1.5, -6.5);
-
-		ArnVec3 t3 = ArnVec3(1, 0, -6.5);
-		ArnVec3 t4 = ArnVec3(1, 1, -3.5);
+		ArnVec3 t3 = ArnVec3(1.0f, 0, -6.5f);
+		ArnVec3 t4 = ArnVec3(1.0f, 1.0f, -3.5f);
 
 		if (ikSolver)
 		{
@@ -911,8 +565,9 @@ DoMain()
 			ikSolver->setTarget(2, t3);
 			ikSolver->setTarget(3, t4);
 
-			//ikSolver->update();
+			ikSolver->update();
 		}
+		*/
 
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
@@ -932,11 +587,11 @@ DoMain()
 		if (defMtrl)
 			ArnSetupMaterialGl(defMtrl);
 
+		/*
 		if (ikSolver)
 		{
 			TreeDraw(*ikSolver->getTree());
 		}
-
 		glPushMatrix();
 		glTranslated(t1.x, t1.y, t1.z);
 		glScaled(0.1, 0.1, 0.1);
@@ -949,7 +604,6 @@ DoMain()
 		ArnRenderSphereGl();
 		glPopMatrix();
 
-		/*
 		glPushMatrix();
 		glTranslated(t3.x, t3.y, t3.z);
 		glScaled(0.1, 0.1, 0.1);
@@ -967,9 +621,8 @@ DoMain()
 		{
 			if (curSgPtr)
 			{
-				//ArnSceneGraphRenderGl(curSgPtr.get());
+				ArnSceneGraphRenderGl(curSgPtr.get());
 			}
-			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTexturePtr);
 		}
 		glPopMatrix();
 
@@ -994,44 +647,44 @@ DoMain()
 		/* Check if there's a pending event. */
 		while( SDL_PollEvent( &event ) ) {
 			done = HandleEvent(&event, curSgPtr.get(), &avd, swPtr);
-
+			
+			int reconfigScene = false;
 			if (done == MHR_NEXT_SCENE)
 			{
 				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
-				if (ConfigureNextTestSceneWithRetry(curSgPtr, fontTexturePtr, curSceneIndex, nextSceneIndex, sceneList, avd) < 0)
+				curSgPtr = ConfigureNextTestSceneWithRetry(curSceneIndex, nextSceneIndex, sceneList, avd);
+				if (!curSgPtr)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
 				}
 				else
 				{
-					// Initialize OpenGL contexts of scene graph objects.
-					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-					ArnInitializeRenderableObjectsGl(curSgPtr.get());
-					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-					ArnConfigureViewMatrixGl(activeCam);
-
+					reconfigScene = true;
 				}
 			}
 			else if (done == MHR_RELOAD_SCENE)
 			{
-				if (ReloadCurrentScene(curSgPtr, fontTexturePtr, curSceneIndex, sceneList, avd) < 0)
+				curSgPtr = ReloadCurrentScene(curSceneIndex, sceneList, avd);
+				if (!curSgPtr)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
 				}
 				else
 				{
-					// Initialize OpenGL contexts of scene graph objects.
-					swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-					ConfigureRenderableObjectOf(fontTexturePtr.get());
-					GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-					ArnInitializeRenderableObjectsGl(curSgPtr.get());
-					ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-					ArnConfigureViewMatrixGl(activeCam);
+					reconfigScene = true;
 				}
+			}
+
+			if (reconfigScene)
+			{
+				// Initialize OpenGL contexts of scene graph objects.
+				swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
+				GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
+				ArnInitializeRenderableObjectsGl(curSgPtr.get());
+				ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
+				ArnConfigureViewMatrixGl(activeCam);
 			}
 		}
 		++frames;
