@@ -27,12 +27,14 @@ public:
 	void							reconfigureRoot(NodePtr newRoot);
 	bool							hasNode(const NodeConstPtr node);
 	NodePtr							getNodeByName(const char* name);
+	NodePtr							getNodeByObjectId(unsigned int id);
 protected:
 private:
 									ArnIkSolver();
 	NodePtr							addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild);
 	void							initializeJacobian();
 	JacobianPtr						getJacobian() { return m_jacobian; }
+
 	TreePtr							m_tree;
 	JacobianPtr						m_jacobian;
 	const ArnSkeleton*				m_skel;

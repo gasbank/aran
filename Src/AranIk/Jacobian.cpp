@@ -21,7 +21,7 @@ const double Jacobian::MaxAngleDLS = 45.0*DegreesToRadians;
 const double Jacobian::MaxAngleSDLS = 45.0*DegreesToRadians;
 const double Jacobian::BaseMaxTargetDist = 0.4;
 
-Jacobian::Jacobian(Tree* tree)
+Jacobian::Jacobian(TreePtr tree)
 {
 	Jacobian::tree = tree;
 	nEffector = tree->GetNumEffector();
@@ -55,6 +55,10 @@ Jacobian::Jacobian(Tree* tree)
 	Reset();
 }
 
+Jacobian::~Jacobian()
+{
+	int k = 0;
+}
 void Jacobian::Reset()
 {
 	// Used by Damped Least Squares Method

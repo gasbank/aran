@@ -6,7 +6,7 @@ static float gs_torque = 0;
 static float gs_torqueAnkle = 0;
 
 static void
-SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, const ArnViewportData* avd, ArnCamera* cam )
+SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr sceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, ArnCamera* cam )
 {
 	if (!sceneGraph)
 		return;
@@ -49,7 +49,11 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	SDL_GL_SwapBuffers();
-	ArnSceneGraphRenderGl(sceneGraph);
+	ArnSceneGraphRenderGl(sceneGraph.get());
+	foreach (ArnIkSolver* ikSolver, ikSolvers)
+	{
+		TreeDraw(*ikSolver->getTree());
+	}
 
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -95,16 +99,23 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 					printf("Mesh Dimension: "); dim.printFormatString();
 				}
 			}
-			else
+			
+			foreach (ArnIkSolver* ikSolver, ikSolvers)
 			{
-				printf("[Selection buffer name 0x%08x]\n", buff[h].contents);
+				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
+				if (node)
+				{
+					printf("[Object 0x%p ID %d %s]\n",
+						node.get(), node->getObjectId(), node->getName());
+					ikSolver->reconfigureRoot(node);
+				}
 			}
 		}
 	}
 }
 
 static MessageHandleResult
-HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd, SimWorldPtr swPtr)
+HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, SimWorldPtr swPtr)
 {
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
@@ -199,7 +210,8 @@ HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportDat
 			{
 				if (event->button.button == SDL_BUTTON_LEFT)
 				{
-					SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y), curSceneGraph, avd, activeCam); // Y-coord flipped.
+					SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y),
+						curSceneGraph, ikSolvers, avd, activeCam); // Y-coord flipped.
 
 					if (curSceneGraph)
 					{
@@ -345,7 +357,6 @@ DoMain()
 	int							curSceneIndex		= -1;
 	std::vector<std::string>	sceneList;
 	ArnSceneGraphPtr			curSgPtr;
-	Tree						tree;
 	std::vector<Node*>			node;
 
 	//ConfigureJacobianTree(tree, jacob, node);
@@ -585,7 +596,7 @@ DoMain()
 
 		while( SDL_PollEvent( &event ) )
 		{
-			done = HandleEvent(&event, curSgPtr.get(), &avd, swPtr);
+			done = HandleEvent(&event, curSgPtr, ikSolvers, &avd, swPtr);
 			
 			int reconfigScene = false;
 			if (done == MHR_NEXT_SCENE)
@@ -643,6 +654,12 @@ DoMain()
 	}
 	Cleanup();
 	SDL_Quit();
+
+	foreach (ArnIkSolver* ikSolver, ikSolvers)
+	{
+		delete ikSolver;
+	}
+	ikSolvers.clear();
 	return 0;
 }
 

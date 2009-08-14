@@ -6,6 +6,7 @@
 #ifndef _CLASS_NODE
 #define _CLASS_NODE
 
+#include "ArnObject.h"
 #include "LinearR3.h"
 
 enum Purpose
@@ -18,7 +19,7 @@ class VectorR3;
 
 TYPEDEF_SHARED_PTR(Node);
 
-class ARANIK_API Node : public std::tr1::enable_shared_from_this<Node>
+class ARANIK_API Node : public ArnObject, public std::tr1::enable_shared_from_this<Node>
 {
 public:
 										~Node();
@@ -52,7 +53,7 @@ public:
 	void								setLeftNode(NodePtr v) { m_left = v; }
 	NodePtr								getRightNode() const { return m_right; }
 	void								setRightNode(NodePtr v) { m_right = v; }
-	const char*							getName() const { return m_name.c_str(); }
+	virtual const char*					getName() const { return m_name.c_str(); }
 	void								setName(const char* name) { m_name = name; }
 	NodePtr								getRealParent() const { return m_realParent; }
 	void								setRealParent(NodePtr v) { m_realParent = v; }
@@ -64,6 +65,7 @@ public:
 	void								printNodeHierarchy(int step) const;
 	bool								hasNode(const NodeConstPtr node) const;
 	NodePtr								getNodeByName(const char* name);
+	NodePtr								getNodeByObjectId(unsigned int id);
 	void								updatePurpose();
 	const VectorR3&						getAttach() const { return m_attach; }
 	const VectorR3&						getR() const { return m_r; }

@@ -660,7 +660,7 @@ static void
 NodeDrawBox(const Node& node)
 {
 	const VectorR3& r = node.getRelativePosition();
-	//const VectorR3& v = node.getRotationAxis();
+	glLoadName(node.getObjectId());
 	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	{
@@ -671,7 +671,7 @@ NodeDrawBox(const Node& node)
 			{
 				// Draw a root node indicator.
 				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
-				ArnRenderSphereGl(0.1);
+				ArnRenderSphereGl(0.2);
 			}
 			else if (node.getRealParent() && node.getLeftNode())
 			{
@@ -713,7 +713,7 @@ NodeDrawBox(const Node& node)
 			glDisable(GL_LIGHTING);
 			glColor3f(1, 1, 1);
 
-			glScaled(0.25, 0.25, length);
+			glScaled(0.35, 0.35, length);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glBegin(GL_QUADS);
 			glVertex3d(0.5, 0.5, 0);
@@ -755,8 +755,11 @@ NodeDrawNode(const Node& node, bool isRoot)
 	else
 	{
 		// Draw a root node indicator.
+		glPushMatrix();
+		glTranslated(node.GetAttach().x, node.GetAttach().y, node.getAttach().z);
 		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
 		ArnRenderSphereGl(0.1);
+		glPopMatrix();
 	}
 
 	// Draw rotation axis

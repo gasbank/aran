@@ -8,6 +8,12 @@ Tree::Tree()
 , m_nEffector(0)
 , m_nJoint(0)
 {
+	int f = 10;
+}
+
+Tree::~Tree()
+{
+	int b = 10;
 }
 
 void Tree::SetSeqNum(NodePtr node)

@@ -27,8 +27,8 @@ enum UpdateMode {
 
 class Jacobian {
 public:
-	Jacobian(Tree*);
-
+	Jacobian(TreePtr);
+	~Jacobian();
 	void ComputeJacobian();
 	const MatrixRmn& ActiveJacobian() const { return *Jactive; }
 	void SetJendActive() { Jactive = &Jend; }						// The default setting is Jend.
@@ -59,7 +59,7 @@ public:
 
 	void setTarget(unsigned int i, const VectorR3& v);
 private:
-	Tree* tree;			// tree associated with this Jacobian matrix
+	TreePtr tree;			// tree associated with this Jacobian matrix
 	int nEffector;		// Number of end effectors
 	int nJoint;			// Number of joints
 	int nRow;			// Total number of rows the real J (= 3*number of end effectors for now)

@@ -14,6 +14,7 @@ class ARANIK_API Tree
 {
 public:
 								Tree();
+								~Tree();
 	int							GetNumNode() const { return m_nNode; }
 	int							GetNumEffector() const { return m_nEffector; }
 	int							GetNumJoint() const { return m_nJoint; }

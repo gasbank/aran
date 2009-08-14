@@ -15,6 +15,7 @@ ArnIkSolver::ArnIkSolver()
 ArnIkSolver::~ArnIkSolver()
 {
 	// Do not release m_skel.
+	int a = 10;
 }
 
 ArnIkSolver*
@@ -139,7 +140,7 @@ ArnIkSolver::reset()
 void
 ArnIkSolver::initializeJacobian()
 {
-	m_jacobian.reset(new Jacobian(m_tree.get()));
+	m_jacobian.reset(new Jacobian(m_tree));
 }
 
 void
@@ -206,4 +207,10 @@ NodePtr
 ArnIkSolver::getNodeByName(const char* name)
 {
 	return m_tree->getNodeByName(name);
+}
+
+NodePtr
+ArnIkSolver::getNodeByObjectId( unsigned int id )
+{
+	return m_tree->GetRoot()->getNodeByObjectId(id);
 }

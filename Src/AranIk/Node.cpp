@@ -4,6 +4,7 @@
 #include "Node.h"
 
 Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
+: ArnObject(NDT_RT_IKNODE)
 {
 	Node::m_freezed = false;
 	Node::m_size = size;
@@ -20,6 +21,7 @@ Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpo
 }
 
 Node::Node(const Node& node)
+: ArnObject(NDT_RT_IKNODE)
 {
 	Node::m_freezed = false;
 	Node::m_size = node.m_size;
@@ -38,6 +40,7 @@ Node::Node(const Node& node)
 
 Node::~Node()
 {
+	int c = 10;
 }
 
 // Compute the global position of a single node
@@ -155,4 +158,25 @@ NodePtr
 Node::createCloneWithoutLink( NodePtr node )
 {
 	return NodePtr(new Node(*node));
+}
+
+NodePtr
+Node::getNodeByObjectId( unsigned int id )
+{
+	if (getObjectId() == id)
+		return shared_from_this();
+	NodePtr ret;
+	if (m_left)
+	{
+		ret = m_left->getNodeByObjectId(id);
+		if (ret)
+			return ret;
+	}
+	if (m_right)
+	{
+		ret = m_right->getNodeByObjectId(id);
+		if (ret)
+			return ret;
+	}
+	return ret;
 }
