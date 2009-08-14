@@ -1,5 +1,10 @@
 #include "IkTest.h"
 
+static float gs_linVelX = 0;
+static float gs_linVelZ = 0;
+static float gs_torque = 0;
+static float gs_torqueAnkle = 0;
+
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sceneGraph, const ArnViewportData* avd, ArnCamera* cam )
 {
@@ -97,12 +102,6 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 		}
 	}
 }
-
-
-static float gs_linVelX = 0;
-static float gs_linVelZ = 0;
-static float gs_torque = 0;
-static float gs_torqueAnkle = 0;
 
 static MessageHandleResult
 HandleEvent(SDL_Event* event, ArnSceneGraph* curSceneGraph, const ArnViewportData* avd, SimWorldPtr swPtr)
@@ -706,7 +705,7 @@ DoMain()
 	const int					bpp					= 32;
 	const int					depthSize			= 24;
 	bool						bFullScreen			= false;
-	bool						bNoFrame			= true;
+	bool						bNoFrame			= false;
 	ArnViewportData				avd;
 	ArnTexturePtr				fontTexturePtr;
 	SimWorldPtr					swPtr;
