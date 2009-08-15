@@ -25,29 +25,30 @@ public:
 	virtual								~Node();
 	static NodePtr						create(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 	static NodePtr						createCloneWithoutLink(NodePtr node);
-	void								PrintNode() const;
-	void								InitNode();
-	const VectorR3&						GetAttach() const { return m_attach; }
-	double								GetTheta() const { return m_theta; }
-	double								AddToTheta( double delta ) { m_theta += delta; return m_theta; }
-	const VectorR3&						GetS() const { return m_s; }
-	const VectorR3&						GetW() const { return m_w; }
-	double								GetMinTheta() const { return m_minTheta; }
-	double								GetMaxTheta() const { return m_maxTheta; }
-	double								GetRestAngle() const { return m_restAngle; } ;
-	void								SetTheta(double newTheta) { m_theta = newTheta; }
-	void								ComputeS(void);
-	void								ComputeW(void);
-	bool								IsEffector() const { return m_purpose==ENDEFFECTOR; }
-	bool								IsJoint() const { return m_purpose==JOINT; }
-	int									GetEffectorNum() const { return m_seqNumEffector; }
-	int									GetJointNum() const { return m_seqNumJoint; }
-	bool								IsFrozen() const { return m_freezed; }
-	void								Freeze() { m_freezed = true; }
-	void								UnFreeze() { m_freezed = false; }
-	const VectorR3&						getRelativePosition() const { return m_r; }
+	void								printNode() const;
+	void								initNode();
+	const VectorR3&						getAttach() const { return m_attach; }
+	double								getTheta() const { return m_theta; }
+	void								setTheta(double newTheta) { m_theta = newTheta; }
+	double								addToTheta( double delta ) { m_theta += delta; return m_theta; }
+	const VectorR3&						getGlobalRotAxis() const { return m_globalRotAxis; }
+	double								getMinTheta() const { return m_minTheta; }
+	double								getMaxTheta() const { return m_maxTheta; }
+	double								getRestAngle() const { return m_restAngle; } ;
+	void								computeGlobalPosition(void);
+	void								computeGlobalRotAxis(void);
+	bool								isEndeffector() const { return m_purpose==ENDEFFECTOR; }
+	bool								isJoint() const { return m_purpose==JOINT; }
+	bool								isFrozen() const { return m_freezed; }
+	int									getEffectorNum() const { return m_seqNumEffector; }
+	int									getJointNum() const { return m_seqNumJoint; }
+	void								freeze() { m_freezed = true; }
+	void								unFreeze() { m_freezed = false; }
+	const VectorR3&						getGlobalPosition() const { return m_globalPosition; }
+	void								setRelativePosition(const VectorR3& v) { m_relativePosition = v; }
+	const VectorR3&						getRelativePosition() const { return m_relativePosition; }
 	double								getJointAngle() const { return m_theta; }
-	const VectorR3&						getRotationAxis() const { return m_v; }
+	const VectorR3&						getRotationAxis() const { return m_rotAxis; }
 	double								getSize() const { return m_size; }
 	NodePtr								getLeftNode() const { return m_left; }
 	void								setLeftNode(NodePtr v) { m_left = v; }
@@ -67,32 +68,30 @@ public:
 	NodePtr								getNodeByName(const char* name);
 	NodePtr								getNodeByObjectId(unsigned int id);
 	void								updatePurpose();
-	const VectorR3&						getAttach() const { return m_attach; }
-	const VectorR3&						getR() const { return m_r; }
-	void								setR(const VectorR3& v) { m_r = v; }
 	void								setTarget(const VectorR3& v) { assert(m_purpose==ENDEFFECTOR); m_target = v; }
+	void								setTargetDiff(double dx, double dy, double dz) { assert(m_purpose==ENDEFFECTOR); m_target.x += dx, m_target.y += dy, m_target.z += dz; }
 	const VectorR3&						getTarget() const { assert(m_purpose==ENDEFFECTOR); return m_target; }
 private:
 										Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 										Node(const Node& node);
 	std::string							m_name;
-	bool								m_freezed;			// Is this node frozen?
-	int									m_seqNumJoint;		// sequence number if this node is a joint
-	int									m_seqNumEffector;	// sequence number if this node is an effector
-	double								m_size;				// size
-	Purpose								m_purpose;			// joint / effector / both
-	VectorR3							m_attach;			// attachment point
-	VectorR3							m_r;				// relative position vector
-	VectorR3							m_v;				// rotation axis
-	double								m_theta;			// joint angle (radian)
-	double								m_minTheta;			// lower limit of joint angle
-	double								m_maxTheta;			// upper limit of joint angle
-	double								m_restAngle;		// rest position angle
-	VectorR3							m_s;				// Global Position
-	VectorR3							m_w;				// Global rotation axis
-	NodePtr								m_left;				// left child
-	NodePtr								m_right;			// right sibling
-	std::tr1::weak_ptr<Node>			m_realParent;		// pointer to real parent
+	bool								m_freezed;				// Is this node frozen?
+	int									m_seqNumJoint;			// sequence number if this node is a joint
+	int									m_seqNumEffector;		// sequence number if this node is an effector
+	double								m_size;					// size
+	Purpose								m_purpose;				// joint / endeffector
+	VectorR3							m_attach;				// attachment point
+	VectorR3							m_relativePosition;		// relative position vector
+	VectorR3							m_rotAxis;				// rotation axis
+	double								m_theta;				// joint angle (radian)
+	double								m_minTheta;				// lower limit of joint angle
+	double								m_maxTheta;				// upper limit of joint angle
+	double								m_restAngle;			// rest position angle
+	VectorR3							m_globalPosition;		// Global Position
+	VectorR3							m_globalRotAxis;		// Global rotation axis
+	NodePtr								m_left;					// left child
+	NodePtr								m_right;				// right sibling
+	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
 	VectorR3							m_target;
 };
 

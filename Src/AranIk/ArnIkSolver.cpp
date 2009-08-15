@@ -201,6 +201,7 @@ ArnIkSolver::reconfigureRoot(NodePtr newRoot)
 			<< getTree()->GetNumEffector() << " end-effector(s) and "
 			<< getTree()->GetNumJoint() << " joint(s)." << std::endl;
 	printHierarchy();
+	m_selectedEndeffector.reset();
 }
 
 NodePtr

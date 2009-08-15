@@ -666,7 +666,7 @@ NodeDrawBox(const Node& node)
 	{
 		glPushMatrix();
 		{
-			glTranslated(node.getR().x, node.getR().y, node.getR().z);
+			glTranslated(r.x, r.y, r.z);
 			if (!node.getRealParent())
 			{
 				// Draw a root node indicator.
@@ -684,6 +684,14 @@ NodeDrawBox(const Node& node)
 				// Draw an end-effector indicator.
 				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_RED);
 				ArnRenderSphereGl(0.1);
+
+				// End-effector target indicator.
+				VectorR3 relTarget = node.getTarget() - node.getGlobalPosition();
+				glPushMatrix();
+				glTranslated(relTarget.x, relTarget.y, relTarget.z);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
+				ArnRenderSphereGl(0.1);
+				glPopMatrix();
 			}
 			else
 			{
@@ -756,7 +764,7 @@ NodeDrawNode(const Node& node, bool isRoot)
 	{
 		// Draw a root node indicator.
 		glPushMatrix();
-		glTranslated(node.GetAttach().x, node.GetAttach().y, node.getAttach().z);
+		glTranslated(node.getAttach().x, node.getAttach().y, node.getAttach().z);
 		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
 		ArnRenderSphereGl(0.1);
 		glPopMatrix();
@@ -769,7 +777,7 @@ NodeDrawNode(const Node& node, bool isRoot)
 	glLineWidth(2.0);
 	glBegin(GL_LINES);
 	{
-		VectorR3 temp = node.getR();
+		VectorR3 temp = node.getRelativePosition();
 		temp.AddScaled(node.getRotationAxis(), rotAxisLen * node.getSize());
 		glVertex3d( temp.x, temp.y, temp.z );
 		temp.AddScaled(node.getRotationAxis(),-2.0*rotAxisLen*node.getSize());

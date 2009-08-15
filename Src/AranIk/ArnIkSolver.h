@@ -28,6 +28,8 @@ public:
 	bool							hasNode(const NodeConstPtr node);
 	NodePtr							getNodeByName(const char* name);
 	NodePtr							getNodeByObjectId(unsigned int id);
+	void							setSelectedEndeffector(NodePtr node) { m_selectedEndeffector = node; }
+	NodePtr							getSelectedEndeffector() const { return m_selectedEndeffector; }
 protected:
 private:
 									ArnIkSolver();
@@ -38,6 +40,7 @@ private:
 	TreePtr							m_tree;
 	JacobianPtr						m_jacobian;
 	const ArnSkeleton*				m_skel;
+	NodePtr							m_selectedEndeffector;
 };
 
 #endif // ARANIKSOLVER_H

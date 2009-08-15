@@ -1,10 +1,19 @@
 #include "IkTest.h"
 
-static float gs_linVelX = 0;
-static float gs_linVelZ = 0;
-static float gs_torque = 0;
-static float gs_torqueAnkle = 0;
-static bool gs_bHoldingShift = false;
+static float		gs_linVelX = 0;
+static float		gs_linVelZ = 0;
+static float		gs_torque = 0;
+static float		gs_torqueAnkle = 0;
+static bool			gs_bHoldingShift = false;
+static bool			gs_bHoldingArrowKeys[4] = { false, false, false, false };
+
+enum ArrowKeys
+{
+	AK_UP,
+	AK_DOWN,
+	AK_LEFT,
+	AK_RIGHT
+};
 
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr sceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, ArnCamera* cam )
@@ -106,10 +115,19 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
 				if (node)
 				{
-					printf("[Object 0x%p ID %d %s]\n",
-						node.get(), node->getObjectId(), node->getName());
+					printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
+						node.get(), node->getObjectId(), node->getName(), node->isEndeffector());
 					if (gs_bHoldingShift)
+					{
 						ikSolver->reconfigureRoot(node);
+					}
+					else
+					{
+						if (node->isEndeffector())
+						{
+							ikSolver->setSelectedEndeffector(node);
+						}
+					}
 				}
 			}
 		}
@@ -255,6 +273,22 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				gs_bHoldingShift = true;
 			}
+			else if (event->key.keysym.sym == SDLK_UP)
+			{
+				gs_bHoldingArrowKeys[AK_UP] = true;
+			}
+			else if (event->key.keysym.sym == SDLK_DOWN)
+			{
+				gs_bHoldingArrowKeys[AK_DOWN] = true;
+			}
+			else if (event->key.keysym.sym == SDLK_LEFT)
+			{
+				gs_bHoldingArrowKeys[AK_LEFT] = true;
+			}
+			else if (event->key.keysym.sym == SDLK_RIGHT)
+			{
+				gs_bHoldingArrowKeys[AK_RIGHT] = true;
+			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
@@ -262,6 +296,22 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			if (event->key.keysym.sym == SDLK_RSHIFT || event->key.keysym.sym == SDLK_LSHIFT)
 			{
 				gs_bHoldingShift = false;
+			}
+			else if (event->key.keysym.sym == SDLK_UP)
+			{
+				gs_bHoldingArrowKeys[AK_UP] = false;
+			}
+			else if (event->key.keysym.sym == SDLK_DOWN)
+			{
+				gs_bHoldingArrowKeys[AK_DOWN] = false;
+			}
+			else if (event->key.keysym.sym == SDLK_LEFT)
+			{
+				gs_bHoldingArrowKeys[AK_LEFT] = false;
+			}
+			else if (event->key.keysym.sym == SDLK_RIGHT)
+			{
+				gs_bHoldingArrowKeys[AK_RIGHT] = false;
 			}
 			break;
 		case SDL_QUIT:
@@ -565,7 +615,30 @@ DoMain()
 		}
 		foreach (ArnIkSolver* ikSolver, ikSolvers)
 		{
-			//ikSolver->update();
+			ikSolver->update();
+
+			NodePtr selNode = ikSolver->getSelectedEndeffector();
+			if (selNode)
+			{
+				static const double d = 0.1;
+				if (gs_bHoldingArrowKeys[AK_UP])
+				{
+					selNode->setTargetDiff(0, 0, d);
+				}
+				if (gs_bHoldingArrowKeys[AK_DOWN])
+				{
+					selNode->setTargetDiff(0, 0, -d);
+				}
+				if (gs_bHoldingArrowKeys[AK_LEFT])
+				{
+					selNode->setTargetDiff(0, -d, 0);
+				}
+				if (gs_bHoldingArrowKeys[AK_RIGHT])
+				{
+					selNode->setTargetDiff(0, d, 0);
+				}
+			}
+			
 		}
 		
 		// Rendering phase

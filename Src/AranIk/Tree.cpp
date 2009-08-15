@@ -36,7 +36,7 @@ void Tree::InsertRoot(NodePtr root)
 	m_nNode++;
 	assert(!m_root);
 	Tree::m_root = root;
-	root->setR(root->getAttach());
+	root->setRelativePosition(root->getAttach());
 	assert( !(root->getLeftNode() || root->getRightNode()) );
 	SetSeqNum(root);
 }
@@ -47,7 +47,7 @@ void Tree::InsertLeftChild(NodePtr parent, NodePtr child)
 	m_nNode++;
 	parent->setLeftNode(child);
 	child->setRealParent(parent);
-	child->setR(child->getAttach() - child->getRealParent()->getAttach());
+	child->setRelativePosition(child->getAttach() - child->getRealParent()->getAttach());
 	assert( !(child->getLeftNode() || child->getRightNode()) );
 	SetSeqNum(child);
 }
@@ -58,7 +58,7 @@ void Tree::InsertRightSibling(NodePtr parent, NodePtr child)
 	m_nNode++;
 	parent->setRightNode(child);
 	child->setRealParent(parent->getRealParent());
-	child->setR(child->getAttach() - child->getRealParent()->getAttach());
+	child->setRelativePosition(child->getAttach() - child->getRealParent()->getAttach());
 	assert( !(child->getLeftNode() || child->getRightNode()) );
 	SetSeqNum(child);
 }
@@ -129,14 +129,14 @@ const VectorR3& Tree::GetEffectorPosition(int index)
 {
 	NodePtr effector = GetEffector(index);
 	assert(effector);
-	return (effector->GetS());
+	return (effector->getGlobalPosition());
 }
 
 void Tree::ComputeTree(NodePtr node)
 {
 	if (node != 0) {
-		node->ComputeS();
-		node->ComputeW();
+		node->computeGlobalPosition();
+		node->computeGlobalRotAxis();
 		ComputeTree(node->getLeftNode());
 		ComputeTree(node->getRightNode());
 	}
@@ -151,7 +151,7 @@ void Tree::PrintTree(NodeConstPtr node) const
 {
 	if (node)
 	{
-		node->PrintNode();
+		node->printNode();
 		PrintTree(node->getLeftNode());
 		PrintTree(node->getRightNode());
 	}
@@ -168,7 +168,7 @@ void Tree::InitTree(NodePtr node)
 {
 	if (node)
 	{
-		node->InitNode();
+		node->initNode();
 		InitTree(node->getLeftNode());
 		InitTree(node->getRightNode());
 	}
@@ -183,7 +183,7 @@ void Tree::Init(void)
 void Tree::UnFreezeTree(NodePtr node)
 {
 	if (node != 0) {
-		node->UnFreeze();
+		node->unFreeze();
 		UnFreezeTree(node->getLeftNode());
 		UnFreezeTree(node->getRightNode());
 	}

@@ -76,33 +76,33 @@ void Jacobian::ComputeJacobian()
 	VectorR3 temp;
 	NodePtr n = m_tree->GetRoot();
 	while ( n ) {
-		if ( n->IsEffector() ) {
-			int i = n->GetEffectorNum();
+		if ( n->isEndeffector() ) {
+			int i = n->getEffectorNum();
 			const VectorR3& targetPos = n->getTarget();
 
 			// Compute the delta S value (differences from end effectors to target positions.
 			temp = targetPos;
-			temp -= n->GetS();
+			temp -= n->getGlobalPosition();
 			m_dS.SetTriple(i, temp);
 
 			// Find all ancestors (they will usually all be joints)
 			// Set the corresponding entries in the Jacobians J, K.
 			NodePtr m = m_tree->GetParent(n).lock();
 			while ( m ) {
-				int j = m->GetJointNum();
+				int j = m->getJointNum();
 				assert ( 0 <=i && i<m_nEffector && 0<=j && j<m_nJoint );
-				if ( m->IsFrozen() ) {
+				if ( m->isFrozen() ) {
 					m_Jend.SetTriple(i, j, VectorR3::Zero);
 					m_Jtarget.SetTriple(i, j, VectorR3::Zero);
 				}
 				else {
-					temp = m->GetS();			// joint pos.
-					temp -= n->GetS();			// -(end effector pos. - joint pos.)
-					temp *= m->GetW();			// cross product with joint rotation axis
+					temp = m->getGlobalPosition();			// joint pos.
+					temp -= n->getGlobalPosition();			// -(end effector pos. - joint pos.)
+					temp *= m->getGlobalRotAxis();			// cross product with joint rotation axis
 					m_Jend.SetTriple(i, j, temp);
-					temp = m->GetS();			// joint pos.
+					temp = m->getGlobalPosition();			// joint pos.
 					temp -= targetPos;		// -(target pos. - joint pos.)
-					temp *= m->GetW();			// cross product with joint rotation axis
+					temp *= m->getGlobalRotAxis();			// cross product with joint rotation axis
 					m_Jtarget.SetTriple(i, j, temp);
 				}
 				m = m_tree->GetParent( m ).lock();
@@ -121,13 +121,13 @@ void Jacobian::UpdateThetas()
 	// Update the joint angles
 	NodePtr n = m_tree->GetRoot();
 	while ( n ) {
-		if ( n->IsJoint() ) {
-			int i = n->GetJointNum();
-			double nextTheta = n->GetTheta() + m_dTheta[i];
+		if ( n->isJoint() ) {
+			int i = n->getJointNum();
+			double nextTheta = n->getTheta() + m_dTheta[i];
 			// Check joint limits
-			if (n->GetMinTheta() < nextTheta && nextTheta < n->GetMaxTheta())
+			if (n->getMinTheta() < nextTheta && nextTheta < n->getMaxTheta())
 			{
-				n->AddToTheta( m_dTheta[i] );
+				n->addToTheta( m_dTheta[i] );
 			}
 		}
 		n = m_tree->GetSuccessor( n );
@@ -404,11 +404,11 @@ double Jacobian::UpdateErrorArray()
 	VectorR3 temp;
 	NodePtr n = m_tree->GetRoot();
 	while ( n ) {
-		if ( n->IsEffector() ) {
-			int i = n->GetEffectorNum();
+		if ( n->isEndeffector() ) {
+			int i = n->getEffectorNum();
 			const VectorR3& targetPos = n->getTarget();
 			temp = targetPos;
-			temp -= n->GetS();
+			temp -= n->getGlobalPosition();
 			double err = temp.Norm();
 			m_errorArray[i] = err;
 			totalError += err;
@@ -424,14 +424,14 @@ void Jacobian::UpdatedSClampValue()
 	VectorR3 temp;
 	NodePtr n = m_tree->GetRoot();
 	while ( n ) {
-		if ( n->IsEffector() ) {
-			int i = n->GetEffectorNum();
+		if ( n->isEndeffector() ) {
+			int i = n->getEffectorNum();
 			const VectorR3& targetPos = n->getTarget();
 
 			// Compute the delta S value (differences from end effectors to target positions.
 			// While we are at it, also update the clamping values in dSclamp;
 			temp = targetPos;
-			temp -= n->GetS();
+			temp -= n->getGlobalPosition();
 			double normSi = sqrt(Square(m_dS[i])+Square(m_dS[i+1])+Square(m_dS[i+2]));
 			double changedDist = temp.Norm()-normSi;
 			if ( changedDist>0.0 ) {

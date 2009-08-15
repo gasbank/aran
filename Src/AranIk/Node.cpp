@@ -6,36 +6,38 @@
 Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
 : ArnObject(NDT_RT_IKNODE)
 {
-	Node::m_freezed = false;
-	Node::m_size = size;
-	Node::m_purpose = purpose;
-	m_seqNumJoint = -1;
-	m_seqNumEffector = -1;
-	Node::m_attach = attach;		// Global attachment point when joints are at zero angle
-	m_r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
-	Node::m_v = v;				// Rotation axis when joints at zero angles
-	m_theta = 0.0;
-	Node::m_minTheta = minTheta;
-	Node::m_maxTheta = maxTheta;
-	Node::m_restAngle = restAngle;
+	m_freezed				= false;
+	m_size					= size;
+	m_purpose				= purpose;
+	m_seqNumJoint			= -1;
+	m_seqNumEffector		= -1;
+	m_attach				= attach;		// Global attachment point when joints are at zero angle
+	m_target				= attach;
+	m_relativePosition.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
+	m_rotAxis				= v;				// Rotation axis when joints at zero angles
+	m_theta					= 0.0;
+	m_minTheta				= minTheta;
+	m_maxTheta				= maxTheta;
+	m_restAngle				= restAngle;
 }
 
 Node::Node(const Node& node)
 : ArnObject(NDT_RT_IKNODE)
 {
-	Node::m_freezed = false;
-	Node::m_size = node.m_size;
-	Node::m_purpose = node.m_purpose;
-	m_seqNumJoint = -1;
-	m_seqNumEffector = -1;
-	Node::m_attach = node.m_attach;		// Global attachment point when joints are at zero angle
-	m_r.Set(0.0, 0.0, 0.0);		// r will be updated when this node is inserted into tree
-	Node::m_v = node.m_v;				// Rotation axis when joints at zero angles
-	m_theta = 0.0;
-	Node::m_minTheta = node.m_minTheta;
-	Node::m_maxTheta = node.m_maxTheta;
-	Node::m_restAngle = node.m_restAngle;
-	m_name = node.m_name;
+	m_freezed				= node.m_freezed;
+	m_size					= node.m_size;
+	m_purpose				= node.m_purpose;
+	m_seqNumJoint			= -1;
+	m_seqNumEffector		= -1;
+	m_attach				= node.getGlobalPosition();
+	m_target				= node.m_target;
+	m_relativePosition		= node.m_relativePosition;
+	m_rotAxis				= node.m_rotAxis;
+	m_theta					= node.m_theta;
+	m_minTheta				= node.m_minTheta;
+	m_maxTheta				= node.m_maxTheta;
+	m_restAngle				= node.m_restAngle;
+	m_name					= node.m_name;
 }
 
 Node::~Node()
@@ -43,40 +45,40 @@ Node::~Node()
 }
 
 // Compute the global position of a single node
-void Node::ComputeS(void)
+void Node::computeGlobalPosition(void)
 {
 	NodePtr y = getRealParent();
 	Node* w = this;
-	m_s = m_r;							// Initialize to local (relative) position
+	m_globalPosition = m_relativePosition;							// Initialize to local (relative) position
 	while ( y ) {
-		m_s.Rotate( y->m_theta, y->m_v );
+		m_globalPosition.Rotate( y->m_theta, y->m_rotAxis );
 		y = y->getRealParent();
 		w = w->getRealParent().get();
-		m_s += w->getR();
+		m_globalPosition += w->getRelativePosition();
 	}
 }
 
 // Compute the global rotation axis of a single node
-void Node::ComputeW(void)
+void Node::computeGlobalRotAxis(void)
 {
 	NodePtr y = this->m_realParent.lock();
-	m_w = m_v;							// Initialize to local rotation axis
+	m_globalRotAxis = m_rotAxis;							// Initialize to local rotation axis
 	while (y) {
-		m_w.Rotate(y->m_theta, y->m_v);
+		m_globalRotAxis.Rotate(y->m_theta, y->m_rotAxis);
 		y = y->m_realParent.lock();
 	}
 }
 
-void Node::PrintNode() const
+void Node::printNode() const
 {
 	cerr << "Attach : (" << m_attach << ")\n";
-	cerr << "r : (" << m_r << ")\n";
-	cerr << "s : (" << m_s << ")\n";
-	cerr << "w : (" << m_w << ")\n";
+	cerr << "r : (" << m_relativePosition << ")\n";
+	cerr << "s : (" << m_globalPosition << ")\n";
+	cerr << "w : (" << m_globalRotAxis << ")\n";
 	cerr << "realparent : " << getRealParent()->getSeqNumJoint() << "\n";
 }
 
-void Node::InitNode()
+void Node::initNode()
 {
 	m_theta = 0.0;
 }
@@ -87,10 +89,10 @@ void Node::printNodeHierarchy(int step) const
 		std::cout << "  ";
 	//std::cout << getName() << " [" << getAttach().x << " " << getAttach().y << " " << getAttach().z << "]" << std::endl;
 	std::cout << getName();
-	if (IsEffector())
-		std::cout << " endeffector " << GetEffectorNum();
-	else if (IsJoint())
-		std::cout << " joint " << GetJointNum();
+	if (isEndeffector())
+		std::cout << " endeffector " << getEffectorNum();
+	else if (isJoint())
+		std::cout << " joint " << getJointNum();
 	std::cout << std::endl;
 
 	if (m_left)
