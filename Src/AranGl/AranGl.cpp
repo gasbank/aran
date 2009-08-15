@@ -684,14 +684,6 @@ NodeDrawBox(const Node& node)
 				// Draw an end-effector indicator.
 				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_RED);
 				ArnRenderSphereGl(0.1);
-
-				// End-effector target indicator.
-				VectorR3 relTarget = node.getTarget() - node.getGlobalPosition();
-				glPushMatrix();
-				glTranslated(relTarget.x, relTarget.y, relTarget.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
-				ArnRenderSphereGl(0.1);
-				glPopMatrix();
 			}
 			else
 			{
@@ -815,8 +807,29 @@ TreeDrawTree(const Tree& tree, NodeConstPtr node)
 	}
 }
 
+static void
+DrawEndeffectorTarget(NodeConstPtr node)
+{
+	if (node)
+	{
+		if (node->isEndeffector())
+		{
+			// End-effector target indicator.
+			const VectorR3& targetPos = node->getTarget();
+			glPushMatrix();
+			glTranslated(targetPos.x, targetPos.y, targetPos.z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
+			ArnRenderSphereGl(0.1);
+			glPopMatrix();
+		}
+		DrawEndeffectorTarget(node->getLeftNode());
+		DrawEndeffectorTarget(node->getRightNode());
+	}
+}
+
 void
 TreeDraw(const Tree& tree)
 {
 	TreeDrawTree(tree, tree.GetRoot());
+	DrawEndeffectorTarget(tree.GetRoot());
 }
