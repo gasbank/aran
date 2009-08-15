@@ -57,7 +57,6 @@ Jacobian::Jacobian(TreePtr tree)
 
 Jacobian::~Jacobian()
 {
-	int k = 0;
 }
 void Jacobian::Reset()
 {
@@ -79,7 +78,7 @@ void Jacobian::ComputeJacobian()
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();
-			const VectorR3& targetPos = m_target[i];
+			const VectorR3& targetPos = n->getTarget();
 
 			// Compute the delta S value (differences from end effectors to target positions.
 			temp = targetPos;
@@ -88,7 +87,7 @@ void Jacobian::ComputeJacobian()
 
 			// Find all ancestors (they will usually all be joints)
 			// Set the corresponding entries in the Jacobians J, K.
-			NodePtr m = m_tree->GetParent(n);
+			NodePtr m = m_tree->GetParent(n).lock();
 			while ( m ) {
 				int j = m->GetJointNum();
 				assert ( 0 <=i && i<m_nEffector && 0<=j && j<m_nJoint );
@@ -106,7 +105,7 @@ void Jacobian::ComputeJacobian()
 					temp *= m->GetW();			// cross product with joint rotation axis
 					m_Jtarget.SetTriple(i, j, temp);
 				}
-				m = m_tree->GetParent( m );
+				m = m_tree->GetParent( m ).lock();
 			}
 		}
 		n = m_tree->GetSuccessor( n );
@@ -407,7 +406,7 @@ double Jacobian::UpdateErrorArray()
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();
-			const VectorR3& targetPos = m_target[i];
+			const VectorR3& targetPos = n->getTarget();
 			temp = targetPos;
 			temp -= n->GetS();
 			double err = temp.Norm();
@@ -427,7 +426,7 @@ void Jacobian::UpdatedSClampValue()
 	while ( n ) {
 		if ( n->IsEffector() ) {
 			int i = n->GetEffectorNum();
-			const VectorR3& targetPos = m_target[i];
+			const VectorR3& targetPos = n->getTarget();
 
 			// Compute the delta S value (differences from end effectors to target positions.
 			// While we are at it, also update the clamping values in dSclamp;
@@ -529,10 +528,4 @@ void Jacobian::CountErrors( const Jacobian& j1, const Jacobian& j2, int* numBett
 	*numBetter1 = b1;
 	*numBetter2 = b2;
 	*numTies = tie;
-}
-
-void Jacobian::setTarget(unsigned int i, const VectorR3& v)
-{
-	assert(i < 10);
-	m_target[i] = v;
 }

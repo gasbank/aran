@@ -565,7 +565,7 @@ DoMain()
 		}
 		foreach (ArnIkSolver* ikSolver, ikSolvers)
 		{
-			ikSolver->update();
+			//ikSolver->update();
 		}
 		
 		// Rendering phase

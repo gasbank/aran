@@ -12,7 +12,7 @@
 enum Purpose
 {
 	JOINT,
-	EFFECTOR
+	ENDEFFECTOR
 };
 
 class VectorR3;
@@ -22,7 +22,7 @@ TYPEDEF_SHARED_PTR(Node);
 class ARANIK_API Node : public ArnObject, public std::tr1::enable_shared_from_this<Node>
 {
 public:
-										~Node();
+	virtual								~Node();
 	static NodePtr						create(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 	static NodePtr						createCloneWithoutLink(NodePtr node);
 	void								PrintNode() const;
@@ -38,7 +38,7 @@ public:
 	void								SetTheta(double newTheta) { m_theta = newTheta; }
 	void								ComputeS(void);
 	void								ComputeW(void);
-	bool								IsEffector() const { return m_purpose==EFFECTOR; }
+	bool								IsEffector() const { return m_purpose==ENDEFFECTOR; }
 	bool								IsJoint() const { return m_purpose==JOINT; }
 	int									GetEffectorNum() const { return m_seqNumEffector; }
 	int									GetJointNum() const { return m_seqNumJoint; }
@@ -55,7 +55,7 @@ public:
 	void								setRightNode(NodePtr v) { m_right = v; }
 	virtual const char*					getName() const { return m_name.c_str(); }
 	void								setName(const char* name) { m_name = name; }
-	NodePtr								getRealParent() const { return m_realParent; }
+	NodePtr								getRealParent() const { return m_realParent.lock(); }
 	void								setRealParent(NodePtr v) { m_realParent = v; }
 	Purpose								getPurpose() const { return m_purpose; }
 	int									getSeqNumJoint() const { return m_seqNumJoint; }
@@ -70,6 +70,8 @@ public:
 	const VectorR3&						getAttach() const { return m_attach; }
 	const VectorR3&						getR() const { return m_r; }
 	void								setR(const VectorR3& v) { m_r = v; }
+	void								setTarget(const VectorR3& v) { assert(m_purpose==ENDEFFECTOR); m_target = v; }
+	const VectorR3&						getTarget() const { assert(m_purpose==ENDEFFECTOR); return m_target; }
 private:
 										Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 										Node(const Node& node);
@@ -90,7 +92,8 @@ private:
 	VectorR3							m_w;				// Global rotation axis
 	NodePtr								m_left;				// left child
 	NodePtr								m_right;			// right sibling
-	NodePtr								m_realParent;		// pointer to real parent
+	std::tr1::weak_ptr<Node>			m_realParent;		// pointer to real parent
+	VectorR3							m_target;
 };
 
 #endif

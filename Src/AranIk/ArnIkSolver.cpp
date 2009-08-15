@@ -15,7 +15,6 @@ ArnIkSolver::ArnIkSolver()
 ArnIkSolver::~ArnIkSolver()
 {
 	// Do not release m_skel.
-	int a = 10;
 }
 
 ArnIkSolver*
@@ -39,6 +38,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 		prevNode = ret->addToTree(prevNode, skel, bone, firstChild);
 		firstChild = false;
 	}
+	
 	ret->initializeJacobian();
 	ret->reset();
 	std::cout << " --- ArnIkSolver creation report: ArnSkeleton " << skel->getName() << " has "
@@ -66,7 +66,7 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	if (bEndEffector)
 	{
 		assert(bone->getChildBoneCount() == 0);
-		purpose = EFFECTOR;
+		purpose = ENDEFFECTOR;
 		rotAxis = VectorR3::Zero;
 	}
 	else
@@ -144,10 +144,10 @@ ArnIkSolver::initializeJacobian()
 }
 
 void
-ArnIkSolver::setTarget(unsigned int i, const ArnVec3& v)
+ArnIkSolver::setTarget(const char* nodeName, const ArnVec3& v)
 {
 	VectorR3 vec(v.x, v.y, v.z);
-	m_jacobian->setTarget(i, vec);
+	m_tree->getNodeByName(nodeName)->setTarget(vec);
 }
 
 void

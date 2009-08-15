@@ -28,8 +28,8 @@ public:
 	const VectorR3&				GetEffectorPosition(int);
 	// Accessors for tree traversal
 	NodePtr						GetRoot() const { return m_root; }
-	NodePtr						GetSuccessor ( NodeConstPtr ) const;
-	NodePtr						GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
+	NodePtr						GetSuccessor ( NodePtr ) const;
+	std::tr1::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
 	void						Compute();
 	void						Print();
 	void						Init();
@@ -57,20 +57,21 @@ private:
 typedef std::tr1::shared_ptr<Tree> TreePtr;
 
 
-inline NodePtr Tree::GetSuccessor ( NodeConstPtr node ) const
+inline NodePtr Tree::GetSuccessor ( NodePtr node ) const
 {
 	if ( node->getLeftNode() )
 	{
 		return node->getLeftNode();
 	}
+	std::tr1::weak_ptr<Node> nodeWeak = node;
 	while ( true )
 	{
-		if ( node->getRightNode() )
+		if ( nodeWeak.lock()->getRightNode() )
 		{
-			return ( node->getRightNode() );
+			return ( nodeWeak.lock()->getRightNode() );
 		}
-		node = node->getRealParent();
-		if ( !node )
+		nodeWeak = nodeWeak.lock()->getRealParent();
+		if ( !nodeWeak.lock() )
 		{
 			return NodePtr();		// Back to root, finished traversal
 		}

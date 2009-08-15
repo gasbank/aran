@@ -8,12 +8,10 @@ Tree::Tree()
 , m_nEffector(0)
 , m_nJoint(0)
 {
-	int f = 10;
 }
 
 Tree::~Tree()
 {
-	int b = 10;
 }
 
 void Tree::SetSeqNum(NodePtr node)
@@ -24,7 +22,7 @@ void Tree::SetSeqNum(NodePtr node)
 		m_nJoint++;
 		node->setSeqNumEffector(-1);
 		break;
-	case EFFECTOR:
+	case ENDEFFECTOR:
 		node->setSeqNumJoint(-1);
 		node->setSeqNumEffector(m_nEffector);
 		m_nEffector++;
@@ -36,6 +34,7 @@ void Tree::InsertRoot(NodePtr root)
 {
 	assert( m_nNode==0 );
 	m_nNode++;
+	assert(!m_root);
 	Tree::m_root = root;
 	root->setR(root->getAttach());
 	assert( !(root->getLeftNode() || root->getRightNode()) );

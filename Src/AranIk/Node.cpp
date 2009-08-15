@@ -40,13 +40,12 @@ Node::Node(const Node& node)
 
 Node::~Node()
 {
-	int c = 10;
 }
 
 // Compute the global position of a single node
 void Node::ComputeS(void)
 {
-	NodePtr y = this->m_realParent;
+	NodePtr y = getRealParent();
 	Node* w = this;
 	m_s = m_r;							// Initialize to local (relative) position
 	while ( y ) {
@@ -60,11 +59,11 @@ void Node::ComputeS(void)
 // Compute the global rotation axis of a single node
 void Node::ComputeW(void)
 {
-	NodePtr y = this->m_realParent;
+	NodePtr y = this->m_realParent.lock();
 	m_w = m_v;							// Initialize to local rotation axis
 	while (y) {
 		m_w.Rotate(y->m_theta, y->m_v);
-		y = y->m_realParent;
+		y = y->m_realParent.lock();
 	}
 }
 
@@ -74,7 +73,7 @@ void Node::PrintNode() const
 	cerr << "r : (" << m_r << ")\n";
 	cerr << "s : (" << m_s << ")\n";
 	cerr << "w : (" << m_w << ")\n";
-	cerr << "realparent : " << m_realParent->m_seqNumJoint << "\n";
+	cerr << "realparent : " << getRealParent()->getSeqNumJoint() << "\n";
 }
 
 void Node::InitNode()
@@ -86,7 +85,13 @@ void Node::printNodeHierarchy(int step) const
 {
 	for (int i = 0; i < step; ++i)
 		std::cout << "  ";
-	std::cout << getName() << " [" << getAttach().x << " " << getAttach().y << " " << getAttach().z << "]" << std::endl;
+	//std::cout << getName() << " [" << getAttach().x << " " << getAttach().y << " " << getAttach().z << "]" << std::endl;
+	std::cout << getName();
+	if (IsEffector())
+		std::cout << " endeffector " << GetEffectorNum();
+	else if (IsJoint())
+		std::cout << " joint " << GetJointNum();
+	std::cout << std::endl;
 
 	if (m_left)
 		m_left->printNodeHierarchy(step + 1);
@@ -142,7 +147,7 @@ void Node::updatePurpose()
 	}
 	else
 	{
-		m_purpose = EFFECTOR;
+		m_purpose = ENDEFFECTOR;
 	}
 	if (m_right)
 		m_right->updatePurpose();
@@ -151,13 +156,15 @@ void Node::updatePurpose()
 NodePtr
 Node::create(const VectorR3& attach, const VectorR3& v, double size, Purpose purpose, double minTheta, double maxTheta, double restAngle)
 {
-	return NodePtr(new Node(attach, v, size, purpose, minTheta, maxTheta, restAngle));
+	NodePtr ret(new Node(attach, v, size, purpose, minTheta, maxTheta, restAngle));
+	return ret;
 }
 
 NodePtr
 Node::createCloneWithoutLink( NodePtr node )
 {
-	return NodePtr(new Node(*node));
+	NodePtr ret(new Node(*node));
+	return ret;
 }
 
 NodePtr

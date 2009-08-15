@@ -58,8 +58,6 @@ public:
 	UpdateMode					GetCurrentMode() const { return m_CurrentUpdateMode; }
 	void						SetDampingDLS( double lambda ) { m_DampingLambda = lambda; m_DampingLambdaSq = Square(lambda); }
 	void						Reset();
-	void						setTarget(unsigned int i, const VectorR3& v);
-
 private:
 	void						CalcdTClampedFromdS();
 
@@ -96,7 +94,6 @@ private:
 	double						m_DampingLambdaSq;
 	//double					DampingLambdaSDLS;
 	MatrixRmn*					m_Jactive;
-	VectorR3					m_target[10];
 };
 
 typedef std::tr1::shared_ptr<Jacobian> JacobianPtr;

@@ -21,7 +21,7 @@ public:
 	static ArnIkSolver*				createFrom(const ArnSkeleton* skel);
 	void							reset();
 	const TreePtr					getTree() const { return m_tree; }
-	void							setTarget(unsigned int i, const ArnVec3& v);
+	void							setTarget(const char* nodeName, const ArnVec3& v);
 	void							update();
 	void							printHierarchy() const;
 	void							reconfigureRoot(NodePtr newRoot);
