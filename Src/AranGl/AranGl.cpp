@@ -1,6 +1,3 @@
-// AranGl.cpp : Defines the exported functions for the DLL application.
-//
-
 #include "AranGlPCH.h"
 #include "AranGl.h"
 #include "ArnMesh.h"
@@ -14,6 +11,7 @@
 #include "Tree.h"
 
 static GLUquadric* gs_quadricSphere = 0;
+static GLuint gs_glArrowList = 0;
 static bool gs_bAranGlInitialized = false;
 
 void
@@ -349,26 +347,7 @@ ArnBoneRenderGl( const ArnBone* bone )
 
 			glScaled(0.25, 0.25, boneLength);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glBegin(GL_QUADS);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0.5, -0.5, 0);
-			glEnd();
-			glBegin(GL_TRIANGLES);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0.5, -0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(0.5, -0.5, 0);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(0, 0, 1);
-			glEnd();
+			glCallList(gs_glArrowList);
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -627,6 +606,31 @@ ArnInitializeGl()
 		assert(!gs_quadricSphere);
 		gs_quadricSphere = gluNewQuadric();
 		assert(gs_quadricSphere);
+
+		gs_glArrowList = glGenLists(1);
+		glNewList(gs_glArrowList, GL_COMPILE);
+		glBegin(GL_QUADS);
+		glVertex3d(0.5, 0.5, 0);
+		glVertex3d(-0.5, 0.5, 0);
+		glVertex3d(-0.5, -0.5, 0);
+		glVertex3d(0.5, -0.5, 0);
+		glEnd();
+		glBegin(GL_TRIANGLES);
+		glVertex3d(0.5, 0.5, 0);
+		glVertex3d(-0.5, 0.5, 0);
+		glVertex3d(0, 0, 1);
+		glVertex3d(-0.5, 0.5, 0);
+		glVertex3d(-0.5, -0.5, 0);
+		glVertex3d(0, 0, 1);
+		glVertex3d(-0.5, -0.5, 0);
+		glVertex3d(0.5, -0.5, 0);
+		glVertex3d(0, 0, 1);
+		glVertex3d(0.5, -0.5, 0);
+		glVertex3d(0.5, 0.5, 0);
+		glVertex3d(0, 0, 1);
+		glEnd();
+		glEndList();
+
 		gs_bAranGlInitialized = true;
 		return 0;
 	}
@@ -644,6 +648,7 @@ ArnCleanupGl()
 	{
 		assert(gs_quadricSphere);
 		gluDeleteQuadric(gs_quadricSphere);
+		glDeleteLists(gs_glArrowList, 1);
 		gs_bAranGlInitialized = false;
 		return 0;
 	}
@@ -715,26 +720,7 @@ NodeDrawBox(const Node& node)
 
 			glScaled(0.35, 0.35, length);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glBegin(GL_QUADS);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0.5, -0.5, 0);
-			glEnd();
-			glBegin(GL_TRIANGLES);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(-0.5, 0.5, 0);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(-0.5, -0.5, 0);
-			glVertex3d(0.5, -0.5, 0);
-			glVertex3d(0, 0, 1);
-			glVertex3d(0.5, -0.5, 0);
-			glVertex3d(0.5, 0.5, 0);
-			glVertex3d(0, 0, 1);
-			glEnd();
+			glCallList(gs_glArrowList);
 
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			glEnable(GL_LIGHTING);

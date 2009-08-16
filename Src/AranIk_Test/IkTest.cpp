@@ -15,6 +15,15 @@ enum ArrowKeys
 	AK_RIGHT
 };
 
+static inline double
+FootHeight(double t, double stepLength, double maxStepHeight)
+{
+	if (t <= 0 || t >= stepLength)
+		return 0;
+	else
+		return -4.0*maxStepHeight*t*(t-stepLength)/(stepLength*stepLength);
+}
+
 static void
 SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr sceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, ArnCamera* cam )
 {

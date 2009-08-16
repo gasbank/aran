@@ -189,7 +189,7 @@ TAB_SIZE               = 8
 # will result in a user-defined paragraph with heading "Side Effects:". 
 # You can put \n's in the value part of an alias to insert newlines.
 
-ALIASES                = "internalonly=\"@name Internal use only methods\nShould not use these methods.\""
+ALIASES                = "internalonly=\name 내부 호출 전용 메소드"
 
 # Set the OPTIMIZE_OUTPUT_FOR_C tag to YES if your project consists of C 
 # sources only. Doxygen will then generate output that is more tailored for C. 
