@@ -100,6 +100,36 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	return ret;
 }
 
+static void
+GetJointRotAxisOfBoneFromName(bool& x, bool& y, bool& z, const ArnBone* bone)
+{
+	unsigned int offset = 0;
+	const size_t nameLen = strlen(bone->getName());
+	x = false;
+	y = false;
+	z = false;
+	while (bone->getName()[offset] != '_' && offset < nameLen )
+	{
+		if (bone->getName()[offset] == 'X')
+			x = true;
+		else if (bone->getName()[offset] == 'Y')
+			y = true;
+		else if (bone->getName()[offset] == 'Z')
+			z = true;
+		else if (bone->getName()[offset] == 'E')
+		{ // End effector
+			x = false;
+			y = false;
+			z = false;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+		++offset;
+	}
+}
+
 NodePtr
 ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild)
 {
@@ -110,23 +140,162 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	{
 		bEndEffector = true;
 	}
-	NodePtr node = CreateNodeFromArnBone(skel, bone, bEndEffector);
-	if (prevNode && firstChild)
+	bool rx, ry, rz;
+	GetJointRotAxisOfBoneFromName(rx, ry, rz, bone);
+	NodePtr firstCreated;
+	bool firstChildOriginal = firstChild;
+	
+	if (!(rx || ry || rz))
 	{
-		// b is a child of prevNode.
-		m_tree->InsertLeftChild(prevNode, node);
-	}
-	else if (prevNode && !firstChild)
-	{
-		// b is a sibling of prevNode.
-		m_tree->InsertRightSibling(prevNode, node);
-	}
-	else
-	{
-		ARN_THROW_UNEXPECTED_CASE_ERROR
-	}
+		// End-effector
+		assert(bEndEffector);
+		NodePtr eNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		eNode->setRotationAxis(VectorR3::Zero);
 
-	NodePtr nextPrevNode = node;
+		if (prevNode && firstChild)
+		{
+			// b is a child of prevNode.
+			m_tree->InsertLeftChild(prevNode, eNode);
+		}
+		else if (prevNode && !firstChild)
+		{
+			// b is a sibling of prevNode.
+			m_tree->InsertRightSibling(prevNode, eNode);
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+
+		prevNode = eNode;
+		if (!firstCreated)
+			firstCreated = prevNode;
+	}
+	if (rx)
+	{
+		NodePtr rxNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		rxNode->setRotationAxis(VectorR3::UnitX);
+		int offset = 0;
+		const size_t boneNameLen = strlen(bone->getName());
+		size_t pos = 0;
+		while (bone->getName()[pos] != '_' && pos < boneNameLen)
+		{
+			++pos;
+		}
+		std::string bn = "X_";
+		bn += &bone->getName()[pos+1];
+		rxNode->setName(bn.c_str());
+
+		if (prevNode && firstChild)
+		{
+			// b is a child of prevNode.
+			m_tree->InsertLeftChild(prevNode, rxNode);
+		}
+		else if (prevNode && !firstChild)
+		{
+			// b is a sibling of prevNode.
+			m_tree->InsertRightSibling(prevNode, rxNode);
+			firstChild = true;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+
+		prevNode = rxNode;
+		if (!firstCreated)
+		{
+			firstCreated = prevNode;
+		}
+		else
+		{
+			rxNode->setAdditionalNode(true);
+		}
+	}
+	if (ry)
+	{
+		NodePtr ryNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		ryNode->setRotationAxis(VectorR3::UnitY);
+		int offset = 0;
+		const size_t boneNameLen = strlen(bone->getName());
+		size_t pos = 0;
+		while (bone->getName()[pos] != '_' && pos < boneNameLen)
+		{
+			++pos;
+		}
+		std::string bn = "Y_";
+		bn += &bone->getName()[pos+1];
+		ryNode->setName(bn.c_str());
+
+		if (prevNode && firstChild)
+		{
+			// b is a child of prevNode.
+			m_tree->InsertLeftChild(prevNode, ryNode);
+		}
+		else if (prevNode && !firstChild)
+		{
+			// b is a sibling of prevNode.
+			m_tree->InsertRightSibling(prevNode, ryNode);
+			firstChild = true;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+
+		prevNode = ryNode;
+		if (!firstCreated)
+		{
+			firstCreated = prevNode;
+		}
+		else
+		{
+			ryNode->setAdditionalNode(true);
+		}
+	}
+	if (rz)
+	{
+		NodePtr rzNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		rzNode->setRotationAxis(VectorR3::UnitZ);
+		int offset = 0;
+		const size_t boneNameLen = strlen(bone->getName());
+		size_t pos = 0;
+		while (bone->getName()[pos] != '_' && pos < boneNameLen)
+		{
+			++pos;
+		}
+		std::string bn = "Z_";
+		bn += &bone->getName()[pos+1];
+		rzNode->setName(bn.c_str());
+
+		if (prevNode && firstChild)
+		{
+			// b is a child of prevNode.
+			m_tree->InsertLeftChild(prevNode, rzNode);
+		}
+		else if (prevNode && !firstChild)
+		{
+			// b is a sibling of prevNode.
+			m_tree->InsertRightSibling(prevNode, rzNode);
+			firstChild = true;
+		}
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+
+		prevNode = rzNode;
+		if (!firstCreated)
+		{
+			firstCreated = prevNode;
+		}
+		else
+		{
+			rzNode->setAdditionalNode(true);
+		}
+	}
+	assert(prevNode);
+	NodePtr nextPrevNode = prevNode;
 	bool nextFirstChild = true;
 	foreach (const ArnNode* arnnode, bone->getChildren())
 	{
@@ -135,7 +304,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		nextPrevNode = addToTree(nextPrevNode, skel, bone2, nextFirstChild);
 		nextFirstChild = false;
 	}
-	return node;
+	return firstCreated;
 }
 
 void

@@ -19,6 +19,7 @@ Node::Node(const VectorR3& attach, const VectorR3& v, double size, Purpose purpo
 	m_minTheta				= minTheta;
 	m_maxTheta				= maxTheta;
 	m_restAngle				= restAngle;
+	m_bAdditionalNode		= false;
 }
 
 Node::Node(const Node& node)
@@ -38,6 +39,7 @@ Node::Node(const Node& node)
 	m_maxTheta				= node.m_maxTheta;
 	m_restAngle				= node.m_restAngle;
 	m_name					= node.m_name;
+	m_bAdditionalNode		= node.m_bAdditionalNode;
 }
 
 Node::~Node()

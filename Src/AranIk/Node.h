@@ -49,6 +49,7 @@ public:
 	const VectorR3&						getRelativePosition() const { return m_relativePosition; }
 	double								getJointAngle() const { return m_theta; }
 	const VectorR3&						getRotationAxis() const { return m_rotAxis; }
+	void								setRotationAxis(const VectorR3& v) { m_rotAxis = v; }
 	double								getSize() const { return m_size; }
 	NodePtr								getLeftNode() const { return m_left; }
 	void								setLeftNode(NodePtr v) { m_left = v; }
@@ -71,6 +72,8 @@ public:
 	void								setTarget(const VectorR3& v) { assert(m_purpose==ENDEFFECTOR); m_target = v; }
 	void								setTargetDiff(double dx, double dy, double dz) { assert(m_purpose==ENDEFFECTOR); m_target.x += dx, m_target.y += dy, m_target.z += dz; }
 	const VectorR3&						getTarget() const { assert(m_purpose==ENDEFFECTOR); return m_target; }
+	bool								isAdditionalNode() const { return m_bAdditionalNode; }
+	void								setAdditionalNode(bool val) { m_bAdditionalNode = val; }
 private:
 										Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 										Node(const Node& node);
@@ -93,6 +96,7 @@ private:
 	NodePtr								m_right;				// right sibling
 	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
 	VectorR3							m_target;
+	bool								m_bAdditionalNode;
 };
 
 #endif
