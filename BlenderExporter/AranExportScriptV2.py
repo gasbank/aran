@@ -246,7 +246,31 @@ def createSkeletonData(doc, ob):
 	for bone in skel.bones.values():
 		if not bone.parent:
 			makeBoneElementRecursive(doc, skelData, bone)
-	
+
+	if ob.getPose():
+		pbones = ob.getPose().bones.values()
+		for pbone in pbones:
+			for c in pbone.constraints:
+				if c.type is Constraint.Type.LIMITROT:
+					cElm = doc.createElement('constraint')
+					cElm.setAttribute('type', 'limitrot')
+					targetBone = doc.createElement('target')
+					targetBone.appendChild(doc.createTextNode(pbone.name))
+					cElm.appendChild(targetBone)
+					limitFlags = c[Constraint.Settings.LIMIT]
+					if limitFlags & 1:
+						limitElm = CreateLimitElm(doc, 'AngX', c[Constraint.Settings.XMIN], c[Constraint.Settings.XMAX])
+						limitElm.setAttribute('unit', 'deg')
+						cElm.appendChild(limitElm)
+					if limitFlags & 2:
+						limitElm = CreateLimitElm(doc, 'AngY', c[Constraint.Settings.YMIN], c[Constraint.Settings.YMAX])
+						limitElm.setAttribute('unit', 'deg')
+						cElm.appendChild(limitElm)
+					if limitFlags & 4:
+						limitElm = CreateLimitElm(doc, 'AngZ', c[Constraint.Settings.ZMIN], c[Constraint.Settings.ZMAX])
+						limitElm.setAttribute('unit', 'deg')
+						cElm.appendChild(limitElm)
+					skelData.appendChild(cElm)
 	return skelData
 	
 def createMeshData(doc, ob):
@@ -626,7 +650,7 @@ for ob in sce.objects:
 					limitElm = CreateLimitElm(doc, 'AngZ', c[Constraint.Settings.CONSTR_RB_MINLIMIT5], c[Constraint.Settings.CONSTR_RB_MAXLIMIT5])
 					cElm.appendChild(limitElm)
 				obj.appendChild(cElm)
-	
+
 	scene.appendChild(obj)
 
 #print Constraint.Settings
