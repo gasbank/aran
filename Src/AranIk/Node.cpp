@@ -90,7 +90,8 @@ void Node::printNodeHierarchy(int step) const
 	for (int i = 0; i < step; ++i)
 		std::cout << "  ";
 	//std::cout << getName() << " [" << getAttach().x << " " << getAttach().y << " " << getAttach().z << "]" << std::endl;
-	std::cout << getName() << " " << m_minTheta << " " << m_maxTheta;
+	//std::cout << getName() << " " << m_minTheta << " " << m_maxTheta;
+	std::cout << getName();
 	if (isEndeffector())
 		std::cout << " endeffector " << getEffectorNum();
 	else if (isJoint())

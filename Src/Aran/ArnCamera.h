@@ -1,3 +1,9 @@
+/*!
+ * @author Geoyeob Kim
+ * @date 2009
+ *
+ * Camera class
+ */
 #pragma once
 #include "ArnXformable.h"
 
@@ -21,9 +27,15 @@ public:
 	void								setNearClip(float v) { m_cameraData.nearClip = v; }
 	void								setFarClip(float v) { m_cameraData.farClip = v; }
 	void								printCameraOrientation() const;
-	// *** INTERNAL USE ONLY START ***
+	ArnVec3								getRightVec() const;
+	ArnVec3								getUpVec() const;
+	ArnVec3								getLookVec() const;
+	/*!
+	 * @internalonly
+	 */
+	//@{
 	virtual void						interconnect(ArnNode* sceneRoot);
-	// *** INTERNAL USE ONLY END ***
+	//@}
 private:
 										ArnCamera();
 	void								buildFrom(const NodeCamera1* nc);

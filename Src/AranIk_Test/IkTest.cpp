@@ -1,23 +1,11 @@
 #include "IkTest.h"
 
-enum ArrowKeys
-{
-	AK_UP,
-	AK_DOWN,
-	AK_LEFT,
-	AK_RIGHT,
-	AK_HOME,
-	AK_END,
-	AK_COUNT,
-};
-
-
 static float		gs_linVelX = 0;
 static float		gs_linVelZ = 0;
 static float		gs_torque = 0;
 static float		gs_torqueAnkle = 0;
 static bool			gs_bHoldingShift = false;
-static bool			gs_bHoldingArrowKeys[AK_COUNT] = { false, false, false, false, false, false };
+static char			gs_bHoldingKeys[SDLK_LAST];
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -269,11 +257,12 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			}
 			break;
 		case SDL_KEYDOWN:
+			gs_bHoldingKeys[event->key.keysym.sym] = true;
+
 			if ( event->key.keysym.sym == SDLK_ESCAPE )
 			{
 				done = MHR_EXIT_APP;
 			}
-			
 			else if (event->key.keysym.sym == SDLK_n)
 			{
 				done = MHR_NEXT_SCENE;
@@ -286,62 +275,11 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				gs_bHoldingShift = true;
 			}
-			else if (event->key.keysym.sym == SDLK_UP)
-			{
-				gs_bHoldingArrowKeys[AK_UP] = true;
-			}
-			else if (event->key.keysym.sym == SDLK_DOWN)
-			{
-				gs_bHoldingArrowKeys[AK_DOWN] = true;
-			}
-			else if (event->key.keysym.sym == SDLK_LEFT)
-			{
-				gs_bHoldingArrowKeys[AK_LEFT] = true;
-			}
-			else if (event->key.keysym.sym == SDLK_RIGHT)
-			{
-				gs_bHoldingArrowKeys[AK_RIGHT] = true;
-			}
-			else if (event->key.keysym.sym == SDLK_HOME)
-			{
-				gs_bHoldingArrowKeys[AK_HOME] = true;
-			}
-			else if (event->key.keysym.sym == SDLK_END)
-			{
-				gs_bHoldingArrowKeys[AK_END] = true;
-			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
 		case SDL_KEYUP:
-			if (event->key.keysym.sym == SDLK_RSHIFT || event->key.keysym.sym == SDLK_LSHIFT)
-			{
-				gs_bHoldingShift = false;
-			}
-			else if (event->key.keysym.sym == SDLK_UP)
-			{
-				gs_bHoldingArrowKeys[AK_UP] = false;
-			}
-			else if (event->key.keysym.sym == SDLK_DOWN)
-			{
-				gs_bHoldingArrowKeys[AK_DOWN] = false;
-			}
-			else if (event->key.keysym.sym == SDLK_LEFT)
-			{
-				gs_bHoldingArrowKeys[AK_LEFT] = false;
-			}
-			else if (event->key.keysym.sym == SDLK_RIGHT)
-			{
-				gs_bHoldingArrowKeys[AK_RIGHT] = false;
-			}
-			else if (event->key.keysym.sym == SDLK_HOME)
-			{
-				gs_bHoldingArrowKeys[AK_HOME] = false;
-			}
-			else if (event->key.keysym.sym == SDLK_END)
-			{
-				gs_bHoldingArrowKeys[AK_END] = false;
-			}
+			gs_bHoldingKeys[event->key.keysym.sym] = false;
 			break;
 		case SDL_QUIT:
 			done = MHR_EXIT_APP;
@@ -657,32 +595,49 @@ DoMain()
 			if (selNode)
 			{
 				static const double d = 0.1;
-				if (gs_bHoldingArrowKeys[AK_UP])
+				if (gs_bHoldingKeys[SDLK_UP])
 				{
 					selNode->setTargetDiff(0, 0, d);
 				}
-				if (gs_bHoldingArrowKeys[AK_DOWN])
+				if (gs_bHoldingKeys[SDLK_DOWN])
 				{
 					selNode->setTargetDiff(0, 0, -d);
 				}
-				if (gs_bHoldingArrowKeys[AK_LEFT])
+				if (gs_bHoldingKeys[SDLK_LEFT])
 				{
 					selNode->setTargetDiff(0, -d, 0);
 				}
-				if (gs_bHoldingArrowKeys[AK_RIGHT])
+				if (gs_bHoldingKeys[SDLK_RIGHT])
 				{
 					selNode->setTargetDiff(0, d, 0);
 				}
-				if (gs_bHoldingArrowKeys[AK_HOME])
+				if (gs_bHoldingKeys[SDLK_HOME])
 				{
 					selNode->setTargetDiff(d, 0, 0);
 				}
-				if (gs_bHoldingArrowKeys[AK_END])
+				if (gs_bHoldingKeys[SDLK_END])
 				{
 					selNode->setTargetDiff(-d, 0, 0);
 				}
 			}
 		}
+
+		ArnVec3 cameraDiff(0, 0, 0);
+		static const float cameraDiffAmount = 0.1f;
+		if (gs_bHoldingKeys[SDLK_a] && !gs_bHoldingKeys[SDLK_d])
+			cameraDiff -= activeCam->getRightVec() * cameraDiffAmount;
+		else if (!gs_bHoldingKeys[SDLK_a] && gs_bHoldingKeys[SDLK_d])
+			cameraDiff += activeCam->getRightVec() * cameraDiffAmount;
+		if (gs_bHoldingKeys[SDLK_s] && !gs_bHoldingKeys[SDLK_w])
+			cameraDiff -= activeCam->getUpVec() * cameraDiffAmount;
+		else if (!gs_bHoldingKeys[SDLK_s] && gs_bHoldingKeys[SDLK_w])
+			cameraDiff += activeCam->getUpVec() * cameraDiffAmount;
+		if (gs_bHoldingKeys[SDLK_KP_MINUS] && !gs_bHoldingKeys[SDLK_KP_PLUS])
+			cameraDiff += activeCam->getLookVec() * cameraDiffAmount;
+		else if (!gs_bHoldingKeys[SDLK_KP_MINUS] && gs_bHoldingKeys[SDLK_KP_PLUS])
+			cameraDiff -= activeCam->getLookVec() * cameraDiffAmount;
+		activeCam->setLocalXform_Trans( activeCam->getLocalXform_Trans() + cameraDiff );
+		activeCam->recalcLocalXform();
 		
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );

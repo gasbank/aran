@@ -157,3 +157,24 @@ ArnCamera::printCameraOrientation() const
 	str.append(buf);
 	std::cout << str;
 }
+
+ArnVec3
+ArnCamera::getRightVec() const
+{
+	const ArnMatrix& mat = getLocalXform();
+	return ArnVec3(mat.m[0][0], mat.m[1][0], mat.m[2][0]);
+}
+
+ArnVec3
+ArnCamera::getUpVec() const
+{
+	const ArnMatrix& mat = getLocalXform();
+	return ArnVec3(mat.m[0][1], mat.m[1][1], mat.m[2][1]);
+}
+
+ArnVec3
+ArnCamera::getLookVec() const
+{
+	const ArnMatrix& mat = getLocalXform();
+	return ArnVec3(-mat.m[0][2], -mat.m[1][2], -mat.m[2][2]);
+}
