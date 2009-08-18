@@ -23,11 +23,11 @@ public:
 	const MyFrameData*						getFrameData() const { return m_frameData; }
 	const BoneData&							getBoneData() const { return m_data; }
 	/*!
-	 * @brief 하위 ArnBone 총 개수 반환
-	 * @remark 자식뿐만 아니라 이 뼈에 속해있는 모든 하위 ArnBone의 총 개수를 재귀적으로 합산하여 반환합니다.
+	 * @brief 하위 ArnBone 개수 반환
+	 * @param bRecursive \c false 면 바로 속한 자식 ArnBone 개수만을 반환, \c true 면 하위 자식 ArnBone 총 개수 반환
 	 * @sa ArnSkeleton::getChildBoneCount
 	 */
-	unsigned int							getChildBoneCount() const;
+	unsigned int							getChildBoneCount(bool bRecursive) const;
 	/*!
 	 * @brief 뼈의 방향
 	 *
@@ -36,11 +36,13 @@ public:
 	 * 결과적으로 head에서 tail를 가리키는 벡터가 반환됩니다.
 	 */
 	ArnVec3									getBoneDirection() const { return ArnVec3Substract(m_tailPos, m_headPos); }
+
+	void									getRotLimit(AxisEnum axis, float& minimum, float& maximum) const;
+	void									setRotLimit(AxisEnum axis, float minimum, float maximum);
+	void									clearRotLimit(AxisEnum axis);
+	ArnBone*								getFirstChildBone() const;
 	/*!
-	 * @name Internal use only methods
-	 *
-	 * These methods are exposed in order to make internal linkage between objects or initialization.
-	 * Clients should aware that these are not for client-side APIs.
+	 * @internalonly
 	 */
 	//@{
 	virtual void							interconnect(ArnNode* sceneRoot) { ArnNode::interconnect(sceneRoot); }
@@ -57,4 +59,5 @@ private:
 	ArnVec3									m_headPos;
 	ArnVec3									m_tailPos;
 	float									m_roll;
+	float									m_rotLimit[3][2]; // [X, Y, Z axis][min, max]
 };

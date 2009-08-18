@@ -33,7 +33,9 @@ public:
 	double								addToTheta( double delta ) { m_theta += delta; return m_theta; }
 	const VectorR3&						getGlobalRotAxis() const { return m_globalRotAxis; }
 	double								getMinTheta() const { return m_minTheta; }
+	void								setMinTheta(double v);
 	double								getMaxTheta() const { return m_maxTheta; }
+	void								setMaxTheta(double v);
 	double								getRestAngle() const { return m_restAngle; } ;
 	void								computeGlobalPosition(void);
 	void								computeGlobalRotAxis(void);

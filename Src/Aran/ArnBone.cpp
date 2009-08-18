@@ -1,4 +1,5 @@
 #include "AranPCH.h"
+#include <float.h>
 #include "ArnBone.h"
 #include "ArnMath.h"
 
@@ -7,6 +8,9 @@ ArnBone::ArnBone(void)
 , m_frameData()
 , m_roll(0)
 {
+	clearRotLimit(AXIS_X);
+	clearRotLimit(AXIS_Y);
+	clearRotLimit(AXIS_Z);
 }
 
 ArnBone::~ArnBone(void)
@@ -77,15 +81,99 @@ ArnBone::buildFrom( const NodeBone2* nb )
 }
 
 unsigned int
-ArnBone::getChildBoneCount() const
+ArnBone::getChildBoneCount(bool bRecursive) const
 {
 	unsigned int ret = 0;
 	foreach(const ArnNode* node, getChildren())
 	{
 		if (node->getType() == NDT_RT_BONE)
 		{
-			ret += 1 + static_cast<const ArnBone*>(node)->getChildBoneCount();
+			ret += 1 + (bRecursive ? static_cast<const ArnBone*>(node)->getChildBoneCount(true) : 0);
 		}
 	}
 	return ret;
+}
+
+void
+ArnBone::setRotLimit( AxisEnum axis, float minimum, float maximum )
+{
+	assert(minimum <= maximum);
+	if (axis == AXIS_X)
+	{
+		m_rotLimit[0][0] = minimum;
+		m_rotLimit[0][1] = maximum;
+	}
+	else if (axis == AXIS_Y)
+	{
+		m_rotLimit[1][0] = minimum;
+		m_rotLimit[1][1] = maximum;
+	}
+	else if (axis == AXIS_Z)
+	{
+		m_rotLimit[2][0] = minimum;
+		m_rotLimit[2][1] = maximum;
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+}
+
+void
+ArnBone::clearRotLimit( AxisEnum axis )
+{
+	if (axis == AXIS_X)
+	{
+		m_rotLimit[0][0] = -FLT_MAX;
+		m_rotLimit[0][1] =  FLT_MAX;
+	}
+	else if (axis == AXIS_Y)
+	{
+		m_rotLimit[1][0] = -FLT_MAX;
+		m_rotLimit[1][1] =  FLT_MAX;
+	}
+	else if (axis == AXIS_Z)
+	{
+		m_rotLimit[2][0] = -FLT_MAX;
+		m_rotLimit[2][1] =  FLT_MAX;
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+}
+
+void
+ArnBone::getRotLimit( AxisEnum axis, float& minimum, float& maximum ) const
+{
+	if (axis == AXIS_X)
+	{
+		minimum = m_rotLimit[0][0];
+		maximum = m_rotLimit[0][1];
+	}
+	else if (axis == AXIS_Y)
+	{
+		minimum = m_rotLimit[1][0];
+		maximum = m_rotLimit[1][1];
+	}
+	else if (axis == AXIS_Z)
+	{
+		minimum = m_rotLimit[2][0];
+		maximum = m_rotLimit[2][1];
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+}
+
+ArnBone* ArnBone::getFirstChildBone() const
+{
+	assert(getChildBoneCount(false) >= 1);
+	foreach (ArnNode* n, getChildren())
+	{
+		if (n->getType() == NDT_RT_BONE)
+			return static_cast<ArnBone*>(n);
+	}
+	ARN_THROW_UNEXPECTED_CASE_ERROR
 }

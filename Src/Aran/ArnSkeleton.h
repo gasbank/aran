@@ -26,10 +26,10 @@ public:
 	const std::string&					getActionName() const { return m_actionName; }
 	/*!
 	 * @brief ArnBone 총 개수 반환
-	 * @remarks 이 ArnSkeleton이 가지고 있는 총 ArnBone 개수를 반환합니다.
+	 * @param bRecursive \c false 면 바로 속한 자식 ArnBone 개수만을 반환, \c true 면 하위 자식 ArnBone 총 개수 반환
 	 * @sa ArnBone::getChildBoneCount
 	 */
-	unsigned int						getChildBoneCount() const;
+	unsigned int						getChildBoneCount(bool bRecursive) const;
 	void								setActionToNext();
 	/*!
 	 * @name Internal use only methods

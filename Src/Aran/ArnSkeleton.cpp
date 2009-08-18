@@ -43,7 +43,7 @@ ArnSkeleton::configureIpos()
 	{
 		ArnAnimationController* animCtrl = 0;
 		V_VERIFY( ArnCreateAnimationController(
-			getChildBoneCount(),					/* MaxNumMatrices */
+			getChildBoneCount(true),					/* MaxNumMatrices */
 			m_actionStrips.size(),					/* MaxNumAnimationSets */
 			m_actionStrips.size(),					/* MaxNumTracks */
 			0,										/* MaxNumEvents */
@@ -78,14 +78,14 @@ ArnSkeleton::configureIpos()
 }
 
 unsigned int
-ArnSkeleton::getChildBoneCount() const
+ArnSkeleton::getChildBoneCount(bool bRecursive) const
 {
 	unsigned int ret = 0;
 	foreach(ArnNode* node, getChildren())
 	{
 		if (node->getType() == NDT_RT_BONE)
 		{
-			ret += 1 + static_cast<ArnBone*>(node)->getChildBoneCount();
+			ret += 1 + (bRecursive ? static_cast<const ArnBone*>(node)->getChildBoneCount(true) : 0);
 		}
 	}
 	return ret;

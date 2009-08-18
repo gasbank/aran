@@ -356,7 +356,7 @@ ArnBoneRenderGl( const ArnBone* bone )
 		glPopMatrix();
 		glTranslatef(0, boneLength, 0);
 		ArnDrawAxesGl(0.25);
-		if (bone->getChildBoneCount() == 0)
+		if (bone->getChildBoneCount(true) == 0)
 		{
 			// Draw an end-effector indicator.
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);

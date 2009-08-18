@@ -773,6 +773,48 @@ ArnSkeleton::createFrom( const TiXmlElement* elm )
 			ret->attachChild(bone);
 		}
 	}
+	for (const TiXmlElement* e = skelElm->FirstChildElement("constraint"); e; e = e->NextSiblingElement("constraint"))
+	{
+		if (e->Parent() == skelElm)
+		{
+			const char* type = e->Attribute("type");
+			if (strcmp(type, "limitrot") == 0)
+			{
+				const TiXmlElement* targetElm = e->FirstChildElement("target");
+				assert(targetElm);
+				const char* targetBoneName = targetElm->GetText();
+				ArnNode* boneNode = ret->getNodeByName(targetBoneName);
+				ArnBone* bone = dynamic_cast<ArnBone*>(boneNode);
+				assert(bone);
+				for (const TiXmlElement* ee = e->FirstChildElement("limit"); ee; ee = ee->NextSiblingElement("limit"))
+				{
+					const char* limitType = ee->Attribute("type");
+					const char* unit = ee->Attribute("unit");
+					AxisEnum axis;
+					float minimum, maximum;
+					Parse2FloatsFromElement(&minimum, &maximum, ee);
+					if (strcmp(unit, "deg") == 0)
+					{
+						minimum = ArnToRadian(minimum);
+						maximum = ArnToRadian(maximum);
+					}
+					if (strcmp(limitType, "AngX") == 0)
+						axis = AXIS_X;
+					else if (strcmp(limitType, "AngY") == 0)
+						axis = AXIS_Y;
+					else if (strcmp(limitType, "AngZ") == 0)
+						axis = AXIS_Z;
+					else
+						ARN_THROW_UNEXPECTED_CASE_ERROR
+					bone->setRotLimit(axis, minimum, maximum);
+				}
+			}
+			else
+			{
+				ARN_THROW_UNEXPECTED_CASE_ERROR
+			}
+		}
+	}
 
 	return ret;
 }

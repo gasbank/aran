@@ -59,6 +59,7 @@ public:
 	inline ArnAnimationController*				getAnimCtrl();
 	inline bool									isLocalXformDirty() const;
 	const std::vector<ArnJointData>&			getJointData() const { return m_jointData; }
+
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);

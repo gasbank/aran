@@ -1,4 +1,5 @@
 #include "AranIkPCH.h"
+#include <float.h>
 #include "ArnIkSolver.h"
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
@@ -24,7 +25,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 	ret->m_tree.reset(new Tree);
 	VectorR3 rootHeadPoint;
 	ArnVec3Assign(rootHeadPoint, skel->getLocalXform_Trans());
-	NodePtr rootNode = Node::create(rootHeadPoint, VectorR3::UnitX, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
+	NodePtr rootNode = Node::create(rootHeadPoint, VectorR3::UnitZ, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
 	rootNode->setName("Root");
 	ret->m_tree->InsertRoot(rootNode);
 
@@ -65,35 +66,13 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	double restAngle = ArnToRadian(0.0);
 	if (bEndEffector)
 	{
-		assert(bone->getChildBoneCount() == 0);
+		assert(bone->getChildBoneCount(true) == 0);
 		purpose = ENDEFFECTOR;
 		rotAxis = VectorR3::Zero;
 	}
 	else
 	{
 		purpose = JOINT;
-		const char* boneName = bone->getName();
-		if (strcmp(boneName, "KneeR") == 0 || strcmp(boneName, "KneeL") == 0)
-		{
-			minAngle = -ARN_PI;
-			maxAngle = 0;
-		}
-		else if (strcmp(boneName, "AnkleR") == 0 || strcmp(boneName, "AnkleL") == 0)
-		{
-			minAngle = ArnToRadian(-30.0);
-			maxAngle = ArnToRadian(30.0);
-		}
-		if (boneName[0] == 'X')
-			rotAxis = VectorR3::UnitX;
-		else if (boneName[0] == 'Y')
-			rotAxis = VectorR3::UnitY;
-		else if (boneName[0] == 'Z')
-			rotAxis = VectorR3::UnitZ;
-		else
-		{
-			ARN_THROW_UNEXPECTED_CASE_ERROR
-		}
-
 	}
 	NodePtr ret = Node::create(tailPoint, rotAxis, size, purpose, minAngle, maxAngle, restAngle);
 	ret->setName(bone->getName());
@@ -130,13 +109,53 @@ GetJointRotAxisOfBoneFromName(bool& x, bool& y, bool& z, const ArnBone* bone)
 	}
 }
 
+static void
+SetJointLimitFromBone(NodePtr node, const ArnBone* bone)
+{
+	const char* nodeName = node->getName();
+	AxisEnum axis;
+	float minimum, maximum;
+	if (strncmp(nodeName, "X_", 2) == 0)
+	{
+		axis = AXIS_X;
+		bone->getRotLimit(axis, minimum, maximum);
+	}
+	else if (strncmp(nodeName, "Y_", 2) == 0)
+	{
+		axis = AXIS_Y;
+		bone->getRotLimit(axis, minimum, maximum);
+	}
+	else if (strncmp(nodeName, "Z_", 2) == 0)
+	{
+		axis = AXIS_Z;
+		bone->getRotLimit(axis, minimum, maximum);
+	}
+	else if (strncmp(nodeName, "Root", 4) == 0)
+	{
+		minimum = float(-ARN_PI);
+		maximum = float( ARN_PI);
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+
+	if (minimum <= -ARN_PI)
+		minimum = float(-ARN_PI);
+	node->setMinTheta(minimum);
+
+	if (maximum >= ARN_PI)
+		maximum = float(ARN_PI);
+	node->setMaxTheta(maximum);
+}
+
 NodePtr
 ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild)
 {
 	assert(prevNode);
 	assert(bone);
 	bool bEndEffector = false;
-	if (bone->getChildBoneCount() == 0)
+	if (bone->getChildBoneCount(true) == 0)
 	{
 		bEndEffector = true;
 	}
@@ -186,6 +205,11 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		bn += &bone->getName()[pos+1];
 		rxNode->setName(bn.c_str());
 
+		if (bone->getChildBoneCount(false) == 1)
+		{
+			SetJointLimitFromBone(rxNode, bone->getFirstChildBone());
+		}
+
 		if (prevNode && firstChild)
 		{
 			// b is a child of prevNode.
@@ -226,6 +250,11 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		std::string bn = "Y_";
 		bn += &bone->getName()[pos+1];
 		ryNode->setName(bn.c_str());
+
+		if (bone->getChildBoneCount(false) == 1)
+		{
+			SetJointLimitFromBone(ryNode, bone->getFirstChildBone());
+		}
 
 		if (prevNode && firstChild)
 		{
@@ -268,6 +297,11 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		bn += &bone->getName()[pos+1];
 		rzNode->setName(bn.c_str());
 
+		if (bone->getChildBoneCount(false) == 1)
+		{
+			SetJointLimitFromBone(rzNode, bone->getFirstChildBone());
+		}
+		
 		if (prevNode && firstChild)
 		{
 			// b is a child of prevNode.
