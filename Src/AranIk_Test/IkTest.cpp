@@ -1,19 +1,23 @@
 #include "IkTest.h"
 
-static float		gs_linVelX = 0;
-static float		gs_linVelZ = 0;
-static float		gs_torque = 0;
-static float		gs_torqueAnkle = 0;
-static bool			gs_bHoldingShift = false;
-static bool			gs_bHoldingArrowKeys[4] = { false, false, false, false };
-
 enum ArrowKeys
 {
 	AK_UP,
 	AK_DOWN,
 	AK_LEFT,
-	AK_RIGHT
+	AK_RIGHT,
+	AK_HOME,
+	AK_END,
+	AK_COUNT,
 };
+
+
+static float		gs_linVelX = 0;
+static float		gs_linVelZ = 0;
+static float		gs_torque = 0;
+static float		gs_torqueAnkle = 0;
+static bool			gs_bHoldingShift = false;
+static bool			gs_bHoldingArrowKeys[AK_COUNT] = { false, false, false, false, false, false };
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -298,6 +302,14 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				gs_bHoldingArrowKeys[AK_RIGHT] = true;
 			}
+			else if (event->key.keysym.sym == SDLK_HOME)
+			{
+				gs_bHoldingArrowKeys[AK_HOME] = true;
+			}
+			else if (event->key.keysym.sym == SDLK_END)
+			{
+				gs_bHoldingArrowKeys[AK_END] = true;
+			}
 			printf("key '%s' pressed\n",
 				SDL_GetKeyName(event->key.keysym.sym));
 			break;
@@ -321,6 +333,14 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			else if (event->key.keysym.sym == SDLK_RIGHT)
 			{
 				gs_bHoldingArrowKeys[AK_RIGHT] = false;
+			}
+			else if (event->key.keysym.sym == SDLK_HOME)
+			{
+				gs_bHoldingArrowKeys[AK_HOME] = false;
+			}
+			else if (event->key.keysym.sym == SDLK_END)
+			{
+				gs_bHoldingArrowKeys[AK_END] = false;
 			}
 			break;
 		case SDL_QUIT:
@@ -420,6 +440,11 @@ LoadSceneList(std::vector<std::string>& sceneList)
 		++sceneCount;
 	}
 	return sceneCount;
+}
+
+static void Walk(ArnIkSolver* ikSolver)
+{
+
 }
 
 int
@@ -626,6 +651,8 @@ DoMain()
 		{
 			ikSolver->update();
 
+			Walk(ikSolver);
+
 			NodePtr selNode = ikSolver->getSelectedEndeffector();
 			if (selNode)
 			{
@@ -646,8 +673,15 @@ DoMain()
 				{
 					selNode->setTargetDiff(0, d, 0);
 				}
+				if (gs_bHoldingArrowKeys[AK_HOME])
+				{
+					selNode->setTargetDiff(d, 0, 0);
+				}
+				if (gs_bHoldingArrowKeys[AK_END])
+				{
+					selNode->setTargetDiff(-d, 0, 0);
+				}
 			}
-			
 		}
 		
 		// Rendering phase

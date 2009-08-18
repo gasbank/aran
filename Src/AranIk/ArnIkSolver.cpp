@@ -24,7 +24,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 	ret->m_tree.reset(new Tree);
 	VectorR3 rootHeadPoint;
 	ArnVec3Assign(rootHeadPoint, skel->getLocalXform_Trans());
-	NodePtr rootNode = Node::create(rootHeadPoint, VectorR3::UnitZ, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
+	NodePtr rootNode = Node::create(rootHeadPoint, VectorR3::UnitX, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
 	rootNode->setName("Root");
 	ret->m_tree->InsertRoot(rootNode);
 
@@ -83,7 +83,17 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 			minAngle = ArnToRadian(-30.0);
 			maxAngle = ArnToRadian(30.0);
 		}
-		rotAxis = VectorR3::UnitX;
+		if (boneName[0] == 'X')
+			rotAxis = VectorR3::UnitX;
+		else if (boneName[0] == 'Y')
+			rotAxis = VectorR3::UnitY;
+		else if (boneName[0] == 'Z')
+			rotAxis = VectorR3::UnitZ;
+		else
+		{
+			ARN_THROW_UNEXPECTED_CASE_ERROR
+		}
+
 	}
 	NodePtr ret = Node::create(tailPoint, rotAxis, size, purpose, minAngle, maxAngle, restAngle);
 	ret->setName(bone->getName());
