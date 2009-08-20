@@ -15,15 +15,15 @@ class StateController;
 class ArnSceneGraph;
 struct OdeSpaceContext;
 
-TYPEDEF_SHARED_PTR(GeneralBody);
-TYPEDEF_SHARED_PTR(GeneralJoint);
+TYPEDEF_SHARED_PTR(GeneralBody)
+TYPEDEF_SHARED_PTR(GeneralJoint)
 
 typedef std::vector<GeneralBody*>						GeneralBodyVector;
 typedef std::set<GeneralBodyPtr>						GeneralBodyPtrSet;
 typedef std::set<GeneralJointPtr>						GeneralJointPtrSet;
 typedef std::vector<SliderJoint*>						SliderJointVector;
 
-TYPEDEF_SHARED_PTR(SimWorld);
+TYPEDEF_SHARED_PTR(SimWorld)
 
 /**
 \brief 독립된 하나의 물리 시뮬레이션 공간

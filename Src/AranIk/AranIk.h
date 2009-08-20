@@ -7,7 +7,7 @@
 
 class ArnSkeleton;
 class ArnIkSolver;
-TYPEDEF_SHARED_PTR(ArnSceneGraph);
+TYPEDEF_SHARED_PTR(ArnSceneGraph)
 
 /*!
  * @brief ArnSkeleton으로부터 IK 솔버 생성

@@ -4,9 +4,9 @@
 class ArnSkeleton;
 class ArnBone;
 class Node;
-TYPEDEF_SHARED_PTR(Tree);
-TYPEDEF_SHARED_PTR(Jacobian);
-TYPEDEF_SHARED_PTR(Node);
+TYPEDEF_SHARED_PTR(Tree)
+TYPEDEF_SHARED_PTR(Jacobian)
+TYPEDEF_SHARED_PTR(Node)
 
 /*!
  * @brief IK 솔버

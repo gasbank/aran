@@ -17,7 +17,7 @@ struct GeneralBodyState
 	ArnVec3 angVel;
 };
 
-TYPEDEF_SHARED_PTR(GeneralBody);
+TYPEDEF_SHARED_PTR(GeneralBody)
 
 /*!
 @brief ODE 강체 관련 함수에 대한 래퍼 최상위 클래스

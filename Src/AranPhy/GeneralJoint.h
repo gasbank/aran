@@ -11,8 +11,8 @@ class BasicObjects;
 
 static const char* JointControlModeStr[] = { "REST", "TARGET", "STAY", "INCR", "RANGE" };
 
-TYPEDEF_SHARED_PTR(GeneralBody);
-TYPEDEF_SHARED_PTR(GeneralJoint);
+TYPEDEF_SHARED_PTR(GeneralBody)
+TYPEDEF_SHARED_PTR(GeneralJoint)
 /*!
 \brief ODE 관절 관련 함수에 대한 래퍼 최상위 클래스
 */

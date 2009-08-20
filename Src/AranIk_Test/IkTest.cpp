@@ -110,7 +110,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 					printf("Mesh Dimension: "); dim.printFormatString();
 				}
 			}
-			
+
 			foreach (ArnIkSolver* ikSolver, ikSolvers)
 			{
 				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
@@ -574,9 +574,9 @@ DoMain()
 		// to keep app from advocating all resources to step further.
 		static const unsigned int simMaxIteration = 500;
 
-		unsigned int simLoop = unsigned int(frameDurationMs / 1000.0 * simFreq);
+		unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
 		if (simLoop > simMaxIteration)
-			simLoop = simMaxIteration; 
+			simLoop = simMaxIteration;
 		for (unsigned int step = 0; step < simLoop; ++step)
 		{
 			swPtr->updateFrame(1.0 / simFreq);
@@ -638,7 +638,7 @@ DoMain()
 			cameraDiff -= activeCam->getLookVec() * cameraDiffAmount;
 		activeCam->setLocalXform_Trans( activeCam->getLocalXform_Trans() + cameraDiff );
 		activeCam->recalcLocalXform();
-		
+
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -686,7 +686,7 @@ DoMain()
 		while( SDL_PollEvent( &event ) )
 		{
 			done = HandleEvent(&event, curSgPtr, ikSolvers, &avd, swPtr);
-			
+
 			int reconfigScene = false;
 			if (done == MHR_NEXT_SCENE)
 			{

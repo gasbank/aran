@@ -10,11 +10,11 @@ static bool gs_ilInitialized = false;
 
 ArnTexture::ArnTexture()
 : ArnNode(NDT_RT_TEXTURE)
+, m_bInitialized(false)
 , m_rawData(0)
 , m_width(0)
 , m_height(0)
 , m_bWrap(false)
-, m_bInitialized(false)
 {
 }
 

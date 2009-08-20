@@ -17,7 +17,7 @@ enum Purpose
 
 class VectorR3;
 
-TYPEDEF_SHARED_PTR(Node);
+TYPEDEF_SHARED_PTR(Node)
 
 class ARANIK_API Node : public ArnObject, public std::tr1::enable_shared_from_this<Node>
 {

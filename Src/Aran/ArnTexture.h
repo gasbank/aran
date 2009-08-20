@@ -8,7 +8,7 @@
 
 class ArnRenderableObject;
 
-TYPEDEF_SHARED_PTR(ArnTexture);
+TYPEDEF_SHARED_PTR(ArnTexture)
 
 // Aran library compartment for LPD3DTEXTURE9
 class ARAN_API ArnTexture : public ArnNode

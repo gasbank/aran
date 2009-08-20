@@ -8,7 +8,7 @@
 
 #ifndef _CLASS_TREE
 #define _CLASS_TREE
-TYPEDEF_SHARED_PTR(Node);
+TYPEDEF_SHARED_PTR(Node)
 
 class ARANIK_API Tree
 {
