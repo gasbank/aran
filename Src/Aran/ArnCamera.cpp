@@ -6,14 +6,15 @@
 ArnCamera::ArnCamera()
 : ArnXformable(NDT_RT_CAMERA)
 {
-	m_cameraData.farClip = 1000.0f;
-	m_cameraData.nearClip = 1.0f;
-	m_cameraData.fov = float(ARN_PI / 4);
-	m_cameraData.pos = ArnConsts::ARNVEC3_ZERO;
-	m_cameraData.rot = ArnConsts::ARNQUAT_IDENTITY;
-	m_cameraData.lookAtVector = CreateArnVec3(0, 0, -1);
-	m_cameraData.targetPos = ArnConsts::ARNVEC3_ZERO;
-	m_cameraData.upVector = ArnConsts::ARNVEC3_Y;
+	m_cameraData.farClip		= 1000.0f;
+	m_cameraData.nearClip		= 1.0f;
+	m_cameraData.fov			= ArnToRadian(45.0f);
+	m_cameraData.pos			= ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.rot			= ArnConsts::ARNQUAT_IDENTITY;
+	m_cameraData.lookAtVector	= CreateArnVec3(0, 0, -1);
+	m_cameraData.targetPos		= ArnConsts::ARNVEC3_ZERO;
+	m_cameraData.upVector		= ArnConsts::ARNVEC3_Y;
+	m_cameraData.bOrtho			= false;
 }
 
 ArnCamera::~ArnCamera(void)
@@ -78,7 +79,7 @@ ArnCamera::createFrom( const char* name, const ArnVec3& eye, const ArnVec3& targ
 	mat.m[1][0] = right.y;
 	mat.m[2][0] = right.z;
 	mat.m[3][0] = 0.0f;
-	
+
 	// Up vector (2nd column)
 	mat.m[0][1] = up.x;
 	mat.m[1][1] = up.y;
@@ -90,13 +91,13 @@ ArnCamera::createFrom( const char* name, const ArnVec3& eye, const ArnVec3& targ
 	mat.m[1][2] = -lookDir.y;
 	mat.m[2][2] = -lookDir.z;
 	mat.m[3][2] = 0.0f;
-	
+
 	// Translation vector (4th column)
 	mat.m[0][3] = eye.x;
 	mat.m[1][3] = eye.y;
 	mat.m[2][3] = eye.z;
 	mat.m[3][3] = 1.0f;
-	
+
 	node->setLocalXform(mat);
 	node->setFov(fov);
 	return node;

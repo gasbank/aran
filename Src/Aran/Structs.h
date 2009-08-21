@@ -1,5 +1,8 @@
-// Structs.h
-// 2007, 2008, 2009 Geoyeob Kim (gasbank@gmail.com)
+/*!
+ * @file Structs.h
+ * @author Geoyeob Kim
+ * @date 2007, 2008, 2009
+ */
 #ifndef __STRUCTS_H_
 #define __STRUCTS_H_
 
@@ -230,7 +233,9 @@ typedef struct tagARN_NDD_MESH3
 
 } ARN_NDD_MESH3;
 
-
+/*!
+ * @brief ArnCamera 클래스의 멤버 변수 모음 구조체
+ */
 struct ARN_NDD_CAMERA_CHUNK
 {
 	ArnVec3		pos;
@@ -241,8 +246,9 @@ struct ARN_NDD_CAMERA_CHUNK
 	float		farClip;
 	float		nearClip;
 	float		fov;
+	bool		bOrtho;
+	float		scale; // Valid only if bOrtho is true.
 };
-
 
 //----------------------------------------------------------------------------
 // D3DXKEY_VECTOR3:

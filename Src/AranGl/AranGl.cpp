@@ -26,13 +26,28 @@ ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const ArnCa
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	float fovdeg = ArnToDegree(cam->getFov()); // OpenGL uses degrees as angle unit rather than radians.
 	float aspect = 0;
-	if (viewportData->Height == 0)
-		aspect = (float)viewportData->Width;
+		if (viewportData->Height == 0)
+			aspect = (float)viewportData->Width;
+		else
+			aspect = (float)viewportData->Width / viewportData->Height;
+	if (cam->isOrtho())
+	{
+		glOrtho(
+			-0.5 * cam->getOrthoScale() * aspect,
+			0.5 * cam->getOrthoScale() * aspect,
+			-0.5 * cam->getOrthoScale(),
+			0.5 * cam->getOrthoScale(),
+			cam->getNearClip(),
+			cam->getFarClip()
+		);
+	}
 	else
-		aspect = (float)viewportData->Width / viewportData->Height;
-	gluPerspective(fovdeg, aspect, cam->getNearClip(), cam->getFarClip());
+	{
+		float fovdeg = ArnToDegree(cam->getFov()); // OpenGL uses degrees as angle unit rather than radians.
+
+		gluPerspective(fovdeg, aspect, cam->getNearClip(), cam->getFarClip());
+	}
 }
 
 

@@ -188,6 +188,7 @@ def createCameraData(doc, ob):
 	cameraData.setAttribute('fovdeg', str(cam.angle))
 	cameraData.setAttribute('nearclip', str(cam.clipStart))
 	cameraData.setAttribute('farclip', str(cam.clipEnd))
+	cameraData.setAttribute('scale', str(cam.scale))
 	return cameraData
 
 def createLightData(doc, ob):

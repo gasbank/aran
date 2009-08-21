@@ -572,7 +572,7 @@ DoMain()
 		static const unsigned int simFreq = 200;
 		// Maximum simulation step iteration count for clamping
 		// to keep app from advocating all resources to step further.
-		static const unsigned int simMaxIteration = 500;
+		static const unsigned int simMaxIteration = 1000;
 
 		unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
 		if (simLoop > simMaxIteration)
@@ -629,13 +629,14 @@ DoMain()
 		else if (!gs_bHoldingKeys[SDLK_a] && gs_bHoldingKeys[SDLK_d])
 			cameraDiff += activeCam->getRightVec() * cameraDiffAmount;
 		if (gs_bHoldingKeys[SDLK_s] && !gs_bHoldingKeys[SDLK_w])
-			cameraDiff -= activeCam->getUpVec() * cameraDiffAmount;
-		else if (!gs_bHoldingKeys[SDLK_s] && gs_bHoldingKeys[SDLK_w])
-			cameraDiff += activeCam->getUpVec() * cameraDiffAmount;
-		if (gs_bHoldingKeys[SDLK_KP_MINUS] && !gs_bHoldingKeys[SDLK_KP_PLUS])
-			cameraDiff += activeCam->getLookVec() * cameraDiffAmount;
-		else if (!gs_bHoldingKeys[SDLK_KP_MINUS] && gs_bHoldingKeys[SDLK_KP_PLUS])
 			cameraDiff -= activeCam->getLookVec() * cameraDiffAmount;
+		else if (!gs_bHoldingKeys[SDLK_s] && gs_bHoldingKeys[SDLK_w])
+			cameraDiff += activeCam->getLookVec() * cameraDiffAmount;
+		if (gs_bHoldingKeys[SDLK_KP_MINUS] && !gs_bHoldingKeys[SDLK_KP_PLUS])
+			cameraDiff -= activeCam->getUpVec() * cameraDiffAmount;
+		else if (!gs_bHoldingKeys[SDLK_KP_MINUS] && gs_bHoldingKeys[SDLK_KP_PLUS])
+			cameraDiff += activeCam->getUpVec() * cameraDiffAmount;
+
 		activeCam->setLocalXform_Trans( activeCam->getLocalXform_Trans() + cameraDiff );
 		activeCam->recalcLocalXform();
 

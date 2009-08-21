@@ -640,8 +640,11 @@ ArnMaterial::createFrom(const TiXmlElement* elm)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " specular alpha is zero." << std::endl;
 	ParseRgbaFromElementAttr(&r, &g, &b, &a, emissiveElm);
 	ret->m_data.m_d3dMaterial.Emissive = ArnColorValue4f(r, g, b, 1);
+	// Don't care emissive alpha.
+	/*
 	if (a == 0)
 		std::cerr << " *** Warning: material " << mtrlName.c_str() << " emissive alpha is zero." << std::endl;
+	*/
 	ret->m_data.m_d3dMaterial.Power = ParseFloatFromAttr(powerElm, "value");
 
 	for (const TiXmlElement* e = materialElm->FirstChildElement("texture"); e; e = e->NextSiblingElement("texture"))
@@ -679,16 +682,20 @@ ArnCamera::createFrom(const TiXmlElement* elm)
 	float farClip = ParseFloatFromAttr(cameraElm, "farclip");
 	float nearClip = ParseFloatFromAttr(cameraElm, "nearclip");
 	float fovdeg = ParseFloatFromAttr(cameraElm, "fovdeg");
+	float scale = ParseFloatFromAttr(cameraElm, "scale");
 	ret->setFarClip(farClip);
 	ret->setNearClip(nearClip);
 	ret->setFov(ArnToRadian(fovdeg));
+	ret->setOrthoScale(scale);
 	std::string typeStr;
 	GetAttr(typeStr, cameraElm, "type");
 	if (strcmp(typeStr.c_str(), "persp") == 0)
 	{
+		ret->setOrtho(false);
 	}
 	else if (strcmp(typeStr.c_str(), "ortho") == 0)
 	{
+		ret->setOrtho(true);
 	}
 	else
 	{
