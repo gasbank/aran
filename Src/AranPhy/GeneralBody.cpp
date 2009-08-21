@@ -243,7 +243,7 @@ GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 }
 
 void
-GeneralBody::notify()
+GeneralBody::notify() const
 {
 	if (m_xformable)
 	{
@@ -332,5 +332,4 @@ void
 GeneralBody::calculateLumpedComAndMass(ArnVec3* com, float* mass) const
 {
 	CalculateLumpedComAndMass(com, mass, getBodyId(), getBodyId(), 0);
-	int a = 10;
 }

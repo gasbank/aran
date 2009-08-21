@@ -63,3 +63,32 @@ ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )
 	}
 	return 0;
 }
+
+ArnCamera*
+ArnSceneGraph::getNextCamera(const ArnCamera* cam) const
+{
+	std::list<ArnCamera*>::const_iterator it = std::find(m_cameraList.begin(), m_cameraList.end(), cam);
+	if (it != m_cameraList.end())
+	{
+		++it;
+		if (it != m_cameraList.end())
+		{
+			return *it;
+		}
+	}
+
+	if (m_cameraList.size())
+	{
+		return *m_cameraList.begin();
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+ArnCamera*
+ArnSceneGraph::getFirstCamera() const
+{
+	return getNextCamera(0);
+}

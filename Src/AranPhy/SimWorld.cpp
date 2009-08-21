@@ -19,6 +19,7 @@ SimWorld::SimWorld()
 , m_bRenderSupports(false)
 , m_footSupportHeight(0.01)
 {
+	memset(m_osc, 0, sizeof(OdeSpaceContext));
 	m_osc->world = dWorldCreate();
 	dWorldSetGravity(m_osc->world, 0, 0, -9.8);
 	//dWorldSetERP(m_osc->world, 0.4);
@@ -161,7 +162,7 @@ SimWorld::placePiston(const char* name, const ArnVec3& com, const ArnVec3& size,
 static void
 NearCallback(void* data, dGeomID o1, dGeomID o2)
 {
-	const OdeSpaceContext* osc = reinterpret_cast<const OdeSpaceContext*>(data);
+	OdeSpaceContext* osc = reinterpret_cast<OdeSpaceContext*>(data);
 	assert(osc);
 	dBodyID b1 = dGeomGetBody(o1);
 	dBodyID b2 = dGeomGetBody(o2);
@@ -170,28 +171,24 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 	if (b1 && b2 && dAreConnectedExcluding(b1, b2, dJointTypeContact))
 		return;
 
-	// N = maximum number of contact joints between o1 and o2.
-	static const int MAXIMUM_CONTACT_COUNT = 50;
-	dContact contact[MAXIMUM_CONTACT_COUNT];
-	int n = dCollide(o1, o2, MAXIMUM_CONTACT_COUNT, &contact[0].geom, sizeof(dContact));
-	for (int i = 0; i < n; i++)
+	memset(osc->contacts, 0, sizeof(dContact) * osc->MAXIMUM_CONTACT_COUNT);
+	osc->numContact = dCollide(o1, o2, osc->MAXIMUM_CONTACT_COUNT, &osc->contacts[0].geom, sizeof(dContact));
+	for (int i = 0; i < osc->numContact; i++)
 	{
-		//contact[i].surface.mode = dContactSoftERP; // | dContactSoftCFM;
-		contact[i].surface.mode = 0;
+		//osc->contacts[i].surface.mode = dContactSoftERP; // | dContactSoftCFM;
+		osc->contacts[i].surface.mode = 0;
+		osc->contacts[i].surface.mu   = dInfinity; //2.0;
+		//osc->contacts[i].surface.mu   = 2.0;
+		//osc->contacts[i].surface.mu   = 0;
 
-		contact[i].surface.mu   = dInfinity; //2.0;
-		//contact[i].surface.mu   = 2.0;
-		//contact[i].surface.mu   = 0;
+		//osc->contacts[i].surface.mu   = 500;
+		//osc->contacts[i].surface.soft_erp = 0.9;
+		//osc->contacts[i].surface.soft_erp = 0.0001;
+		//osc->contacts[i].surface.soft_cfm = 0.01;
 
-		//contact[i].surface.mu   = 500;
-		//contact[i].surface.soft_erp = 0.9;
-		//contact[i].surface.soft_erp = 0.0001;
-		//contact[i].surface.soft_cfm = 0.01;
-
-		dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &contact[i]);
+		dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &osc->contacts[i]);
 		dJointAttach(c, b1, b2);
 	}
-
 }
 
 void
@@ -203,7 +200,7 @@ SimWorld::updateFrame(double elapsedTime)
 	//dWorldStep(m_osc->world, elapsedTime);
 	dWorldQuickStep(m_osc->world, elapsedTime);
 	dJointGroupEmpty(m_osc->contactGroup);
-	foreach (const GeneralBodyPtr gbPtr, m_bodiesPtr)
+	foreach (GeneralBodyConstPtr gbPtr, m_bodiesPtr)
 	{
 		gbPtr->notify();
 	}
@@ -405,4 +402,20 @@ SimWorld::registerJoint( const GeneralJointPtr gjPtr )
 	gjPtr->configureOdeContext(m_osc);
 	m_jointsPtr.insert(gjPtr);
 	return true;
+}
+
+ArnVec3*
+SimWorld::getContactPosition(unsigned int i, ArnVec3* v) const
+{
+	assert(v && i < (unsigned int)m_osc->numContact);
+	v->x = m_osc->contacts[i].geom.pos[0];
+	v->y = m_osc->contacts[i].geom.pos[1];
+	v->z = m_osc->contacts[i].geom.pos[2];
+	return v;
+}
+
+unsigned int
+SimWorld::getContactCount() const
+{
+	return (unsigned int)m_osc->numContact;
 }

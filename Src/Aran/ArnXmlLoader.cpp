@@ -437,6 +437,12 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 			childObj = CreateArnNodeFromXmlElement(childElm, 0);
 		}
 		ret->attachChild(childObj);
+
+		// 카메라는 별도의 리스트를 만들어서 쉽게 탐색할 수 있도록 한다.
+		if (childObj->getType() == NDT_RT_CAMERA)
+		{
+			ret->m_cameraList.push_back(static_cast<ArnCamera*>(childObj));
+		}
 	}
 	return ret;
 }

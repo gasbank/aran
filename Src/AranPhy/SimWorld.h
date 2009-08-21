@@ -61,7 +61,8 @@ public:
 	void										updateFrame(double elapsedTime);
 	void										reset();
 	const SliderJointVector&					getJoints() const { return m_sliderJoints; }
-
+	unsigned int								getContactCount() const;
+	ArnVec3*									getContactPosition(unsigned int i, ArnVec3* v) const;
 	/*!
 	 * @deprecated 이 함수 대신 SimWorld::getGeneralJointByName 사용
 	 */

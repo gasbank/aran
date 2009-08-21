@@ -120,7 +120,7 @@ public:
 	/*!
 	 * @brief ArnXformable의 위치와 회전 값을 갱신
 	 */
-	void							notify();
+	void							notify() const;
 	void							setXformableTarget(ArnXformable* xformable) { m_xformable = xformable; }
 	void							addExternalForceOnCom(double x, double y, double z);
 	bool							isContactGround() const;

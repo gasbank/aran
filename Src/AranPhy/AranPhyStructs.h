@@ -1,5 +1,11 @@
+/*!
+ * @file AranPhyStructs.h
+ * @author Geoyeob Kim
+ * @date 2009
+ *
+ * ARAN Physics Package (AranPhy) Common Structure Definition
+ */
 #pragma once
-
 
 enum BodyEnum
 {
@@ -60,12 +66,18 @@ static const int JointAxisEnumStringsCorr[] = {
 };
 
 /*!
-@brief ODE 컨텍스트
-*/
+ * @brief ODE 컨텍스트
+ *
+ * OpenDE의 실행 컨텍스트 자료를 모아놓은 구조체입니다.
+ * SimWorld 객체에 고유하게 하나씩 할당됩니다.
+ */
 struct OdeSpaceContext
 {
-	dWorldID		world;			///< ODE World ID
-	dSpaceID		space;			///< ODE Space ID
-	dGeomID			plane;			///< ODE Plane ID: Z=0인 고정된 바닥(땅)
-	dJointGroupID	contactGroup;	///< ODE JointGroup ID: 강체간 접촉 그룹 ID
+	dWorldID			world;								///< ODE World ID
+	dSpaceID			space;								///< ODE Space ID
+	dGeomID				plane;								///< ODE Plane ID: Z=0인 고정된 바닥(땅)
+	dJointGroupID		contactGroup;						///< ODE JointGroup ID: 강체간 접촉 그룹 ID
+	static const int	MAXIMUM_CONTACT_COUNT = 100;		///< 최대 접촉점 확인 개수
+	int					numContact;							///< 접촉점 저장 공간의 유효한 요소 개수
+	dContact			contacts[MAXIMUM_CONTACT_COUNT];	///< 접촉점 저장 공간
 };

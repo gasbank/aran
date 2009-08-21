@@ -6,6 +6,7 @@ static float		gs_torque = 0;
 static float		gs_torqueAnkle = 0;
 static bool			gs_bHoldingShift = false;
 static char			gs_bHoldingKeys[SDLK_LAST];
+static bool			gs_bNextCamera = false;
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -280,6 +281,11 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			break;
 		case SDL_KEYUP:
 			gs_bHoldingKeys[event->key.keysym.sym] = false;
+
+			if (event->key.keysym.sym == SDLK_c)
+			{
+				gs_bNextCamera = true;
+			}
 			break;
 		case SDL_QUIT:
 			done = MHR_EXIT_APP;
@@ -349,7 +355,7 @@ Cleanup()
 static void
 GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight, ArnSceneGraph* sg)
 {
-	activeCam = reinterpret_cast<ArnCamera*>(sg->findFirstNodeOfType(NDT_RT_CAMERA));
+	activeCam = sg->getFirstCamera();
 	assert(activeCam);
 	activeCam->recalcLocalXform();
 	activeCam->recalcAnimLocalXform();
@@ -525,8 +531,7 @@ DoMain()
 
 	// Initialize renderer-dependent data in scene graph objects.
 	ArnInitializeRenderableObjectsGl(curSgPtr.get());
-	ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-	ArnConfigureViewMatrixGl(activeCam);
+
 
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
@@ -625,6 +630,12 @@ DoMain()
 			}
 		}
 
+		if (gs_bNextCamera)
+		{
+			activeCam = curSgPtr->getNextCamera(activeCam);
+			gs_bNextCamera = false;
+		}
+
 		ArnVec3 cameraDiff(0, 0, 0);
 		static const float cameraDiffAmount = 0.1f;
 		if (gs_bHoldingKeys[SDLK_a] && !gs_bHoldingKeys[SDLK_d])
@@ -647,15 +658,21 @@ DoMain()
 		float bipedMass;
 		trunk->calculateLumpedComAndMass(&bipedComPos, &bipedMass);
 
+
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
 		if (activeCam)
+		{
+			ArnConfigureViewportProjectionMatrixGl(&avd, activeCam);
 			ArnConfigureViewMatrixGl(activeCam);
+		}
 		if (activeLight)
+		{
 			ArnConfigureLightGl(0, activeLight);
+		}
 
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		glBindTexture(GL_TEXTURE_2D, 0);
@@ -676,14 +693,27 @@ DoMain()
 		}
 		glPopMatrix();
 
-		// Render COM indicator of a biped.
-		glPushMatrix();
-		glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
+		// Render COM indicator and contact points of a biped.
 		glDisable(GL_DEPTH_TEST);
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
-		ArnRenderSphereGl(0.025, 16, 16);
+		{
+			glPushMatrix();
+			glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
+			ArnRenderSphereGl(0.025, 16, 16);
+			glPopMatrix();
+			unsigned int contactCount = swPtr->getContactCount();
+			for (unsigned int i = 0; i < contactCount; ++i)
+			{
+				ArnVec3 contactPos;
+				swPtr->getContactPosition(i, &contactPos);
+				glPushMatrix();
+				glTranslatef(contactPos.x, contactPos.y, contactPos.z);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+				ArnRenderSphereGl(0.025, 16, 16);
+				glPopMatrix();
+			}
+		}
 		glEnable(GL_DEPTH_TEST);
-		glPopMatrix();
 
 		SDL_GL_SwapBuffers();
 
@@ -746,8 +776,6 @@ DoMain()
 
 				// Initialize renderer-dependent data in scene graph objects.
 				ArnInitializeRenderableObjectsGl(curSgPtr.get());
-				ArnConfigureViewportProjectionMatrixGl(&avd, activeCam); // Projection matrix is not changed during runtime for now.
-				ArnConfigureViewMatrixGl(activeCam);
 			}
 		}
 		++frames;
