@@ -37,6 +37,7 @@
 		<Compiler>
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
+			<Add option="-DdDOUBLE" />
 			<Add directory="../" />
 			<Add directory="../Aran" />
 			<Add directory="../AranIk" />

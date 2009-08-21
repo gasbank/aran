@@ -39,7 +39,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 		prevNode = ret->addToTree(prevNode, skel, bone, firstChild);
 		firstChild = false;
 	}
-	
+
 	ret->initializeJacobian();
 	ret->reset();
 	std::cout << " --- ArnIkSolver creation report: ArnSkeleton " << skel->getName() << " has "
@@ -162,8 +162,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	bool rx, ry, rz;
 	GetJointRotAxisOfBoneFromName(rx, ry, rz, bone);
 	NodePtr firstCreated;
-	bool firstChildOriginal = firstChild;
-	
+
 	if (!(rx || ry || rz))
 	{
 		// End-effector
@@ -194,7 +193,6 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	{
 		NodePtr rxNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		rxNode->setRotationAxis(VectorR3::UnitX);
-		int offset = 0;
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
 		while (bone->getName()[pos] != '_' && pos < boneNameLen)
@@ -240,7 +238,6 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	{
 		NodePtr ryNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		ryNode->setRotationAxis(VectorR3::UnitY);
-		int offset = 0;
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
 		while (bone->getName()[pos] != '_' && pos < boneNameLen)
@@ -286,7 +283,6 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	{
 		NodePtr rzNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		rzNode->setRotationAxis(VectorR3::UnitZ);
-		int offset = 0;
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
 		while (bone->getName()[pos] != '_' && pos < boneNameLen)
@@ -301,7 +297,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		{
 			SetJointLimitFromBone(rzNode, bone->getFirstChildBone());
 		}
-		
+
 		if (prevNode && firstChild)
 		{
 			// b is a child of prevNode.

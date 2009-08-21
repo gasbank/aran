@@ -139,6 +139,7 @@ BallSocketJoint::configureOdeContext( const OdeSpaceContext* osc )
 	assert(!getId() && !m_amotorId);
 	assert(getBody1()->getBodyId() && getBody2()->getBodyId());
 	setId(dJointCreateBall(osc->world, 0));
+	dJointSetData(getId(), reinterpret_cast<void*>(getObjectId()));
 	dJointAttach(getId(), getBody1()->getBodyId(), getBody2()->getBodyId());
 	dJointSetBallAnchor(getId(), getAnchor().x, getAnchor().y, getAnchor().z);
 	m_amotorId = dJointCreateAMotor(osc->world, 0);

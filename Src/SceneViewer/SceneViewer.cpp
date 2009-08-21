@@ -866,11 +866,11 @@ main(int argc, char *argv[])
 {
 	int retCode = DoMain();
 
-#ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+#ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
 	std::cout << "ArnObject dtor count: " << ArnObject::getDtorCount() << std::endl;
 	ArnObject::printInstances();
-#endif // #ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+#endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	return retCode;
 }

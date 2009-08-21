@@ -61,11 +61,25 @@ public:
 	void										updateFrame(double elapsedTime);
 	void										reset();
 	const SliderJointVector&					getJoints() const { return m_sliderJoints; }
+
+	/*!
+	 * @deprecated 이 함수 대신 SimWorld::getGeneralJointByName 사용
+	 */
 	SliderJoint*								getJointByName(const char* name) const;
-	GeneralJointPtr								getGeneralJointByName(const char* name) const;
+	/*!
+	 * @deprecated 이 함수 대신 SimWorld::getBodyByNameFromSet 사용
+	 */
 	GeneralBody*								getBodyByName(const char* name) const;
-	const GeneralBodyPtr						getBodyByNameFromSet(const char* name) const;
-	//GeneralBody*								getBodyByGeomID(dGeomID g) const;
+
+	/*!
+	 * @brief 관절 이름으로 가져오기
+	 */
+	GeneralJointPtr								getGeneralJointByName(const char* name) const;
+	/*!
+	 * @brief 강체 이름으로 가져오기
+	 */
+	GeneralBodyPtr								getBodyByNameFromSet(const char* name) const;
+
 	void										clearBodyContact();
 	void										setBiped(Biped* biped) { m_biped = biped; }
 	Biped*										getBiped() const { return m_biped; }

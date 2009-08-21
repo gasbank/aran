@@ -158,7 +158,6 @@ SimWorld::placePiston(const char* name, const ArnVec3& com, const ArnVec3& size,
 	dJointSetFixed(fix);
 }
 
-
 static void
 NearCallback(void* data, dGeomID o1, dGeomID o2)
 {
@@ -201,7 +200,8 @@ SimWorld::updateFrame(double elapsedTime)
 	m_totalElapsedTime += elapsedTime;
 
 	dSpaceCollide(m_osc->space, m_osc, &NearCallback);
-	dWorldStep(m_osc->world, elapsedTime);
+	//dWorldStep(m_osc->world, elapsedTime);
+	dWorldQuickStep(m_osc->world, elapsedTime);
 	dJointGroupEmpty(m_osc->contactGroup);
 	foreach (const GeneralBodyPtr gbPtr, m_bodiesPtr)
 	{
@@ -369,7 +369,7 @@ SimWorld::getBodyByName(const char* name) const
 	return 0;
 }
 
-const GeneralBodyPtr
+GeneralBodyPtr
 SimWorld::getBodyByNameFromSet( const char* name ) const
 {
 	foreach (const GeneralBodyPtr b, m_bodiesPtr)
@@ -379,19 +379,7 @@ SimWorld::getBodyByNameFromSet( const char* name ) const
 	}
 	return GeneralBodyPtr();
 }
-/*
-GeneralBody* SimWorld::getBodyByGeomID(dGeomID g) const
-{
-	GeneralBodyVector::const_iterator cit = m_bodies.begin();
-	GeneralBodyVector::const_iterator citEnd = m_bodies.end();
-	for (; cit != citEnd; ++cit)
-	{
-		if ((*cit)->getGeomID() == g)
-			return *cit;
-	}
-	return 0;
-}
-*/
+
 void
 SimWorld::clearBodyContact()
 {

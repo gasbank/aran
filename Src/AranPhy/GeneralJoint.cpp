@@ -3,7 +3,8 @@
 #include "GeneralJoint.h"
 
 GeneralJoint::GeneralJoint(const OdeSpaceContext* osc)
-: m_osc(osc)
+: ArnObject(NDT_RT_GENERALJOINT)
+, m_osc(osc)
 , m_joint(0)
 , m_jcm(JCM_REST)
 {

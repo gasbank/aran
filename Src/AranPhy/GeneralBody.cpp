@@ -4,7 +4,8 @@
 #include "ArnXformable.h"
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
-: m_osc(osc)
+: ArnObject(NDT_RT_GENERALBODY)
+, m_osc(osc)
 , m_body(0)
 , m_geom(0)
 , m_isContactGround(false)
@@ -199,6 +200,7 @@ GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 
 	// Body and mass distribution setting
 	m_body = dBodyCreate(m_osc->world);
+	dBodySetData(getBodyId(), reinterpret_cast<void*>(getObjectId()));
 	dMass mass;
 	dMassSetZero(&mass);
 	switch (m_amdt)
@@ -275,4 +277,60 @@ void
 GeneralBody::setLinearVel(float x, float y, float z)
 {
 	dBodySetLinearVel(m_body, x, y, z);
+}
+
+static void
+CalculateLumpedComAndMass(ArnVec3* com, float* mass, dBodyID body, dBodyID parentBody, int depth)
+{
+	assert(com && mass);
+	int numJoint = dBodyGetNumJoints(body);
+	const dReal* bodyPos = dBodyGetPosition(body);
+	dMass bodyMass;
+	dBodyGetMass(body, &bodyMass);
+	ArnVec3 subCom(bodyPos[0], bodyPos[1], bodyPos[2]);
+	dReal subMass = bodyMass.mass;
+
+#if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0
+	for (int i = 0; i < depth; ++i)
+		std::cout << "  ";
+	unsigned int objectId = reinterpret_cast<unsigned long>(dBodyGetData(body)) & 0xffffffff;
+	ArnObject* arnObj = ArnObject::getObjectById(objectId);
+	assert(arnObj);
+	std::cout << arnObj->getName() << " " << bodyPos[0] << " " << bodyPos[1] << " " << bodyPos[2] << std::endl;
+#endif // ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
+
+	for (int i = 0; i < numJoint; ++i)
+	{
+		dJointID joint = dBodyGetJoint(body, i);
+		int jointType = dJointGetType(joint);
+		if (jointType != dJointTypeBall
+		 && jointType != dJointTypeHinge
+		 && jointType != dJointTypeUniversal)
+		{
+		 	continue;
+		}
+		dBodyID body2 = dJointGetBody(joint, 0);
+		if (body2 == body)
+			body2 = dJointGetBody(joint, 1);
+		if (body2 == parentBody)
+			continue;
+
+		ArnVec3 tempSubCom(0, 0, 0);
+		float tempSubMass = 0;
+		CalculateLumpedComAndMass(&tempSubCom, &tempSubMass, body2, body, depth + 1);
+
+		subCom += tempSubCom * tempSubMass;
+		subMass += tempSubMass;
+	}
+	assert(subMass);
+
+	*com = subCom / subMass;
+	*mass = subMass;
+}
+
+void
+GeneralBody::calculateLumpedComAndMass(ArnVec3* com, float* mass) const
+{
+	CalculateLumpedComAndMass(com, mass, getBodyId(), getBodyId(), 0);
+	int a = 10;
 }

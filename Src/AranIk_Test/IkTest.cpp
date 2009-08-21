@@ -439,6 +439,7 @@ DoMain()
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 	std::vector<ArnIkSolver*> ikSolvers;
+	GeneralBodyPtr trunk;
 
 	// Initialize renderer-independent data in scene graph objects.
 	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
@@ -446,6 +447,8 @@ DoMain()
 	foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
 	ikSolvers.clear();
 	ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
+	if (swPtr)
+		trunk = swPtr->getBodyByNameFromSet("Trunk");
 
 	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
@@ -572,7 +575,7 @@ DoMain()
 		static const unsigned int simFreq = 200;
 		// Maximum simulation step iteration count for clamping
 		// to keep app from advocating all resources to step further.
-		static const unsigned int simMaxIteration = 1000;
+		static const unsigned int simMaxIteration = 100;
 
 		unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
 		if (simLoop > simMaxIteration)
@@ -640,6 +643,10 @@ DoMain()
 		activeCam->setLocalXform_Trans( activeCam->getLocalXform_Trans() + cameraDiff );
 		activeCam->recalcLocalXform();
 
+		ArnVec3 bipedComPos;
+		float bipedMass;
+		trunk->calculateLumpedComAndMass(&bipedComPos, &bipedMass);
+
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -667,6 +674,15 @@ DoMain()
 				ArnSceneGraphRenderGl(curSgPtr.get());
 			}
 		}
+		glPopMatrix();
+
+		// Render COM indicator of a biped.
+		glPushMatrix();
+		glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
+		glDisable(GL_DEPTH_TEST);
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
+		ArnRenderSphereGl(0.025, 16, 16);
+		glEnable(GL_DEPTH_TEST);
 		glPopMatrix();
 
 		SDL_GL_SwapBuffers();
@@ -725,6 +741,8 @@ DoMain()
 				foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
 				ikSolvers.clear();
 				ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
+				if (swPtr)
+					trunk = swPtr->getBodyByNameFromSet("Trunk");
 
 				// Initialize renderer-dependent data in scene graph objects.
 				ArnInitializeRenderableObjectsGl(curSgPtr.get());
@@ -758,11 +776,11 @@ int main(int argc, char *argv[])
 	int retCode = 0;
 	retCode = DoMain();
 
-#ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+#ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
 	std::cout << "ArnObject dtor count: " << ArnObject::getDtorCount() << std::endl;
 	ArnObject::printInstances();
-#endif // #ifdef ARNOBJECT_MEMORY_LEAK_CHECK
+#endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	return retCode;
 }

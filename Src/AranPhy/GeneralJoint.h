@@ -1,10 +1,12 @@
 /*!
-\file GeneralJoint.h
-\author Geoyeob Kim
-\date 2009
-*/
+ * @file GeneralJoint.h
+ * @author Geoyeob Kim
+ * @date 2009
+ */
 #ifndef GENERALJOINT_H
 #define GENERALJOINT_H
+
+#include "ArnObject.h"
 
 class GeneralBody;
 class BasicObjects;
@@ -16,33 +18,47 @@ TYPEDEF_SHARED_PTR(GeneralJoint)
 /*!
 \brief ODE 관절 관련 함수에 대한 래퍼 최상위 클래스
 */
-class ARANPHY_API GeneralJoint
+class ARANPHY_API GeneralJoint : public ArnObject
 {
 public:
 	virtual						~GeneralJoint();
-	/*! @name 관절 이름 및 종류
-	사용자가 읽을 수 있는 관절 이름을 정합니다. 고유한 이름이라는 보장은 없습니다.
-	*/
+	/*!
+	 * @name 관절 이름 및 종류
+	 * 사용자가 읽을 수 있는 관절 이름을 정합니다. 고유한 이름이라는 보장은 없습니다.
+	 */
 	//@{
 	void						setName(const char* name);
 	const char*					getName() const;
 	virtual const char*			getJointTypeName() const = 0;
 	//@}
-	/*! @brief 두 강체를 현재 관절을 이용해 붙임 */
+	/*!
+	 * @brief 두 강체를 현재 관절을 이용해 붙임
+	 */
 	virtual void				attach(GeneralBody& body1, GeneralBody& body2);
-	/* @brief 현재 관절 각도를 반환 */
+	/*!
+	 * @brief 현재 관절 각도를 반환
+	 */
 	virtual double				getValue(int anum) const = 0;
-	/* @brief 현재 관절 속도를 반환 */
+	/*!
+	 * @brief 현재 관절 속도를 반환
+	 */
 	virtual double				getVelocity(int anum) const = 0;
-	/* @brief 현재 관절이 이루고자 하는 목표값을 반환 */
+	/*!
+	 * @brief 현재 관절이 이루고자 하는 목표값을 반환
+	 */
 	double						getTargetValue(int anum) const { return m_targetValue[anum - 1]; }
-	/* @brief 현재 관절 각도와 목표값과의 차이를 반환 */
+	/*!
+	 * @brief 현재 관절 각도와 목표값과의 차이를 반환
+	 */
 	inline double				getTargetCurrentDiff(int anum) const;
-	/*! @name 관절 제어
-	관절을 제어할 수 있는 여러 가지 방법을 설정할 수 있습니다.
-	*/
+	/*!
+	 * @name 관절 제어
+	 * 관절을 제어할 수 있는 여러 가지 방법을 설정할 수 있습니다.
+	 */
 	//@{
-	/*!	@brief 관절 제어 방법	*/
+	/*!
+	 * @brief 관절 제어 방법
+	 */
 	enum JointControlMode
 	{
 		JCM_REST,					///< 전혀 제어를 하지 않습니다. (힘을 가하지 않음)
@@ -63,21 +79,25 @@ public:
 	void						controlIncr_P(int anum, double incrVal, double proGain, double forceMax);
 	void						controlIncr_PD(int anum, double incrVal, double proGain, double derGain, double forceMax);
 	void						controlWithinRange_P(int anum, double min, double max, double pGain, double fMax);
-	/*! @brief proportional 게인 값을 설정 */
+	/*!
+	 * @brief proportional 게인 값을 설정
+	 */
 	void						setProGain(int anum, double v) { m_proGain[anum-1] = v; }
-	/*! @brief 현재 관절 제어 방법을 문자열로 반환 */
+	/*!
+	 * @brief 현재 관절 제어 방법을 문자열로 반환
+	 */
 	const char*					getJcmName() const { return JointControlModeStr[m_jcm]; }
 	//@}
 	/*!
-	@brief ODE 컨텍스트를 이용해 강체의 ODE 인스턴스를 생성
-	@param osc ODE 컨텍스트
-	@remark 호출하는 전에 ODE 컨텍스트가 \c NULL 로 설정되어 있어야 합니다.
-	\c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.
-	*/
+	 * @brief ODE 컨텍스트를 이용해 강체의 ODE 인스턴스를 생성
+	 * @param osc ODE 컨텍스트
+	 * @remarks 호출하는 전에 ODE 컨텍스트가 \c NULL 로 설정되어 있어야 합니다.
+	 * \c NULL 이 아닌 경우는 이미 객체의 ODE 인스턴스가 생성되었다는 뜻입니다.
+	 */
 	virtual void				configureOdeContext(const OdeSpaceContext* osc);
 	/*!
-	@name 관절 파라미터
-	*/
+	 * @name 관절 파라미터
+	 */
 	//@{
 	virtual void				setParamVelocity(int anum, dReal v) = 0;
 	virtual void				setParamFMax(int anum, dReal v) = 0;
