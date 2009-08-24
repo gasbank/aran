@@ -1,12 +1,36 @@
+/*!
+ * @file IkTest.cpp
+ * @author Geoyeob Kim
+ * @date 2009
+ */
 #include "IkTest.h"
 
-static float		gs_linVelX = 0;
-static float		gs_linVelZ = 0;
-static float		gs_torque = 0;
-static float		gs_torqueAnkle = 0;
-static bool			gs_bHoldingShift = false;
-static char			gs_bHoldingKeys[SDLK_LAST];
-static bool			gs_bNextCamera = false;
+class AppContext : private Uncopyable
+{
+public:
+	static const int			windowWidth			= 800;
+	static const int			windowHeight		= 600;
+
+	ArnViewportData				avd;
+	std::vector<std::string>	sceneList;
+	int							curSceneIndex;
+	ArnSceneGraphPtr			sgPtr;
+	SimWorldPtr					swPtr;
+	ArnCamera*					activeCam;
+	ArnLight*					activeLight;
+	std::vector<ArnIkSolver*>	ikSolvers;
+	GeneralBodyPtr				trunk, footR, footL;
+	ArnPlane					contactCheckPlane;
+	ArnVec3						bipedComPos;
+	float						bipedMass;
+	float						linVelX;
+	float						linVelZ;
+	float						torque;
+	float						torqueAnkle;
+	char						bHoldingKeys[SDLK_LAST];
+	bool						bNextCamera;
+	std::list<ArnVec3>			isects;
+};
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -18,9 +42,9 @@ FootHeight(double t, double stepLength, double maxStepHeight)
 }
 
 static void
-SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr sceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, ArnCamera* cam )
+SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 {
-	if (!sceneGraph)
+	if (!ac.sgPtr || !ac.activeCam)
 		return;
 
 	HitRecord buff[16];
@@ -52,7 +76,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 
 	/* your original projection matrix */
 	ArnMatrix projMat;
-	ArnGetProjectionMatrix(&projMat, avd, cam, true);
+	ArnGetProjectionMatrix(&projMat, &ac.avd, ac.activeCam, true);
 	glMultTransposeMatrixf(reinterpret_cast<const GLfloat*>(projMat.m));
 
 	/* Draw the objects onto the screen */
@@ -61,8 +85,8 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	SDL_GL_SwapBuffers();
-	ArnSceneGraphRenderGl(sceneGraph.get());
-	foreach (ArnIkSolver* ikSolver, ikSolvers)
+	ArnSceneGraphRenderGl(ac.sgPtr.get());
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		TreeDraw(*ikSolver->getTree());
 	}
@@ -82,7 +106,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 	{
 		if (buff[h].contents) // Zero means that ray hit on bounding box area.
 		{
-			const ArnNode* node = sceneGraph->getConstNodeById(buff[h].contents);
+			const ArnNode* node = ac.sgPtr->getConstNodeById(buff[h].contents);
 			if (node)
 			{
 				const ArnNode* parentNode = node->getParent();
@@ -112,14 +136,14 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 				}
 			}
 
-			foreach (ArnIkSolver* ikSolver, ikSolvers)
+			foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 			{
 				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
 				if (node)
 				{
 					printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
 						node.get(), node->getObjectId(), node->getName(), node->isEndeffector());
-					if (gs_bHoldingShift)
+					if (ac.bHoldingKeys[SDLK_LSHIFT])
 					{
 						ikSolver->reconfigureRoot(node);
 					}
@@ -137,15 +161,13 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraphPtr 
 }
 
 static MessageHandleResult
-HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkSolver*>& ikSolvers, const ArnViewportData* avd, SimWorldPtr swPtr)
+HandleEvent(SDL_Event* event, AppContext& ac)
 {
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
-	ArnCamera* activeCam = 0;
-	if (curSceneGraph)
+	if (ac.sgPtr)
 	{
-		activeCam = reinterpret_cast<ArnCamera*>(curSceneGraph->findFirstNodeOfType(NDT_RT_CAMERA));
-		skel = reinterpret_cast<ArnSkeleton*>(curSceneGraph->findFirstNodeOfType(NDT_RT_SKELETON));
+		skel = reinterpret_cast<ArnSkeleton*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
 	}
 	switch( event->type ) {
 		case SDL_JOYAXISMOTION:
@@ -155,40 +177,40 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				if (abs(event->jaxis.value) > 9000)
 				{
-					gs_linVelX = float(event->jaxis.value / 16000.0);
+					ac.linVelX = float(event->jaxis.value / 16000.0);
 				}
 				else
 				{
-					gs_linVelX = 0;
+					ac.linVelX = 0;
 				}
 			}
 			if ((int)event->jaxis.axis == 1)
 			{
 				if (abs(event->jaxis.value) > 9000)
 				{
-					gs_linVelZ = float(-event->jaxis.value / 16000.0);
+					ac.linVelZ = float(-event->jaxis.value / 16000.0);
 
 				}
 				else
 				{
-					gs_linVelZ = 0;
+					ac.linVelZ = 0;
 				}
 			}
-			GeneralBodyPtr gbPtr = swPtr->getBodyByNameFromSet("EndEffector");
+			GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
 			if (gbPtr)
 			{
-				gbPtr->setLinearVel(gs_linVelX, 0, gs_linVelZ);
+				gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
 			}
 			/////////////////////////////////////////////////////////////////////////
 			if ((int)event->jaxis.axis == 2)
 			{
 				if (abs(event->jaxis.value) > 9000)
 				{
-					gs_torque = event->jaxis.value / 10.0f;
+					ac.torque = event->jaxis.value / 10.0f;
 				}
 				else
 				{
-					gs_torque = 0;
+					ac.torque = 0;
 				}
 			}
 
@@ -196,11 +218,11 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				if (abs(event->jaxis.value) > 10)
 				{
-					gs_torqueAnkle = event->jaxis.value / 500.0f;
+					ac.torqueAnkle = event->jaxis.value / 500.0f;
 				}
 				else
 				{
-					gs_torqueAnkle = 0;
+					ac.torqueAnkle = 0;
 				}
 			}
 		}
@@ -223,19 +245,22 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
         case SDL_JOYBUTTONUP:
         {
         	std::cout << "SDL_JOYBUTTONUP" << std::endl;
-        	std::cout << "gs_torque =  " << gs_torque << std::endl;
-        	std::cout << "gs_linVelX = " << gs_linVelX << std::endl;
-        	std::cout << "gs_linVelZ = " << gs_linVelZ << std::endl;
+        	std::cout << "gs_torque =  " << ac.torque << std::endl;
+        	std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
+        	std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
         }
         break;
 		case SDL_MOUSEBUTTONUP:
 			{
 				if (event->button.button == SDL_BUTTON_LEFT)
 				{
-					SelectGraphicObject(float(event->motion.x), float(avd->Height - event->motion.y),
-						curSceneGraph, ikSolvers, avd, activeCam); // Y-coord flipped.
+					SelectGraphicObject(
+						ac,
+						float(event->motion.x),
+						float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
+						);
 
-					if (curSceneGraph)
+					if (ac.sgPtr)
 					{
 						ArnMatrix modelview, projection;
 						glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
@@ -243,8 +268,8 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 						glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
 						projection = projection.transpose();
 						ArnVec3 origin, direction;
-						ArnMakePickRay(&origin, &direction, float(event->motion.x), float(avd->Height - event->motion.y), &modelview, &projection, avd);
-						ArnMesh* mesh = reinterpret_cast<ArnMesh*>(curSceneGraph->findFirstNodeOfType(NDT_RT_MESH));
+						ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
+						ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
 						if (mesh)
 						{
 							bool bHit = false;
@@ -258,7 +283,7 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			}
 			break;
 		case SDL_KEYDOWN:
-			gs_bHoldingKeys[event->key.keysym.sym] = true;
+			ac.bHoldingKeys[event->key.keysym.sym] = true;
 
 			if ( event->key.keysym.sym == SDLK_ESCAPE )
 			{
@@ -272,19 +297,15 @@ HandleEvent(SDL_Event* event, ArnSceneGraphPtr curSceneGraph, std::vector<ArnIkS
 			{
 				done = MHR_RELOAD_SCENE;
 			}
-			else if (event->key.keysym.sym == SDLK_RSHIFT || event->key.keysym.sym == SDLK_LSHIFT)
-			{
-				gs_bHoldingShift = true;
-			}
-			printf("key '%s' pressed\n",
-				SDL_GetKeyName(event->key.keysym.sym));
+
+			printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
 			break;
 		case SDL_KEYUP:
-			gs_bHoldingKeys[event->key.keysym.sym] = false;
+			ac.bHoldingKeys[event->key.keysym.sym] = false;
 
 			if (event->key.keysym.sym == SDLK_c)
 			{
-				gs_bNextCamera = true;
+				ac.bNextCamera = true;
 			}
 			break;
 		case SDL_QUIT:
@@ -386,85 +407,265 @@ LoadSceneList(std::vector<std::string>& sceneList)
 	return sceneCount;
 }
 
-static void Walk(ArnIkSolver* ikSolver)
+static void
+Walk(ArnIkSolver* ikSolver)
 {
 
 }
 
-int
-DoMain()
+static void
+UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDurationMs)
 {
-	int							curSceneIndex		= -1;
-	std::vector<std::string>	sceneList;
-	ArnSceneGraphPtr			curSgPtr;
-	std::vector<Node*>			node;
+	// Physics simulation frequency (Hz)
+	// higher --> accurate, stable, slow
+	// lower  --> errors, unstable, fast
+	static const unsigned int simFreq = 200;
+	// Maximum simulation step iteration count for clamping
+	// to keep app from advocating all resources to step further.
+	static const unsigned int simMaxIteration = 100;
 
-	//ConfigureJacobianTree(tree, jacob, node);
-
-	ArnInitializeXmlParser();
-	ArnInitializeImageLibrary();
-	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
-	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
-
-	if (LoadSceneList(sceneList) < 0)
+	unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
+	if (simLoop > simMaxIteration)
+		simLoop = simMaxIteration;
+	for (unsigned int step = 0; step < simLoop; ++step)
 	{
-		std::cerr << " *** Aborting..." << std::endl;
-		Cleanup();
-		return -113;
+		ac.swPtr->updateFrame(1.0 / simFreq);
+	}
+	if (ac.sgPtr)
+	{
+		ac.sgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
+	}
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
+	{
+		ikSolver->update();
+
+		Walk(ikSolver);
+
+		NodePtr selNode = ikSolver->getSelectedEndeffector();
+		if (selNode)
+		{
+			static const double d = 0.1;
+			if (ac.bHoldingKeys[SDLK_UP])
+			{
+				selNode->setTargetDiff(0, 0, d);
+			}
+			if (ac.bHoldingKeys[SDLK_DOWN])
+			{
+				selNode->setTargetDiff(0, 0, -d);
+			}
+			if (ac.bHoldingKeys[SDLK_LEFT])
+			{
+				selNode->setTargetDiff(0, -d, 0);
+			}
+			if (ac.bHoldingKeys[SDLK_RIGHT])
+			{
+				selNode->setTargetDiff(0, d, 0);
+			}
+			if (ac.bHoldingKeys[SDLK_HOME])
+			{
+				selNode->setTargetDiff(d, 0, 0);
+			}
+			if (ac.bHoldingKeys[SDLK_END])
+			{
+				selNode->setTargetDiff(-d, 0, 0);
+			}
+		}
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////////////////
-
-	const int					windowWidth			= 800;
-	const int					windowHeight		= 600;
-	const int					bpp					= 32;
-	const int					depthSize			= 24;
-	bool						bFullScreen			= false;
-	bool						bNoFrame			= false;
-	ArnViewportData				avd;
-	SimWorldPtr					swPtr;
-
-	avd.X		= 0;
-	avd.Y		= 0;
-	avd.Width	= windowWidth;
-	avd.Height	= windowHeight;
-	avd.MinZ	= 0;
-	avd.MaxZ	= 1.0f;
-
-	// Load first scene file into memory.
-	assert(sceneList.size() > 0);
-	assert(curSceneIndex == -1);
-	curSgPtr = ConfigureNextTestSceneWithRetry(curSceneIndex, 0, sceneList, avd);
-	if (!curSgPtr)
+	if (ac.bNextCamera)
 	{
-		std::cerr << " *** Aborting..." << std::endl;
-		Cleanup();
-		return -11;
-	}
-	assert(curSgPtr);
-	ArnCamera* activeCam = 0;
-	ArnLight* activeLight = 0;
-	std::vector<ArnIkSolver*> ikSolvers;
-	GeneralBodyPtr trunk, footR, footL;
-
-	// Initialize renderer-independent data in scene graph objects.
-	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-	GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-	foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
-	ikSolvers.clear();
-	ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
-	if (swPtr)
-	{
-		trunk = swPtr->getBodyByNameFromSet("Trunk");
-		footR = swPtr->getBodyByNameFromSet("Foot.R");
-		footL = swPtr->getBodyByNameFromSet("Foot.L");
+		ac.activeCam = ac.sgPtr->getNextCamera(ac.activeCam);
+		ac.bNextCamera = false;
 	}
 
-	// SDL Window init start
-	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
+	ArnVec3 cameraDiff(0, 0, 0);
+	static const float cameraDiffAmount = 0.1f;
+	if (ac.bHoldingKeys[SDLK_a] && !ac.bHoldingKeys[SDLK_d])
+		cameraDiff -= ac.activeCam->getRightVec() * cameraDiffAmount;
+	else if (!ac.bHoldingKeys[SDLK_a] && ac.bHoldingKeys[SDLK_d])
+		cameraDiff += ac.activeCam->getRightVec() * cameraDiffAmount;
+	if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
+		cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
+	else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
+		cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
+	if (ac.bHoldingKeys[SDLK_KP_MINUS] && !ac.bHoldingKeys[SDLK_KP_PLUS])
+		cameraDiff -= ac.activeCam->getUpVec() * cameraDiffAmount;
+	else if (!ac.bHoldingKeys[SDLK_KP_MINUS] && ac.bHoldingKeys[SDLK_KP_PLUS])
+		cameraDiff += ac.activeCam->getUpVec() * cameraDiffAmount;
+
+	ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
+	ac.activeCam->recalcLocalXform();
+
+	if (ac.trunk)
+	{
+		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+	}
+	if (ac.footR)
+	{
+		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footR, ac.contactCheckPlane);
+	}
+	if (ac.footL)
+	{
+		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footL, ac.contactCheckPlane);
+	}
+}
+
+static void
+RenderScene(const AppContext& ac)
+{
+	glClearColor( 0.5, 0.5, 0.5, 1.0 );
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	if (ac.activeCam)
+	{
+		ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
+		ArnConfigureViewMatrixGl(ac.activeCam);
+	}
+	if (ac.activeLight)
+	{
+		ArnConfigureLightGl(0, ac.activeLight);
+	}
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
+	{
+		glPushMatrix();
+		TreeDraw(*ikSolver->getTree());
+		glPopMatrix();
+	}
+
+	glPushMatrix();
+	{
+		if (ac.sgPtr)
+		{
+			ArnSceneGraphRenderGl(ac.sgPtr.get());
+		}
+	}
+	glPopMatrix();
+
+	// Render COM indicator and contact points of a biped.
+	glDisable(GL_DEPTH_TEST);
+	{
+		if (ac.trunk)
+		{
+			glPushMatrix();
+			glTranslatef(ac.bipedComPos.x, ac.bipedComPos.y, ac.bipedComPos.z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
+			ArnRenderSphereGl(0.025, 16, 16);
+			glPopMatrix();
+		}
+
+		foreach (const ArnVec3& isect, ac.isects)
+		{
+			glPushMatrix();
+			glTranslatef(isect.x, isect.y, isect.z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
+			ArnRenderSphereGl(0.015, 16, 16);
+			glPopMatrix();
+		}
+		/*
+		unsigned int contactCount = swPtr->getContactCount();
+		for (unsigned int i = 0; i < contactCount; ++i)
+		{
+			ArnVec3 contactPos;
+			swPtr->getContactPosition(i, &contactPos);
+			glPushMatrix();
+			glTranslatef(contactPos.x, contactPos.y, contactPos.z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+			ArnRenderSphereGl(0.025, 16, 16);
+			glPopMatrix();
+		}
+		*/
+	}
+	glEnable(GL_DEPTH_TEST);
+}
+
+/*!
+ * @brief Scene graph가 새로 로드되었을 때 수행되는 초기화 (렌더러와 무관)
+ */
+static int
+InitializeRendererIndependentsFromSg(AppContext& ac)
+{
+	assert(ac.sgPtr);
+	ac.swPtr.reset(SimWorld::createFrom(ac.sgPtr.get()));
+	GetActiveCamAndLight(ac.activeCam, ac.activeLight, ac.sgPtr.get());
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
+	{
+		delete ikSolver;
+	}
+	ac.ikSolvers.clear();
+	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	if (ac.swPtr)
+	{
+		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
+		ac.footR = ac.swPtr->getBodyByNameFromSet("Foot.R");
+		ac.footL = ac.swPtr->getBodyByNameFromSet("Foot.L");
+	}
+	return 0;
+}
+
+/*!
+ * @brief Scene graph가 새로 로드되었을 때 수행되는 초기화 (렌더러 종속)
+ */
+static int
+InitializeRendererDependentsFromSg(AppContext& ac)
+{
+	ArnInitializeRenderableObjectsGl(ac.sgPtr.get());
+	return 0;
+}
+
+/*!
+ * @brief 프로그램 실행 시 한 번만 수행되는 초기화 루틴
+ */
+static int
+InitializeAppContextOnce(AppContext& ac)
+{
+	/// \c SceneList.txt 를 파싱합니다.
+	if (LoadSceneList(ac.sceneList) < 0)
+	{
+		std::cerr << " *** Init failed..." << std::endl;
+		return -10;
+	}
+
+	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
+
+	/// Viewport를 초기화합니다.
+	ac.avd.X		= 0;
+	ac.avd.Y		= 0;
+	ac.avd.Width	= AppContext::windowWidth;
+	ac.avd.Height	= AppContext::windowHeight;
+	ac.avd.MinZ		= 0;
+	ac.avd.MaxZ		= 1.0f;
+
+	/// 다음 카메라로 변경 플래그 초기화
+	ac.bNextCamera	= false;
+
+	/// 첫 장면 파일을 메모리에 로드합니다.
+	assert(ac.sceneList.size() > 0);
+	ac.curSceneIndex = -1;
+	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
+	if (!ac.sgPtr)
+	{
+		std::cerr << " *** Scene graph loading failed..." << std::endl;
+		return -20;
+	}
+	assert(ac.sgPtr);
+
+	/*!
+	 * SDL 라이브러리를 초기화합니다.
+	 * 이후에 예기치않은 오류가 발생했을 경우에는 SDL_Quit() 함수를 호출한 후 반환해야 합니다.
+	 */
+	const int		bpp					= 32;
+	const int		depthSize			= 24;
+	bool			bFullScreen			= false;
+	bool			bNoFrame			= false;
+	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
+	{
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-		Cleanup();
-		return -304;
+		return -30;
 	}
 	SDL_JoystickOpen(0);
 
@@ -486,11 +687,10 @@ DoMain()
 	// Swap Control On --> Refresh rate not exceeds Vsync(60 Hz mostly)
 	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
 
-	if ( SDL_SetVideoMode( windowWidth, windowHeight, bpp, video_flags ) == NULL ) {
+	if ( SDL_SetVideoMode( AppContext::windowWidth, AppContext::windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
-		Cleanup();
 		SDL_Quit();
-		return -2039;
+		return -40;
 	}
 	// OpenGL context available from this line.
 
@@ -521,25 +721,10 @@ DoMain()
 	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &value );
 	printf( "SDL_GL_ACCELERATED_VISUAL: requested 1, got %d\n", value );
 
-	if (ArnInitGlExtFunctions() < 0)
-	{
-		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
-		std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
-		std::cerr << "     Aborting..." << std::endl;
-		Cleanup();
-		SDL_Quit();
-		return -102;
-	}
-	ArnInitializePhysics();
-	ArnInitializeGl();
-
-	// Initialize renderer-dependent data in scene graph objects.
-	ArnInitializeRenderableObjectsGl(curSgPtr.get());
-
-
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
 
+	/// OpenGL 플래그를 설정합니다.
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LINE_SMOOTH);
@@ -560,12 +745,81 @@ DoMain()
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-	ArnPlane contactCheckPlane(ArnVec3(0, 0, 1), ArnVec3(0, 0, 0));
+	/// OpenGL 확장 기능을 초기화합니다.
+	if (ArnInitGlExtFunctions() < 0)
+	{
+		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
+		std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
+		std::cerr << "     Aborting..." << std::endl;
+		SDL_Quit();
+		return -50;
+	}
 
+	/// ARAN OpenGL 패키지를 초기화합니다.
+	if (ArnInitializeGl() < 0)
+	{
+		SDL_Quit();
+		return -3;
+	}
+
+	/// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
+	if (InitializeRendererIndependentsFromSg(ac) < 0)
+	{
+		SDL_Quit();
+		return -1;
+	}
+	if (InitializeRendererDependentsFromSg(ac) < 0)
+	{
+		SDL_Quit();
+		return -2;
+	}
+	return 0;
+}
+
+/*!
+ * @brief 주요 루틴 시작 함수
+ */
+int
+DoMain()
+{
+	/*!
+	 * 렌더러 독립적 ARAN 패키지인 ARAN Core, ARAN Physics를 초기화합니다.
+	 * 초기화가 성공한 이후 프로그램의 치명적인 오류로 인해 실행이 중단될 경우
+	 * 반드시 Cleanup() 을 호출해야 합니다.
+	 * 본 초기화가 실패할 경우에는 프로그램이 종료됩니다.
+	 */
+	if (ArnInitializeXmlParser() < 0)
+	{
+		Cleanup();
+		return -1;
+	}
+	if (ArnInitializeImageLibrary() < 0)
+	{
+		Cleanup();
+		return -2;
+	}
+	if (ArnInitializePhysics() < 0)
+	{
+		Cleanup();
+		return -3;
+	}
+	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
+	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
+
+	/*!
+	 * Application-wide context를 초기화합니다.
+	 * 이 초기화는 프로그램 구동시 단 한번 시행됩니다.
+	 */
+	AppContext ac;
+	if (InitializeAppContextOnce(ac) < 0)
+	{
+		Cleanup();
+		return -4;
+	}
+
+	/// 프로그램 메인 루프를 시작합니다.
 	unsigned int frames = 0;
 	unsigned int start_time = SDL_GetTicks();
-
-	/* Loop until done. */
 	MessageHandleResult done = MHR_DO_NOTHING;
 	unsigned int frameStartMs = 0;
 	unsigned int frameDurationMs = 0;
@@ -578,174 +832,14 @@ DoMain()
 		SDL_Event event;
 		char* sdl_error;
 
-		// Update phase
+		// 1. Update phase
+		UpdateScene(ac, frameStartMs, frameDurationMs);
 
-		// Physics simulation frequency (Hz)
-		// higher --> accurate, stable, slow
-		// lower  --> errors, unstable, fast
-		static const unsigned int simFreq = 200;
-		// Maximum simulation step iteration count for clamping
-		// to keep app from advocating all resources to step further.
-		static const unsigned int simMaxIteration = 100;
+		// 2. Rendering phase
+		RenderScene(ac);
 
-		unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
-		if (simLoop > simMaxIteration)
-			simLoop = simMaxIteration;
-		for (unsigned int step = 0; step < simLoop; ++step)
-		{
-			swPtr->updateFrame(1.0 / simFreq);
-		}
-		if (curSgPtr)
-		{
-			curSgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
-		}
-		foreach (ArnIkSolver* ikSolver, ikSolvers)
-		{
-			ikSolver->update();
-
-			Walk(ikSolver);
-
-			NodePtr selNode = ikSolver->getSelectedEndeffector();
-			if (selNode)
-			{
-				static const double d = 0.1;
-				if (gs_bHoldingKeys[SDLK_UP])
-				{
-					selNode->setTargetDiff(0, 0, d);
-				}
-				if (gs_bHoldingKeys[SDLK_DOWN])
-				{
-					selNode->setTargetDiff(0, 0, -d);
-				}
-				if (gs_bHoldingKeys[SDLK_LEFT])
-				{
-					selNode->setTargetDiff(0, -d, 0);
-				}
-				if (gs_bHoldingKeys[SDLK_RIGHT])
-				{
-					selNode->setTargetDiff(0, d, 0);
-				}
-				if (gs_bHoldingKeys[SDLK_HOME])
-				{
-					selNode->setTargetDiff(d, 0, 0);
-				}
-				if (gs_bHoldingKeys[SDLK_END])
-				{
-					selNode->setTargetDiff(-d, 0, 0);
-				}
-			}
-		}
-
-		if (gs_bNextCamera)
-		{
-			activeCam = curSgPtr->getNextCamera(activeCam);
-			gs_bNextCamera = false;
-		}
-
-		ArnVec3 cameraDiff(0, 0, 0);
-		static const float cameraDiffAmount = 0.1f;
-		if (gs_bHoldingKeys[SDLK_a] && !gs_bHoldingKeys[SDLK_d])
-			cameraDiff -= activeCam->getRightVec() * cameraDiffAmount;
-		else if (!gs_bHoldingKeys[SDLK_a] && gs_bHoldingKeys[SDLK_d])
-			cameraDiff += activeCam->getRightVec() * cameraDiffAmount;
-		if (gs_bHoldingKeys[SDLK_s] && !gs_bHoldingKeys[SDLK_w])
-			cameraDiff -= activeCam->getLookVec() * cameraDiffAmount;
-		else if (!gs_bHoldingKeys[SDLK_s] && gs_bHoldingKeys[SDLK_w])
-			cameraDiff += activeCam->getLookVec() * cameraDiffAmount;
-		if (gs_bHoldingKeys[SDLK_KP_MINUS] && !gs_bHoldingKeys[SDLK_KP_PLUS])
-			cameraDiff -= activeCam->getUpVec() * cameraDiffAmount;
-		else if (!gs_bHoldingKeys[SDLK_KP_MINUS] && gs_bHoldingKeys[SDLK_KP_PLUS])
-			cameraDiff += activeCam->getUpVec() * cameraDiffAmount;
-
-		activeCam->setLocalXform_Trans( activeCam->getLocalXform_Trans() + cameraDiff );
-		activeCam->recalcLocalXform();
-
-		ArnVec3 bipedComPos;
-		float bipedMass;
-		std::list<ArnVec3> isects;
-
-		if (trunk)
-		{
-			trunk->calculateLumpedComAndMass(&bipedComPos, &bipedMass);
-		}
-		if (footR)
-		{
-			ArnGeneralBodyPlaneIntersection(isects, *footR, contactCheckPlane);
-		}
-		if (footL)
-		{
-			ArnGeneralBodyPlaneIntersection(isects, *footL, contactCheckPlane);
-		}
-
-		// Rendering phase
-		glClearColor( 0.5, 0.5, 0.5, 1.0 );
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		if (activeCam)
-		{
-			ArnConfigureViewportProjectionMatrixGl(&avd, activeCam);
-			ArnConfigureViewMatrixGl(activeCam);
-		}
-		if (activeLight)
-		{
-			ArnConfigureLightGl(0, activeLight);
-		}
-
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		foreach (ArnIkSolver* ikSolver, ikSolvers)
-		{
-			glPushMatrix();
-			TreeDraw(*ikSolver->getTree());
-			glPopMatrix();
-		}
-
-		glPushMatrix();
-		{
-			if (curSgPtr)
-			{
-				ArnSceneGraphRenderGl(curSgPtr.get());
-			}
-		}
-		glPopMatrix();
-
-		// Render COM indicator and contact points of a biped.
-		glDisable(GL_DEPTH_TEST);
-		{
-			if (trunk)
-			{
-				glPushMatrix();
-				glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
-				ArnRenderSphereGl(0.025, 16, 16);
-				glPopMatrix();
-			}
-
-			foreach (const ArnVec3& isect, isects)
-			{
-				glPushMatrix();
-				glTranslatef(isect.x, isect.y, isect.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
-				ArnRenderSphereGl(0.015, 16, 16);
-				glPopMatrix();
-			}
-			/*
-			unsigned int contactCount = swPtr->getContactCount();
-			for (unsigned int i = 0; i < contactCount; ++i)
-			{
-				ArnVec3 contactPos;
-				swPtr->getContactPosition(i, &contactPos);
-				glPushMatrix();
-				glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-				ArnRenderSphereGl(0.025, 16, 16);
-				glPopMatrix();
-			}
-			*/
-		}
-		glEnable(GL_DEPTH_TEST);
+		// 3. Clear pseudo-intersection points for support polygon drawing
+		ac.isects.clear();
 
 		SDL_GL_SwapBuffers();
 
@@ -764,14 +858,14 @@ DoMain()
 
 		while( SDL_PollEvent( &event ) )
 		{
-			done = HandleEvent(&event, curSgPtr, ikSolvers, &avd, swPtr);
+			done = HandleEvent(&event, ac);
 
 			int reconfigScene = false;
 			if (done == MHR_NEXT_SCENE)
 			{
-				int nextSceneIndex = (curSceneIndex + 1) % sceneList.size();
-				curSgPtr = ConfigureNextTestSceneWithRetry(curSceneIndex, nextSceneIndex, sceneList, avd);
-				if (!curSgPtr)
+				int nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+				ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
+				if (!ac.sgPtr)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
@@ -783,8 +877,8 @@ DoMain()
 			}
 			else if (done == MHR_RELOAD_SCENE)
 			{
-				curSgPtr = ReloadCurrentScene(curSceneIndex, sceneList, avd);
-				if (!curSgPtr)
+				ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
+				if (!ac.sgPtr)
 				{
 					std::cerr << " *** Aborting..." << std::endl;
 					done = MHR_EXIT_APP;
@@ -797,21 +891,8 @@ DoMain()
 
 			if (reconfigScene)
 			{
-				// Initialize renderer-independent data in scene graph objects.
-				swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
-				GetActiveCamAndLight(activeCam, activeLight, curSgPtr.get());
-				foreach (ArnIkSolver* ikSolver, ikSolvers) { delete ikSolver; }
-				ikSolvers.clear();
-				ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
-				if (swPtr)
-				{
-					trunk = swPtr->getBodyByNameFromSet("Trunk");
-					footR = swPtr->getBodyByNameFromSet("Foot.R");
-					footL = swPtr->getBodyByNameFromSet("Foot.L");
-				}
-
-				// Initialize renderer-dependent data in scene graph objects.
-				ArnInitializeRenderableObjectsGl(curSgPtr.get());
+				InitializeRendererIndependentsFromSg(ac);
+				InitializeRendererDependentsFromSg(ac);
 			}
 		}
 		++frames;
@@ -824,14 +905,15 @@ DoMain()
 	{
 		printf("%.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
-	Cleanup();
-	SDL_Quit();
 
-	foreach (ArnIkSolver* ikSolver, ikSolvers)
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		delete ikSolver;
 	}
-	ikSolvers.clear();
+	ac.ikSolvers.clear();
+
+	Cleanup();
+	SDL_Quit();
 	return 0;
 }
 

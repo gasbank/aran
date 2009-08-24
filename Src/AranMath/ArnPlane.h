@@ -15,6 +15,7 @@
 class ArnPlane
 {
 public:
+						ArnPlane();
 						ArnPlane(const ArnVec3& normal, const ArnVec3& v0);
 						ArnPlane(const ArnVec3& v0, const ArnVec3& v1, const ArnVec3& v2);
 						~ArnPlane() {}

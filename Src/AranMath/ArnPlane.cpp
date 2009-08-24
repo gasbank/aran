@@ -1,6 +1,13 @@
 #include "AranMathPCH.h"
 #include "ArnPlane.h"
 #include "ArnMath.h"
+#include "ArnConsts.h"
+
+ArnPlane::ArnPlane()
+: m_normal(ArnConsts::ARNVEC3_Z)
+, m_v0(ArnConsts::ARNVEC3_ZERO)
+{
+}
 
 ArnPlane::ArnPlane(const ArnVec3& normal, const ArnVec3& v0)
 : m_normal(normal)
