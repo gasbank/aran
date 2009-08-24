@@ -287,8 +287,9 @@ CalculateLumpedComAndMass(ArnVec3* com, float* mass, dBodyID body, dBodyID paren
 	const dReal* bodyPos = dBodyGetPosition(body);
 	dMass bodyMass;
 	dBodyGetMass(body, &bodyMass);
-	ArnVec3 subCom(bodyPos[0], bodyPos[1], bodyPos[2]);
+
 	dReal subMass = bodyMass.mass;
+	ArnVec3 subCom = ArnVec3(bodyPos[0], bodyPos[1], bodyPos[2]) * subMass;
 
 #if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0
 	for (int i = 0; i < depth; ++i)

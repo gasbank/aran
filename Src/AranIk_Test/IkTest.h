@@ -68,6 +68,7 @@
 #include "GeneralJoint.h"
 #include "AranIk.h"
 #include "ArnIkSolver.h"
+#include "ArnPlane.h"
 
 #include "Tree.h"
 #include "Jacobian.h"

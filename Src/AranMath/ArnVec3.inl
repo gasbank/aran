@@ -114,6 +114,14 @@ ArnVec3::operator = ( const T& v )
 	return *this;
 }
 
+inline void
+ArnVec3::set(float x, float y, float z)
+{
+	this->x = x;
+	this->y = y;
+	this->z = z;
+}
+
 template<typename V1, typename V2> void
 ArnVec3Assign(V1& v1, const V2& v2)
 {

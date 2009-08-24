@@ -44,6 +44,7 @@
 		<Unit filename="ArnColorValue4f.h" />
 		<Unit filename="ArnConsts.cpp" />
 		<Unit filename="ArnConsts.h" />
+		<Unit filename="ArnIntersection.h" />
 		<Unit filename="ArnMath.cpp" />
 		<Unit filename="ArnMath.h" />
 		<Unit filename="ArnMath.inl">
@@ -52,6 +53,8 @@
 		</Unit>
 		<Unit filename="ArnMatrix.cpp" />
 		<Unit filename="ArnMatrix.h" />
+		<Unit filename="ArnPlane.cpp" />
+		<Unit filename="ArnPlane.h" />
 		<Unit filename="ArnQuat.cpp" />
 		<Unit filename="ArnQuat.h" />
 		<Unit filename="ArnVec3.cpp" />

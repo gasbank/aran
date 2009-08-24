@@ -55,7 +55,7 @@ public:
 	 * 속하거나 아무데도 속하지 않을 수 있다. 면은 정점 세 개로 이루어진 삼각형 면과
 	 * 정점 네 개로 이루어진 사각형 면 두 종류가 있다. 면 그룹 하나에는
 	 * 삼각형 면과 사각형 면이 모두 들어있다.
-	*/
+	 */
 	//@{
 	unsigned int							getFaceGroupCount() const { return m_faceGroup.size(); }
 	unsigned int							getFaceCount(unsigned int& triCount, unsigned int& quadCount, unsigned int faceGroupIdx) const;
@@ -106,15 +106,15 @@ public:
 	 * @brief bounding box를 정의하는 정점 중 하나를 가져옴
 	 * @param i bounding box를 이루는 0~7 사이의 인덱스 값
 	 * @return bounding box를 정의하는 i번째 정점 좌표
-	 * @remark 로컬 변환이 이루어지기 전 메시의 고유한 bounding box의 정점을 반환합니다.
+	 * @remarks 로컬 변환이 이루어지기 전 메시의 고유한 bounding box의 정점을 반환합니다.
 	 */
 	const ArnVec3*							getBoundingBoxPoint(unsigned int i) const { assert(i < 8); return &m_boundingBoxPoints[i]; }
 	ArnBoundingBoxType						getBoundingBoxType() const { return m_abbt; }
 	/*!
 	 * @brief bounding box 렌더링 가능 여부를 반환
 	 * @return 현재 bounding box를 정의하는 정점 값이 유효하고, bounding box 렌더링 플래그가 켜져 있는 경우
-	true를 반환하고 그 외에는 false 반환
-	*/
+	 * true를 반환하고 그 외에는 false 반환
+	 */
 	bool									isOkayToRenderBoundingBox() const { return !m_bBoundingBoxPointsDirty && m_bRenderBoundingBox; }
 	//@}
 	/*!
@@ -136,7 +136,7 @@ public:
 	bool									isPhyActor() const { return m_bPhyActor; }
 	/*!
 	 * @brief 이 메시의 물리적 특성 중 하나인 질량을 반환
-	 * @remark 질량이 0이면서 물리 시뮬레이터에 따라 움직이는 것은 일반적인 강체가 아니라
+	 * @remarks 질량이 0이면서 물리 시뮬레이터에 따라 움직이는 것은 일반적인 강체가 아니라
 	 * 공간상에 완전히 고정된 물체라고 생각하면 됩니다.
 	 * @sa isPhyActor
 	 */
@@ -151,9 +151,7 @@ public:
 	const ArnBinaryChunk*					getQuadFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].quadFaceChunk; }
 
 	/*!
-	 * @name Internal use only methods
-	 * These methods are exposed in order to make internal linkage between objects.
-	 * You should aware that these are not for client-side APIs.
+	 * @internalonly
 	 */
 	//@{
 	virtual void							interconnect(ArnNode* sceneRoot);

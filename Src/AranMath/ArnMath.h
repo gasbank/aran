@@ -8,7 +8,7 @@ class ArnMesh;
 class ArnGenericBuffer;
 struct ArnViewportData;
 struct ArnColorValue4f;
-const static float COMPARE_EPSILON = 1e-4f;
+const static float COMPARE_EPSILON = 1e-6f;
 
 ARANMATH_API DWORD				ArnFloat4ColorToDword(const ArnColorValue4f* cv);
 ARANMATH_API ArnVec3			ArnQuatToEuler(const ArnQuat* quat);
@@ -16,6 +16,7 @@ ARANMATH_API ArnQuat			ArnEulerToQuat(const ArnVec3* vec3);
 ARANMATH_API ArnVec3			ArnVec3RadToDeg(const ArnVec3* vec3);
 ARANMATH_API float				ArnVec3Length(const ArnVec3* vec3);
 ARANMATH_API inline float		ArnVec3Length(const ArnVec3& vec3) { return ArnVec3Length(&vec3); }
+ARANMATH_API bool				ArnVec3IsNormalized(const ArnVec3& vec3);
 ARANMATH_API void				ArnQuatToAxisAngle(ArnVec3* axis, float* angle, const ArnQuat* q);
 ARANMATH_API ArnMatrix*			ArnMatrixTransformation(ArnMatrix* pOut, const ArnVec3* pScalingCenter,
 								   const ArnQuat* pScalingRotation, const ArnVec3* pScaling,

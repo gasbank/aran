@@ -445,7 +445,7 @@ DoMain()
 	ArnCamera* activeCam = 0;
 	ArnLight* activeLight = 0;
 	std::vector<ArnIkSolver*> ikSolvers;
-	GeneralBodyPtr trunk;
+	GeneralBodyPtr trunk, footR, footL;
 
 	// Initialize renderer-independent data in scene graph objects.
 	swPtr.reset(SimWorld::createFrom(curSgPtr.get()));
@@ -454,7 +454,11 @@ DoMain()
 	ikSolvers.clear();
 	ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
 	if (swPtr)
+	{
 		trunk = swPtr->getBodyByNameFromSet("Trunk");
+		footR = swPtr->getBodyByNameFromSet("Foot.R");
+		footL = swPtr->getBodyByNameFromSet("Foot.L");
+	}
 
 	// SDL Window init start
 	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 ) {
@@ -556,6 +560,8 @@ DoMain()
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
+	ArnPlane contactCheckPlane(ArnVec3(0, 0, 1), ArnVec3(0, 0, 0));
+
 	unsigned int frames = 0;
 	unsigned int start_time = SDL_GetTicks();
 
@@ -656,8 +662,20 @@ DoMain()
 
 		ArnVec3 bipedComPos;
 		float bipedMass;
-		trunk->calculateLumpedComAndMass(&bipedComPos, &bipedMass);
+		std::list<ArnVec3> isects;
 
+		if (trunk)
+		{
+			trunk->calculateLumpedComAndMass(&bipedComPos, &bipedMass);
+		}
+		if (footR)
+		{
+			ArnGeneralBodyPlaneIntersection(isects, *footR, contactCheckPlane);
+		}
+		if (footL)
+		{
+			ArnGeneralBodyPlaneIntersection(isects, *footL, contactCheckPlane);
+		}
 
 		// Rendering phase
 		glClearColor( 0.5, 0.5, 0.5, 1.0 );
@@ -696,11 +714,24 @@ DoMain()
 		// Render COM indicator and contact points of a biped.
 		glDisable(GL_DEPTH_TEST);
 		{
-			glPushMatrix();
-			glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
-			ArnRenderSphereGl(0.025, 16, 16);
-			glPopMatrix();
+			if (trunk)
+			{
+				glPushMatrix();
+				glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
+				ArnRenderSphereGl(0.025, 16, 16);
+				glPopMatrix();
+			}
+
+			foreach (const ArnVec3& isect, isects)
+			{
+				glPushMatrix();
+				glTranslatef(isect.x, isect.y, isect.z);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+				ArnRenderSphereGl(0.015, 16, 16);
+				glPopMatrix();
+			}
+			/*
 			unsigned int contactCount = swPtr->getContactCount();
 			for (unsigned int i = 0; i < contactCount; ++i)
 			{
@@ -712,18 +743,19 @@ DoMain()
 				ArnRenderSphereGl(0.025, 16, 16);
 				glPopMatrix();
 			}
+			*/
 		}
 		glEnable(GL_DEPTH_TEST);
 
 		SDL_GL_SwapBuffers();
 
 		/* Check for error conditions. */
-		gl_error = glGetError( );
+		gl_error = glGetError();
 		if( gl_error != GL_NO_ERROR )
 		{
 			fprintf( stderr, "ARAN: OpenGL error: %d\n", gl_error );
 		}
-		sdl_error = SDL_GetError( );
+		sdl_error = SDL_GetError();
 		if( sdl_error[0] != '\0' )
 		{
 			fprintf(stderr, "ARAN: SDL error '%s'\n", sdl_error);
@@ -772,7 +804,11 @@ DoMain()
 				ikSolvers.clear();
 				ArnCreateArnIkSolversOnSceneGraph(ikSolvers, curSgPtr);
 				if (swPtr)
+				{
 					trunk = swPtr->getBodyByNameFromSet("Trunk");
+					footR = swPtr->getBodyByNameFromSet("Foot.R");
+					footL = swPtr->getBodyByNameFromSet("Foot.L");
+				}
 
 				// Initialize renderer-dependent data in scene graph objects.
 				ArnInitializeRenderableObjectsGl(curSgPtr.get());
@@ -786,7 +822,7 @@ DoMain()
 	unsigned int this_time = SDL_GetTicks();
 	if ( this_time != start_time )
 	{
-		printf("%2.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
+		printf("%.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
 	Cleanup();
 	SDL_Quit();

@@ -19,6 +19,8 @@
 #include "ArnQuat.h"
 #include "ArnMatrix.h"
 #include "ArnMath.h"
+#include "ArnPlane.h"
+#include "ArnIntersection.h"
 
 using namespace std;
 
@@ -78,9 +80,53 @@ void QuaternionTest()
 	}
 }
 
+void PlaneIntersectionTest()
+{
+	ArnPlane p1(ArnVec3(0, 0, 0), ArnVec3(0, 1, 1), ArnVec3(0, 1, 9));
+	ArnPlane p2(ArnVec3(0, 0, 0), ArnVec3(0, 1, 0), ArnVec3(0, 1, 1));
+
+	ArnVec3 v0, v1;
+	int c = intersect3D_2Planes(v0, v1, p1, p2);
+	if (c == 0)
+	{
+		printf("Parallel planes - no intersection points.\n");
+	}
+	else if (c == 1)
+	{
+		printf("Almost(completely) the sasme planes - no intersection points defined.\n");
+	}
+	else if (c == 2)
+	{
+		printf("Line intersection with v0(%.2f, %.2f, %.2f) and v1(%.2f, %.2f, %.2f).\n", v0.x, v0.y, v0.z, v1.x, v1.y, v1.z);
+	}
+	else
+	{
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+}
+
+void PointToPlaneProjectionTest()
+{
+	ArnPlane p1 = ArnPlane(ArnVec3(1, 0, 0), ArnVec3(0, 1, 0), ArnVec3(0, 0, 1));
+	ArnVec3 point(5, 5, 5);
+	ArnVec3 p;
+	ArnProjectPointToPlane(p, point, p1);
+	printf("Projected point %.2f, %.2f, %.2f\n", p.x, p.y, p.z);
+
+	ArnVec3 line(5, 5, 5);
+	ArnVec3 linedir(-1, -1, -1);
+	linedir /= ArnVec3Length(linedir);
+	ArnVec3 rayPlaneIn;
+	int intersected = ArnLinePlaneIntersection(rayPlaneIn, line, linedir, p1);
+	if (intersected)
+		printf("Ray-plane intersection point %.2f, %.2f, %.2f\n", rayPlaneIn.x, rayPlaneIn.y, rayPlaneIn.z);
+}
+
 int main()
 {
-	QuaternionTest();
+	//QuaternionTest();
+	//PlaneIntersectionTest();
+	PointToPlaneProjectionTest();
     cout << "The end of Aran library math test." << endl;
     return 0;
 }

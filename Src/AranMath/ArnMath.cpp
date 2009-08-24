@@ -6,7 +6,7 @@
 #include "ArnColorValue4f.h"
 #include "ArnViewportData.h"
 #include "ArnMath.h"
-
+#include "ArnIntersection.h"
 // Floating Point Library Specific
 static const float	EPSILON						= 0.0001f;		// error tolerance for check
 static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
@@ -464,3 +464,9 @@ ArnVec3Transform(ArnVec4* out, const ArnVec3* vec, const ArnMatrix* mat)
 	return out;
 }
 
+bool
+ArnVec3IsNormalized(const ArnVec3& vec3)
+{
+	float len = ArnVec3Length(vec3);
+	return (1.0f - COMPARE_EPSILON <= len && len <= 1.0f + COMPARE_EPSILON);
+}

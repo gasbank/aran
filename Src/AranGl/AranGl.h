@@ -14,7 +14,7 @@ class ArnSceneGraph;
 /*!
  * @brief AranGl 라이브러리 초기화
  * @return 성공 시 0, 실패(재 초기화 포함) 시 음수
- * @remark 이 함수는 OpenGL 컨텍스트를 생성하거나 초기화하는 함수가 아닙니다.
+ * @remarks 이 함수는 OpenGL 컨텍스트를 생성하거나 초기화하는 함수가 아닙니다.
  *         반드시 OpenGL 컨텍스트가 생성된 후에 이 함수를 호출해야 합니다.
  */
 ARANGL_API int						ArnInitializeGl();
