@@ -411,10 +411,10 @@ void
 ArnSetupBasicMaterialGl(const ArnColorValue4f* color)
 {
 	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)color);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)color);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)color);
-	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)color);
-	const static float shininess = 100.0f;
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
+	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
+	const static float shininess = 0;
 	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
 }
 

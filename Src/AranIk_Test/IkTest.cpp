@@ -718,7 +718,7 @@ DoMain()
 			{
 				glPushMatrix();
 				glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLACK);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
 				ArnRenderSphereGl(0.025, 16, 16);
 				glPopMatrix();
 			}
@@ -727,7 +727,7 @@ DoMain()
 			{
 				glPushMatrix();
 				glTranslatef(isect.x, isect.y, isect.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
 				ArnRenderSphereGl(0.015, 16, 16);
 				glPopMatrix();
 			}

@@ -22,6 +22,7 @@ struct ARANMATH_API ArnConsts
 	static const ArnColorValue4f		ARNCOLOR_MAGENTA;
 	static const ArnColorValue4f		ARNCOLOR_CYAN;
 	static const ArnColorValue4f		ARNCOLOR_WHITE;
+	static const ArnColorValue4f		ARNCOLOR_ORANGE;
 
 	static const ArnMaterialData		ARNMTRLDATA_RED;
 	static const ArnMaterialData		ARNMTRLDATA_WHITE;
