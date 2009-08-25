@@ -291,9 +291,20 @@ ArnMatrix*
 ArnMatrixOrthoLH( ArnMatrix* pOut, float w, float h, float zn, float zf )
 {
 	cml_mat44 cmlmat;
-	cml::matrix_orthographic_LH(cmlmat, -h/2, h/2, -w/2, w/2, zn, zf, cml::z_clip_neg_one);
-	for (int i = 0; i < 4; ++i)
-		for (int j = 0; j < 4; ++j)
+	cml::matrix_orthographic_LH(cmlmat, w, h, zn, zf, cml::z_clip_neg_one);
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
+			pOut->m[i][j] = cmlmat.basis_element(j, i);
+	return pOut;
+}
+
+ArnMatrix*
+ArnMatrixOrthoRH( ArnMatrix* pOut, float w, float h, float zn, float zf )
+{
+	cml_mat44 cmlmat;
+	cml::matrix_orthographic_RH(cmlmat, w, h, zn, zf, cml::z_clip_neg_one);
+	for (int i = 0; i < 4; ++i) // row
+		for (int j = 0; j < 4; ++j) // column
 			pOut->m[i][j] = cmlmat.basis_element(j, i);
 	return pOut;
 }

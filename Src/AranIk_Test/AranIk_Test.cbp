@@ -59,6 +59,7 @@
 			<Add library="AranGlD" />
 			<Add library="AranPhyD" />
 			<Add library="AranMathD" />
+			<Add library="CGAL" />
 			<Add directory="../../../Working" />
 		</Linker>
 		<Unit filename="IkTest.cpp" />

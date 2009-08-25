@@ -5,6 +5,16 @@
  */
 #include "IkTest.h"
 
+#include <CGAL/Cartesian.h>
+#include <CGAL/ch_graham_andrew.h>
+#include <CGAL/functional.h>
+#include <CGAL/double.h>
+#include <CGAL/convex_hull_2.h>
+typedef double RT;
+
+// define point creator
+typedef   CGAL::Point_2<CGAL::Cartesian<double> >        Point_2;
+
 class AppContext : private Uncopyable
 {
 public:
@@ -29,7 +39,10 @@ public:
 	float						torqueAnkle;
 	char						bHoldingKeys[SDLK_LAST];
 	bool						bNextCamera;
-	std::list<ArnVec3>			isects;
+
+	// Volatile: should be clear()-ed every frame.
+	std::list<ArnVec3>			isects;					///< Foot-ground intersection points
+	std::vector<ArnVec3>		supportPolygon;			///< Support polygon
 };
 
 static inline double
@@ -79,18 +92,17 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 	ArnGetProjectionMatrix(&projMat, &ac.avd, ac.activeCam, true);
 	glMultTransposeMatrixf(reinterpret_cast<const GLfloat*>(projMat.m));
 
+
 	/* Draw the objects onto the screen */
 	glMatrixMode(GL_MODELVIEW);
-
-	/* draw only the names in the stack, and fill the array */
-	glFlush();
-	SDL_GL_SwapBuffers();
-	ArnSceneGraphRenderGl(ac.sgPtr.get());
-	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-	{
-		TreeDraw(*ikSolver->getTree());
-	}
-
+		/* draw only the names in the stack, and fill the array */
+		glFlush();
+		SDL_GL_SwapBuffers();
+		ArnSceneGraphRenderGl(ac.sgPtr.get());
+		foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
+		{
+			TreeDraw(*ikSolver->getTree());
+		}
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -500,6 +512,8 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	{
 		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
 	}
+
+	ac.isects.clear();
 	if (ac.footR)
 	{
 		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footR, ac.contactCheckPlane);
@@ -507,6 +521,29 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	if (ac.footL)
 	{
 		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footL, ac.contactCheckPlane);
+	}
+
+	size_t isectsCount = ac.isects.size();
+	if (isectsCount)
+	{
+		std::vector<Point_2> isectsCgal;
+		//isectsCgal.resize(isectsCount);
+		foreach (const ArnVec3& isect, ac.isects)
+		{
+			isectsCgal.push_back(Point_2(isect.x, isect.y));
+		}
+		std::vector<Point_2> out;
+		out.resize(isectsCount);
+		std::vector<Point_2>::iterator outEnd;
+
+		outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
+
+		ac.supportPolygon.clear();
+		for (std::vector<Point_2>::const_iterator it = out.begin(); it != outEnd; ++it)
+		{
+			const Point_2& p = *it;
+			ac.supportPolygon.push_back(ArnVec3(p[0], p[1], 0));
+		}
 	}
 }
 
@@ -583,6 +620,49 @@ RenderScene(const AppContext& ac)
 	glEnable(GL_DEPTH_TEST);
 }
 
+static void
+RenderHud(const AppContext& ac)
+{
+	glMatrixMode(GL_PROJECTION);
+	glPushMatrix();
+	glLoadIdentity();
+	const double aspect = (double)AppContext::windowWidth / AppContext::windowHeight;
+	glOrtho(-0.5 * aspect, 0.5 * aspect, -0.5, 0.5, 0, 1);
+	glMatrixMode(GL_MODELVIEW);
+
+	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_LIGHTING_BIT | GL_LINE_BIT | GL_POINT_BIT);
+	glLineWidth(1);
+	glPointSize(8);
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_LIGHTING);
+	glPushMatrix();
+		glLoadIdentity();
+		glTranslatef(0.5, -0.4, 0);
+		glScalef(0.25, 0.25, 1);
+
+		ArnDrawAxesGl(0.5f);
+		if (ac.supportPolygon.size())
+		{
+
+			glBegin(GL_LINE_LOOP);
+			foreach (const ArnVec3& v, ac.supportPolygon)
+			{
+				glColor3f(0, 0, 0); glVertex2f(v.x, v.y);
+			}
+			glEnd();
+		}
+		glBegin(GL_POINTS);
+		glColor3f(0, 0, 0); glVertex2f(ac.bipedComPos.x, ac.bipedComPos.y);
+		glEnd();
+	glPopMatrix();
+	glPopAttrib();
+
+
+	glMatrixMode(GL_PROJECTION);
+	glPopMatrix();
+	glMatrixMode(GL_MODELVIEW);
+}
+
 /*!
  * @brief Scene graph가 새로 로드되었을 때 수행되는 초기화 (렌더러와 무관)
  */
@@ -603,6 +683,9 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
 		ac.footR = ac.swPtr->getBodyByNameFromSet("Foot.R");
 		ac.footL = ac.swPtr->getBodyByNameFromSet("Foot.L");
+
+		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+		std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
 	}
 	return 0;
 }
@@ -837,9 +920,7 @@ DoMain()
 
 		// 2. Rendering phase
 		RenderScene(ac);
-
-		// 3. Clear pseudo-intersection points for support polygon drawing
-		ac.isects.clear();
+		RenderHud(ac);
 
 		SDL_GL_SwapBuffers();
 

@@ -635,7 +635,14 @@ ArnMatrix*
 ArnGetProjectionMatrix(ArnMatrix* out, const ArnViewportData* viewportData, const ArnCamera* cam, bool rightHanded)
 {
 	float aspect = (float)viewportData->Width / viewportData->Height;
-	return ArnMatrixPerspectiveYFov(out, cam->getFov(), aspect, cam->getNearClip(), cam->getFarClip(), rightHanded);
+	if (cam->isOrtho())
+	{
+		return ArnMatrixOrthoRH(out, cam->getOrthoScale() * aspect, cam->getOrthoScale(), cam->getNearClip(), cam->getFarClip());
+	}
+	else
+	{
+		return ArnMatrixPerspectiveYFov(out, cam->getFov(), aspect, cam->getNearClip(), cam->getFarClip(), rightHanded);
+	}
 }
 
 HRESULT

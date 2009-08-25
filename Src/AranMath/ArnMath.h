@@ -63,6 +63,7 @@ ARANMATH_API ArnVec3*			ArnVec3TransformNormal(ArnVec3* out, const ArnVec3* vec,
 
 // Build an ortho projection matrix. (left-handed)
 ARANMATH_API ArnMatrix*			ArnMatrixOrthoLH( ArnMatrix* pOut, float w, float h, float zn, float zf );
+ARANMATH_API ArnMatrix*			ArnMatrixOrthoRH( ArnMatrix* pOut, float w, float h, float zn, float zf );
 
 ARANMATH_API void ArnGetViewportMatrix(ArnMatrix* out, const ArnViewportData* pViewport);
 ARANMATH_API void ArnExtractFrustumPlanes(float planes[6][4], const ArnMatrix* modelview, const ArnMatrix* projection);
