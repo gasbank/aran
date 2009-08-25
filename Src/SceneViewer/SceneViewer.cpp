@@ -44,7 +44,7 @@ SelectGraphicObject( const float mousePx, const float mousePy, ArnSceneGraph* sc
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	SDL_GL_SwapBuffers();
-	ArnSceneGraphRenderGl(sceneGraph);
+	ArnSceneGraphRenderGl(sceneGraph, true);
 
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -342,7 +342,7 @@ RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int du
 	const ArnRenderableObject* textureRenderable = fontTexturePtr.get()->getRenderableObject();
 	assert(textureRenderable);
 
-	textureRenderable->render(); // glBindTexture(GL_TEXTURE_2D, fontTextureId);
+	textureRenderable->render(false); // glBindTexture(GL_TEXTURE_2D, fontTextureId);
 
 	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBlendFunc(GL_ONE, GL_ONE);
@@ -355,7 +355,6 @@ RenderInfo(const ArnViewportData* viewport, unsigned int timeMs, unsigned int du
 	glTexCoord2d(1, 0); glVertex3d(1, 0, 0);
 	glEnd();
 	glEnable(GL_LIGHTING);
-
 
 	// restore projection matrix
 	glPopMatrix();                   // restore to previous projection matrix
@@ -781,7 +780,7 @@ DoMain()
 		{
 			if (curSgPtr)
 			{
-				ArnSceneGraphRenderGl(curSgPtr.get());
+				ArnSceneGraphRenderGl(curSgPtr.get(), true);
 				curSgPtr.get()->update((double)SDL_GetTicks() / 1000, (float)frameDurationMs / 1000);
 			}
 			RenderInfo(&avd, SDL_GetTicks(), frameDurationMs, fontTexturePtr);

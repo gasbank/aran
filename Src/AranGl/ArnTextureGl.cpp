@@ -58,8 +58,9 @@ ArnTextureGl::init()
 }
 
 int
-ArnTextureGl::render() const
+ArnTextureGl::render(bool bIncludeShadeless) const
 {
+	// 'bIncludeShadeless' unused.
 	glBindTexture(GL_TEXTURE_2D, getTextureId());
 	GLenum err = glGetError( );
 	assert(err == 0);

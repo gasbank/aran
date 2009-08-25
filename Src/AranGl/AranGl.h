@@ -56,7 +56,7 @@ ARANGL_API void						ArnSetupMaterialGl(const ArnMaterial* mtrl);
  */
 ARANGL_API void						ArnRenderSphereGl(double radius = 1.0, unsigned int slices = 16, unsigned int stacks = 16);
 
-ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg);
+ARANGL_API void						ArnSceneGraphRenderGl(const ArnSceneGraph* sg, bool bIncludeShadeless);
 ARANGL_API void						setTransformGl (const double pos[3], const double R[12]);
 ARANGL_API void						ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb);
 

@@ -7,7 +7,7 @@ class ArnTextureGl : public ArnRenderableObject
 public:
 											~ArnTextureGl(void);
 	static ArnTextureGl*					createFrom(const ArnTexture* tex);
-	virtual int								render() const;
+	virtual int								render(bool bIncludeShadeless) const;
 	virtual void							cleanup();
 private:
 											ArnTextureGl(void);

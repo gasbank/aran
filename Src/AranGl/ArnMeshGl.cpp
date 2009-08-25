@@ -189,7 +189,7 @@ ArnMeshGl::renderVbIb() const
 }
 
 void
-ArnMeshGl::renderXml() const
+ArnMeshGl::renderXml(bool bIncludeShadeless) const
 {
 	assert(m_target);
 	assert(m_target->getFaceGroupCount() && m_target->getVertGroupCount());
@@ -228,6 +228,10 @@ ArnMeshGl::renderXml() const
 			const ArnNode* mtrlNode = sceneRoot->getConstNodeByName( m_target->getMaterialReferenceName(mtrlIndex) );
 			const ArnMaterial* mtrl = dynamic_cast<const ArnMaterial*>(mtrlNode);
 			assert(mtrl);
+			if (mtrl->isShadeless() && !bIncludeShadeless)
+			{
+				continue;
+			}
 			ArnSetupMaterialGl(mtrl);
 		}
 		const ArnBinaryChunk* triFaceChunk = m_target->getTriFaceChunkOfFaceGroup(i);
@@ -315,9 +319,9 @@ ArnMeshGl::renderXml() const
 	}
 }
 
-int ArnMeshGl::render() const
+int ArnMeshGl::render(bool bIncludeShadeless) const
 {
-	renderXml();
+	renderXml(bIncludeShadeless);
 	return 0;
 }
 

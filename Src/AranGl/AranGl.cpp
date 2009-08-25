@@ -440,7 +440,7 @@ ArnSetupMaterialGl(const ArnMaterial* mtrl)
 		const ArnRenderableObject* renderable = tex->getRenderableObject();
 		assert(renderable);
 		// 'Rendering texture' has meaning of 'binding texture'
-		renderable->render();
+		renderable->render(false);
 	}
 	else
 	{
@@ -523,15 +523,15 @@ ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
 }
 
 static void
-ArnMeshRenderGl( const ArnMesh* mesh )
+ArnMeshRenderGl( const ArnMesh* mesh, bool bIncludeShadeless )
 {
 	const ArnRenderableObject* renderable = mesh->getRenderableObject();
 	assert(renderable);
-	renderable->render();
+	renderable->render(bIncludeShadeless);
 }
 
 void
-ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
+ArnSceneGraphRenderGl( const ArnSceneGraph* sg, bool bIncludeShadeless )
 {
 	foreach (const ArnNode* node, sg->getChildren())
 	{
@@ -539,7 +539,9 @@ ArnSceneGraphRenderGl( const ArnSceneGraph* sg )
 		{
 			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
 			if (mesh->isVisible())
-				ArnMeshRenderGl(mesh);
+			{
+				ArnMeshRenderGl(mesh, bIncludeShadeless);
+			}
 		}
 		else if (node->getType() == NDT_RT_SKELETON)
 		{

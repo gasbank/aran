@@ -98,7 +98,7 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 		/* draw only the names in the stack, and fill the array */
 		glFlush();
 		SDL_GL_SwapBuffers();
-		ArnSceneGraphRenderGl(ac.sgPtr.get());
+		ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 		foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 		{
 			TreeDraw(*ikSolver->getTree());
@@ -564,7 +564,6 @@ RenderScene(const AppContext& ac)
 		ArnConfigureLightGl(0, ac.activeLight);
 	}
 
-
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
@@ -579,12 +578,44 @@ RenderScene(const AppContext& ac)
 	{
 		if (ac.sgPtr)
 		{
-			ArnSceneGraphRenderGl(ac.sgPtr.get());
+			ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 		}
 	}
 	glPopMatrix();
 
+	// Render shadow
+	// light vector. LIGHTZ is implicitly 1
+	static const float LIGHTX = 1.0f;
+	static const float LIGHTY = 1.0f;
+	static const float SHADOW_INTENSITY = 0.65f;
+	static const float GROUND_R = 0.5f; 	// ground color for when there's no texture
+	static const float GROUND_G = 0.5f;
+	static const float GROUND_B = 0.5f;
+	glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
+	glDisable(GL_BLEND);
+	glDisable(GL_LIGHTING);
+	glDisable(GL_TEXTURE_2D);
+	glColor3f(GROUND_R*SHADOW_INTENSITY, GROUND_G*SHADOW_INTENSITY, GROUND_B*SHADOW_INTENSITY);
+	glDepthRange(0, 0.9999);
+	GLfloat matrix[16];
+	for (int i = 0; i < 16; i++)
+		matrix[i] = 0;
+	matrix[ 0] = 1;
+	matrix[ 5] = 1;
+	matrix[ 8] = -LIGHTX;
+	matrix[ 9] = -LIGHTY;
+	matrix[15] = 1;
+	glPushMatrix();
+	glMultMatrixf(matrix);
+	if (ac.sgPtr)
+	{
+		ArnSceneGraphRenderGl(ac.sgPtr.get(), false);
+	}
+	glPopMatrix();
+	glPopAttrib();
+
 	// Render COM indicator and contact points of a biped.
+	glPushAttrib(GL_DEPTH_BUFFER_BIT);
 	glDisable(GL_DEPTH_TEST);
 	{
 		if (ac.trunk)
@@ -618,7 +649,7 @@ RenderScene(const AppContext& ac)
 		}
 		*/
 	}
-	glEnable(GL_DEPTH_TEST);
+	glPopAttrib();
 }
 
 static void

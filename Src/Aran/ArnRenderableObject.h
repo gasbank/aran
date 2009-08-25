@@ -21,7 +21,7 @@ public:
 	 * ArnMesh라면 메시가 렌더링되는 함수가 호출되고, ArnTexture라면 텍스처가
 	 * 렌더러 컨텍스트에 바인딩되는 등의 일을 하는 함수입니다.
 	 */
-	virtual int								render() const = 0; // TODO: ArnMesh---render, ArnTexture---bind?
+	virtual int								render(bool bIncludeShadeless) const = 0; // TODO: ArnMesh---render, ArnTexture---bind?
 	virtual void							cleanup()  = 0;
 	/*!
 	 * @brief 렌더러 컨텍스트 의존 자료의 초기화 여부 알아내기
