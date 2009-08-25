@@ -741,7 +741,12 @@ ArnLight::createFrom( const TiXmlElement* elm )
 	{
 		// Directional light
 		ret->m_d3dLight.Type = ARNLIGHT_DIRECTIONAL;
-		ARN_THROW_NOT_IMPLEMENTED_ERROR
+		ArnVec3 negZ(0, 0, 1);
+		ArnVec3 dir;
+		ArnMatrix rot;
+		ret->getLocalXform_Rot().getRotationMatrix(&rot);
+		ArnVec3TransformCoord(&dir, &negZ, &rot);
+		ret->m_d3dLight.Direction = dir;
 	}
 	else
 	{

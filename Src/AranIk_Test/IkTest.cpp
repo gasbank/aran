@@ -564,6 +564,7 @@ RenderScene(const AppContext& ac)
 		ArnConfigureLightGl(0, ac.activeLight);
 	}
 
+
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 

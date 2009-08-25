@@ -130,12 +130,12 @@ ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 		else if (lightType == 3)
 		{
 			// Directional light (e.g. sunlight)
-			ArnVec4 dir(light->getD3DLightData().Direction, 1);
+			ArnVec4 dir(light->getD3DLightData().Direction, 0);
 			float cutoff = 180;
 			glPushMatrix();
 			{
 				//glLoadIdentity();
-				glLightfv(GL_LIGHT0 + lightId, GL_SPOT_DIRECTION, dir.getRawData());
+				glLightfv(GL_LIGHT0 + lightId, GL_POSITION, dir.getRawData());
 			}
 			glPopMatrix();
 			glLightfv(GL_LIGHT0 + lightId, GL_SPOT_CUTOFF, &cutoff);
@@ -402,19 +402,30 @@ ArnSetupBasicMaterialGl(const ArnMaterialData* mtrlData)
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&mtrlData->Diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&mtrlData->Specular);
 	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&mtrlData->Emissive);
-	const static float shininess = 100.0f;
+	const static float shininess = 5.0f;
 	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
 }
 
 void
 ArnSetupBasicMaterialGl(const ArnColorValue4f* color)
 {
-	glMaterialfv(GL_FRONT, GL_AMBIENT, (const GLfloat*)color);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
-	glMaterialfv(GL_FRONT, GL_EMISSION, (const GLfloat*)&ArnConsts::ARNCOLOR_BLACK);
-	const static float shininess = 0;
-	glMaterialfv(GL_FRONT, GL_SHININESS, &shininess);
+	GLfloat light_ambient[4], light_diffuse[4], light_specular[4];
+	light_ambient[0] = color->r*0.3f;
+	light_ambient[1] = color->g*0.3f;
+	light_ambient[2] = color->b*0.3f;
+	light_ambient[3] = color->a;
+	light_diffuse[0] = color->r*0.7f;
+	light_diffuse[1] = color->g*0.7f;
+	light_diffuse[2] = color->b*0.7f;
+	light_diffuse[3] = color->a;
+	light_specular[0] = color->r*0.2f;
+	light_specular[1] = color->g*0.2f;
+	light_specular[2] = color->b*0.2f;
+	light_specular[3] = color->a;
+	glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT, light_ambient);
+	glMaterialfv (GL_FRONT_AND_BACK, GL_DIFFUSE, light_diffuse);
+	glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, light_specular);
+	glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 5.0f);
 }
 
 void
