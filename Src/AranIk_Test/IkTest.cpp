@@ -683,8 +683,11 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		ac.footR = ac.swPtr->getBodyByNameFromSet("Foot.R");
 		ac.footL = ac.swPtr->getBodyByNameFromSet("Foot.L");
 
-		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
-		std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
+		if (ac.trunk)
+		{
+			ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+			std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
+		}
 	}
 	return 0;
 }
