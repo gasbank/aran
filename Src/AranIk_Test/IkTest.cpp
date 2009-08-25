@@ -643,7 +643,6 @@ RenderHud(const AppContext& ac)
 		ArnDrawAxesGl(0.5f);
 		if (ac.supportPolygon.size())
 		{
-
 			glBegin(GL_LINE_LOOP);
 			foreach (const ArnVec3& v, ac.supportPolygon)
 			{
@@ -656,7 +655,6 @@ RenderHud(const AppContext& ac)
 		glEnd();
 	glPopMatrix();
 	glPopAttrib();
-
 
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
