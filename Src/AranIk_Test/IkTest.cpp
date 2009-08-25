@@ -523,17 +523,19 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footL, ac.contactCheckPlane);
 	}
 
-	size_t isectsCount = ac.isects.size();
-	if (isectsCount)
+	unsigned int contactCount = ac.swPtr->getContactCount();
+	if (contactCount)
 	{
 		std::vector<Point_2> isectsCgal;
-		//isectsCgal.resize(isectsCount);
-		foreach (const ArnVec3& isect, ac.isects)
+		for (unsigned int i = 0; i < contactCount; ++i)
 		{
-			isectsCgal.push_back(Point_2(isect.x, isect.y));
+			ArnVec3 contactPos;
+			ac.swPtr->getContactPosition(i, &contactPos);
+			isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
 		}
+
 		std::vector<Point_2> out;
-		out.resize(isectsCount);
+		out.resize(contactCount);
 		std::vector<Point_2>::iterator outEnd;
 
 		outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
@@ -626,7 +628,7 @@ RenderScene(const AppContext& ac)
 			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
-
+		/*
 		foreach (const ArnVec3& isect, ac.isects)
 		{
 			glPushMatrix();
@@ -635,19 +637,19 @@ RenderScene(const AppContext& ac)
 			ArnRenderSphereGl(0.015, 16, 16);
 			glPopMatrix();
 		}
-		/*
-		unsigned int contactCount = swPtr->getContactCount();
+		*/
+
+		unsigned int contactCount = ac.swPtr->getContactCount();
 		for (unsigned int i = 0; i < contactCount; ++i)
 		{
 			ArnVec3 contactPos;
-			swPtr->getContactPosition(i, &contactPos);
+			ac.swPtr->getContactPosition(i, &contactPos);
 			glPushMatrix();
 			glTranslatef(contactPos.x, contactPos.y, contactPos.z);
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
 			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
-		*/
 	}
 	glPopAttrib();
 }
@@ -669,7 +671,7 @@ RenderHud(const AppContext& ac)
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 		glLoadIdentity();
-		glTranslatef(0.5, -0.4, 0);
+		glTranslatef(0.5, 0, 0);
 		glScalef(0.25, 0.25, 1);
 
 		ArnDrawAxesGl(0.5f);

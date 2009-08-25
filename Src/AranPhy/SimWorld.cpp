@@ -162,33 +162,49 @@ SimWorld::placePiston(const char* name, const ArnVec3& com, const ArnVec3& size,
 static void
 NearCallback(void* data, dGeomID o1, dGeomID o2)
 {
-	OdeSpaceContext* osc = reinterpret_cast<OdeSpaceContext*>(data);
-	assert(osc);
-	dBodyID b1 = dGeomGetBody(o1);
-	dBodyID b2 = dGeomGetBody(o2);
-
-	// Exclude contact between bodies which are connected by a certain joint.
-	if (b1 && b2 && dAreConnectedExcluding(b1, b2, dJointTypeContact))
-		return;
-
-	memset(osc->contacts, 0, sizeof(dContact) * osc->MAXIMUM_CONTACT_COUNT);
-	osc->numContact = dCollide(o1, o2, osc->MAXIMUM_CONTACT_COUNT, &osc->contacts[0].geom, sizeof(dContact));
-	for (int i = 0; i < osc->numContact; i++)
+	if (dGeomIsSpace (o1) || dGeomIsSpace (o2))
 	{
-		//osc->contacts[i].surface.mode = dContactSoftCFM; //dContactSoftERP; // | ;
-		osc->contacts[i].surface.mode = 0;
-		osc->contacts[i].surface.mu   = dInfinity; //2.0;
-		//osc->contacts[i].surface.mu   = 2.0;
-		//osc->contacts[i].surface.mu   = 0;
+		// colliding a space with something :
+		dSpaceCollide2 (o1, o2, data,&NearCallback);
 
-		//osc->contacts[i].surface.mu   = 500;
-		//osc->contacts[i].surface.soft_erp = 0.9;
-		//osc->contacts[i].surface.soft_erp = 0.0001;
-		osc->contacts[i].surface.soft_cfm = 0.01;
-
-		dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &osc->contacts[i]);
-		dJointAttach(c, b1, b2);
+		// collide all geoms internal to the space(s)
+		if (dGeomIsSpace (o1))
+			dSpaceCollide ((dSpaceID)o1, data, &NearCallback);
+		if (dGeomIsSpace (o2))
+			dSpaceCollide ((dSpaceID)o2, data, &NearCallback);
 	}
+	else
+	{
+        // colliding two non-space geoms, so generate contact
+        // points between o1 and o2
+		OdeSpaceContext* osc = reinterpret_cast<OdeSpaceContext*>(data);
+		assert(osc);
+		dBodyID b1 = dGeomGetBody(o1);
+		dBodyID b2 = dGeomGetBody(o2);
+
+		// Exclude contact between bodies which are connected by a certain joint.
+		if (b1 && b2 && dAreConnectedExcluding(b1, b2, dJointTypeContact))
+			return;
+
+		//memset(osc->contacts, 0, sizeof(dContact) * osc->MAXIMUM_CONTACT_COUNT);
+		osc->numContact += dCollide(o1, o2, osc->MAXIMUM_CONTACT_COUNT, &osc->contacts[osc->numContact].geom, sizeof(dContact));
+		for (int i = 0; i < osc->numContact; i++)
+		{
+			//osc->contacts[i].surface.mode = dContactSoftCFM; //dContactSoftERP; // | ;
+			osc->contacts[i].surface.mode = 0;
+			osc->contacts[i].surface.mu   = dInfinity; //2.0;
+			//osc->contacts[i].surface.mu   = 2.0;
+			//osc->contacts[i].surface.mu   = 0;
+
+			//osc->contacts[i].surface.mu   = 500;
+			//osc->contacts[i].surface.soft_erp = 0.9;
+			//osc->contacts[i].surface.soft_erp = 0.0001;
+			osc->contacts[i].surface.soft_cfm = 0.01;
+
+			dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &osc->contacts[i]);
+			dJointAttach(c, b1, b2);
+		}
+    }
 }
 
 void
@@ -196,7 +212,16 @@ SimWorld::updateFrame(double elapsedTime)
 {
 	m_totalElapsedTime += elapsedTime;
 
+	/*
+	 * Clear all contact joints and test for collision.
+	 * Since dSpaceCollide() will be called recursively,
+	 * we must clear the previous frames contact joints
+	 * at this time.
+	 */
+	m_osc->numContact = 0;
+	memset(m_osc->contacts, 0, sizeof(dContact) * m_osc->MAXIMUM_CONTACT_COUNT);
 	dSpaceCollide(m_osc->space, m_osc, &NearCallback);
+
 	dWorldStep(m_osc->world, elapsedTime);
 	//dWorldQuickStep(m_osc->world, elapsedTime);
 	dJointGroupEmpty(m_osc->contactGroup);
