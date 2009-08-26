@@ -190,16 +190,11 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 		osc->numContact += dCollide(o1, o2, osc->MAXIMUM_CONTACT_COUNT, &osc->contacts[osc->numContact].geom, sizeof(dContact));
 		for (int i = 0; i < osc->numContact; i++)
 		{
-			//osc->contacts[i].surface.mode = dContactSoftCFM; //dContactSoftERP; // | ;
-			osc->contacts[i].surface.mode = 0;
+			osc->contacts[i].surface.mode = /*dContactSoftCFM |*/ dContactSoftERP;
+			//osc->contacts[i].surface.mode = 0;
 			osc->contacts[i].surface.mu   = dInfinity; //2.0;
-			//osc->contacts[i].surface.mu   = 2.0;
-			//osc->contacts[i].surface.mu   = 0;
-
-			//osc->contacts[i].surface.mu   = 500;
-			//osc->contacts[i].surface.soft_erp = 0.9;
-			//osc->contacts[i].surface.soft_erp = 0.0001;
-			osc->contacts[i].surface.soft_cfm = 0.01;
+			osc->contacts[i].surface.soft_erp = 0.0001;
+			osc->contacts[i].surface.soft_cfm = 0;
 
 			dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &osc->contacts[i]);
 			dJointAttach(c, b1, b2);

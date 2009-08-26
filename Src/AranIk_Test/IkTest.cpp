@@ -936,13 +936,14 @@ DoMain()
 	}
 
 	/// 프로그램 메인 루프를 시작합니다.
-	unsigned int frames = 0;
-	unsigned int start_time = SDL_GetTicks();
-	MessageHandleResult done = MHR_DO_NOTHING;
-	unsigned int frameStartMs = 0;
-	unsigned int frameDurationMs = 0;
-	unsigned int frameEndMs = 0;
-	while( done != MHR_EXIT_APP )
+	static unsigned int frames = 0;
+	static unsigned int start_time;
+	static unsigned int frameStartMs = 0;
+	static unsigned int frameDurationMs = 0;
+	static unsigned int frameEndMs = 0;
+	static bool bExitLoop = false;
+	start_time = SDL_GetTicks();
+	while( !bExitLoop )
 	{
 		frameDurationMs = frameEndMs - frameStartMs;
 		frameStartMs = SDL_GetTicks();
@@ -974,6 +975,7 @@ DoMain()
 
 		while( SDL_PollEvent( &event ) )
 		{
+			static MessageHandleResult done;
 			done = HandleEvent(&event, ac);
 
 			int reconfigScene = false;
@@ -1010,6 +1012,9 @@ DoMain()
 				InitializeRendererIndependentsFromSg(ac);
 				InitializeRendererDependentsFromSg(ac);
 			}
+
+			if (done == MHR_EXIT_APP)
+				bExitLoop = true;
 		}
 		++frames;
 		frameEndMs = SDL_GetTicks();
