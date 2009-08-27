@@ -508,12 +508,14 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
 	ac.activeCam->recalcLocalXform();
 
+	ac.isects.clear();
 	if (ac.trunk)
 	{
 		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
+		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
 	}
-
-	ac.isects.clear();
+	/*
 	if (ac.footR)
 	{
 		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footR, ac.contactCheckPlane);
@@ -522,15 +524,27 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	{
 		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footL, ac.contactCheckPlane);
 	}
+	*/
 
-	unsigned int contactCount = ac.swPtr->getContactCount();
+	//unsigned int contactCount = ac.swPtr->getContactCount();
+	ac.supportPolygon.clear();
+
+
+
+	unsigned int contactCount = ac.isects.size();
 	if (contactCount)
 	{
 		std::vector<Point_2> isectsCgal;
+		/*
 		for (unsigned int i = 0; i < contactCount; ++i)
 		{
 			ArnVec3 contactPos;
 			ac.swPtr->getContactPosition(i, &contactPos);
+			isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
+		}
+		*/
+		foreach (const ArnVec3& contactPos, ac.isects)
+		{
 			isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
 		}
 
@@ -540,7 +554,6 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 
 		outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
 
-		ac.supportPolygon.clear();
 		for (std::vector<Point_2>::const_iterator it = out.begin(); it != outEnd; ++it)
 		{
 			const Point_2& p = *it;
@@ -628,17 +641,17 @@ RenderScene(const AppContext& ac)
 			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
-		/*
+
 		foreach (const ArnVec3& isect, ac.isects)
 		{
 			glPushMatrix();
 			glTranslatef(isect.x, isect.y, isect.z);
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
-			ArnRenderSphereGl(0.015, 16, 16);
+			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
-		*/
 
+		/*
 		unsigned int contactCount = ac.swPtr->getContactCount();
 		for (unsigned int i = 0; i < contactCount; ++i)
 		{
@@ -650,6 +663,7 @@ RenderScene(const AppContext& ac)
 			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
+		*/
 	}
 	glPopAttrib();
 }
@@ -757,6 +771,9 @@ InitializeAppContextOnce(AppContext& ac)
 	ac.avd.Height	= AppContext::windowHeight;
 	ac.avd.MinZ		= 0;
 	ac.avd.MaxZ		= 1.0f;
+
+	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
+	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
 
 	/// 다음 카메라로 변경 플래그 초기화
 	ac.bNextCamera	= false;

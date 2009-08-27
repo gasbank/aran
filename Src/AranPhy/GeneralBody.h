@@ -9,6 +9,7 @@
 #include "ArnObject.h"
 
 class ArnXformable;
+class ArnPlane;
 struct OdeSpaceContext;
 
 struct GeneralBodyState
@@ -72,6 +73,9 @@ public:
 	 * @brief 이 강체를 포함해 관절로 연결된 모든 강체를 하나의 강체로 봤을 때의 COM 반환
 	 */
 	void							calculateLumpedComAndMass(ArnVec3* com, float* mass) const;
+	void							calculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane) const;
+	void							calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const;
+
 	//@}
 	/*! @name 회전
 	 * 강체의 회전 상태를 Euler 각도, 사원수 혹은 행렬 형태로 설정하거나 읽어올 수 있습니다.

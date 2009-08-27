@@ -192,7 +192,8 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 		{
 			osc->contacts[i].surface.mode = /*dContactSoftCFM |*/ dContactSoftERP;
 			//osc->contacts[i].surface.mode = 0;
-			osc->contacts[i].surface.mu   = dInfinity; //2.0;
+			//osc->contacts[i].surface.mu   = dInfinity; //2.0;
+			osc->contacts[i].surface.mu   = 500.0;
 			osc->contacts[i].surface.soft_erp = 0.0001;
 			osc->contacts[i].surface.soft_cfm = 0;
 

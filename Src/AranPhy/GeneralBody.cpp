@@ -2,6 +2,7 @@
 #include "GeneralBody.h"
 #include "UtilFunc.h"
 #include "ArnXformable.h"
+#include "AranPhy.h"
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 : ArnObject(NDT_RT_GENERALBODY)
@@ -335,4 +336,143 @@ void
 GeneralBody::calculateLumpedComAndMass(ArnVec3* com, float* mass) const
 {
 	CalculateLumpedComAndMass(com, mass, getBodyId(), getBodyId(), 0);
+}
+
+
+static void
+CalculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane, dBodyID body, dBodyID parentBody, int depth)
+{
+	int numJoint = dBodyGetNumJoints(body);
+	dGeomID geom = dBodyGetFirstGeom(body);
+	assert(dGeomGetClass(geom) == dBoxClass);
+	dVector3 boxSize;
+	dGeomBoxGetLengths(geom, boxSize);
+	/*
+	const dReal* boxPos = dGeomGetPosition(geom);
+	const dReal* boxQ = dGeomGetRotation(geom);
+	*/
+	const dReal* boxPos = dBodyGetPosition(body);
+	const dReal* boxQ = dBodyGetQuaternion(body);
+	ArnXformedBoxPlaneIntersection(
+		isects,
+		ArnVec3(boxSize[0], boxSize[1], boxSize[2]),
+		ArnVec3(boxPos[0], boxPos[1], boxPos[2]),
+		ArnQuat(boxQ[1], boxQ[2], boxQ[3], boxQ[0]),
+		plane
+	);
+#if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0
+	for (int i = 0; i < depth; ++i)
+		std::cout << "  ";
+	unsigned int objectId = reinterpret_cast<unsigned long>(dBodyGetData(body)) & 0xffffffff;
+	ArnObject* arnObj = ArnObject::getObjectById(objectId);
+	assert(arnObj);
+	std::cout << arnObj->getName() << " " << boxPos[0] << " " << boxPos[1] << " " << boxPos[2] << std::endl;
+#endif // ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
+
+	for (int i = 0; i < numJoint; ++i)
+	{
+		dJointID joint = dBodyGetJoint(body, i);
+		int jointType = dJointGetType(joint);
+		if (jointType != dJointTypeBall
+		 && jointType != dJointTypeHinge
+		 && jointType != dJointTypeUniversal)
+		{
+		 	continue;
+		}
+		dBodyID body2 = dJointGetBody(joint, 0);
+		if (body2 == body)
+			body2 = dJointGetBody(joint, 1);
+		if (body2 == parentBody)
+			continue;
+
+		CalculateLumpedIntersection(isects, plane, body2, body, depth + 1);
+	}
+}
+
+static void
+CalculateLumpedGroundIntersection(std::list<ArnVec3>& isects, dBodyID body, dBodyID parentBody, int depth)
+{
+	int numJoint = dBodyGetNumJoints(body);
+	dGeomID geom = dBodyGetFirstGeom(body);
+	assert(dGeomGetClass(geom) == dBoxClass);
+	dVector3 boxSize;
+	dGeomBoxGetLengths(geom, boxSize);
+	/*
+	const dReal* boxPos = dGeomGetPosition(geom);
+	const dReal* boxQ = dGeomGetRotation(geom);
+	*/
+
+	const dReal* boxPos = dBodyGetPosition(body);
+	const dReal* boxQ = dBodyGetQuaternion(body);
+
+	const float x = boxSize[0] / 2;
+	const float y = boxSize[1] / 2;
+	const float z = boxSize[2] / 2;
+
+	ArnVec3 p[8];
+	p[0].set(  x,  y,  z);
+	p[1].set(  x,  y, -z);
+	p[2].set(  x, -y,  z);
+	p[3].set(  x, -y, -z);
+	p[4].set( -x,  y,  z);
+	p[5].set( -x,  y, -z);
+	p[6].set( -x, -y,  z);
+	p[7].set( -x, -y, -z);
+	for (int i = 0; i < 8; ++i)
+	{
+		ArnMatrix rotMat;
+		ArnQuat q(boxQ[1], boxQ[2], boxQ[3], boxQ[0]);
+		q.getRotationMatrix(&rotMat);
+		ArnVec3 tp;
+		ArnVec3TransformCoord(&tp, &p[i], &rotMat);
+		p[i] = tp;
+		p[i].x += boxPos[0];
+		p[i].y += boxPos[1];
+		p[i].z += boxPos[2];
+
+		//if (-0.001f <= p[i].z && p[i].z <= 0.001f)
+		//{
+			isects.push_back(p[i]);
+		//}
+	}
+
+#if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0
+	for (int i = 0; i < depth; ++i)
+		std::cout << "  ";
+	unsigned int objectId = reinterpret_cast<unsigned long>(dBodyGetData(body)) & 0xffffffff;
+	ArnObject* arnObj = ArnObject::getObjectById(objectId);
+	assert(arnObj);
+	std::cout << arnObj->getName() << " " << boxPos[0] << " " << boxPos[1] << " " << boxPos[2] << std::endl;
+#endif // ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
+
+	for (int i = 0; i < numJoint; ++i)
+	{
+		dJointID joint = dBodyGetJoint(body, i);
+		int jointType = dJointGetType(joint);
+		if (jointType != dJointTypeBall
+		 && jointType != dJointTypeHinge
+		 && jointType != dJointTypeUniversal)
+		{
+		 	continue;
+		}
+		dBodyID body2 = dJointGetBody(joint, 0);
+		if (body2 == body)
+			body2 = dJointGetBody(joint, 1);
+		if (body2 == parentBody)
+			continue;
+
+		CalculateLumpedGroundIntersection(isects, body2, body, depth + 1);
+	}
+}
+
+void
+GeneralBody::calculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane) const
+{
+	CalculateLumpedIntersection(isects, plane, getBodyId(), getBodyId(), 0);
+}
+
+void
+GeneralBody::calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const
+{
+	CalculateLumpedGroundIntersection(isects, getBodyId(), getBodyId(), 0);
 }

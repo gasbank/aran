@@ -21,7 +21,9 @@ public:
 						~ArnPlane() {}
 	const ArnVec3&		getV0() const { return m_v0; }
 	const ArnVec3&		getNormal() const;
+	void				setV0(const ArnVec3& v0) { m_v0 = v0; }
+	void				setNormal(const ArnVec3& normal) { m_normal = normal; }
 private:
-	ArnVec3				m_v0;			///< A point in the plane
 	ArnVec3				m_normal;		///< Plane normal (should be normalized)
+	ArnVec3				m_v0;			///< A point in the plane
 };
