@@ -10,6 +10,7 @@
 #include <CGAL/functional.h>
 #include <CGAL/double.h>
 #include <CGAL/convex_hull_2.h>
+#include <boost/circular_buffer.hpp>
 typedef double RT;
 
 // define point creator
@@ -18,32 +19,42 @@ typedef   CGAL::Point_2<CGAL::Cartesian<double> >        Point_2;
 class AppContext : private Uncopyable
 {
 public:
-	static const int			windowWidth			= 800;
-	static const int			windowHeight		= 600;
-
-	ArnViewportData				avd;
-	std::vector<std::string>	sceneList;
-	int							curSceneIndex;
-	ArnSceneGraphPtr			sgPtr;
-	SimWorldPtr					swPtr;
-	ArnCamera*					activeCam;
-	ArnLight*					activeLight;
-	std::vector<ArnIkSolver*>	ikSolvers;
-	GeneralBodyPtr				trunk, footR, footL;
-	ArnPlane					contactCheckPlane;
-	ArnVec3						bipedComPos;
-	float						bipedMass;
-	float						linVelX;
-	float						linVelZ;
-	float						torque;
-	float						torqueAnkle;
-	char						bHoldingKeys[SDLK_LAST];
-	bool						bNextCamera;
+											AppContext();
+											~AppContext();
+	static const int						windowWidth			= 800;
+	static const int						windowHeight		= 600;
+	ArnViewportData							avd;
+	std::vector<std::string>				sceneList;
+	int										curSceneIndex;
+	ArnSceneGraphPtr						sgPtr;
+	SimWorldPtr								swPtr;
+	ArnCamera*								activeCam;
+	ArnLight*								activeLight;
+	std::vector<ArnIkSolver*>				ikSolvers;
+	GeneralBodyPtr							trunk, footR, footL;
+	ArnPlane								contactCheckPlane;
+	boost::circular_buffer<ArnVec3>			bipedComPos;
+	float									bipedMass;
+	float									linVelX;
+	float									linVelZ;
+	float									torque;
+	float									torqueAnkle;
+	char									bHoldingKeys[SDLK_LAST];
+	bool									bNextCamera;
 
 	// Volatile: should be clear()-ed every frame.
-	std::list<ArnVec3>			isects;					///< Foot-ground intersection points
-	std::vector<ArnVec3>		supportPolygon;			///< Support polygon
+	std::list<ArnVec3>						isects;					///< Foot-ground intersection points
+	std::vector<ArnVec3>					supportPolygon;			///< Support polygon
 };
+
+AppContext::AppContext()
+: bipedComPos(50)
+{
+}
+
+AppContext::~AppContext()
+{
+}
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -431,7 +442,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	// Physics simulation frequency (Hz)
 	// higher --> accurate, stable, slow
 	// lower  --> errors, unstable, fast
-	static const unsigned int simFreq = 200;
+	static const unsigned int simFreq = 150;
 	// Maximum simulation step iteration count for clamping
 	// to keep app from advocating all resources to step further.
 	static const unsigned int simMaxIteration = 100;
@@ -511,7 +522,9 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	ac.isects.clear();
 	if (ac.trunk)
 	{
-		ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+		ArnVec3 bipedComPos;
+		ac.trunk->calculateLumpedComAndMass(&bipedComPos, &ac.bipedMass);
+		ac.bipedComPos.push_back(bipedComPos);
 		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
 	}
@@ -531,12 +544,12 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 
 
 
-	unsigned int contactCount = ac.isects.size();
-	if (contactCount)
+	unsigned int isectsCount = ac.isects.size();
+	if (isectsCount)
 	{
 		std::vector<Point_2> isectsCgal;
 		/*
-		for (unsigned int i = 0; i < contactCount; ++i)
+		for (unsigned int i = 0; i < isectsCount; ++i)
 		{
 			ArnVec3 contactPos;
 			ac.swPtr->getContactPosition(i, &contactPos);
@@ -549,7 +562,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		}
 
 		std::vector<Point_2> out;
-		out.resize(contactCount);
+		out.resize(isectsCount);
 		std::vector<Point_2>::iterator outEnd;
 
 		outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
@@ -636,12 +649,30 @@ RenderScene(const AppContext& ac)
 		if (ac.trunk)
 		{
 			glPushMatrix();
-			glTranslatef(ac.bipedComPos.x, ac.bipedComPos.y, ac.bipedComPos.z);
+			const ArnVec3& bipedComPos = *ac.bipedComPos.rbegin();
+			glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
 			ArnRenderSphereGl(0.025, 16, 16);
+
+			ArnVec3 netContactForce;
+			const unsigned int contactCount = ac.swPtr->getContactCount();
+			for (unsigned int i = 0; i < contactCount; ++i)
+			{
+				ArnVec3 contactForce;
+				ac.swPtr->getContactForce1(i, &contactForce);
+				netContactForce += contactForce;
+			}
+			glEnable(GL_COLOR_MATERIAL);
+			glBegin(GL_LINES);
+			glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
+			glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
+			glEnd();
+			glDisable(GL_COLOR_MATERIAL);
+			//printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
 			glPopMatrix();
 		}
 
+		/*
 		foreach (const ArnVec3& isect, ac.isects)
 		{
 			glPushMatrix();
@@ -650,20 +681,41 @@ RenderScene(const AppContext& ac)
 			ArnRenderSphereGl(0.025, 16, 16);
 			glPopMatrix();
 		}
+		*/
 
-		/*
-		unsigned int contactCount = ac.swPtr->getContactCount();
+		const unsigned int contactCount = ac.swPtr->getContactCount();
 		for (unsigned int i = 0; i < contactCount; ++i)
 		{
-			ArnVec3 contactPos;
+			ArnVec3 contactPos, contactForce;
 			ac.swPtr->getContactPosition(i, &contactPos);
 			glPushMatrix();
-			glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-			ArnRenderSphereGl(0.025, 16, 16);
+			{
+				glTranslatef(contactPos.x, contactPos.y, contactPos.z);
+				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+				ArnRenderSphereGl(0.025, 16, 16);
+
+				/*
+
+				ac.swPtr->getContactForce1(i, &contactForce);
+				//contactForce /= 100;
+				glEnable(GL_COLOR_MATERIAL);
+				glBegin(GL_LINES);
+				glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
+				glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
+				glEnd();
+				glDisable(GL_COLOR_MATERIAL);
+
+				ac.swPtr->getContactForce2(i, &contactForce);
+				glEnable(GL_COLOR_MATERIAL);
+				glBegin(GL_LINES);
+				glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
+				glColor3f(0, 0, 1); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
+				glEnd();
+				glDisable(GL_COLOR_MATERIAL);
+				*/
+			}
 			glPopMatrix();
 		}
-		*/
 	}
 	glPopAttrib();
 }
@@ -680,7 +732,7 @@ RenderHud(const AppContext& ac)
 
 	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_LIGHTING_BIT | GL_LINE_BIT | GL_POINT_BIT);
 	glLineWidth(1);
-	glPointSize(8);
+	glPointSize(4);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
@@ -699,7 +751,13 @@ RenderHud(const AppContext& ac)
 			glEnd();
 		}
 		glBegin(GL_POINTS);
-		glColor3f(0, 0, 0); glVertex2f(ac.bipedComPos.x, ac.bipedComPos.y);
+		float trail = 0;
+		const float trailDiff = 1.0f / ac.bipedComPos.size();
+		foreach (const ArnVec3& comPos, ac.bipedComPos)
+		{
+			glColor4f(1, 0, 0, trail); glVertex2f(comPos.x, comPos.y);
+			trail += trailDiff;
+		}
 		glEnd();
 	glPopMatrix();
 	glPopAttrib();
@@ -732,7 +790,10 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 
 		if (ac.trunk)
 		{
-			ac.trunk->calculateLumpedComAndMass(&ac.bipedComPos, &ac.bipedMass);
+			ac.bipedComPos.clear();
+			ArnVec3 comPos;
+			ac.trunk->calculateLumpedComAndMass(&comPos, &ac.bipedMass);
+			ac.bipedComPos.push_back(comPos);
 			std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
 		}
 	}

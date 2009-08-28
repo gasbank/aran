@@ -73,11 +73,12 @@ static const int JointAxisEnumStringsCorr[] = {
  */
 struct OdeSpaceContext
 {
-	dWorldID			world;								///< ODE World ID
-	dSpaceID			space;								///< ODE Space ID
-	dGeomID				plane;								///< ODE Plane ID: Z=0인 고정된 바닥(땅)
-	dJointGroupID		contactGroup;						///< ODE JointGroup ID: 강체간 접촉 그룹 ID
-	static const int	MAXIMUM_CONTACT_COUNT = 100;		///< 최대 접촉점 확인 개수
-	int					numContact;							///< 접촉점 저장 공간의 유효한 요소 개수
-	dContact			contacts[MAXIMUM_CONTACT_COUNT];	///< 접촉점 저장 공간
+	dWorldID			world;										///< ODE World ID
+	dSpaceID			space;										///< ODE Space ID
+	dGeomID				plane;										///< ODE Plane ID: Z=0인 고정된 바닥(땅)
+	dJointGroupID		contactGroup;								///< ODE JointGroup ID: 강체간 접촉 그룹 ID
+	static const int	MAXIMUM_CONTACT_COUNT = 100;				///< 최대 접촉점 확인 개수
+	int					numContact;									///< 접촉점 저장 공간의 유효한 요소 개수
+	dContact			contacts[MAXIMUM_CONTACT_COUNT];			///< 접촉점 저장 공간
+	dJointFeedback		contactFeedbacks[MAXIMUM_CONTACT_COUNT];	///< 접촉점 저장 공간
 };

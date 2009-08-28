@@ -190,15 +190,18 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 		osc->numContact += dCollide(o1, o2, osc->MAXIMUM_CONTACT_COUNT, &osc->contacts[osc->numContact].geom, sizeof(dContact));
 		for (int i = 0; i < osc->numContact; i++)
 		{
+			memset(&osc->contacts[i].surface, 0, sizeof(dSurfaceParameters));
 			osc->contacts[i].surface.mode = /*dContactSoftCFM |*/ dContactSoftERP;
 			//osc->contacts[i].surface.mode = 0;
 			//osc->contacts[i].surface.mu   = dInfinity; //2.0;
-			osc->contacts[i].surface.mu   = 500.0;
+			osc->contacts[i].surface.mu   = 10000.0;
+			//osc->contacts[i].surface.mu   = 0;
 			osc->contacts[i].surface.soft_erp = 0.0001;
-			osc->contacts[i].surface.soft_cfm = 0;
+			//osc->contacts[i].surface.soft_cfm = 0;
 
 			dJointID c = dJointCreateContact(osc->world, osc->contactGroup, &osc->contacts[i]);
 			dJointAttach(c, b1, b2);
+			dJointSetFeedback(c, &osc->contactFeedbacks[i]);
 		}
     }
 }
@@ -429,9 +432,26 @@ ArnVec3*
 SimWorld::getContactPosition(unsigned int i, ArnVec3* v) const
 {
 	assert(v && i < (unsigned int)m_osc->numContact);
-	v->x = m_osc->contacts[i].geom.pos[0];
-	v->y = m_osc->contacts[i].geom.pos[1];
-	v->z = m_osc->contacts[i].geom.pos[2];
+	const dReal* pos = m_osc->contacts[i].geom.pos;
+	ArnVec3Assign(v, pos);
+	return v;
+}
+
+ArnVec3*
+SimWorld::getContactForce1(unsigned int i, ArnVec3* v) const
+{
+	assert(v && i < (unsigned int)m_osc->numContact);
+	const dReal* f1 = m_osc->contactFeedbacks[i].f1;
+	ArnVec3Assign(v, f1);
+	return v;
+}
+
+ArnVec3*
+SimWorld::getContactForce2(unsigned int i, ArnVec3* v) const
+{
+	assert(v && i < (unsigned int)m_osc->numContact);
+	const dReal* f2 = m_osc->contactFeedbacks[i].f2;
+	ArnVec3Assign(v, f2);
 	return v;
 }
 
