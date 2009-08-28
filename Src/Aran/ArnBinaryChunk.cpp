@@ -155,6 +155,7 @@ ArnBinaryChunk::createFrom(const char* fileName, bool zlibCompressed, unsigned i
 			ret->m_recordSize = uncompressedSize;
 			ret->m_recordCount = 1;
 		}
+		fclose(f);
 	}
 	else
 	{
