@@ -479,5 +479,5 @@ bool
 ArnVec3IsNormalized(const ArnVec3& vec3)
 {
 	float len = ArnVec3Length(vec3);
-	return (1.0f - COMPARE_EPSILON <= len && len <= 1.0f + COMPARE_EPSILON);
+	return (1.0f - FLT_COMPARE_EPSILON <= len && len <= 1.0f + FLT_COMPARE_EPSILON);
 }

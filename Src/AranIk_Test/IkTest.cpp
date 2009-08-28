@@ -797,6 +797,10 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
 		}
 	}
+
+	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
+
+	delete skel;
 	return 0;
 }
 
