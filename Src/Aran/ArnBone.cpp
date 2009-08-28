@@ -18,6 +18,16 @@ ArnBone::~ArnBone(void)
 }
 
 ArnBone*
+ArnBone::createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll)
+{
+	ArnBone* ret = new ArnBone();
+	ret->m_headPos = head;
+	ret->m_tailPos = tail;
+	ret->m_roll = roll;
+	return ret;
+}
+
+ArnBone*
 ArnBone::createFrom( const NodeBase* nodeBase )
 {
 	ArnBone* node = new ArnBone();

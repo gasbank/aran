@@ -4,7 +4,7 @@
  * @date 2009
  */
 #include "IkTest.h"
-
+#include "ArnBone.h"
 #include <CGAL/Cartesian.h>
 #include <CGAL/ch_graham_andrew.h>
 #include <CGAL/functional.h>
@@ -799,7 +799,10 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 	}
 
 	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
-
+	ArnVec3 head, tail;
+	float roll = 0;
+	ArnBone* rootBone = ArnBone::createFrom(head, tail, roll);
+	skel->attachChild(rootBone);
 	delete skel;
 	return 0;
 }
