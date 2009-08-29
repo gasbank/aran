@@ -20,11 +20,18 @@ ArnBone::~ArnBone(void)
 ArnBone*
 ArnBone::createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll)
 {
-	ArnBone* ret = new ArnBone();
-	ret->m_headPos = head;
-	ret->m_tailPos = tail;
-	ret->m_roll = roll;
-	return ret;
+	ArnBone* bone = new ArnBone();
+	bone->m_headPos = head;
+	bone->m_tailPos = tail;
+	bone->m_roll = roll;
+
+	ArnVec3 boneDir(bone->getBoneDirection());
+	float boneLength = ArnVec3GetLength(boneDir);
+	ArnVec3 rotAxis(ArnVec3GetCrossProduct(ArnConsts::ARNVEC3_Y, boneDir / boneLength));
+	float rotAngle = acos(ArnVec3Dot(ArnConsts::ARNVEC3_Y, boneDir / boneLength) / boneLength);
+	ArnQuat q(ArnQuat::createFromRotAxis(rotAngle, rotAxis.x, rotAxis.y, rotAxis.z));
+	bone->setLocalXform_Rot(q);
+	return bone;
 }
 
 ArnBone*

@@ -35,6 +35,7 @@ public:
 	 * 뼈의 위치는 뼈의 굵은 부분(head) 위치와 가는 부분(tail)위치로 정의됩니다.
 	 * 이 때 뼈의 방향을 나타내는 벡터는 tail - head로 정의하며 이 함수는 그 벡터를 반환합니다.
 	 * 결과적으로 head에서 tail를 가리키는 벡터가 반환됩니다.
+	 * 이 벡터는 정규화되지 않습니다.
 	 */
 	ArnVec3									getBoneDirection() const { return ArnVec3Substract(m_tailPos, m_headPos); }
 

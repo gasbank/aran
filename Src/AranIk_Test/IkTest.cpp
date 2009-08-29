@@ -613,6 +613,7 @@ RenderScene(const AppContext& ac)
 
 	// Render shadow
 	// light vector. LIGHTZ is implicitly 1
+	/*
 	static const float LIGHTX = 1.0f;
 	static const float LIGHTY = 1.0f;
 	static const float SHADOW_INTENSITY = 0.65f;
@@ -641,6 +642,7 @@ RenderScene(const AppContext& ac)
 	}
 	glPopMatrix();
 	glPopAttrib();
+	*/
 
 	// Render COM indicator and contact points of a biped.
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
@@ -781,7 +783,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		delete ikSolver;
 	}
 	ac.ikSolvers.clear();
-	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	if (ac.swPtr)
 	{
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
@@ -798,12 +800,21 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		}
 	}
 
+
 	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
-	ArnVec3 head, tail;
+	skel->setName("Runtime SKeleton");
+	ArnVec3 head(0, 0, 0), tail(0, 1, 0);
 	float roll = 0;
 	ArnBone* rootBone = ArnBone::createFrom(head, tail, roll);
+	//rootBone->setLocalXform_Rot(ArnQuat::createFromEuler(ARN_PI/2, 0, 0));
+	rootBone->recalcLocalXform();
+
 	skel->attachChild(rootBone);
-	delete skel;
+	skel->setLocalXform_Trans(ArnVec3(-2, 0, 0));
+	skel->recalcLocalXform();
+	ac.sgPtr->attachChild(skel);
+
+
 	return 0;
 }
 
