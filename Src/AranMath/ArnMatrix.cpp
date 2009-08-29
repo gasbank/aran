@@ -2,6 +2,8 @@
 #include "ArnVec3.h"
 #include "ArnVec4.h"
 #include "ArnMatrix.h"
+#include "ArnQuat.h"
+#include "ArnMath.h"
 
 ArnMatrix::ArnMatrix()
 {
@@ -109,6 +111,21 @@ ArnVec3 ArnMatrix::getColumnVec3( unsigned int zeroindex ) const
 {
 	assert(zeroindex < 4);
 	return ArnVec3(m[0][zeroindex], m[1][zeroindex], m[2][zeroindex]);
+}
+
+void ArnMatrix::printFrameInfo() const
+{
+	printf("%6.3f %6.3f %6.3f %6.3f\n", m[0][0], m[0][1], m[0][2], m[0][3]);
+	printf("%6.3f %6.3f %6.3f %6.3f\n", m[1][0], m[1][1], m[1][2], m[1][3]);
+	printf("%6.3f %6.3f %6.3f %6.3f\n", m[2][0], m[2][1], m[2][2], m[2][3]);
+	printf("%6.3f %6.3f %6.3f %6.3f\n", m[3][0], m[3][1], m[3][2], m[3][3]);
+	ArnVec3 trans, scale;
+	ArnQuat q;
+	ArnMatrixDecompose(&scale, &q, &trans, this);
+	ArnVec3 rotEuler(ArnQuatToEuler(&q));
+	printf("Scaling             : %6.3f %6.3f %6.3f\n", scale.x, scale.y, scale.z);
+	printf("Rotation in Degrees : %6.3f %6.3f %6.3f\n", ArnToDegree(rotEuler.x), ArnToDegree(rotEuler.y), ArnToDegree(rotEuler.z));
+	printf("Translation         : %6.3f %6.3f %6.3f\n", trans.x, trans.y, trans.z);
 }
 
 //////////////////////////////////////////////////////////////////////////

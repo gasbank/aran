@@ -3,6 +3,10 @@
 #include "UtilFunc.h"
 #include "ArnXformable.h"
 #include "AranPhy.h"
+#include "Structs.h"
+#include "ArnSkeleton.h"
+#include "ArnBone.h"
+
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 : ArnObject(NDT_RT_GENERALBODY)
@@ -475,4 +479,70 @@ void
 GeneralBody::calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const
 {
 	CalculateLumpedGroundIntersection(isects, getBodyId(), getBodyId(), 0);
+}
+
+ArnVec3
+ArnxGetJointAnchor(dJointID j)
+{
+	dVector3 anc;
+	switch (dJointGetType(j))
+	{
+	case dJointTypeHinge:
+		dJointGetHingeAnchor(j, anc);
+		break;
+	case dJointTypeUniversal:
+		dJointGetUniversalAnchor(j, anc);
+		break;
+	case dJointTypeBall:
+		dJointGetBallAnchor(j, anc);
+		break;
+	default:
+		ARN_THROW_UNEXPECTED_CASE_ERROR
+	}
+	return ArnVec3(anc[0], anc[1], anc[2]);
+}
+
+void
+ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBody, int depth)
+{
+	int numJoint = dBodyGetNumJoints(body);
+	const ArnMatrix parentWorldXform = parent->computeWorldXform();
+	ArnMatrix parentWorldXformInv;
+	ArnMatrixInverse(&parentWorldXformInv, 0, &parentWorldXform);
+	const ArnVec3 headPos(parentWorldXform.getColumnVec3(3));
+	for (int i = 0; i < numJoint; ++i)
+	{
+		dJointID joint = dBodyGetJoint(body, i);
+		int jointType = dJointGetType(joint);
+		if (jointType != dJointTypeBall
+		 && jointType != dJointTypeHinge
+		 && jointType != dJointTypeUniversal)
+		{
+		 	continue;
+		}
+		dBodyID body2 = dJointGetBody(joint, 0);
+		if (body2 == body)
+			body2 = dJointGetBody(joint, 1);
+		if (body2 == parentBody)
+			continue;
+		ArnVec3 tail(ArnxGetJointAnchor(joint));
+		ArnVec3TransformCoord(&tail, &tail, &parentWorldXformInv);
+		float roll = 0;
+		ArnBone* b = ArnBone::createFrom(ArnConsts::ARNVEC3_ZERO, tail, roll);
+		//b->getLocalXform().printFrameInfo();
+		parent->attachChild(b);
+		ArnxCreateLumpedArnSkeleton(b, body2, body, depth+1);
+	}
+}
+
+ArnSkeleton*
+GeneralBody::createLumpedArnSkeleton() const
+{
+	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
+	const ArnVec3 skelRootPos(getPosition()[0], getPosition()[1], getPosition()[2]);
+	skel->setLocalXform_Trans(skelRootPos);
+	skel->recalcLocalXform();
+	//skel->getLocalXform().printFrameInfo();
+	ArnxCreateLumpedArnSkeleton(skel, getBodyId(), getBodyId(), 0);
+	return skel;
 }

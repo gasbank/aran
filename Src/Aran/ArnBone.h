@@ -9,7 +9,8 @@
 struct NodeBase;
 struct NodeBone1;
 struct NodeBone2;
-
+struct MyFrameData;
+struct BoneData;
 /*!
  * @brief ArnSkeleton 구성하는 하나의 뼈를 나타내는 클래스
  */
@@ -45,6 +46,7 @@ public:
 	 * 이 벡터는 정규화되지 않습니다.
 	 */
 	ArnVec3									getBoneDirection() const { return ArnVec3Substract(m_tailPos, m_headPos); }
+	float									getBoneLength() const;
 
 	void									getRotLimit(AxisEnum axis, float& minimum, float& maximum) const;
 	void									setRotLimit(AxisEnum axis, float minimum, float maximum);

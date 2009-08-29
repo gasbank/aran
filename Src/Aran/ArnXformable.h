@@ -28,9 +28,11 @@ public:
 	virtual										~ArnXformable(void);
 	inline const std::string&					getIpoName() const;
 	inline const ArnMatrix&						getFinalLocalXform() const;
+	ArnMatrix									computeWorldXform() const;
 	inline const ArnVec3&						getLocalXform_Scale() const;
 	inline void									setLocalXform_Scale(const ArnVec3& scale);
 	inline const ArnQuat&						getLocalXform_Rot() const;
+	ArnQuat										computeWorldXform_Rot() const;
 	inline void									setLocalXform_Rot(const ArnQuat& rot);
 	inline const ArnVec3&						getLocalXform_Trans() const;
 	inline void									setLocalXform_Trans(const ArnVec3& trans);

@@ -11,6 +11,7 @@ struct NodeSkeleton1;
 struct NodeHierarchy2;
 class ArnAction;
 class ArnBone;
+class TiXmlElement;
 
 /*!
  * @brief 뼈대 구조를 정의하는 클래스 (블랜더의 Armature)

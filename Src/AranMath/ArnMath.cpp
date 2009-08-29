@@ -7,6 +7,7 @@
 #include "ArnViewportData.h"
 #include "ArnMath.h"
 #include "ArnIntersection.h"
+
 // Floating Point Library Specific
 static const float	EPSILON						= 0.0001f;		// error tolerance for check
 static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding

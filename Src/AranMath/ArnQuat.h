@@ -22,6 +22,7 @@ public:
 	void						normalize();
 	void						printEuler() const;
 	void						printAxisAngle() const;
+	ArnQuat						computeInverse() const;
 
 	float						x;
 	float						y;

@@ -31,7 +31,7 @@ public:
 	ArnCamera*								activeCam;
 	ArnLight*								activeLight;
 	std::vector<ArnIkSolver*>				ikSolvers;
-	GeneralBodyPtr							trunk, footR, footL;
+	GeneralBodyPtr							trunk;
 	ArnPlane								contactCheckPlane;
 	boost::circular_buffer<ArnVec3>			bipedComPos;
 	float									bipedMass;
@@ -507,14 +507,28 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		cameraDiff -= ac.activeCam->getRightVec() * cameraDiffAmount;
 	else if (!ac.bHoldingKeys[SDLK_a] && ac.bHoldingKeys[SDLK_d])
 		cameraDiff += ac.activeCam->getRightVec() * cameraDiffAmount;
-	if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
-		cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
-	else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
-		cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
 	if (ac.bHoldingKeys[SDLK_KP_MINUS] && !ac.bHoldingKeys[SDLK_KP_PLUS])
 		cameraDiff -= ac.activeCam->getUpVec() * cameraDiffAmount;
 	else if (!ac.bHoldingKeys[SDLK_KP_MINUS] && ac.bHoldingKeys[SDLK_KP_PLUS])
 		cameraDiff += ac.activeCam->getUpVec() * cameraDiffAmount;
+
+	if (ac.activeCam->isOrtho())
+	{
+		float orthoScaleDiff = 0;
+		if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
+			orthoScaleDiff += cameraDiffAmount;
+		else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
+			orthoScaleDiff -= cameraDiffAmount;
+
+		ac.activeCam->setOrthoScale(ac.activeCam->getOrthoScale() + orthoScaleDiff);
+	}
+	else
+	{
+		if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
+			cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
+		else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
+			cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
+	}
 
 	ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
 	ac.activeCam->recalcLocalXform();
@@ -787,8 +801,6 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 	if (ac.swPtr)
 	{
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
-		ac.footR = ac.swPtr->getBodyByNameFromSet("Foot.R");
-		ac.footL = ac.swPtr->getBodyByNameFromSet("Foot.L");
 
 		if (ac.trunk)
 		{
@@ -797,24 +809,11 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			ac.trunk->calculateLumpedComAndMass(&comPos, &ac.bipedMass);
 			ac.bipedComPos.push_back(comPos);
 			std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
+
+			ArnSkeleton* trunkSkel = ac.trunk->createLumpedArnSkeleton();
+			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
-
-
-	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
-	skel->setName("Runtime SKeleton");
-	ArnVec3 head(0, 0, 0), tail(0, 1, 0);
-	float roll = -ARN_PI / 4;
-	ArnBone* rootBone = ArnBone::createFrom(head, tail, roll);
-	//rootBone->setLocalXform_Rot(ArnQuat::createFromEuler(ARN_PI/2, 0, 0));
-	rootBone->recalcLocalXform();
-
-	skel->attachChild(rootBone);
-	skel->setLocalXform_Trans(ArnVec3(-2, 0, 0));
-	skel->recalcLocalXform();
-	ac.sgPtr->attachChild(skel);
-
-
 	return 0;
 }
 

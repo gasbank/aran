@@ -61,6 +61,13 @@ ArnQuat::getLength() const
 	return sqrtf(getSquaredLength());
 }
 
+ArnQuat
+ArnQuat::computeInverse() const
+{
+	float len = getSquaredLength();
+	return ArnQuat(-x/len, -y/len, -z/len, w/len);
+}
+
 void
 ArnQuat::normalize()
 {
