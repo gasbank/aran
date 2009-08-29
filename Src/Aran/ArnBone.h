@@ -17,6 +17,13 @@ class ARAN_API ArnBone : public ArnXformable
 {
 public:
 											~ArnBone(void);
+	/*!
+	 * @brief head, tail, roll 값으로 뼈대를 생성
+	 *
+	 * head, tail, roll 값으로부터 변환행렬을 역으로 계산합니다. 변환행렬이 만들어진 이후에는
+	 * 렌더링할 때에는 head, tail값을 이용해 뼈대의 길이만 계산하고, 변환행렬로 회전 행렬을 얻습니다.
+	 * 즉, 생성된 이후 head, tail값을 바꾸는 것만으로는 뼈대의 위치가 변경되지 않습니다.
+	 */
 	static ArnBone*							createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll);
 	static ArnBone*							createFrom(const NodeBase* nodeBase);
 	static ArnBone*							createFrom(const TiXmlElement* elm);

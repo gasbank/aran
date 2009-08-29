@@ -29,8 +29,9 @@ ArnBone::createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll)
 	float boneLength = ArnVec3GetLength(boneDir);
 	ArnVec3 rotAxis(ArnVec3GetCrossProduct(ArnConsts::ARNVEC3_Y, boneDir / boneLength));
 	float rotAngle = acos(ArnVec3Dot(ArnConsts::ARNVEC3_Y, boneDir / boneLength) / boneLength);
-	ArnQuat q(ArnQuat::createFromRotAxis(rotAngle, rotAxis.x, rotAxis.y, rotAxis.z));
-	bone->setLocalXform_Rot(q);
+	ArnQuat q1(ArnQuat::createFromRotAxis(rotAngle, rotAxis.x, rotAxis.y, rotAxis.z));
+	ArnQuat q2(ArnQuat::createFromRotAxis(roll, 0, 1, 0));
+	bone->setLocalXform_Rot(q1 * q2);
 	return bone;
 }
 

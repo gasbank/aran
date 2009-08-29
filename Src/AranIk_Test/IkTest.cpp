@@ -804,7 +804,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
 	skel->setName("Runtime SKeleton");
 	ArnVec3 head(0, 0, 0), tail(0, 1, 0);
-	float roll = 0;
+	float roll = -ARN_PI / 4;
 	ArnBone* rootBone = ArnBone::createFrom(head, tail, roll);
 	//rootBone->setLocalXform_Rot(ArnQuat::createFromEuler(ARN_PI/2, 0, 0));
 	rootBone->recalcLocalXform();
