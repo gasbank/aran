@@ -15,12 +15,14 @@
 #include "ArnBone.h"
 #include "ArnLight.h"
 #include "ArnMaterial.h"
+#include "ArnSkinningShaderGl.h"
 #include "Node.h"
 #include "Tree.h"
 
 static GLUquadric* gs_quadricSphere = 0;
 static GLuint gs_glArrowList = 0;
 static bool gs_bAranGlInitialized = false;
+static ArnSkinningShaderGl* gs_skinningShaderGl = 0;
 
 void
 ArnConfigureViewportProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam)
@@ -705,6 +707,9 @@ ArnInitializeGl()
 		glEnd();
 		glEndList();
 
+		gs_skinningShaderGl = new ArnSkinningShaderGl();
+		gs_skinningShaderGl->initShader();
+
 		gs_bAranGlInitialized = true;
 		return 0;
 	}
@@ -723,6 +728,7 @@ ArnCleanupGl()
 		assert(gs_quadricSphere);
 		gluDeleteQuadric(gs_quadricSphere);
 		glDeleteLists(gs_glArrowList, 1);
+		delete gs_skinningShaderGl;
 		gs_bAranGlInitialized = false;
 		return 0;
 	}

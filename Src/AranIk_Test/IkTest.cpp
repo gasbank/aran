@@ -309,6 +309,42 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 			{
 				done = MHR_RELOAD_SCENE;
 			}
+			else if (event->key.keysym.sym == SDLK_1)
+			{
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
+					skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(0, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(0, 1);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_2)
+			{
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
+					skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(1, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(1, 1);
+				}
+			}
+			else if (event->key.keysym.sym == SDLK_3)
+			{
+				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
+				{
+					skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
+					skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
+					ARNTRACK_DESC desc;
+					skel->getAnimCtrl()->GetTrackDesc(2, &desc);
+					skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
+					skel->getAnimCtrl()->SetTrackWeight(2, 1);
+				}
+			}
 
 			printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
 			break;
@@ -1049,7 +1085,7 @@ DoMain()
 		gl_error = glGetError();
 		if( gl_error != GL_NO_ERROR )
 		{
-			fprintf( stderr, "ARAN: OpenGL error: %d\n", gl_error );
+			fprintf( stderr, "ARAN: OpenGL error: %s\n", gluErrorString(gl_error) );
 		}
 		sdl_error = SDL_GetError();
 		if( sdl_error[0] != '\0' )

@@ -646,7 +646,7 @@ global linkedMaterials
 global linkedIpos
 global linkedActions
 
-exportPlace = 'xml'
+exportPlace = 'bin'
 
 sce = bpy.data.scenes.active # Get active scene automatically
 doc = Document()

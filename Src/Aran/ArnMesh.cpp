@@ -191,3 +191,64 @@ void ArnMesh::getBoundingBoxDimension( ArnVec3* out, bool worldSpace ) const
 		out->z *= getLocalXform_Scale().z;
 	}
 }
+
+unsigned int
+ArnMesh::computeBoneInfluencesCountOfVert(unsigned int vIdx) const
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+
+void
+ArnMesh::computeBoneInflucnesOfVert(unsigned int vIdx, float influences[4]) const
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+
+void
+ArnMesh::computeBoneMatIndicesOfVert(unsigned int vIdx, int m[4]) const
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+
+struct ArnxBoneInf
+{
+	unsigned int vertexId;
+	float weight;
+};
+
+void
+ArnMesh::computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[4], int m[4]) const
+{
+	*numInf = 0;
+	int vgIdx = 0;
+	float sumWeight = 0;
+	foreach (const VertexGroup& vg, m_vertexGroup)
+	{
+		if (vg.vertGroupChunk)
+		{
+			unsigned int nRecord = vg.vertGroupChunk->getRecordCount();
+			for (unsigned int i = 0; i < nRecord; ++i)
+			{
+				const ArnxBoneInf* binf = reinterpret_cast<const ArnxBoneInf*>(vg.vertGroupChunk->getRecordAt(i));
+				if (binf->vertexId == vIdx)
+				{
+					assert(*numInf < 4);
+					influences[*numInf] = binf->weight;
+					m[*numInf] = vgIdx;
+					sumWeight += binf->weight;
+					++(*numInf);
+				}
+			}
+		}
+		++vgIdx;
+	}
+
+	// Normalize bone weights here.
+	if (sumWeight)
+	{
+		for (int i = 0; i < *numInf; ++i)
+		{
+			influences[i] /= sumWeight;
+		}
+	}
+}

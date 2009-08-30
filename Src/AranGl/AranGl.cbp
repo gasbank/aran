@@ -49,6 +49,8 @@
 		<Unit filename="ArnGlExtEntry.h" />
 		<Unit filename="ArnMeshGl.cpp" />
 		<Unit filename="ArnMeshGl.h" />
+		<Unit filename="ArnSkinningShaderGl.cpp" />
+		<Unit filename="ArnSkinningShaderGl.h" />
 		<Unit filename="ArnTextureGl.cpp" />
 		<Unit filename="ArnTextureGl.h" />
 		<Unit filename="BasicObjects.cpp" />

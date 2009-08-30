@@ -30,7 +30,15 @@ static const Arn8Points ArnUnitBoundingBox = {{
 	ArnVec3( 0.5f, -0.5f, -0.5f),
 	ArnVec3( 0.5f, -0.5f,  0.5f),
 	ArnVec3( 0.5f,  0.5f,  0.5f),
-	ArnVec3( 0.5f,  0.5f, -0.5f) }};
+	ArnVec3( 0.5f,  0.5f, -0.5f)
+}};
+
+struct VertexGroup
+{
+	std::string			name;
+	int					mtrlIndex;
+	ArnBinaryChunk*		vertGroupChunk;
+};
 
 /*!
  * @brief 메시
@@ -69,6 +77,7 @@ public:
 	 * 속한 고정된 그룹이다.
 	 */
 	//@{
+	const std::vector<VertexGroup>&			getVertGroup() const { return m_vertexGroup; }
 	unsigned int							getVertGroupCount() const { return m_vertexGroup.size(); }
 	unsigned int							getVertCountOfVertGroup(unsigned int vertGroupIdx) const;
 	unsigned int							getTotalVertCount() const { return getVertCountOfVertGroup(0); }
@@ -151,6 +160,34 @@ public:
 	const ArnBinaryChunk*					getQuadFaceChunkOfFaceGroup(unsigned int i) const { return m_faceGroup[i].quadFaceChunk; }
 
 	/*!
+	 * @name 스키닝
+	 *
+	 * 뼈대 애니메이션을 위해 필요한 값을 계산하는 함수입니다.
+	 */
+	//@{
+	/*!
+	 * @brief 정점에 영향을 주는 뼈(혹은 행렬)가 총 몇 개인지 반환
+	 * @return 0..4
+	 */
+	unsigned int							computeBoneInfluencesCountOfVert(unsigned int vIdx) const;
+	/*!
+	 * @brief 정점에 영향을 주는 뼈(혹은 행렬)의 가중치 반환
+	 * @sa computeBoneInfluencesCountOfVert
+	 *
+	 * 반환되는 값에서 영향을 주는 뼈 개수만큼만 유효한 값을 가집니다.
+	 */
+	void									computeBoneInflucnesOfVert(unsigned int vIdx, float influences[4]) const;
+	/*!
+	 * @brief 정점에 영향을 주는 뼈(혹은 행렬)의 인덱스 반환
+	 * @sa computeBoneInfluencesCountOfVert
+	 *
+	 * 반환되는 값에서 영향을 주는 뼈 개수만큼만 유효한 값을 가집니다.
+	 */
+	void									computeBoneMatIndicesOfVert(unsigned int vIdx, int m[4]) const;
+	void									computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[4], int m[4]) const;
+
+	//@}
+	/*!
 	 * @internalonly
 	 */
 	//@{
@@ -169,11 +206,6 @@ private:
 		int					mtrlIndex;
 		ArnBinaryChunk*		triFaceChunk;
 		ArnBinaryChunk*		quadFaceChunk;
-	};
-	struct VertexGroup
-	{
-		int					mtrlIndex;
-		ArnBinaryChunk*		vertGroupChunk;
 	};
 	struct BoneDataInternal
 	{

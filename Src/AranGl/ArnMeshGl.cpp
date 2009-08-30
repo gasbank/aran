@@ -4,6 +4,7 @@
 #include "ArnBinaryChunk.h"
 #include "ArnMaterial.h"
 #include "AranGl.h"
+#include "ArnSkinningShaderGl.h"
 
 static float lmodel_twoside[] = {GL_TRUE};
 static float lmodel_oneside[] = {GL_FALSE};
@@ -42,6 +43,42 @@ ArnMeshGl::initRendererObjectVbIb()
 	return true;
 }
 
+struct ArnxVertexChunkEntry
+{
+	float x, y, z;			// vertex coordinates
+	float nx, ny, nz;		// vertex normal coordinates
+};
+
+struct ArnxVboEntry
+{
+	// minimal fields
+	ArnxVertexChunkEntry coords;
+	// optional fields
+	float u, v;				// UV texture coordinates
+	int numInf;				// the number of bone influences, 0..4
+	int m0, m1, m2, m3;		// bone matrix index. 0..
+	float w0, w1, w2, w3;	// bone influences. 0.0f..1.0f
+};
+
+struct ArnxTriFaceChunkEntry
+{
+	int faceId;
+	int v0, v1, v2;
+};
+
+struct ArnxQuadFaceChunkEntry
+{
+	int faceId;
+	int v0, v1, v2, v3;
+};
+
+struct ArnxBoneRecord
+{
+	float numInf[4];			// Should be 'int numInf' but shader compatability
+	float influences[4];
+	float m[4];					// Should be 'int m[4]' but shader compatability
+};
+
 bool
 ArnMeshGl::initRendererObjectXml()
 {
@@ -66,9 +103,12 @@ ArnMeshGl::initRendererObjectXml()
 		const ArnBinaryChunk* triquadUvChunk = m_target->getTriquadUvChunk();
 		const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 		int uvRecordSize = 0;
+		int boneRecordSize = 0;
 		if (triquadUvChunk)
 			uvRecordSize += sizeof(float) * 2; // Extend vertex size to include 2D UV coordinates.
-		int vboEntrySize = vertexRecordSize + uvRecordSize;
+		if (m_target->getVertGroupCount() > 1) // TODO: How to determine skinned meshes?
+			boneRecordSize += sizeof(ArnxBoneRecord);
+		int vboEntrySize = vertexRecordSize + uvRecordSize + boneRecordSize;
 
 		const size_t faceGroupCount = m_target->getFaceGroupCount();
 		m_vboIds.resize(faceGroupCount);
@@ -98,16 +138,35 @@ ArnMeshGl::initRendererObjectXml()
 				{
 					for (int k = 0; k < 3; ++k)
 					{
-						const char* record = vertexChunk->getRecordAt( *(vert3Ind + j*(1+3) + k + 1) ); // Skip face index by adding 1 to vert3Ind ptr.
+						const int* faceId = vert3Ind + j*(1+3);
+						const int* vertexId = faceId + 1 + k; // Skip face index by adding 1 to vert3Ind ptr.
+						const char* record = vertexChunk->getRecordAt(*vertexId);
 						memcpy(&buf[bufOffset], record, vertexRecordSize);
 						bufOffset += vertexRecordSize;
 						if (triquadUvChunk)
 						{
 							assert(uvRecordSize);
-							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt( *(vert3Ind + j*(1+3)) );
+							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt(*faceId);
 							quadrupleUvCoordsRecord += uvRecordSize * k;
 							memcpy(&buf[bufOffset], quadrupleUvCoordsRecord, uvRecordSize);
 							bufOffset += uvRecordSize;
+						}
+						if (boneRecordSize)
+						{
+							ArnxBoneRecord abr;
+							int numInf;
+							int m[4];
+							m_target->computeBoneDataOfVert(*vertexId, &numInf, abr.influences, m);
+							abr.numInf[0] = static_cast<float>(numInf);
+							abr.numInf[1] = 0;
+							abr.numInf[2] = 0;
+							abr.numInf[3] = 0;
+							abr.m[0] = static_cast<float>(m[0]);
+							abr.m[1] = static_cast<float>(m[1]);
+							abr.m[2] = static_cast<float>(m[2]);
+							abr.m[3] = static_cast<float>(m[3]);
+							memcpy(&buf[bufOffset], &abr, boneRecordSize);
+							bufOffset += boneRecordSize;
 						}
 					}
 				}
@@ -127,16 +186,41 @@ ArnMeshGl::initRendererObjectXml()
 				{
 					for (int k = 0; k < 4; ++k)
 					{
-						const char* record = vertexChunk->getRecordAt( *(vert4Ind + j*(1+4) + k + 1) ); // Skip face index by adding 1 to vert3Ind ptr.
+						const int* faceId = vert4Ind + j*(1+4);
+						const int* vertexId = faceId + 1 + k; // Skip face index by adding 1 to vert4Ind ptr.
+						const char* record = vertexChunk->getRecordAt(*vertexId);
 						memcpy(&buf[bufOffset], record, vertexRecordSize);
 						bufOffset += vertexRecordSize;
 						if (triquadUvChunk)
 						{
 							assert(uvRecordSize);
-							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt( *(vert4Ind + j*(1+4)) );
+							const char* quadrupleUvCoordsRecord = triquadUvChunk->getRecordAt(*faceId);
 							quadrupleUvCoordsRecord += uvRecordSize * k;
 							memcpy(&buf[bufOffset], quadrupleUvCoordsRecord, uvRecordSize);
 							bufOffset += uvRecordSize;
+						}
+						if (boneRecordSize)
+						{
+							ArnxBoneRecord abr;
+							int numInf;
+							int m[4];
+							m_target->computeBoneDataOfVert(*vertexId, &numInf, abr.influences, m);
+							abr.numInf[0] = static_cast<float>(numInf);
+							abr.numInf[1] = 0;
+							abr.numInf[2] = 0;
+							abr.numInf[3] = 0;
+							abr.m[0] = static_cast<float>(m[0]);
+							abr.m[1] = static_cast<float>(m[1]);
+							abr.m[2] = static_cast<float>(m[2]);
+							abr.m[3] = static_cast<float>(m[3]);
+							memcpy(&buf[bufOffset], &abr, boneRecordSize);
+							bufOffset += boneRecordSize;
+							/*
+							printf("%.1f %.1f %.1f %.1f --- %.1f %.1f %.1f %.1f --- %.1f %.1f %.1f %.1f\n",
+								abr.numInf[0], abr.numInf[1], abr.numInf[2], abr.numInf[3],
+								abr.influences[0], abr.influences[1], abr.influences[2], abr.influences[3],
+								abr.m[0], abr.m[1], abr.m[2], abr.m[3] );
+							*/
 						}
 					}
 				}
@@ -208,14 +292,30 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 	|<------------------ vboEntrySize (if UV) --------------------->|
 
 	*/
-
 	const ArnBinaryChunk* vertexChunk = m_target->getVertexChunk();
 	const ArnBinaryChunk* triquadUvChunk = m_target->getTriquadUvChunk();
 	const int vertexRecordSize = vertexChunk->getRecordSize(); // typically coords(float3) + normal(float3) = 24 bytes
 	int uvRecordSize = 0;
+	int boneRecordSize = 0;
 	if (triquadUvChunk)
 		uvRecordSize += sizeof(float) * 2; // Extend vertex size to include 2D UV coordinates.
-	int vboEntrySize = vertexRecordSize + uvRecordSize;
+	if (m_target->getVertGroupCount() > 1)
+		boneRecordSize += sizeof(ArnxBoneRecord);
+	int vboEntrySize = vertexRecordSize + uvRecordSize + boneRecordSize;
+
+	if (boneRecordSize)
+	{
+		glUseProgramObjectARB(ArnSkinningShaderGl::getSingleton().getProgramObj());
+
+		// TODO: How to locate the parent skeleton of a skinned mesh?
+		ArnNode* skelParent = getParent();
+		while (skelParent && skelParent->getType() != NDT_RT_SKELETON)
+		{
+			skelParent = skelParent->getParent();
+		}
+		assert(skelParent && skelParent->getType() == NDT_RT_SKELETON);
+		ArnSkinningShaderGl::getSingleton().setShaderConstants(reinterpret_cast<ArnSkeleton*>(skelParent), m_target->getVertGroup());
+	}
 
 	const size_t faceGroupCount = m_target->getFaceGroupCount();
 	const int mtrlRefNameCount = static_cast<const int>(m_target->getMaterialReferenceNameCount());
@@ -241,10 +341,23 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 		int triFaceVertSize = triFaceCount * 3 * vboEntrySize;
 		//int quadFaceVertSize = quadFaceCount * 3 * vboEntrySize;
 
+		// Skinning shader attributes placeholders setup
+		const GLuint matIndAttr = ArnSkinningShaderGl::getSingleton().getMatrixIndicesAttrId();
+		const GLuint weightsAttr = ArnSkinningShaderGl::getSingleton().getWeightsAttrId();
+		const GLuint numBonesAttr = ArnSkinningShaderGl::getSingleton().getNumBonesAttrId();
+
 		glBindBuffer(GL_ARRAY_BUFFER_ARB, m_vboIds[i]);
 
+		if (boneRecordSize)
+		{
+			glEnableVertexAttribArrayARB(matIndAttr);
+			glEnableVertexAttribArrayARB(weightsAttr);
+			glEnableVertexAttribArrayARB(numBonesAttr);
+		}
 		if (triquadUvChunk)
+		{
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
 
@@ -256,6 +369,7 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 			assert(m_target->isLocalXformDirty() == false);
 
 			glMultTransposeMatrixf((float*)m_target->getFinalLocalXform().m);
+			/*
 			if (m_target->isTwoSided())
 			{
 				glDisable(GL_CULL_FACE);
@@ -266,12 +380,23 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 				glEnable(GL_CULL_FACE);
 				//glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_oneside);
 			}
+			*/
 			glLoadName(getObjectId()); // For screenspace rendering based picking
+
+
 			// 1. Draw tri faces
 			if (triFaceCount)
 			{
+				if (boneRecordSize)
+				{
+					glVertexAttribPointer(matIndAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize + sizeof(float)*8));
+					glVertexAttribPointer(weightsAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize + sizeof(float)*4));
+					glVertexAttribPointer(numBonesAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize));
+				}
 				if (triquadUvChunk)
-					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*6));
+				{
+					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(vertexRecordSize));
+				}
 				glNormalPointer(GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*3));
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, 0);
 				glDrawArrays(GL_TRIANGLES, 0, triFaceCount * 3);
@@ -280,8 +405,16 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 			// 2. Draw quad faces
 			if (quadFaceCount)
 			{
+				if (boneRecordSize)
+				{
+					glVertexAttribPointer(matIndAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize + sizeof(float)*8 + triFaceVertSize));
+					glVertexAttribPointer(weightsAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize + sizeof(float)*4 + triFaceVertSize));
+					glVertexAttribPointer(numBonesAttr, 4, GL_FLOAT, GL_FALSE, vboEntrySize, (void*)(vertexRecordSize + uvRecordSize + triFaceVertSize));
+				}
 				if (triquadUvChunk)
-					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(sizeof(float)*6 + triFaceVertSize));
+				{
+					glTexCoordPointer(2, GL_FLOAT, vboEntrySize, (void*)(vertexRecordSize + triFaceVertSize));
+				}
 				glNormalPointer(GL_FLOAT, vboEntrySize, (void*)((sizeof(float)*3 + triFaceVertSize)));
 				glVertexPointer(3, GL_FLOAT, vboEntrySize, (void*)(0 + triFaceVertSize));
 				glDrawArrays(GL_QUADS, 0, quadFaceCount * 4);
@@ -313,13 +446,24 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 
 		//glPopMatrix();
 
-		if (triquadUvChunk)
-			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState(GL_VERTEX_ARRAY);
+		if (triquadUvChunk)
+		{
+			glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+		}
+		if (boneRecordSize)
+		{
+			glDisableVertexAttribArrayARB(matIndAttr);
+			glDisableVertexAttribArrayARB(weightsAttr);
+			glDisableVertexAttribArrayARB(numBonesAttr);
+		}
 
 		glBindBufferARB(GL_ARRAY_BUFFER_ARB, 0);
 	}
+
+	if (boneRecordSize)
+		glUseProgramObjectARB(0);
 }
 
 int ArnMeshGl::render(bool bIncludeShadeless) const

@@ -471,14 +471,20 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 	// Process vertex groups
 	// Note: There is an implicitly created vertex group 0 which includes
 	//       the entire vertices having material 0 and unit-weights.
-	ArnMesh::VertexGroup vg0;
+	VertexGroup vg0;
+	vg0.name = "Vertex Group 0";
 	vg0.mtrlIndex = 0;
 	vg0.vertGroupChunk = 0;
 	ret->m_vertexGroup.push_back(vg0);
 
-	// TODO: Vertex groups
-	for (const TiXmlElement* e = elm->FirstChildElement("vertgroup"); e; e = e->NextSiblingElement("vertgroup"))
+	for (const TiXmlElement* e = meshElm->FirstChildElement("vertgroup"); e; e = e->NextSiblingElement("vertgroup"))
 	{
+		VertexGroup vg;
+		GetAttr(vg.name, e, "name");
+		vg.mtrlIndex = 0; // TODO: Vertex group mtrl
+		vg.vertGroupChunk = ArnBinaryChunk::createFrom(GetUniqueChildElement(e, "chunk"), binaryChunkBasePtr);
+		assert(vg.vertGroupChunk->getRecordCount());
+		ret->m_vertexGroup.push_back(vg);
 	}
 
 	// Process face groups
