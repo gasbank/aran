@@ -30,7 +30,7 @@ ARANGL_API void						ArnConfigureProjectionMatrixGl(const ArnViewportData* viewp
 ARANGL_API void						ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
 ARANGL_API void						ArnConfigureViewMatrixGl(ArnCamera* cam);
 ARANGL_API GLuint					ArnCreateNormalizationCubeMapGl();
-ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnSceneGraph* sg);
+ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnNode* node);
 /*!
  * @brief 기본적인 물질 정보를 OpenGL 컨텍스트에 적용
  *

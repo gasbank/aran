@@ -241,14 +241,16 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 		int triFaceVertSize = triFaceCount * 3 * vboEntrySize;
 		//int quadFaceVertSize = quadFaceCount * 3 * vboEntrySize;
 
-		glBindBufferARB(GL_ARRAY_BUFFER_ARB, m_vboIds[i]);
+		glBindBuffer(GL_ARRAY_BUFFER_ARB, m_vboIds[i]);
 
 		if (triquadUvChunk)
 			glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
 
-		glPushMatrix();
+		// No push, pop matrix needed. It is done in the previous call level.
+		//glPushMatrix();
+
 		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
 		{
 			assert(m_target->isLocalXformDirty() == false);
@@ -308,7 +310,8 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 			}
 		}
 		glPopAttrib();
-		glPopMatrix();
+
+		//glPopMatrix();
 
 		if (triquadUvChunk)
 			glDisableClientState(GL_TEXTURE_COORD_ARRAY);

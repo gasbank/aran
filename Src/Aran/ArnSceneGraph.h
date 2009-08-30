@@ -36,6 +36,7 @@ public:
 	void							render();
 	void							initRendererObjects();
 	ArnNode*						findFirstNodeOfType(NODE_DATA_TYPE ndt);
+	void							registerToCameraList(ArnCamera* cam);
 	/*!
 	 * @brief 장면 그래프에 등록된 \a cam 다음 카메라를 반환
 	 *

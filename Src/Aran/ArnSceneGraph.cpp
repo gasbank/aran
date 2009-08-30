@@ -92,3 +92,9 @@ ArnSceneGraph::getFirstCamera() const
 {
 	return getNextCamera(0);
 }
+
+void
+ArnSceneGraph::registerToCameraList(ArnCamera* cam)
+{
+	m_cameraList.push_back(cam);
+}

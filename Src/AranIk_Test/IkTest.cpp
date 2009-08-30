@@ -4,17 +4,6 @@
  * @date 2009
  */
 #include "IkTest.h"
-#include "ArnBone.h"
-#include <CGAL/Cartesian.h>
-#include <CGAL/ch_graham_andrew.h>
-#include <CGAL/functional.h>
-#include <CGAL/double.h>
-#include <CGAL/convex_hull_2.h>
-#include <boost/circular_buffer.hpp>
-typedef double RT;
-
-// define point creator
-typedef   CGAL::Point_2<CGAL::Cartesian<double> >        Point_2;
 
 class AppContext : private Uncopyable
 {
@@ -33,7 +22,7 @@ public:
 	std::vector<ArnIkSolver*>				ikSolvers;
 	GeneralBodyPtr							trunk;
 	ArnPlane								contactCheckPlane;
-	boost::circular_buffer<ArnVec3>			bipedComPos;
+	boost::circular_buffer<ArnVec3>			bipedComPos;			///< Store a trail of biped COM positions
 	float									bipedMass;
 	float									linVelX;
 	float									linVelZ;
@@ -798,6 +787,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 	}
 	ac.ikSolvers.clear();
 	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	ac.bipedComPos.clear();
 	if (ac.swPtr)
 	{
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");

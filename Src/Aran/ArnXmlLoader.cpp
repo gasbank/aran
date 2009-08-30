@@ -388,6 +388,25 @@ ArnBinaryChunk::createFrom(const TiXmlElement* elm, const char* binaryChunkBaseP
 	return ret;
 }
 
+void ArnxCreateArnNodeFromChildObjects(ArnNode* parentNode, const TiXmlElement* parentElm, ArnSceneGraph* sg, const char* binDataPtr)
+{
+	for (const TiXmlElement* e = parentElm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
+	{
+		const TiXmlElement* childElm = e;
+		assert(childElm);
+		ArnNode* childObj = CreateArnNodeFromXmlElement(childElm, binDataPtr);
+		parentNode->attachChild(childObj);
+
+		// 카메라는 별도의 리스트를 만들어서 쉽게 탐색할 수 있도록 한다.
+		if (childObj->getType() == NDT_RT_CAMERA)
+		{
+			sg->registerToCameraList(static_cast<ArnCamera*>(childObj));
+		}
+
+		ArnxCreateArnNodeFromChildObjects(childObj, childElm, sg, binDataPtr);
+	}
+}
+
 ArnSceneGraph*
 ArnSceneGraph::createFrom(const char* xmlFile)
 {
@@ -421,29 +440,10 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 
 	unsigned int binUncompressedSize = (unsigned int)ParseIntFromAttr(elm, "binuncompressedsize");
 	ret->m_binaryChunk = ArnBinaryChunk::createFrom(binaryFileName.c_str(), true, binUncompressedSize);
+	const char* binDataPtr = ret->m_binaryChunk->getConstRawDataPtr();
 
-	for (const TiXmlElement* e = elm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
-	{
-		const TiXmlElement* childElm = e;
-		assert(childElm);
-		ArnNode* childObj = 0;
-		if (ret->m_binaryChunk)
-		{
-			const char* binDataPtr = ret->m_binaryChunk->getConstRawDataPtr();
-			childObj = CreateArnNodeFromXmlElement(childElm, binDataPtr);
-		}
-		else
-		{
-			childObj = CreateArnNodeFromXmlElement(childElm, 0);
-		}
-		ret->attachChild(childObj);
+	ArnxCreateArnNodeFromChildObjects(ret, elm, ret, binDataPtr);
 
-		// 카메라는 별도의 리스트를 만들어서 쉽게 탐색할 수 있도록 한다.
-		if (childObj->getType() == NDT_RT_CAMERA)
-		{
-			ret->m_cameraList.push_back(static_cast<ArnCamera*>(childObj));
-		}
-	}
 	return ret;
 }
 

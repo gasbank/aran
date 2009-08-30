@@ -493,39 +493,15 @@ def CreateLimitElm(doc, name, v0, v1):
 	limitElm.appendChild(doc.createTextNode(limitStr))
 	return limitElm
 
-#
-#
-#
-# Export Script Entry
-#
-#
-#
-global xmlFile
-global binFile
-global exportPlace
-global linkedMaterials
-global linkedIpos
-global linkedActions
 
-exportPlace = 'bin'
-
-sce = bpy.data.scenes.active # Get active scene automatically
-doc = Document()
-homedir = os.path.expanduser('~')
-print 'Export Directory: %s' % homedir
-xmlFile = open('%s/%s.xml' % (homedir, sce.name), 'w')
-binFile = open('%s/%s.bin' % (homedir, sce.name), 'wb')
-linkedMaterials = []
-linkedIpos      = []
-linkedActions   = []
-
-scene = doc.createElement('object')
-scene.setAttribute('name', sce.name)
-scene.setAttribute('rtclass', 'ArnSceneGraph')
-scene.setAttribute('blender', Blender.Get('filename'))
-doc.appendChild(scene)
-
-for ob in sce.objects:
+def ProcessSceneObject(doc, ob, processedObjects, sceneElm):
+	if ob in processedObjects.keys():
+		return processedObjects[ob]
+	if ob.parent is None:
+		parentElm = sceneElm
+	else:
+		parentElm = ProcessSceneObject(doc, ob.parent, processedObjects, sceneElm)
+	
 	if ob.type == 'Mesh':
 		rtclass = 'ArnMesh'
 	elif ob.type == 'Camera':
@@ -652,8 +628,47 @@ for ob in sce.objects:
 					cElm.appendChild(limitElm)
 				obj.appendChild(cElm)
 
-	scene.appendChild(obj)
+	parentElm.appendChild(obj)
+	assert(ob not in processedObjects.keys())
+	processedObjects[ob] = obj
 
+#
+#
+#
+# Export Script Entry
+#
+#
+#
+global xmlFile
+global binFile
+global exportPlace
+global linkedMaterials
+global linkedIpos
+global linkedActions
+
+exportPlace = 'xml'
+
+sce = bpy.data.scenes.active # Get active scene automatically
+doc = Document()
+homedir = os.path.expanduser('~')
+print 'Export Directory: %s' % homedir
+xmlFile = open('%s/%s.xml' % (homedir, sce.name), 'w')
+binFile = open('%s/%s.bin' % (homedir, sce.name), 'wb')
+linkedMaterials = []
+linkedIpos      = []
+linkedActions   = []
+
+scene = doc.createElement('object')
+scene.setAttribute('name', sce.name)
+scene.setAttribute('rtclass', 'ArnSceneGraph')
+scene.setAttribute('blender', Blender.Get('filename'))
+doc.appendChild(scene)
+
+processedObjects = {}
+
+for ob in sce.objects:
+	ProcessSceneObject(doc, ob, processedObjects, scene)
+	
 #print Constraint.Settings
 
 # Export only actucally used materials, actions and ipos.

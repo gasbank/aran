@@ -1,3 +1,11 @@
+/*!
+ * @file AranGl.cpp
+ * @author Geoyeob Kim
+ * @date 2009
+ *
+ * ARAN Core 자료구조 중 렌더링 가능한 것을 OpenGL을 이용해
+ * 렌더링하는 루틴을 모아 놓은 파일입니다.
+ */
 #include "AranGlPCH.h"
 #include "AranGl.h"
 #include "ArnMesh.h"
@@ -337,61 +345,68 @@ ArnCreateNormalizationCubeMapGl()
 	return tex;
 }
 
+/*!
+ * @brief ArnBone 렌더링
+ * @sa ArnNodeRenderGl
+ *
+ * ArnNodeRenderGl 의 서브 루틴으로 호출되는 함수입니다. 자식 노드까지 렌더링하지 않습니다.
+ */
 static void
 ArnBoneRenderGl( const ArnBone* bone )
 {
+	// No push, pop matrix needed. It is done in the previous call level.
 	assert(bone->isLocalXformDirty() == false);
 
 	ArnVec3 boneDir(bone->getBoneDirection());
 	float boneLength = ArnVec3GetLength(boneDir);
+
+	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_CULL_FACE);
+
+	ArnQuat q = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
+	ArnMatrix matRot;
+	q.getRotationMatrix(&matRot);
+	glMultTransposeMatrixf((const GLfloat*)matRot.m);
 	glPushMatrix();
 	{
-		ArnQuat q = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
-		ArnMatrix matRot;
-		q.getRotationMatrix(&matRot);
-		glMultTransposeMatrixf((const GLfloat*)matRot.m);
-		glPushMatrix();
-		{
-			glLoadName(bone->getObjectId()); // For screen-space rendering based picking
-			glRotatef(-90, 1, 0, 0);
-			glLineWidth(1);
-			glDisable(GL_LIGHTING);
-			glColor3f(1, 1, 1);
+		glLoadName(bone->getObjectId()); // For screen-space rendering based picking
+		glRotatef(-90, 1, 0, 0);
+		glLineWidth(1);
+		glDisable(GL_LIGHTING);
+		glColor3f(1, 1, 1);
 
-			glScaled(boneLength/4, boneLength/4, boneLength);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glCallList(gs_glArrowList);
+		glScaled(boneLength/4, boneLength/4, boneLength);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glCallList(gs_glArrowList);
 
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-			glEnable(GL_LIGHTING);
-		}
-		glPopMatrix();
-		glTranslatef(0, boneLength, 0);
-		ArnDrawAxesGl(boneLength/4);
-		if (bone->getChildBoneCount(true) == 0)
-		{
-			// Draw an end-effector indicator.
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
-			ArnRenderSphereGl(boneLength/12);
-		}
-		else
-		{
-			// Draw a joint indicator.
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-			ArnRenderSphereGl(boneLength/12);
-		}
-
-		foreach (const ArnNode* node, bone->getChildren())
-		{
-			assert(node->getType() == NDT_RT_BONE);
-			const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
-			ArnBoneRenderGl(bone);
-		}
+		glEnable(GL_LIGHTING);
 	}
 	glPopMatrix();
-	glEnable(GL_CULL_FACE);
+	glTranslatef(0, boneLength, 0);
+	ArnDrawAxesGl(boneLength/4);
+	if (bone->getChildBoneCount(true) == 0)
+	{
+		// Draw an end-effector indicator.
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
+		ArnRenderSphereGl(boneLength/12);
+	}
+	else
+	{
+		// Draw a joint indicator.
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+		ArnRenderSphereGl(boneLength/12);
+	}
+	/*
+	foreach (const ArnNode* node, bone->getChildren())
+	{
+		assert(node->getType() == NDT_RT_BONE);
+		const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
+		ArnBoneRenderGl(bone);
+	}
+	*/
+	glPopAttrib();
 }
 
 void
@@ -454,25 +469,22 @@ ArnSetupMaterialGl(const ArnMaterial* mtrl)
 	}
 }
 
+/*!
+ * @brief ArnSkeleton 렌더링
+ * @sa ArnNodeRenderGl
+ *
+ * ArnNodeRenderGl 의 서브 루틴으로 호출되는 함수입니다. 자식 노드까지 렌더링하지 않습니다.
+ */
 static void
 ArnSkeletonRenderGl( const ArnSkeleton* skel )
 {
-	glPushMatrix();
-	{
-		assert(skel->isLocalXformDirty() == false);
-		glMultTransposeMatrixf((float*)skel->getLocalXform().m);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		ArnDrawAxesGl(0.75);
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
-		ArnRenderSphereGl(0.1);
-		foreach (const ArnNode* node, skel->getChildren())
-		{
-			assert(node->getType() == NDT_RT_BONE);
-			const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
-			ArnBoneRenderGl(bone);
-		}
-	}
-	glPopMatrix();
+	// No push, pop matrix needed. It is done in the previous call level.
+	assert(skel->isLocalXformDirty() == false);
+	glMultTransposeMatrixf((float*)skel->getLocalXform().m);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	ArnDrawAxesGl(0.75);
+	ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+	ArnRenderSphereGl(0.1);
 }
 
 static void
@@ -500,34 +512,82 @@ InitializeArnMaterialRenderableObjectGl( const ArnMaterial* mtrl )
 }
 
 void
-ArnInitializeRenderableObjectsGl( ArnSceneGraph* sg )
+ArnInitializeRenderableObjectsGl( ArnNode* node )
 {
-	foreach (ArnNode* node, sg->getChildren())
+	if (node->getType() == NDT_RT_MESH)
 	{
-		if (node->getType() == NDT_RT_MESH)
-		{
-			ArnMesh* mesh = static_cast<ArnMesh*>(node);
-			InitializeArnMeshRenderableObjectGl(mesh);
-		}
-		else if (node->getType() == NDT_RT_MATERIAL)
-		{
-			ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
-			InitializeArnMaterialRenderableObjectGl(mtrl);
-		}
-		else if (node->getType() == NDT_RT_SKELETON)
-		{
-			ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
-			skel->configureIpos();
-		}
+		ArnMesh* mesh = static_cast<ArnMesh*>(node);
+		InitializeArnMeshRenderableObjectGl(mesh);
+	}
+	else if (node->getType() == NDT_RT_MATERIAL)
+	{
+		ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
+		InitializeArnMaterialRenderableObjectGl(mtrl);
+	}
+	else if (node->getType() == NDT_RT_SKELETON)
+	{
+		ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
+		skel->configureIpos();
+	}
+
+	foreach (ArnNode* child, node->getChildren())
+	{
+		ArnInitializeRenderableObjectsGl(child);
 	}
 }
 
+/*!
+ * @brief ArnMesh 렌더링
+ * @sa ArnNodeRenderGl
+ *
+ * ArnNodeRenderGl 의 서브 루틴으로 호출되는 함수입니다. 자식 노드까지 렌더링하지 않습니다.
+ */
 static void
 ArnMeshRenderGl( const ArnMesh* mesh, bool bIncludeShadeless )
 {
+	// No push, pop matrix needed. It is done in the previous call level.
 	const ArnRenderableObject* renderable = mesh->getRenderableObject();
 	assert(renderable);
 	renderable->render(bIncludeShadeless);
+}
+
+static void ArnNodeRenderGl( const ArnNode* node, bool bIncludeShadeless )
+{
+	glPushMatrix(); // ArnNode-level push
+
+	switch (node->getType())
+	{
+	case NDT_RT_MESH:
+		{
+			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
+			if (mesh->isVisible())
+				ArnMeshRenderGl(mesh, bIncludeShadeless);
+		}
+		break;
+	case NDT_RT_SKELETON:
+		{
+			const ArnSkeleton* skel = reinterpret_cast<const ArnSkeleton*>(node);
+			if (skel->isVisible())
+				ArnSkeletonRenderGl(skel);
+		}
+		break;
+	case NDT_RT_BONE:
+		{
+			const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
+			ArnBoneRenderGl(bone);
+		}
+		break;
+	default:
+		// Not a renderable object.
+		break;
+	}
+
+	foreach (const ArnNode* child, node->getChildren())
+	{
+		ArnNodeRenderGl(child, bIncludeShadeless);
+	}
+
+	glPopMatrix(); // ArnNode-level pop
 }
 
 void
@@ -535,20 +595,7 @@ ArnSceneGraphRenderGl( const ArnSceneGraph* sg, bool bIncludeShadeless )
 {
 	foreach (const ArnNode* node, sg->getChildren())
 	{
-		if (node->getType() == NDT_RT_MESH)
-		{
-			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
-			if (mesh->isVisible())
-			{
-				ArnMeshRenderGl(mesh, bIncludeShadeless);
-			}
-		}
-		else if (node->getType() == NDT_RT_SKELETON)
-		{
-			const ArnSkeleton* skel = reinterpret_cast<const ArnSkeleton*>(node);
-			if (skel->isVisible())
-				ArnSkeletonRenderGl(skel);
-		}
+		ArnNodeRenderGl(node, bIncludeShadeless);
 	}
 }
 
