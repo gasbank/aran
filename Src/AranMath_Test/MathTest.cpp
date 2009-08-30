@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <vector>
 
 //
 // Boost C++
@@ -21,6 +22,9 @@
 #include "ArnMath.h"
 #include "ArnPlane.h"
 #include "ArnIntersection.h"
+#include "ArnCommonTypes.h"
+#include "ArnConsts.h"
+
 
 using namespace std;
 
@@ -122,11 +126,41 @@ void PointToPlaneProjectionTest()
 		printf("Ray-plane intersection point %.2f, %.2f, %.2f\n", rayPlaneIn.x, rayPlaneIn.y, rayPlaneIn.z);
 }
 
+void Frame()
+{
+	ArnMatrix A, AB_T, AC_T;
+	ArnMatrixIdentity(&A);
+	A.printFrameInfo();
+
+	ArnQuat qB(ArnQuat::createFromEuler(0, 0, 0));
+	ArnVec3 tB(0, 0, 5);
+	ArnMatrixTransformation(&AB_T, 0, 0, &ArnConsts::ARNVEC3_ONE, 0, &qB, &tB);
+	AB_T.printFrameInfo();
+
+	ArnQuat qC(ArnQuat::createFromEuler(ArnToRadian(45.0), 0, 0));
+	ArnVec3 tC(2, 3, 4);
+	ArnMatrixTransformation(&AC_T, 0, 0, &ArnConsts::ARNVEC3_ONE, 0, &qC, &tC);
+	AC_T.printFrameInfo();
+
+	ArnVec3 P_A(10, 20, 30);
+	ArnVec3 P_B, P_C;
+	ArnMatrix BA_T, CA_T;
+	ArnMatrixInverse(&BA_T, 0, &AB_T);
+	ArnMatrixInverse(&CA_T, 0, &AC_T);
+	ArnVec3TransformCoord(&P_B, &P_A, &BA_T);
+	ArnVec3TransformCoord(&P_C, &P_A, &CA_T);
+
+	P_B.printFormatString();
+	P_C.printFormatString();
+
+}
+
 int main()
 {
 	//QuaternionTest();
 	//PlaneIntersectionTest();
-	PointToPlaneProjectionTest();
+	//PointToPlaneProjectionTest();
+	Frame();
     cout << "The end of Aran library math test." << endl;
     return 0;
 }

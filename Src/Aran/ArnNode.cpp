@@ -23,6 +23,15 @@ ArnNode::attachChild( ArnNode* child )
 }
 
 void
+ArnNode::attachChildToFront( ArnNode* child )
+{
+	child->detachParent();
+	m_children.push_front(child);
+	child->setParentName(getName());
+	child->setParent(this);
+}
+
+void
 ArnNode::detachChild( ArnNode* child )
 {
 	m_children.remove(child);

@@ -15,6 +15,7 @@ public:
 	inline const char*				getName() const;
 	inline void						setName(const char* name);
 	void							attachChild(ArnNode* child);
+	void							attachChildToFront(ArnNode* child);
 	void							detachChild(ArnNode* child);
 	void							deleteAllChildren();
 	ArnNode*						getLastNode();

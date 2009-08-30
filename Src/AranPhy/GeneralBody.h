@@ -10,6 +10,7 @@
 
 class ArnXformable;
 class ArnPlane;
+class ArnSkeleton;
 struct OdeSpaceContext;
 
 struct GeneralBodyState
@@ -75,6 +76,14 @@ public:
 	void							calculateLumpedComAndMass(ArnVec3* com, float* mass) const;
 	void							calculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane) const;
 	void							calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const;
+
+	/*!
+	 * @brief 강체와 관절로 연결된 모델로부터 ArnSkeleton을 생성
+	 *
+	 * 현재 GeneralBody 를 중심으로 하여 관절로 연결되어있는 GeneralBody 를
+	 * 따라가며 ArnSkeleton 을 생성합니다. 각 관절의 위치가 ArnBone의 tail이 됩니다.
+	 */
+	ArnSkeleton*					createLumpedArnSkeleton() const;
 
 	//@}
 	/*! @name 회전

@@ -4,7 +4,7 @@
  * @date 2009
  */
 #include "IkTest.h"
-
+#include "ArnBone.h"
 #include <CGAL/Cartesian.h>
 #include <CGAL/ch_graham_andrew.h>
 #include <CGAL/functional.h>
@@ -31,7 +31,7 @@ public:
 	ArnCamera*								activeCam;
 	ArnLight*								activeLight;
 	std::vector<ArnIkSolver*>				ikSolvers;
-	GeneralBodyPtr							trunk, footR, footL;
+	GeneralBodyPtr							trunk;
 	ArnPlane								contactCheckPlane;
 	boost::circular_buffer<ArnVec3>			bipedComPos;
 	float									bipedMass;
@@ -507,14 +507,28 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		cameraDiff -= ac.activeCam->getRightVec() * cameraDiffAmount;
 	else if (!ac.bHoldingKeys[SDLK_a] && ac.bHoldingKeys[SDLK_d])
 		cameraDiff += ac.activeCam->getRightVec() * cameraDiffAmount;
-	if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
-		cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
-	else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
-		cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
 	if (ac.bHoldingKeys[SDLK_KP_MINUS] && !ac.bHoldingKeys[SDLK_KP_PLUS])
 		cameraDiff -= ac.activeCam->getUpVec() * cameraDiffAmount;
 	else if (!ac.bHoldingKeys[SDLK_KP_MINUS] && ac.bHoldingKeys[SDLK_KP_PLUS])
 		cameraDiff += ac.activeCam->getUpVec() * cameraDiffAmount;
+
+	if (ac.activeCam->isOrtho())
+	{
+		float orthoScaleDiff = 0;
+		if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
+			orthoScaleDiff += cameraDiffAmount;
+		else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
+			orthoScaleDiff -= cameraDiffAmount;
+
+		ac.activeCam->setOrthoScale(ac.activeCam->getOrthoScale() + orthoScaleDiff);
+	}
+	else
+	{
+		if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
+			cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
+		else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
+			cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
+	}
 
 	ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
 	ac.activeCam->recalcLocalXform();
@@ -613,6 +627,7 @@ RenderScene(const AppContext& ac)
 
 	// Render shadow
 	// light vector. LIGHTZ is implicitly 1
+	/*
 	static const float LIGHTX = 1.0f;
 	static const float LIGHTY = 1.0f;
 	static const float SHADOW_INTENSITY = 0.65f;
@@ -641,6 +656,7 @@ RenderScene(const AppContext& ac)
 	}
 	glPopMatrix();
 	glPopAttrib();
+	*/
 
 	// Render COM indicator and contact points of a biped.
 	glPushAttrib(GL_DEPTH_BUFFER_BIT);
@@ -781,12 +797,10 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		delete ikSolver;
 	}
 	ac.ikSolvers.clear();
-	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	if (ac.swPtr)
 	{
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
-		ac.footR = ac.swPtr->getBodyByNameFromSet("Foot.R");
-		ac.footL = ac.swPtr->getBodyByNameFromSet("Foot.L");
 
 		if (ac.trunk)
 		{
@@ -795,6 +809,9 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			ac.trunk->calculateLumpedComAndMass(&comPos, &ac.bipedMass);
 			ac.bipedComPos.push_back(comPos);
 			std::cout << " - Biped total mass: " << ac.bipedMass << std::endl;
+
+			ArnSkeleton* trunkSkel = ac.trunk->createLumpedArnSkeleton();
+			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
 	return 0;

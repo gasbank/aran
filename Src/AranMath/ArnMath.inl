@@ -25,25 +25,25 @@ ArnMatrixRotationZ( ArnMatrix* out, float rad	)
 static inline BOOL
 almostEqualFloat3(ArnVec3* pV1, ArnVec3* pV2)
 {
-	return ( fabsf( pV1->x - pV2->x ) < COMPARE_EPSILON )
-		&& ( fabsf( pV1->y - pV2->y ) < COMPARE_EPSILON )
-		&& ( fabsf( pV1->z - pV2->z ) < COMPARE_EPSILON );
+	return ( fabsf( pV1->x - pV2->x ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( pV1->y - pV2->y ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( pV1->z - pV2->z ) < FLT_COMPARE_EPSILON );
 }
 
 static inline BOOL
 almostEqualFloat3(float* floatArray1, float* floatArray2)
 {
-	return ( fabsf( floatArray1[0] - floatArray2[0] ) < COMPARE_EPSILON )
-		&& ( fabsf( floatArray1[1] - floatArray2[1] ) < COMPARE_EPSILON )
-		&& ( fabsf( floatArray1[2] - floatArray2[2] ) < COMPARE_EPSILON );
+	return ( fabsf( floatArray1[0] - floatArray2[0] ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( floatArray1[1] - floatArray2[1] ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( floatArray1[2] - floatArray2[2] ) < FLT_COMPARE_EPSILON );
 }
 static inline BOOL
 almostEqualFloat4(float* floatArray1, float* floatArray2)
 {
-	return ( fabsf( floatArray1[0] - floatArray2[0] ) < COMPARE_EPSILON )
-		&& ( fabsf( floatArray1[1] - floatArray2[1] ) < COMPARE_EPSILON )
-		&& ( fabsf( floatArray1[2] - floatArray2[2] ) < COMPARE_EPSILON )
-		&& ( fabsf( floatArray1[3] - floatArray2[3] ) < COMPARE_EPSILON );
+	return ( fabsf( floatArray1[0] - floatArray2[0] ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( floatArray1[1] - floatArray2[1] ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( floatArray1[2] - floatArray2[2] ) < FLT_COMPARE_EPSILON )
+		&& ( fabsf( floatArray1[3] - floatArray2[3] ) < FLT_COMPARE_EPSILON );
 }
 
 static inline float

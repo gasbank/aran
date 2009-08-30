@@ -7,6 +7,7 @@
 #include "ArnViewportData.h"
 #include "ArnMath.h"
 #include "ArnIntersection.h"
+
 // Floating Point Library Specific
 static const float	EPSILON						= 0.0001f;		// error tolerance for check
 static const int	FLOAT_DECIMAL_TOLERANCE		= 3;			// decimal places for float rounding
@@ -145,12 +146,23 @@ ArnMatrixInverse( ArnMatrix *pOut, float *pDeterminant, const ArnMatrix *pM )
 ArnQuat*
 ArnQuaternionRotationAxis( ArnQuat *pOut, const ArnVec3 *pV, float Angle )
 {
-	assert(ArnVec3GetLength(*pV) == 1);
-	float s = sinf(Angle / 2);
-	pOut->w = cos(Angle / 2);
-	pOut->x = pV->x * s;
-	pOut->y = pV->y * s;
-	pOut->z = pV->z * s;
+	//return ArnRotAxisToQuat(angle, ArnVec3(rx, ry, rz));
+	if (-FLT_COMPARE_EPSILON <= Angle && Angle <= FLT_COMPARE_EPSILON)
+	{
+		pOut->w = 1;
+		pOut->x = 0;
+		pOut->y = 0;
+		pOut->z = 0;
+	}
+	else
+	{
+		assert(ArnVec3GetLength(*pV) == 1);
+		float s = sinf(Angle / 2);
+		pOut->w = cos(Angle / 2);
+		pOut->x = pV->x * s;
+		pOut->y = pV->y * s;
+		pOut->z = pV->z * s;
+	}
 	return pOut;
 }
 
@@ -479,5 +491,5 @@ bool
 ArnVec3IsNormalized(const ArnVec3& vec3)
 {
 	float len = ArnVec3Length(vec3);
-	return (1.0f - COMPARE_EPSILON <= len && len <= 1.0f + COMPARE_EPSILON);
+	return (1.0f - FLT_COMPARE_EPSILON <= len && len <= 1.0f + FLT_COMPARE_EPSILON);
 }

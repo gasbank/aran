@@ -32,6 +32,16 @@ ArnQuat::createFromEuler(float rx, float ry, float rz)
 	return ArnEulerToQuat(&v3);
 }
 
+ArnQuat
+ArnQuat::createFromRotAxis(float angle, float rx, float ry, float rz)
+{
+	ArnQuat q;
+	ArnVec3 r(rx, ry, rz);
+	r /= ArnVec3Length(r);
+	ArnQuaternionRotationAxis(&q, &r, angle);
+	return q;
+}
+
 void
 ArnQuat::getRotationMatrix(ArnMatrix* pOut) const
 {
@@ -49,6 +59,13 @@ float
 ArnQuat::getLength() const
 {
 	return sqrtf(getSquaredLength());
+}
+
+ArnQuat
+ArnQuat::computeInverse() const
+{
+	float len = getSquaredLength();
+	return ArnQuat(-x/len, -y/len, -z/len, w/len);
 }
 
 void

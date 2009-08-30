@@ -272,3 +272,30 @@ void ArnXformable::addJointData( const ArnJointData& data )
 {
 	m_jointData.push_back(data);
 }
+
+
+ArnQuat ArnXformable::computeWorldXform_Rot() const
+{
+	ArnXformable* xParent = dynamic_cast<ArnXformable*>(getParent());
+	if (xParent)
+	{
+		return xParent->computeWorldXform_Rot() * getLocalXform_Rot();
+	}
+	else
+	{
+		return getLocalXform_Rot();
+	}
+}
+
+ArnMatrix ArnXformable::computeWorldXform() const
+{
+	ArnXformable* xParent = dynamic_cast<ArnXformable*>(getParent());
+	if (xParent)
+	{
+		return xParent->computeWorldXform() * getLocalXform();
+	}
+	else
+	{
+		return getLocalXform();
+	}
+}

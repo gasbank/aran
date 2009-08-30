@@ -15,12 +15,14 @@ public:
 	bool						operator == ( const ArnQuat& rhs) const;
 	bool						operator != ( const ArnQuat& rhs) const;
 	static ArnQuat				createFromEuler(float rx, float ry, float rz);
+	static ArnQuat				createFromRotAxis(float angle, float rx, float ry, float rz);
 	float						getLength() const;
 	float						getSquaredLength() const;
 	void						getRotationMatrix(ArnMatrix* pOut) const;
 	void						normalize();
 	void						printEuler() const;
 	void						printAxisAngle() const;
+	ArnQuat						computeInverse() const;
 
 	float						x;
 	float						y;

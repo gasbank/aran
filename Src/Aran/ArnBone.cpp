@@ -18,6 +18,29 @@ ArnBone::~ArnBone(void)
 }
 
 ArnBone*
+ArnBone::createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll)
+{
+	ArnBone* bone = new ArnBone();
+	bone->m_headPos = head;
+	bone->m_tailPos = tail;
+	bone->m_roll = roll;
+
+	ArnVec3 boneDir(bone->getBoneDirection());
+	float boneLength = ArnVec3GetLength(boneDir);
+	ArnVec3 rotAxis(ArnVec3GetCrossProduct(ArnConsts::ARNVEC3_Y, boneDir));
+	rotAxis /= ArnVec3Length(rotAxis);
+	float dot = ArnVec3Dot(ArnConsts::ARNVEC3_Y, boneDir / boneLength);
+	float rotAngle = acos(dot);
+	ArnQuat q1(ArnQuat::createFromRotAxis(rotAngle, rotAxis.x, rotAxis.y, rotAxis.z));
+	ArnQuat q2(ArnQuat::createFromRotAxis(roll, 0, 1, 0));
+	bone->setLocalXform_Trans(bone->getBoneDirection());
+	bone->setLocalXform_Rot(q1 * q2);
+
+	bone->recalcLocalXform();
+	return bone;
+}
+
+ArnBone*
 ArnBone::createFrom( const NodeBase* nodeBase )
 {
 	ArnBone* node = new ArnBone();
@@ -176,4 +199,10 @@ ArnBone* ArnBone::getFirstChildBone() const
 			return static_cast<ArnBone*>(n);
 	}
 	ARN_THROW_UNEXPECTED_CASE_ERROR
+}
+
+float
+ArnBone::getBoneLength() const
+{
+	return ArnVec3Length(ArnVec3Substract(m_tailPos, m_headPos));
 }

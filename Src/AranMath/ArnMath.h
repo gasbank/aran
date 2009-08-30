@@ -8,7 +8,7 @@ class ArnMesh;
 class ArnGenericBuffer;
 struct ArnViewportData;
 struct ArnColorValue4f;
-const static float COMPARE_EPSILON = 1e-6f;
+const static float FLT_COMPARE_EPSILON = 1e-4f;
 
 ARANMATH_API DWORD				ArnFloat4ColorToDword(const ArnColorValue4f* cv);
 ARANMATH_API ArnVec3			ArnQuatToEuler(const ArnQuat* quat);

@@ -20,6 +20,7 @@ public:
 	ArnMatrix&						operator *= ( const ArnMatrix& rhs );
 	ArnMatrix&						operator = (const ArnMatrix& rhs);
 	void							getFormatString(char* buf) const;
+	void							printFrameInfo() const;
 
 	float							m[4][4]; // First index is row index, second index is column index!!!
 };

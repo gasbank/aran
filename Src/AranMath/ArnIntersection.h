@@ -78,7 +78,7 @@ ArnLinePlaneIntersection(ArnVec3& p, const ArnVec3& p0, const ArnVec3& p1, const
 	assert(ArnVec3IsNormalized(p1));
 	const ArnVec3& n = plane.getNormal();
 	const float perpTest = ArnVec3Dot(n, p1);
-	if (-COMPARE_EPSILON <= perpTest && perpTest <= COMPARE_EPSILON)
+	if (-FLT_COMPARE_EPSILON <= perpTest && perpTest <= FLT_COMPARE_EPSILON)
 	{
 		return 0;
 	}
@@ -111,7 +111,7 @@ intersect3D_2Planes( ArnVec3& p0, ArnVec3& p1, const ArnPlane& Pn1, const ArnPla
     float    az = (u.z >= 0 ? u.z : -u.z);
 
     // test if the two planes are parallel
-    if ((ax+ay+az) < COMPARE_EPSILON) {       // Pn1 and Pn2 are near parallel
+    if ((ax+ay+az) < FLT_COMPARE_EPSILON) {       // Pn1 and Pn2 are near parallel
         // test if disjoint or coincide
         ArnVec3 v = Pn2.getV0() - Pn1.getV0();
 
@@ -178,7 +178,7 @@ intersect3D_SegmentPlane(ArnVec3& I, const ArnVec3& p0, const ArnVec3& p1, const
 	float     D = ArnVec3Dot(Pn.getNormal(), u);
 	float     N = -ArnVec3Dot(Pn.getNormal(), w);
 
-	if (fabs(D) < COMPARE_EPSILON) {          // segment is parallel to plane
+	if (fabs(D) < FLT_COMPARE_EPSILON) {          // segment is parallel to plane
 		if (N == 0)                     // segment lies in plane
 			return 2;
 		else

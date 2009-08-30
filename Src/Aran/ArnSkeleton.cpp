@@ -16,6 +16,12 @@ ArnSkeleton::~ArnSkeleton(void)
 {
 }
 
+ArnSkeleton* ArnSkeleton::createFromEmpty()
+{
+	ArnSkeleton* ret = new ArnSkeleton();
+	return ret;
+}
+
 void
 ArnSkeleton::interconnect( ArnNode* sceneRoot )
 {

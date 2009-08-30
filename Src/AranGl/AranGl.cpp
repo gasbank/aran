@@ -359,7 +359,7 @@ ArnBoneRenderGl( const ArnBone* bone )
 			glDisable(GL_LIGHTING);
 			glColor3f(1, 1, 1);
 
-			glScaled(0.25, 0.25, boneLength);
+			glScaled(boneLength/4, boneLength/4, boneLength);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glCallList(gs_glArrowList);
 
@@ -369,18 +369,18 @@ ArnBoneRenderGl( const ArnBone* bone )
 		}
 		glPopMatrix();
 		glTranslatef(0, boneLength, 0);
-		ArnDrawAxesGl(0.25);
+		ArnDrawAxesGl(boneLength/4);
 		if (bone->getChildBoneCount(true) == 0)
 		{
 			// Draw an end-effector indicator.
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
-			ArnRenderSphereGl(0.1);
+			ArnRenderSphereGl(boneLength/12);
 		}
 		else
 		{
 			// Draw a joint indicator.
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-			ArnRenderSphereGl(0.1);
+			ArnRenderSphereGl(boneLength/12);
 		}
 
 		foreach (const ArnNode* node, bone->getChildren())
