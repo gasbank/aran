@@ -152,6 +152,7 @@ ArnSkinningShaderGl::initShader()
 void
 ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vector<VertexGroup>& vertGroup, const ArnMesh* skinnedMesh)
 {
+	// TODO: Unnecessarily duplicated computation...
 	int boneMatIdx = 0;
 	foreach (const VertexGroup& vg, vertGroup)
 	{
@@ -159,50 +160,44 @@ ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vect
 		if (boneNode && boneNode->getType() == NDT_RT_BONE)
 		{
 			const ArnBone* bone = reinterpret_cast<const ArnBone*>(boneNode);
-			//ArnMatrix m = bone->computeWorldXform().transpose();
-			//ArnMatrix m = bone->getFinalLocalXform().transpose();
-			ArnMatrix m;
-			ArnQuat q = bone->getAnimLocalXform_Rot();
+			ArnMatrix m(ArnConsts::ARNMAT_IDENTITY);
 
-			q.getRotationMatrix(&m);
-			//m = m * bone->computeWorldXform();
-			m = m.transpose();
-			m = bone->getAutoLocalXform();
-			//ArnMatrix parentWxform(bone->getParent()->computeWorldXform());
-			//ArnMatrix parentWxformInv;
-			//ArnMatrixInverse(&parentWxformInv, 0, &parentWxform);
-
-			//ArnMatrixInverse(&m, 0, &m);
-
-			//m.printFrameInfo();
-			ArnMatrix model2BoneXform(ArnConsts::ARNMAT_IDENTITY);
-			const ArnXformable* boneParent = dynamic_cast<const ArnXformable*>(bone->getParent());
-			if (boneParent)
+			while (bone)
 			{
-				ArnMatrix boneChainMat = boneParent->computeWorldXform();
-				ArnMatrix boneChainMatInv;
-				ArnMatrixInverse(&boneChainMatInv, 0, &boneChainMat);
-				model2BoneXform = boneChainMatInv;
+				const ArnXformable* boneParent = dynamic_cast<const ArnXformable*>(bone->getParent());
+				ArnMatrix boneWorldMat(ArnConsts::ARNMAT_IDENTITY);
+
+				while (boneParent)
+				{
+					ArnMatrix boneMat;
+					ArnQuat boneQ = boneParent->getLocalXform_Rot() * boneParent->getAnimLocalXform_Rot();
+					ArnMatrixTransformation(&boneMat, 0, 0, &boneParent->getLocalXform_Scale(), 0, &boneQ, &boneParent->getLocalXform_Trans());
+					boneWorldMat = boneMat * boneWorldMat;
+
+					boneParent = dynamic_cast<const ArnXformable*>(boneParent->getParent());
+				}
+
+				const ArnVec3 parentBoneTailDiff = boneWorldMat.getColumnVec3(1) * static_cast<ArnBone*>(bone->getParent())->getBoneLength();
+				boneWorldMat.m[0][3] += parentBoneTailDiff.x;
+				boneWorldMat.m[1][3] += parentBoneTailDiff.y;
+				boneWorldMat.m[2][3] += parentBoneTailDiff.z;
+
+				ArnMatrix boneWorldMatInv;
+				ArnMatrixInverse(&boneWorldMatInv, 0, &boneWorldMat);
+				const ArnMatrix meshWorldMat = skinnedMesh->computeWorldXform();
+
+				const ArnMatrix model2BoneMat = boneWorldMatInv * meshWorldMat;
+				ArnMatrix bone2ModelMat;
+				ArnMatrixInverse(&bone2ModelMat, 0, &model2BoneMat);
+
+				ArnMatrix boneRotMat;
+				bone->getAnimLocalXform_Rot().getRotationMatrix(&boneRotMat);
+
+				m *= bone2ModelMat * boneRotMat * model2BoneMat;
+
+
+				bone = dynamic_cast<const ArnBone*>(bone->getParent());
 			}
-			//model2BoneXform = model2BoneXform * skinnedMesh->getAutoLocalXform();
-
-
-			ArnMatrix model2BoneXformInv;
-			ArnMatrixInverse(&model2BoneXformInv, 0, &model2BoneXform);
-
-			const ArnMatrix& skelXform = skel->computeWorldXform();
-			ArnMatrix skelXformInv;
-			ArnMatrixInverse(&skelXformInv, 0, &skelXform);
-
-
-			ArnMatrix boneSpaceXform = skelXformInv * bone->computeWorldXform();
-			//const ArnMatrix& boneSpaceXform = bone->getAutoLocalXform();
-			m = model2BoneXformInv * boneSpaceXform * model2BoneXform;
-			printf("%s\n", bone->getName());
-			model2BoneXformInv.printFrameInfo();
-			boneSpaceXform.printFrameInfo();
-			model2BoneXform.printFrameInfo();
-
 			// Matrices should be transposed before applied in OpenGL.
 			glUniformMatrix4fvARB( m_location_boneMatrices[boneMatIdx], 1, false, reinterpret_cast<const GLfloat*>(m.transpose().m) );
 			//glUniformMatrix4fvARB( m_location_boneMatrices[boneMatIdx], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
@@ -210,34 +205,34 @@ ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vect
 		++boneMatIdx;
 	}
 
-    //
-    // Set up some lighting...
-    //
-    float fEyePosition[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-    float fLightVector[] = { 0.0f, 0.0f, -1.0f, 0.0f };
+	//
+	// Set up some lighting...
+	//
+	float fEyePosition[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+	float fLightVector[] = { 0.0f, 0.0f, -1.0f, 0.0f };
 
-    // Normalize light vector
-    float fLength = sqrtf( fLightVector[0]*fLightVector[0] +
-                           fLightVector[1]*fLightVector[1] +
-                           fLightVector[2]*fLightVector[2] );
-    fLightVector[0] /= fLength;
-    fLightVector[1] /= fLength;
-    fLightVector[2] /= fLength;
+	// Normalize light vector
+	float fLength = sqrtf( fLightVector[0]*fLightVector[0] +
+						   fLightVector[1]*fLightVector[1] +
+						   fLightVector[2]*fLightVector[2] );
+	fLightVector[0] /= fLength;
+	fLightVector[1] /= fLength;
+	fLightVector[2] /= fLength;
 
-    // Set the light's directional vector
-    if ( m_location_lightVector != (unsigned int)(-1) )
+	// Set the light's directional vector
+	if ( m_location_lightVector != (unsigned int)(-1) )
 		glUniform4fARB( m_location_lightVector, fLightVector[0], fLightVector[1], fLightVector[2], fLightVector[3] );
 
-    // Set the viewer's eye position
-    if ( m_location_eyePosition != (unsigned int)(-1) )
-        glUniform4fARB( m_location_eyePosition, fEyePosition[0], fEyePosition[1], fEyePosition[2], fEyePosition[3] );
+	// Set the viewer's eye position
+	if ( m_location_eyePosition != (unsigned int)(-1) )
+		glUniform4fARB( m_location_eyePosition, fEyePosition[0], fEyePosition[1], fEyePosition[2], fEyePosition[3] );
 
-    // Set the inverse of the current model-view matrix
-    ArnMatrix modelView;
-    ArnMatrix inverseModelView;
-    glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelView.m));
-    ArnMatrixInverse(&inverseModelView, 0, &modelView);
-    if ( m_location_inverseModelView != (unsigned int)(-1) )
+	// Set the inverse of the current model-view matrix
+	ArnMatrix modelView;
+	ArnMatrix inverseModelView;
+	glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelView.m));
+	ArnMatrixInverse(&inverseModelView, 0, &modelView);
+	if ( m_location_inverseModelView != (unsigned int)(-1) )
 		glUniformMatrix4fvARB( m_location_inverseModelView, 1, false, reinterpret_cast<const GLfloat*>(inverseModelView.m) );
-}
+	}
 
