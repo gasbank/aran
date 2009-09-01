@@ -209,15 +209,28 @@ def createLightData(doc, ob):
 	lightData.setAttribute('b', str(light.B))
 	return lightData
 
-def makeBoneElementRecursive(doc, skelData, bone):
+def makeBoneElementRecursive(doc, skelData, bone, parentBone):
 	boneElm = doc.createElement('object')
 	boneElm.setAttribute('name', bone.name)
 	boneElm.setAttribute('rtclass', 'ArnBone')
-	boneXformElm = createTransformElementFromMatrix(doc, bone.matrix['BONESPACE'])
+	if parentBone:
+		boneXformElm = createTransformElementFromMatrix(doc, bone.matrix['BONESPACE'])
+		boneTranslationElm = doc.createElement('translation')
+		boneTranslationElm.setAttribute('x', str(0))
+		if parentBone:
+			boneTranslationElm.setAttribute('y', str(parentBone.length))
+		else:
+			boneTranslationElm.setAttribute('y', str(0))
+		boneTranslationElm.setAttribute('z', str(0))
+		boneXformElm.appendChild(boneTranslationElm)
+	else:
+		boneXformElm = createTransformElementFromMatrix(doc, bone.matrix['ARMATURESPACE'])
 	boneElm.appendChild(boneXformElm)
 	
 	coordSpace = 'BONESPACE'
 	boneTag = doc.createElement('bone')
+	# In which coordinates head and tail are defined?
+	boneTag.setAttribute('frame', 'bone')
 	headTag = doc.createElement('head')
 	headTag.setAttribute('x', str(bone.head[coordSpace].x))
 	headTag.setAttribute('y', str(bone.head[coordSpace].y))
@@ -235,7 +248,7 @@ def makeBoneElementRecursive(doc, skelData, bone):
 	boneElm.appendChild(boneTag)
 	
 	for boneChild in bone.children:
-		skelData.appendChild(makeBoneElementRecursive(doc, boneElm, boneChild))
+		skelData.appendChild(makeBoneElementRecursive(doc, boneElm, boneChild, bone))
 		
 	skelData.appendChild(boneElm)
 	return skelData
@@ -246,7 +259,7 @@ def createSkeletonData(doc, ob):
 	
 	for bone in skel.bones.values():
 		if not bone.parent:
-			makeBoneElementRecursive(doc, skelData, bone)
+			makeBoneElementRecursive(doc, skelData, bone, 0)
 
 	if ob.getPose():
 		pbones = ob.getPose().bones.values()
