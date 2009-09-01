@@ -567,21 +567,9 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
 	}
-	/*
-	if (ac.footR)
-	{
-		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footR, ac.contactCheckPlane);
-	}
-	if (ac.footL)
-	{
-		ArnGeneralBodyPlaneIntersection(ac.isects, *ac.footL, ac.contactCheckPlane);
-	}
-	*/
 
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();
-
-
 
 	unsigned int isectsCount = ac.isects.size();
 	if (isectsCount)

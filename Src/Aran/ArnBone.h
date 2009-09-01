@@ -11,21 +11,29 @@ struct NodeBone1;
 struct NodeBone2;
 struct MyFrameData;
 struct BoneData;
+class ArnSkeleton;
+
 /*!
  * @brief ArnSkeleton 구성하는 하나의 뼈를 나타내는 클래스
+ *
+ * 뼈는 뼈의 시작 위치와 뼈가 뻗어나가는 방향, 길이, 뻗어나가는
+ * 축에서의 회전으로 정의됩니다. 뼈의 시작 위치를 head, 끝 위치를
+ * tail이라고 합니다. 또한, 뼈 축의 회전 정도를 roll이라고 합니다.
+ * head는 local 변환을 통해 bone space(frame) 상에서 그 위치가
+ * 정의됩니다. tail은 head를 +Y 방향으로 뼈의 길이만큼 translation하면
+ * 구할 수 있습니다. 즉, ArnBone 클래스에서는 뼈의 길이와 회전(roll)만
+ * 따로 저장하고 있으면 됩니다.
  */
 class ARAN_API ArnBone : public ArnXformable
 {
 public:
 											~ArnBone(void);
+	virtual const ArnMatrix&				getAutoLocalXform() const;
+
 	/*!
-	 * @brief head, tail, roll 값으로 뼈대를 생성
-	 *
-	 * head, tail, roll 값으로부터 변환행렬을 역으로 계산합니다. 변환행렬이 만들어진 이후에는
-	 * 렌더링할 때에는 head, tail값을 이용해 뼈대의 길이만 계산하고, 변환행렬로 회전 행렬을 얻습니다.
-	 * 즉, 생성된 이후 head, tail값을 바꾸는 것만으로는 뼈대의 위치가 변경되지 않습니다.
+	 * @brief length와 roll(bone space 상) 값을 설정하여 새 뼈 생성
 	 */
-	static ArnBone*							createFrom(const ArnVec3& head, const ArnVec3& tail, const float roll);
+	static ArnBone*							createFrom(const float length, const float roll);
 	static ArnBone*							createFrom(const NodeBase* nodeBase);
 	static ArnBone*							createFrom(const TiXmlElement* elm);
 	void									setFrameData(const MyFrameData* frameData) { m_frameData = frameData; }
@@ -40,14 +48,15 @@ public:
 	/*!
 	 * @brief 뼈의 방향
 	 *
-	 * 뼈의 위치는 뼈의 굵은 부분(head) 위치와 가는 부분(tail)위치로 정의됩니다.
-	 * 이 때 뼈의 방향을 나타내는 벡터는 tail - head로 정의하며 이 함수는 그 벡터를 반환합니다.
-	 * 결과적으로 head에서 tail를 가리키는 벡터가 반환됩니다.
-	 * 이 벡터는 정규화되지 않습니다.
+	 * 뼈의 방향은 bone space에서 양의 Y축입니다.
 	 */
-	ArnVec3									getBoneDirection() const { return ArnVec3Substract(m_tailPos, m_headPos); }
-	float									getBoneLength() const;
-
+	ArnVec3									getBoneDirection() const { return getAutoLocalXform().getColumnVec3(1); }
+	float									getBoneLength() const { return m_boneLength; }
+	/*!
+	 * @brief 부모 ArnSkeleton 을 반환
+	 * @return 있으면 부모 ArnSkeleton 포인터, 없으면 \c NULL 반환
+	 */
+	ArnSkeleton*							getParentSkeleton() const;
 	void									getRotLimit(AxisEnum axis, float& minimum, float& maximum) const;
 	void									setRotLimit(AxisEnum axis, float minimum, float maximum);
 	void									clearRotLimit(AxisEnum axis);
@@ -62,13 +71,9 @@ private:
 											ArnBone(void);
 	void									buildFrom(const NodeBone1* nb);
 	void									buildFrom(const NodeBone2* nb);
-	void									setHeadPos(const ArnVec3& pos) { m_headPos = pos; }
-	void									setTailPos(const ArnVec3& pos) { m_tailPos = pos; }
-	void									setRoll(float v) { m_roll = v; }
 	BoneData								m_data;
 	const MyFrameData*						m_frameData;
-	ArnVec3									m_headPos;
-	ArnVec3									m_tailPos;
 	float									m_roll;
+	float									m_boneLength;
 	float									m_rotLimit[3][2]; // [X, Y, Z axis][min, max]
 };

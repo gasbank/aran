@@ -14,18 +14,16 @@ ArnXformable::ArnXformable(NODE_DATA_TYPE ndt)
 , m_localXform_Scale(ArnConsts::ARNVEC3_ONE)
 , m_localXform_Rot(ArnConsts::ARNQUAT_IDENTITY)
 , m_localXform_Trans(ArnConsts::ARNVEC3_ZERO)
-, m_bLocalXformDirty(true)
+, m_bLocalXformDirty(false)
 , m_animLocalXform(ArnConsts::ARNMAT_IDENTITY)
 , m_animLocalXform_Scale(ArnConsts::ARNVEC3_ONE)
 , m_animLocalXform_Rot(ArnConsts::ARNQUAT_IDENTITY)
 , m_animLocalXform_Trans(ArnConsts::ARNVEC3_ZERO)
-, m_bAnimLocalXformDirty(true)
+, m_bAnimLocalXformDirty(false)
 , m_animCtrl(0)
 , m_bDoAnim(false)
 , m_bAnimSeqEnded(false)
 , m_ipo(0)
-, m_finalLocalXform(ArnConsts::ARNMAT_IDENTITY)
-, m_localXformIpo(ArnConsts::ARNMAT_IDENTITY)
 {
 }
 
@@ -62,6 +60,7 @@ void
 ArnXformable::setIpo( ArnIpo* val )
 {
 	m_ipo = val;
+	/*
 	if (m_ipo)
 	{
 		DWORD cn = m_ipo->getCurveNames();
@@ -84,20 +83,7 @@ ArnXformable::setIpo( ArnIpo* val )
 
 		ArnMatrixTransformation(&m_localXformIpo, 0, 0, &vScale, 0, &qRot, &vTrans);
 	}
-}
-ArnMatrix
-ArnXformable::getFinalXform()
-{
-	if (	(getParent()->getType() == NDT_RT_MESH)
-		||	(getParent()->getType() == NDT_RT_CAMERA)
-		||	(getParent()->getType() == NDT_RT_LIGHT) )
-	{
-		return ArnMatrixMultiply(static_cast<ArnXformable*>(getParent())->getFinalXform(), getFinalLocalXform());
-	}
-	else
-	{
-		return getFinalLocalXform();
-	}
+	*/
 }
 
 void
@@ -152,25 +138,7 @@ ArnXformable::update( double fTime, float fElapsedTime )
 {
 	if (m_bDoAnim && m_animCtrl)
 	{
-		//m_d3dxAnimCtrl->AdvanceTime(0.005, 0);
 		m_animCtrl->AdvanceTime(fElapsedTime, 0);
-
-		/*
-		ARNTRACK_DESC trackDesc;
-		m_d3dxAnimCtrl->GetTrackDesc( 0, &trackDesc );
-		if (m_ipo && ( (float)m_ipo->getEndKeyframe() / FPS < (float)trackDesc.Position ))
-		{
-			// Current Ipo ended. Stop the animation
-			setDoAnim(false);
-			setAnimSeqEnded(true);
-
-			char debugMsg[128];
-			//StringCchPrintf(debugMsg, 128, _T("m_ipo End Keyframe = %d, trackDescPosition = %f\n"), m_ipo->getEndKeyframe(), (float)trackDesc.Position);
-			sprintf(debugMsg, "m_ipo End Keyframe = %d, trackDescPosition = %f\n", m_ipo->getEndKeyframe(), (float)trackDesc.Position);
-			OutputDebugStringA("INFO: Animation stopped since all keyframes passed\n");
-			OutputDebugStringA(debugMsg);
-		}
-		*/
 	}
 
 	ArnNode::update(fTime, fElapsedTime);
@@ -181,7 +149,6 @@ void
 ArnXformable::setLocalXform( const ArnMatrix& localXform )
 {
 	m_localXform = localXform;
-	m_localXformIpo = m_localXform;
 	ArnMatrixDecompose(&m_localXform_Scale, &m_localXform_Rot, &m_localXform_Trans, &m_localXform);
 	m_bLocalXformDirty = false;
 }
@@ -203,13 +170,9 @@ ArnXformable::recalcAnimLocalXform()
 	m_bAnimLocalXformDirty = false;
 }
 
-
 const ArnMatrix&
-ArnXformable::getFinalLocalXform() const
+ArnXformable::getAutoLocalXform() const
 {
-	// TODO: We need urgent transformation matrix cleanup -_-;
-
-	//m_finalLocalXform = m_animLocalXform * m_localXformIpo;
 	if (m_ipo)
 	{
 		assert(m_bAnimLocalXformDirty == false);
@@ -253,11 +216,12 @@ ArnXformable::setDoAnim( bool bDoAnim )
 void
 ArnXformable::printXformData() const
 {
-	printf("Node name: %s\n", getName());
-	printf("Local translation (%.3f, %.3f, %.3f)\n", m_localXform_Trans.x, m_localXform_Trans.y, m_localXform_Trans.z);
 	ArnVec3 eul = ArnQuatToEuler(&m_localXform_Rot);
-	printf("Rotation Quat (w%.3f, %.3f, %.3f, %.3f)\n", m_localXform_Rot.w, m_localXform_Rot.x, m_localXform_Rot.y, m_localXform_Rot.z);
-	printf("Rotation Euler (%.3f, %.3f, %.3f)\n", eul.x * 180 / M_PI, eul.y * 180 / M_PI, eul.z * 180 / M_PI);
+	printf("  Node name: %s\n", getName());
+	printf("    Local scaling        ( %.3f, %.3f, %.3f)\n", m_localXform_Scale.x, m_localXform_Scale.y, m_localXform_Scale.z);
+	printf("    Local Rotation Quat  (w%.3f, %.3f, %.3f, %.3f)\n", m_localXform_Rot.w, m_localXform_Rot.x, m_localXform_Rot.y, m_localXform_Rot.z);
+	printf("    Local Rotation Euler ( %.3f, %.3f, %.3f)\n", eul.x * 180 / M_PI, eul.y * 180 / M_PI, eul.z * 180 / M_PI);
+	printf("    Local translation    ( %.3f, %.3f, %.3f)\n", m_localXform_Trans.x, m_localXform_Trans.y, m_localXform_Trans.z);
 }
 
 void
@@ -273,29 +237,22 @@ void ArnXformable::addJointData( const ArnJointData& data )
 	m_jointData.push_back(data);
 }
 
-
-ArnQuat ArnXformable::computeWorldXform_Rot() const
+ArnMatrix
+ArnXformable::computeWorldXform() const
 {
-	ArnXformable* xParent = dynamic_cast<ArnXformable*>(getParent());
-	if (xParent)
+	if	(getParent()
+		&&	( getParent()->getType() == NDT_RT_MESH
+		||	  getParent()->getType() == NDT_RT_CAMERA
+		||	  getParent()->getType() == NDT_RT_LIGHT
+		||	  getParent()->getType() == NDT_RT_SKELETON
+		||	  getParent()->getType() == NDT_RT_BONE
+			)
+		)
 	{
-		return xParent->computeWorldXform_Rot() * getLocalXform_Rot();
+		return ArnMatrixMultiply(static_cast<ArnXformable*>(getParent())->computeWorldXform(), getAutoLocalXform());
 	}
 	else
 	{
-		return getLocalXform_Rot();
-	}
-}
-
-ArnMatrix ArnXformable::computeWorldXform() const
-{
-	ArnXformable* xParent = dynamic_cast<ArnXformable*>(getParent());
-	if (xParent)
-	{
-		return xParent->computeWorldXform() * getLocalXform();
-	}
-	else
-	{
-		return getLocalXform();
+		return getAutoLocalXform();
 	}
 }

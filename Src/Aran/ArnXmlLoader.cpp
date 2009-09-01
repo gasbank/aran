@@ -847,9 +847,6 @@ ArnBone*
 ArnBone::createFrom( const TiXmlElement* elm )
 {
 	AssertAttrEquals(elm, "rtclass", "ArnBone");
-	ArnBone* ret = new ArnBone();
-	SetupArnXformableCommonPart(ret, elm);
-
 	const TiXmlElement* boneElm = GetUniqueChildElement(elm, "bone");
 	const TiXmlElement* headElm = GetUniqueChildElement(boneElm, "head");
 	const TiXmlElement* tailElm = GetUniqueChildElement(boneElm, "tail");
@@ -858,10 +855,11 @@ ArnBone::createFrom( const TiXmlElement* elm )
 	ArnVec3 headPos, tailPos;
 	ParseArnVec3FromElementAttr(&headPos, headElm);
 	ParseArnVec3FromElementAttr(&tailPos, tailElm);
+	ArnVec3 boneDir(tailPos - headPos);
+	float length = ArnVec3Length(boneDir);
 	float roll = ParseFloatFromAttr(rollElm, "value");
-	ret->setHeadPos(headPos);
-	ret->setTailPos(tailPos);
-	ret->setRoll(ArnToRadian(roll));
+	ArnBone* ret = ArnBone::createFrom(length, ArnToRadian(roll));
+	SetupArnXformableCommonPart(ret, elm);
 
 	for (const TiXmlElement* e = elm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
 	{

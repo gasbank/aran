@@ -314,7 +314,7 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 			skelParent = skelParent->getParent();
 		}
 		assert(skelParent && skelParent->getType() == NDT_RT_SKELETON);
-		ArnSkinningShaderGl::getSingleton().setShaderConstants(reinterpret_cast<ArnSkeleton*>(skelParent), m_target->getVertGroup());
+		ArnSkinningShaderGl::getSingleton().setShaderConstants(reinterpret_cast<ArnSkeleton*>(skelParent), m_target->getVertGroup(), m_target);
 	}
 
 	const size_t faceGroupCount = m_target->getFaceGroupCount();
@@ -368,7 +368,8 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 		{
 			assert(m_target->isLocalXformDirty() == false);
 
-			glMultTransposeMatrixf((float*)m_target->getFinalLocalXform().m);
+			glMultTransposeMatrixf((float*)m_target->getAutoLocalXform().m);
+
 			/*
 			if (m_target->isTwoSided())
 			{

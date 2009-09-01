@@ -65,7 +65,7 @@ void
 ArnConfigureViewMatrixGl(ArnCamera* cam)
 {
 	//ArnMatrix localTf = cam->getLocalXform();
-	ArnMatrix localTf = cam->getFinalLocalXform();
+	ArnMatrix localTf = cam->getAutoLocalXform();
 
 	ARN_CAMERA mainCamera;
 	mainCamera.eye.x = localTf.m[0][3];
@@ -103,7 +103,7 @@ ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 		if (lightType == 1)
 		{
 			// Point light (e.g. bulb)
-			ArnVec4 pos(light->getFinalLocalXform().getColumnVec3(3), 1);
+			ArnVec4 pos(light->getAutoLocalXform().getColumnVec3(3), 1);
 			float a0 = 0.001f;
 			float a1 = 0.1f;
 			float a2 = 0.00001f;
@@ -359,20 +359,23 @@ ArnBoneRenderGl( const ArnBone* bone )
 	// No push, pop matrix needed. It is done in the previous call level.
 	assert(bone->isLocalXformDirty() == false);
 
-	ArnVec3 boneDir(bone->getBoneDirection());
-	float boneLength = ArnVec3GetLength(boneDir);
+	//ArnVec3 boneDir(bone->getBoneDirection());
+	const float boneLength = bone->getBoneLength();
 
 	glPushAttrib(GL_ENABLE_BIT);
 	glDisable(GL_CULL_FACE);
 
-	ArnQuat q = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
-	ArnMatrix matRot;
-	q.getRotationMatrix(&matRot);
-	glMultTransposeMatrixf((const GLfloat*)matRot.m);
+	// TODO: Bone animation
+	ArnMatrix boneMat;
+	ArnQuat boneQ = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
+	ArnMatrixTransformation(&boneMat, 0, 0, &bone->getLocalXform_Scale(), 0, &boneQ, &bone->getLocalXform_Trans());
+
+	glMultTransposeMatrixf((const GLfloat*)boneMat.m);
+	ArnDrawAxesGl(boneLength/4);
 	glPushMatrix();
 	{
 		glLoadName(bone->getObjectId()); // For screen-space rendering based picking
-		glRotatef(-90, 1, 0, 0);
+		glRotatef(-90, 1, 0, 0); // Arrow model has +Z direction but bone has +Y direction. Rotate it to match direction.
 		glLineWidth(1);
 		glDisable(GL_LIGHTING);
 		glColor3f(1, 1, 1);
@@ -386,28 +389,26 @@ ArnBoneRenderGl( const ArnBone* bone )
 		glEnable(GL_LIGHTING);
 	}
 	glPopMatrix();
-	glTranslatef(0, boneLength, 0);
-	ArnDrawAxesGl(boneLength/4);
-	if (bone->getChildBoneCount(true) == 0)
+
+	glPushMatrix();
 	{
-		// Draw an end-effector indicator.
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
-		ArnRenderSphereGl(boneLength/12);
+		// Move to tail position.
+		glTranslatef(0, boneLength, 0);
+		if (bone->getChildBoneCount(true) == 0)
+		{
+			// Draw an end-effector indicator.
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNMTRLDATA_RED);
+			ArnRenderSphereGl(boneLength/12);
+		}
+		else
+		{
+			// Draw a joint indicator.
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+			ArnRenderSphereGl(boneLength/12);
+		}
 	}
-	else
-	{
-		// Draw a joint indicator.
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-		ArnRenderSphereGl(boneLength/12);
-	}
-	/*
-	foreach (const ArnNode* node, bone->getChildren())
-	{
-		assert(node->getType() == NDT_RT_BONE);
-		const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
-		ArnBoneRenderGl(bone);
-	}
-	*/
+	glPopMatrix();
+
 	glPopAttrib();
 }
 

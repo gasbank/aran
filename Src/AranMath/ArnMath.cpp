@@ -156,7 +156,8 @@ ArnQuaternionRotationAxis( ArnQuat *pOut, const ArnVec3 *pV, float Angle )
 	}
 	else
 	{
-		assert(ArnVec3GetLength(*pV) == 1);
+		float rotAxisLen = ArnVec3GetLength(*pV);
+		assert(1-FLT_COMPARE_EPSILON <= rotAxisLen && rotAxisLen <= 1+FLT_COMPARE_EPSILON);
 		float s = sinf(Angle / 2);
 		pOut->w = cos(Angle / 2);
 		pOut->x = pV->x * s;

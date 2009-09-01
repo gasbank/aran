@@ -2,6 +2,7 @@
 #include "ArnSkinningShaderGl.h"
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
+#include "ArnMesh.h"
 
 #include <sys/stat.h>
 
@@ -149,18 +150,8 @@ ArnSkinningShaderGl::initShader()
 }
 
 void
-ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vector<VertexGroup>& vertGroup)
+ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vector<VertexGroup>& vertGroup, const ArnMesh* skinnedMesh)
 {
-	/*
-	ArnMatrix yScaleMat;
-	ArnMatrixScaling(&yScaleMat, 1, 0.5, 1);
-	if ( m_location_boneMatrices[0] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[0], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	if ( m_location_boneMatrices[1] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[1], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	if ( m_location_boneMatrices[31] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[31], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	*/
 	int boneMatIdx = 0;
 	foreach (const VertexGroup& vg, vertGroup)
 	{
@@ -171,24 +162,53 @@ ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vect
 			//ArnMatrix m = bone->computeWorldXform().transpose();
 			//ArnMatrix m = bone->getFinalLocalXform().transpose();
 			ArnMatrix m;
-			ArnQuat q = bone->getLocalXform_Rot() * bone->getAnimLocalXform_Rot();
-			q.getRotationMatrix(&m);
-			m = m.transpose();
+			ArnQuat q = bone->getAnimLocalXform_Rot();
 
-			glUniformMatrix4fvARB( m_location_boneMatrices[boneMatIdx], 1, false, reinterpret_cast<const GLfloat*>(m.m) );
+			q.getRotationMatrix(&m);
+			//m = m * bone->computeWorldXform();
+			m = m.transpose();
+			m = bone->getAutoLocalXform();
+			//ArnMatrix parentWxform(bone->getParent()->computeWorldXform());
+			//ArnMatrix parentWxformInv;
+			//ArnMatrixInverse(&parentWxformInv, 0, &parentWxform);
+
+			//ArnMatrixInverse(&m, 0, &m);
+
+			//m.printFrameInfo();
+			ArnMatrix model2BoneXform(ArnConsts::ARNMAT_IDENTITY);
+			const ArnXformable* boneParent = dynamic_cast<const ArnXformable*>(bone->getParent());
+			if (boneParent)
+			{
+				ArnMatrix boneChainMat = boneParent->computeWorldXform();
+				ArnMatrix boneChainMatInv;
+				ArnMatrixInverse(&boneChainMatInv, 0, &boneChainMat);
+				model2BoneXform = boneChainMatInv;
+			}
+			//model2BoneXform = model2BoneXform * skinnedMesh->getAutoLocalXform();
+
+
+			ArnMatrix model2BoneXformInv;
+			ArnMatrixInverse(&model2BoneXformInv, 0, &model2BoneXform);
+
+			const ArnMatrix& skelXform = skel->computeWorldXform();
+			ArnMatrix skelXformInv;
+			ArnMatrixInverse(&skelXformInv, 0, &skelXform);
+
+
+			ArnMatrix boneSpaceXform = skelXformInv * bone->computeWorldXform();
+			//const ArnMatrix& boneSpaceXform = bone->getAutoLocalXform();
+			m = model2BoneXformInv * boneSpaceXform * model2BoneXform;
+			printf("%s\n", bone->getName());
+			model2BoneXformInv.printFrameInfo();
+			boneSpaceXform.printFrameInfo();
+			model2BoneXform.printFrameInfo();
+
+			// Matrices should be transposed before applied in OpenGL.
+			glUniformMatrix4fvARB( m_location_boneMatrices[boneMatIdx], 1, false, reinterpret_cast<const GLfloat*>(m.transpose().m) );
 			//glUniformMatrix4fvARB( m_location_boneMatrices[boneMatIdx], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
 		}
 		++boneMatIdx;
 	}
-
-	/*
-	if ( m_location_boneMatrices[0] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[0], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	if ( m_location_boneMatrices[1] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[1], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	if ( m_location_boneMatrices[2] != -1 )
-		glUniformMatrix4fvARB( m_location_boneMatrices[2], 1, false, reinterpret_cast<const GLfloat*>(ArnConsts::ARNMAT_IDENTITY.m) );
-	*/
 
     //
     // Set up some lighting...
@@ -205,11 +225,11 @@ ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vect
     fLightVector[2] /= fLength;
 
     // Set the light's directional vector
-    if ( m_location_lightVector != -1 )
+    if ( m_location_lightVector != (unsigned int)(-1) )
 		glUniform4fARB( m_location_lightVector, fLightVector[0], fLightVector[1], fLightVector[2], fLightVector[3] );
 
     // Set the viewer's eye position
-    if ( m_location_eyePosition != -1 )
+    if ( m_location_eyePosition != (unsigned int)(-1) )
         glUniform4fARB( m_location_eyePosition, fEyePosition[0], fEyePosition[1], fEyePosition[2], fEyePosition[3] );
 
     // Set the inverse of the current model-view matrix
@@ -217,7 +237,7 @@ ArnSkinningShaderGl::setShaderConstants(const ArnSkeleton* skel, const std::vect
     ArnMatrix inverseModelView;
     glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelView.m));
     ArnMatrixInverse(&inverseModelView, 0, &modelView);
-    if ( m_location_inverseModelView != -1 )
+    if ( m_location_inverseModelView != (unsigned int)(-1) )
 		glUniformMatrix4fvARB( m_location_inverseModelView, 1, false, reinterpret_cast<const GLfloat*>(inverseModelView.m) );
 }
 

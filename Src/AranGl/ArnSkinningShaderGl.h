@@ -2,6 +2,7 @@
 #define ARNSKINNINGSHADERGL_H
 
 class ArnSkeleton;
+class ArnMesh;
 
 class ArnSkinningShaderGl : public Singleton<ArnSkinningShaderGl>
 {
@@ -9,7 +10,7 @@ public:
 						ArnSkinningShaderGl();
 						~ArnSkinningShaderGl();
 	void				initShader();
-	void				setShaderConstants(const ArnSkeleton* skel, const std::vector<VertexGroup>& vertGroup);
+	void				setShaderConstants(const ArnSkeleton* skel, const std::vector<VertexGroup>& vertGroup, const ArnMesh* skinnedMesh);
 	GLhandleARB			getProgramObj() const { return m_programObj; }
 	GLuint				getWeightsAttrId() const { return m_location_weights; }
 	GLuint				getMatrixIndicesAttrId() const { return m_location_matrixIndices; }

@@ -1,3 +1,8 @@
+/*!
+ * @file ArnXformable.h
+ * @author Geoyeob Kim
+ * @date 2009
+ */
 #pragma once
 
 #include "ArnNode.h"
@@ -19,49 +24,153 @@ struct ArnJointData
 	std::list<ArnJointLimit> limits;
 };
 
-/**
-@brief A superclass of renderer objects which have position and orientation.
-*/
+/*!
+ * @brief 위치와 방향 정보를 가진 객체를 나타내는 클래스
+ *
+ * 주로 렌더링되는 물체(메시)나 카메라 등이 본 클래스를 상속받습니다.
+ */
 class ARAN_API ArnXformable : public ArnNode
 {
 public:
 	virtual										~ArnXformable(void);
-	inline const std::string&					getIpoName() const;
-	inline const ArnMatrix&						getFinalLocalXform() const;
-	ArnMatrix									computeWorldXform() const;
+	/*!
+	 * @name Local 변환
+	 *
+	 * 본 객체가 가지고 있는 고유한 local model 변환입니다.
+	 * 객체는 local 변환을 위한 행렬과 이를 decompose한 SRT 요소를
+	 * 각각 저장하고 있습니다. 사용자는 행렬을 직접 조작할 수 없고
+	 * SRT 요소를 개별적으로 수정한 뒤 ArnXformable::recalcLocalXform 을 호출함으로써
+	 * local 변환 행렬을 설정할 수 있습니다. 만일 SRT 요소를 설정한 후
+	 * ArnXformable::recalcLocalXform 호출을 생략하고 local 변환 행렬을 접근하려 한다면
+	 * assertion 오류가 발생합니다.
+	 *
+	 * 본 객체의 부모가 없는 경우 local 변환이 곧 world 변환이 됩니다.
+	 */
+	//@{
+	/*!
+	 * @brief local 변환 행렬을 가져옴
+	 * @sa ArnXformable::getFinalLocalXform
+	 *
+	 * 반드시 dirty bit이 \c false여야 하며, dirty bit이 \c true일 경우에는
+	 * ArnXformable::recalcLocalXform 을 먼저 호출해야합니다.
+	 */
+	inline const ArnMatrix&						getLocalXform() const; // m_localXform will not be updated until recalcLocalXform() is called.
+	/*!
+	 * @brief local 변환 중 scale 요소를 가져옴
+	 */
 	inline const ArnVec3&						getLocalXform_Scale() const;
+	/*!
+	 * @brief local 변환 중 scale 요소를 설정함
+	 *
+	 * dirty bit을 \c true 로 설정합니다.
+	 */
 	inline void									setLocalXform_Scale(const ArnVec3& scale);
+	/*!
+	 * @brief local 변환 중 rotation 요소를 가져옴
+	 */
 	inline const ArnQuat&						getLocalXform_Rot() const;
-	ArnQuat										computeWorldXform_Rot() const;
+	/*!
+	 * @brief local 변환 중 rotation 요소를 설정함
+	 *
+	 * dirty bit을 \c true 로 설정합니다.
+	 */
 	inline void									setLocalXform_Rot(const ArnQuat& rot);
+	/*!
+	 * @brief local 변환 중 translation 요소를 가져옴
+	 */
 	inline const ArnVec3&						getLocalXform_Trans() const;
+	/*!
+	 * @brief local 변환 중 translation 요소를 설정함
+	 *
+	 * dirty bit을 \c true 로 설정합니다.
+	 */
 	inline void									setLocalXform_Trans(const ArnVec3& trans);
+	/*!
+	 * @brief local 변환의 SRT 요소를 이용해 local 변환 행렬을 재계산함
+	 * @remarks dirty bit이 이미 \c false 인 경우에도 재계산을 합니다.
+	 *
+	 * 재계산 후에 dirty bit을 \c false 로 설정합니다.
+	 */
+	void										recalcLocalXform();
+	/*!
+	 * @brief local 변환 행렬이 dirty 상태인지 반환함
+	 */
+	inline bool									isLocalXformDirty() const;
+	//@}
+	/*!
+	 * @name Animation Local 변환
+	 *
+	 * IPO에 의해 매 프레임마다 변경될 수 있는 local model 변환입니다.
+	 * 만일 본 객체에 IPO가 할당되어 있고, 애니메이션 컨트롤러가 작동하고 있는 경우에는
+	 * Local 변환 관련된 값 대신에 Animation Local 변환 관련값을 참조해야 합니다.
+	 * 많은 경우 시간 원점(\c t=0)에서의 Animation Local 변환과 Local 변환은 같은 변환이
+	 * 되도록 조절하지만 반드시 그래야하는 것은 아닙니다.
+	 */
+	//@{
+	const ArnMatrix& 							getAnimLocalXform() const { return m_animLocalXform; }
 	inline const ArnQuat&						getAnimLocalXform_Rot() const;
 	inline void									setAnimLocalXform_Rot(const ArnQuat& q);
 	inline void									setAnimLocalXform_Scale(const ArnVec3& scale);
 	inline void									setAnimLocalXform_Trans(const ArnVec3& trans);
-	inline bool									isAnimSeqEnded() const;
-	inline const ArnMatrix&						getLocalXform() const; // m_localXform will not be updated until recalcLocalXform() is called.
-	inline void									resetAnimSeqTime();
-	inline bool									isVisible() const;
-	inline void									setVisible(bool val);
-	ArnMatrix									getFinalXform();
-	void										recalcLocalXform();
 	void										recalcAnimLocalXform();
-	double										getAnimCtrlTime() const;
-	void										setAnimCtrlTime( double dTime );
-	void										setDoAnim( bool bDoAnim );
-	void										advanceTime( float fTime );
-	void										printXformData() const;
-	void										configureIpo();
+	bool										isAnimLocalXformDirty() const { return m_bAnimLocalXformDirty; }
+	//@}
+
+	/*!
+	 * @name World 변환
+	 */
+	//@{
+	/*!
+	 * @brief World 변환을 계산
+	 * @sa ArnXformable::getAutoLocalXform
+	 *
+	 * 자신과 부모의 (Animation) Local 변환을 재귀적으로 따라 올라가며
+	 * 최종 변환인 World 변환을 계산합니다.
+	 */
+	ArnMatrix									computeWorldXform() const;
+	//@}
+
+	/*!
+	 * @brief IPO 여부에 따라 적절한 local 변환 행렬을 반환
+	 *
+	 * IPO가 할당되고 애니메이션 컨트롤러가 작동 중인 경우에는 Animation Local 행렬을 반환하고
+	 * 그렇지 않은 경우에는 Local 행렬을 반환합니다.
+	 */
+	virtual const ArnMatrix&					getAutoLocalXform() const;
+
+	/*!
+	 * @brief 보이는 물체(렌더링 되는 물체)라면 \c true 반환
+	 */
+	inline bool									isVisible() const;
+	/*!
+	 * @brief 보이는 물체(렌더링 되는 물체)인지 아닌지 설정
+	 */
+	inline void									setVisible(bool val);
+
+	/*!
+	 * @name 애니메이션과 IPO
+	 */
+	//@{
+	inline const std::string&					getIpoName() const;
 	inline ArnIpo*								getIpo() const;
 	inline void									setIpoName(const char* ipoName);
 	void										setIpo(ArnIpo* val);
 	void										setIpo(const std::string& ipoName);
+	void										configureIpo();
+	inline void									resetAnimSeqTime();
+	inline bool									isAnimSeqEnded() const;
+	double										getAnimCtrlTime() const;
+	void										setAnimCtrlTime( double dTime );
+	void										setDoAnim( bool bDoAnim );
+	void										advanceTime( float fTime );
 	inline ArnAnimationController*				getAnimCtrl();
-	inline bool									isLocalXformDirty() const;
-	const std::vector<ArnJointData>&			getJointData() const { return m_jointData; }
+	//@}
 
+	const std::vector<ArnJointData>&			getJointData() const { return m_jointData; }
+	/*!
+	 * @brief local 변환 행렬에 관련한 정보를 출력 (디버그)
+	 */
+	void										printXformData() const;
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);
@@ -89,8 +198,6 @@ private:
 	std::vector<ArnJointData>					m_jointData;
 	std::string									m_ipoName;
 	ArnIpo*										m_ipo;
-	ArnMatrix  									m_finalLocalXform;		// TODO: A variable's usage is not clear
-	ArnMatrix  									m_localXformIpo;		// TODO: A variable's usage is not clear
 };
 
 #include "ArnXformable.inl"

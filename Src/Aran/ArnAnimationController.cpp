@@ -199,14 +199,13 @@ ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 			// TODO: Quaternion should be normalized before a making composed transformation matrix.
 			//       Any way to make this routine faster?
 			quat /= quat.getLength();
+
 			NODE_DATA_TYPE ndt = p.first->getType();
-			if (ndt == NDT_RT_BONE)
-			{
-				// Note: Bone should have rotational transform only.
-				ArnBone* bone = static_cast<ArnBone*>(p.first);
-				bone->setAnimLocalXform_Rot(quat);
-			}
-			else if (ndt == NDT_RT_MESH || ndt == NDT_RT_CAMERA || ndt == NDT_RT_LIGHT)
+			if (	ndt == NDT_RT_MESH
+				||	ndt == NDT_RT_CAMERA
+				||	ndt == NDT_RT_LIGHT
+				||	ndt == NDT_RT_BONE
+				||	ndt == NDT_RT_SKELETON)
 			{
 				ArnXformable* xformable = static_cast<ArnXformable*>(p.first);
 				xformable->setAnimLocalXform_Scale(scaleKey);

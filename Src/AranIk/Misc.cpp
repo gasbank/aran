@@ -1,47 +1,6 @@
 #include "AranIkPCH.h"
 #include "LinearR3.h"
 
-/****************************************************************
-							 Axes
-*****************************************************************/
-static float xx[] = {
-		0., 1., 0., 1.
-	      };
-
-static float xy[] = {
-		-.5, .5, .5, -.5
-	      };
-
-static int xorder[] = {
-		1, 2, -3, 4
-		};
-
-
-static float yx[] = {
-		0., 0., -.5, .5
-	      };
-
-static float yy[] = {
-		0.f, .6f, 1.f, 1.f
-	      };
-
-static int yorder[] = {
-		1, 2, 3, -2, 4
-		};
-
-
-static float zx[] = {
-		1., 0., 1., 0., .25, .75
-	      };
-
-static float zy[] = {
-		.5, .5, -.5, -.5, 0., 0.
-	      };
-
-static int zorder[] = {
-		1, 2, 3, 4, -5, 6
-		};
-
 #define LENFRAC		0.10
 #define BASEFRAC	1.10
 
@@ -131,15 +90,6 @@ void Axes( float length )
 #define X	1
 #define Y	2
 #define Z	3
-
-
-/* x, y, z, axes:							*/
-
-static float axx[3] = { 1., 0., 0. };
-static float ayy[3] = { 0., 1., 0. };
-static float azz[3] = { 0., 0., 1. };
-
-
 
 /* function declarations:						*/
 void	Arrow( float tail[3], float head[3] );

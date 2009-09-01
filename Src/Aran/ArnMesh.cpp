@@ -147,14 +147,14 @@ void ArnMesh::getVert( ArnVec3* pos, ArnVec3* nor, ArnVec3* uv, unsigned int ver
 	if (pos)
 	{
 		if (finalXformed)
-			ArnVec3TransformCoord(pos, &posnor->pos, &getFinalLocalXform());
+			ArnVec3TransformCoord(pos, &posnor->pos, &getAutoLocalXform());
 		else
 			*pos = posnor->pos;
 	}
 	if (nor)
 	{
 		if (finalXformed)
-			ArnVec3TransformNormal(nor, &posnor->nor, &getFinalLocalXform());
+			ArnVec3TransformNormal(nor, &posnor->nor, &getAutoLocalXform());
 		else
 			*nor = posnor->nor;
 	}
