@@ -4,6 +4,7 @@
  * @date 2009
  */
 #include "IkTest.h"
+#include <libguile.h>
 
 class AppContext : private Uncopyable
 {
@@ -1045,13 +1046,14 @@ DoMain()
 	}
 
 	/// 프로그램 메인 루프를 시작합니다.
-	static unsigned int frames = 0;
-	static unsigned int start_time;
-	static unsigned int frameStartMs = 0;
-	static unsigned int frameDurationMs = 0;
-	static unsigned int frameEndMs = 0;
-	static bool bExitLoop = false;
+	unsigned int frames = 0;
+	unsigned int start_time;
+	unsigned int frameStartMs = 0;
+	unsigned int frameDurationMs = 0;
+	unsigned int frameEndMs = 0;
+	bool bExitLoop = false;
 	start_time = SDL_GetTicks();
+	MessageHandleResult done;
 	while( !bExitLoop )
 	{
 		frameDurationMs = frameEndMs - frameStartMs;
@@ -1084,7 +1086,6 @@ DoMain()
 
 		while( SDL_PollEvent( &event ) )
 		{
-			static MessageHandleResult done;
 			done = HandleEvent(&event, ac);
 
 			int reconfigScene = false;
@@ -1147,8 +1148,23 @@ DoMain()
 	return 0;
 }
 
+SCM DoMainWrapper()
+{
+	return scm_from_int(DoMain());
+}
+
+void guile_inner_main(void* data, int argc, char** argv)
+{
+	scm_c_define_gsubr("do", 0, 0, 0, DoMainWrapper);
+	//scm_c_define_gsubr("next", 0, 0, 0, NextScene);
+	//scm_c_eval_string("(call-with-new-thread (do))");
+	scm_shell(0, 0);
+}
+
 int main(int argc, char *argv[])
 {
+	//scm_boot_guile(argc, argv, guile_inner_main, 0);
+
 	int retCode = 0;
 	retCode = DoMain();
 

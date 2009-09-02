@@ -37,6 +37,7 @@
 		<Compiler>
 			<Add option="-pedantic" />
 			<Add option="-Wall" />
+			<Add option="`guile-config compile`" />
 			<Add option="-DdDOUBLE" />
 			<Add directory="../" />
 			<Add directory="../Aran" />
@@ -47,6 +48,7 @@
 			<Add directory="/usr/include/freetype2" />
 		</Compiler>
 		<Linker>
+			<Add option="`guile-config link`" />
 			<Add library="rt" />
 			<Add library="SDL" />
 			<Add library="freetype" />

@@ -521,6 +521,7 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 	ArnMatrixInverse(&parentWorldXformInv, 0, &parentWorldXform);
 
 	const ArnVec3& head(ArnConsts::ARNVEC3_ZERO);
+	bool childBoneAdded = false;
 	for (int i = 0; i < numJoint; ++i)
 	{
 		dJointID joint = dBodyGetJoint(body, i);
@@ -556,7 +557,32 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 		b->recalcLocalXform();
 		//b->getLocalXform().printFrameInfo();
 		parent->attachChild(b);
+		childBoneAdded = true;
 		ArnxCreateLumpedArnSkeleton(b, body2, body, depth+1);
+	}
+	if (!childBoneAdded)
+	{
+		const dReal* bodyCom = dBodyGetPosition(body);
+		ArnVec3 tail(bodyCom[0], bodyCom[1], bodyCom[2]);
+		ArnVec3TransformCoord(&tail, &tail, &parentWorldXformInv);
+		const ArnVec3 boneDir = tail - head;
+		float length = ArnVec3Length(boneDir);
+		float roll = 0;
+		ArnBone* b = ArnBone::createFrom(length, roll);
+		ArnVec3 rotAxis = ArnVec3GetCrossProduct(ArnConsts::ARNVEC3_Y, boneDir);
+		const float rotAngle = acos(ArnVec3Dot(ArnConsts::ARNVEC3_Y, boneDir/length));
+		ArnQuat q;
+		rotAxis /= ArnVec3Length(rotAxis);
+		ArnQuaternionRotationAxis(&q, &rotAxis, rotAngle);
+		b->setLocalXform_Rot(q);
+
+		if (parent->getType() == NDT_RT_BONE)
+		{
+			b->setLocalXform_Trans(ArnVec3(0, static_cast<ArnBone*>(parent)->getBoneLength(), 0));
+		}
+		b->recalcLocalXform();
+		//b->getLocalXform().printFrameInfo();
+		parent->attachChild(b);
 	}
 }
 

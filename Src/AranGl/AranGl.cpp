@@ -728,8 +728,13 @@ ArnCleanupGl()
 	{
 		assert(gs_quadricSphere);
 		gluDeleteQuadric(gs_quadricSphere);
+		gs_quadricSphere = 0;
+
 		glDeleteLists(gs_glArrowList, 1);
+		gs_glArrowList = 0;
+
 		delete gs_skinningShaderGl;
+		gs_skinningShaderGl = 0;
 		gs_bAranGlInitialized = false;
 		return 0;
 	}
