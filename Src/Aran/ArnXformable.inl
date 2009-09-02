@@ -102,11 +102,6 @@ void ArnXformable::setAnimLocalXform_Trans( const ArnVec3& trans )
 	m_animLocalXform_Trans = trans;
 }
 
-bool ArnXformable::isVisible() const
-{
-	return m_bVisible;
-}
-
 void ArnXformable::setVisible(bool val)
 {
 	m_bVisible = val;

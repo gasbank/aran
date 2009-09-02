@@ -140,8 +140,13 @@ public:
 
 	/*!
 	 * @brief 보이는 물체(렌더링 되는 물체)라면 \c true 반환
+	 *
+	 * 부모의 visibility와는 관계 없이 이 물체의 값을 반환합니다.
+	 * 즉, 부모의 ArnXformable::isVisible() 값과 이 값과는 관계가 없습니다.
+	 * 그러나 렌더링 할 때에는 부모의 visibility가 \c false 이면
+	 * 자식 노드는 렌더링하지 않습니다.
 	 */
-	inline bool									isVisible() const;
+	bool										isVisible() const;
 	/*!
 	 * @brief 보이는 물체(렌더링 되는 물체)인지 아닌지 설정
 	 */

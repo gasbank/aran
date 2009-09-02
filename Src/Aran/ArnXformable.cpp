@@ -256,3 +256,17 @@ ArnXformable::computeWorldXform() const
 		return getAutoLocalXform();
 	}
 }
+
+bool
+ArnXformable::isVisible() const
+{
+	return m_bVisible;
+
+	/*
+	const ArnXformable* parentXformable = dynamic_cast<const ArnXformable*>(getParent());
+	if (parentXformable)
+		return parentXformable->isVisible() && m_bVisible;
+	else
+		return m_bVisible;
+	*/
+}

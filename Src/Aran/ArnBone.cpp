@@ -214,3 +214,13 @@ ArnBone::getAutoLocalXform() const
 		return getLocalXform();
 	}
 }
+
+void
+ArnBone::computeWorldHeadTail(ArnVec3& head, ArnVec3& tail) const
+{
+	const ArnMatrix headWorldMat = computeWorldXform();
+	const float boneLength = getBoneLength();
+
+	head = headWorldMat.getColumnVec3(3);
+	tail = head + headWorldMat.getColumnVec3(1) * boneLength;
+}

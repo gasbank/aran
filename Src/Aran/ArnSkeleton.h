@@ -50,13 +50,3 @@ private:
 	std::vector<std::string>			m_actionStripNames;
 	std::vector<ArnAction*>				m_actionStrips;
 };
-
-/*!
- * @brief ArnSkeleton에 속하는 ArnBone의 head와 tail 위치의 global coordinates를 반환
- * @param head ArnBone의 global head position
- * @param tail ArnBone의 global tail position
- * @param skel ArnBone이 속해있는 ArnSkeleton
- * @param bone head 위치를 알고 싶은 ArnBone
- * @remarks ArnBone이 제공된 ArnSkeleton에 속하는지 확인하지는 않습니다.
- */
-ARAN_API void ArnGetGlobalBonePosition(ArnVec3* head, ArnVec3* tail, const ArnSkeleton* skel, const ArnBone* bone);

@@ -10,13 +10,6 @@ class ArnIkSolver;
 TYPEDEF_SHARED_PTR(ArnSceneGraph)
 
 /*!
- * @brief ArnSkeleton으로부터 IK 솔버 생성
- * @param solver 새로 생성된 솔버가 반환됨
- * @param skel 입력되는 ArnSkeleton
- */
-ARANIK_API void CreateArnIkSolver(ArnIkSolver** solver, const ArnSkeleton* skel);
-
-/*!
  * @brief ArnSceneGraph의 루트에 속한 ArnSkeleton에 대해 ArnIkSolver를 생성
  * @param ikSolvers 생성된 ArnIkSolver의 포인터 배열
  * @param sg scene graph

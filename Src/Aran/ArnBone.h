@@ -16,13 +16,14 @@ class ArnSkeleton;
 /*!
  * @brief ArnSkeleton 구성하는 하나의 뼈를 나타내는 클래스
  *
- * 뼈는 뼈의 시작 위치와 뼈가 뻗어나가는 방향, 길이, 뻗어나가는
+ * ArnBone은 뼈의 시작 위치와 뼈가 뻗어나가는 방향, 길이, 뻗어나가는
  * 축에서의 회전으로 정의됩니다. 뼈의 시작 위치를 head, 끝 위치를
- * tail이라고 합니다. 또한, 뼈 축의 회전 정도를 roll이라고 합니다.
- * head는 local 변환을 통해 bone space(frame) 상에서 그 위치가
- * 정의됩니다. tail은 head를 +Y 방향으로 뼈의 길이만큼 translation하면
- * 구할 수 있습니다. 즉, ArnBone 클래스에서는 뼈의 길이와 회전(roll)만
- * 따로 저장하고 있으면 됩니다.
+ * tail이라고 합니다. 또한, 뼈가 뻗어나가는 방향을 회전축으로 하여 회전된
+ * 정도를 roll이라고 합니다.
+ *
+ * local frame의 원점이 head 위치이며, tail은 head에서 +Y 방향으로
+ * 뼈의 길이만큼 이동하면 구할 수 있습니다. 즉, ArnBone 클래스에서는
+ * 뼈의 길이와 회전(roll)만 따로 저장하고 있으면 됩니다.
  */
 class ARAN_API ArnBone : public ArnXformable
 {
@@ -61,6 +62,7 @@ public:
 	void									setRotLimit(AxisEnum axis, float minimum, float maximum);
 	void									clearRotLimit(AxisEnum axis);
 	ArnBone*								getFirstChildBone() const;
+	void									computeWorldHeadTail(ArnVec3& head, ArnVec3& tail) const;
 	/*!
 	 * @internalonly
 	 */

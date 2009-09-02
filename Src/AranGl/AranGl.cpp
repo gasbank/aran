@@ -558,26 +558,46 @@ static void ArnNodeRenderGl( const ArnNode* node, bool bIncludeShadeless )
 {
 	glPushMatrix(); // ArnNode-level push
 
+	bool bVisible = true;
 	switch (node->getType())
 	{
 	case NDT_RT_MESH:
 		{
 			const ArnMesh* mesh = reinterpret_cast<const ArnMesh*>(node);
 			if (mesh->isVisible())
+			{
 				ArnMeshRenderGl(mesh, bIncludeShadeless);
+			}
+			else
+			{
+				bVisible = false;
+			}
 		}
 		break;
 	case NDT_RT_SKELETON:
 		{
 			const ArnSkeleton* skel = reinterpret_cast<const ArnSkeleton*>(node);
 			if (skel->isVisible())
+			{
 				ArnSkeletonRenderGl(skel);
+			}
+			else
+			{
+				bVisible = false;
+			}
 		}
 		break;
 	case NDT_RT_BONE:
 		{
 			const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
-			ArnBoneRenderGl(bone);
+			if (bone->isVisible())
+			{
+				ArnBoneRenderGl(bone);
+			}
+			else
+			{
+				bVisible = false;
+			}
 		}
 		break;
 	default:
@@ -585,9 +605,12 @@ static void ArnNodeRenderGl( const ArnNode* node, bool bIncludeShadeless )
 		break;
 	}
 
-	foreach (const ArnNode* child, node->getChildren())
+	if (bVisible)
 	{
-		ArnNodeRenderGl(child, bIncludeShadeless);
+		foreach (const ArnNode* child, node->getChildren())
+		{
+			ArnNodeRenderGl(child, bIncludeShadeless);
+		}
 	}
 
 	glPopMatrix(); // ArnNode-level pop

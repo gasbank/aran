@@ -56,7 +56,7 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	VectorR3 tailPoint; // Global coordinates of the bone's head.
 	ArnVec3 arnHeadPoint;
 	ArnVec3 arnTailPoint;
-	ArnGetGlobalBonePosition(&arnHeadPoint, &arnTailPoint, skel, bone);
+	bone->computeWorldHeadTail(arnHeadPoint, arnTailPoint);
 	ArnVec3Assign(tailPoint, arnTailPoint);
 	VectorR3 rotAxis;
 	double size = 1.0;

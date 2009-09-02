@@ -79,26 +79,32 @@ public:
 private:
 										Node(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
 										Node(const Node& node);
+
+	// Duplicated data structures w.r.t. ArnBone
 	std::string							m_name;
+	VectorR3							m_attach;				// attachment point
+	VectorR3							m_relativePosition;		// relative position vector
+	VectorR3							m_rotAxis;				// rotation axis
+	double								m_theta;				// joint angle (radian)
+	VectorR3							m_globalPosition;		// Global Position
+	VectorR3							m_globalRotAxis;		// Global rotation axis
+
+	// Should be removed
+	NodePtr								m_left;					// left child
+	NodePtr								m_right;				// right sibling
+	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
+
+	// Needed
 	bool								m_freezed;				// Is this node frozen?
 	int									m_seqNumJoint;			// sequence number if this node is a joint
 	int									m_seqNumEffector;		// sequence number if this node is an effector
 	double								m_size;					// size
 	Purpose								m_purpose;				// joint / endeffector
-	VectorR3							m_attach;				// attachment point
-	VectorR3							m_relativePosition;		// relative position vector
-	VectorR3							m_rotAxis;				// rotation axis
-	double								m_theta;				// joint angle (radian)
 	double								m_minTheta;				// lower limit of joint angle
 	double								m_maxTheta;				// upper limit of joint angle
 	double								m_restAngle;			// rest position angle
-	VectorR3							m_globalPosition;		// Global Position
-	VectorR3							m_globalRotAxis;		// Global rotation axis
-	NodePtr								m_left;					// left child
-	NodePtr								m_right;				// right sibling
-	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
-	VectorR3							m_target;
-	bool								m_bAdditionalNode;
+	VectorR3							m_target;				// target position only if this is an end-effector
+	bool								m_bAdditionalNode;		// this node is created to make more DoF in the joint.
 };
 
 #endif

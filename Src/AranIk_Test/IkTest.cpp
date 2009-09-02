@@ -811,12 +811,12 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 		delete ikSolver;
 	}
 	ac.ikSolvers.clear();
-	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	ac.bipedComPos.clear();
 	if (ac.swPtr)
 	{
 		ac.trunk = ac.swPtr->getBodyByNameFromSet("Trunk");
 
+		// Create ArnSkeleton from rigid body links!
 		if (ac.trunk)
 		{
 			ac.bipedComPos.clear();
@@ -829,6 +829,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
+	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	return 0;
 }
 
