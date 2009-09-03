@@ -3,8 +3,9 @@
  * @author Geoyeob Kim
  * @date 2009
  */
+#define CGAL_CFG_NO_NEXTAFTER
 #include "IkTest.h"
-#include <libguile.h>
+//#include <libguile.h>
 
 class AppContext : private Uncopyable
 {
@@ -572,35 +573,36 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();
 
-	unsigned int isectsCount = ac.isects.size();
-	if (isectsCount)
-	{
-		std::vector<Point_2> isectsCgal;
-		/*
-		for (unsigned int i = 0; i < isectsCount; ++i)
-		{
-			ArnVec3 contactPos;
-			ac.swPtr->getContactPosition(i, &contactPos);
-			isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
-		}
-		*/
-		foreach (const ArnVec3& contactPos, ac.isects)
-		{
-			isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
-		}
+	
+	//unsigned int isectsCount = ac.isects.size();
+	//if (isectsCount)
+	//{
+	//	std::vector<Point_2> isectsCgal;
+	//	/*
+	//	for (unsigned int i = 0; i < isectsCount; ++i)
+	//	{
+	//		ArnVec3 contactPos;
+	//		ac.swPtr->getContactPosition(i, &contactPos);
+	//		isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
+	//	}
+	//	*/
+	//	foreach (const ArnVec3& contactPos, ac.isects)
+	//	{
+	//		isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
+	//	}
 
-		std::vector<Point_2> out;
-		out.resize(isectsCount);
-		std::vector<Point_2>::iterator outEnd;
+	//	std::vector<Point_2> out;
+	//	out.resize(isectsCount);
+	//	std::vector<Point_2>::iterator outEnd;
 
-		outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
+	//	outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
 
-		for (std::vector<Point_2>::const_iterator it = out.begin(); it != outEnd; ++it)
-		{
-			const Point_2& p = *it;
-			ac.supportPolygon.push_back(ArnVec3(p[0], p[1], 0));
-		}
-	}
+	//	for (std::vector<Point_2>::const_iterator it = out.begin(); it != outEnd; ++it)
+	//	{
+	//		const Point_2& p = *it;
+	//		ac.supportPolygon.push_back(ArnVec3(p[0], p[1], 0));
+	//	}
+	//}
 }
 
 static void
@@ -829,7 +831,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
-	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	return 0;
 }
 
@@ -1148,7 +1150,7 @@ DoMain()
 	SDL_Quit();
 	return 0;
 }
-
+/*
 SCM DoMainWrapper()
 {
 	return scm_from_int(DoMain());
@@ -1161,7 +1163,7 @@ void guile_inner_main(void* data, int argc, char** argv)
 	//scm_c_eval_string("(call-with-new-thread (do))");
 	scm_shell(0, 0);
 }
-
+*/
 int main(int argc, char *argv[])
 {
 	//scm_boot_guile(argc, argv, guile_inner_main, 0);

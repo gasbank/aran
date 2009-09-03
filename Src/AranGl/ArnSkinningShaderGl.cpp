@@ -3,10 +3,9 @@
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
 #include "ArnMesh.h"
-
 #include <sys/stat.h>
 
-IMPLEMENT_SINGLETON(ArnSkinningShaderGl)
+IMPLEMENT_SINGLETON(ArnSkinningShaderGl);
 
 ArnSkinningShaderGl::ArnSkinningShaderGl()
 {
@@ -133,13 +132,13 @@ ArnSkinningShaderGl::initShader()
 	//
 
 	m_location_inverseModelView = glGetUniformLocation( m_programObj, "inverseModelView" );
-	m_location_eyePosition      = glGetUniformLocationARB( m_programObj, "eyePosition" );
-	m_location_lightVector      = glGetUniformLocationARB( m_programObj, "lightVector" );
+	m_location_eyePosition      = glGetUniformLocation( m_programObj, "eyePosition" );
+	m_location_lightVector      = glGetUniformLocation( m_programObj, "lightVector" );
 	for (int i = 0; i < 32; ++i)
 	{
 		char varName[128];
 		sprintf(varName, "boneMatrices[%d]", i);
-		m_location_boneMatrices[i] = glGetUniformLocationARB( m_programObj, varName );
+		m_location_boneMatrices[i] = glGetUniformLocation( m_programObj, varName );
 	}
 
 	m_location_weights        = glGetAttribLocationARB( m_programObj, "weights" );

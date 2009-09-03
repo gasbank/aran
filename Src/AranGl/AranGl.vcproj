@@ -121,7 +121,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;../AranIk"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANGL_EXPORTS"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -214,6 +214,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnSkinningShaderGl.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnTextureGl.cpp"
 				>
 			</File>
@@ -275,6 +279,10 @@
 			</File>
 			<File
 				RelativePath=".\ArnMeshGl.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnSkinningShaderGl.h"
 				>
 			</File>
 			<File

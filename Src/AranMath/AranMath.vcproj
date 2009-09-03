@@ -204,11 +204,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnIntersection.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnMath.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\ArnMatrix.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnPlane.cpp"
 				>
 			</File>
 			<File
@@ -246,6 +254,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnIntersection.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnMath.h"
 				>
 			</File>
@@ -255,6 +267,10 @@
 			</File>
 			<File
 				RelativePath=".\ArnMatrix.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ArnPlane.h"
 				>
 			</File>
 			<File

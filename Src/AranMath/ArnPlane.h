@@ -12,7 +12,7 @@
  *
  * 평면 위의 한 점과 법선 벡터로 정의되는 평면 클래스입니다.
  */
-class ArnPlane
+class ARANMATH_API ArnPlane
 {
 public:
 						ArnPlane();

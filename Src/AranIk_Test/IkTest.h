@@ -76,17 +76,15 @@
 #include "Jacobian.h"
 #include "Node.h"
 
+/*
 #include <CGAL/Cartesian.h>
 #include <CGAL/ch_graham_andrew.h>
 #include <CGAL/functional.h>
 #include <CGAL/double.h>
 #include <CGAL/convex_hull_2.h>
-
 typedef double RT;
-
-// define point creator
 typedef   CGAL::Point_2<CGAL::Cartesian<double> >        Point_2;
-
+*/
 
 struct HitRecord
 {
