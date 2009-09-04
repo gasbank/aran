@@ -7,6 +7,8 @@
 #include "IkTest.h"
 //#include <libguile.h>
 
+using namespace boost::lambda;
+
 class AppContext : private Uncopyable
 {
 public:
@@ -34,7 +36,7 @@ public:
 	bool									bNextCamera;
 
 	// Volatile: should be clear()-ed every frame.
-	std::list<ArnVec3>						isects;					///< Foot-ground intersection points
+	std::vector<ArnVec3>						isects;					///< Foot-ground intersection points
 	std::vector<ArnVec3>					supportPolygon;			///< Support polygon
 };
 
@@ -469,7 +471,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	// Physics simulation frequency (Hz)
 	// higher --> accurate, stable, slow
 	// lower  --> errors, unstable, fast
-	static const unsigned int simFreq = 150;
+	static const unsigned int simFreq = 500;
 	// Maximum simulation step iteration count for clamping
 	// to keep app from advocating all resources to step further.
 	static const unsigned int simMaxIteration = 100;
@@ -479,6 +481,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		simLoop = simMaxIteration;
 	for (unsigned int step = 0; step < simLoop; ++step)
 	{
+		//printf("frame duration: %d / simloop original: %d / current simstep %d\n", frameDurationMs, (unsigned int)(frameDurationMs / 1000.0 * simFreq), step);
 		ac.swPtr->updateFrame(1.0 / simFreq);
 	}
 	if (ac.sgPtr)
@@ -573,6 +576,13 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();
 
+	unsigned int isectsCount = ac.isects.size();
+	if (isectsCount)
+	{
+		std::sort(ac.isects.begin(), ac.isects.end(),
+			ret<bool>( (&_1->*&ArnVec3::x) < (&_2->*&ArnVec3::x)) );
+	}
+	int a = 10;
 	
 	//unsigned int isectsCount = ac.isects.size();
 	//if (isectsCount)

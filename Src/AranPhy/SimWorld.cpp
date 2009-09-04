@@ -218,7 +218,7 @@ SimWorld::updateFrame(double elapsedTime)
 	 * at this time.
 	 */
 	m_osc->numContact = 0;
-	memset(m_osc->contacts, 0, sizeof(dContact) * m_osc->MAXIMUM_CONTACT_COUNT);
+	//memset(m_osc->contacts, 0, sizeof(dContact) * m_osc->MAXIMUM_CONTACT_COUNT);
 	dSpaceCollide(m_osc->space, m_osc, &NearCallback);
 
 	dWorldStep(m_osc->world, elapsedTime);

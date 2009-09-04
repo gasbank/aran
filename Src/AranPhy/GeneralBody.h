@@ -74,8 +74,8 @@ public:
 	 * @brief 이 강체를 포함해 관절로 연결된 모든 강체를 하나의 강체로 봤을 때의 COM 반환
 	 */
 	void							calculateLumpedComAndMass(ArnVec3* com, float* mass) const;
-	void							calculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane) const;
-	void							calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const;
+	void							calculateLumpedIntersection(std::vector<ArnVec3>& isects, const ArnPlane& plane) const;
+	void							calculateLumpedGroundIntersection(std::vector<ArnVec3>& isects) const;
 
 	/*!
 	 * @brief 강체와 관절로 연결된 모델로부터 ArnSkeleton을 생성

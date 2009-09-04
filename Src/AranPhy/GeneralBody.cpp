@@ -344,7 +344,7 @@ GeneralBody::calculateLumpedComAndMass(ArnVec3* com, float* mass) const
 
 
 static void
-CalculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane, dBodyID body, dBodyID parentBody, int depth)
+CalculateLumpedIntersection(std::vector<ArnVec3>& isects, const ArnPlane& plane, dBodyID body, dBodyID parentBody, int depth)
 {
 	int numJoint = dBodyGetNumJoints(body);
 	dGeomID geom = dBodyGetFirstGeom(body);
@@ -394,7 +394,7 @@ CalculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane, d
 }
 
 static void
-CalculateLumpedGroundIntersection(std::list<ArnVec3>& isects, dBodyID body, dBodyID parentBody, int depth)
+CalculateLumpedGroundIntersection(std::vector<ArnVec3>& isects, dBodyID body, dBodyID parentBody, int depth)
 {
 	int numJoint = dBodyGetNumJoints(body);
 	dGeomID geom = dBodyGetFirstGeom(body);
@@ -470,13 +470,13 @@ CalculateLumpedGroundIntersection(std::list<ArnVec3>& isects, dBodyID body, dBod
 }
 
 void
-GeneralBody::calculateLumpedIntersection(std::list<ArnVec3>& isects, const ArnPlane& plane) const
+GeneralBody::calculateLumpedIntersection(std::vector<ArnVec3>& isects, const ArnPlane& plane) const
 {
 	CalculateLumpedIntersection(isects, plane, getBodyId(), getBodyId(), 0);
 }
 
 void
-GeneralBody::calculateLumpedGroundIntersection(std::list<ArnVec3>& isects) const
+GeneralBody::calculateLumpedGroundIntersection(std::vector<ArnVec3>& isects) const
 {
 	CalculateLumpedGroundIntersection(isects, getBodyId(), getBodyId(), 0);
 }

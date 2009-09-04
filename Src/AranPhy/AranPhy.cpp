@@ -39,7 +39,7 @@ ArnCleanupPhysics()
 }
 
 void
-ArnLineSegmentPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3& p0, const ArnVec3& p1, const ArnPlane& plane)
+ArnLineSegmentPlaneIntersection(std::vector<ArnVec3>& points, const ArnVec3& p0, const ArnVec3& p1, const ArnPlane& plane)
 {
 	ArnVec3 isect;
 	int isectCount;
@@ -56,7 +56,7 @@ ArnLineSegmentPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3& p0, c
 }
 
 void
-ArnBoxPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3 p[8], const ArnPlane& plane)
+ArnBoxPlaneIntersection(std::vector<ArnVec3>& points, const ArnVec3 p[8], const ArnPlane& plane)
 {
 	ArnLineSegmentPlaneIntersection(points, p[0], p[1], plane);
 	ArnLineSegmentPlaneIntersection(points, p[4], p[5], plane);
@@ -75,7 +75,7 @@ ArnBoxPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3 p[8], const Ar
 }
 
 void
-ArnXformedBoxPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3& boxSize, const ArnVec3& boxPos, const ArnQuat& q, const ArnPlane& plane)
+ArnXformedBoxPlaneIntersection(std::vector<ArnVec3>& points, const ArnVec3& boxSize, const ArnVec3& boxPos, const ArnQuat& q, const ArnPlane& plane)
 {
 	const float x = boxSize[0] / 2;
 	const float y = boxSize[1] / 2;
@@ -103,7 +103,7 @@ ArnXformedBoxPlaneIntersection(std::list<ArnVec3>& points, const ArnVec3& boxSiz
 }
 
 void
-ArnGeneralBodyPlaneIntersection(std::list<ArnVec3>& points, const GeneralBody& gb, const ArnPlane& plane)
+ArnGeneralBodyPlaneIntersection(std::vector<ArnVec3>& points, const GeneralBody& gb, const ArnPlane& plane)
 {
 	if (gb.getBoundingBoxType() == ABBT_BOX)
 	{

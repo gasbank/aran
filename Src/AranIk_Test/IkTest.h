@@ -48,6 +48,8 @@
 // Boost C++
 //
 #include <boost/lambda/lambda.hpp>
+#include <boost/lambda/casts.hpp>
+#include <boost/function/function_base.hpp>
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>

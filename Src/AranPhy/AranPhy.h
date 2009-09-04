@@ -32,7 +32,7 @@ ArnCleanupPhysics();
  */
 ARANPHY_API void
 ArnLineSegmentPlaneIntersection(
-	std::list<ArnVec3>& points,
+	std::vector<ArnVec3>& points,
 	const ArnVec3& p0,
 	const ArnVec3& p1,
 	const ArnPlane& plane
@@ -57,7 +57,7 @@ ArnBoxPlaneIntersection(
  */
 ARANPHY_API void
 ArnXformedBoxPlaneIntersection(
-	std::list<ArnVec3>& points,
+	std::vector<ArnVec3>& points,
 	const ArnVec3& boxSize,
 	const ArnVec3& boxPos,
 	const ArnQuat& q,
@@ -71,7 +71,7 @@ ArnXformedBoxPlaneIntersection(
  */
 ARANPHY_API void
 ArnGeneralBodyPlaneIntersection(
-	std::list<ArnVec3>& points,		///< [out] 교차점
+	std::vector<ArnVec3>& points,		///< [out] 교차점
 	const GeneralBody& gb,			///< [in] 교차 테스트를 할 물리
 	const ArnPlane& plane			///< [in] 교차 테스트를 할 평면
 );
