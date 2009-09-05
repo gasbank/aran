@@ -811,7 +811,7 @@ RenderHud(const AppContext& ac)
 }
 
 /*!
- * @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯¿Í ¹«°ü)
+ * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ì™€ ë¬´ê´€)
  */
 static int
 InitializeRendererIndependentsFromSg(AppContext& ac)
@@ -847,7 +847,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯ Á¾¼Ó)
+ * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ ì¢…ì†)
  */
 static int
 InitializeRendererDependentsFromSg(AppContext& ac)
@@ -857,12 +857,12 @@ InitializeRendererDependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief ÇÁ·Î±×·¥ ½ÇÇà ½Ã ÇÑ ¹ø¸¸ ¼öÇàµÇ´Â ÃÊ±âÈ­ ·çÆ¾
+ * @brief í”„ë¡œê·¸ë¨ ì‹¤í–‰ ì‹œ í•œ ë²ˆë§Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” ë£¨í‹´
  */
 static int
 InitializeAppContextOnce(AppContext& ac)
 {
-	/// \c SceneList.txt ¸¦ ÆÄ½ÌÇÕ´Ï´Ù.
+	/// \c SceneList.txt ë¥¼ íŒŒì‹±í•©ë‹ˆë‹¤.
 	if (LoadSceneList(ac.sceneList) < 0)
 	{
 		std::cerr << " *** Init failed..." << std::endl;
@@ -871,7 +871,7 @@ InitializeAppContextOnce(AppContext& ac)
 
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
 
-	/// Viewport¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// Viewportë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	ac.avd.X		= 0;
 	ac.avd.Y		= 0;
 	ac.avd.Width	= AppContext::windowWidth;
@@ -882,10 +882,10 @@ InitializeAppContextOnce(AppContext& ac)
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
 
-	/// ´ÙÀ½ Ä«¸Ş¶ó·Î º¯°æ ÇÃ·¡±× ÃÊ±âÈ­
+	/// ë‹¤ìŒ ì¹´ë©”ë¼ë¡œ ë³€ê²½ í”Œë˜ê·¸ ì´ˆê¸°í™”
 	ac.bNextCamera	= false;
 
-	/// Ã¹ Àå¸é ÆÄÀÏÀ» ¸Ş¸ğ¸®¿¡ ·ÎµåÇÕ´Ï´Ù.
+	/// ì²« ì¥ë©´ íŒŒì¼ì„ ë©”ëª¨ë¦¬ì— ë¡œë“œí•©ë‹ˆë‹¤.
 	assert(ac.sceneList.size() > 0);
 	ac.curSceneIndex = -1;
 	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
@@ -897,8 +897,8 @@ InitializeAppContextOnce(AppContext& ac)
 	assert(ac.sgPtr);
 
 	/*!
-	 * SDL ¶óÀÌºê·¯¸®¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
-	 * ÀÌÈÄ¿¡ ¿¹±âÄ¡¾ÊÀº ¿À·ù°¡ ¹ß»ıÇßÀ» °æ¿ì¿¡´Â SDL_Quit() ÇÔ¼ö¸¦ È£ÃâÇÑ ÈÄ ¹İÈ¯ÇØ¾ß ÇÕ´Ï´Ù.
+	 * SDL ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	 * ì´í›„ì— ì˜ˆê¸°ì¹˜ì•Šì€ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆì„ ê²½ìš°ì—ëŠ” SDL_Quit() í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•œ í›„ ë°˜í™˜í•´ì•¼ í•©ë‹ˆë‹¤.
 	 */
 	const int		bpp					= 32;
 	const int		depthSize			= 24;
@@ -966,7 +966,7 @@ InitializeAppContextOnce(AppContext& ac)
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
 
-	/// OpenGL ÇÃ·¡±×¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+	/// OpenGL í”Œë˜ê·¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LINE_SMOOTH);
@@ -987,7 +987,7 @@ InitializeAppContextOnce(AppContext& ac)
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-	/// OpenGL È®Àå ±â´ÉÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// OpenGL í™•ì¥ ê¸°ëŠ¥ì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (ArnInitGlExtFunctions() < 0)
 	{
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
@@ -997,14 +997,14 @@ InitializeAppContextOnce(AppContext& ac)
 		return -50;
 	}
 
-	/// ARAN OpenGL ÆĞÅ°Áö¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// ARAN OpenGL íŒ¨í‚¤ì§€ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (ArnInitializeGl() < 0)
 	{
 		SDL_Quit();
 		return -3;
 	}
 
-	/// Ã³À½À¸·Î ·ÎµåÇÑ ¸ğµ¨ ÆÄÀÏ¿¡ Á¾¼ÓÀûÀÎ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// ì²˜ìŒìœ¼ë¡œ ë¡œë“œí•œ ëª¨ë¸ íŒŒì¼ì— ì¢…ì†ì ì¸ ë°ì´í„°ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
 		SDL_Quit();
@@ -1019,17 +1019,17 @@ InitializeAppContextOnce(AppContext& ac)
 }
 
 /*!
- * @brief ÁÖ¿ä ·çÆ¾ ½ÃÀÛ ÇÔ¼ö
+ * @brief ì£¼ìš” ë£¨í‹´ ì‹œì‘ í•¨ìˆ˜
  */
 int
 DoMain()
 {
 	int a = 10;
 	/*!
-	 * ·»´õ·¯ µ¶¸³Àû ARAN ÆĞÅ°ÁöÀÎ ARAN Core, ARAN Physics¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
-	 * ÃÊ±âÈ­°¡ ¼º°øÇÑ ÀÌÈÄ ÇÁ·Î±×·¥ÀÇ Ä¡¸íÀûÀÎ ¿À·ù·Î ÀÎÇØ ½ÇÇàÀÌ Áß´ÜµÉ °æ¿ì
-	 * ¹İµå½Ã Cleanup() À» È£ÃâÇØ¾ß ÇÕ´Ï´Ù.
-	 * º» ÃÊ±âÈ­°¡ ½ÇÆĞÇÒ °æ¿ì¿¡´Â ÇÁ·Î±×·¥ÀÌ Á¾·áµË´Ï´Ù.
+	 * ë Œë”ëŸ¬ ë…ë¦½ì  ARAN íŒ¨í‚¤ì§€ì¸ ARAN Core, ARAN Physicsë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	 * ì´ˆê¸°í™”ê°€ ì„±ê³µí•œ ì´í›„ í”„ë¡œê·¸ë¨ì˜ ì¹˜ëª…ì ì¸ ì˜¤ë¥˜ë¡œ ì¸í•´ ì‹¤í–‰ì´ ì¤‘ë‹¨ë  ê²½ìš°
+	 * ë°˜ë“œì‹œ Cleanup() ì„ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.
+	 * ë³¸ ì´ˆê¸°í™”ê°€ ì‹¤íŒ¨í•  ê²½ìš°ì—ëŠ” í”„ë¡œê·¸ë¨ì´ ì¢…ë£Œë©ë‹ˆë‹¤.
 	 */
 	if (ArnInitializeXmlParser() < 0)
 	{
@@ -1050,8 +1050,8 @@ DoMain()
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
 	/*!
-	 * Application-wide context¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
-	 * ÀÌ ÃÊ±âÈ­´Â ÇÁ·Î±×·¥ ±¸µ¿½Ã ´Ü ÇÑ¹ø ½ÃÇàµË´Ï´Ù.
+	 * Application-wide contextë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	 * ì´ ì´ˆê¸°í™”ëŠ” í”„ë¡œê·¸ë¨ êµ¬ë™ì‹œ ë‹¨ í•œë²ˆ ì‹œí–‰ë©ë‹ˆë‹¤.
 	 */
 	AppContext ac;
 	if (InitializeAppContextOnce(ac) < 0)
@@ -1060,7 +1060,7 @@ DoMain()
 		return -4;
 	}
 
-	/// ÇÁ·Î±×·¥ ¸ŞÀÎ ·çÇÁ¸¦ ½ÃÀÛÇÕ´Ï´Ù.
+	/// í”„ë¡œê·¸ë¨ ë©”ì¸ ë£¨í”„ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤.
 	unsigned int frames = 0;
 	unsigned int start_time;
 	unsigned int frameStartMs = 0;

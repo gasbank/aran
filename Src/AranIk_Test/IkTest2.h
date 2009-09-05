@@ -3,8 +3,8 @@
  * @author Geoyeob Kim
  * @date 2009
  *
- * ARAN ���̺귯�� �� AranIk ��Ű���� ����� �����غ��� ���α׷��Դϴ�.
- * Inverse kinematics�� �̿��� ArnSkeleton�� �����ϴ� ���� �ֵ� ��ǥ�Դϴ�.
+ * ARAN 라이브러리 중 AranIk 패키지의 기능을 시험해보는 프로그램입니다.
+ * Inverse kinematics를 이용해 ArnSkeleton을 조작하는 것이 주된 목표입니다.
  */
 #pragma once
 
