@@ -3,12 +3,14 @@
  * @author http://math.ucsd.edu/~sbuss/ResearchWeb/ikmethods/index.html
  * @author Geoyeob Kim
  */
+#ifndef _CLASS_TREE
+#define _CLASS_TREE
+
 #include "LinearR3.h"
 #include "Node.h"
 
-#ifndef _CLASS_TREE
-#define _CLASS_TREE
 TYPEDEF_SHARED_PTR(Node)
+TYPEDEF_SHARED_PTR(Tree)
 
 class ARANIK_API Tree
 {
@@ -29,7 +31,7 @@ public:
 	// Accessors for tree traversal
 	NodePtr						GetRoot() const { return m_root; }
 	NodePtr						GetSuccessor ( NodePtr ) const;
-	std::tr1::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
+	tr1ns::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
 	void						Compute();
 	void						Print();
 	void						Init();
@@ -54,16 +56,13 @@ private:
 	int							m_nJoint;
 };
 
-typedef std::tr1::shared_ptr<Tree> TreePtr;
-
-
 inline NodePtr Tree::GetSuccessor ( NodePtr node ) const
 {
 	if ( node->getLeftNode() )
 	{
 		return node->getLeftNode();
 	}
-	std::tr1::weak_ptr<Node> nodeWeak = node;
+	tr1ns::weak_ptr<Node> nodeWeak = node;
 	while ( true )
 	{
 		if ( nodeWeak.lock()->getRightNode() )

@@ -19,7 +19,7 @@ class VectorR3;
 
 TYPEDEF_SHARED_PTR(Node)
 
-class ARANIK_API Node : public ArnObject, public std::tr1::enable_shared_from_this<Node>
+class ARANIK_API Node : public ArnObject, public tr1ns::enable_shared_from_this<Node>
 {
 public:
 	virtual								~Node();
@@ -92,7 +92,7 @@ private:
 	// Should be removed
 	NodePtr								m_left;					// left child
 	NodePtr								m_right;				// right sibling
-	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
+	tr1ns::weak_ptr<Node>			m_realParent;			// pointer to real parent
 
 	// Needed
 	bool								m_freezed;				// Is this node frozen?

@@ -31,6 +31,8 @@ enum UpdateMode
 	JACOB_SDLS = 4
 };
 
+TYPEDEF_SHARED_PTR(Jacobian)
+
 class Jacobian
 {
 public:
@@ -95,7 +97,5 @@ private:
 	//double					DampingLambdaSDLS;
 	MatrixRmn*					m_Jactive;
 };
-
-typedef std::tr1::shared_ptr<Jacobian> JacobianPtr;
 
 #endif

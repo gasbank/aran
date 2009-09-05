@@ -1,10 +1,10 @@
 /*!
- * @file IkTest.h
+ * @file IkTest2.h
  * @author Geoyeob Kim
  * @date 2009
  *
- * ARAN ë¼ì´ë¸ŒëŸ¬ë¦¬ ì¤‘ AranIk íŒ¨í‚¤ì§€ì˜ ê¸°ëŠ¥ì„ ì‹œí—˜í•´ë³´ëŠ” í”„ë¡œê·¸ë¨ì…ë‹ˆë‹¤.
- * Inverse kinematicsë¥¼ ì´ìš©í•´ ArnSkeletonì„ ì¡°ì‘í•˜ëŠ” ê²ƒì´ ì£¼ëœ ëª©í‘œì…ë‹ˆë‹¤.
+ * ARAN ¶óÀÌºê·¯¸® Áß AranIk ÆĞÅ°ÁöÀÇ ±â´ÉÀ» ½ÃÇèÇØº¸´Â ÇÁ·Î±×·¥ÀÔ´Ï´Ù.
+ * Inverse kinematics¸¦ ÀÌ¿ëÇØ ArnSkeletonÀ» Á¶ÀÛÇÏ´Â °ÍÀÌ ÁÖµÈ ¸ñÇ¥ÀÔ´Ï´Ù.
  */
 #pragma once
 
@@ -47,12 +47,19 @@
 //
 // Boost C++
 //
+#include <boost/weak_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/shared_ptr.hpp>
+/*
 #include <boost/lambda/lambda.hpp>
 #include <boost/lambda/casts.hpp>
 #include <boost/function/function_base.hpp>
 #include <boost/function.hpp>
+*/
 #include <boost/foreach.hpp>
+/*
 #include <boost/tokenizer.hpp>
+*/
 #include <boost/array.hpp>
 #include <boost/circular_buffer.hpp>
 #define foreach BOOST_FOREACH

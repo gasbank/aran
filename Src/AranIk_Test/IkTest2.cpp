@@ -1,13 +1,12 @@
 /*!
- * @file IkTest.cpp
+ * @file IkTest2.cpp
  * @author Geoyeob Kim
  * @date 2009
  */
-#define CGAL_CFG_NO_NEXTAFTER
-#include "IkTest.h"
+#include "IkTest2.h"
 //#include <libguile.h>
 
-using namespace boost::lambda;
+//using namespace boost::lambda;
 
 class AppContext : private Uncopyable
 {
@@ -576,6 +575,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();
 
+	/*
 	unsigned int isectsCount = ac.isects.size();
 	if (isectsCount)
 	{
@@ -583,6 +583,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 			ret<bool>( (&_1->*&ArnVec3::x) < (&_2->*&ArnVec3::x)) );
 	}
 	int a = 10;
+	*/
 	
 	//unsigned int isectsCount = ac.isects.size();
 	//if (isectsCount)
@@ -810,7 +811,7 @@ RenderHud(const AppContext& ac)
 }
 
 /*!
- * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ì™€ ë¬´ê´€)
+ * @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯¿Í ¹«°ü)
  */
 static int
 InitializeRendererIndependentsFromSg(AppContext& ac)
@@ -846,7 +847,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ ì¢…ì†)
+ * @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯ Á¾¼Ó)
  */
 static int
 InitializeRendererDependentsFromSg(AppContext& ac)
@@ -856,12 +857,12 @@ InitializeRendererDependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief í”„ë¡œê·¸ë¨ ì‹¤í–‰ ì‹œ í•œ ë²ˆë§Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” ë£¨í‹´
+ * @brief ÇÁ·Î±×·¥ ½ÇÇà ½Ã ÇÑ ¹ø¸¸ ¼öÇàµÇ´Â ÃÊ±âÈ­ ·çÆ¾
  */
 static int
 InitializeAppContextOnce(AppContext& ac)
 {
-	/// \c SceneList.txt ë¥¼ íŒŒì‹±í•©ë‹ˆë‹¤.
+	/// \c SceneList.txt ¸¦ ÆÄ½ÌÇÕ´Ï´Ù.
 	if (LoadSceneList(ac.sceneList) < 0)
 	{
 		std::cerr << " *** Init failed..." << std::endl;
@@ -870,7 +871,7 @@ InitializeAppContextOnce(AppContext& ac)
 
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
 
-	/// Viewportë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// Viewport¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	ac.avd.X		= 0;
 	ac.avd.Y		= 0;
 	ac.avd.Width	= AppContext::windowWidth;
@@ -881,10 +882,10 @@ InitializeAppContextOnce(AppContext& ac)
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
 
-	/// ë‹¤ìŒ ì¹´ë©”ë¼ë¡œ ë³€ê²½ í”Œë˜ê·¸ ì´ˆê¸°í™”
+	/// ´ÙÀ½ Ä«¸Ş¶ó·Î º¯°æ ÇÃ·¡±× ÃÊ±âÈ­
 	ac.bNextCamera	= false;
 
-	/// ì²« ì¥ë©´ íŒŒì¼ì„ ë©”ëª¨ë¦¬ì— ë¡œë“œí•©ë‹ˆë‹¤.
+	/// Ã¹ Àå¸é ÆÄÀÏÀ» ¸Ş¸ğ¸®¿¡ ·ÎµåÇÕ´Ï´Ù.
 	assert(ac.sceneList.size() > 0);
 	ac.curSceneIndex = -1;
 	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
@@ -896,14 +897,14 @@ InitializeAppContextOnce(AppContext& ac)
 	assert(ac.sgPtr);
 
 	/*!
-	 * SDL ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´í›„ì— ì˜ˆê¸°ì¹˜ì•Šì€ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆì„ ê²½ìš°ì—ëŠ” SDL_Quit() í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•œ í›„ ë°˜í™˜í•´ì•¼ í•©ë‹ˆë‹¤.
+	 * SDL ¶óÀÌºê·¯¸®¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	 * ÀÌÈÄ¿¡ ¿¹±âÄ¡¾ÊÀº ¿À·ù°¡ ¹ß»ıÇßÀ» °æ¿ì¿¡´Â SDL_Quit() ÇÔ¼ö¸¦ È£ÃâÇÑ ÈÄ ¹İÈ¯ÇØ¾ß ÇÕ´Ï´Ù.
 	 */
 	const int		bpp					= 32;
 	const int		depthSize			= 24;
 	bool			bFullScreen			= false;
 	bool			bNoFrame			= false;
-	if( SDL_Init( SDL_INIT_VIDEO | SDL_INIT_JOYSTICK ) < 0 )
+	if( SDL_Init( SDL_INIT_VIDEO /*| SDL_INIT_JOYSTICK*/ ) < 0 )
 	{
 		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
 		return -30;
@@ -965,7 +966,7 @@ InitializeAppContextOnce(AppContext& ac)
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
 
-	/// OpenGL í”Œë˜ê·¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
+	/// OpenGL ÇÃ·¡±×¸¦ ¼³Á¤ÇÕ´Ï´Ù.
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LINE_SMOOTH);
@@ -986,7 +987,7 @@ InitializeAppContextOnce(AppContext& ac)
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-	/// OpenGL í™•ì¥ ê¸°ëŠ¥ì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// OpenGL È®Àå ±â´ÉÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (ArnInitGlExtFunctions() < 0)
 	{
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
@@ -996,14 +997,14 @@ InitializeAppContextOnce(AppContext& ac)
 		return -50;
 	}
 
-	/// ARAN OpenGL íŒ¨í‚¤ì§€ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// ARAN OpenGL ÆĞÅ°Áö¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (ArnInitializeGl() < 0)
 	{
 		SDL_Quit();
 		return -3;
 	}
 
-	/// ì²˜ìŒìœ¼ë¡œ ë¡œë“œí•œ ëª¨ë¸ íŒŒì¼ì— ì¢…ì†ì ì¸ ë°ì´í„°ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// Ã³À½À¸·Î ·ÎµåÇÑ ¸ğµ¨ ÆÄÀÏ¿¡ Á¾¼ÓÀûÀÎ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
 		SDL_Quit();
@@ -1018,16 +1019,17 @@ InitializeAppContextOnce(AppContext& ac)
 }
 
 /*!
- * @brief ì£¼ìš” ë£¨í‹´ ì‹œì‘ í•¨ìˆ˜
+ * @brief ÁÖ¿ä ·çÆ¾ ½ÃÀÛ ÇÔ¼ö
  */
 int
 DoMain()
 {
+	int a = 10;
 	/*!
-	 * ë Œë”ëŸ¬ ë…ë¦½ì  ARAN íŒ¨í‚¤ì§€ì¸ ARAN Core, ARAN Physicsë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´ˆê¸°í™”ê°€ ì„±ê³µí•œ ì´í›„ í”„ë¡œê·¸ë¨ì˜ ì¹˜ëª…ì ì¸ ì˜¤ë¥˜ë¡œ ì¸í•´ ì‹¤í–‰ì´ ì¤‘ë‹¨ë  ê²½ìš°
-	 * ë°˜ë“œì‹œ Cleanup() ì„ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.
-	 * ë³¸ ì´ˆê¸°í™”ê°€ ì‹¤íŒ¨í•  ê²½ìš°ì—ëŠ” í”„ë¡œê·¸ë¨ì´ ì¢…ë£Œë©ë‹ˆë‹¤.
+	 * ·»´õ·¯ µ¶¸³Àû ARAN ÆĞÅ°ÁöÀÎ ARAN Core, ARAN Physics¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	 * ÃÊ±âÈ­°¡ ¼º°øÇÑ ÀÌÈÄ ÇÁ·Î±×·¥ÀÇ Ä¡¸íÀûÀÎ ¿À·ù·Î ÀÎÇØ ½ÇÇàÀÌ Áß´ÜµÉ °æ¿ì
+	 * ¹İµå½Ã Cleanup() À» È£ÃâÇØ¾ß ÇÕ´Ï´Ù.
+	 * º» ÃÊ±âÈ­°¡ ½ÇÆĞÇÒ °æ¿ì¿¡´Â ÇÁ·Î±×·¥ÀÌ Á¾·áµË´Ï´Ù.
 	 */
 	if (ArnInitializeXmlParser() < 0)
 	{
@@ -1048,8 +1050,8 @@ DoMain()
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
 	/*!
-	 * Application-wide contextë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´ ì´ˆê¸°í™”ëŠ” í”„ë¡œê·¸ë¨ êµ¬ë™ì‹œ ë‹¨ í•œë²ˆ ì‹œí–‰ë©ë‹ˆë‹¤.
+	 * Application-wide context¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	 * ÀÌ ÃÊ±âÈ­´Â ÇÁ·Î±×·¥ ±¸µ¿½Ã ´Ü ÇÑ¹ø ½ÃÇàµË´Ï´Ù.
 	 */
 	AppContext ac;
 	if (InitializeAppContextOnce(ac) < 0)
@@ -1058,7 +1060,7 @@ DoMain()
 		return -4;
 	}
 
-	/// í”„ë¡œê·¸ë¨ ë©”ì¸ ë£¨í”„ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤.
+	/// ÇÁ·Î±×·¥ ¸ŞÀÎ ·çÇÁ¸¦ ½ÃÀÛÇÕ´Ï´Ù.
 	unsigned int frames = 0;
 	unsigned int start_time;
 	unsigned int frameStartMs = 0;
@@ -1174,13 +1176,15 @@ void guile_inner_main(void* data, int argc, char** argv)
 	scm_shell(0, 0);
 }
 */
-int main(int argc, char *argv[])
+
+int in_main(int argc, char** argv)
 {
 	//scm_boot_guile(argc, argv, guile_inner_main, 0);
-
-	int retCode = 0;
+	int retCode = 454;
+	printf("%d\n", retCode);
+	int a = 10;
 	retCode = DoMain();
-
+	int b = 20;
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
@@ -1188,4 +1192,10 @@ int main(int argc, char *argv[])
 	ArnObject::printInstances();
 #endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	return retCode;
+}
+
+
+int main(int argc, char** argv)
+{
+	return in_main(argc, argv);
 }

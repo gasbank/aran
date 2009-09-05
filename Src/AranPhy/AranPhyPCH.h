@@ -31,6 +31,7 @@
 //
 // Boost C++
 //
+#include <boost/shared_ptr.hpp>
 #include <boost/lambda/lambda.hpp>
 #include <boost/function.hpp>
 #include <boost/foreach.hpp>

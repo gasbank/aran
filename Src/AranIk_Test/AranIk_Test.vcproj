@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib AranGl_D.lib AranIk_D.lib SDL_D.lib SDLmain.lib freetype239MT_D.lib opengl32.lib glu32.lib"
+				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib AranGl_D.lib AranIk_D.lib SDL_D.lib SDLmain.lib opengl32.lib glu32.lib"
 				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
@@ -181,20 +181,20 @@
 		<Filter
 			Name="Source Files"
 			Filter="cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx"
-			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
+			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A234232A2FF}"
 			>
 			<File
-				RelativePath=".\IkTest.cpp"
+				RelativePath=".\IkTest2.cpp"
 				>
 			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
+			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE42342B}"
 			>
 			<File
-				RelativePath=".\IkTest.h"
+				RelativePath=".\IkTest2.h"
 				>
 			</File>
 		</Filter>
