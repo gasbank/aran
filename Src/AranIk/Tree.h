@@ -63,18 +63,15 @@ inline NodePtr Tree::GetSuccessor ( NodePtr node ) const
 		return node->getLeftNode();
 	}
 	tr1ns::weak_ptr<Node> nodeWeak = node;
-	while ( true )
+	while ( nodeWeak.lock() )
 	{
 		if ( nodeWeak.lock()->getRightNode() )
 		{
 			return ( nodeWeak.lock()->getRightNode() );
 		}
 		nodeWeak = nodeWeak.lock()->getRealParent();
-		if ( !nodeWeak.lock() )
-		{
-			return NodePtr();		// Back to root, finished traversal
-		}
 	}
+	return NodePtr();
 }
 
 #endif

@@ -4,7 +4,7 @@
 class ArnSkeleton;
 class ArnMesh;
 
-class ARANGL_API ArnSkinningShaderGl : public Singleton<ArnSkinningShaderGl>
+class ArnSkinningShaderGl : public Singleton<ArnSkinningShaderGl>
 {
 public:
 						ArnSkinningShaderGl();

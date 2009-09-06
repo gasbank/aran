@@ -6,7 +6,7 @@
 #include "Structs.h"
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
-
+#include "ArnIntersection.h"
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 : ArnObject(NDT_RT_GENERALBODY)
@@ -502,7 +502,7 @@ ArnxGetJointAnchor(dJointID j)
 	return ArnVec3(anc[0], anc[1], anc[2]);
 }
 
-void
+static void
 ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBody, int depth)
 {
 	int numJoint = dBodyGetNumJoints(body);
@@ -598,4 +598,66 @@ GeneralBody::createLumpedArnSkeleton() const
 	//skel->getLocalXform().printFrameInfo();
 	ArnxCreateLumpedArnSkeleton(skel, getBodyId(), getBodyId(), 0);
 	return skel;
+}
+
+static float
+ArnxCalculateLumpedVerticalIntersection(std::vector<ArnVec3>& isects, std::vector<std::vector<float> >& massMap, dBodyID body, dBodyID parentBody, int depth,  const float cx, const float cy, const float deviation, const int resolution, const int row, const int col, float maxMassMapVal)
+{
+	int numJoint = dBodyGetNumJoints(body);
+	dGeomID geom = dBodyGetFirstGeom(body);
+	assert(dGeomGetClass(geom) == dBoxClass);
+	dVector3 boxSize;
+	dGeomBoxGetLengths(geom, boxSize);
+	const dReal* boxPos = dBodyGetPosition(body);
+	const dReal* boxQ = dBodyGetQuaternion(body);
+
+#if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0
+	for (int i = 0; i < depth; ++i)
+		std::cout << "  ";
+	unsigned int objectId = reinterpret_cast<unsigned long>(dBodyGetData(body)) & 0xffffffff;
+	ArnObject* arnObj = ArnObject::getObjectById(objectId);
+	assert(arnObj);
+	std::cout << arnObj->getName() << " " << boxPos[0] << " " << boxPos[1] << " " << boxPos[2] << std::endl;
+#endif // ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
+
+	float massWeight = ArnXformedBoxVerticalLineIntersection(isects, ArnVec3(boxSize[0], boxSize[1], boxSize[2]), ArnVec3(boxPos[0], boxPos[1], boxPos[2]), ArnQuat(boxQ[1], boxQ[2], boxQ[3], boxQ[0]), cx + deviation / resolution * row,  cy + deviation / resolution * col);
+	dMass mass;
+	dBodyGetMass(body, &mass);
+	massMap[row + resolution][col + resolution] += mass.mass * massWeight;
+	if (maxMassMapVal < massMap[row + resolution][col + resolution])
+		maxMassMapVal = massMap[row + resolution][col + resolution];
+	for (int i = 0; i < numJoint; ++i)
+	{
+		dJointID joint = dBodyGetJoint(body, i);
+		int jointType = dJointGetType(joint);
+		if (jointType != dJointTypeBall
+			&& jointType != dJointTypeHinge
+			&& jointType != dJointTypeUniversal)
+		{
+			continue;
+		}
+		dBodyID body2 = dJointGetBody(joint, 0);
+		if (body2 == body)
+			body2 = dJointGetBody(joint, 1);
+		if (body2 == parentBody)
+			continue;
+
+		ArnxCalculateLumpedVerticalIntersection(isects, massMap, body2, body, depth + 1, cx, cy, deviation, resolution, row, col, maxMassMapVal);
+	}
+
+	return maxMassMapVal;
+}
+
+float
+GeneralBody::calculateLumpedVerticalIntersection( std::vector<ArnVec3>& isects, std::vector<std::vector<float> >& massMap, const float cx, const float cy, const float deviation, const int resolution ) const
+{
+	float maxMassMapVal = 0;
+	for (int i = -resolution; i < resolution; ++i)
+	{
+		for (int j = -resolution; j < resolution; ++j)
+		{
+			maxMassMapVal = ArnxCalculateLumpedVerticalIntersection(isects, massMap, getBodyId(), getBodyId(), 0, cx, cy, deviation, resolution, i, j, maxMassMapVal );
+		}
+	}
+	return maxMassMapVal;
 }

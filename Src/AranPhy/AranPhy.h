@@ -26,45 +26,6 @@ ARANPHY_API int
 ArnCleanupPhysics();
 
 /*!
- * @brief 선분과 ArnPlane 사이의 교차점 계산
- *
- * 시작점과 끝점으로 정의되는 선분과 ArnPlane의 교차점을 계산합니다.
- */
-ARANPHY_API void
-ArnLineSegmentPlaneIntersection(
-	std::vector<ArnVec3>& points,
-	const ArnVec3& p0,
-	const ArnVec3& p1,
-	const ArnPlane& plane
-);
-
-/*!
- * @brief 상자와 ArnPlane 사이의 교차점 계산
- *
- * 8개의 점으로 정의된 상자와 ArnPlane의 교차점을 계산합니다.
- */
-ARANPHY_API void
-ArnBoxPlaneIntersection(
-	std::list<ArnVec3>& points,
-	const ArnVec3 box[8],
-	const ArnPlane& plane
-);
-
-/*!
- * @brief 상자와 ArnPlane 사이의 교차점 계산
- *
- * 8개의 점으로 정의된 상자와 ArnPlane의 교차점을 계산합니다.
- */
-ARANPHY_API void
-ArnXformedBoxPlaneIntersection(
-	std::vector<ArnVec3>& points,
-	const ArnVec3& boxSize,
-	const ArnVec3& boxPos,
-	const ArnQuat& q,
-	const ArnPlane& plane
-);
-
-/*!
  * @brief GeneralBody 와 ArnPlane 사이의 교차점 계산
  *
  * 다수의 교차점이 있을 수도 있으므로 교차점 리스트를 만들어 냅니다.
@@ -75,3 +36,15 @@ ArnGeneralBodyPlaneIntersection(
 	const GeneralBody& gb,			///< [in] 교차 테스트를 할 물리
 	const ArnPlane& plane			///< [in] 교차 테스트를 할 평면
 );
+
+/*!
+ * @brief GeneralBody 와 수직선(vertical line)과의 교차점 계산
+ *
+ * 다수의 교차점이 있을 수도 있으므로 교차점 리스트를 만들어 냅니다.
+ */
+ARANPHY_API void
+ArnGeneralBodyVerticalLineIntersection(std::vector<ArnVec3>& points,	///< [out] 교차점
+									const GeneralBody& gb,			///< [in] 교차 테스트를 할 물리
+									const float x,					///< [in] 수직선의 X 좌표
+									const float y					///< [in] 수직선의 Y 좌표
+									);

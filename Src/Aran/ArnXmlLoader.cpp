@@ -108,6 +108,8 @@ Parse2FloatsFromElement(float* f0, float* f1, const TiXmlElement* elm)
 {
 	if (sscanf(elm->GetText(), "%f %f", f0, f1) != 2)
 	{
+		// NOTE: Microsoft Visual C++ link error if we use ARN_THROW_UNEXPECTED_CASE_ERROR
+		//       instead of abort() on release build. Why???!!!
 		abort();
 	}
 }

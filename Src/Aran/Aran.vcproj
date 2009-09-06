@@ -569,6 +569,10 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\VTune\Aran.vpj"
+			>
+		</File>
+		<File
 			RelativePath=".\ArnJoint.cpp"
 			>
 		</File>

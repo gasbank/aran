@@ -76,7 +76,7 @@ public:
 	void							calculateLumpedComAndMass(ArnVec3* com, float* mass) const;
 	void							calculateLumpedIntersection(std::vector<ArnVec3>& isects, const ArnPlane& plane) const;
 	void							calculateLumpedGroundIntersection(std::vector<ArnVec3>& isects) const;
-
+	float							calculateLumpedVerticalIntersection(std::vector<ArnVec3>& isects, std::vector<std::vector<float> >& massMap, const float cx, const float cy, const float deviation, const int resolution) const;
 	/*!
 	 * @brief 강체와 관절로 연결된 모델로부터 ArnSkeleton을 생성
 	 *

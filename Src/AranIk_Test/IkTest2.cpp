@@ -1,8 +1,8 @@
 /*!
- * @file IkTest2.cpp
- * @author Geoyeob Kim
- * @date 2009
- */
+* @file IkTest2.cpp
+* @author Geoyeob Kim
+* @date 2009
+*/
 #include "IkTest2.h"
 //#include <libguile.h>
 
@@ -11,10 +11,12 @@
 class AppContext : private Uncopyable
 {
 public:
-											AppContext();
-											~AppContext();
+	AppContext();
+	~AppContext();
 	static const int						windowWidth			= 800;
 	static const int						windowHeight		= 600;
+	static const int						massMapResolution	= 16;
+	static const float						massMapDeviation;
 	ArnViewportData							avd;
 	std::vector<std::string>				sceneList;
 	int										curSceneIndex;
@@ -35,17 +37,36 @@ public:
 	bool									bNextCamera;
 
 	// Volatile: should be clear()-ed every frame.
-	std::vector<ArnVec3>						isects;					///< Foot-ground intersection points
+	std::vector<ArnVec3>					isects;					///< Foot-ground intersection points
 	std::vector<ArnVec3>					supportPolygon;			///< Support polygon
-};
 
+	std::vector<ArnVec3>					verticalLineIsects;
+	std::vector<std::vector<float> >		massMap;
+	GLuint									massMapTex;
+	unsigned char*							massMapData;
+};
+const float						AppContext::massMapDeviation = 0.5f;
 AppContext::AppContext()
 : bipedComPos(50)
+, massMapData(new unsigned char[massMapResolution*2 * massMapResolution*2 * 4])
 {
+	massMap.resize(massMapResolution*2);
+	for (int i = 0; i < massMapResolution*2; ++i)
+	{
+		massMap[i].resize(massMapResolution*2);
+	}
+	// OpenGL context is not available at this time.
 }
 
 AppContext::~AppContext()
 {
+	foreach (ArnIkSolver* ikSolver, ikSolvers)
+	{
+		delete ikSolver;
+	}
+	ikSolvers.clear();
+	glDeleteTextures(1, &massMapTex);
+	delete [] massMapData;
 }
 
 static inline double
@@ -98,14 +119,14 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 
 	/* Draw the objects onto the screen */
 	glMatrixMode(GL_MODELVIEW);
-		/* draw only the names in the stack, and fill the array */
-		glFlush();
-		SDL_GL_SwapBuffers();
-		ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
-		foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-		{
-			TreeDraw(*ikSolver->getTree());
-		}
+	/* draw only the names in the stack, and fill the array */
+	glFlush();
+	SDL_GL_SwapBuffers();
+	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
+	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
+	{
+		TreeDraw(*ikSolver->getTree());
+	}
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -185,183 +206,183 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 		skel = reinterpret_cast<ArnSkeleton*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
 	}
 	switch( event->type ) {
-		case SDL_JOYAXISMOTION:
+case SDL_JOYAXISMOTION:
+	{
+		//std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
+		if ((int)event->jaxis.axis == 0)
 		{
-			//std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
-			if ((int)event->jaxis.axis == 0)
+			if (abs(event->jaxis.value) > 9000)
 			{
-				if (abs(event->jaxis.value) > 9000)
-				{
-					ac.linVelX = float(event->jaxis.value / 16000.0);
-				}
-				else
-				{
-					ac.linVelX = 0;
-				}
+				ac.linVelX = float(event->jaxis.value / 16000.0);
 			}
-			if ((int)event->jaxis.axis == 1)
+			else
 			{
-				if (abs(event->jaxis.value) > 9000)
-				{
-					ac.linVelZ = float(-event->jaxis.value / 16000.0);
+				ac.linVelX = 0;
+			}
+		}
+		if ((int)event->jaxis.axis == 1)
+		{
+			if (abs(event->jaxis.value) > 9000)
+			{
+				ac.linVelZ = float(-event->jaxis.value / 16000.0);
 
-				}
-				else
-				{
-					ac.linVelZ = 0;
-				}
 			}
-			GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
-			if (gbPtr)
+			else
 			{
-				gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
+				ac.linVelZ = 0;
 			}
-			/////////////////////////////////////////////////////////////////////////
-			if ((int)event->jaxis.axis == 2)
+		}
+		GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
+		if (gbPtr)
+		{
+			gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
+		}
+		/////////////////////////////////////////////////////////////////////////
+		if ((int)event->jaxis.axis == 2)
+		{
+			if (abs(event->jaxis.value) > 9000)
 			{
-				if (abs(event->jaxis.value) > 9000)
-				{
-					ac.torque = event->jaxis.value / 10.0f;
-				}
-				else
-				{
-					ac.torque = 0;
-				}
+				ac.torque = event->jaxis.value / 10.0f;
 			}
+			else
+			{
+				ac.torque = 0;
+			}
+		}
 
-			if ((int)event->jaxis.axis == 5)
+		if ((int)event->jaxis.axis == 5)
+		{
+			if (abs(event->jaxis.value) > 10)
 			{
-				if (abs(event->jaxis.value) > 10)
+				ac.torqueAnkle = event->jaxis.value / 500.0f;
+			}
+			else
+			{
+				ac.torqueAnkle = 0;
+			}
+		}
+	}
+	break;
+case SDL_JOYBALLMOTION:
+	{
+		std::cout << "SDL_JOYBALLMOTION" << std::endl;
+	}
+	break;
+case SDL_JOYHATMOTION:
+	{
+		std::cout << "SDL_JOYHATMOTION" << std::endl;
+	}
+	break;
+case SDL_JOYBUTTONDOWN:
+	{
+		std::cout << "SDL_JOYBUTTONDOWN" << std::endl;
+	}
+	break;
+case SDL_JOYBUTTONUP:
+	{
+		std::cout << "SDL_JOYBUTTONUP" << std::endl;
+		std::cout << "gs_torque =  " << ac.torque << std::endl;
+		std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
+		std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
+	}
+	break;
+case SDL_MOUSEBUTTONUP:
+	{
+		if (event->button.button == SDL_BUTTON_LEFT)
+		{
+			SelectGraphicObject(
+				ac,
+				float(event->motion.x),
+				float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
+				);
+
+			if (ac.sgPtr)
+			{
+				ArnMatrix modelview, projection;
+				glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+				modelview = modelview.transpose();
+				glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+				projection = projection.transpose();
+				ArnVec3 origin, direction;
+				ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
+				ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
+				if (mesh)
 				{
-					ac.torqueAnkle = event->jaxis.value / 500.0f;
-				}
-				else
-				{
-					ac.torqueAnkle = 0;
+					bool bHit = false;
+					unsigned int faceIdx = 0;
+					ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
+					if (bHit)
+						printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
 				}
 			}
 		}
-		break;
-		case SDL_JOYBALLMOTION:
+	}
+	break;
+case SDL_KEYDOWN:
+	ac.bHoldingKeys[event->key.keysym.sym] = true;
+
+	if ( event->key.keysym.sym == SDLK_ESCAPE )
+	{
+		done = MHR_EXIT_APP;
+	}
+	else if (event->key.keysym.sym == SDLK_n)
+	{
+		done = MHR_NEXT_SCENE;
+	}
+	else if (event->key.keysym.sym == SDLK_r)
+	{
+		done = MHR_RELOAD_SCENE;
+	}
+	else if (event->key.keysym.sym == SDLK_1)
+	{
+		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
 		{
-			std::cout << "SDL_JOYBALLMOTION" << std::endl;
+			skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
+			skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
+			ARNTRACK_DESC desc;
+			skel->getAnimCtrl()->GetTrackDesc(0, &desc);
+			skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
+			skel->getAnimCtrl()->SetTrackWeight(0, 1);
 		}
-		break;
-		case SDL_JOYHATMOTION:
+	}
+	else if (event->key.keysym.sym == SDLK_2)
+	{
+		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
 		{
-			std::cout << "SDL_JOYHATMOTION" << std::endl;
+			skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
+			skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
+			ARNTRACK_DESC desc;
+			skel->getAnimCtrl()->GetTrackDesc(1, &desc);
+			skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
+			skel->getAnimCtrl()->SetTrackWeight(1, 1);
 		}
-		break;
-        case SDL_JOYBUTTONDOWN:
-        {
-        	std::cout << "SDL_JOYBUTTONDOWN" << std::endl;
-        }
-        break;
-        case SDL_JOYBUTTONUP:
-        {
-        	std::cout << "SDL_JOYBUTTONUP" << std::endl;
-        	std::cout << "gs_torque =  " << ac.torque << std::endl;
-        	std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
-        	std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
-        }
-        break;
-		case SDL_MOUSEBUTTONUP:
-			{
-				if (event->button.button == SDL_BUTTON_LEFT)
-				{
-					SelectGraphicObject(
-						ac,
-						float(event->motion.x),
-						float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
-						);
+	}
+	else if (event->key.keysym.sym == SDLK_3)
+	{
+		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
+		{
+			skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
+			skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
+			ARNTRACK_DESC desc;
+			skel->getAnimCtrl()->GetTrackDesc(2, &desc);
+			skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
+			skel->getAnimCtrl()->SetTrackWeight(2, 1);
+		}
+	}
 
-					if (ac.sgPtr)
-					{
-						ArnMatrix modelview, projection;
-						glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-						modelview = modelview.transpose();
-						glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-						projection = projection.transpose();
-						ArnVec3 origin, direction;
-						ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
-						ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
-						if (mesh)
-						{
-							bool bHit = false;
-							unsigned int faceIdx = 0;
-							ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-							if (bHit)
-								printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
-						}
-					}
-				}
-			}
-			break;
-		case SDL_KEYDOWN:
-			ac.bHoldingKeys[event->key.keysym.sym] = true;
+	printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
+	break;
+case SDL_KEYUP:
+	ac.bHoldingKeys[event->key.keysym.sym] = false;
 
-			if ( event->key.keysym.sym == SDLK_ESCAPE )
-			{
-				done = MHR_EXIT_APP;
-			}
-			else if (event->key.keysym.sym == SDLK_n)
-			{
-				done = MHR_NEXT_SCENE;
-			}
-			else if (event->key.keysym.sym == SDLK_r)
-			{
-				done = MHR_RELOAD_SCENE;
-			}
-			else if (event->key.keysym.sym == SDLK_1)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
-					skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(0, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(0, 1);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_2)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
-					skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(1, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(1, 1);
-				}
-			}
-			else if (event->key.keysym.sym == SDLK_3)
-			{
-				if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
-				{
-					skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
-					skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
-					ARNTRACK_DESC desc;
-					skel->getAnimCtrl()->GetTrackDesc(2, &desc);
-					skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
-					skel->getAnimCtrl()->SetTrackWeight(2, 1);
-				}
-			}
-
-			printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
-			break;
-		case SDL_KEYUP:
-			ac.bHoldingKeys[event->key.keysym.sym] = false;
-
-			if (event->key.keysym.sym == SDLK_c)
-			{
-				ac.bNextCamera = true;
-			}
-			break;
-		case SDL_QUIT:
-			done = MHR_EXIT_APP;
-			break;
+	if (event->key.keysym.sym == SDLK_c)
+	{
+		ac.bNextCamera = true;
+	}
+	break;
+case SDL_QUIT:
+	done = MHR_EXIT_APP;
+	break;
 	}
 	return done;
 }
@@ -470,7 +491,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	// Physics simulation frequency (Hz)
 	// higher --> accurate, stable, slow
 	// lower  --> errors, unstable, fast
-	static const unsigned int simFreq = 500;
+	static const unsigned int simFreq = 1000;
 	// Maximum simulation step iteration count for clamping
 	// to keep app from advocating all resources to step further.
 	static const unsigned int simMaxIteration = 100;
@@ -563,6 +584,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	ac.activeCam->recalcLocalXform();
 
 	ac.isects.clear();
+	ac.verticalLineIsects.clear();
 	if (ac.trunk)
 	{
 		ArnVec3 bipedComPos;
@@ -570,6 +592,35 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		ac.bipedComPos.push_back(bipedComPos);
 		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
+
+		for (int mm = 0; mm < AppContext::massMapResolution*2; ++mm)
+			std::fill(ac.massMap[mm].begin(), ac.massMap[mm].end(), 0);
+		float maxMassMapVal = ac.trunk->calculateLumpedVerticalIntersection(ac.verticalLineIsects, ac.massMap, bipedComPos.x, bipedComPos.y, AppContext::massMapDeviation, AppContext::massMapResolution);
+
+		// Prepare texture
+		for (int i = -AppContext::massMapResolution; i < AppContext::massMapResolution; ++i)
+		{
+			for (int j = -AppContext::massMapResolution; j < AppContext::massMapResolution; ++j)
+			{
+				int offset = AppContext::massMapResolution*2*(i+AppContext::massMapResolution) + j+AppContext::massMapResolution;
+				
+				ac.massMapData[4*offset + 0] = 0;
+				ac.massMapData[4*offset + 1] = 0;
+				ac.massMapData[4*offset + 2] = 255;
+				ac.massMapData[4*offset + 3] = (int)(ac.massMap[j+AppContext::massMapResolution][i+AppContext::massMapResolution] / maxMassMapVal * 255);
+				
+				/*
+				ac.massMapData[4*offset + 0] = 0;
+				ac.massMapData[4*offset + 1] = 255;
+				ac.massMapData[4*offset + 2] = 0;
+				ac.massMapData[4*offset + 3] = 100;
+				*/
+			}
+		}
+		glBindTexture(GL_TEXTURE_2D, ac.massMapTex);
+		//glTexImage2D(GL_TEXTURE_2D, 0, 4, AppContext::massMapResolution*2, AppContext::massMapResolution*2, 0, GL_RGBA, GL_UNSIGNED_BYTE, ac.massMapData);
+		gluBuild2DMipmaps( GL_TEXTURE_2D, 4, AppContext::massMapResolution*2, AppContext::massMapResolution*2, GL_RGBA, GL_UNSIGNED_BYTE, ac.massMapData );
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
 
 	//unsigned int contactCount = ac.swPtr->getContactCount();
@@ -579,12 +630,12 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	unsigned int isectsCount = ac.isects.size();
 	if (isectsCount)
 	{
-		std::sort(ac.isects.begin(), ac.isects.end(),
-			ret<bool>( (&_1->*&ArnVec3::x) < (&_2->*&ArnVec3::x)) );
+	std::sort(ac.isects.begin(), ac.isects.end(),
+	ret<bool>( (&_1->*&ArnVec3::x) < (&_2->*&ArnVec3::x)) );
 	}
 	int a = 10;
 	*/
-	
+
 	//unsigned int isectsCount = ac.isects.size();
 	//if (isectsCount)
 	//{
@@ -669,7 +720,7 @@ RenderScene(const AppContext& ac)
 	glDepthRange(0, 0.9999);
 	GLfloat matrix[16];
 	for (int i = 0; i < 16; i++)
-		matrix[i] = 0;
+	matrix[i] = 0;
 	matrix[ 0] = 1;
 	matrix[ 5] = 1;
 	matrix[ 8] = -LIGHTX;
@@ -679,7 +730,7 @@ RenderScene(const AppContext& ac)
 	glMultMatrixf(matrix);
 	if (ac.sgPtr)
 	{
-		ArnSceneGraphRenderGl(ac.sgPtr.get(), false);
+	ArnSceneGraphRenderGl(ac.sgPtr.get(), false);
 	}
 	glPopMatrix();
 	glPopAttrib();
@@ -691,25 +742,49 @@ RenderScene(const AppContext& ac)
 	{
 		if (ac.trunk)
 		{
+			ArnVec3 netContactForce;
+			const unsigned int contactCount = ac.swPtr->getContactCount();
+			// Calculate the net contact force and render the individual contact force
+			for (unsigned int i = 0; i < contactCount; ++i)
+			{
+				ArnVec3 contactPos, contactForce;
+				ac.swPtr->getContactPosition(i, &contactPos);
+				ac.swPtr->getContactForce1(i, &contactForce);
+				netContactForce += contactForce; // Accumulate contact forces
+
+				// Render the individual contact force
+				glPushMatrix();
+				{
+					glTranslatef(contactPos.x, contactPos.y, contactPos.z);
+					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+					ArnRenderSphereGl(0.025, 16, 16);
+
+					glEnable(GL_COLOR_MATERIAL);
+					glBegin(GL_LINES);
+					glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
+					glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
+					glEnd();
+					glDisable(GL_COLOR_MATERIAL);
+
+					// Contact forces in the second direction. Should be zero.
+					ac.swPtr->getContactForce2(i, &contactForce);
+					assert(contactForce == ArnConsts::ARNVEC3_ZERO);
+				}
+				glPopMatrix();
+			}
 			glPushMatrix();
 			const ArnVec3& bipedComPos = *ac.bipedComPos.rbegin();
 			glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
 			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
-			ArnRenderSphereGl(0.025, 16, 16);
-
-			ArnVec3 netContactForce;
-			const unsigned int contactCount = ac.swPtr->getContactCount();
-			for (unsigned int i = 0; i < contactCount; ++i)
-			{
-				ArnVec3 contactForce;
-				ac.swPtr->getContactForce1(i, &contactForce);
-				netContactForce += contactForce;
-			}
+			ArnRenderSphereGl(0.025, 16, 16); // COM indicator
 			glEnable(GL_COLOR_MATERIAL);
+			//float netContactForceSize = ArnVec3Length(netContactForce);
+			/*
 			glBegin(GL_LINES);
 			glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
 			glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
 			glEnd();
+			*/
 			glDisable(GL_COLOR_MATERIAL);
 			//printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
 			glPopMatrix();
@@ -718,47 +793,13 @@ RenderScene(const AppContext& ac)
 		/*
 		foreach (const ArnVec3& isect, ac.isects)
 		{
-			glPushMatrix();
-			glTranslatef(isect.x, isect.y, isect.z);
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
-			ArnRenderSphereGl(0.025, 16, 16);
-			glPopMatrix();
+		glPushMatrix();
+		glTranslatef(isect.x, isect.y, isect.z);
+		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
+		ArnRenderSphereGl(0.025, 16, 16);
+		glPopMatrix();
 		}
 		*/
-
-		const unsigned int contactCount = ac.swPtr->getContactCount();
-		for (unsigned int i = 0; i < contactCount; ++i)
-		{
-			ArnVec3 contactPos, contactForce;
-			ac.swPtr->getContactPosition(i, &contactPos);
-			glPushMatrix();
-			{
-				glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-				ArnRenderSphereGl(0.025, 16, 16);
-
-				/*
-
-				ac.swPtr->getContactForce1(i, &contactForce);
-				//contactForce /= 100;
-				glEnable(GL_COLOR_MATERIAL);
-				glBegin(GL_LINES);
-				glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
-				glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
-				glEnd();
-				glDisable(GL_COLOR_MATERIAL);
-
-				ac.swPtr->getContactForce2(i, &contactForce);
-				glEnable(GL_COLOR_MATERIAL);
-				glBegin(GL_LINES);
-				glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
-				glColor3f(0, 0, 1); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
-				glEnd();
-				glDisable(GL_COLOR_MATERIAL);
-				*/
-			}
-			glPopMatrix();
-		}
 	}
 	glPopAttrib();
 }
@@ -779,29 +820,53 @@ RenderHud(const AppContext& ac)
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
-		glLoadIdentity();
-		glTranslatef(0.5, 0, 0);
-		glScalef(0.25, 0.25, 1);
+	glLoadIdentity();
+	glTranslatef(0.5, 0, 0);
+	glScalef(0.25, 0.25, 1);
 
-		ArnDrawAxesGl(0.5f);
-		if (ac.supportPolygon.size())
+	// Origin indicator
+	ArnDrawAxesGl(0.5f);
+
+	// Support polygon
+	if (ac.supportPolygon.size())
+	{
+		glBegin(GL_LINE_LOOP);
+		foreach (const ArnVec3& v, ac.supportPolygon)
 		{
-			glBegin(GL_LINE_LOOP);
-			foreach (const ArnVec3& v, ac.supportPolygon)
-			{
-				glColor3f(0, 0, 0); glVertex2f(v.x, v.y);
-			}
-			glEnd();
-		}
-		glBegin(GL_POINTS);
-		float trail = 0;
-		const float trailDiff = 1.0f / ac.bipedComPos.size();
-		foreach (const ArnVec3& comPos, ac.bipedComPos)
-		{
-			glColor4f(1, 0, 0, trail); glVertex2f(comPos.x, comPos.y);
-			trail += trailDiff;
+			glColor3f(0, 0, 0); glVertex2f(v.x, v.y);
 		}
 		glEnd();
+	}
+
+	// Mass map
+	if (ac.bipedComPos.size())
+	{
+		const float devi = AppContext::massMapDeviation;
+		const ArnVec3& comPos = *ac.bipedComPos.rbegin();
+		glEnable(GL_DEPTH_TEST);
+		glBindTexture(GL_TEXTURE_2D, ac.massMapTex);
+		glBegin(GL_QUADS);
+		glTexCoord2f(0, 0); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y - devi);
+		glTexCoord2f(1, 0); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y - devi);
+		glTexCoord2f(1, 1); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y + devi);
+		glTexCoord2f(0, 1); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y + devi);
+		glEnd();
+		glBindTexture(GL_TEXTURE_2D, 0);
+	}
+
+	// COM
+	glDisable(GL_DEPTH_TEST);
+	glBegin(GL_POINTS);
+	float trail = 0;
+	const float trailDiff = 1.0f / ac.bipedComPos.size();
+	foreach (const ArnVec3& comPos, ac.bipedComPos)
+	{
+		glColor4f(1, 0, 0, trail); glVertex2f(comPos.x, comPos.y);
+		trail += trailDiff;
+	}
+	glEnd();
+
+
 	glPopMatrix();
 	glPopAttrib();
 
@@ -811,8 +876,8 @@ RenderHud(const AppContext& ac)
 }
 
 /*!
- * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ì™€ ë¬´ê´€)
- */
+* @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯¿Í ¹«°ü)
+*/
 static int
 InitializeRendererIndependentsFromSg(AppContext& ac)
 {
@@ -847,8 +912,8 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ ì¢…ì†)
- */
+* @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯ Á¾¼Ó)
+*/
 static int
 InitializeRendererDependentsFromSg(AppContext& ac)
 {
@@ -857,12 +922,12 @@ InitializeRendererDependentsFromSg(AppContext& ac)
 }
 
 /*!
- * @brief í”„ë¡œê·¸ë¨ ì‹¤í–‰ ì‹œ í•œ ë²ˆë§Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” ë£¨í‹´
- */
+* @brief ÇÁ·Î±×·¥ ½ÇÇà ½Ã ÇÑ ¹ø¸¸ ¼öÇàµÇ´Â ÃÊ±âÈ­ ·çÆ¾
+*/
 static int
 InitializeAppContextOnce(AppContext& ac)
 {
-	/// \c SceneList.txt ë¥¼ íŒŒì‹±í•©ë‹ˆë‹¤.
+	/// \c SceneList.txt ¸¦ ÆÄ½ÌÇÕ´Ï´Ù.
 	if (LoadSceneList(ac.sceneList) < 0)
 	{
 		std::cerr << " *** Init failed..." << std::endl;
@@ -871,7 +936,7 @@ InitializeAppContextOnce(AppContext& ac)
 
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
 
-	/// Viewportë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// Viewport¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	ac.avd.X		= 0;
 	ac.avd.Y		= 0;
 	ac.avd.Width	= AppContext::windowWidth;
@@ -882,10 +947,10 @@ InitializeAppContextOnce(AppContext& ac)
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
 
-	/// ë‹¤ìŒ ì¹´ë©”ë¼ë¡œ ë³€ê²½ í”Œë˜ê·¸ ì´ˆê¸°í™”
+	/// ´ÙÀ½ Ä«¸Ş¶ó·Î º¯°æ ÇÃ·¡±× ÃÊ±âÈ­
 	ac.bNextCamera	= false;
 
-	/// ì²« ì¥ë©´ íŒŒì¼ì„ ë©”ëª¨ë¦¬ì— ë¡œë“œí•©ë‹ˆë‹¤.
+	/// Ã¹ Àå¸é ÆÄÀÏÀ» ¸Ş¸ğ¸®¿¡ ·ÎµåÇÕ´Ï´Ù.
 	assert(ac.sceneList.size() > 0);
 	ac.curSceneIndex = -1;
 	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
@@ -897,9 +962,9 @@ InitializeAppContextOnce(AppContext& ac)
 	assert(ac.sgPtr);
 
 	/*!
-	 * SDL ë¼ì´ë¸ŒëŸ¬ë¦¬ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´í›„ì— ì˜ˆê¸°ì¹˜ì•Šì€ ì˜¤ë¥˜ê°€ ë°œìƒí–ˆì„ ê²½ìš°ì—ëŠ” SDL_Quit() í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•œ í›„ ë°˜í™˜í•´ì•¼ í•©ë‹ˆë‹¤.
-	 */
+	* SDL ¶óÀÌºê·¯¸®¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	* ÀÌÈÄ¿¡ ¿¹±âÄ¡¾ÊÀº ¿À·ù°¡ ¹ß»ıÇßÀ» °æ¿ì¿¡´Â SDL_Quit() ÇÔ¼ö¸¦ È£ÃâÇÑ ÈÄ ¹İÈ¯ÇØ¾ß ÇÕ´Ï´Ù.
+	*/
 	const int		bpp					= 32;
 	const int		depthSize			= 24;
 	bool			bFullScreen			= false;
@@ -966,7 +1031,7 @@ InitializeAppContextOnce(AppContext& ac)
 	/* Set the window manager title bar */
 	SDL_WM_SetCaption( "aran", "aran" );
 
-	/// OpenGL í”Œë˜ê·¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
+	/// OpenGL ÇÃ·¡±×¸¦ ¼³Á¤ÇÕ´Ï´Ù.
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LINE_SMOOTH);
@@ -987,7 +1052,7 @@ InitializeAppContextOnce(AppContext& ac)
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-	/// OpenGL í™•ì¥ ê¸°ëŠ¥ì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// OpenGL È®Àå ±â´ÉÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (ArnInitGlExtFunctions() < 0)
 	{
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
@@ -997,14 +1062,22 @@ InitializeAppContextOnce(AppContext& ac)
 		return -50;
 	}
 
-	/// ARAN OpenGL íŒ¨í‚¤ì§€ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// ARAN OpenGL ÆĞÅ°Áö¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (ArnInitializeGl() < 0)
 	{
 		SDL_Quit();
 		return -3;
 	}
 
-	/// ì²˜ìŒìœ¼ë¡œ ë¡œë“œí•œ ëª¨ë¸ íŒŒì¼ì— ì¢…ì†ì ì¸ ë°ì´í„°ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	/// Mass map ÅØ½ºÃ³¸¦ »ı¼ºÇÕ´Ï´Ù.
+	glGenTextures(1, &ac.massMapTex);
+	glBindTexture( GL_TEXTURE_2D, ac.massMapTex );
+	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_NEAREST );
+	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	/// Ã³À½À¸·Î ·ÎµåÇÑ ¸ğµ¨ ÆÄÀÏ¿¡ Á¾¼ÓÀûÀÎ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
 	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
 		SDL_Quit();
@@ -1019,18 +1092,17 @@ InitializeAppContextOnce(AppContext& ac)
 }
 
 /*!
- * @brief ì£¼ìš” ë£¨í‹´ ì‹œì‘ í•¨ìˆ˜
- */
+* @brief ÁÖ¿ä ·çÆ¾ ½ÃÀÛ ÇÔ¼ö
+*/
 int
 DoMain()
 {
-	int a = 10;
 	/*!
-	 * ë Œë”ëŸ¬ ë…ë¦½ì  ARAN íŒ¨í‚¤ì§€ì¸ ARAN Core, ARAN Physicsë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´ˆê¸°í™”ê°€ ì„±ê³µí•œ ì´í›„ í”„ë¡œê·¸ë¨ì˜ ì¹˜ëª…ì ì¸ ì˜¤ë¥˜ë¡œ ì¸í•´ ì‹¤í–‰ì´ ì¤‘ë‹¨ë  ê²½ìš°
-	 * ë°˜ë“œì‹œ Cleanup() ì„ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.
-	 * ë³¸ ì´ˆê¸°í™”ê°€ ì‹¤íŒ¨í•  ê²½ìš°ì—ëŠ” í”„ë¡œê·¸ë¨ì´ ì¢…ë£Œë©ë‹ˆë‹¤.
-	 */
+	* ·»´õ·¯ µ¶¸³Àû ARAN ÆĞÅ°ÁöÀÎ ARAN Core, ARAN Physics¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	* ÃÊ±âÈ­°¡ ¼º°øÇÑ ÀÌÈÄ ÇÁ·Î±×·¥ÀÇ Ä¡¸íÀûÀÎ ¿À·ù·Î ÀÎÇØ ½ÇÇàÀÌ Áß´ÜµÉ °æ¿ì
+	* ¹İµå½Ã Cleanup() À» È£ÃâÇØ¾ß ÇÕ´Ï´Ù.
+	* º» ÃÊ±âÈ­°¡ ½ÇÆĞÇÒ °æ¿ì¿¡´Â ÇÁ·Î±×·¥ÀÌ Á¾·áµË´Ï´Ù.
+	*/
 	if (ArnInitializeXmlParser() < 0)
 	{
 		Cleanup();
@@ -1050,9 +1122,9 @@ DoMain()
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
 	/*!
-	 * Application-wide contextë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
-	 * ì´ ì´ˆê¸°í™”ëŠ” í”„ë¡œê·¸ë¨ êµ¬ë™ì‹œ ë‹¨ í•œë²ˆ ì‹œí–‰ë©ë‹ˆë‹¤.
-	 */
+	* Application-wide context¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	* ÀÌ ÃÊ±âÈ­´Â ÇÁ·Î±×·¥ ±¸µ¿½Ã ´Ü ÇÑ¹ø ½ÃÇàµË´Ï´Ù.
+	*/
 	AppContext ac;
 	if (InitializeAppContextOnce(ac) < 0)
 	{
@@ -1060,7 +1132,7 @@ DoMain()
 		return -4;
 	}
 
-	/// í”„ë¡œê·¸ë¨ ë©”ì¸ ë£¨í”„ë¥¼ ì‹œì‘í•©ë‹ˆë‹¤.
+	/// ÇÁ·Î±×·¥ ¸ŞÀÎ ·çÇÁ¸¦ ½ÃÀÛÇÕ´Ï´Ù.
 	unsigned int frames = 0;
 	unsigned int start_time;
 	unsigned int frameStartMs = 0;
@@ -1152,12 +1224,6 @@ DoMain()
 		printf("%.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
 	}
 
-	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-	{
-		delete ikSolver;
-	}
-	ac.ikSolvers.clear();
-
 	Cleanup();
 	SDL_Quit();
 	return 0;
@@ -1165,26 +1231,25 @@ DoMain()
 /*
 SCM DoMainWrapper()
 {
-	return scm_from_int(DoMain());
+return scm_from_int(DoMain());
 }
 
 void guile_inner_main(void* data, int argc, char** argv)
 {
-	scm_c_define_gsubr("do", 0, 0, 0, DoMainWrapper);
-	//scm_c_define_gsubr("next", 0, 0, 0, NextScene);
-	//scm_c_eval_string("(call-with-new-thread (do))");
-	scm_shell(0, 0);
+scm_c_define_gsubr("do", 0, 0, 0, DoMainWrapper);
+//scm_c_define_gsubr("next", 0, 0, 0, NextScene);
+//scm_c_eval_string("(call-with-new-thread (do))");
+scm_shell(0, 0);
 }
 */
 
-int in_main(int argc, char** argv)
+//HRESULT WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
+int main(int argc, char** argv)
 {
 	//scm_boot_guile(argc, argv, guile_inner_main, 0);
-	int retCode = 454;
+	int retCode = 0;
 	printf("%d\n", retCode);
-	int a = 10;
 	retCode = DoMain();
-	int b = 20;
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
@@ -1192,10 +1257,4 @@ int in_main(int argc, char** argv)
 	ArnObject::printInstances();
 #endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	return retCode;
-}
-
-
-int main(int argc, char** argv)
-{
-	return in_main(argc, argv);
 }

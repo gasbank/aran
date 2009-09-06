@@ -30,6 +30,7 @@
 
 class ArnVec3;
 class ArnPlane;
+class ArnQuat;
 
 /*!
  * @brief 한 점의 어떤 평면에 대한 투영된 위치를 반환
@@ -43,7 +44,38 @@ class ArnPlane;
  * 한 점 \a point 의 투영된 점 \a p 를 계산합니다.
  * 이러한 점은 유일하게 반드시 존재합니다.
  */
-ARANMATH_API float ArnProjectPointToPlane(ArnVec3& p, const ArnVec3& point, const ArnPlane& plane);
+ARANMATH_API float
+ArnProjectPointToPlane(ArnVec3& p, const ArnVec3& point, const ArnPlane& plane);
+
+/*!
+ * @brief 벡터를 벡터에 투영시킨 벡터를 반환
+ * @return 투영된 벡터의 길이(양수면 투영시킬 벡터와 같은 방향, 음수면 반대 방향임)
+ */
+ARANMATH_API float
+ArnProjectVector(ArnVec3& out,					///< [out] 투영된 벡터
+				const ArnVec3& toBeProjected,	///< [in] 투영될 벡터
+				const ArnVec3& vec				///< [in] 투영시킬 벡터
+				);
+
+/*!
+ * @brief 패치와 Z축과 평행인 선과의 교차점 반환
+ * @return 교차점이 있으면 1, 없으면 0
+ *
+ * 패치는 한 점과 그 점에서 뻗어나가는 두 변으로 정의되는 유한한 넓이의 사각형입니다.
+ */
+ARANMATH_API int
+ArnPatchVerticalLineIntersection(ArnVec3& ret,			///< [out] 교차점(반환값이 1인 경우에만 유효)
+								 const ArnVec3& p0,		///< [in] 패치의 한 점
+								 const ArnVec3& v1,		///< [in] 패치의 첫 번째 변
+								 const ArnVec3& v2,		///< [in] 패치의 두 번째 변
+								 const float x,			///< [in] Z축과 평행인 선의 X 좌표
+								 const float y			///< [in] Z축과 평행인 선의 Y 좌표
+								 );
+
+/*
+ *
+ARANMATH_API int
+ArnPatchVerticalLineIntersection(ArnVec3& ret, const ArnVec3& v0, const ArnVec3& v1, const ArnVec3& v2, const int x, const int y);
 
 /*!
  * @brief Line-Plane 교차점 반환
@@ -81,3 +113,54 @@ ARANMATH_API int intersect3D_2Planes( ArnVec3& p0, ArnVec3& p1, const ArnPlane& 
 //            1 = intersection in the unique point *I0
 //            2 = the segment lies in the plane
 ARANMATH_API int intersect3D_SegmentPlane(ArnVec3& I, const ArnVec3& p0, const ArnVec3& p1, const ArnPlane& Pn);
+
+/*!
+* @brief 선분과 ArnPlane 사이의 교차점 계산
+*
+* 시작점과 끝점으로 정의되는 선분과 ArnPlane의 교차점을 계산합니다.
+*/
+ARANMATH_API void
+ArnLineSegmentPlaneIntersection(
+								std::vector<ArnVec3>& points,
+								const ArnVec3& p0,
+								const ArnVec3& p1,
+								const ArnPlane& plane
+								);
+
+/*!
+* @brief 상자와 ArnPlane 사이의 교차점 계산
+*
+* 8개의 점으로 정의된 상자와 ArnPlane의 교차점을 계산합니다.
+*/
+ARANMATH_API void
+ArnBoxPlaneIntersection(
+						std::list<ArnVec3>& points,
+						const ArnVec3 box[8],
+						const ArnPlane& plane
+						);
+
+/*!
+* @brief 상자와 ArnPlane 사이의 교차점 계산
+*
+* 8개의 점으로 정의된 상자와 ArnPlane의 교차점을 계산합니다.
+*/
+ARANMATH_API void
+ArnXformedBoxPlaneIntersection(
+							   std::vector<ArnVec3>& points,
+							   const ArnVec3& boxSize,
+							   const ArnVec3& boxPos,
+							   const ArnQuat& q,
+							   const ArnPlane& plane
+							   );
+
+/*!
+ * @brief 상자와 수직선 사이의 교차점 계산
+ */
+ARANMATH_API float
+ArnXformedBoxVerticalLineIntersection(std::vector<ArnVec3>& points,
+									  const ArnVec3& boxSize,
+									  const ArnVec3& boxPos,
+									  const ArnQuat& q,
+									  const float vx,
+									  const float vy
+									  );
