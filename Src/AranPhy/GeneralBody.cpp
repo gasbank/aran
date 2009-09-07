@@ -626,6 +626,7 @@ ArnxCalculateLumpedVerticalIntersection(std::vector<ArnVec3>& isects, std::vecto
 	massMap[row + resolution][col + resolution] += mass.mass * massWeight;
 	if (maxMassMapVal < massMap[row + resolution][col + resolution])
 		maxMassMapVal = massMap[row + resolution][col + resolution];
+
 	for (int i = 0; i < numJoint; ++i)
 	{
 		dJointID joint = dBodyGetJoint(body, i);
@@ -642,7 +643,9 @@ ArnxCalculateLumpedVerticalIntersection(std::vector<ArnVec3>& isects, std::vecto
 		if (body2 == parentBody)
 			continue;
 
-		ArnxCalculateLumpedVerticalIntersection(isects, massMap, body2, body, depth + 1, cx, cy, deviation, resolution, row, col, maxMassMapVal);
+		float maxVal = ArnxCalculateLumpedVerticalIntersection(isects, massMap, body2, body, depth + 1, cx, cy, deviation, resolution, row, col, maxMassMapVal);
+		if (maxMassMapVal < maxVal)
+			maxMassMapVal = maxVal;
 	}
 
 	return maxMassMapVal;
@@ -656,7 +659,9 @@ GeneralBody::calculateLumpedVerticalIntersection( std::vector<ArnVec3>& isects, 
 	{
 		for (int j = -resolution; j < resolution; ++j)
 		{
-			maxMassMapVal = ArnxCalculateLumpedVerticalIntersection(isects, massMap, getBodyId(), getBodyId(), 0, cx, cy, deviation, resolution, i, j, maxMassMapVal );
+			float maxVal = ArnxCalculateLumpedVerticalIntersection(isects, massMap, getBodyId(), getBodyId(), 0, cx, cy, deviation, resolution, i, j, maxMassMapVal );
+			if (maxMassMapVal < maxVal)
+				maxMassMapVal = maxVal;
 		}
 	}
 	return maxMassMapVal;

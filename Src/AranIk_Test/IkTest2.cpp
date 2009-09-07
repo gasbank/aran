@@ -15,7 +15,7 @@ public:
 	~AppContext();
 	static const int						windowWidth			= 800;
 	static const int						windowHeight		= 600;
-	static const int						massMapResolution	= 16;
+	static const int						massMapResolution	= 8;
 	static const float						massMapDeviation;
 	ArnViewportData							avd;
 	std::vector<std::string>				sceneList;
@@ -45,7 +45,7 @@ public:
 	GLuint									massMapTex;
 	unsigned char*							massMapData;
 };
-const float						AppContext::massMapDeviation = 0.5f;
+const float						AppContext::massMapDeviation = 0.1f;
 AppContext::AppContext()
 : bipedComPos(50)
 , massMapData(new unsigned char[massMapResolution*2 * massMapResolution*2 * 4])
@@ -502,6 +502,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	for (unsigned int step = 0; step < simLoop; ++step)
 	{
 		//printf("frame duration: %d / simloop original: %d / current simstep %d\n", frameDurationMs, (unsigned int)(frameDurationMs / 1000.0 * simFreq), step);
+
 		ac.swPtr->updateFrame(1.0 / simFreq);
 	}
 	if (ac.sgPtr)
@@ -821,8 +822,8 @@ RenderHud(const AppContext& ac)
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(0.5, 0, 0);
-	glScalef(0.25, 0.25, 1);
+	glTranslatef(0.1, 0, 0);
+	glScalef(0.5, 0.5, 1);
 
 	// Origin indicator
 	ArnDrawAxesGl(0.5f);
@@ -852,6 +853,14 @@ RenderHud(const AppContext& ac)
 		glTexCoord2f(0, 1); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y + devi);
 		glEnd();
 		glBindTexture(GL_TEXTURE_2D, 0);
+
+		glDisable(GL_DEPTH_TEST);
+		glBegin(GL_LINE_LOOP);
+		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y - devi);
+		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y - devi);
+		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y + devi);
+		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y + devi);
+		glEnd();
 	}
 
 	// COM
@@ -1248,7 +1257,6 @@ int main(int argc, char** argv)
 {
 	//scm_boot_guile(argc, argv, guile_inner_main, 0);
 	int retCode = 0;
-	printf("%d\n", retCode);
 	retCode = DoMain();
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
