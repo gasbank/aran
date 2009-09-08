@@ -31,7 +31,7 @@ public:
 	// Accessors for tree traversal
 	NodePtr						GetRoot() const { return m_root; }
 	NodePtr						GetSuccessor ( NodePtr ) const;
-	tr1ns::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
+	std::tr1::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
 	void						Compute();
 	void						Print();
 	void						Init();
@@ -62,7 +62,7 @@ inline NodePtr Tree::GetSuccessor ( NodePtr node ) const
 	{
 		return node->getLeftNode();
 	}
-	tr1ns::weak_ptr<Node> nodeWeak = node;
+	std::tr1::weak_ptr<Node> nodeWeak = node;
 	while ( nodeWeak.lock() )
 	{
 		if ( nodeWeak.lock()->getRightNode() )

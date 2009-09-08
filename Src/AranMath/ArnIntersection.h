@@ -72,11 +72,6 @@ ArnPatchVerticalLineIntersection(ArnVec3& ret,			///< [out] 교차점(반환값�
 								 const float y			///< [in] Z축과 평행인 선의 Y 좌표
 								 );
 
-/*
- *
-ARANMATH_API int
-ArnPatchVerticalLineIntersection(ArnVec3& ret, const ArnVec3& v0, const ArnVec3& v1, const ArnVec3& v2, const int x, const int y);
-
 /*!
  * @brief Line-Plane 교차점 반환
  * @param [out] p 교차점

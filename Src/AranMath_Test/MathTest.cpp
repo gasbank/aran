@@ -6,6 +6,7 @@
 #include <string.h>
 #include <math.h>
 #include <vector>
+#include <list>
 
 //
 // Boost C++

@@ -240,9 +240,7 @@ EpSafeReleaseAll( T& obj )
 	#define E_FAIL (-1)
 #endif
 
-namespace tr1ns = std::tr1;
-
 #define TYPEDEF_SHARED_PTR(type) \
 	class type; \
-	typedef tr1ns::shared_ptr<type> type##Ptr; \
-	typedef tr1ns::shared_ptr<const type> type##ConstPtr;
+	typedef std::tr1::shared_ptr < type > type##Ptr; \
+	typedef std::tr1::shared_ptr < const type > type##ConstPtr;

@@ -7,7 +7,7 @@
 
 #include "ArnNode.h"
 
-TYPEDEF_SHARED_PTR(ArnContainer);
+TYPEDEF_SHARED_PTR(ArnContainer)
 
 /*!
  * @brief ArnNode를 계층적으로 저장하고 싶을 때 사용하는 클래스
