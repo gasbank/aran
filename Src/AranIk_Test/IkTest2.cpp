@@ -45,7 +45,7 @@ public:
 	GLuint									massMapTex;
 	unsigned char*							massMapData;
 };
-const float						AppContext::massMapDeviation = 0.1f;
+const float						AppContext::massMapDeviation = 0.05f;
 AppContext::AppContext()
 : bipedComPos(50)
 , massMapData(new unsigned char[massMapResolution*2 * massMapResolution*2 * 4])
