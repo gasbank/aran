@@ -44,6 +44,7 @@
 		<Unit filename="ArnColorValue4f.h" />
 		<Unit filename="ArnConsts.cpp" />
 		<Unit filename="ArnConsts.h" />
+		<Unit filename="ArnIntersection.cpp" />
 		<Unit filename="ArnIntersection.h" />
 		<Unit filename="ArnMath.cpp" />
 		<Unit filename="ArnMath.h" />

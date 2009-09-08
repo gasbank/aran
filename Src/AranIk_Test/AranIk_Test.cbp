@@ -64,8 +64,8 @@
 			<Add library="CGAL" />
 			<Add directory="../../../Working" />
 		</Linker>
-		<Unit filename="IkTest.cpp" />
-		<Unit filename="IkTest.h" />
+		<Unit filename="IkTest2.cpp" />
+		<Unit filename="IkTest2.h" />
 		<Extensions>
 			<code_completion>
 				<search_path add="/usr/include/SDL" />
