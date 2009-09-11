@@ -59,7 +59,7 @@
 #define foreach BOOST_FOREACH
 
 //
-// Aran Library
+// Aran package
 //
 #include "Macros.h"
 #include "ArnCommonTypes.h"

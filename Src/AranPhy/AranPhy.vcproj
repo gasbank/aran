@@ -65,7 +65,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="Aran_D.lib ode_doubled.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;"
+				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -220,28 +220,6 @@
 			<File
 				RelativePath=".\Biped.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\dllmain.cpp"
-				>
-				<FileConfiguration
-					Name="DebugDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						CompileAsManaged="0"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="ReleaseDLL|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-						CompileAsManaged="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath=".\GeneralBody.cpp"

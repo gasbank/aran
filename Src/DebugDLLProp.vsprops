@@ -11,6 +11,7 @@
 	<Tool
 		Name="VCLinkerTool"
 		OutputFile="$(WORKING)/$(ProjectName)_D.dll"
+		AdditionalLibraryDirectories="&quot;$(SolutionDir)/DebugDLL&quot;"
 		ImportLibrary="$(OutDir)/$(TargetName).lib"
 	/>
 </VisualStudioPropertySheet>

@@ -91,7 +91,7 @@ ArnMatrixTransformation(
 
 // The input transform is assumed to consist of a scaling, a rotation, and a translation,
 // applied in the order scale->rotation->translation.
-HRESULT
+void
 ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTranslation, const ArnMatrix* pM )
 {
 	cml_mat44 cmlmat;
@@ -112,7 +112,6 @@ ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTran
 	pOutScale->x = sx;
 	pOutScale->y = sy;
 	pOutScale->z = sz;
-	return S_OK;
 }
 
 ArnVec3*

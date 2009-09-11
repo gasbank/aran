@@ -39,7 +39,8 @@
 #endif
 
 #ifndef EP_SAFE_RELEASE
-#define EP_SAFE_RELEASE(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
+#define EP_SAFE_release(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
+#define EP_SAFE_Release(p)      { if (p) { (p)->Release(); SAFE_DELETE(p); } }
 #endif
 
 template<typename T> void
@@ -48,7 +49,7 @@ EpSafeReleaseAll( T& obj )
 	typename T::iterator it = obj.begin();
 	for ( ; it != obj.end(); ++it )
 	{
-		EP_SAFE_RELEASE( *it );
+		EP_SAFE_release( *it );
 	}
 	obj.clear();
 }
@@ -224,21 +225,23 @@ EpSafeReleaseAll( T& obj )
 #define	SQR(x)		( (x) * (x) )
 #define FOUR_BYTES_INTO_DWORD(i1, i2, i3, i4)  ((DWORD)((i1)&0xff | (((i2)&0xff)<<8) | (((i3)&0xff)<<16) | (((i4)&0xff)<<24) ))
 
-#ifndef DWORD
-	#define DWORD unsigned int
-#endif
-#ifndef HRESULT
-	#define HRESULT int
-#endif
-#ifndef BOOL
-	#define BOOL int
-#endif
-#ifndef S_OK
-	#define S_OK (0)
-#endif
-#ifndef E_FAIL
-	#define E_FAIL (-1)
-#endif
+#ifndef WIN32
+	#ifndef DWORD
+		#define DWORD unsigned int
+	#endif
+	#ifndef HRESULT
+		#define HRESULT int
+	#endif
+	#ifndef BOOL
+		#define BOOL int
+	#endif
+	#ifndef S_OK
+		#define S_OK (0)
+	#endif
+	#ifndef E_FAIL
+		#define E_FAIL (-1)
+	#endif
+#endif // #ifndef WIN32
 
 #define TYPEDEF_SHARED_PTR(type) \
 	class type; \

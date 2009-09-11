@@ -22,7 +22,7 @@ ARANMATH_API ArnMatrix*			ArnMatrixTransformation(ArnMatrix* pOut, const ArnVec3
 								   const ArnQuat* pScalingRotation, const ArnVec3* pScaling,
 								   const ArnVec3* pRotationCenter, const ArnQuat* pRotation,
 								   const ArnVec3* pTranslation);
-ARANMATH_API HRESULT			ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTranslation, const ArnMatrix* pM );
+ARANMATH_API void				ArnMatrixDecompose( ArnVec3* pOutScale, ArnQuat* pOutRotation, ArnVec3* pOutTranslation, const ArnMatrix* pM );
 ARANMATH_API void				ArnMatrixRotationQuaternion(ArnMatrix* mat, const ArnQuat* quat);
 
 // Calculate inverse of matrix.  Inversion my fail, in which case NULL will
