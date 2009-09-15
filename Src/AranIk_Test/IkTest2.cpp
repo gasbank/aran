@@ -604,12 +604,12 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 			for (int j = -AppContext::massMapResolution; j < AppContext::massMapResolution; ++j)
 			{
 				int offset = AppContext::massMapResolution*2*(i+AppContext::massMapResolution) + j+AppContext::massMapResolution;
-				
+
 				ac.massMapData[4*offset + 0] = 0;
 				ac.massMapData[4*offset + 1] = 0;
 				ac.massMapData[4*offset + 2] = 255;
 				ac.massMapData[4*offset + 3] = (int)(ac.massMap[j+AppContext::massMapResolution][i+AppContext::massMapResolution] / maxMassMapVal * 255);
-				
+
 				/*
 				ac.massMapData[4*offset + 0] = 0;
 				ac.massMapData[4*offset + 1] = 255;

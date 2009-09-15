@@ -97,7 +97,6 @@
 		<Unit filename="ArnXmlLoader.cpp" />
 		<Unit filename="ArnXmlLoader.h" />
 		<Unit filename="DefaultRenderLayer.h" />
-		<Unit filename="DllMain.cpp" />
 		<Unit filename="DungeonInterface.cpp" />
 		<Unit filename="DungeonInterface.h" />
 		<Unit filename="Log.cpp" />
@@ -111,10 +110,6 @@
 		<Unit filename="Renderer.cpp" />
 		<Unit filename="Renderer.h" />
 		<Unit filename="Singleton.h" />
-		<Unit filename="Sprite.cpp" />
-		<Unit filename="Sprite.h" />
-		<Unit filename="SpriteManager.cpp" />
-		<Unit filename="SpriteManager.h" />
 		<Unit filename="Structs.h" />
 		<Unit filename="VideoMan.cpp" />
 		<Unit filename="VideoMan.h" />

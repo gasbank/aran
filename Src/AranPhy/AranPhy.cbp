@@ -69,7 +69,6 @@
 		<Unit filename="UniversalJoint.h" />
 		<Unit filename="UtilFunc.cpp" />
 		<Unit filename="UtilFunc.h" />
-		<Unit filename="dllmain.cpp" />
 		<Unit filename="targetver.h" />
 		<Unit filename="../ArnCommonTypes.h" />
 		<Unit filename="../Macros.h" />

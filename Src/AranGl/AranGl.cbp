@@ -57,7 +57,6 @@
 		<Unit filename="BasicObjects.h" />
 		<Unit filename="VideoManGl.cpp" />
 		<Unit filename="VideoManGl.h" />
-		<Unit filename="dllmain.cpp" />
 		<Unit filename="glInfo.cpp" />
 		<Unit filename="glInfo.h" />
 		<Unit filename="glext.h" />
