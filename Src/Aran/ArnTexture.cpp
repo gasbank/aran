@@ -31,16 +31,16 @@ ArnTexture::createFrom(const char* texFileName)
 }
 
 ArnTexture*
-ArnTexture::createFrom(const unsigned char* data, unsigned int width, unsigned int height, unsigned int bpp, bool wrap)
+ArnTexture::createFrom(const unsigned char* data, unsigned int width, unsigned int height, ArnColorFormat format, bool wrap)
 {
-	assert(data && width && height && (bpp == 3 || bpp == 4));
+	assert(data && width && height && (0 <= format && format <= 3));
 	ArnTexture* ret = new ArnTexture();
 	// m_rawData has a deep copy of the texture image data.
-	ret->m_rawData.resize(width * height * bpp);
-	memcpy(&ret->m_rawData[0], data, width * height * bpp);
+	ret->m_rawData.resize(width * height * ArnGetBppFromFormat(format));
+	memcpy(&ret->m_rawData[0], data, width * height * ArnGetBppFromFormat(format));
 	ret->m_width = width;
 	ret->m_height = height;
-	ret->m_bpp = bpp;
+	ret->m_format = format;
 	ret->m_bWrap = wrap;
 	return ret;
 }
@@ -56,9 +56,9 @@ ArnTexture::init()
 	assert(m_bInitialized == false);
 	if (m_fileName.size() && m_rawData.size() == 0) // The path of a texture image is provided.
 	{
-		ArnTextureGetRawDataFromimageFile(m_rawData, &m_width, &m_height, &m_bpp, m_fileName.c_str());
+		ArnTextureGetRawDataFromimageFile(m_rawData, &m_width, &m_height, &m_format, m_fileName.c_str());
 	}
-	else if (m_fileName.size() == 0 && m_rawData.size() && m_width && m_height && m_bpp) // In-memory pointer to raw image data is provided.
+	else if (m_fileName.size() == 0 && m_rawData.size() && m_width && m_height && m_format) // In-memory pointer to raw image data is provided.
 	{
 	}
 	else
@@ -67,6 +67,12 @@ ArnTexture::init()
 	}
 	m_bInitialized = true;
 }
+
+unsigned int ArnTexture::getBpp() const
+{
+	return ArnGetBppFromFormat(m_format);
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 HRESULT
@@ -145,7 +151,7 @@ ArnCleanupImageLibrary()
 }
 
 void
-ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, unsigned int* bpp, const char* fileName )
+ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, ArnColorFormat* format, const char* fileName )
 {
 	assert(gs_ilInitialized);
 	assert(data.size() == 0);
@@ -159,6 +165,7 @@ ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned in
 		data.resize(0);
 		*width = 0;
 		*height = 0;
+		*format = ACF_UNKNOWN;
 		return;
 	}
 	*width = ilGetInteger(IL_IMAGE_WIDTH);
@@ -168,25 +175,21 @@ ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned in
 	assert(type == IL_UNSIGNED_BYTE);
 	switch (fmt)
 	{
-	case IL_RGB:
-		*bpp = 3;
-		break;
-	case IL_RGBA:
-		*bpp = 4;
-		break;
-	default:
-		ARN_THROW_UNEXPECTED_CASE_ERROR
-		break;
+	case IL_RGB: *format = ACF_RGB; break;
+	case IL_BGR: *format = ACF_BGR; break;
+	case IL_RGBA: *format = ACF_RGBA; break;
+	case IL_BGRA: *format = ACF_BGRA; break;
+	default: ARN_THROW_UNEXPECTED_CASE_ERROR break;
 	}
-	data.resize( (*width) * (*height) * (*bpp) );
+	data.resize( (*width) * (*height) * ArnGetBppFromFormat(*format) );
 	ilCopyPixels(0, 0, 0, *width, *height, 1, fmt, type, &data[0]);
 	ilDeleteImages(1, &handle);
 }
 
 ArnTexture*
-ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsigned int height, unsigned int bpp, bool wrap )
+ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsigned int height, ArnColorFormat format, bool wrap )
 {
-	ArnTexture* ret = ArnTexture::createFrom(data, width, height, bpp, wrap);
+	ArnTexture* ret = ArnTexture::createFrom(data, width, height, format, wrap);
 	ret->init();
 	return ret;
 }

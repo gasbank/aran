@@ -6,7 +6,7 @@
 	#include <windows.h>
 	#include <tchar.h>
 	#include <d3d9.h>
-	#include <dxerr9.h>
+	#include <dxerr.h>
 	#include <CommCtrl.h>
 #endif
 

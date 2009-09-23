@@ -93,7 +93,7 @@ def createChunk(doc, writePlace, types):
 		chunk.setAttribute('startoffset', str(binFile.tell()))
 		chunk.setAttribute('endoffset', '0')
 	else:
-		assert(0 and 'Should not happen!')
+		raise Exception, 'Unexpected chunk type: should be xml or bin.'
 
 	return chunk
 
@@ -202,7 +202,7 @@ def createLightData(doc, ob):
 	elif light.type == 2:
 		lightType = 'spot'
 	else:
-		assert(0 and 'Should not happen!')
+		raise Exception, 'Unexpected light type of object %s' % light.name
 	lightData.setAttribute('type', lightType)
 	lightData.setAttribute('r', str(light.R))
 	lightData.setAttribute('g', str(light.G))
@@ -289,6 +289,9 @@ def createSkeletonData(doc, ob):
 	
 def createMeshData(doc, ob):
 	mesh = ob.getData(mesh=1)
+	if len(mesh.verts) is 0:
+		print '[INFO] Object %s has no vertices; skipping...' % ob.name
+		return
 	meshData = doc.createElement('mesh')
 	
 	meshData.setAttribute('uv', str(mesh.faceUV))
@@ -524,7 +527,8 @@ def ProcessSceneObject(doc, ob, processedObjects, sceneElm):
 	elif ob.type == 'Armature':
 		rtclass = 'ArnSkeleton'
 	else:
-		print 'Object \'', ob.name, '\' of type ', ob.type, ' is not supported type; skipping'
+		print '[INFO] Object %s of type %s is not supported type; skipping...' % (ob.name, ob.type)
+		return
 	
 	obj = doc.createElement('object')
 	obj.setAttribute('rtclass', rtclass)
@@ -539,21 +543,22 @@ def ProcessSceneObject(doc, ob, processedObjects, sceneElm):
 		linkedIpos.append(ob.ipo.name)
 		obj.appendChild(ipoElm)
 	
+	objData = 0
 	if ob.type == 'Mesh':
-		meshData = createMeshData(doc, ob)
-		obj.appendChild(meshData)
+		objData = createMeshData(doc, ob)
 	elif ob.type == 'Camera':
-		cameraData = createCameraData(doc, ob)
-		obj.appendChild(cameraData)
+		objData = createCameraData(doc, ob)
 	elif ob.type == 'Lamp':
-		lightData = createLightData(doc, ob)
-		obj.appendChild(lightData)
+		objData = createLightData(doc, ob)
 	elif ob.type == 'Armature':
-		skeletonData = createSkeletonData(doc, ob)
-		obj.appendChild(skeletonData)
+		objData = createSkeletonData(doc, ob)	
 	else:
-		errorerror
-		
+		raise Exception, 'Unexpected object type %s.' % ob.type
+	if objData:
+		obj.appendChild(objData)
+	else:
+		return
+	
 	if ob.action:
 		actElm = doc.createElement('action')
 		actElm.setAttribute('name', ob.action.name)
@@ -715,3 +720,5 @@ binFile.write(compressedData)
 binFile.close()
 
 doc.unlink()
+
+print '[INFO] Export finished successfully. :)'

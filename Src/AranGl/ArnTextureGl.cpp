@@ -17,7 +17,23 @@ ArnTextureGl::init()
 {
 	assert(m_target);
 	assert(m_target->isInitialized());
+	m_textureId = 0;
 
+	// build our texture MIP maps
+	int fmt = 0;
+	if (m_target->getFormat() == ACF_RGB)
+		fmt = GL_RGB;
+	else if (m_target->getFormat() == ACF_RGBA)
+		fmt = GL_RGBA;
+	else if (m_target->getFormat() == ACF_BGR)
+		fmt = GL_BGR;
+	else if (m_target->getFormat() == ACF_BGRA)
+		fmt = GL_BGRA;
+	else
+	{
+		// Invalid texture
+		return -5;
+	}
 	// allocate a texture name
 	glGenTextures( 1, &m_textureId );
 
@@ -38,20 +54,6 @@ ArnTextureGl::init()
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<GLfloat>(m_target->isWrap() ? GL_REPEAT : GL_CLAMP) );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<GLfloat>(m_target->isWrap() ? GL_REPEAT : GL_CLAMP) );
 
-	// build our texture MIP maps
-	int fmt = 0;
-	if (m_target->getBpp() == 3)
-	{
-		fmt = GL_RGB;
-	}
-	else if (m_target->getBpp() == 4)
-	{
-		fmt = GL_RGBA;
-	}
-	else
-	{
-		ARN_THROW_UNEXPECTED_CASE_ERROR
-	}
 	gluBuild2DMipmaps( GL_TEXTURE_2D, m_target->getBpp(), m_target->getWidth(), m_target->getHeight(), fmt, GL_UNSIGNED_BYTE, &m_target->getRawData()[0] );
 	glBindTexture( GL_TEXTURE_2D, 0 );
 	return 0;

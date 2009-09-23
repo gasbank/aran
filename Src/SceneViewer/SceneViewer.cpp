@@ -309,7 +309,7 @@ CreateFontTextureWithFreeType(const char* sceneFileName)
 		}
 		pen_x += slot->advance.x >> 6;
 	}
-	return ArnCreateTextureFromArray(&fontTexture[0], textTextureSize, textTextureSize, 4, false);
+	return ArnCreateTextureFromArray(&fontTexture[0], textTextureSize, textTextureSize, ACF_RGBA, false);
 }
 
 static void
