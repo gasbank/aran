@@ -329,6 +329,10 @@ case SDL_KEYDOWN:
 	{
 		done = MHR_NEXT_SCENE;
 	}
+	else if (event->key.keysym.sym == SDLK_b)
+	{
+		done = MHR_PREV_SCENE;
+	}
 	else if (event->key.keysym.sym == SDLK_r)
 	{
 		done = MHR_RELOAD_SCENE;
@@ -1185,9 +1189,19 @@ DoMain()
 			done = HandleEvent(&event, ac);
 
 			int reconfigScene = false;
-			if (done == MHR_NEXT_SCENE)
+			if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)
 			{
-				int nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+				int nextSceneIndex;
+				if (done == MHR_NEXT_SCENE)
+					nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+				else
+				{
+					if (ac.curSceneIndex == 0)
+						nextSceneIndex = ac.sceneList.size() - 1;
+					else
+						nextSceneIndex = ac.curSceneIndex - 1;
+				}
+
 				ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
 				if (!ac.sgPtr)
 				{
