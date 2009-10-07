@@ -595,7 +595,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
 
 		for (int mm = 0; mm < AppContext::massMapResolution*2; ++mm)
-			std::fill(ac.massMap[mm].begin(), ac.massMap[mm].end(), 0);
+			std::fill(ac.massMap[mm].begin(), ac.massMap[mm].end(), 0.0f);
 		float maxMassMapVal = ac.trunk->calculateLumpedVerticalIntersection(ac.verticalLineIsects, ac.massMap, bipedComPos.x, bipedComPos.y, AppContext::massMapDeviation, AppContext::massMapResolution);
 
 		// Prepare texture
@@ -608,7 +608,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 				ac.massMapData[4*offset + 0] = 0;
 				ac.massMapData[4*offset + 1] = 0;
 				ac.massMapData[4*offset + 2] = 255;
-				ac.massMapData[4*offset + 3] = (int)(ac.massMap[j+AppContext::massMapResolution][i+AppContext::massMapResolution] / maxMassMapVal * 255);
+				ac.massMapData[4*offset + 3] = (unsigned char)(ac.massMap[j+AppContext::massMapResolution][i+AppContext::massMapResolution] / maxMassMapVal * 255);
 
 				/*
 				ac.massMapData[4*offset + 0] = 0;
@@ -822,7 +822,7 @@ RenderHud(const AppContext& ac)
 	glDisable(GL_LIGHTING);
 	glPushMatrix();
 	glLoadIdentity();
-	glTranslatef(0.1, 0, 0);
+	glTranslatef(0.1f, 0, 0);
 	glScalef(0.5, 0.5, 1);
 
 	// Origin indicator
