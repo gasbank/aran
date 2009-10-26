@@ -28,7 +28,6 @@ public:
 	static ArnTexture*						createFrom(const unsigned char* data, unsigned int width, unsigned int height, ArnColorFormat format, bool wrap); // Create from in-memory raw image data
 	void									init();
 	bool									isInitialized() const { return m_bInitialized; }
-	virtual const char*						getName() const { return m_name.c_str(); }
 	const char*								getFileName() const { return m_fileName.c_str(); }
 	const std::vector<unsigned char>&		getRawData() const { return m_rawData; }
 	unsigned int							getWidth() const { return m_width; }
@@ -44,7 +43,6 @@ public:
 	//@}
 private:
 											ArnTexture();
-	std::string								m_name;
 	bool									m_bInitialized;
 	std::string								m_fileName;
 	std::vector<unsigned char>				m_rawData;
@@ -79,3 +77,5 @@ inline unsigned int		ArnGetBppFromFormat(ArnColorFormat format)
 		return 4;
 	else return 0;
 }
+
+ARAN_API unsigned char* readBMP2(const char* fileName, int& width, int& height, bool& rgbOrBgr);

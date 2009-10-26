@@ -150,6 +150,19 @@ ArnCleanupImageLibrary()
 	}
 }
 
+template <class T>
+T nearestpower2(T v)
+{
+	int k;
+	if (v == 0)
+		return 1;
+	for (k = sizeof(T) * 8 - 1; ((static_cast<T>(1U) << k) & v) == 0; k--);
+	if (((static_cast<T>(1U) << (k - 1)) & v) == 0)
+		return static_cast<T>(1U) << k;
+	return static_cast<T>(1U) << (k + 1);
+}
+
+
 void
 ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, ArnColorFormat* format, const char* fileName )
 {
@@ -170,6 +183,17 @@ ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned in
 	}
 	*width = ilGetInteger(IL_IMAGE_WIDTH);
 	*height = ilGetInteger(IL_IMAGE_HEIGHT);
+
+	if (*width != nearestpower2(*width) || *height != nearestpower2(*height))
+	{
+		fprintf(stderr, " *** Image dimension should be a power of two. (%d x %d) given.\n", *width, *height);
+		data.resize(0);
+		*width = 0;
+		*height = 0;
+		*format = ACF_UNKNOWN;
+		return;
+	}
+
 	ILint fmt = ilGetInteger(IL_IMAGE_FORMAT);
 	ILint type = ilGetInteger(IL_IMAGE_TYPE);
 	assert(type == IL_UNSIGNED_BYTE);
@@ -192,4 +216,39 @@ ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsign
 	ArnTexture* ret = ArnTexture::createFrom(data, width, height, format, wrap);
 	ret->init();
 	return ret;
+}
+
+
+
+
+// Bitmap data returned is (R,G,B) tuples in row-major order.
+unsigned char* readBMP2(const char* fileName, int& width, int& height, bool& rgbOrBgr)
+{
+	ILuint handle;
+	ilGenImages(1, &handle);
+	ilBindImage(handle);
+	ILboolean result = ilLoadImage(fileName);
+	if (result == IL_FALSE)
+	{
+		fprintf(stderr, " *** Texture file is not loaded correctly: %s\n", fileName);
+		width = 0;
+		height = 0;
+		rgbOrBgr = false;
+		return 0;
+	}
+	width = ilGetInteger(IL_IMAGE_WIDTH);
+	height = ilGetInteger(IL_IMAGE_HEIGHT);
+	ILint fmt = ilGetInteger(IL_IMAGE_FORMAT);
+	ILint type = ilGetInteger(IL_IMAGE_TYPE);
+	assert(type == IL_UNSIGNED_BYTE);
+	switch (fmt)
+	{
+	case IL_RGB: rgbOrBgr = false; break;
+	case IL_BGR: rgbOrBgr = true; break;
+	default: throw std::runtime_error("Unspecified BMP type."); break;
+	}
+	unsigned char* data = new unsigned char[width * height * 3];
+	ilCopyPixels(0, 0, 0, width, height, 1, fmt, type, data);
+	ilDeleteImages(1, &handle);
+	return data;
 }

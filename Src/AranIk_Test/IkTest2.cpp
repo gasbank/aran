@@ -590,6 +590,9 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 
 	ac.isects.clear();
 	ac.verticalLineIsects.clear();
+
+	// Projected mass distribution map texture creation
+	/*
 	if (ac.trunk)
 	{
 		ArnVec3 bipedComPos;
@@ -613,13 +616,6 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 				ac.massMapData[4*offset + 1] = 0;
 				ac.massMapData[4*offset + 2] = 255;
 				ac.massMapData[4*offset + 3] = (unsigned char)(ac.massMap[j+AppContext::massMapResolution][i+AppContext::massMapResolution] / maxMassMapVal * 255);
-
-				/*
-				ac.massMapData[4*offset + 0] = 0;
-				ac.massMapData[4*offset + 1] = 255;
-				ac.massMapData[4*offset + 2] = 0;
-				ac.massMapData[4*offset + 3] = 100;
-				*/
 			}
 		}
 		glBindTexture(GL_TEXTURE_2D, ac.massMapTex);
@@ -627,6 +623,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		gluBuild2DMipmaps( GL_TEXTURE_2D, 4, AppContext::massMapResolution*2, AppContext::massMapResolution*2, GL_RGBA, GL_UNSIGNED_BYTE, ac.massMapData );
 		glBindTexture(GL_TEXTURE_2D, 0);
 	}
+	*/
 
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();

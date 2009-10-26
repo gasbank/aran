@@ -79,10 +79,18 @@ ArnTextureGl* ArnTextureGl::createFrom( const ArnTexture* tex )
 {
 	ArnTextureGl* ret = new ArnTextureGl();
 	ret->m_target = tex;
-	ret->init();
-	ret->setInitialized(true);
-	ret->setRendererType(RENDERER_GL);
-	return ret;
+	if (ret->init() < 0)
+	{
+		delete ret;
+		printf("ArnTextureGl initialization failed!\n");
+		return 0;
+	}
+	else
+	{
+		ret->setInitialized(true);
+		ret->setRendererType(RENDERER_GL);
+		return ret;
+	}
 }
 
 void ConfigureRenderableObjectOf( ArnTexture* tex )

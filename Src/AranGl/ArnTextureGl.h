@@ -2,7 +2,7 @@
 
 #include "ArnRenderableObject.h"
 class ArnTexture;
-class ArnTextureGl : public ArnRenderableObject
+class ARANGL_API ArnTextureGl : public ArnRenderableObject
 {
 public:
 											~ArnTextureGl(void);

@@ -1,11 +1,3 @@
-/*!
- * @file IkTest2.h
- * @author Geoyeob Kim
- * @date 2009
- *
- * ARAN 라이브러리 중 AranIk 패키지의 기능을 시험해보는 프로그램입니다.
- * Inverse kinematics를 이용해 ArnSkeleton을 조작하는 것이 주된 목표입니다.
- */
 #pragma once
 
 #include <stdlib.h>
@@ -30,6 +22,7 @@
 #ifdef WIN32
 	#include <SDL.h>
 	#include <SDL_opengl.h>
+	#include <SDL_syswm.h>
 #else
 	#define GL_GLEXT_PROTOTYPES
 	#include <SDL/SDL.h>
@@ -50,16 +43,7 @@
 #include <boost/weak_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_ptr.hpp>
-/*
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/casts.hpp>
-#include <boost/function/function_base.hpp>
-#include <boost/function.hpp>
-*/
 #include <boost/foreach.hpp>
-/*
-#include <boost/tokenizer.hpp>
-*/
 #include <boost/array.hpp>
 #include <boost/circular_buffer.hpp>
 #define foreach BOOST_FOREACH
@@ -84,16 +68,6 @@
 #include "Tree.h"
 #include "Jacobian.h"
 #include "Node.h"
-
-/*
-#include <CGAL/Cartesian.h>
-#include <CGAL/ch_graham_andrew.h>
-#include <CGAL/functional.h>
-#include <CGAL/double.h>
-#include <CGAL/convex_hull_2.h>
-typedef double RT;
-typedef   CGAL::Point_2<CGAL::Cartesian<double> >        Point_2;
-*/
 
 struct HitRecord
 {
