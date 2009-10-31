@@ -205,188 +205,189 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 	{
 		skel = reinterpret_cast<ArnSkeleton*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
 	}
-	switch( event->type ) {
-case SDL_JOYAXISMOTION:
+	switch( event->type )
 	{
-		//std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
-		if ((int)event->jaxis.axis == 0)
+	case SDL_JOYAXISMOTION:
 		{
-			if (abs(event->jaxis.value) > 9000)
+			//std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
+			if ((int)event->jaxis.axis == 0)
 			{
-				ac.linVelX = float(event->jaxis.value / 16000.0);
-			}
-			else
-			{
-				ac.linVelX = 0;
-			}
-		}
-		if ((int)event->jaxis.axis == 1)
-		{
-			if (abs(event->jaxis.value) > 9000)
-			{
-				ac.linVelZ = float(-event->jaxis.value / 16000.0);
-
-			}
-			else
-			{
-				ac.linVelZ = 0;
-			}
-		}
-		GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
-		if (gbPtr)
-		{
-			gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
-		}
-		/////////////////////////////////////////////////////////////////////////
-		if ((int)event->jaxis.axis == 2)
-		{
-			if (abs(event->jaxis.value) > 9000)
-			{
-				ac.torque = event->jaxis.value / 10.0f;
-			}
-			else
-			{
-				ac.torque = 0;
-			}
-		}
-
-		if ((int)event->jaxis.axis == 5)
-		{
-			if (abs(event->jaxis.value) > 10)
-			{
-				ac.torqueAnkle = event->jaxis.value / 500.0f;
-			}
-			else
-			{
-				ac.torqueAnkle = 0;
-			}
-		}
-	}
-	break;
-case SDL_JOYBALLMOTION:
-	{
-		std::cout << "SDL_JOYBALLMOTION" << std::endl;
-	}
-	break;
-case SDL_JOYHATMOTION:
-	{
-		std::cout << "SDL_JOYHATMOTION" << std::endl;
-	}
-	break;
-case SDL_JOYBUTTONDOWN:
-	{
-		std::cout << "SDL_JOYBUTTONDOWN" << std::endl;
-	}
-	break;
-case SDL_JOYBUTTONUP:
-	{
-		std::cout << "SDL_JOYBUTTONUP" << std::endl;
-		std::cout << "gs_torque =  " << ac.torque << std::endl;
-		std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
-		std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
-	}
-	break;
-case SDL_MOUSEBUTTONUP:
-	{
-		if (event->button.button == SDL_BUTTON_LEFT)
-		{
-			SelectGraphicObject(
-				ac,
-				float(event->motion.x),
-				float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
-				);
-
-			if (ac.sgPtr)
-			{
-				ArnMatrix modelview, projection;
-				glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-				modelview = modelview.transpose();
-				glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-				projection = projection.transpose();
-				ArnVec3 origin, direction;
-				ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
-				ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
-				if (mesh)
+				if (abs(event->jaxis.value) > 9000)
 				{
-					bool bHit = false;
-					unsigned int faceIdx = 0;
-					ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-					if (bHit)
-						printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+					ac.linVelX = float(event->jaxis.value / 16000.0);
+				}
+				else
+				{
+					ac.linVelX = 0;
+				}
+			}
+			if ((int)event->jaxis.axis == 1)
+			{
+				if (abs(event->jaxis.value) > 9000)
+				{
+					ac.linVelZ = float(-event->jaxis.value / 16000.0);
+
+				}
+				else
+				{
+					ac.linVelZ = 0;
+				}
+			}
+			GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
+			if (gbPtr)
+			{
+				gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
+			}
+			/////////////////////////////////////////////////////////////////////////
+			if ((int)event->jaxis.axis == 2)
+			{
+				if (abs(event->jaxis.value) > 9000)
+				{
+					ac.torque = event->jaxis.value / 10.0f;
+				}
+				else
+				{
+					ac.torque = 0;
+				}
+			}
+
+			if ((int)event->jaxis.axis == 5)
+			{
+				if (abs(event->jaxis.value) > 10)
+				{
+					ac.torqueAnkle = event->jaxis.value / 500.0f;
+				}
+				else
+				{
+					ac.torqueAnkle = 0;
 				}
 			}
 		}
-	}
-	break;
-case SDL_KEYDOWN:
-	ac.bHoldingKeys[event->key.keysym.sym] = true;
+		break;
+	case SDL_JOYBALLMOTION:
+		{
+			std::cout << "SDL_JOYBALLMOTION" << std::endl;
+		}
+		break;
+	case SDL_JOYHATMOTION:
+		{
+			std::cout << "SDL_JOYHATMOTION" << std::endl;
+		}
+		break;
+	case SDL_JOYBUTTONDOWN:
+		{
+			std::cout << "SDL_JOYBUTTONDOWN" << std::endl;
+		}
+		break;
+	case SDL_JOYBUTTONUP:
+		{
+			std::cout << "SDL_JOYBUTTONUP" << std::endl;
+			std::cout << "gs_torque =  " << ac.torque << std::endl;
+			std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
+			std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
+		}
+		break;
+	case SDL_MOUSEBUTTONUP:
+		{
+			if (event->button.button == SDL_BUTTON_LEFT)
+			{
+				SelectGraphicObject(
+					ac,
+					float(event->motion.x),
+					float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
+					);
 
-	if ( event->key.keysym.sym == SDLK_ESCAPE )
-	{
+				if (ac.sgPtr)
+				{
+					ArnMatrix modelview, projection;
+					glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
+					modelview = modelview.transpose();
+					glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
+					projection = projection.transpose();
+					ArnVec3 origin, direction;
+					ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
+					ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
+					if (mesh)
+					{
+						bool bHit = false;
+						unsigned int faceIdx = 0;
+						ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
+						if (bHit)
+							printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
+					}
+				}
+			}
+		}
+		break;
+	case SDL_KEYDOWN:
+		ac.bHoldingKeys[event->key.keysym.sym] = true;
+
+		if ( event->key.keysym.sym == SDLK_ESCAPE )
+		{
+			done = MHR_EXIT_APP;
+		}
+		else if (event->key.keysym.sym == SDLK_n)
+		{
+			done = MHR_NEXT_SCENE;
+		}
+		else if (event->key.keysym.sym == SDLK_b)
+		{
+			done = MHR_PREV_SCENE;
+		}
+		else if (event->key.keysym.sym == SDLK_r)
+		{
+			done = MHR_RELOAD_SCENE;
+		}
+		else if (event->key.keysym.sym == SDLK_1)
+		{
+			if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
+			{
+				skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
+				skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
+				ARNTRACK_DESC desc;
+				skel->getAnimCtrl()->GetTrackDesc(0, &desc);
+				skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
+				skel->getAnimCtrl()->SetTrackWeight(0, 1);
+			}
+		}
+		else if (event->key.keysym.sym == SDLK_2)
+		{
+			if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
+			{
+				skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
+				skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
+				ARNTRACK_DESC desc;
+				skel->getAnimCtrl()->GetTrackDesc(1, &desc);
+				skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
+				skel->getAnimCtrl()->SetTrackWeight(1, 1);
+			}
+		}
+		else if (event->key.keysym.sym == SDLK_3)
+		{
+			if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
+			{
+				skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
+				skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
+				ARNTRACK_DESC desc;
+				skel->getAnimCtrl()->GetTrackDesc(2, &desc);
+				skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
+				skel->getAnimCtrl()->SetTrackWeight(2, 1);
+			}
+		}
+
+		printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
+		break;
+	case SDL_KEYUP:
+		ac.bHoldingKeys[event->key.keysym.sym] = false;
+
+		if (event->key.keysym.sym == SDLK_c)
+		{
+			ac.bNextCamera = true;
+		}
+		break;
+	case SDL_QUIT:
 		done = MHR_EXIT_APP;
-	}
-	else if (event->key.keysym.sym == SDLK_n)
-	{
-		done = MHR_NEXT_SCENE;
-	}
-	else if (event->key.keysym.sym == SDLK_b)
-	{
-		done = MHR_PREV_SCENE;
-	}
-	else if (event->key.keysym.sym == SDLK_r)
-	{
-		done = MHR_RELOAD_SCENE;
-	}
-	else if (event->key.keysym.sym == SDLK_1)
-	{
-		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
-		{
-			skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
-			skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
-			ARNTRACK_DESC desc;
-			skel->getAnimCtrl()->GetTrackDesc(0, &desc);
-			skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
-			skel->getAnimCtrl()->SetTrackWeight(0, 1);
-		}
-	}
-	else if (event->key.keysym.sym == SDLK_2)
-	{
-		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
-		{
-			skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
-			skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
-			ARNTRACK_DESC desc;
-			skel->getAnimCtrl()->GetTrackDesc(1, &desc);
-			skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
-			skel->getAnimCtrl()->SetTrackWeight(1, 1);
-		}
-	}
-	else if (event->key.keysym.sym == SDLK_3)
-	{
-		if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
-		{
-			skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
-			skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
-			ARNTRACK_DESC desc;
-			skel->getAnimCtrl()->GetTrackDesc(2, &desc);
-			skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
-			skel->getAnimCtrl()->SetTrackWeight(2, 1);
-		}
-	}
-
-	printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
-	break;
-case SDL_KEYUP:
-	ac.bHoldingKeys[event->key.keysym.sym] = false;
-
-	if (event->key.keysym.sym == SDLK_c)
-	{
-		ac.bNextCamera = true;
-	}
-	break;
-case SDL_QUIT:
-	done = MHR_EXIT_APP;
-	break;
+		break;
 	}
 	return done;
 }
@@ -687,6 +688,7 @@ RenderScene(const AppContext& ac)
 	}
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
@@ -998,6 +1000,7 @@ InitializeAppContextOnce(AppContext& ac)
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, rgb_size[0] );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, rgb_size[1] );
 	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, rgb_size[2] );
+	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
 	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
 	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
 	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
@@ -1028,6 +1031,9 @@ InitializeAppContextOnce(AppContext& ac)
 
 	SDL_GL_GetAttribute( SDL_GL_BLUE_SIZE, &value );
 	printf( "SDL_GL_BLUE_SIZE: requested %d, got %d\n", rgb_size[2],value);
+
+	SDL_GL_GetAttribute( SDL_GL_ALPHA_SIZE, &value );
+	printf( "SDL_GL_ALPHA_SIZE: requested %d, got %d\n", 8,value);
 
 	SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &value );
 	printf( "SDL_GL_DEPTH_SIZE: requested %d, got %d\n", depthSize, value );

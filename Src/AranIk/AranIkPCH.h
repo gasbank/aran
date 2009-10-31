@@ -1,6 +1,8 @@
 #ifndef ARANIKPCH_H_INCLUDED
 #define ARANIKPCH_H_INCLUDED
 
+#include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <math.h>
 #include <assert.h>

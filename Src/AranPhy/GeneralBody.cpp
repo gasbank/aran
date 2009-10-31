@@ -240,8 +240,8 @@ GeneralBody::configureOdeContext( const OdeSpaceContext* osc )
 	dQuaternion odeQ = { m_quat0.w, m_quat0.x, m_quat0.y, m_quat0.z };
 	dBodySetQuaternion(m_body, odeQ);
 	// TODO: Rigid body linear and angualr damping constants
-	dBodySetAngularDamping(m_body, 0.01);
-	dBodySetLinearDamping(m_body, 0.01);
+	//dBodySetAngularDamping(m_body, 0.01);
+	//dBodySetLinearDamping(m_body, 0.01);
 
 	if (isFixed())
 	{
