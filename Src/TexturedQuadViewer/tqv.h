@@ -9,6 +9,10 @@ public:
 
 	ArnTexture*								texture;
 	std::vector<std::pair<double,double> >	quadVertices;
+	int										orgImgWidth;
+	int										orgImgHeight;
+	int										gridWidth;
+	int										gridHeight;
 	int										gridCountX;
 	int										gridCountY;
 	std::string								inputFileName;

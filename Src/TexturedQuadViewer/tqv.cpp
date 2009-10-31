@@ -69,19 +69,25 @@ static void RenderScene(const AppContext& ac)
 
 	glEnable( GL_TEXTURE_2D );
 
-	glColor3f(1, 1, 1);
+	
 	typedef std::pair<double, double> TqvVertPos;
-	double newWidth = ac.quadVertices.rbegin()->first;
-	double newHeight = ac.quadVertices.rbegin()->second;
+
+	int xRemains = ac.orgImgWidth % (ac.gridWidth);
+	int yRemains = ac.orgImgHeight % (ac.gridHeight);
+	const double newWidth = ac.quadVertices.rbegin()->first;
+	const double newHeight = ac.quadVertices.rbegin()->second;
+	
 	for (int k = 0; k < (g_bDrawWireframe ? 2 : 1); ++k)
 	{
 		if (k == 0)
 		{
+			glColor3f(1, 1, 1);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 			ac.texture->getRenderableObject()->render(true);
 		}
 		else
 		{
+			glColor3f(1, 0, 0);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
@@ -91,17 +97,37 @@ static void RenderScene(const AppContext& ac)
 		{
 			for (int i = 0; i < ac.gridCountX-1; ++i)
 			{
+				TqvVertPos t[4] = {
+					std::make_pair((double)i / (ac.gridCountX-1), (double)j / (ac.gridCountY-1)),
+					std::make_pair((double)(i+1) / (ac.gridCountX-1), (double)j / (ac.gridCountY-1)),
+					std::make_pair((double)(i+1) / (ac.gridCountX-1), (double)(j+1) / (ac.gridCountY-1)),
+					std::make_pair((double)i / (ac.gridCountX-1), (double)(j+1) / (ac.gridCountY-1))
+				};
+				
+				if (xRemains && i == ac.gridCountX-2)
+				{
+					t[1].first = (double)(ac.orgImgWidth-xRemains) / ac.orgImgWidth;
+					t[2].first = (double)(ac.orgImgWidth-xRemains) / ac.orgImgWidth;
+				}
+
+				if (yRemains && j == ac.gridCountY-2)
+				{
+					t[2].second = (double)(ac.orgImgHeight-yRemains) / ac.orgImgHeight;
+					t[3].second = (double)(ac.orgImgHeight-yRemains) / ac.orgImgHeight;
+				}
+
 				const int v = j*ac.gridCountX + i;
-				glTexCoord2d((double)i / (ac.gridCountX-1), (double)j / (ac.gridCountY-1));
+
+				glTexCoord2d(t[0].first, t[0].second);
 				glVertex3d  (ac.quadVertices[v                ].first         , ac.quadVertices[v                ].second, 0);
 
-				glTexCoord2d((double)(i+1) / (ac.gridCountX-1), (double)j / (ac.gridCountY-1));
+				glTexCoord2d(t[1].first, t[1].second);
 				glVertex3d  (ac.quadVertices[v+1              ].first         , ac.quadVertices[v+1              ].second, 0);
 
-				glTexCoord2d((double)(i+1) / (ac.gridCountX-1), (double)(j+1) / (ac.gridCountY-1));
+				glTexCoord2d(t[2].first, t[2].second);
 				glVertex3d  (ac.quadVertices[v+1+ac.gridCountX].first         , ac.quadVertices[v+1+ac.gridCountX].second, 0);
 
-				glTexCoord2d((double)i / (ac.gridCountX-1), (double)(j+1) / (ac.gridCountY-1));
+				glTexCoord2d(t[3].first, t[3].second);
 				glVertex3d  (ac.quadVertices[v  +ac.gridCountX].first         , ac.quadVertices[v  +ac.gridCountX].second, 0);
 			}
 		}
@@ -125,6 +151,8 @@ static void ParseInputFile(AppContext& ac)
 	assert(fin.is_open());
 	std::string imgFileName;
 	fin >> imgFileName;
+	fin >> ac.orgImgWidth >> ac.orgImgHeight;
+	fin >> ac.gridWidth >> ac.gridHeight;
 	fin >> ac.gridCountX >> ac.gridCountY;
 	ac.quadVertices.resize(ac.gridCountX * ac.gridCountY);
 	int i = 0;
