@@ -919,7 +919,7 @@ InitializeRendererIndependentsFromSg(AppContext& ac)
 			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
-	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	return 0;
 }
 
