@@ -1,5 +1,4 @@
 #include "AranIkPCH.h"
-#include <float.h>
 #include "ArnIkSolver.h"
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
@@ -42,9 +41,12 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 
 	ret->initializeJacobian();
 	ret->reset();
-	std::cout << " --- ArnIkSolver creation report: ArnSkeleton " << skel->getName() << " has "
-			<< ret->getTree()->GetNumEffector() << " end-effector(s) and "
-			<< ret->getTree()->GetNumJoint() << " joint(s)." << std::endl;
+	//std::cout.setf(ios::left);
+	std::cout << " ----- ArnIkSolver creation report -----" << std::endl;
+	std::cout << "   ArnSkeleton        : " << skel->getName() << std::endl;
+	std::cout << "   # of End-effectors : " << std::setw(10) << ret->getTree()->GetNumEffector() << std::endl;
+	std::cout << "   # of Joints        : " << std::setw(10) << ret->getTree()->GetNumJoint() << std::endl;
+	std::cout << " ---------------------------------------" << std::endl;
 	ret->printHierarchy();
 	ret->m_skel = skel;
 	return ret;
@@ -406,9 +408,10 @@ ArnIkSolver::reconfigureRoot(NodePtr newRoot)
 
 	initializeJacobian();
 	reset();
-	std::cout << " --- ArnIkSolver root reconfig report: "
-			<< getTree()->GetNumEffector() << " end-effector(s) and "
-			<< getTree()->GetNumJoint() << " joint(s)." << std::endl;
+	std::cout << " ----- ArnIkSolver creation report -----" << std::endl;
+	std::cout << "   # of End-effectors : " << std::setw(10) << getTree()->GetNumEffector() << std::endl;
+	std::cout << "   # of Joints        : " << std::setw(10) << getTree()->GetNumJoint() << std::endl;
+	std::cout << " ---------------------------------------" << std::endl;
 	printHierarchy();
 	m_selectedEndeffector.reset();
 }

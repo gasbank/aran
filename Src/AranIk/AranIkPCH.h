@@ -10,6 +10,8 @@
 #include <set>
 #include <vector>
 #include <list>
+#include <float.h>
+#include <iomanip>
 #ifdef WIN32
 	#include <memory>
 #else

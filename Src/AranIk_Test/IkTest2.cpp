@@ -8,15 +8,24 @@
 
 //using namespace boost::lambda;
 
+enum ViewMode
+{
+	VM_UNKNOWN,
+	VM_TOP,
+	VM_LEFT,
+	VM_FRONT,
+	VM_CAMERA
+};
+
 class AppContext : private Uncopyable
 {
 public:
 	AppContext();
 	~AppContext();
-	static const int						windowWidth			= 800;
-	static const int						windowHeight		= 600;
 	static const int						massMapResolution	= 8;
 	static const float						massMapDeviation;
+	int										windowWidth;
+	int										windowHeight;
 	ArnViewportData							avd;
 	std::vector<std::string>				sceneList;
 	int										curSceneIndex;
@@ -44,6 +53,12 @@ public:
 	std::vector<std::vector<float> >		massMap;
 	GLuint									massMapTex;
 	unsigned char*							massMapData;
+
+	ViewMode								viewMode;
+	bool									bRenderHud;
+	int										orthoViewDistance;
+	bool									bPanningButtonDown;
+	std::pair<int, int>						panningStartPoint;
 };
 const float						AppContext::massMapDeviation = 0.05f;
 AppContext::AppContext()
@@ -207,6 +222,15 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 	}
 	switch( event->type )
 	{
+	case SDL_VIDEORESIZE:
+		{
+			ac.windowWidth = event->resize.w;
+			ac.windowHeight = event->resize.h;
+			ac.avd.Width	= ac.windowWidth;
+			ac.avd.Height	= ac.windowHeight;
+			glViewport(0, 0, ac.windowWidth, ac.windowHeight);
+			break;
+		}
 	case SDL_JOYAXISMOTION:
 		{
 			//std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
@@ -317,8 +341,41 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 					}
 				}
 			}
+			else if (event->button.button == SDL_BUTTON_WHEELUP)
+			{
+				if (ac.viewMode == VM_TOP || ac.viewMode == VM_LEFT || ac.viewMode == VM_FRONT)
+				{
+					if (ac.orthoViewDistance > 1)
+						--ac.orthoViewDistance;
+				}
+			}
+			else if (event->button.button == SDL_BUTTON_WHEELDOWN)
+			{
+				if (ac.viewMode == VM_TOP || ac.viewMode == VM_LEFT || ac.viewMode == VM_FRONT)
+				{
+					++ac.orthoViewDistance;
+				}
+			}
+			else if (event->button.button == 6 || event->button.button == 7) // *** MY HARDWARE SPECIFIC CODE ***
+			{
+				ac.bPanningButtonDown = false;
+			}
 		}
 		break;
+	case SDL_MOUSEBUTTONDOWN:
+		{
+			if (event->button.button == 6 || event->button.button == 7) // *** MY HARDWARE SPECIFIC CODE ***
+			{
+				ac.bPanningButtonDown = true;
+				ac.panningStartPoint.first = event->button.x;
+				ac.panningStartPoint.second = event->button.y;
+				printf("Panning start point is (%d, %d)\n", event->button.x, event->button.y);
+			}
+		}
+	case SDL_MOUSEMOTION:
+		{
+			break;
+		}
 	case SDL_KEYDOWN:
 		ac.bHoldingKeys[event->key.keysym.sym] = true;
 
@@ -337,6 +394,30 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 		else if (event->key.keysym.sym == SDLK_r)
 		{
 			done = MHR_RELOAD_SCENE;
+		}
+		else if (event->key.keysym.sym == SDLK_KP7)
+		{
+			ac.viewMode = VM_TOP;
+			printf("  View mode set to top.\n");
+		}
+		else if (event->key.keysym.sym == SDLK_KP1)
+		{
+			ac.viewMode = VM_LEFT;
+			printf("  View mode set to left.\n");
+		}
+		else if (event->key.keysym.sym == SDLK_KP3)
+		{
+			ac.viewMode = VM_FRONT;
+			printf("  View mode set to front.\n");
+		}
+		else if (event->key.keysym.sym == SDLK_KP4)
+		{
+			ac.viewMode = VM_CAMERA;
+			printf("  View mode set to camera.\n");
+		}
+		else if (event->key.keysym.sym == SDLK_h)
+		{
+			ac.bRenderHud = !ac.bRenderHud;
 		}
 		else if (event->key.keysym.sym == SDLK_1)
 		{
@@ -675,13 +756,32 @@ RenderScene(const AppContext& ac)
 {
 	glClearColor( 0.5, 0.5, 0.5, 1.0 );
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	if (ac.activeCam)
+	
+	// Set modelview and projection matrices here
+	if (ac.viewMode == VM_CAMERA || ac.viewMode == VM_UNKNOWN)
 	{
-		ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
-		ArnConfigureViewMatrixGl(ac.activeCam);
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		if (ac.activeCam)
+		{
+			ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
+			ArnConfigureViewMatrixGl(ac.activeCam);
+		}
 	}
+	else if (ac.viewMode == VM_TOP)
+	{
+		glMatrixMode(GL_MODELVIEW);
+		glLoadIdentity();
+		gluLookAt(0, 0, 20, 0, 0, 0, 0, 1, 0);
+		glMatrixMode(GL_PROJECTION);
+		glLoadIdentity();
+		const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
+		const float viewDistance = (float)ac.orthoViewDistance;
+		glOrtho(-viewDistance*aspectRatio, viewDistance*aspectRatio, -viewDistance, viewDistance, 0, 10000);
+		glMatrixMode(GL_MODELVIEW);
+	}
+
+
 	if (ac.activeLight)
 	{
 		ArnConfigureLightGl(0, ac.activeLight);
@@ -691,6 +791,41 @@ RenderScene(const AppContext& ac)
 	//glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
+	// Render a plane of grid
+	const static float subgridGap = 0.5f;
+	const static int mainGridCount = 5;
+	const static int halfGridCount = 20;
+	const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
+	glColor3fv(gridColor);
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_LIGHTING);
+
+	glLineWidth(0.5f);
+	glBegin(GL_LINES);
+	for (int i = -halfGridCount; i <= halfGridCount; ++i)
+	{
+		glVertex3f(-10, subgridGap * i, 0);
+		glVertex3f( 10, subgridGap * i, 0);
+
+		glVertex3f(subgridGap * i, -10, 0);
+		glVertex3f(subgridGap * i,  10, 0);
+	}
+	glEnd();
+
+	glLineWidth(1.0f);
+	glBegin(GL_LINES);
+	for (int i = -halfGridCount/mainGridCount; i <= halfGridCount/mainGridCount; ++i)
+	{
+		glVertex3f(-10, subgridGap * i * mainGridCount, 0);
+		glVertex3f( 10, subgridGap * i * mainGridCount, 0);
+
+		glVertex3f(subgridGap * i * mainGridCount, -10, 0);
+		glVertex3f(subgridGap * i * mainGridCount,  10, 0);
+	}
+	glEnd();
+	glPopAttrib();
+
+	// Render skeletons under control of IK solver
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		glPushMatrix();
@@ -698,6 +833,7 @@ RenderScene(const AppContext& ac)
 		glPopMatrix();
 	}
 
+	// Render the main scene graph
 	glPushMatrix();
 	{
 		if (ac.sgPtr)
@@ -814,7 +950,7 @@ RenderHud(const AppContext& ac)
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
 	glLoadIdentity();
-	const double aspect = (double)AppContext::windowWidth / AppContext::windowHeight;
+	const double aspect = (double)ac.windowWidth / ac.windowHeight;
 	glOrtho(-0.5 * aspect, 0.5 * aspect, -0.5, 0.5, 0, 1);
 	glMatrixMode(GL_MODELVIEW);
 
@@ -948,13 +1084,22 @@ InitializeAppContextOnce(AppContext& ac)
 
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
 
+	// Initial window size
+	ac.windowWidth = 800;
+	ac.windowHeight = 600;
+
 	/// Viewport를 초기화합니다.
 	ac.avd.X		= 0;
 	ac.avd.Y		= 0;
-	ac.avd.Width	= AppContext::windowWidth;
-	ac.avd.Height	= AppContext::windowHeight;
+	ac.avd.Width	= ac.windowWidth;
+	ac.avd.Height	= ac.windowHeight;
 	ac.avd.MinZ		= 0;
 	ac.avd.MaxZ		= 1.0f;
+
+	ac.viewMode = VM_UNKNOWN;
+	ac.bRenderHud = false;
+	ac.orthoViewDistance = 5;
+	ac.bPanningButtonDown = false;
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
@@ -989,7 +1134,7 @@ InitializeAppContextOnce(AppContext& ac)
 	SDL_JoystickOpen(0);
 
 	/* Set the flags we want to use for setting the video mode */
-	int video_flags = SDL_OPENGL;
+	int video_flags = SDL_OPENGL | SDL_RESIZABLE;
 	if (bFullScreen)
 		video_flags |= SDL_FULLSCREEN;
 	if (bNoFrame)
@@ -1007,7 +1152,7 @@ InitializeAppContextOnce(AppContext& ac)
 	// Swap Control On --> Refresh rate not exceeds Vsync(60 Hz mostly)
 	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
 
-	if ( SDL_SetVideoMode( AppContext::windowWidth, AppContext::windowHeight, bpp, video_flags ) == NULL ) {
+	if ( SDL_SetVideoMode( ac.windowWidth, ac.windowHeight, bpp, video_flags ) == NULL ) {
 		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
 		SDL_Quit();
 		return -40;
@@ -1063,6 +1208,7 @@ InitializeAppContextOnce(AppContext& ac)
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
+	glEnable(GL_NORMALIZE);
 	for (int lightId = 0; lightId < 8; ++lightId)
 	{
 		glDisable(GL_LIGHT0 + lightId);
@@ -1170,7 +1316,8 @@ DoMain()
 
 		// 2. Rendering phase
 		RenderScene(ac);
-		RenderHud(ac);
+		if (ac.bRenderHud)
+			RenderHud(ac);
 
 		SDL_GL_SwapBuffers();
 
