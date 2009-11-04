@@ -1,12 +1,61 @@
-/*!
-* @file IkTest2.cpp
-* @author Geoyeob Kim
-* @date 2009
-*/
-#include "IkTest2.h"
-//#include <libguile.h>
+#include "IkTest-Fltk.h"
 
-//using namespace boost::lambda;
+struct			 							// Create A Structure For The Timer Information
+{
+	__int64       frequency;							// Timer Frequency
+	float         resolution;							// Timer Resolution
+	unsigned long mm_timer_start;							// Multimedia Timer Start Value
+	unsigned long mm_timer_elapsed;						// Multimedia Timer Elapsed Time
+	bool		performance_timer;						// Using The Performance Timer?
+	__int64       performance_timer_start;					// Performance Timer Start Value
+	__int64       performance_timer_elapsed;					// Performance Timer Elapsed Time
+} timer;									// Structure Is Named timer
+
+void TimerInit(void)								// Initialize Our Timer (Get It Ready)
+{
+	memset(&timer, 0, sizeof(timer));					// Clear Our Timer Structure
+
+	// Check To See If A Performance Counter Is Available
+	// If One Is Available The Timer Frequency Will Be Updated
+	if (!QueryPerformanceFrequency((LARGE_INTEGER *) &timer.frequency))
+	{
+		// No Performace Counter Available
+		timer.performance_timer	= FALSE;				// Set Performance Timer To FALSE
+		timer.mm_timer_start	= timeGetTime();			// Use timeGetTime() To Get Current Time
+		timer.resolution	= 1.0f/1000.0f;				// Set Our Timer Resolution To .001f
+		timer.frequency		= 1000;					// Set Our Timer Frequency To 1000
+		timer.mm_timer_elapsed	= timer.mm_timer_start;			// Set The Elapsed Time To The Current Time
+	}
+	else
+	{
+		// Performance Counter Is Available, Use It Instead Of The Multimedia Timer
+		// Get The Current Time And Store It In performance_timer_start
+		QueryPerformanceCounter((LARGE_INTEGER *) &timer.performance_timer_start);
+		timer.performance_timer		= TRUE;				// Set Performance Timer To TRUE
+		// Calculate The Timer Resolution Using The Timer Frequency
+		timer.resolution		= (float) (((double)1.0f)/((double)timer.frequency));
+		// Set The Elapsed Time To The Current Time
+		timer.performance_timer_elapsed	= timer.performance_timer_start;
+	}
+}
+
+// Returns milliseconds elasped from starting of this app
+double GetTicks()
+{
+	__int64 time;								// time Will Hold A 64 Bit Integer
+
+	if (timer.performance_timer)						// Are We Using The Performance Timer?
+	{
+		QueryPerformanceCounter((LARGE_INTEGER *) &time);		// Grab The Current Performance Time
+		// Return The Current Time Minus The Start Time Multiplied By The Resolution And 1000 (To Get MS)
+		return ( (double) ( time - timer.performance_timer_start) * timer.resolution) * 1000.0;
+	}
+	else
+	{
+		// Return The Current Time Minus The Start Time Multiplied By The Resolution And 1000 (To Get MS)
+		return( (double) ( timeGetTime() - timer.mm_timer_start) * timer.resolution) * 1000.0;
+	}
+}
 
 enum ViewMode
 {
@@ -42,7 +91,7 @@ public:
 	float									linVelZ;
 	float									torque;
 	float									torqueAnkle;
-	char									bHoldingKeys[SDLK_LAST];
+	bool									bHoldingKeys[256];
 	bool									bNextCamera;
 
 	// Volatile: should be clear()-ed every frame.
@@ -138,7 +187,9 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 	glMatrixMode(GL_MODELVIEW);
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
-	SDL_GL_SwapBuffers();
+	
+	//SDL_GL_SwapBuffers();
+	
 	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
@@ -196,6 +247,7 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 				{
 					printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
 						node.get(), node->getObjectId(), node->getName(), node->isEndeffector());
+					/*
 					if (ac.bHoldingKeys[SDLK_LSHIFT])
 					{
 						ikSolver->reconfigureRoot(node);
@@ -207,19 +259,18 @@ SelectGraphicObject(AppContext& ac, const float mousePx, const float mousePy)
 							ikSolver->setSelectedEndeffector(node);
 						}
 					}
+					*/
 				}
 			}
 		}
 	}
 }
 
-static std::pair<int, int> mousePosition;
-
+/*
 static MessageHandleResult
 HandleEvent(SDL_Event* event, AppContext& ac)
 {
-	
-
+	static std::pair<int, int> mousePosition;
 	MessageHandleResult done = MHR_DO_NOTHING;
 	ArnSkeleton* skel = 0;
 	if (ac.sgPtr)
@@ -505,6 +556,7 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 	}
 	return done;
 }
+*/
 
 static ArnSceneGraphPtr
 ConfigureTestScene(const char* sceneFileName, const ArnViewportData* avd)
@@ -626,7 +678,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 	}
 	if (ac.sgPtr)
 	{
-		ac.sgPtr->update(SDL_GetTicks() / 1000.0, frameDurationMs / 1000.0f);
+		ac.sgPtr->update(GetTicks() / 1000.0, frameDurationMs / 1000.0f);
 	}
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
@@ -637,6 +689,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		NodePtr selNode = ikSolver->getSelectedEndeffector();
 		if (selNode)
 		{
+			/*
 			static const double d = 0.1;
 			if (ac.bHoldingKeys[SDLK_UP])
 			{
@@ -662,6 +715,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 			{
 				selNode->setTargetDiff(-d, 0, 0);
 			}
+			*/
 		}
 	}
 
@@ -673,6 +727,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 
 	ArnVec3 cameraDiff(0, 0, 0);
 	static const float cameraDiffAmount = 0.1f;
+	/*
 	if (ac.bHoldingKeys[SDLK_a] && !ac.bHoldingKeys[SDLK_d])
 		cameraDiff -= ac.activeCam->getRightVec() * cameraDiffAmount;
 	else if (!ac.bHoldingKeys[SDLK_a] && ac.bHoldingKeys[SDLK_d])
@@ -699,6 +754,7 @@ UpdateScene(AppContext& ac, unsigned int frameStartMs, unsigned int frameDuratio
 		else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
 			cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
 	}
+	*/
 
 	ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
 	ac.activeCam->recalcLocalXform();
@@ -1120,15 +1176,9 @@ InitializeAppContextOnce(AppContext& ac)
 
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
 
-	// Initial window size
-	ac.windowWidth = 800;
-	ac.windowHeight = 600;
-
 	/// Viewport를 초기화합니다.
 	ac.avd.X		= 0;
 	ac.avd.Y		= 0;
-	ac.avd.Width	= ac.windowWidth;
-	ac.avd.Height	= ac.windowHeight;
 	ac.avd.MinZ		= 0;
 	ac.avd.MaxZ		= 1.0f;
 
@@ -1166,71 +1216,14 @@ InitializeAppContextOnce(AppContext& ac)
 	const int		depthSize			= 24;
 	bool			bFullScreen			= false;
 	bool			bNoFrame			= false;
-	if( SDL_Init( SDL_INIT_VIDEO /*| SDL_INIT_JOYSTICK*/ ) < 0 )
-	{
-		fprintf(stderr, "Couldn't initialize SDL: %s\n", SDL_GetError());
-		return -30;
-	}
-	SDL_JoystickOpen(0);
-
-	/* Set the flags we want to use for setting the video mode */
-	int video_flags = SDL_OPENGL | SDL_RESIZABLE;
-	if (bFullScreen)
-		video_flags |= SDL_FULLSCREEN;
-	if (bNoFrame)
-		video_flags |= SDL_NOFRAME;
-
-	/* Initialize the display */
-	int rgb_size[3] = { 8, 8, 8 };
-	SDL_GL_SetAttribute( SDL_GL_RED_SIZE, rgb_size[0] );
-	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, rgb_size[1] );
-	SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, rgb_size[2] );
-	SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
-	SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, depthSize );
-	SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
-	SDL_GL_SetAttribute( SDL_GL_ACCELERATED_VISUAL, 1 );
-	// Swap Control On --> Refresh rate not exceeds Vsync(60 Hz mostly)
-	SDL_GL_SetAttribute( SDL_GL_SWAP_CONTROL, 1 );
-
-	if ( SDL_SetVideoMode( ac.windowWidth, ac.windowHeight, bpp, video_flags ) == NULL ) {
-		fprintf(stderr, "Couldn't set GL mode: %s\n", SDL_GetError());
-		SDL_Quit();
-		return -40;
-	}
+	
 	// OpenGL context available from this line.
 
-	printf("Screen BPP: %d\n", SDL_GetVideoSurface()->format->BitsPerPixel);
-	printf("\n");
 	printf( "Vendor     : %s\n", glGetString( GL_VENDOR ) );
 	printf( "Renderer   : %s\n", glGetString( GL_RENDERER ) );
 	printf( "Version    : %s\n", glGetString( GL_VERSION ) );
 	//printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
 	printf("\n");
-
-	int value;
-	SDL_GL_GetAttribute( SDL_GL_RED_SIZE, &value );
-	printf( "SDL_GL_RED_SIZE: requested %d, got %d\n", rgb_size[0],value);
-
-	SDL_GL_GetAttribute( SDL_GL_GREEN_SIZE, &value );
-	printf( "SDL_GL_GREEN_SIZE: requested %d, got %d\n", rgb_size[1],value);
-
-	SDL_GL_GetAttribute( SDL_GL_BLUE_SIZE, &value );
-	printf( "SDL_GL_BLUE_SIZE: requested %d, got %d\n", rgb_size[2],value);
-
-	SDL_GL_GetAttribute( SDL_GL_ALPHA_SIZE, &value );
-	printf( "SDL_GL_ALPHA_SIZE: requested %d, got %d\n", 8,value);
-
-	SDL_GL_GetAttribute( SDL_GL_DEPTH_SIZE, &value );
-	printf( "SDL_GL_DEPTH_SIZE: requested %d, got %d\n", depthSize, value );
-
-	SDL_GL_GetAttribute( SDL_GL_DOUBLEBUFFER, &value );
-	printf( "SDL_GL_DOUBLEBUFFER: requested 1, got %d\n", value );
-
-	SDL_GL_GetAttribute( SDL_GL_ACCELERATED_VISUAL, &value );
-	printf( "SDL_GL_ACCELERATED_VISUAL: requested 1, got %d\n", value );
-
-	/* Set the window manager title bar */
-	SDL_WM_SetCaption( "aran", "aran" );
 
 	/// OpenGL 플래그를 설정합니다.
 	glEnable(GL_DEPTH_TEST);
@@ -1260,14 +1253,12 @@ InitializeAppContextOnce(AppContext& ac)
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
 		std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
 		std::cerr << "     Aborting..." << std::endl;
-		SDL_Quit();
 		return -50;
 	}
 
 	/// ARAN OpenGL 패키지를 초기화합니다.
 	if (ArnInitializeGl() < 0)
 	{
-		SDL_Quit();
 		return -3;
 	}
 
@@ -1282,31 +1273,18 @@ InitializeAppContextOnce(AppContext& ac)
 	/// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
 	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
-		SDL_Quit();
 		return -1;
 	}
 	if (InitializeRendererDependentsFromSg(ac) < 0)
 	{
-		SDL_Quit();
 		return -2;
 	}
-
-	SDL_Cursor* defaultCursor = SDL_GetCursor();
-	Uint8 mask[] = {0x00, 0x80, 0x01, 0xc0, 0x03, 0xE0, 0x07, 0xF0, 0x0F, 0xF8, 0x1F, 0xFC, 0x3F, 0xFE, 0x7F, 0xFF };
-	Uint8 data[] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-	SDL_Cursor* cursor = SDL_CreateCursor(data, mask, 16, 8, 8, 0);
-	SDL_SetCursor (cursor);
-	SDL_FreeCursor(cursor);
-	SDL_SetCursor(defaultCursor);
 
 	return 0;
 }
 
-/*!
-* @brief 주요 루틴 시작 함수
-*/
 int
-DoMain()
+Initialize(AppContext& ac)
 {
 	/*!
 	* 렌더러 독립적 ARAN 패키지인 ARAN Core, ARAN Physics를 초기화합니다.
@@ -1336,146 +1314,225 @@ DoMain()
 	* Application-wide context를 초기화합니다.
 	* 이 초기화는 프로그램 구동시 단 한번 시행됩니다.
 	*/
-	AppContext ac;
 	if (InitializeAppContextOnce(ac) < 0)
 	{
 		Cleanup();
 		return -4;
 	}
-
-	/// 프로그램 메인 루프를 시작합니다.
-	unsigned int frames = 0;
-	unsigned int start_time;
-	unsigned int frameStartMs = 0;
-	unsigned int frameDurationMs = 0;
-	unsigned int frameEndMs = 0;
-	bool bExitLoop = false;
-	start_time = SDL_GetTicks();
-	MessageHandleResult done;
-	while( !bExitLoop )
-	{
-		frameDurationMs = frameEndMs - frameStartMs;
-		frameStartMs = SDL_GetTicks();
-		GLenum gl_error;
-		SDL_Event event;
-		char* sdl_error;
-
-		// 1. Update phase
-		UpdateScene(ac, frameStartMs, frameDurationMs);
-
-		// 2. Rendering phase
-		RenderScene(ac);
-		if (ac.bRenderHud)
-			RenderHud(ac);
-
-		SDL_GL_SwapBuffers();
-
-		/* Check for error conditions. */
-		gl_error = glGetError();
-		if( gl_error != GL_NO_ERROR )
-		{
-			fprintf( stderr, "ARAN: OpenGL error: %s\n", gluErrorString(gl_error) );
-		}
-		sdl_error = SDL_GetError();
-		if( sdl_error[0] != '\0' )
-		{
-			fprintf(stderr, "ARAN: SDL error '%s'\n", sdl_error);
-			SDL_ClearError();
-		}
-
-		while( SDL_PollEvent( &event ) )
-		{
-			done = HandleEvent(&event, ac);
-
-			int reconfigScene = false;
-			if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)
-			{
-				int nextSceneIndex;
-				if (done == MHR_NEXT_SCENE)
-					nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
-				else
-				{
-					if (ac.curSceneIndex == 0)
-						nextSceneIndex = ac.sceneList.size() - 1;
-					else
-						nextSceneIndex = ac.curSceneIndex - 1;
-				}
-
-				ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
-				if (!ac.sgPtr)
-				{
-					std::cerr << " *** Aborting..." << std::endl;
-					done = MHR_EXIT_APP;
-				}
-				else
-				{
-					reconfigScene = true;
-				}
-			}
-			else if (done == MHR_RELOAD_SCENE)
-			{
-				ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
-				if (!ac.sgPtr)
-				{
-					std::cerr << " *** Aborting..." << std::endl;
-					done = MHR_EXIT_APP;
-				}
-				else
-				{
-					reconfigScene = true;
-				}
-			}
-
-			if (reconfigScene)
-			{
-				InitializeRendererIndependentsFromSg(ac);
-				InitializeRendererDependentsFromSg(ac);
-			}
-
-			if (done == MHR_EXIT_APP)
-				bExitLoop = true;
-		}
-		++frames;
-		frameEndMs = SDL_GetTicks();
-	}
-
-	/* Print out the frames per second */
-	unsigned int this_time = SDL_GetTicks();
-	if ( this_time != start_time )
-	{
-		printf("%.2f FPS\n", ((float)frames/(this_time-start_time))*1000.0);
-	}
-
-	Cleanup();
-	SDL_Quit();
 	return 0;
 }
-/*
-SCM DoMainWrapper()
+
+
+
+#if !HAVE_GL
+#include <FL/Fl_Box.H>
+class shape_window : public Fl_Box {
+public:	
+	int sides;
+	shape_window(int x,int y,int w,int h,const char *l=0)
+		:Fl_Box(FL_DOWN_BOX,x,y,w,h,l){
+			label("This demo does\nnot work without GL");
+	}
+};
+#else
+#include <FL/gl.h>
+#include <FL/Fl_Gl_Window.H>
+
+class shape_window : public Fl_Gl_Window {
+	void draw();
+	void draw_overlay();
+public:
+	virtual int handle(int);
+	virtual void resize(int,int,int,int);
+	int sides;
+	int overlay_sides;
+	shape_window(int x,int y,int w,int h, const char *l, AppContext& ac);
+
+	AppContext& m_ac;
+};
+
+
+shape_window::shape_window(int x,int y,int w,int h,const char *l, AppContext& ac)
+: Fl_Gl_Window(x,y,w,h,l), m_ac(ac)
 {
-return scm_from_int(DoMain());
+	sides = overlay_sides = 3;
+
+	m_ac.windowWidth = w;
+	m_ac.windowHeight = h;
+	m_ac.avd.Width	= m_ac.windowWidth;
+	m_ac.avd.Height	= m_ac.windowHeight;
 }
 
-void guile_inner_main(void* data, int argc, char** argv)
-{
-scm_c_define_gsubr("do", 0, 0, 0, DoMainWrapper);
-//scm_c_define_gsubr("next", 0, 0, 0, NextScene);
-//scm_c_eval_string("(call-with-new-thread (do))");
-scm_shell(0, 0);
-}
-*/
+static bool bOpenGlInited = false;
 
-//HRESULT WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
-int main(int argc, char** argv)
+void shape_window::draw() {
+	
+	if (!bOpenGlInited)
+	{
+		Initialize(m_ac);
+		bOpenGlInited = true;
+	}
+	// the valid() property may be used to avoid reinitializing your
+	// GL transformation for each redraw:
+	if (!valid()) {
+		valid(1);
+		glLoadIdentity();
+		glViewport(0,0,w(),h());
+	}
+	
+	RenderScene(m_ac);
+
+}
+
+void shape_window::draw_overlay() {
+
+}
+
+int shape_window::handle( int eventType )
 {
-	//scm_boot_guile(argc, argv, guile_inner_main, 0);
-	int retCode = 0;
-	retCode = DoMain();
+	if (eventType == FL_ENTER)
+	{
+		return 1;
+	}
+	else if (eventType == FL_MOVE)
+	{
+		//printf("%d %d\n", Fl::event_x(), Fl::event_y());
+	}
+	
+	return Fl_Gl_Window::handle(eventType);
+}
+#endif
+
+// when you change the data, as in this callback, you must call redraw():
+void sides_cb(Fl_Widget *o, void *p) {
+	shape_window *sw = (shape_window *)p;
+	sw->sides = int(((Fl_Slider *)o)->value());
+	sw->redraw();
+}
+
+#if HAVE_GL
+void overlay_sides_cb(Fl_Widget *o, void *p) {
+	shape_window *sw = (shape_window *)p;
+	sw->overlay_sides = int(((Fl_Slider *)o)->value());
+	sw->redraw_overlay();
+}
+#endif
+
+class MainWindow : public Fl_Window
+{
+public:
+	MainWindow(int w,int h, const char* c = 0) : Fl_Window(w, h, c), m_shapeWindow(0) {}
+	
+	virtual int handle(int eventType);
+	virtual ~MainWindow() {}
+	void setShapeWindow(shape_window* sw) { m_shapeWindow = sw; }
+	AppContext m_ac;
+	shape_window* m_shapeWindow;
+};
+
+void shape_window::resize( int x, int y, int w, int h )
+{
+	m_ac.windowWidth = w;
+	m_ac.windowHeight = h;
+	m_ac.avd.Width	= m_ac.windowWidth;
+	m_ac.avd.Height	= m_ac.windowHeight;
+	if (bOpenGlInited)
+	{
+		glViewport(0, 0, m_ac.windowWidth, m_ac.windowHeight);
+		//printf("Resized OpenGL widget size is %d x %d.\n", m_ac.windowWidth, m_ac.windowHeight);
+	}
+	Fl_Gl_Window::resize(x, y, w, h);
+}
+
+int MainWindow::handle( int eventType )
+{
+	if (eventType == FL_KEYUP)
+	{
+		int key = Fl::event_key();
+		if (key < 256)
+			m_ac.bHoldingKeys[key] = false;
+	}
+	else if (eventType == FL_KEYDOWN)
+	{
+		int key = Fl::event_key();
+		if (key < 256)
+			m_ac.bHoldingKeys[key] = true;
+
+		if (key == FL_KP + '7')
+		{
+			m_ac.viewMode = VM_TOP;
+			printf("  View mode set to top.\n");
+			m_shapeWindow->redraw();
+		}
+		else if (key == FL_KP + '3')
+		{
+			m_ac.viewMode = VM_LEFT;
+			printf("  View mode set to left.\n");
+			m_shapeWindow->redraw();
+		}
+		else if (key == FL_KP + '1')
+		{
+			m_ac.viewMode = VM_FRONT;
+			printf("  View mode set to front.\n");
+			m_shapeWindow->redraw();
+		}
+		else if (key == FL_KP + '4')
+		{
+			m_ac.viewMode = VM_CAMERA;
+			printf("  View mode set to camera.\n");
+			m_shapeWindow->redraw();
+		}
+	}
+	return Fl_Window::handle(eventType);
+}
+
+int main(int argc, char **argv)
+{
+	int ret = 0;
+	{
+		MainWindow window(800, 600);
+		TimerInit();
+		shape_window sw(10, 75, window.w()-20, window.h()-90, 0, window.m_ac);
+		window.setShapeWindow(&sw);
+		//sw.mode(FL_RGB);
+		window.resizable(&sw);
+
+		Fl_Hor_Slider slider(60, 5, window.w()-70, 30, "Sides:");
+		slider.align(FL_ALIGN_LEFT);
+		slider.callback(sides_cb,&sw);
+		slider.value(sw.sides);
+		slider.step(1);
+		slider.bounds(3,40);
+
+		Fl_Hor_Slider oslider(60, 40, window.w()-70, 30, "Overlay:");
+		oslider.align(FL_ALIGN_LEFT);
+#if HAVE_GL
+		oslider.callback(overlay_sides_cb,&sw);
+		oslider.value(sw.overlay_sides);
+#endif
+		oslider.step(1);
+		oslider.bounds(3,40);
+
+		window.end();
+		window.show(argc,argv);
+#if HAVE_GL
+		printf("Can do overlay = %d\n", sw.can_do_overlay());
+		sw.show();
+		sw.redraw_overlay();
+#else
+		sw.show();
+#endif
+
+		
+		ret = Fl::run();
+	}
+	
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
 	std::cout << "ArnObject dtor count: " << ArnObject::getDtorCount() << std::endl;
 	ArnObject::printInstances();
 #endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
-	return retCode;
+	
+	return ret;
 }
