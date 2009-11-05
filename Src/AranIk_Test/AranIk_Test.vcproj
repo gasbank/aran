@@ -47,7 +47,8 @@
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
+				UsePrecompiledHeader="2"
+				PrecompiledHeaderThrough="BwPch.h"
 				WarningLevel="4"
 				DebugInformationFormat="4"
 				DisableSpecificWarnings="4100;4251"
@@ -67,7 +68,6 @@
 				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../DebugDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/fltk-1.1.10rc3/lib&quot;"
-				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"
@@ -123,7 +123,7 @@
 				Optimization="3"
 				EnableIntrinsicFunctions="true"
 				FavorSizeOrSpeed="1"
-				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranIk;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;"
+				AdditionalIncludeDirectories="../;../Aran;../AranPhy;../AranMath;../AranIk;../AranGl;&quot;$(CODEBASE)/SDL-1.2.13/include&quot;;&quot;$(CODEBASE)/freetype-2.3.9/include&quot;;&quot;$(CODEBASE)/opende/include&quot;;&quot;$(CODEBASE)/fltk-1.1.10rc3&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -142,10 +142,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran.lib AranMath.lib AranPhy.lib AranGl.lib AranIk.lib SDL.lib SDLmain.lib freetype239MT.lib opengl32.lib glu32.lib DevIL.lib"
+				AdditionalDependencies="Aran.lib AranMath.lib AranPhy.lib AranGl.lib AranIk.lib SDL.lib SDLmain.lib freetype239MT.lib opengl32.lib glu32.lib DevIL.lib fltk.lib fltkgl.lib comctl32.lib wsock32.lib winmm.lib"
 				OutputFile="$(WORKING)/$(ProjectName).exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/fltk-1.1.10rc3/lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -179,27 +179,59 @@
 	</References>
 	<Files>
 		<File
-			RelativePath=".\IkTest-Fltk.cpp"
+			RelativePath=".\BwAppContext.cpp"
 			>
 		</File>
 		<File
-			RelativePath=".\IkTest-Fltk.h"
+			RelativePath=".\BwAppContext.h"
 			>
 		</File>
 		<File
-			RelativePath=".\IkTest2.cpp"
+			RelativePath=".\BwMain.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwMain.h"
+			>
+		</File>
+		<File
+			RelativePath=".\BwOpenGlWindow.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwOpenGlWindow.h"
+			>
+		</File>
+		<File
+			RelativePath=".\BwPch.cpp"
 			>
 			<FileConfiguration
 				Name="Debug|Win32"
-				ExcludedFromBuild="true"
 				>
 				<Tool
 					Name="VCCLCompilerTool"
+					UsePrecompiledHeader="1"
 				/>
 			</FileConfiguration>
 		</File>
 		<File
-			RelativePath=".\IkTest2.h"
+			RelativePath=".\BwPch.h"
+			>
+		</File>
+		<File
+			RelativePath=".\BwTopWindow.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwTopWindow.h"
+			>
+		</File>
+		<File
+			RelativePath=".\BwWin32Timer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwWin32Timer.h"
 			>
 		</File>
 	</Files>
