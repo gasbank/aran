@@ -706,6 +706,55 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 	//}
 }
 
+static void RenderGrid(const BwAppContext& ac, const float gridCellSize, const int gridCellCount, const float gridColor[3], const float thickness)
+{
+	glColor3fv(gridColor);
+	glPushAttrib(GL_ENABLE_BIT);
+	glDisable(GL_LIGHTING);
+
+	// subgrid
+	glLineWidth(thickness);
+	glBegin(GL_LINES);
+	const float v1 = gridCellCount * gridCellSize;
+	for (int i = -gridCellCount; i <= gridCellCount; ++i)
+	{		
+		const float v2 = gridCellSize * i;
+
+		switch (ac.viewMode)
+		{
+		case VM_TOP:
+			// X direction
+			glVertex3f(-v1, v2, 0);
+			glVertex3f( v1, v2, 0);
+			// Y direction
+			glVertex3f(v2, -v1, 0);
+			glVertex3f(v2,  v1, 0);
+			break;
+		case VM_RIGHT:
+			// Y direction
+			glVertex3f(0, -v1, v2);
+			glVertex3f(0,  v1, v2);
+			// Z direction
+			glVertex3f(0, v2, -v1);
+			glVertex3f(0, v2,  v1);
+			break;
+		case VM_BACK:
+			// X direction
+			glVertex3f(-v1, 0, v2);
+			glVertex3f( v1, 0, v2);
+			// Z direction
+			glVertex3f(v2, 0, -v1);
+			glVertex3f(v2, 0,  v1);
+			break;
+		default:
+			break;
+		}
+	}
+	glEnd();
+
+	glPopAttrib();
+}
+
 void
 RenderScene(const BwAppContext& ac)
 {
@@ -790,40 +839,10 @@ RenderScene(const BwAppContext& ac)
 	//glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	// Render a plane of grid
-	const static float subgridGap = 0.5f;
-	const static int mainGridCount = 5;
-	const static int halfGridCount = 20;
 	const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
-	glColor3fv(gridColor);
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
-
-	glLineWidth(0.5f);
-	glBegin(GL_LINES);
-	for (int i = -halfGridCount; i <= halfGridCount; ++i)
-	{
-		glVertex3f(-10, subgridGap * i, 0);
-		glVertex3f( 10, subgridGap * i, 0);
-
-		glVertex3f(subgridGap * i, -10, 0);
-		glVertex3f(subgridGap * i,  10, 0);
-	}
-	glEnd();
-
-	glLineWidth(1.0f);
-	glBegin(GL_LINES);
-	for (int i = -halfGridCount/mainGridCount; i <= halfGridCount/mainGridCount; ++i)
-	{
-		glVertex3f(-10, subgridGap * i * mainGridCount, 0);
-		glVertex3f( 10, subgridGap * i * mainGridCount, 0);
-
-		glVertex3f(subgridGap * i * mainGridCount, -10, 0);
-		glVertex3f(subgridGap * i * mainGridCount,  10, 0);
-	}
-	glEnd();
-	glPopAttrib();
-
+	RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
+	RenderGrid(ac, 2.5f, 2, gridColor, 1.0f);
+	
 	// Render skeletons under control of IK solver
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
