@@ -4,9 +4,12 @@
 enum ViewMode
 {
 	VM_UNKNOWN,
-	VM_TOP,
-	VM_LEFT,
-	VM_FRONT,
+	VM_TOP,		// KeyPad 7
+	VM_RIGHT,	// KeyPad 3
+	VM_BACK,	// KeyPad 1
+	VM_BOTTOM,	// Shift + KeyPad 7
+	VM_LEFT,	// Shift + KeyPad 3
+	VM_FRONT,	// Shift + KeyPad 1
 	VM_CAMERA
 };
 
@@ -53,6 +56,7 @@ public:
 	int										orthoViewDistance;
 	bool									bPanningButtonDown;
 	std::pair<int, int>						panningStartPoint;
-	std::pair<float, float>					panningCenter;
-	std::pair<float, float>					dPanningCenter;
+
+	float									panningCenter[3];
+	float									dPanningCenter[3];
 };

@@ -3,7 +3,7 @@
 #include "BwAppContext.h"
 #include "BwMain.h"
 
-BwOpenGlWindow::BwOpenGlWindow(int x,int y,int w,int h,const char *l, BwAppContext& ac)
+BwOpenGlWindow::BwOpenGlWindow(int x, int y, int w, int h, const char *l, BwAppContext& ac)
 : Fl_Gl_Window(x, y, w, h, l)
 , m_ac(ac)
 {
@@ -85,8 +85,25 @@ int BwOpenGlWindow::handle( int eventType )
 			int dx = mousePosition.first - m_ac.panningStartPoint.first;
 			int dy = mousePosition.second - m_ac.panningStartPoint.second;
 			const float aspectRatio = (float)m_ac.windowWidth / m_ac.windowHeight;
-			m_ac.dPanningCenter.first = -(2.0f * m_ac.orthoViewDistance * aspectRatio / m_ac.windowWidth) * dx;
-			m_ac.dPanningCenter.second = -(-2.0f * m_ac.orthoViewDistance / m_ac.windowHeight) * dy;
+			const float d1 = -(2.0f * m_ac.orthoViewDistance * aspectRatio / m_ac.windowWidth) * dx;
+			const float d2 = -(-2.0f * m_ac.orthoViewDistance / m_ac.windowHeight) * dy;
+
+			if (m_ac.viewMode == VM_TOP)
+			{
+				m_ac.dPanningCenter[0] = d1;
+				m_ac.dPanningCenter[1] = d2;
+			}
+			else if (m_ac.viewMode == VM_RIGHT)
+			{
+				m_ac.dPanningCenter[1] = d1;
+				m_ac.dPanningCenter[2] = d2;
+			}
+			else if (m_ac.viewMode == VM_BACK)
+			{
+				m_ac.dPanningCenter[0] = d1;
+				m_ac.dPanningCenter[2] = d2;
+			}
+			
 
 			//printf("%f   %f\n", m_ac.dPanningCenter.first, m_ac.dPanningCenter.second);
 
@@ -95,7 +112,7 @@ int BwOpenGlWindow::handle( int eventType )
 	}
 	else if (eventType == FL_MOUSEWHEEL)
 	{
-		if (m_ac.viewMode == VM_TOP || m_ac.viewMode == VM_LEFT || m_ac.viewMode == VM_FRONT)
+		if (m_ac.viewMode == VM_TOP || m_ac.viewMode == VM_RIGHT || m_ac.viewMode == VM_BACK)
 		{
 			if (Fl::event_dy() > 0)
 			{
@@ -132,19 +149,49 @@ int BwOpenGlWindow::handle( int eventType )
 	else if (eventType == FL_KEYUP)
 	{
 		int key = Fl::event_key();
+
+		if (key < 256)
+			m_ac.bHoldingKeys[key] = true;
+
 		if (key == 32) // SPACE key
 		{
 			if (m_ac.bPanningButtonDown)
 			{
 				m_ac.bPanningButtonDown = false;
 
-				m_ac.panningCenter.first += m_ac.dPanningCenter.first;
-				m_ac.panningCenter.second += m_ac.dPanningCenter.second;
+				m_ac.panningCenter[0] += m_ac.dPanningCenter[0];
+				m_ac.panningCenter[1] += m_ac.dPanningCenter[1];
+				m_ac.panningCenter[2] += m_ac.dPanningCenter[2];
 
-				m_ac.dPanningCenter.first = 0;
-				m_ac.dPanningCenter.second = 0;
+				m_ac.dPanningCenter[0] = 0;
+				m_ac.dPanningCenter[1] = 0;
+				m_ac.dPanningCenter[2] = 0;
 				redraw();
 			}
+		}
+		else if (key == FL_KP + '7')
+		{
+			m_ac.viewMode = VM_TOP;
+			printf("  View mode set to top.\n");
+			redraw();
+		}
+		else if (key == FL_KP + '3')
+		{
+			m_ac.viewMode = VM_RIGHT;
+			printf("  View mode set to left.\n");
+			redraw();
+		}
+		else if (key == FL_KP + '1')
+		{
+			m_ac.viewMode = VM_BACK;
+			printf("  View mode set to front.\n");
+			redraw();
+		}
+		else if (key == FL_KP + '4')
+		{
+			m_ac.viewMode = VM_CAMERA;
+			printf("  View mode set to camera.\n");
+			redraw();
 		}
 	}
 	return Fl_Gl_Window::handle(eventType);

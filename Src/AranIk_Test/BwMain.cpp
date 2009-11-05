@@ -723,14 +723,55 @@ RenderScene(const BwAppContext& ac)
 			ArnConfigureViewMatrixGl(ac.activeCam);
 		}
 	}
-	else if (ac.viewMode == VM_TOP)
+	else if (ac.viewMode == VM_TOP || ac.viewMode == VM_RIGHT || ac.viewMode == VM_BACK)
 	{
+		static float eye[3], at[3], up[3];
+		if (ac.viewMode == VM_TOP)
+		{
+			eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
+			eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
+			eye[2] = 100.0f;
+
+			at[0] = eye[0];
+			at[1] = eye[1];
+			at[2] = 0;
+			
+			up[0] = 0;
+			up[1] = 1.0f;
+			up[2] = 0;
+		}
+		else if (ac.viewMode == VM_RIGHT)
+		{
+			eye[0] = 100.0f;
+			eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
+			eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
+
+			at[0] = 0;
+			at[1] = eye[1];
+			at[2] = eye[2];
+
+			up[0] = 0;
+			up[1] = 0;
+			up[2] = 1.0f;
+		}
+		else if (ac.viewMode == VM_BACK)
+		{
+			eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
+			eye[1] = -100.0f;
+			eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
+
+			at[0] = eye[0];
+			at[1] = 0;
+			at[2] = eye[2];
+
+			up[0] = 0;
+			up[1] = 0;
+			up[2] = 1.0f;
+		}
+
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		gluLookAt(
-			ac.panningCenter.first + ac.dPanningCenter.first, ac.panningCenter.second + ac.dPanningCenter.second, 100,
-			ac.panningCenter.first + ac.dPanningCenter.first, ac.panningCenter.second + ac.dPanningCenter.second, 0,
-			0, 1, 0);
+		gluLookAt(eye[0], eye[1], eye[2], at[0], at[1], at[2], up[0], up[1], up[2]);
 		glMatrixMode(GL_PROJECTION);
 		glLoadIdentity();
 		const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
@@ -1122,10 +1163,12 @@ InitializeAppContextOnce(BwAppContext& ac)
 	ac.bRenderHud = false;
 	ac.orthoViewDistance = 5;
 	ac.bPanningButtonDown = false;
-	ac.panningCenter.first = 0;
-	ac.panningCenter.second = 0;
-	ac.dPanningCenter.first = 0;
-	ac.dPanningCenter.second = 0;
+	ac.panningCenter[0] = 0;
+	ac.panningCenter[1] = 0;
+	ac.panningCenter[2] = 0;
+	ac.dPanningCenter[0] = 0;
+	ac.dPanningCenter[1] = 0;
+	ac.dPanningCenter[2] = 0;
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
