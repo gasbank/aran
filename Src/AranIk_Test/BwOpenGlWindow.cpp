@@ -283,7 +283,7 @@ SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
 	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
-		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator);
+		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator, ac.bJointAxisIndicator);
 	}
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -503,7 +503,7 @@ RenderScene(const BwAppContext& ac)
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		glPushMatrix();
-		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator);
+		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator, ac.bJointAxisIndicator);
 		glPopMatrix();
 	}
 
@@ -566,19 +566,25 @@ RenderScene(const BwAppContext& ac)
 				ac.swPtr->getContactForce1(i, &contactForce);
 				netContactForce += contactForce; // Accumulate contact forces
 
-				// Render the individual contact force
+				// Render the individual contact force and contact point
 				glPushMatrix();
 				{
 					glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-					ArnRenderSphereGl(0.025, 16, 16);
+					if (ac.bContactIndicator)
+					{
+						ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+						ArnRenderSphereGl(0.025, 16, 16);
+					}
 
-					glEnable(GL_COLOR_MATERIAL);
-					glBegin(GL_LINES);
-					glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
-					glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
-					glEnd();
-					glDisable(GL_COLOR_MATERIAL);
+					if (ac.bContactForaceIndicator)
+					{
+						glEnable(GL_COLOR_MATERIAL);
+						glBegin(GL_LINES);
+						glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
+						glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
+						glEnd();
+						glDisable(GL_COLOR_MATERIAL);
+					}
 
 					// Contact forces in the second direction. Should be zero.
 					ac.swPtr->getContactForce2(i, &contactForce);

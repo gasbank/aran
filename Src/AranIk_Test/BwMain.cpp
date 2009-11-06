@@ -508,16 +508,18 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 	ac.isects.clear();
 	ac.verticalLineIsects.clear();
 
-	// Projected mass distribution map texture creation
-	/*
+	
 	if (ac.trunk)
 	{
+		// Update COM pos
 		ArnVec3 bipedComPos;
 		ac.trunk->calculateLumpedComAndMass(&bipedComPos, &ac.bipedMass);
-		ac.bipedComPos.push_back(bipedComPos);
+		ac.bipedComPos.push_back(bipedComPos); // Save the trail of COM for visualization
 		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
+		
+		/*
+		// Projected mass distribution map texture creation
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
-
 		for (int mm = 0; mm < AppContext::massMapResolution*2; ++mm)
 			std::fill(ac.massMap[mm].begin(), ac.massMap[mm].end(), 0.0f);
 		float maxMassMapVal = ac.trunk->calculateLumpedVerticalIntersection(ac.verticalLineIsects, ac.massMap, bipedComPos.x, bipedComPos.y, AppContext::massMapDeviation, AppContext::massMapResolution);
@@ -539,8 +541,8 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 		//glTexImage2D(GL_TEXTURE_2D, 0, 4, AppContext::massMapResolution*2, AppContext::massMapResolution*2, 0, GL_RGBA, GL_UNSIGNED_BYTE, ac.massMapData);
 		gluBuild2DMipmaps( GL_TEXTURE_2D, 4, AppContext::massMapResolution*2, AppContext::massMapResolution*2, GL_RGBA, GL_UNSIGNED_BYTE, ac.massMapData );
 		glBindTexture(GL_TEXTURE_2D, 0);
+		*/
 	}
-	*/
 
 	//unsigned int contactCount = ac.swPtr->getContactCount();
 	ac.supportPolygon.clear();
@@ -790,6 +792,9 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.bRenderHud					= false;
 	ac.bRenderJointIndicator		= false;
 	ac.bRenderEndeffectorIndicator	= false;
+	ac.bJointAxisIndicator			= false;
+	ac.bContactIndicator			= false;
+	ac.bContactForaceIndicator		= false;
 	// Scene graph UI
 	ac.sceneGraphList = 0;
 	// Timer init
@@ -841,11 +846,45 @@ void overlay_sides_cb(Fl_Widget *o, void *p)
 	sw->redraw_overlay();
 }
 
+void idle_cb(void* ac)
+{
+	static unsigned int start_time			= 0;
+	static unsigned int frameStartMs		= 0;
+	static unsigned int frameDurationMs		= 0;
+	static unsigned int frameEndMs			= 0;
+	static char frameStr[32];
+
+	BwAppContext& appContext = *(BwAppContext*)ac;
+	if (appContext.bSimulate)
+	{
+		start_time = (unsigned int)appContext.timer.getTicks();
+		frameDurationMs = frameEndMs - frameStartMs;
+		frameStartMs = (unsigned int)appContext.timer.getTicks();
+		UpdateScene(appContext, frameStartMs, frameDurationMs);
+		++appContext.frames;
+		frameEndMs = (unsigned int)appContext.timer.getTicks();
+		appContext.glWindow->redraw();
+		sprintf(frameStr, "%d", appContext.frames);
+		appContext.frameLabel->label(frameStr);
+	}
+}
+
 void simulate_button_cb(Fl_Widget *o, void *p)
 {
 	Fl_Light_Button* widget = (Fl_Light_Button*)o;
 	BwAppContext& appContext = *(BwAppContext*)p;
 	appContext.bSimulate = widget->value() ? true : false;
+
+	if (appContext.bSimulate)
+	{
+		if (!Fl::has_idle(idle_cb, &appContext))
+			Fl::add_idle(idle_cb, &appContext);
+	}
+	else
+	{
+		if (Fl::has_idle(idle_cb, &appContext))
+			Fl::remove_idle(idle_cb, &appContext);
+	}
 }
 
 struct SceneButtonsHolder
@@ -907,29 +946,6 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
 		InitializeRendererDependentsFromSg(ac);
 
 		openGlWindow.redraw();
-	}
-}
-
-void idle_cb(void* ac)
-{
-	static unsigned int start_time			= 0;
-	static unsigned int frameStartMs		= 0;
-	static unsigned int frameDurationMs		= 0;
-	static unsigned int frameEndMs			= 0;
-	static char frameStr[32];
-
-	BwAppContext& appContext = *(BwAppContext*)ac;
-	if (appContext.bSimulate)
-	{
-		start_time = (unsigned int)appContext.timer.getTicks();
-		frameDurationMs = frameEndMs - frameStartMs;
-		frameStartMs = (unsigned int)appContext.timer.getTicks();
-		UpdateScene(appContext, frameStartMs, frameDurationMs);
-		++appContext.frames;
-		frameEndMs = (unsigned int)appContext.timer.getTicks();
-		appContext.glWindow->redraw();
-		sprintf(frameStr, "%d", appContext.frames);
-		appContext.frameLabel->label(frameStr);
 	}
 }
 
@@ -1022,7 +1038,7 @@ int main(int argc, char **argv)
 			sceneList.add(scene.c_str());
 		}
 
-		Fl::add_idle(idle_cb, &appContext);
+		//Fl::add_idle(idle_cb, &appContext);
 		
 		ret = Fl::run();
 

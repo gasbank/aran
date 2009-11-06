@@ -8,10 +8,13 @@ BwDrawingOptionsWindow::BwDrawingOptionsWindow( int x, int y, int w, int h, cons
 , m_ac(ac)
 , m_openGlWindow(openGlWindow)
 {
-	add("Grid", (int)m_ac.bRenderGrid);
-	add("HUD", (int)m_ac.bRenderHud);
-	add("Joint", (int)m_ac.bRenderJointIndicator);
-	add("Endeffector", (int)m_ac.bRenderEndeffectorIndicator);
+	add("Grid",				(int)m_ac.bRenderGrid);
+	add("HUD",				(int)m_ac.bRenderHud);
+	add("Joint",			(int)m_ac.bRenderJointIndicator);
+	add("Endeffector",		(int)m_ac.bRenderEndeffectorIndicator);
+	add("Joint Axis",		(int)m_ac.bJointAxisIndicator);
+	add("Contact",			(int)m_ac.bContactIndicator);
+	add("Contact Force",	(int)m_ac.bContactForaceIndicator);
 }
 
 BwDrawingOptionsWindow::~BwDrawingOptionsWindow(void)
@@ -26,6 +29,9 @@ int BwDrawingOptionsWindow::handle( int eventType )
 		m_ac.bRenderHud = checked(2) ? true : false;
 		m_ac.bRenderJointIndicator = checked(3) ? true : false;
 		m_ac.bRenderEndeffectorIndicator = checked(4) ? true : false;
+		m_ac.bJointAxisIndicator = checked(5) ? true : false;
+		m_ac.bContactIndicator = checked(6) ? true : false;
+		m_ac.bContactForaceIndicator = checked(7) ? true : false;
 		m_openGlWindow.redraw();
 	}
 	return Fl_Check_Browser::handle(eventType);

@@ -61,6 +61,9 @@ public:
 	bool									bRenderHud;
 	bool									bRenderJointIndicator;
 	bool									bRenderEndeffectorIndicator;
+	bool									bJointAxisIndicator;
+	bool									bContactIndicator;
+	bool									bContactForaceIndicator;
 
 	bool									bSimulate;
 	unsigned int							frames;

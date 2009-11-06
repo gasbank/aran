@@ -140,7 +140,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Aran.lib AranMath.lib AranGl.lib AranPhy.lib AranIk.lib SDL.lib SDLmain.lib opengl32.lib glu32.lib"
+				OutputFile="$(WORKING)/$(ProjectName).exe"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../ReleaseDLL;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release&quot;;&quot;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

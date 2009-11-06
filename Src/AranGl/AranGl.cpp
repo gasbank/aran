@@ -844,7 +844,7 @@ NodeDrawBox(const Node& node, const bool bDrawJointIndicator)
 }
 
 void
-NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator)
+NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, const bool bDrawRotationAxis)
 {
 	if (!isRoot)
 	{
@@ -861,21 +861,24 @@ NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator)
 	}
 
 	// Draw rotation axis
-	const double rotAxisLen = 0.5;
-	glDisable(GL_LIGHTING);
-	glColor3f(1.0f, 1.0f, 0.0f);
-	glLineWidth(2.0);
-	glBegin(GL_LINES);
+	if (bDrawRotationAxis)
 	{
-		VectorR3 temp = node.getRelativePosition();
-		temp.AddScaled(node.getRotationAxis(), rotAxisLen * node.getSize());
-		glVertex3d( temp.x, temp.y, temp.z );
-		temp.AddScaled(node.getRotationAxis(),-2.0*rotAxisLen*node.getSize());
-		glVertex3d( temp.x, temp.y, temp.z );
+		const double rotAxisLen = 0.5;
+		glDisable(GL_LIGHTING);
+		glColor3f(1.0f, 1.0f, 0.0f);
+		glLineWidth(2.0);
+		glBegin(GL_LINES);
+		{
+			VectorR3 temp = node.getRelativePosition();
+			temp.AddScaled(node.getRotationAxis(), rotAxisLen * node.getSize());
+			glVertex3d( temp.x, temp.y, temp.z );
+			temp.AddScaled(node.getRotationAxis(),-2.0*rotAxisLen*node.getSize());
+			glVertex3d( temp.x, temp.y, temp.z );
+		}
+		glEnd();
+		glLineWidth(1.0);
+		glEnable(GL_LIGHTING);
 	}
-	glEnd();
-	glLineWidth(1.0);
-	glEnable(GL_LIGHTING);
 
 	const VectorR3& r = node.getRelativePosition();
 	const VectorR3& v = node.getRotationAxis();
@@ -884,23 +887,23 @@ NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator)
 }
 
 static void
-TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator)
+TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator, const bool bDrawRotationAxis)
 {
 	if (node)
 	{
 		glPushMatrix();
 		{
-			NodeDrawNode(*node, tree.GetRoot() == node, bDrawJointIndicator); // Recursively draw node and update ModelView matrix
+			NodeDrawNode(*node, tree.GetRoot() == node, bDrawJointIndicator, bDrawRotationAxis); // Recursively draw node and update ModelView matrix
 			if (node->getLeftNode())
 			{
-				TreeDrawTree(tree, node->getLeftNode(), bDrawJointIndicator); // Draw tree of children recursively
+				TreeDrawTree(tree, node->getLeftNode(), bDrawJointIndicator, bDrawRotationAxis); // Draw tree of children recursively
 			}
 		}
 		glPopMatrix();
 
 		if (node->getRightNode())
 		{
-			TreeDrawTree(tree, node->getRightNode(), bDrawJointIndicator); // Draw right siblings recursively
+			TreeDrawTree(tree, node->getRightNode(), bDrawJointIndicator, bDrawRotationAxis); // Draw right siblings recursively
 		}
 	}
 }
@@ -926,9 +929,9 @@ DrawEndeffectorTarget(NodeConstPtr node)
 }
 
 void
-TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator)
+TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator, const bool bDrawRotationAxis)
 {
-	TreeDrawTree(tree, tree.GetRoot(), bDrawJointIndicator);
+	TreeDrawTree(tree, tree.GetRoot(), bDrawJointIndicator, bDrawRotationAxis);
 	if (bDrawEndeffectorIndicator)
 		DrawEndeffectorTarget(tree.GetRoot());
 }
