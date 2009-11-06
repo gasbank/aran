@@ -228,6 +228,7 @@
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Hor_Slider.H>
 #include <FL/Fl_Toggle_Button.H>
+#include <FL/Fl_Light_Button.H>
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Check_Browser.H>
 #include <FL/Fl_Gl_Window.H>

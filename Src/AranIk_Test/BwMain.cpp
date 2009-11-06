@@ -907,8 +907,16 @@ int main(int argc, char **argv)
 		BwWin32Timer timer;
 
 		BwTopWindow topWindow(800, 600, "aran", appContext);
+
+		std::ifstream windowPosAndSizeInput("BwWindow.txt");
+		if (windowPosAndSizeInput.is_open())
+		{
+			int x, y, w, h;
+			windowPosAndSizeInput >> x >> y >> w >> h;
+			topWindow.resize(x, y, w, h);
+		}
+
 		BwOpenGlWindow openGlWindow(10, 75, topWindow.w()-20-200, topWindow.h()-90, 0, appContext);
-		
 		topWindow.setShapeWindow(&openGlWindow);
 		//sw.mode(FL_RGB);
 		topWindow.resizable(&openGlWindow);
@@ -934,6 +942,7 @@ int main(int argc, char **argv)
 		Fl_Button prevSceneButton(10+75+55, 5, 50, 30, "Next");
 		prevSceneButton.callback(scene_buttons_cb, &sbh[2]);
 
+		Fl_Light_Button simulateButton(10, 40, 80, 30, "Simulate");
 
 		Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
 		slider.align(FL_ALIGN_LEFT);
@@ -976,6 +985,10 @@ int main(int argc, char **argv)
 		}
 		
 		ret = Fl::run();
+
+		std::ofstream windowPosAndSize("BwWindow.txt");
+		windowPosAndSize << topWindow.x() << " " << topWindow.y() << " " << topWindow.w() << " " << topWindow.h() << std::endl;
+		windowPosAndSize.close();
 	}
 	
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
