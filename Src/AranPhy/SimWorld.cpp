@@ -472,3 +472,26 @@ SimWorld::getContactCount() const
 {
 	return (unsigned int)m_osc->numContact;
 }
+
+void SimWorld::getSimWorldState( SimWorldState& state ) const
+{
+	state.generalBodyState.resize(m_bodiesPtr.size());
+	int i = 0;
+	foreach (const GeneralBodyPtr b, m_bodiesPtr)
+	{
+		b->getState(state.generalBodyState[i]);
+		++i;
+	}
+}
+
+void SimWorld::setSimWorldState( const SimWorldState& state )
+{
+	if (state.generalBodyState.size() != m_bodiesPtr.size())
+		abort();
+	int i = 0;
+	foreach (const GeneralBodyPtr b, m_bodiesPtr)
+	{
+		b->setState(state.generalBodyState[i], true);
+		++i;
+	}
+}

@@ -349,7 +349,7 @@ void Biped::loadBipedStateFromFile(const char* fileName)
 		{
 			GeneralBodyState gbs;
 			fread(&gbs, 1, sizeof(gbs), f);
-			m_bodies[i]->setState(gbs);
+			m_bodies[i]->setState(gbs, false);
 		}
 		fread(&m_curControlState, 1, sizeof(m_curControlState), f);
 		fread(&m_nextControlState, 1, sizeof(m_nextControlState), f);

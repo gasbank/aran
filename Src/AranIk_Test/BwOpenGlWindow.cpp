@@ -43,7 +43,7 @@ void BwOpenGlWindow::draw()
 	}
 
 	RenderScene(m_ac);
-	if (m_ac.bRenderHud)
+	if (m_ac.bDrawHud)
 		RenderHud(m_ac);
 
 	/* Check for error conditions. */
@@ -278,13 +278,14 @@ SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
 	/* draw only the names in the stack, and fill the array */
 	glFlush();
 	
-	//SDL_GL_SwapBuffers();
-	
+	// Rendering routine START
 	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
-		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator, ac.bJointAxisIndicator);
+		TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
 	}
+	// Rendering routine END
+
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
@@ -492,7 +493,7 @@ RenderScene(const BwAppContext& ac)
 	//glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	if (ac.bRenderGrid)
+	if (ac.bDrawGrid)
 	{
 		const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
 		RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
@@ -503,7 +504,7 @@ RenderScene(const BwAppContext& ac)
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		glPushMatrix();
-		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator, ac.bJointAxisIndicator);
+		TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
 		glPopMatrix();
 	}
 
@@ -570,13 +571,13 @@ RenderScene(const BwAppContext& ac)
 				glPushMatrix();
 				{
 					glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-					if (ac.bContactIndicator)
+					if (ac.bDrawContactIndicator)
 					{
 						ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
 						ArnRenderSphereGl(0.025, 16, 16);
 					}
 
-					if (ac.bContactForaceIndicator)
+					if (ac.bDrawContactForaceIndicator)
 					{
 						glEnable(GL_COLOR_MATERIAL);
 						glBegin(GL_LINES);

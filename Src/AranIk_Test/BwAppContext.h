@@ -13,6 +13,8 @@ enum ViewMode
 	VM_CAMERA
 };
 
+class PlaybackSlider;
+
 class BwAppContext : private Uncopyable
 {
 public:
@@ -57,13 +59,14 @@ public:
 	std::pair<int, int>						panningStartPoint;
 
 	// Drawing options
-	bool									bRenderGrid;
-	bool									bRenderHud;
-	bool									bRenderJointIndicator;
-	bool									bRenderEndeffectorIndicator;
-	bool									bJointAxisIndicator;
-	bool									bContactIndicator;
-	bool									bContactForaceIndicator;
+	bool									bDrawGrid;
+	bool									bDrawHud;
+	bool									bDrawJointIndicator;
+	bool									bDrawEndeffectorIndicator;
+	bool									bDrawJointAxisIndicator;
+	bool									bDrawContactIndicator;
+	bool									bDrawContactForaceIndicator;
+	bool									bDrawRootNodeIndicator;
 
 	bool									bSimulate;
 	unsigned int							frames;
@@ -74,4 +77,7 @@ public:
 	Fl_Select_Browser*						sceneGraphList;
 	Fl_Gl_Window*							glWindow;
 	Fl_Button*								frameLabel;
+	PlaybackSlider*							playbackSlider;
+
+	std::vector<SimWorldState>				simWorldHistory;
 };

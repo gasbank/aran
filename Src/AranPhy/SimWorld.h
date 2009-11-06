@@ -23,6 +23,11 @@ typedef std::set<GeneralBodyPtr>						GeneralBodyPtrSet;
 typedef std::set<GeneralJointPtr>						GeneralJointPtrSet;
 typedef std::vector<SliderJoint*>						SliderJointVector;
 
+struct SimWorldState
+{
+	std::vector<GeneralBodyState> generalBodyState;
+};
+
 TYPEDEF_SHARED_PTR(SimWorld)
 
 /**
@@ -86,6 +91,9 @@ public:
 	 * @brief Body ID로 \c GeneralBodyPtr 가져오기
 	 */
 	GeneralBodyPtr								getBodyByBodyIdFromSet(dBodyID bodyId) const;
+
+	void										getSimWorldState(SimWorldState& state) const;
+	void										setSimWorldState(const SimWorldState& state);
 
 	void										clearBodyContact();
 	void										setBiped(Biped* biped) { m_biped = biped; }

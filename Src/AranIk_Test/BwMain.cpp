@@ -5,6 +5,7 @@
 #include "BwAppContext.h"
 #include "BwWin32Timer.h"
 #include "BwDrawingOptionsWindow.h"
+#include "BwPlaybackSlider.h"
 
 #if !HAVE_GL
 #error OpenGL in FLTK not enabled.
@@ -758,55 +759,56 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 		Cleanup();
 		return -3;
 	}
+	// Notice for 32-bit and 64-bit build: Do not confuse the size of pointers!
 	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
-
-	
 	/// \c SceneList.txt 를 파싱합니다.
 	if (LoadSceneList(ac.sceneList) < 0)
 	{
 		std::cerr << " *** Init failed..." << std::endl;
 		return -10;
 	}
-
 	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
-
-	/// Viewport를 초기화합니다.
-	ac.avd.X		= 0;
-	ac.avd.Y		= 0;
-	ac.avd.MinZ		= 0;
-	ac.avd.MaxZ		= 1.0f;
-
-	ac.viewMode = VM_UNKNOWN;
-	ac.orthoViewDistance = 5;
+	// Default viewport init
+	ac.avd.X						= 0;
+	ac.avd.Y						= 0;
+	ac.avd.MinZ						= 0;
+	ac.avd.MaxZ						= 1.0f;
+	// View mode
+	ac.viewMode						= VM_UNKNOWN;
+	ac.orthoViewDistance			= 5;
 	// Panning by dragging
-	ac.bPanningButtonDown = false;
-	ac.panningCenter[0] = 0;
-	ac.panningCenter[1] = 0;
-	ac.panningCenter[2] = 0;
-	ac.dPanningCenter[0] = 0;
-	ac.dPanningCenter[1] = 0;
-	ac.dPanningCenter[2] = 0;
+	ac.bPanningButtonDown			= false;
+	ac.panningCenter[0]				= 0;
+	ac.panningCenter[1]				= 0;
+	ac.panningCenter[2]				= 0;
+	ac.dPanningCenter[0]			= 0;
+	ac.dPanningCenter[1]			= 0;
+	ac.dPanningCenter[2]			= 0;
 	// Drawing options
-	ac.bRenderGrid					= true;
-	ac.bRenderHud					= false;
-	ac.bRenderJointIndicator		= false;
-	ac.bRenderEndeffectorIndicator	= false;
-	ac.bJointAxisIndicator			= false;
-	ac.bContactIndicator			= false;
-	ac.bContactForaceIndicator		= false;
+	ac.bDrawGrid					= true;
+	ac.bDrawHud						= false;
+	ac.bDrawJointIndicator			= false;
+	ac.bDrawEndeffectorIndicator	= false;
+	ac.bDrawJointAxisIndicator		= false;
+	ac.bDrawContactIndicator		= false;
+	ac.bDrawContactForaceIndicator	= false;
+	ac.bDrawRootNodeIndicator		= false;
 	// Scene graph UI
-	ac.sceneGraphList = 0;
+	ac.sceneGraphList				= 0;
+	// Rigid body simulation
+	ac.bSimulate					= false;
+	/// 다음 카메라로 변경 플래그 초기화
+	ac.bNextCamera					= false;
 	// Timer init
 	ac.timer.start();
-	
-	ac.bSimulate = false;
+	// SimWorld history
+	ac.simWorldHistory.resize(10000);	
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
 
-	/// 다음 카메라로 변경 플래그 초기화
-	ac.bNextCamera	= false;
+	
 
 	/// 첫 장면 파일을 메모리에 로드합니다.
 	assert(ac.sceneList.size() > 0);
@@ -861,11 +863,18 @@ void idle_cb(void* ac)
 		frameDurationMs = frameEndMs - frameStartMs;
 		frameStartMs = (unsigned int)appContext.timer.getTicks();
 		UpdateScene(appContext, frameStartMs, frameDurationMs);
-		++appContext.frames;
+		
 		frameEndMs = (unsigned int)appContext.timer.getTicks();
 		appContext.glWindow->redraw();
 		sprintf(frameStr, "%d", appContext.frames);
 		appContext.frameLabel->label(frameStr);
+
+		appContext.playbackSlider->setAvailableFrames(appContext.frames);
+		appContext.playbackSlider->value(appContext.frames);
+		
+		appContext.swPtr->getSimWorldState(appContext.simWorldHistory[appContext.frames]);
+
+		++appContext.frames;
 	}
 }
 
@@ -999,17 +1008,18 @@ int main(int argc, char **argv)
 
 		Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
 		slider.align(FL_ALIGN_LEFT);
-		slider.callback(sides_cb,&openGlWindow);
+		slider.callback(sides_cb, &openGlWindow);
 		//slider.value(sw.sides);
 		slider.step(1);
 		slider.bounds(3,40);
 
-		Fl_Hor_Slider oslider(260, 40, topWindow.w()-270, 30, "Overlay:");
-		oslider.align(FL_ALIGN_LEFT);
-		oslider.callback(overlay_sides_cb,&openGlWindow);
+		PlaybackSlider playbackSlider(200, 40, topWindow.w()-210, 30, 0, appContext);
+		appContext.playbackSlider = &playbackSlider;
+		playbackSlider.bounds(0, 9999);
+		playbackSlider.align(FL_ALIGN_LEFT);
 		//oslider.value(sw.overlay_sides);
-		oslider.step(1);
-		oslider.bounds(3,40);
+		playbackSlider.step(1);
+		
 
 		BwDrawingOptionsWindow drawingOptions(topWindow.w()-200, 75, 190, 100, 0, appContext, openGlWindow);
 

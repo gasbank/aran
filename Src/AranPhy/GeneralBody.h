@@ -117,7 +117,7 @@ public:
 	 */
 	//@{
 	void							getState(GeneralBodyState& gbs) const;
-	void							setState(const GeneralBodyState& gbs);
+	void							setState(const GeneralBodyState& gbs, const bool notifyAlso);
 	//@}
 	/*!
 	 * @brief			모든 물리적 상태를 초기화

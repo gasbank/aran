@@ -232,5 +232,6 @@
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Check_Browser.H>
 #include <FL/Fl_Gl_Window.H>
-#include <FL/gl.h>
-#include <FL/math.h>
+#include <FL/gl.H>
+#include <FL/math.H>
+#include <FL/fl_draw.H>

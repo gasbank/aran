@@ -84,13 +84,16 @@ GeneralBody::getState(GeneralBodyState& gbs) const
 }
 
 void
-GeneralBody::setState(const GeneralBodyState& gbs)
+GeneralBody::setState(const GeneralBodyState& gbs, const bool notifyAlso)
 {
 	dQuaternion odeQ = { gbs.quat.w, gbs.quat.x, gbs.quat.y, gbs.quat.z }; // odeQ[0] is the scalar component
 	dBodySetPosition(m_body, gbs.pos[0], gbs.pos[1], gbs.pos[2]);
 	dBodySetQuaternion(m_body, odeQ);
 	dBodySetLinearVel(m_body, gbs.linVel[0], gbs.linVel[1], gbs.linVel[2]);
 	dBodySetAngularVel(m_body, gbs.angVel[0], gbs.angVel[1], gbs.angVel[2]);
+
+	if (notifyAlso)
+		notify();
 }
 
 ArnVec3

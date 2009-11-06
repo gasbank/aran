@@ -844,7 +844,7 @@ NodeDrawBox(const Node& node, const bool bDrawJointIndicator)
 }
 
 void
-NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, const bool bDrawRotationAxis)
+NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, const bool bDrawRotationAxis, const bool bDrawRootNodeIndicator)
 {
 	if (!isRoot)
 	{
@@ -853,11 +853,14 @@ NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, cons
 	else
 	{
 		// Draw a root node indicator.
-		glPushMatrix();
-		glTranslated(node.getAttach().x, node.getAttach().y, node.getAttach().z);
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
-		ArnRenderSphereGl(0.1);
-		glPopMatrix();
+		if (bDrawRootNodeIndicator)
+		{
+			glPushMatrix();
+			glTranslated(node.getAttach().x, node.getAttach().y, node.getAttach().z);
+			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+			ArnRenderSphereGl(0.1);
+			glPopMatrix();
+		}
 	}
 
 	// Draw rotation axis
@@ -887,23 +890,23 @@ NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, cons
 }
 
 static void
-TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator, const bool bDrawRotationAxis)
+TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator, const bool bDrawRotationAxis, const bool bDrawRootNodeIndicator)
 {
 	if (node)
 	{
 		glPushMatrix();
 		{
-			NodeDrawNode(*node, tree.GetRoot() == node, bDrawJointIndicator, bDrawRotationAxis); // Recursively draw node and update ModelView matrix
+			NodeDrawNode(*node, tree.GetRoot() == node, bDrawJointIndicator, bDrawRotationAxis, bDrawRootNodeIndicator); // Recursively draw node and update ModelView matrix
 			if (node->getLeftNode())
 			{
-				TreeDrawTree(tree, node->getLeftNode(), bDrawJointIndicator, bDrawRotationAxis); // Draw tree of children recursively
+				TreeDrawTree(tree, node->getLeftNode(), bDrawJointIndicator, bDrawRotationAxis, bDrawRootNodeIndicator); // Draw tree of children recursively
 			}
 		}
 		glPopMatrix();
 
 		if (node->getRightNode())
 		{
-			TreeDrawTree(tree, node->getRightNode(), bDrawJointIndicator, bDrawRotationAxis); // Draw right siblings recursively
+			TreeDrawTree(tree, node->getRightNode(), bDrawJointIndicator, bDrawRotationAxis, bDrawRootNodeIndicator); // Draw right siblings recursively
 		}
 	}
 }
@@ -929,9 +932,9 @@ DrawEndeffectorTarget(NodeConstPtr node)
 }
 
 void
-TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator, const bool bDrawRotationAxis)
+TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator, const bool bDrawRotationAxis, const bool bDrawRootNodeIndicator)
 {
-	TreeDrawTree(tree, tree.GetRoot(), bDrawJointIndicator, bDrawRotationAxis);
+	TreeDrawTree(tree, tree.GetRoot(), bDrawJointIndicator, bDrawRotationAxis, bDrawRootNodeIndicator);
 	if (bDrawEndeffectorIndicator)
 		DrawEndeffectorTarget(tree.GetRoot());
 }
