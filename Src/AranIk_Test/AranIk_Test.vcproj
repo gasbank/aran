@@ -187,6 +187,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\BwDrawingOptionsWindow.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwDrawingOptionsWindow.h"
+			>
+		</File>
+		<File
 			RelativePath=".\BwMain.cpp"
 			>
 		</File>

@@ -53,6 +53,7 @@ public:
 
 	ViewMode								viewMode;
 	bool									bRenderHud;
+	bool									bRenderGrid;
 	int										orthoViewDistance;
 	bool									bPanningButtonDown;
 	std::pair<int, int>						panningStartPoint;

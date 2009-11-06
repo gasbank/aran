@@ -12,8 +12,16 @@ public:
 	
 private:
 	void						draw();
-	void						draw_overlay();
-	BwAppContext&					m_ac;
+	BwAppContext&				m_ac;
 	int							sides;
 	int							overlay_sides;
+};
+
+
+struct HitRecord
+{
+	GLuint numNames;	// Number of names in the name stack for this hit record
+	GLuint minDepth;	// Minimum depth value of primitives (range 0 to 2^32-1)
+	GLuint maxDepth;	// Maximum depth value of primitives (range 0 to 2^32-1)
+	GLuint contents;	// Name stack contents
 };

@@ -35,3 +35,13 @@ void BwTopWindow::setShapeWindow( BwOpenGlWindow* sw )
 {
 	m_shapeWindow = sw;
 }
+
+void BwTopWindow::setSceneList( Fl_Select_Browser* sl )
+{
+	m_sceneList = sl;
+}
+
+void BwTopWindow::setDrawingOptionsWindow( Fl_Check_Browser* dow )
+{
+	m_drawingOptionsWindow = dow;
+}

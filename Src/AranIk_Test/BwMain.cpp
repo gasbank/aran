@@ -4,6 +4,7 @@
 #include "BwOpenGlWindow.h"
 #include "BwAppContext.h"
 #include "BwWin32Timer.h"
+#include "BwDrawingOptionsWindow.h"
 
 #if !HAVE_GL
 #error OpenGL in FLTK not enabled.
@@ -18,127 +19,6 @@ FootHeight(double t, double stepLength, double maxStepHeight)
 		return -4.0*maxStepHeight*t*(t-stepLength)/(stepLength*stepLength);
 }
 
-static void
-SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
-{
-	if (!ac.sgPtr || !ac.activeCam)
-		return;
-
-	HitRecord buff[16];
-	GLint hits, view[4];
-
-	/* This choose the buffer where store the values for the selection data */
-	glSelectBuffer(4*16, reinterpret_cast<GLuint*>(buff));
-
-	/* This retrieve info about the viewport */
-	glGetIntegerv(GL_VIEWPORT, view);
-
-	/* Switching in selecton mode */
-	glRenderMode(GL_SELECT);
-
-	/* Clearing the name's stack. This stack contains all the info about the objects */
-	glInitNames();
-
-	/* Now fill the stack with one element (or glLoadName will generate an error) */
-	glPushName(0);
-
-	/* Now modify the vieving volume, restricting selection area around the cursor */
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-
-	/* restrict the draw to an area around the cursor */
-	const GLdouble pickingAroundFactor = 1.0;
-	gluPickMatrix(mousePx, mousePy, pickingAroundFactor, pickingAroundFactor, view);
-
-	/* your original projection matrix */
-	ArnMatrix projMat;
-	ArnGetProjectionMatrix(&projMat, &ac.avd, ac.activeCam, true);
-	glMultTransposeMatrixf(reinterpret_cast<const GLfloat*>(projMat.m));
-
-
-	/* Draw the objects onto the screen */
-	glMatrixMode(GL_MODELVIEW);
-	/* draw only the names in the stack, and fill the array */
-	glFlush();
-	
-	//SDL_GL_SwapBuffers();
-	
-	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
-	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-	{
-		TreeDraw(*ikSolver->getTree());
-	}
-	/* Do you remeber? We do pushMatrix in PROJECTION mode */
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-
-	/* get number of objects drawed in that area and return to render mode */
-	hits = glRenderMode(GL_RENDER);
-
-	glMatrixMode(GL_MODELVIEW);
-
-	/* Print a list of the objects */
-	printf("---------------------\n");
-	for (GLint h = 0; h < hits; ++h)
-	{
-		if (buff[h].contents) // Zero means that ray hit on bounding box area.
-		{
-			const ArnNode* node = ac.sgPtr->getConstNodeById(buff[h].contents);
-			if (node)
-			{
-				const ArnNode* parentNode = node->getParent();
-				const char* name = node->getName();
-				if (strlen(name) == 0)
-					name = "<Unnamed>";
-				if (parentNode)
-				{
-					const char* parentName = parentNode->getName();
-					if (strlen(parentName) == 0)
-						parentName = "<Unnamed>";
-					printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
-						node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
-				}
-				else
-				{
-					printf("[Object 0x%p ID %d %s]\n",
-						node, node->getObjectId(), name);
-				}
-
-				const ArnMesh* mesh = dynamic_cast<const ArnMesh*>(parentNode);
-				if (mesh)
-				{
-					ArnVec3 dim;
-					mesh->getBoundingBoxDimension(&dim, true);
-					printf("Mesh Dimension: "); dim.printFormatString();
-				}
-			}
-
-			foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-			{
-				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
-				if (node)
-				{
-					printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
-						node.get(), node->getObjectId(), node->getName(), node->isEndeffector());
-					/*
-					if (ac.bHoldingKeys[SDLK_LSHIFT])
-					{
-						ikSolver->reconfigureRoot(node);
-					}
-					else
-					{
-						if (node->isEndeffector())
-						{
-							ikSolver->setSelectedEndeffector(node);
-						}
-					}
-					*/
-				}
-			}
-		}
-	}
-}
 
 /*
 static MessageHandleResult
@@ -706,341 +586,6 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 	//}
 }
 
-static void RenderGrid(const BwAppContext& ac, const float gridCellSize, const int gridCellCount, const float gridColor[3], const float thickness)
-{
-	glColor3fv(gridColor);
-	glPushAttrib(GL_ENABLE_BIT);
-	glDisable(GL_LIGHTING);
-
-	// subgrid
-	glLineWidth(thickness);
-	glBegin(GL_LINES);
-	const float v1 = gridCellCount * gridCellSize;
-	for (int i = -gridCellCount; i <= gridCellCount; ++i)
-	{		
-		const float v2 = gridCellSize * i;
-
-		switch (ac.viewMode)
-		{
-		case VM_TOP:
-			// X direction
-			glVertex3f(-v1, v2, 0);
-			glVertex3f( v1, v2, 0);
-			// Y direction
-			glVertex3f(v2, -v1, 0);
-			glVertex3f(v2,  v1, 0);
-			break;
-		case VM_RIGHT:
-			// Y direction
-			glVertex3f(0, -v1, v2);
-			glVertex3f(0,  v1, v2);
-			// Z direction
-			glVertex3f(0, v2, -v1);
-			glVertex3f(0, v2,  v1);
-			break;
-		case VM_BACK:
-			// X direction
-			glVertex3f(-v1, 0, v2);
-			glVertex3f( v1, 0, v2);
-			// Z direction
-			glVertex3f(v2, 0, -v1);
-			glVertex3f(v2, 0,  v1);
-			break;
-		default:
-			break;
-		}
-	}
-	glEnd();
-
-	glPopAttrib();
-}
-
-void
-RenderScene(const BwAppContext& ac)
-{
-	glClearColor( 0.5, 0.5, 0.5, 1.0 );
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
-	// Set modelview and projection matrices here
-	if (ac.viewMode == VM_CAMERA || ac.viewMode == VM_UNKNOWN)
-	{
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		if (ac.activeCam)
-		{
-			ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
-			ArnConfigureViewMatrixGl(ac.activeCam);
-		}
-	}
-	else if (ac.viewMode == VM_TOP || ac.viewMode == VM_RIGHT || ac.viewMode == VM_BACK)
-	{
-		static float eye[3], at[3], up[3];
-		if (ac.viewMode == VM_TOP)
-		{
-			eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
-			eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
-			eye[2] = 100.0f;
-
-			at[0] = eye[0];
-			at[1] = eye[1];
-			at[2] = 0;
-			
-			up[0] = 0;
-			up[1] = 1.0f;
-			up[2] = 0;
-		}
-		else if (ac.viewMode == VM_RIGHT)
-		{
-			eye[0] = 100.0f;
-			eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
-			eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
-
-			at[0] = 0;
-			at[1] = eye[1];
-			at[2] = eye[2];
-
-			up[0] = 0;
-			up[1] = 0;
-			up[2] = 1.0f;
-		}
-		else if (ac.viewMode == VM_BACK)
-		{
-			eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
-			eye[1] = -100.0f;
-			eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
-
-			at[0] = eye[0];
-			at[1] = 0;
-			at[2] = eye[2];
-
-			up[0] = 0;
-			up[1] = 0;
-			up[2] = 1.0f;
-		}
-
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-		gluLookAt(eye[0], eye[1], eye[2], at[0], at[1], at[2], up[0], up[1], up[2]);
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
-		const float viewDistance = (float)ac.orthoViewDistance;
-		glOrtho(-viewDistance*aspectRatio, viewDistance*aspectRatio, -viewDistance, viewDistance, 0, 10000);
-		glMatrixMode(GL_MODELVIEW);
-	}
-
-
-	if (ac.activeLight)
-	{
-		ArnConfigureLightGl(0, ac.activeLight);
-	}
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
-	RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
-	RenderGrid(ac, 2.5f, 2, gridColor, 1.0f);
-	
-	// Render skeletons under control of IK solver
-	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-	{
-		glPushMatrix();
-		TreeDraw(*ikSolver->getTree());
-		glPopMatrix();
-	}
-
-	// Render the main scene graph
-	glPushMatrix();
-	{
-		if (ac.sgPtr)
-		{
-			ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
-		}
-	}
-	glPopMatrix();
-
-	// Render shadow
-	// light vector. LIGHTZ is implicitly 1
-	/*
-	static const float LIGHTX = 1.0f;
-	static const float LIGHTY = 1.0f;
-	static const float SHADOW_INTENSITY = 0.65f;
-	static const float GROUND_R = 0.5f; 	// ground color for when there's no texture
-	static const float GROUND_G = 0.5f;
-	static const float GROUND_B = 0.5f;
-	glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
-	glDisable(GL_BLEND);
-	glDisable(GL_LIGHTING);
-	glDisable(GL_TEXTURE_2D);
-	glColor3f(GROUND_R*SHADOW_INTENSITY, GROUND_G*SHADOW_INTENSITY, GROUND_B*SHADOW_INTENSITY);
-	glDepthRange(0, 0.9999);
-	GLfloat matrix[16];
-	for (int i = 0; i < 16; i++)
-	matrix[i] = 0;
-	matrix[ 0] = 1;
-	matrix[ 5] = 1;
-	matrix[ 8] = -LIGHTX;
-	matrix[ 9] = -LIGHTY;
-	matrix[15] = 1;
-	glPushMatrix();
-	glMultMatrixf(matrix);
-	if (ac.sgPtr)
-	{
-	ArnSceneGraphRenderGl(ac.sgPtr.get(), false);
-	}
-	glPopMatrix();
-	glPopAttrib();
-	*/
-
-	// Render COM indicator and contact points of a biped.
-	glPushAttrib(GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_DEPTH_TEST);
-	{
-		if (ac.trunk)
-		{
-			ArnVec3 netContactForce;
-			const unsigned int contactCount = ac.swPtr->getContactCount();
-			// Calculate the net contact force and render the individual contact force
-			for (unsigned int i = 0; i < contactCount; ++i)
-			{
-				ArnVec3 contactPos, contactForce;
-				ac.swPtr->getContactPosition(i, &contactPos);
-				ac.swPtr->getContactForce1(i, &contactForce);
-				netContactForce += contactForce; // Accumulate contact forces
-
-				// Render the individual contact force
-				glPushMatrix();
-				{
-					glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-					ArnRenderSphereGl(0.025, 16, 16);
-
-					glEnable(GL_COLOR_MATERIAL);
-					glBegin(GL_LINES);
-					glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
-					glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
-					glEnd();
-					glDisable(GL_COLOR_MATERIAL);
-
-					// Contact forces in the second direction. Should be zero.
-					ac.swPtr->getContactForce2(i, &contactForce);
-					assert(contactForce == ArnConsts::ARNVEC3_ZERO);
-				}
-				glPopMatrix();
-			}
-			glPushMatrix();
-			const ArnVec3& bipedComPos = *ac.bipedComPos.rbegin();
-			glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
-			ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
-			ArnRenderSphereGl(0.025, 16, 16); // COM indicator
-			glEnable(GL_COLOR_MATERIAL);
-			//float netContactForceSize = ArnVec3Length(netContactForce);
-			/*
-			glBegin(GL_LINES);
-			glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
-			glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
-			glEnd();
-			*/
-			glDisable(GL_COLOR_MATERIAL);
-			//printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
-			glPopMatrix();
-		}
-
-		/*
-		foreach (const ArnVec3& isect, ac.isects)
-		{
-		glPushMatrix();
-		glTranslatef(isect.x, isect.y, isect.z);
-		ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_WHITE);
-		ArnRenderSphereGl(0.025, 16, 16);
-		glPopMatrix();
-		}
-		*/
-	}
-	glPopAttrib();
-}
-
-static void
-RenderHud(const BwAppContext& ac)
-{
-	glMatrixMode(GL_PROJECTION);
-	glPushMatrix();
-	glLoadIdentity();
-	const double aspect = (double)ac.windowWidth / ac.windowHeight;
-	glOrtho(-0.5 * aspect, 0.5 * aspect, -0.5, 0.5, 0, 1);
-	glMatrixMode(GL_MODELVIEW);
-
-	glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_LIGHTING_BIT | GL_LINE_BIT | GL_POINT_BIT);
-	glLineWidth(1);
-	glPointSize(4);
-	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_LIGHTING);
-	glPushMatrix();
-	glLoadIdentity();
-	glTranslatef(0.1f, 0, 0);
-	glScalef(0.5, 0.5, 1);
-
-	// Origin indicator
-	ArnDrawAxesGl(0.5f);
-
-	// Support polygon
-	if (ac.supportPolygon.size())
-	{
-		glBegin(GL_LINE_LOOP);
-		foreach (const ArnVec3& v, ac.supportPolygon)
-		{
-			glColor3f(0, 0, 0); glVertex2f(v.x, v.y);
-		}
-		glEnd();
-	}
-
-	// Mass map
-	if (ac.bipedComPos.size())
-	{
-		const float devi = BwAppContext::massMapDeviation;
-		const ArnVec3& comPos = *ac.bipedComPos.rbegin();
-		glEnable(GL_DEPTH_TEST);
-		glBindTexture(GL_TEXTURE_2D, ac.massMapTex);
-		glBegin(GL_QUADS);
-		glTexCoord2f(0, 0); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y - devi);
-		glTexCoord2f(1, 0); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y - devi);
-		glTexCoord2f(1, 1); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y + devi);
-		glTexCoord2f(0, 1); glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y + devi);
-		glEnd();
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		glDisable(GL_DEPTH_TEST);
-		glBegin(GL_LINE_LOOP);
-		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y - devi);
-		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y - devi);
-		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x + devi, comPos.y + devi);
-		glColor4f(1, 1, 1, 1); glVertex2f(comPos.x - devi, comPos.y + devi);
-		glEnd();
-	}
-
-	// COM
-	glDisable(GL_DEPTH_TEST);
-	glBegin(GL_POINTS);
-	float trail = 0;
-	const float trailDiff = 1.0f / ac.bipedComPos.size();
-	foreach (const ArnVec3& comPos, ac.bipedComPos)
-	{
-		glColor4f(1, 0, 0, trail); glVertex2f(comPos.x, comPos.y);
-		trail += trailDiff;
-	}
-	glEnd();
-
-
-	glPopMatrix();
-	glPopAttrib();
-
-	glMatrixMode(GL_PROJECTION);
-	glPopMatrix();
-	glMatrixMode(GL_MODELVIEW);
-}
-
 /*!
 * @brief Scene graph가 새로 로드되었을 때 수행되는 초기화 (렌더러와 무관)
 */
@@ -1088,9 +633,8 @@ InitializeRendererDependentsFromSg(BwAppContext& ac)
 }
 
 static int
-InitializeRendererDependentAppContextOnce(BwAppContext& ac)
+InitializeRendererDependentOnce(BwAppContext& ac)
 {
-
 	// OpenGL context available from this line.
 	if (!glGetString( GL_VENDOR ) || !glGetString( GL_RENDERER ) || !glGetString( GL_VERSION ))
 	{
@@ -1157,72 +701,8 @@ InitializeRendererDependentAppContextOnce(BwAppContext& ac)
 	return 0;
 }
 
-/*!
-* @brief 프로그램 실행 시 한 번만 수행되는 초기화 루틴
-*/
-static int
-InitializeAppContextOnce(BwAppContext& ac)
-{
-	/// \c SceneList.txt 를 파싱합니다.
-	if (LoadSceneList(ac.sceneList) < 0)
-	{
-		std::cerr << " *** Init failed..." << std::endl;
-		return -10;
-	}
-
-	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
-
-	/// Viewport를 초기화합니다.
-	ac.avd.X		= 0;
-	ac.avd.Y		= 0;
-	ac.avd.MinZ		= 0;
-	ac.avd.MaxZ		= 1.0f;
-
-	ac.viewMode = VM_UNKNOWN;
-	ac.bRenderHud = false;
-	ac.orthoViewDistance = 5;
-	ac.bPanningButtonDown = false;
-	ac.panningCenter[0] = 0;
-	ac.panningCenter[1] = 0;
-	ac.panningCenter[2] = 0;
-	ac.dPanningCenter[0] = 0;
-	ac.dPanningCenter[1] = 0;
-	ac.dPanningCenter[2] = 0;
-
-	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
-	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
-
-	/// 다음 카메라로 변경 플래그 초기화
-	ac.bNextCamera	= false;
-
-	/// 첫 장면 파일을 메모리에 로드합니다.
-	assert(ac.sceneList.size() > 0);
-	ac.curSceneIndex = -1;
-	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
-	if (!ac.sgPtr)
-	{
-		std::cerr << " *** Scene graph loading failed..." << std::endl;
-		return -20;
-	}
-	assert(ac.sgPtr);
-
-
-	/// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
-	if (InitializeRendererIndependentsFromSg(ac) < 0)
-	{
-		return -1;
-	}
-
-	if (InitializeRendererDependentAppContextOnce(ac) < 0)
-	{
-		return -5;
-	}
-
-	return 0;
-}
-
 int
-Initialize(BwAppContext& ac)
+InitializeRendererIndependentOnce(BwAppContext& ac)
 {
 	/*!
 	* 렌더러 독립적 ARAN 패키지인 ARAN Core, ARAN Physics를 초기화합니다.
@@ -1248,29 +728,138 @@ Initialize(BwAppContext& ac)
 	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
 
-	/*!
-	* Application-wide context를 초기화합니다.
-	* 이 초기화는 프로그램 구동시 단 한번 시행됩니다.
-	*/
-	if (InitializeAppContextOnce(ac) < 0)
+	
+	/// \c SceneList.txt 를 파싱합니다.
+	if (LoadSceneList(ac.sceneList) < 0)
+	{
+		std::cerr << " *** Init failed..." << std::endl;
+		return -10;
+	}
+
+	memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
+
+	/// Viewport를 초기화합니다.
+	ac.avd.X		= 0;
+	ac.avd.Y		= 0;
+	ac.avd.MinZ		= 0;
+	ac.avd.MaxZ		= 1.0f;
+
+	ac.viewMode = VM_UNKNOWN;
+	ac.bRenderGrid = true;
+	ac.bRenderHud = false;
+	ac.orthoViewDistance = 5;
+	ac.bPanningButtonDown = false;
+	ac.panningCenter[0] = 0;
+	ac.panningCenter[1] = 0;
+	ac.panningCenter[2] = 0;
+	ac.dPanningCenter[0] = 0;
+	ac.dPanningCenter[1] = 0;
+	ac.dPanningCenter[2] = 0;
+
+	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
+	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
+
+	/// 다음 카메라로 변경 플래그 초기화
+	ac.bNextCamera	= false;
+
+	/// 첫 장면 파일을 메모리에 로드합니다.
+	assert(ac.sceneList.size() > 0);
+	ac.curSceneIndex = -1;
+	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
+	if (!ac.sgPtr)
+	{
+		std::cerr << " *** Scene graph loading failed..." << std::endl;
+		Cleanup();
+		return -20;
+	}
+	assert(ac.sgPtr);
+
+
+	/// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
+	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
 		Cleanup();
-		return -4;
+		return -1;
 	}
+
 	return 0;
 }
 
 // when you change the data, as in this callback, you must call redraw():
-void sides_cb(Fl_Widget *o, void *p) {
+void sides_cb(Fl_Widget *o, void *p)
+{
 	BwOpenGlWindow *sw = (BwOpenGlWindow *)p;
 	//sw->sides = int(((Fl_Slider *)o)->value());
 	sw->redraw();
 }
 
-void overlay_sides_cb(Fl_Widget *o, void *p) {
+void overlay_sides_cb(Fl_Widget *o, void *p)
+{
 	BwOpenGlWindow *sw = (BwOpenGlWindow *)p;
 	//sw->overlay_sides = int(((Fl_Slider *)o)->value());
 	sw->redraw_overlay();
+}
+
+struct SceneButtonsHolder
+{
+	BwAppContext* ac;
+	BwOpenGlWindow* openGlWindow;
+	MessageHandleResult mhr;
+};
+
+void scene_buttons_cb(Fl_Widget* o, void* p)
+{
+	SceneButtonsHolder* sbh = (SceneButtonsHolder*)p;
+	BwAppContext& ac = *sbh->ac;
+	BwOpenGlWindow& openGlWindow = *sbh->openGlWindow;
+	MessageHandleResult done = sbh->mhr;
+	
+	int reconfigScene = false;
+	if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)
+	{
+		int nextSceneIndex;
+		if (done == MHR_NEXT_SCENE)
+			nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+		else
+		{
+			if (ac.curSceneIndex == 0)
+				nextSceneIndex = ac.sceneList.size() - 1;
+			else
+				nextSceneIndex = ac.curSceneIndex - 1;
+		}
+
+		ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
+		if (!ac.sgPtr)
+		{
+			std::cerr << " *** Aborting..." << std::endl;
+			done = MHR_EXIT_APP;
+		}
+		else
+		{
+			reconfigScene = true;
+		}
+	}
+	else if (done == MHR_RELOAD_SCENE)
+	{
+		ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
+		if (!ac.sgPtr)
+		{
+			std::cerr << " *** Aborting..." << std::endl;
+			done = MHR_EXIT_APP;
+		}
+		else
+		{
+			reconfigScene = true;
+		}
+	}
+
+	if (reconfigScene)
+	{
+		InitializeRendererIndependentsFromSg(ac);
+		InitializeRendererDependentsFromSg(ac);
+
+		openGlWindow.redraw();
+	}
 }
 
 int main(int argc, char **argv)
@@ -1278,38 +867,74 @@ int main(int argc, char **argv)
 	int ret = 0;
 	{
 		BwAppContext appContext;
+		InitializeRendererIndependentOnce(appContext);
+		
 		BwWin32Timer timer;
 
-		BwTopWindow window(800, 600, "aran", appContext);
-		BwOpenGlWindow sw(10, 75, window.w()-20, window.h()-90, 0, appContext);
+		BwTopWindow topWindow(800, 600, "aran", appContext);
+		BwOpenGlWindow openGlWindow(10, 75, topWindow.w()-20-200, topWindow.h()-90, 0, appContext);
 		
-		sw.visible_focus();
-		window.setShapeWindow(&sw);
+		topWindow.setShapeWindow(&openGlWindow);
 		//sw.mode(FL_RGB);
-		window.resizable(&sw);
+		topWindow.resizable(&openGlWindow);
 
-		Fl_Hor_Slider slider(60, 5, window.w()-70, 30, "Sides:");
+		SceneButtonsHolder sbh[3];
+		sbh[0].ac = &appContext;
+		sbh[0].openGlWindow = &openGlWindow;
+		sbh[0].mhr = MHR_RELOAD_SCENE;
+		
+		sbh[1].ac = &appContext;
+		sbh[1].openGlWindow = &openGlWindow;
+		sbh[1].mhr = MHR_PREV_SCENE;
+
+		sbh[2].ac = &appContext;
+		sbh[2].openGlWindow = &openGlWindow;
+		sbh[2].mhr = MHR_NEXT_SCENE;
+		
+
+		Fl_Button reloadSceneButton(10, 5, 70, 30, "Reload");
+		reloadSceneButton.callback(scene_buttons_cb, &sbh[0]);
+		Fl_Button nextSceneButton(10+75, 5, 50, 30, "Prev");
+		nextSceneButton.callback(scene_buttons_cb, &sbh[1]);
+		Fl_Button prevSceneButton(10+75+55, 5, 50, 30, "Next");
+		prevSceneButton.callback(scene_buttons_cb, &sbh[2]);
+
+
+		Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
 		slider.align(FL_ALIGN_LEFT);
-		slider.callback(sides_cb,&sw);
+		slider.callback(sides_cb,&openGlWindow);
 		//slider.value(sw.sides);
 		slider.step(1);
 		slider.bounds(3,40);
 
-		Fl_Hor_Slider oslider(60, 40, window.w()-70, 30, "Overlay:");
+		Fl_Hor_Slider oslider(260, 40, topWindow.w()-270, 30, "Overlay:");
 		oslider.align(FL_ALIGN_LEFT);
-		oslider.callback(overlay_sides_cb,&sw);
+		oslider.callback(overlay_sides_cb,&openGlWindow);
 		//oslider.value(sw.overlay_sides);
 		oslider.step(1);
 		oslider.bounds(3,40);
 
-		window.end();
-		window.show(argc,argv);
-		printf("Can do overlay = %d\n", sw.can_do_overlay());
-		sw.show();
-		sw.make_current();
-		sw.redraw_overlay();
+		BwDrawingOptionsWindow drawingOptions(topWindow.w()-200, 75, 190, 100, 0, appContext, openGlWindow);
 
-		Initialize(appContext);
+		Fl_Select_Browser sceneList(topWindow.w()-200, 75+110, 190, topWindow.h()-90-110);
+		topWindow.setSceneList(&sceneList);
+		topWindow.setDrawingOptionsWindow(&drawingOptions);
+		topWindow.end();
+		topWindow.show(argc,argv);
+		//printf("Can do overlay = %d\n", sw.can_do_overlay());
+
+		openGlWindow.show();
+		openGlWindow.make_current();
+		openGlWindow.redraw_overlay();
+
+		InitializeRendererDependentOnce(appContext);
+
+
+		// scene list available now
+		foreach (const std::string& scene, appContext.sceneList)
+		{
+			sceneList.add(scene.c_str());
+		}
 		
 		ret = Fl::run();
 	}
