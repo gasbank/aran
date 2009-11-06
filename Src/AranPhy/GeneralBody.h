@@ -22,6 +22,7 @@ struct GeneralBodyState
 };
 
 TYPEDEF_SHARED_PTR(GeneralBody)
+TYPEDEF_SHARED_PTR(SimWorld)
 
 /*!
  * @brief ODE 강체 관련 함수에 대한 래퍼 최상위 클래스
@@ -83,7 +84,7 @@ public:
 	 * 현재 GeneralBody 를 중심으로 하여 관절로 연결되어있는 GeneralBody 를
 	 * 따라가며 ArnSkeleton 을 생성합니다. 각 관절의 위치가 ArnBone의 tail이 됩니다.
 	 */
-	ArnSkeleton*					createLumpedArnSkeleton() const;
+	ArnSkeleton*					createLumpedArnSkeleton(SimWorldPtr swPtr) const;
 
 	//@}
 	/*! @name 회전

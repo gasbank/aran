@@ -7,6 +7,7 @@
 #include "ArnSkeleton.h"
 #include "ArnBone.h"
 #include "ArnIntersection.h"
+#include "SimWorld.h"
 
 GeneralBody::GeneralBody(const OdeSpaceContext* osc)
 : ArnObject(NDT_RT_GENERALBODY)
@@ -503,9 +504,10 @@ ArnxGetJointAnchor(dJointID j)
 }
 
 static void
-ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBody, int depth)
+ArnxCreateLumpedArnSkeleton(ArnXformable* parent, SimWorldPtr swPtr, const GeneralBody* body, const GeneralBody* parentBody, const int depth)
 {
-	int numJoint = dBodyGetNumJoints(body);
+	assert(body && parentBody);
+	int numJoint = dBodyGetNumJoints(body->getBodyId());
 	// 'parentWorldXform' is the frame located and oriented at the tail of 'parent'
 	// only if 'parent' has a type of ArnBone.
 	ArnMatrix parentWorldXform = parent->computeWorldXform(); // Get the frame located at the head.
@@ -524,7 +526,7 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 	bool childBoneAdded = false;
 	for (int i = 0; i < numJoint; ++i)
 	{
-		dJointID joint = dBodyGetJoint(body, i);
+		dJointID joint = dBodyGetJoint(body->getBodyId(), i);
 		int jointType = dJointGetType(joint);
 		if (jointType != dJointTypeBall
 		 && jointType != dJointTypeHinge
@@ -532,11 +534,19 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 		{
 		 	continue;
 		}
-		dBodyID body2 = dJointGetBody(joint, 0);
-		if (body2 == body)
-			body2 = dJointGetBody(joint, 1);
-		if (body2 == parentBody)
+		dBodyID body2Id = dJointGetBody(joint, 0);
+		GeneralBodyPtr body2 = swPtr->getBodyByBodyIdFromSet(body2Id);
+		assert(body2);
+		if (body2->getBodyId() == body->getBodyId())
+		{
+			body2Id = dJointGetBody(joint, 1);
+			body2 = swPtr->getBodyByBodyIdFromSet(body2Id);
+			assert(body2);
+		}
+		if (body2->getBodyId() == parentBody->getBodyId())
+		{
 			continue;
+		}
 		ArnVec3 tail(ArnxGetJointAnchor(joint));
 		ArnVec3TransformCoord(&tail, &tail, &parentWorldXformInv);
 		const ArnVec3 boneDir = tail - head;
@@ -550,6 +560,13 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 		ArnQuaternionRotationAxis(&q, &rotAxis, rotAngle);
 		b->setLocalXform_Rot(q);
 
+		// TODO: Set the bone name accordingly
+		std::string boneName("XYZ_");
+		boneName += body->getName();
+		boneName += "//";
+		boneName += body2->getName();
+		b->setName(boneName.c_str());
+
 		if (parent->getType() == NDT_RT_BONE)
 		{
 			b->setLocalXform_Trans(ArnVec3(0, static_cast<ArnBone*>(parent)->getBoneLength(), 0));
@@ -558,11 +575,13 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 		//b->getLocalXform().printFrameInfo();
 		parent->attachChild(b);
 		childBoneAdded = true;
-		ArnxCreateLumpedArnSkeleton(b, body2, body, depth+1);
+		ArnxCreateLumpedArnSkeleton(b, swPtr, body2.get(), body, depth+1);
 	}
 	if (!childBoneAdded)
 	{
-		const dReal* bodyCom = dBodyGetPosition(body);
+		// No child bone added --> This is an endeffector.
+
+		const dReal* bodyCom = dBodyGetPosition(body->getBodyId());
 		ArnVec3 tail(bodyCom[0], bodyCom[1], bodyCom[2]);
 		ArnVec3TransformCoord(&tail, &tail, &parentWorldXformInv);
 		const ArnVec3 boneDir = tail - head;
@@ -576,6 +595,11 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 		ArnQuaternionRotationAxis(&q, &rotAxis, rotAngle);
 		b->setLocalXform_Rot(q);
 
+		// Set the bone name accordingly
+		std::string boneName("E_");
+		boneName += body->getName();
+		b->setName(boneName.c_str());
+
 		if (parent->getType() == NDT_RT_BONE)
 		{
 			b->setLocalXform_Trans(ArnVec3(0, static_cast<ArnBone*>(parent)->getBoneLength(), 0));
@@ -587,7 +611,7 @@ ArnxCreateLumpedArnSkeleton(ArnXformable* parent, dBodyID body, dBodyID parentBo
 }
 
 ArnSkeleton*
-GeneralBody::createLumpedArnSkeleton() const
+GeneralBody::createLumpedArnSkeleton(SimWorldPtr swPtr) const
 {
 	ArnSkeleton* skel = ArnSkeleton::createFromEmpty();
 	const ArnVec3 skelRootPos(getPosition()[0], getPosition()[1], getPosition()[2]);
@@ -595,8 +619,9 @@ GeneralBody::createLumpedArnSkeleton() const
 	skel->setLocalXform_Trans(skelRootPos);
 	skel->setLocalXform_Rot(skelRootQ);
 	skel->recalcLocalXform();
+	skel->setName(getName());
 	//skel->getLocalXform().printFrameInfo();
-	ArnxCreateLumpedArnSkeleton(skel, getBodyId(), getBodyId(), 0);
+	ArnxCreateLumpedArnSkeleton(skel, swPtr, this, this, 0);
 	return skel;
 }
 

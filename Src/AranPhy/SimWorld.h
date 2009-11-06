@@ -75,13 +75,17 @@ public:
 	GeneralBody*								getBodyByName(const char* name) const;
 
 	/*!
-	 * @brief 관절 이름으로 가져오기
+	 * @brief 관절 이름으로 \c GeneralJointPtr 가져오기
 	 */
 	GeneralJointPtr								getGeneralJointByName(const char* name) const;
 	/*!
-	 * @brief 강체 이름으로 가져오기
+	 * @brief 강체 이름으로 \c GeneralBodyPtr 가져오기
 	 */
 	GeneralBodyPtr								getBodyByNameFromSet(const char* name) const;
+	/*!
+	 * @brief Body ID로 \c GeneralBodyPtr 가져오기
+	 */
+	GeneralBodyPtr								getBodyByBodyIdFromSet(dBodyID bodyId) const;
 
 	void										clearBodyContact();
 	void										setBiped(Biped* biped) { m_biped = biped; }

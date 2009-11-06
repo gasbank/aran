@@ -402,6 +402,17 @@ SimWorld::getBodyByNameFromSet( const char* name ) const
 	return GeneralBodyPtr();
 }
 
+GeneralBodyPtr
+SimWorld::getBodyByBodyIdFromSet( dBodyID bodyId ) const
+{
+	foreach (const GeneralBodyPtr b, m_bodiesPtr)
+	{
+		if (b->getBodyId() == bodyId)
+			return b;
+	}
+	return GeneralBodyPtr();
+}
+
 void
 SimWorld::clearBodyContact()
 {
