@@ -20,5 +20,5 @@ private:
 		__int64       performance_timer_start;					// Performance Timer Start Value
 		__int64       performance_timer_elapsed;					// Performance Timer Elapsed Time
 	} timer;									// Structure Is Named timer
-
+	bool m_bInited;
 };

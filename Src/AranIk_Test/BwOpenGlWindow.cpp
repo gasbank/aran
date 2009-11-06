@@ -45,6 +45,14 @@ void BwOpenGlWindow::draw()
 	RenderScene(m_ac);
 	if (m_ac.bRenderHud)
 		RenderHud(m_ac);
+
+	/* Check for error conditions. */
+	GLenum gl_error = glGetError();
+	if( gl_error != GL_NO_ERROR )
+	{
+		fprintf( stderr, "ARAN: OpenGL error: %s\n", gluErrorString(gl_error) );
+		abort();
+	}
 }
 
 int BwOpenGlWindow::handle( int eventType )

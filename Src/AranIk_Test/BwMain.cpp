@@ -620,6 +620,7 @@ UpdateSceneGraphList( BwAppContext& ac )
 static int
 InitializeRendererIndependentsFromSg(BwAppContext& ac)
 {
+	ac.frames = 0;
 	assert(ac.sgPtr);
 	ac.swPtr.reset(SimWorld::createFrom(ac.sgPtr.get()));
 	GetActiveCamAndLight(ac.activeCam, ac.activeLight, ac.sgPtr.get());
@@ -776,6 +777,7 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 
 	ac.viewMode = VM_UNKNOWN;
 	ac.orthoViewDistance = 5;
+	// Panning by dragging
 	ac.bPanningButtonDown = false;
 	ac.panningCenter[0] = 0;
 	ac.panningCenter[1] = 0;
@@ -784,12 +786,16 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.dPanningCenter[1] = 0;
 	ac.dPanningCenter[2] = 0;
 	// Drawing options
-	ac.bRenderGrid			= true;
-	ac.bRenderHud			= false;
-	ac.bRenderJointIndicator			= false;
+	ac.bRenderGrid					= true;
+	ac.bRenderHud					= false;
+	ac.bRenderJointIndicator		= false;
 	ac.bRenderEndeffectorIndicator	= false;
-
+	// Scene graph UI
 	ac.sceneGraphList = 0;
+	// Timer init
+	ac.timer.start();
+	
+	ac.bSimulate = false;
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
@@ -833,6 +839,13 @@ void overlay_sides_cb(Fl_Widget *o, void *p)
 	BwOpenGlWindow *sw = (BwOpenGlWindow *)p;
 	//sw->overlay_sides = int(((Fl_Slider *)o)->value());
 	sw->redraw_overlay();
+}
+
+void simulate_button_cb(Fl_Widget *o, void *p)
+{
+	Fl_Light_Button* widget = (Fl_Light_Button*)o;
+	BwAppContext& appContext = *(BwAppContext*)p;
+	appContext.bSimulate = widget->value() ? true : false;
 }
 
 struct SceneButtonsHolder
@@ -897,15 +910,35 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
 	}
 }
 
+void idle_cb(void* ac)
+{
+	static unsigned int start_time			= 0;
+	static unsigned int frameStartMs		= 0;
+	static unsigned int frameDurationMs		= 0;
+	static unsigned int frameEndMs			= 0;
+	static char frameStr[32];
+
+	BwAppContext& appContext = *(BwAppContext*)ac;
+	if (appContext.bSimulate)
+	{
+		start_time = (unsigned int)appContext.timer.getTicks();
+		frameDurationMs = frameEndMs - frameStartMs;
+		frameStartMs = (unsigned int)appContext.timer.getTicks();
+		UpdateScene(appContext, frameStartMs, frameDurationMs);
+		++appContext.frames;
+		frameEndMs = (unsigned int)appContext.timer.getTicks();
+		appContext.glWindow->redraw();
+		sprintf(frameStr, "%d", appContext.frames);
+		appContext.frameLabel->label(frameStr);
+	}
+}
+
 int main(int argc, char **argv)
 {
 	int ret = 0;
 	{
 		BwAppContext appContext;
 		InitializeRendererIndependentOnce(appContext);
-		
-		BwWin32Timer timer;
-
 		BwTopWindow topWindow(800, 600, "aran", appContext);
 
 		std::ifstream windowPosAndSizeInput("BwWindow.txt");
@@ -917,6 +950,7 @@ int main(int argc, char **argv)
 		}
 
 		BwOpenGlWindow openGlWindow(10, 75, topWindow.w()-20-200, topWindow.h()-90, 0, appContext);
+		//openGlWindow.mode(FL_RGB | FL_DOUBLE | FL_DEPTH);
 		topWindow.setShapeWindow(&openGlWindow);
 		//sw.mode(FL_RGB);
 		topWindow.resizable(&openGlWindow);
@@ -941,8 +975,11 @@ int main(int argc, char **argv)
 		nextSceneButton.callback(scene_buttons_cb, &sbh[1]);
 		Fl_Button prevSceneButton(10+75+55, 5, 50, 30, "Next");
 		prevSceneButton.callback(scene_buttons_cb, &sbh[2]);
-
-		Fl_Light_Button simulateButton(10, 40, 80, 30, "Simulate");
+		Fl_Light_Button simulateButton(10, 40, 100, 30, "@> Simulate");
+		simulateButton.callback(simulate_button_cb, &appContext);
+		Fl_Button frameLabel(10+100+5, 40, 50, 30, "Frame");
+		frameLabel.box(FL_NO_BOX);
+		appContext.frameLabel = &frameLabel;
 
 		Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
 		slider.align(FL_ALIGN_LEFT);
@@ -964,6 +1001,7 @@ int main(int argc, char **argv)
 
 		Fl_Select_Browser sceneGraphList(topWindow.w()-200, 75+110+110, 190, topWindow.h()-90-110-110);
 		appContext.sceneGraphList = &sceneGraphList;
+		appContext.glWindow = &openGlWindow;
 
 		topWindow.setSceneList(&sceneList);
 		topWindow.setDrawingOptionsWindow(&drawingOptions);
@@ -983,6 +1021,8 @@ int main(int argc, char **argv)
 		{
 			sceneList.add(scene.c_str());
 		}
+
+		Fl::add_idle(idle_cb, &appContext);
 		
 		ret = Fl::run();
 

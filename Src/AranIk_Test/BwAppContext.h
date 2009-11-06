@@ -61,9 +61,14 @@ public:
 	bool									bRenderHud;
 	bool									bRenderJointIndicator;
 	bool									bRenderEndeffectorIndicator;
+
+	bool									bSimulate;
+	unsigned int							frames;
 	
 	float									panningCenter[3];
 	float									dPanningCenter[3];
 
 	Fl_Select_Browser*						sceneGraphList;
+	Fl_Gl_Window*							glWindow;
+	Fl_Button*								frameLabel;
 };

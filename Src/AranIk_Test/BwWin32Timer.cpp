@@ -2,6 +2,7 @@
 #include "BwWin32Timer.h"
 
 BwWin32Timer::BwWin32Timer(void)
+: m_bInited(false)
 {
 }
 
@@ -35,10 +36,14 @@ void BwWin32Timer::start()
 		// Set The Elapsed Time To The Current Time
 		timer.performance_timer_elapsed	= timer.performance_timer_start;
 	}
+
+	m_bInited = true;
 }
 
 double BwWin32Timer::getTicks()
 {
+	assert(m_bInited);
+
 	__int64 time;								// time Will Hold A 64 Bit Integer
 
 	if (timer.performance_timer)						// Are We Using The Performance Timer?
