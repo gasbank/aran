@@ -775,8 +775,6 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.avd.MaxZ		= 1.0f;
 
 	ac.viewMode = VM_UNKNOWN;
-	ac.bRenderGrid = true;
-	ac.bRenderHud = false;
 	ac.orthoViewDistance = 5;
 	ac.bPanningButtonDown = false;
 	ac.panningCenter[0] = 0;
@@ -785,6 +783,11 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.dPanningCenter[0] = 0;
 	ac.dPanningCenter[1] = 0;
 	ac.dPanningCenter[2] = 0;
+	// Drawing options
+	ac.bRenderGrid			= true;
+	ac.bRenderHud			= false;
+	ac.bRenderJointIndicator			= false;
+	ac.bRenderEndeffectorIndicator	= false;
 
 	ac.sceneGraphList = 0;
 

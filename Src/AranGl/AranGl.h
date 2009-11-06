@@ -62,5 +62,5 @@ ARANGL_API void						ArnRenderBoundingBox(const boost::array<ArnVec3, 8>& bb);
 
 class Node;
 class Tree;
-ARANGL_API void						NodeDrawNode(const Node& node, bool isRoot);
-ARANGL_API void						TreeDraw(const Tree& tree);
+ARANGL_API void						NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator);
+ARANGL_API void						TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator);

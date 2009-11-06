@@ -10,6 +10,8 @@ BwDrawingOptionsWindow::BwDrawingOptionsWindow( int x, int y, int w, int h, cons
 {
 	add("Grid", (int)m_ac.bRenderGrid);
 	add("HUD", (int)m_ac.bRenderHud);
+	add("Joint", (int)m_ac.bRenderJointIndicator);
+	add("Endeffector", (int)m_ac.bRenderEndeffectorIndicator);
 }
 
 BwDrawingOptionsWindow::~BwDrawingOptionsWindow(void)
@@ -22,6 +24,8 @@ int BwDrawingOptionsWindow::handle( int eventType )
 	{
 		m_ac.bRenderGrid = checked(1) ? true : false;
 		m_ac.bRenderHud = checked(2) ? true : false;
+		m_ac.bRenderJointIndicator = checked(3) ? true : false;
+		m_ac.bRenderEndeffectorIndicator = checked(4) ? true : false;
 		m_openGlWindow.redraw();
 	}
 	return Fl_Check_Browser::handle(eventType);

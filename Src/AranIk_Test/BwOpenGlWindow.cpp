@@ -152,6 +152,7 @@ int BwOpenGlWindow::handle( int eventType )
 				redraw();
 			}
 		}
+		return 1;
 	}
 	else if (eventType == FL_KEYDOWN)
 	{
@@ -274,7 +275,7 @@ SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
 	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
-		TreeDraw(*ikSolver->getTree());
+		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator);
 	}
 	/* Do you remeber? We do pushMatrix in PROJECTION mode */
 	glMatrixMode(GL_PROJECTION);
@@ -494,7 +495,7 @@ RenderScene(const BwAppContext& ac)
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
 		glPushMatrix();
-		TreeDraw(*ikSolver->getTree());
+		TreeDraw(*ikSolver->getTree(), ac.bRenderJointIndicator, ac.bRenderEndeffectorIndicator);
 		glPopMatrix();
 	}
 

@@ -771,40 +771,44 @@ ArnCleanupGl()
 
 // Draw the box from the origin to point r.
 static void
-NodeDrawBox(const Node& node)
+NodeDrawBox(const Node& node, const bool bDrawJointIndicator)
 {
 	const VectorR3& r = node.getRelativePosition();
+	const double length = r.Norm();
 	glLoadName(node.getObjectId());
 	glDisable(GL_CULL_FACE);
 	glPushMatrix();
 	{
-		glPushMatrix();
+		if (bDrawJointIndicator)
 		{
-			glTranslated(r.x, r.y, r.z);
-			if (!node.getRealParent())
+			glPushMatrix();
 			{
-				// Draw a root node indicator.
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
-				ArnRenderSphereGl(0.2);
+				glTranslated(r.x, r.y, r.z);
+				if (!node.getRealParent())
+				{
+					// Draw a root node indicator.
+					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_BLUE);
+					ArnRenderSphereGl(length/4);
+				}
+				else if (node.getRealParent() && node.getLeftNode())
+				{
+					// Draw a joint indicator.
+					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+					ArnRenderSphereGl(length/4);
+				}
+				else if (node.getRealParent() && !node.getLeftNode())
+				{
+					// Draw an end-effector indicator.
+					ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_RED);
+					ArnRenderSphereGl(length/4);
+				}
+				else
+				{
+					ARN_THROW_UNEXPECTED_CASE_ERROR
+				}
 			}
-			else if (node.getRealParent() && node.getLeftNode())
-			{
-				// Draw a joint indicator.
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-				ArnRenderSphereGl(0.1);
-			}
-			else if (node.getRealParent() && !node.getLeftNode())
-			{
-				// Draw an end-effector indicator.
-				ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_RED);
-				ArnRenderSphereGl(0.1);
-			}
-			else
-			{
-				ARN_THROW_UNEXPECTED_CASE_ERROR
-			}
+			glPopMatrix();
 		}
-		glPopMatrix();
 
 		if ( r.z!=0.0 || r.x!=0.0 )
 		{
@@ -818,8 +822,6 @@ NodeDrawBox(const Node& node)
 			glRotated( ArnToDegree(beta), 0.0, 0.0, 1.0 );
 		}
 
-		double length = r.Norm();
-
 		glPushMatrix();
 		{
 			glRotatef(90, 0, 1, 0);
@@ -827,7 +829,8 @@ NodeDrawBox(const Node& node)
 			glDisable(GL_LIGHTING);
 			glColor3f(1, 1, 1);
 
-			glScaled(0.35, 0.35, length);
+			//glScaled(0.15, 0.15, length);
+			glScaled(length/4, length/4, length);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glCallList(gs_glArrowList);
 
@@ -841,11 +844,11 @@ NodeDrawBox(const Node& node)
 }
 
 void
-NodeDrawNode(const Node& node, bool isRoot)
+NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator)
 {
 	if (!isRoot)
 	{
-		NodeDrawBox(node);
+		NodeDrawBox(node, bDrawJointIndicator);
 	}
 	else
 	{
@@ -881,23 +884,23 @@ NodeDrawNode(const Node& node, bool isRoot)
 }
 
 static void
-TreeDrawTree(const Tree& tree, NodeConstPtr node)
+TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator)
 {
 	if (node)
 	{
 		glPushMatrix();
 		{
-			NodeDrawNode(*node, tree.GetRoot() == node); // Recursively draw node and update ModelView matrix
+			NodeDrawNode(*node, tree.GetRoot() == node, bDrawJointIndicator); // Recursively draw node and update ModelView matrix
 			if (node->getLeftNode())
 			{
-				TreeDrawTree(tree, node->getLeftNode()); // Draw tree of children recursively
+				TreeDrawTree(tree, node->getLeftNode(), bDrawJointIndicator); // Draw tree of children recursively
 			}
 		}
 		glPopMatrix();
 
 		if (node->getRightNode())
 		{
-			TreeDrawTree(tree, node->getRightNode()); // Draw right siblings recursively
+			TreeDrawTree(tree, node->getRightNode(), bDrawJointIndicator); // Draw right siblings recursively
 		}
 	}
 }
@@ -923,8 +926,9 @@ DrawEndeffectorTarget(NodeConstPtr node)
 }
 
 void
-TreeDraw(const Tree& tree)
+TreeDraw(const Tree& tree, const bool bDrawJointIndicator, const bool bDrawEndeffectorIndicator)
 {
-	TreeDrawTree(tree, tree.GetRoot());
-	DrawEndeffectorTarget(tree.GetRoot());
+	TreeDrawTree(tree, tree.GetRoot(), bDrawJointIndicator);
+	if (bDrawEndeffectorIndicator)
+		DrawEndeffectorTarget(tree.GetRoot());
 }

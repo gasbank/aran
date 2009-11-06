@@ -52,12 +52,16 @@ public:
 	unsigned char*							massMapData;
 
 	ViewMode								viewMode;
-	bool									bRenderHud;
-	bool									bRenderGrid;
 	int										orthoViewDistance;
 	bool									bPanningButtonDown;
 	std::pair<int, int>						panningStartPoint;
 
+	// Drawing options
+	bool									bRenderGrid;
+	bool									bRenderHud;
+	bool									bRenderJointIndicator;
+	bool									bRenderEndeffectorIndicator;
+	
 	float									panningCenter[3];
 	float									dPanningCenter[3];
 
