@@ -586,6 +586,34 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 	//}
 }
 
+static void
+AddToSceneGraphList( const ArnNode* node, Fl_Select_Browser* list, int depth ) 
+{
+	std::string itemName("@s@f");
+	for (int i = 0; i < depth; ++i)
+		itemName += "  ";
+	if (strlen(node->getName()))
+		itemName += node->getName();
+	else
+		itemName += "<unnamed>";
+	list->add(itemName.c_str());
+
+	foreach (const ArnNode* child, node->getChildren())
+	{
+		AddToSceneGraphList(child, list, depth+1);
+	}
+}
+
+static void
+UpdateSceneGraphList( BwAppContext& ac ) 
+{
+	if (ac.sceneGraphList)
+	{
+		ac.sceneGraphList->clear();
+		AddToSceneGraphList(ac.sgPtr->getSceneRoot(), ac.sceneGraphList, 0);
+	}
+}
+
 /*!
 * @brief Scene graph가 새로 로드되었을 때 수행되는 초기화 (렌더러와 무관)
 */
@@ -619,6 +647,9 @@ InitializeRendererIndependentsFromSg(BwAppContext& ac)
 		}
 	}
 	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+
+	UpdateSceneGraphList(ac);
+	
 	return 0;
 }
 
@@ -755,6 +786,8 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.dPanningCenter[0] = 0;
 	ac.dPanningCenter[1] = 0;
 	ac.dPanningCenter[2] = 0;
+
+	ac.sceneGraphList = 0;
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
@@ -916,7 +949,11 @@ int main(int argc, char **argv)
 
 		BwDrawingOptionsWindow drawingOptions(topWindow.w()-200, 75, 190, 100, 0, appContext, openGlWindow);
 
-		Fl_Select_Browser sceneList(topWindow.w()-200, 75+110, 190, topWindow.h()-90-110);
+		Fl_Select_Browser sceneList(topWindow.w()-200, 75+110, 190, 100);
+
+		Fl_Select_Browser sceneGraphList(topWindow.w()-200, 75+110+110, 190, topWindow.h()-90-110-110);
+		appContext.sceneGraphList = &sceneGraphList;
+
 		topWindow.setSceneList(&sceneList);
 		topWindow.setDrawingOptionsWindow(&drawingOptions);
 		topWindow.end();
@@ -928,7 +965,7 @@ int main(int argc, char **argv)
 		openGlWindow.redraw_overlay();
 
 		InitializeRendererDependentOnce(appContext);
-
+		UpdateSceneGraphList(appContext);
 
 		// scene list available now
 		foreach (const std::string& scene, appContext.sceneList)

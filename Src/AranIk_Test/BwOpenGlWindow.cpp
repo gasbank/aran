@@ -364,6 +364,8 @@ static void RenderGrid(const BwAppContext& ac, const float gridCellSize, const i
 
 		switch (ac.viewMode)
 		{
+		case VM_UNKNOWN:
+		case VM_CAMERA:
 		case VM_TOP:
 			// X direction
 			glVertex3f(-v1, v2, 0);

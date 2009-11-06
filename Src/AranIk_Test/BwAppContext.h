@@ -60,4 +60,6 @@ public:
 
 	float									panningCenter[3];
 	float									dPanningCenter[3];
+
+	Fl_Select_Browser*						sceneGraphList;
 };
