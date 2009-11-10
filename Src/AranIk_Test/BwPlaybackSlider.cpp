@@ -16,7 +16,7 @@ static void cb(Fl_Widget *o, void *p)
 	ac.frameLabel->label(frameStr);
 
 	if (!ac.bSimulate)
-	{		
+	{
 		if (ac.simWorldHistory[frame].generalBodyState.size())
 		{
 			ac.swPtr->setSimWorldState( ac.simWorldHistory[frame] );

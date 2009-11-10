@@ -438,10 +438,10 @@ CalculateLumpedGroundIntersection(std::vector<ArnVec3>& isects, dBodyID body, dB
 		p[i].y += boxPos[1];
 		p[i].z += boxPos[2];
 
-		//if (-0.001f <= p[i].z && p[i].z <= 0.001f)
-		//{
+		if (-0.001f <= p[i].z && p[i].z <= 0.001f)
+		{
 			isects.push_back(p[i]);
-		//}
+		}
 	}
 
 #if defined(ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING) & 0

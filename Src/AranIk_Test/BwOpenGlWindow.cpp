@@ -587,9 +587,9 @@ RenderScene(const BwAppContext& ac)
 						glDisable(GL_COLOR_MATERIAL);
 					}
 
-					// Contact forces in the second direction. Should be zero.
+					// TODO: Contact forces in the second direction. Should be zero.
 					ac.swPtr->getContactForce2(i, &contactForce);
-					assert(contactForce == ArnConsts::ARNVEC3_ZERO);
+					//assert(contactForce == ArnConsts::ARNVEC3_ZERO);
 				}
 				glPopMatrix();
 			}
@@ -643,7 +643,7 @@ RenderHud(const BwAppContext& ac)
 	glPushMatrix();
 	glLoadIdentity();
 	glTranslatef(0.1f, 0, 0);
-	glScalef(0.5, 0.5, 1);
+	glScalef(0.2, 0.2, 1);
 
 	// Origin indicator
 	ArnDrawAxesGl(0.5f);
@@ -655,6 +655,13 @@ RenderHud(const BwAppContext& ac)
 		foreach (const ArnVec3& v, ac.supportPolygon)
 		{
 			glColor3f(0, 0, 0); glVertex2f(v.x, v.y);
+		}
+		glEnd();
+
+		glBegin(GL_POINTS);
+		foreach (const ArnVec3& contactPos, ac.isects)
+		{
+			glVertex2f(contactPos.x, contactPos.y);
 		}
 		glEnd();
 	}

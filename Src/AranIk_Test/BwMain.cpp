@@ -6,6 +6,7 @@
 #include "BwWin32Timer.h"
 #include "BwDrawingOptionsWindow.h"
 #include "BwPlaybackSlider.h"
+#include "ConvexHull.h"
 
 #if !HAVE_GL
 #error OpenGL in FLTK not enabled.
@@ -405,20 +406,28 @@ LoadSceneList(std::vector<std::string>& sceneList)
 	return sceneCount;
 }
 
+bool IsectsSort(const ArnVec3& v1, const ArnVec3& v2)
+{
+	return v1.x > v2.x;
+}
+
 static void
-UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurationMs)
+UpdateScene(BwAppContext& ac, float fElapsedTime)
 {
 	// Physics simulation frequency (Hz)
 	// higher --> accurate, stable, slow
 	// lower  --> errors, unstable, fast
-	static const unsigned int simFreq = 1000;
+	static const unsigned int simFreq = 600;
 	// Maximum simulation step iteration count for clamping
 	// to keep app from advocating all resources to step further.
 	static const unsigned int simMaxIteration = 100;
 
-	unsigned int simLoop = (unsigned int)(frameDurationMs / 1000.0 * simFreq);
+	unsigned int simLoop = (unsigned int)(fElapsedTime * simFreq);
 	if (simLoop > simMaxIteration)
 		simLoop = simMaxIteration;
+	else if (simLoop == 0)
+		simLoop = 2;
+	simLoop = 2;
 	for (unsigned int step = 0; step < simLoop; ++step)
 	{
 		//printf("frame duration: %d / simloop original: %d / current simstep %d\n", frameDurationMs, (unsigned int)(frameDurationMs / 1000.0 * simFreq), step);
@@ -427,7 +436,7 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 	}
 	if (ac.sgPtr)
 	{
-		ac.sgPtr->update(ac.timer.getTicks() / 1000.0, frameDurationMs / 1000.0f);
+		ac.sgPtr->update(ac.timer.getTicks() / 1000.0, fElapsedTime);
 	}
 	foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 	{
@@ -508,16 +517,30 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 
 	ac.isects.clear();
 	ac.verticalLineIsects.clear();
-
-	
+	ac.supportPolygon.clear();
+	bool useGroundPlaneBodyIntersection = true;
 	if (ac.trunk)
 	{
 		// Update COM pos
 		ArnVec3 bipedComPos;
 		ac.trunk->calculateLumpedComAndMass(&bipedComPos, &ac.bipedMass);
 		ac.bipedComPos.push_back(bipedComPos); // Save the trail of COM for visualization
-		//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
 		
+		if (useGroundPlaneBodyIntersection)
+		{
+			ac.trunk->calculateLumpedGroundIntersection(ac.isects); // Needed for support polygon visualization
+		}
+		else
+		{
+			const unsigned int swContactCount = ac.swPtr->getContactCount();
+			for (unsigned int i = 0; i < swContactCount; ++i)
+			{
+				ArnVec3 contactPos;
+				ac.swPtr->getContactPosition(i, &contactPos);
+				ac.isects.push_back(contactPos);
+			}
+		}
+
 		/*
 		// Projected mass distribution map texture creation
 		ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
@@ -545,48 +568,25 @@ UpdateScene(BwAppContext& ac, unsigned int frameStartMs, unsigned int frameDurat
 		*/
 	}
 
-	//unsigned int contactCount = ac.swPtr->getContactCount();
-	ac.supportPolygon.clear();
-
-	/*
-	unsigned int isectsCount = ac.isects.size();
-	if (isectsCount)
+	if (ac.isects.size())
 	{
-	std::sort(ac.isects.begin(), ac.isects.end(),
-	ret<bool>( (&_1->*&ArnVec3::x) < (&_2->*&ArnVec3::x)) );
+		std::sort(ac.isects.begin(), ac.isects.end(), IsectsSort); // Should be sorted before applying CH algo.
+		std::vector<ConvexHull::Point> isectsCgal(ac.isects.size());
+		int a = 0;
+		foreach (const ArnVec3& contactPos, ac.isects)
+		{
+			isectsCgal[a] = ConvexHull::Point(contactPos.x, contactPos.y);
+			++a;
+		}
+		std::vector<ConvexHull::Point> out(isectsCgal.size() + 1);
+		int outEnd;
+		outEnd = ConvexHull::chainHull_2D(&isectsCgal[0], isectsCgal.size(), &out[0]);
+
+		for (int i = 0; i < outEnd; ++i)
+		{
+			ac.supportPolygon.push_back(ArnVec3(out[i].x, out[i].y, 0));
+		}
 	}
-	int a = 10;
-	*/
-
-	//unsigned int isectsCount = ac.isects.size();
-	//if (isectsCount)
-	//{
-	//	std::vector<Point_2> isectsCgal;
-	//	/*
-	//	for (unsigned int i = 0; i < isectsCount; ++i)
-	//	{
-	//		ArnVec3 contactPos;
-	//		ac.swPtr->getContactPosition(i, &contactPos);
-	//		isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
-	//	}
-	//	*/
-	//	foreach (const ArnVec3& contactPos, ac.isects)
-	//	{
-	//		isectsCgal.push_back(Point_2(contactPos.x, contactPos.y));
-	//	}
-
-	//	std::vector<Point_2> out;
-	//	out.resize(isectsCount);
-	//	std::vector<Point_2>::iterator outEnd;
-
-	//	outEnd = convex_hull_2(isectsCgal.begin(), isectsCgal.end(), out.begin(), CGAL::Cartesian<double>());
-
-	//	for (std::vector<Point_2>::const_iterator it = out.begin(); it != outEnd; ++it)
-	//	{
-	//		const Point_2& p = *it;
-	//		ac.supportPolygon.push_back(ArnVec3(p[0], p[1], 0));
-	//	}
-	//}
 }
 
 static void
@@ -850,23 +850,26 @@ void overlay_sides_cb(Fl_Widget *o, void *p)
 
 void idle_cb(void* ac)
 {
-	static unsigned int start_time			= 0;
-	static unsigned int frameStartMs		= 0;
-	static unsigned int frameDurationMs		= 0;
-	static unsigned int frameEndMs			= 0;
+	static double start_time		= 0;
+	static double frameStartMs		= 0;
+	static double frameDurationMs	= 0;
+	static double frameEndMs		= 0;
 	static char frameStr[32];
 
 	BwAppContext& appContext = *(BwAppContext*)ac;
 	if (appContext.bSimulate)
 	{
-		start_time = (unsigned int)appContext.timer.getTicks();
+		if (!start_time)
+			start_time = appContext.timer.getTicks();
 		frameDurationMs = frameEndMs - frameStartMs;
-		frameStartMs = (unsigned int)appContext.timer.getTicks();
-		UpdateScene(appContext, frameStartMs, frameDurationMs);
+		//printf("Total %lf FrameDuration %lf\n", frameStartMs - start_time, frameDurationMs);
 		
-		frameEndMs = (unsigned int)appContext.timer.getTicks();
+		frameStartMs = appContext.timer.getTicks();
+		UpdateScene(appContext, frameDurationMs / 1000);
+		
+		frameEndMs = appContext.timer.getTicks();
 		appContext.glWindow->redraw();
-		sprintf(frameStr, "%d", appContext.frames);
+		sprintf(frameStr, "%u(%.0lf)", appContext.frames, frameDurationMs);
 		appContext.frameLabel->label(frameStr);
 
 		appContext.playbackSlider->setAvailableFrames(appContext.frames);
@@ -1002,7 +1005,7 @@ int main(int argc, char **argv)
 		prevSceneButton.callback(scene_buttons_cb, &sbh[2]);
 		Fl_Light_Button simulateButton(10, 40, 100, 30, "@> Simulate");
 		simulateButton.callback(simulate_button_cb, &appContext);
-		Fl_Button frameLabel(10+100+5, 40, 50, 30, "Frame");
+		Fl_Button frameLabel(10+100+5, 40, 150, 30, "Frame");
 		frameLabel.box(FL_NO_BOX);
 		appContext.frameLabel = &frameLabel;
 
@@ -1013,7 +1016,7 @@ int main(int argc, char **argv)
 		slider.step(1);
 		slider.bounds(3,40);
 
-		PlaybackSlider playbackSlider(200, 40, topWindow.w()-210, 30, 0, appContext);
+		PlaybackSlider playbackSlider(300, 40, topWindow.w()-310, 30, 0, appContext);
 		appContext.playbackSlider = &playbackSlider;
 		playbackSlider.bounds(0, 9999);
 		playbackSlider.align(FL_ALIGN_LEFT);

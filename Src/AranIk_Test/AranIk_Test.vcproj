@@ -250,6 +250,14 @@
 			RelativePath=".\BwWin32Timer.h"
 			>
 		</File>
+		<File
+			RelativePath=".\ConvexHull.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ConvexHull.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>
