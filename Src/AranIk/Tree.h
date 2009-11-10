@@ -20,58 +20,56 @@ public:
 	int							GetNumNode() const { return m_nNode; }
 	int							GetNumEffector() const { return m_nEffector; }
 	int							GetNumJoint() const { return m_nJoint; }
-	void						InsertRoot(NodePtr);
-	void						InsertLeftChild(NodePtr parent, NodePtr child);
-	void						InsertRightSibling(NodePtr parent, NodePtr child);
-	void						InsertCopiedNodesBySwitchingRoot(NodePtr prevInsertedNode, NodePtr node, bool childOrSibling, NodePtr skipNode);
+	void						InsertRoot(Node*);
+	void						InsertLeftChild(Node* parent, Node* child);
+	void						InsertRightSibling(Node* parent, Node* child);
+	void						InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, bool childOrSibling, Node* skipNode);
 	// Accessors based on node numbers
-	NodePtr						GetJoint(int);
-	NodePtr						GetEffector(int);
+	Node*						GetJoint(int);
+	Node*						GetEffector(int);
 	const VectorR3&				GetEffectorPosition(int);
 	// Accessors for tree traversal
-	NodePtr						GetRoot() const { return m_root; }
-	NodePtr						GetSuccessor ( NodePtr ) const;
-	std::tr1::weak_ptr<Node>	GetParent( NodeConstPtr node ) const { return node->getRealParent(); }
+	Node*						GetRoot() const { return m_root; }
+	Node*						GetSuccessor ( Node* ) const;
+	Node*						GetParent( const Node* node ) const { return node->getRealParent(); }
 	void						Compute();
 	void						Print();
 	void						Init();
 	void						UnFreeze();
 	void						printHierarchy() const; // Name only, tree style
-	void						PrintTree(NodeConstPtr) const; // Detailed information, list style
-	bool						hasNode(const NodeConstPtr node) const;
-	NodePtr						getPrevSiblingNode(NodePtr node);
-	NodePtr						getNodeByName(const char* name);
+	void						PrintTree(const Node*) const; // Detailed information, list style
+	bool						hasNode(const Node* node) const;
+	Node*						getPrevSiblingNode(Node* node);
+	Node*						getNodeByName(const char* name);
 	void						updatePurpose();
 private:
-	void						SetSeqNum(NodePtr);
-	void						resetSeqNum(NodePtr node);
-	NodePtr						SearchJoint(NodePtr, int);
-	NodePtr						SearchEffector(NodePtr, int);
-	void						ComputeTree(NodePtr);
-	void						InitTree(NodePtr);
-	void						UnFreezeTree(NodePtr);
-	NodePtr						m_root;
+	void						SetSeqNum(Node*);
+	void						resetSeqNum(Node* node);
+	Node*						SearchJoint(Node*, int);
+	Node*						SearchEffector(Node*, int);
+	void						ComputeTree(Node*);
+	void						InitTree(Node*);
+	void						UnFreezeTree(Node*);
+	Node*						m_root;
 	int							m_nNode;			// nNode = nEffector + nJoint
 	int							m_nEffector;
 	int							m_nJoint;
 };
 
-inline NodePtr Tree::GetSuccessor ( NodePtr node ) const
+inline Node* Tree::GetSuccessor ( Node* node ) const
 {
-	if ( node->getLeftNode() )
+	if (node->getLeftNode())
 	{
 		return node->getLeftNode();
 	}
-	std::tr1::weak_ptr<Node> nodeWeak = node;
-	while ( nodeWeak.lock() )
+	while (node)
 	{
-		if ( nodeWeak.lock()->getRightNode() )
-		{
-			return ( nodeWeak.lock()->getRightNode() );
-		}
-		nodeWeak = nodeWeak.lock()->getRealParent();
+		if (node->getRightNode())
+			return node->getRightNode();
+		
+		node = node->getRealParent();
 	}
-	return NodePtr();
+	return 0;
 }
 
 #endif

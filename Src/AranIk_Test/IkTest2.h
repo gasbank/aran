@@ -47,19 +47,7 @@
 //
 // Boost C++
 //
-#include <boost/weak_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
-/*
-#include <boost/lambda/lambda.hpp>
-#include <boost/lambda/casts.hpp>
-#include <boost/function/function_base.hpp>
-#include <boost/function.hpp>
-*/
 #include <boost/foreach.hpp>
-/*
-#include <boost/tokenizer.hpp>
-*/
 #include <boost/array.hpp>
 #include <boost/circular_buffer.hpp>
 #define foreach BOOST_FOREACH

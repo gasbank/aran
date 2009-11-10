@@ -17,14 +17,14 @@ enum Purpose
 
 class VectorR3;
 
-TYPEDEF_SHARED_PTR(Node)
+//TYPEDEF_SHARED_PTR(Node)
 
-class ARANIK_API Node : public ArnObject, public std::tr1::enable_shared_from_this<Node>
+class ARANIK_API Node :  public ArnObject
 {
 public:
 	virtual								~Node();
-	static NodePtr						create(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
-	static NodePtr						createCloneWithoutLink(NodePtr node);
+	static Node*						create(const VectorR3&, const VectorR3&, double, Purpose, double minTheta=-PI, double maxTheta=PI, double restAngle=0.);
+	static Node*						createCloneWithoutLink(Node* node);
 	void								printNode() const;
 	void								initNode();
 	const VectorR3&						getAttach() const { return m_attach; }
@@ -53,23 +53,23 @@ public:
 	const VectorR3&						getRotationAxis() const { return m_rotAxis; }
 	void								setRotationAxis(const VectorR3& v) { m_rotAxis = v; }
 	double								getSize() const { return m_size; }
-	NodePtr								getLeftNode() const { return m_left; }
-	void								setLeftNode(NodePtr v) { m_left = v; }
-	NodePtr								getRightNode() const { return m_right; }
-	void								setRightNode(NodePtr v) { m_right = v; }
+	Node*								getLeftNode() const { return m_left; }
+	void								setLeftNode(Node* v) { m_left = v; }
+	Node*								getRightNode() const { return m_right; }
+	void								setRightNode(Node* v) { m_right = v; }
 	virtual const char*					getName() const { return m_name.c_str(); }
 	void								setName(const char* name) { m_name = name; }
-	NodePtr								getRealParent() const { return m_realParent.lock(); }
-	void								setRealParent(NodePtr v) { m_realParent = v; }
+	Node*								getRealParent() const { return m_realParent; }
+	void								setRealParent(Node* v) { m_realParent = v; }
 	Purpose								getPurpose() const { return m_purpose; }
 	int									getSeqNumJoint() const { return m_seqNumJoint; }
 	int									getSeqNumEffector() const { return m_seqNumEffector; }
 	void								setSeqNumJoint(int v) { m_seqNumJoint = v; }
 	void								setSeqNumEffector(int v) { m_seqNumEffector = v; }
 	void								printNodeHierarchy(int step) const;
-	bool								hasNode(const NodeConstPtr node) const;
-	NodePtr								getNodeByName(const char* name);
-	NodePtr								getNodeByObjectId(unsigned int id);
+	bool								hasNode(const Node* node) const;
+	Node*								getNodeByName(const char* name);
+	Node*								getNodeByObjectId(unsigned int id);
 	void								updatePurpose();
 	void								setTarget(const VectorR3& v) { assert(m_purpose==ENDEFFECTOR); m_target = v; }
 	void								setTargetDiff(double dx, double dy, double dz) { assert(m_purpose==ENDEFFECTOR); m_target.x += dx, m_target.y += dy, m_target.z += dz; }
@@ -90,9 +90,9 @@ private:
 	VectorR3							m_globalRotAxis;		// Global rotation axis
 
 	// Should be removed
-	NodePtr								m_left;					// left child
-	NodePtr								m_right;				// right sibling
-	std::tr1::weak_ptr<Node>			m_realParent;			// pointer to real parent
+	Node*								m_left;					// left child
+	Node*								m_right;				// right sibling
+	Node*								m_realParent;			// pointer to real parent
 
 	// Needed
 	bool								m_freezed;				// Is this node frozen?

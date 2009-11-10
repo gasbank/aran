@@ -442,7 +442,7 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
 	{
 		ikSolver->update();
 
-		NodePtr selNode = ikSolver->getSelectedEndeffector();
+		Node* selNode = ikSolver->getSelectedEndeffector();
 		if (selNode)
 		{
 			/*
@@ -966,7 +966,11 @@ int main(int argc, char **argv)
 	int ret = 0;
 	{
 		BwAppContext appContext;
-		InitializeRendererIndependentOnce(appContext);
+		if (InitializeRendererIndependentOnce(appContext) < 0)
+		{
+			printf("Critical error during initialization of application context. Aborting...\n");
+			abort();
+		}
 		BwTopWindow topWindow(800, 600, "aran", appContext);
 
 		std::ifstream windowPosAndSizeInput("BwWindow.txt");

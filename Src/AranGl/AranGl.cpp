@@ -890,7 +890,7 @@ NodeDrawNode(const Node& node, bool isRoot, const bool bDrawJointIndicator, cons
 }
 
 static void
-TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator, const bool bDrawRotationAxis, const bool bDrawRootNodeIndicator)
+TreeDrawTree(const Tree& tree, const Node* node, const bool bDrawJointIndicator, const bool bDrawRotationAxis, const bool bDrawRootNodeIndicator)
 {
 	if (node)
 	{
@@ -912,7 +912,7 @@ TreeDrawTree(const Tree& tree, NodeConstPtr node, const bool bDrawJointIndicator
 }
 
 static void
-DrawEndeffectorTarget(NodeConstPtr node)
+DrawEndeffectorTarget(const Node* node)
 {
 	if (node)
 	{

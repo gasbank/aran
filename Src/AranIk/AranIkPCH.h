@@ -1,6 +1,4 @@
-#ifndef ARANIKPCH_H_INCLUDED
-#define ARANIKPCH_H_INCLUDED
-
+#pragma once
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -27,9 +25,6 @@ using namespace std;
 //
 // Boost C++
 //
-#include <boost/weak_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/foreach.hpp>
 #include <boost/array.hpp>
 #define foreach BOOST_FOREACH
@@ -38,5 +33,3 @@ using namespace std;
 // Aran Library
 //
 #include "AranApi.h"
-
-#endif // ARANIKPCH_H_INCLUDED

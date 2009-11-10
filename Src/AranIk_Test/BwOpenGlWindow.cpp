@@ -333,11 +333,11 @@ SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
 
 			foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
 			{
-				NodePtr node = ikSolver->getNodeByObjectId(buff[h].contents);
+				Node* node = ikSolver->getNodeByObjectId(buff[h].contents);
 				if (node)
 				{
 					printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
-						node.get(), node->getObjectId(), node->getName(), node->isEndeffector());
+						node, node->getObjectId(), node->getName(), node->isEndeffector());
 					/*
 					if (ac.bHoldingKeys[SDLK_LSHIFT])
 					{

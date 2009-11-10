@@ -1,0 +1,246 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="DebugDLL|Win32">
+      <Configuration>DebugDLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="ReleaseDLL|Win32">
+      <Configuration>ReleaseDLL</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Template|Win32">
+      <Configuration>Template</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{8FD2D266-F50A-43DE-8DF8-EFACCE93F770}</ProjectGuid>
+    <RootNamespace>Aran</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="..\EnvVar.props" />
+    <Import Project="..\ReleaseDLLProp.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
+    <Import Project="..\EnvVar.props" />
+    <Import Project="..\DebugDLLProp.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">$(WORKING)</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">$(Configuration)\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">$(Configuration)\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">$(ProjectName)_D</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>../;../AranMath;../AranPhy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ARAN_EXPORTS;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>AranPCH.h</PrecompiledHeaderFile>
+      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
+      <WarningLevel>Level4</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <DisableSpecificWarnings>4127;4512;4100;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <EnablePREfast>false</EnablePREfast>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>AranMath_D.lib;tinyxmlSTL_D.lib;DevIL.lib;zlib1d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Console</SubSystem>
+      <TargetMachine>MachineX86</TargetMachine>
+      <OutputFile>$(TargetPath)</OutputFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
+    <CustomBuildStep>
+      <Message>
+      </Message>
+      <Command>
+      </Command>
+      <Outputs>%(Outputs)</Outputs>
+    </CustomBuildStep>
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <AdditionalIncludeDirectories>../;../AranMath;$(CODEBASE)/cml-1_0_0;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include;$(CODEBASE)/zlib-1.2.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;ARAN_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>AranPCH.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+      <DisableSpecificWarnings>4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+      <EnablePREfast>false</EnablePREfast>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>AranMath.lib;tinyxmlSTL.lib;DevIL.lib;zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../ReleaseDLL;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Release_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
+      <TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Aran.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="CopyResourcesToWorking.bat" />
+    <None Include="icon1.ico" />
+    <None Include="readme.txt" />
+    <None Include="..\Shaders\basic.fx" />
+    <None Include="..\Shaders\vertBlendDynamic.fx" />
+    <None Include="..\Shaders\vertBlendStatic.fx" />
+    <None Include="ArnGenericBuffer.inl" />
+    <None Include="ArnMesh.inl" />
+    <None Include="ArnNode.inl" />
+    <None Include="ArnSceneGraph.inl" />
+    <None Include="ArnXformable.inl" />
+    <None Include="PreciseTimer.inl" />
+    <None Include="VTune\Aran.vpj" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="ArnAction.cpp" />
+    <ClCompile Include="ArnAnimationController.cpp" />
+    <ClCompile Include="ArnBinaryChunk.cpp" />
+    <ClCompile Include="ArnBone.cpp" />
+    <ClCompile Include="ArnCamera.cpp" />
+    <ClCompile Include="ArnContainer.cpp" />
+    <ClCompile Include="ArnGenericBuffer.cpp" />
+    <ClCompile Include="ArnIndexBuffer.cpp" />
+    <ClCompile Include="ArnIpo.cpp" />
+    <ClCompile Include="ArnLight.cpp" />
+    <ClCompile Include="ArnMaterial.cpp" />
+    <ClCompile Include="ArnMesh.cpp" />
+    <ClCompile Include="ArnNode.cpp" />
+    <ClCompile Include="ArnObject.cpp" />
+    <ClCompile Include="ArnRenderableObject.cpp" />
+    <ClCompile Include="ArnSceneGraph.cpp" />
+    <ClCompile Include="ArnSkeleton.cpp" />
+    <ClCompile Include="ArnTexture.cpp" />
+    <ClCompile Include="ArnVertexBuffer.cpp" />
+    <ClCompile Include="ArnXformable.cpp" />
+    <ClCompile Include="ArnXmlLoader.cpp" />
+    <ClCompile Include="Animation.cpp" />
+    <ClCompile Include="AranApi.cpp" />
+    <ClCompile Include="AranPCH.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="DungeonInterface.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="MyError.cpp" />
+    <ClCompile Include="PreciseTimer.cpp" />
+    <ClCompile Include="Renderer.cpp" />
+    <ClCompile Include="RenderLayer.cpp" />
+    <ClCompile Include="VideoMan.cpp" />
+    <ClCompile Include="ArnJoint.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ArnAction.h" />
+    <ClInclude Include="ArnAnimationController.h" />
+    <ClInclude Include="ArnBinaryChunk.h" />
+    <ClInclude Include="ArnBone.h" />
+    <ClInclude Include="ArnCamera.h" />
+    <ClInclude Include="ArnContainer.h" />
+    <ClInclude Include="ArnGenericBuffer.h" />
+    <ClInclude Include="ArnIndexBuffer.h" />
+    <ClInclude Include="ArnIpo.h" />
+    <ClInclude Include="ArnLight.h" />
+    <ClInclude Include="ArnMaterial.h" />
+    <ClInclude Include="ArnMesh.h" />
+    <ClInclude Include="ArnNode.h" />
+    <ClInclude Include="ArnObject.h" />
+    <ClInclude Include="ArnRenderableObject.h" />
+    <ClInclude Include="ArnSceneGraph.h" />
+    <ClInclude Include="ArnSkeleton.h" />
+    <ClInclude Include="ArnTexture.h" />
+    <ClInclude Include="ArnVertexBuffer.h" />
+    <ClInclude Include="ArnXformable.h" />
+    <ClInclude Include="ArnXmlLoader.h" />
+    <ClInclude Include="Animation.h" />
+    <ClInclude Include="AranApi.h" />
+    <ClInclude Include="AranPCH.h" />
+    <ClInclude Include="DungeonInterface.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="MyError.h" />
+    <ClInclude Include="PreciseTimer.h" />
+    <ClInclude Include="Renderer.h" />
+    <ClInclude Include="RenderLayer.h" />
+    <ClInclude Include="Singleton.h" />
+    <ClInclude Include="VideoMan.h" />
+    <ClInclude Include="..\ArnCommonTypes.h" />
+    <ClInclude Include="glext.h" />
+    <ClInclude Include="..\Macros.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="Structs.h" />
+    <ClInclude Include="ArnJoint.h" />
+    <ClInclude Include="doxygen_main.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AranMath\AranMath.vcxproj">
+      <Project>{4a2c1e91-bc81-4cac-b266-d62e7904d112}</Project>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+  <ProjectExtensions>
+    <VisualStudio>
+      <UserProperties RESOURCE_FILE="Aran.rc" />
+    </VisualStudio>
+  </ProjectExtensions>
+</Project>

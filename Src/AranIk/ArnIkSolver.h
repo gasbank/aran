@@ -24,12 +24,12 @@ public:
 	void							setTarget(const char* nodeName, const ArnVec3& v);
 	void							update();
 	void							printHierarchy() const;
-	void							reconfigureRoot(NodePtr newRoot);
-	bool							hasNode(const NodeConstPtr node);
-	NodePtr							getNodeByName(const char* name);
-	NodePtr							getNodeByObjectId(unsigned int id);
-	void							setSelectedEndeffector(NodePtr node) { m_selectedEndeffector = node; }
-	NodePtr							getSelectedEndeffector() const { return m_selectedEndeffector; }
+	void							reconfigureRoot(Node* newRoot);
+	bool							hasNode(const Node* node);
+	Node*							getNodeByName(const char* name);
+	Node*							getNodeByObjectId(unsigned int id);
+	void							setSelectedEndeffector(Node* node) { m_selectedEndeffector = node; }
+	Node*							getSelectedEndeffector() const { return m_selectedEndeffector; }
 protected:
 private:
 									ArnIkSolver();
@@ -50,14 +50,14 @@ private:
 	 * 추가됩니다. 이는 원래 ArnSkeleton 을 이루던 ArnBone 개수보다 많은 수의 노드가 추가
 	 * 될 수 있음을 의미합니다.
 	 */
-	NodePtr							addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild);
+	Node*							addToTree(Node* prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild);
 	void							initializeJacobian();
 	JacobianPtr						getJacobian() { return m_jacobian; }
 
 	TreePtr							m_tree;
 	JacobianPtr						m_jacobian;
 	const ArnSkeleton*				m_skel;
-	NodePtr							m_selectedEndeffector;
+	Node*							m_selectedEndeffector;
 };
 
 #endif // ARANIKSOLVER_H

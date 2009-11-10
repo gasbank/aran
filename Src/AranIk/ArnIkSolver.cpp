@@ -24,12 +24,12 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 	ret->m_tree.reset(new Tree);
 	VectorR3 rootHeadPoint;
 	ArnVec3Assign(rootHeadPoint, skel->getLocalXform_Trans());
-	NodePtr rootNode = Node::create(rootHeadPoint, VectorR3::UnitZ, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
+	Node* rootNode = Node::create(rootHeadPoint, VectorR3::UnitZ, 1.0, JOINT, ArnToRadian(-180.0), ArnToRadian(180.0), 0);
 	rootNode->setName("Root");
 	ret->m_tree->InsertRoot(rootNode);
 
 	bool firstChild = true;
-	NodePtr prevNode = rootNode;
+	Node* prevNode = rootNode;
 	foreach (const ArnNode* node, skel->getChildren())
 	{
 		// This loop should be called once.
@@ -52,7 +52,7 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 	return ret;
 }
 
-static NodePtr
+static Node*
 CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEffector)
 {
 	VectorR3 tailPoint; // Global coordinates of the bone's head.
@@ -76,7 +76,7 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	{
 		purpose = JOINT;
 	}
-	NodePtr ret = Node::create(tailPoint, rotAxis, size, purpose, minAngle, maxAngle, restAngle);
+	Node* ret = Node::create(tailPoint, rotAxis, size, purpose, minAngle, maxAngle, restAngle);
 	ret->setName(bone->getName());
 	return ret;
 }
@@ -112,7 +112,7 @@ GetJointRotAxisOfBoneFromName(bool& x, bool& y, bool& z, const ArnBone* bone)
 }
 
 static void
-SetJointLimitFromBone(NodePtr node, const ArnBone* bone)
+SetJointLimitFromBone(Node* node, const ArnBone* bone)
 {
 	const char* nodeName = node->getName();
 	AxisEnum axis;
@@ -151,8 +151,8 @@ SetJointLimitFromBone(NodePtr node, const ArnBone* bone)
 	node->setMaxTheta(maximum);
 }
 
-NodePtr
-ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild)
+Node*
+ArnIkSolver::addToTree(Node* prevNode, const ArnSkeleton* skel, const ArnBone* bone, bool firstChild)
 {
 	assert(prevNode);
 	assert(bone);
@@ -163,13 +163,13 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	}
 	bool rx, ry, rz;
 	GetJointRotAxisOfBoneFromName(rx, ry, rz, bone);
-	NodePtr firstCreated;
+	Node* firstCreated = 0;
 
 	if (!(rx || ry || rz))
 	{
 		// End-effector
 		assert(bEndEffector);
-		NodePtr eNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		Node* eNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		eNode->setRotationAxis(VectorR3::Zero);
 
 		if (prevNode && firstChild)
@@ -193,7 +193,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	}
 	if (rx)
 	{
-		NodePtr rxNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		Node* rxNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		rxNode->setRotationAxis(VectorR3::UnitX);
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
@@ -238,7 +238,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	}
 	if (ry)
 	{
-		NodePtr ryNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		Node* ryNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		ryNode->setRotationAxis(VectorR3::UnitY);
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
@@ -283,7 +283,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 	}
 	if (rz)
 	{
-		NodePtr rzNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+		Node* rzNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
 		rzNode->setRotationAxis(VectorR3::UnitZ);
 		const size_t boneNameLen = strlen(bone->getName());
 		size_t pos = 0;
@@ -327,7 +327,7 @@ ArnIkSolver::addToTree(NodePtr prevNode, const ArnSkeleton* skel, const ArnBone*
 		}
 	}
 	assert(prevNode);
-	NodePtr nextPrevNode = prevNode;
+	Node* nextPrevNode = prevNode;
 	bool nextFirstChild = true;
 	foreach (const ArnNode* arnnode, bone->getChildren())
 	{
@@ -390,19 +390,19 @@ ArnIkSolver::printHierarchy() const
 }
 
 bool
-ArnIkSolver::hasNode(const NodeConstPtr node)
+ArnIkSolver::hasNode(const Node* node)
 {
 	return m_tree->hasNode(node);
 }
 
 void
-ArnIkSolver::reconfigureRoot(NodePtr newRoot)
+ArnIkSolver::reconfigureRoot(Node* newRoot)
 {
 	assert(newRoot);
 	assert(m_tree->hasNode(newRoot));
 
 	TreePtr newTree(new Tree);
-	newTree->InsertCopiedNodesBySwitchingRoot(NodePtr(), newRoot, true, NodePtr());
+	newTree->InsertCopiedNodesBySwitchingRoot(0, newRoot, true, 0);
 	newTree->updatePurpose();
 	m_tree = newTree;
 
@@ -413,16 +413,16 @@ ArnIkSolver::reconfigureRoot(NodePtr newRoot)
 	std::cout << "   # of Joints        : " << std::setw(10) << getTree()->GetNumJoint() << std::endl;
 	std::cout << " ---------------------------------------" << std::endl;
 	printHierarchy();
-	m_selectedEndeffector.reset();
+	m_selectedEndeffector = 0;
 }
 
-NodePtr
+Node*
 ArnIkSolver::getNodeByName(const char* name)
 {
 	return m_tree->getNodeByName(name);
 }
 
-NodePtr
+Node*
 ArnIkSolver::getNodeByObjectId( unsigned int id )
 {
 	return m_tree->GetRoot()->getNodeByObjectId(id);
