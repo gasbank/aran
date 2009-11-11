@@ -427,7 +427,7 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
 		simLoop = simMaxIteration;
 	else if (simLoop == 0)
 		simLoop = 2;
-	simLoop = 2;
+	simLoop = 2; // TODO: Simulation frequency
 	for (unsigned int step = 0; step < simLoop; ++step)
 	{
 		//printf("frame duration: %d / simloop original: %d / current simstep %d\n", frameDurationMs, (unsigned int)(frameDurationMs / 1000.0 * simFreq), step);
@@ -528,7 +528,9 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
 		
 		if (useGroundPlaneBodyIntersection)
 		{
-			ac.trunk->calculateLumpedGroundIntersection(ac.isects); // Needed for support polygon visualization
+			// Needed for support polygon visualization
+			//ac.trunk->calculateLumpedGroundIntersection(ac.isects);
+			ac.trunk->calculateLumpedIntersection(ac.isects, ac.contactCheckPlane);
 		}
 		else
 		{
@@ -805,8 +807,8 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	// SimWorld history
 	ac.simWorldHistory.resize(10000);	
 
-	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0));
-	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1));
+	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0.01f));
+	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1.0f));
 
 	
 
@@ -865,7 +867,7 @@ void idle_cb(void* ac)
 		//printf("Total %lf FrameDuration %lf\n", frameStartMs - start_time, frameDurationMs);
 		
 		frameStartMs = appContext.timer.getTicks();
-		UpdateScene(appContext, frameDurationMs / 1000);
+		UpdateScene(appContext, (float)(frameDurationMs / 1000.0));
 		
 		frameEndMs = appContext.timer.getTicks();
 		appContext.glWindow->redraw();
