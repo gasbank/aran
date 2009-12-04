@@ -186,12 +186,14 @@ ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned in
 
 	if (*width != nearestpower2(*width) || *height != nearestpower2(*height))
 	{
-		fprintf(stderr, " *** Image dimension should be a power of two. (%d x %d) given.\n", *width, *height);
+		fprintf(stderr, " *** WARNING: Image dimension should be a power of two. (%d x %d) given.\n", *width, *height);
+		/*
 		data.resize(0);
 		*width = 0;
 		*height = 0;
 		*format = ACF_UNKNOWN;
 		return;
+		*/
 	}
 
 	ILint fmt = ilGetInteger(IL_IMAGE_FORMAT);

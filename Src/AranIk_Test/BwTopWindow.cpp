@@ -26,7 +26,7 @@ int BwTopWindow::handle( int eventType )
 	}
 	else if (eventType == FL_KEYDOWN)
 	{
-		
+
 	}
 	return Fl_Window::handle(eventType);
 }
@@ -36,7 +36,7 @@ void BwTopWindow::setShapeWindow( BwOpenGlWindow* sw )
 	m_shapeWindow = sw;
 }
 
-void BwTopWindow::setSceneList( Fl_Select_Browser* sl )
+void BwTopWindow::setSceneList( Fl_Browser* sl )
 {
 	m_sceneList = sl;
 }

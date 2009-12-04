@@ -12,7 +12,7 @@
 			<Depends filename="AranPhy/AranPhy.cbp" />
 			<Depends filename="AranIk/AranIk.cbp" />
 		</Project>
-		<Project filename="AranIk_Test/AranIk_Test.cbp" active="1">
+		<Project filename="AranIk_Test/AranIk_Test.cbp">
 			<Depends filename="Aran/AranCB.cbp" />
 			<Depends filename="AranMath/AranMath.cbp" />
 			<Depends filename="AranGl/AranGl.cbp" />
@@ -23,5 +23,6 @@
 			<Depends filename="AranMath/AranMath.cbp" />
 		</Project>
 		<Project filename="AranIk/AranIk.cbp" />
+		<Project filename="Oilify/Oilify.cbp" active="1" />
 	</Workspace>
 </CodeBlocks_workspace_file>

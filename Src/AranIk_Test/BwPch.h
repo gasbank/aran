@@ -20,8 +20,8 @@
 	#include <tr1/memory>
 #endif
 
-#include <GL/GL.h>
-#include <GL/GLU.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
 #include "glext.h"
 
 #include "ft2build.h"
@@ -229,6 +229,6 @@
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Check_Browser.H>
 #include <FL/Fl_Gl_Window.H>
-#include <FL/gl.H>
-#include <FL/math.H>
+#include <FL/gl.h>
+#include <FL/math.h>
 #include <FL/fl_draw.H>

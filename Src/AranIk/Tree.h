@@ -50,10 +50,10 @@ private:
 	void						ComputeTree(Node*);
 	void						InitTree(Node*);
 	void						UnFreezeTree(Node*);
-	Node*						m_root;
 	int							m_nNode;			// nNode = nEffector + nJoint
 	int							m_nEffector;
 	int							m_nJoint;
+	Node*						m_root;
 };
 
 inline Node* Tree::GetSuccessor ( Node* node ) const
@@ -66,7 +66,7 @@ inline Node* Tree::GetSuccessor ( Node* node ) const
 	{
 		if (node->getRightNode())
 			return node->getRightNode();
-		
+
 		node = node->getRealParent();
 	}
 	return 0;

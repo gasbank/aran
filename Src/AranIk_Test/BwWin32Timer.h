@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef WIN32
+#include <sys/time.h>
+#endif
+
 class BwWin32Timer
 {
 public:
@@ -10,6 +14,7 @@ public:
 	double getTicks();
 
 private:
+#ifdef WIN32
 	struct			 							// Create A Structure For The Timer Information
 	{
 		__int64       frequency;							// Timer Frequency
@@ -19,6 +24,11 @@ private:
 		bool		performance_timer;						// Using The Performance Timer?
 		__int64       performance_timer_start;					// Performance Timer Start Value
 		__int64       performance_timer_elapsed;					// Performance Timer Elapsed Time
-	} timer;									// Structure Is Named timer
+	} timer;
+										// Structure Is Named timer
+
+#else
+	timespec m_startTime;
+#endif
 	bool m_bInited;
 };

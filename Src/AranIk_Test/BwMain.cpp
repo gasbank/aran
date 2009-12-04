@@ -194,7 +194,7 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 				//printf("%f   %f\n", ac.dPanningCenter.first, ac.dPanningCenter.second);
 			}
 			break;
-		} 
+		}
 	case SDL_KEYDOWN:
 		ac.bHoldingKeys[event->key.keysym.sym] = true;
 
@@ -275,16 +275,16 @@ HandleEvent(SDL_Event* event, AppContext& ac)
 			}
 		}
 		else if (event->key.keysym.sym == SDLK_SPACE)
-		{	
+		{
 			ac.bPanningButtonDown = true;
 			ac.panningStartPoint = mousePosition;
 
-			
+
 			const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
 			float worldX = (2.0f * ac.orthoViewDistance * aspectRatio / ac.windowWidth) * mousePosition.first + (ac.panningCenter.first - ac.orthoViewDistance * aspectRatio);
 			float worldY = (-2.0f * ac.orthoViewDistance / ac.windowHeight) * mousePosition.second + (ac.panningCenter.second + ac.orthoViewDistance);
 			printf("Panning start point is (%d, %d) or (%.3f, %.3f)\n", mousePosition.first, mousePosition.second, worldX, worldY);
-			
+
 		}
 		//printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
 		break;
@@ -525,7 +525,7 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
 		ArnVec3 bipedComPos;
 		ac.trunk->calculateLumpedComAndMass(&bipedComPos, &ac.bipedMass);
 		ac.bipedComPos.push_back(bipedComPos); // Save the trail of COM for visualization
-		
+
 		if (useGroundPlaneBodyIntersection)
 		{
 			// Needed for support polygon visualization
@@ -592,7 +592,7 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
 }
 
 static void
-AddToSceneGraphList( const ArnNode* node, Fl_Select_Browser* list, int depth ) 
+AddToSceneGraphList( const ArnNode* node, Fl_Browser* list, int depth )
 {
 	std::string itemName("@s@f");
 	for (int i = 0; i < depth; ++i)
@@ -610,7 +610,7 @@ AddToSceneGraphList( const ArnNode* node, Fl_Select_Browser* list, int depth )
 }
 
 static void
-UpdateSceneGraphList( BwAppContext& ac ) 
+UpdateSceneGraphList( BwAppContext& ac )
 {
 	if (ac.sceneGraphList)
 	{
@@ -805,12 +805,12 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	// Timer init
 	ac.timer.start();
 	// SimWorld history
-	ac.simWorldHistory.resize(10000);	
+	ac.simWorldHistory.resize(10000);
 
 	ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0.01f));
 	ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1.0f));
 
-	
+
 
 	/// 첫 장면 파일을 메모리에 로드합니다.
 	assert(ac.sceneList.size() > 0);
@@ -865,10 +865,10 @@ void idle_cb(void* ac)
 			start_time = appContext.timer.getTicks();
 		frameDurationMs = frameEndMs - frameStartMs;
 		//printf("Total %lf FrameDuration %lf\n", frameStartMs - start_time, frameDurationMs);
-		
+
 		frameStartMs = appContext.timer.getTicks();
 		UpdateScene(appContext, (float)(frameDurationMs / 1000.0));
-		
+
 		frameEndMs = appContext.timer.getTicks();
 		appContext.glWindow->redraw();
 		sprintf(frameStr, "%u(%.0lf)", appContext.frames, frameDurationMs);
@@ -876,7 +876,7 @@ void idle_cb(void* ac)
 
 		appContext.playbackSlider->setAvailableFrames(appContext.frames);
 		appContext.playbackSlider->value(appContext.frames);
-		
+
 		appContext.swPtr->getSimWorldState(appContext.simWorldHistory[appContext.frames]);
 
 		++appContext.frames;
@@ -914,7 +914,7 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
 	BwAppContext& ac = *sbh->ac;
 	BwOpenGlWindow& openGlWindow = *sbh->openGlWindow;
 	MessageHandleResult done = sbh->mhr;
-	
+
 	int reconfigScene = false;
 	if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)
 	{
@@ -993,7 +993,7 @@ int main(int argc, char **argv)
 		sbh[0].ac = &appContext;
 		sbh[0].openGlWindow = &openGlWindow;
 		sbh[0].mhr = MHR_RELOAD_SCENE;
-		
+
 		sbh[1].ac = &appContext;
 		sbh[1].openGlWindow = &openGlWindow;
 		sbh[1].mhr = MHR_PREV_SCENE;
@@ -1001,8 +1001,9 @@ int main(int argc, char **argv)
 		sbh[2].ac = &appContext;
 		sbh[2].openGlWindow = &openGlWindow;
 		sbh[2].mhr = MHR_NEXT_SCENE;
-		
 
+
+/*
 		Fl_Button reloadSceneButton(10, 5, 70, 30, "Reload");
 		reloadSceneButton.callback(scene_buttons_cb, &sbh[0]);
 		Fl_Button nextSceneButton(10+75, 5, 50, 30, "Prev");
@@ -1015,10 +1016,11 @@ int main(int argc, char **argv)
 		frameLabel.box(FL_NO_BOX);
 		appContext.frameLabel = &frameLabel;
 
+
 		Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
 		slider.align(FL_ALIGN_LEFT);
 		slider.callback(sides_cb, &openGlWindow);
-		//slider.value(sw.sides);
+
 		slider.step(1);
 		slider.bounds(3,40);
 
@@ -1026,15 +1028,15 @@ int main(int argc, char **argv)
 		appContext.playbackSlider = &playbackSlider;
 		playbackSlider.bounds(0, 9999);
 		playbackSlider.align(FL_ALIGN_LEFT);
-		//oslider.value(sw.overlay_sides);
+
 		playbackSlider.step(1);
-		
+
 
 		BwDrawingOptionsWindow drawingOptions(topWindow.w()-200, 75, 190, 100, 0, appContext, openGlWindow);
 
-		Fl_Select_Browser sceneList(topWindow.w()-200, 75+110, 190, 100);
+		Fl_Browser sceneList(topWindow.w()-200, 75+110, 190, 100);
 
-		Fl_Select_Browser sceneGraphList(topWindow.w()-200, 75+110+110, 190, topWindow.h()-90-110-110);
+		Fl_Browser sceneGraphList(topWindow.w()-200, 75+110+110, 190, topWindow.h()-90-110-110);
 		appContext.sceneGraphList = &sceneGraphList;
 		appContext.glWindow = &openGlWindow;
 
@@ -1042,7 +1044,6 @@ int main(int argc, char **argv)
 		topWindow.setDrawingOptionsWindow(&drawingOptions);
 		topWindow.end();
 		topWindow.show(argc,argv);
-		//printf("Can do overlay = %d\n", sw.can_do_overlay());
 
 		openGlWindow.show();
 		openGlWindow.make_current();
@@ -1056,22 +1057,21 @@ int main(int argc, char **argv)
 		{
 			sceneList.add(scene.c_str());
 		}
+*/
 
-		//Fl::add_idle(idle_cb, &appContext);
-		
-		ret = Fl::run();
+		//ret = Fl::run();
 
 		std::ofstream windowPosAndSize("BwWindow.txt");
 		windowPosAndSize << topWindow.x() << " " << topWindow.y() << " " << topWindow.w() << " " << topWindow.h() << std::endl;
 		windowPosAndSize.close();
 	}
-	
+
 #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
 	// Simple check for the memory leak of ArnObjects.
 	std::cout << "ArnObject ctor count: " << ArnObject::getCtorCount() << std::endl;
 	std::cout << "ArnObject dtor count: " << ArnObject::getDtorCount() << std::endl;
 	ArnObject::printInstances();
 #endif // #ifdef ARNOBJECT_GLOBAL_MANAGEMENT_FOR_DEBUGGING
-	
+
 	return ret;
 }

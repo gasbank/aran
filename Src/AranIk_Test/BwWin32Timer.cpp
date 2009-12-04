@@ -12,6 +12,7 @@ BwWin32Timer::~BwWin32Timer(void)
 
 void BwWin32Timer::start()
 {
+#ifdef WIN32
 	memset(&timer, 0, sizeof(timer));					// Clear Our Timer Structure
 
 	// Check To See If A Performance Counter Is Available
@@ -36,14 +37,17 @@ void BwWin32Timer::start()
 		// Set The Elapsed Time To The Current Time
 		timer.performance_timer_elapsed	= timer.performance_timer_start;
 	}
-
+#else
+	// LINUX code goes here ...
+	clock_gettime(CLOCK_REALTIME, &m_startTime);
+#endif
 	m_bInited = true;
 }
 
 double BwWin32Timer::getTicks()
 {
 	assert(m_bInited);
-
+#ifdef WIN32
 	__int64 time;								// time Will Hold A 64 Bit Integer
 
 	if (timer.performance_timer)						// Are We Using The Performance Timer?
@@ -57,4 +61,8 @@ double BwWin32Timer::getTicks()
 		// Return The Current Time Minus The Start Time Multiplied By The Resolution And 1000 (To Get MS)
 		return( (double) ( timeGetTime() - timer.mm_timer_start) * timer.resolution) * 1000.0;
 	}
+#else
+	// LINUX code goes here ...
+	return 0;
+#endif
 }

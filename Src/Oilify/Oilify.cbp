@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Oilify" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="../../../Working/oilifyD" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../../../Working" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="../../../Working/oilify" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="../../../Working" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-march=core2" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
+					<Add option="-fopenmp" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+					<Add option="-lgomp" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-std=c++0x" />
+			<Add option="-Wall" />
+			<Add option="-I../" />
+			<Add option="-I../Aran" />
+			<Add option="-I../AranIk" />
+			<Add option="-I../AranGl" />
+			<Add option="-I../AranPhy" />
+			<Add option="-I../AranMath" />
+			<Add option="-I/usr/include/freetype2" />
+			<Add option="-DdDOUBLE" />
+		</Compiler>
+		<Linker>
+			<Add option="-lrt" />
+			<Add option="-lfreetype" />
+			<Add option="-lIL" />
+			<Add option="-lGL" />
+			<Add option="-lGLU" />
+			<Add option="-lode" />
+			<Add option="-lAranD" />
+			<Add option="-lAranIkD" />
+			<Add option="-lAranGlD" />
+			<Add option="-lAranPhyD" />
+			<Add option="-lAranMathD" />
+			<Add option="-L../../../Working" />
+		</Linker>
+		<Unit filename="oilify.cpp" />
+		<Unit filename="oilify.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

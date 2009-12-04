@@ -37,7 +37,7 @@ ArnObject::printInstances()
 	foreach (ArnObject* obj, ms_instances)
 	{
 		const char* name = strlen(obj->getName()) ? obj->getName() : "<Unnamed>";
-		printf("[ArnObject 0x%p] TYPE: 0x%08x, NAME: %s\n", obj, obj->getType(), name);
+		printf("[ArnObject 0x%p] TYPE: 0x%08x, NAME: %s\n", (void*)obj, obj->getType(), name);
 	}
 }
 

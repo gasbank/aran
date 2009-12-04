@@ -48,9 +48,7 @@
 			<Add directory="/usr/include/freetype2" />
 		</Compiler>
 		<Linker>
-			<Add option="`guile-config link`" />
 			<Add library="rt" />
-			<Add library="SDL" />
 			<Add library="freetype" />
 			<Add library="IL" />
 			<Add library="GL" />
@@ -61,11 +59,28 @@
 			<Add library="AranGlD" />
 			<Add library="AranPhyD" />
 			<Add library="AranMathD" />
-			<Add library="CGAL" />
+			<Add library="fltk" />
+			<Add library="fltk_gl" />
 			<Add directory="../../../Working" />
 		</Linker>
-		<Unit filename="IkTest2.cpp" />
-		<Unit filename="IkTest2.h" />
+		<Unit filename="BwAppContext.cpp" />
+		<Unit filename="BwAppContext.h" />
+		<Unit filename="BwDrawingOptionsWindow.cpp" />
+		<Unit filename="BwDrawingOptionsWindow.h" />
+		<Unit filename="BwMain.cpp" />
+		<Unit filename="BwMain.h" />
+		<Unit filename="BwOpenGlWindow.cpp" />
+		<Unit filename="BwOpenGlWindow.h" />
+		<Unit filename="BwPch.cpp" />
+		<Unit filename="BwPch.h" />
+		<Unit filename="BwPlaybackSlider.cpp" />
+		<Unit filename="BwPlaybackSlider.h" />
+		<Unit filename="BwTopWindow.cpp" />
+		<Unit filename="BwTopWindow.h" />
+		<Unit filename="BwWin32Timer.cpp" />
+		<Unit filename="BwWin32Timer.h" />
+		<Unit filename="ConvexHull.cpp" />
+		<Unit filename="ConvexHull.h" />
 		<Extensions>
 			<code_completion>
 				<search_path add="/usr/include/SDL" />
