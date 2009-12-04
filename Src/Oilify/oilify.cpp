@@ -17,7 +17,7 @@ typedef unsigned char	guchar;
 static inline unsigned char
 intensityFromRgb(unsigned char rgb[3])
 {
-	return CLAMP0255(GIMP_RGB_LUMINANCE_RED*rgb[0] + GIMP_RGB_LUMINANCE_GREEN*rgb[1] + GIMP_RGB_LUMINANCE_BLUE*rgb[2]);
+	return static_cast<unsigned char>(CLAMP0255(GIMP_RGB_LUMINANCE_RED*rgb[0] + GIMP_RGB_LUMINANCE_GREEN*rgb[1] + GIMP_RGB_LUMINANCE_BLUE*rgb[2]));
 }
 
 
@@ -79,7 +79,7 @@ weighted_average_color (gint    hist[HISTSIZE],
   gint   i, b;
   gint   hist_max = 1;
   gint   exponent_int = 0;
-  gfloat div = 1.0e-6;
+  gfloat div = 1.0e-6f;
   gfloat color[4] = { 0.0, 0.0, 0.0, 0.0 };
 
   for (i = 0; i < HISTSIZE; i++)
@@ -113,15 +113,65 @@ weighted_average_color (gint    hist[HISTSIZE],
     }
 }
 
-int main()
+inline static void
+printHelpMessage(const char* cmdname)
 {
+	printf("%s : Oilify a picture\n", cmdname);
+	printf("\n");
+	printf("  ARGUMENTS\n");
+	printf("    input file          <string>\n");
+	printf("    output file         <string>              (overwrites if exists)\n");
+	printf("    radius   [optional] <int>     (0,30]      (default: 4)\n");
+	printf("    exponent [optional] <float>   [0.0, 20.0] (default: 8.0)\n");
+	printf("\n");
+	printf("  EXAMPLE\n");
+	printf("    %s input.png output.png\n", cmdname);
+	printf("    %s input.png output.png 6.0\n", cmdname);
+	printf("    %s input.png output.png 2.0 4.0\n", cmdname);
+}
+
+int main(int argc, const char* argv[])
+{
+	// Default parameters
+	int radius = 4;
+	float exponent = 8.0f;
+
+	// Parse arguments
+	if (argc == 3)
+	{
+	}
+	else if (argc == 4)
+	{
+		radius = atoi(argv[3]);
+	}
+	else if (argc == 5)
+	{
+		radius = atoi(argv[3]);
+		exponent = (float)atof(argv[4]);
+	}
+	else
+	{
+		printHelpMessage(argv[0]);
+		return 0;
+	}
+	
+	// Check radius and exponent boundaries)
+	if (radius <= 0 || radius > 30 || exponent < 0 || exponent > 20)
+	{
+		printHelpMessage(argv[0]);
+		return 0;
+	}
+
+	const char* inputFileName = argv[1];
+	const char* outputFileName = argv[2];
+
 	if (ArnInitializeImageLibrary() < 0)
 	{
 		printf("Image library initialization failed.\n");
 		abort();
 	}
 
-	ArnTexture* texture = ArnTexture::createFrom("textures/oblivion-house-640x480.png");
+	ArnTexture* texture = ArnTexture::createFrom(inputFileName);
 	texture->init();
 	printf("Dimension : %d x %d\n", texture->getWidth(), texture->getHeight());
 	printf("      BPP : %d\n", texture->getBpp());
@@ -148,13 +198,11 @@ int main()
 		for (int x = 0; x < w; ++x)
 		{
 			const int pixelOffset = w*y + x;
-			unsigned char srcRgb[3] { rgbData[bpp*pixelOffset + 0], rgbData[bpp*pixelOffset + 1], rgbData[bpp*pixelOffset + 2] };
+			unsigned char srcRgb[3] = { rgbData[bpp*pixelOffset + 0], rgbData[bpp*pixelOffset + 1], rgbData[bpp*pixelOffset + 2] };
 			srcInten[pixelOffset] = intensityFromRgb(srcRgb);
 		}
 	}
 
-	const int radius = 4;
-	const double exponent = 8.0;
 	std::vector<unsigned char> outData(w*h*3); // output image consists of RGB channels
 
 #pragma omp parallel for schedule(dynamic)
@@ -207,7 +255,7 @@ int main()
 	ilBindImage(ImageName);
 	ilTexImage(w, h, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, &outData[0]);
 	ilEnable(IL_FILE_OVERWRITE);
-	ilSave(IL_PNG, "output.png");
+	ilSave(IL_PNG, outputFileName);
 	ilDeleteImages(1, &ImageName);
 
 	/*
