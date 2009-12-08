@@ -65,7 +65,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Aran_D.lib;AranMath_D.lib;AranPhy_D.lib;AranGl_D.lib;AranIk_D.lib;opengl32.lib;glu32.lib;fltkd.lib;fltkgld.lib;comctl32.lib;wsock32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(TargetPath)</OutputFile>
       <AdditionalLibraryDirectories>../DebugDLL;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/fltk-1.1.10rc3/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -88,7 +87,6 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>Aran.lib;AranMath.lib;AranPhy.lib;AranGl.lib;AranIk.lib;freetype239MT.lib;opengl32.lib;glu32.lib;DevIL.lib;fltk.lib;fltkgl.lib;comctl32.lib;wsock32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <OutputFile>$(WORKING)/$(ProjectName).exe</OutputFile>
       <AdditionalLibraryDirectories>../ReleaseDLL;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/fltk-1.1.10rc3/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -107,7 +105,6 @@
     </ClCompile>
     <ClCompile Include="BwPlaybackSlider.cpp" />
     <ClCompile Include="BwTopWindow.cpp" />
-    <ClCompile Include="BwWin32Timer.cpp" />
     <ClCompile Include="ConvexHull.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -118,7 +115,6 @@
     <ClInclude Include="BwPch.h" />
     <ClInclude Include="BwPlaybackSlider.h" />
     <ClInclude Include="BwTopWindow.h" />
-    <ClInclude Include="BwWin32Timer.h" />
     <ClInclude Include="ConvexHull.h" />
   </ItemGroup>
   <ItemGroup>

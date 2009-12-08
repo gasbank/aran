@@ -1,5 +1,8 @@
-#include "BwPch.h"
+#include "AranPCH.h"
 #include "BwWin32Timer.h"
+#ifdef WIN32
+	#include <mmsystem.h>
+#endif
 
 BwWin32Timer::BwWin32Timer(void)
 : m_bInited(false)

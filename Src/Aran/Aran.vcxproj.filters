@@ -135,6 +135,7 @@
     <ClCompile Include="ArnXmlLoader.cpp">
       <Filter>Arn</Filter>
     </ClCompile>
+    <ClCompile Include="BwWin32Timer.cpp" />
     <ClCompile Include="DungeonInterface.cpp">
       <Filter>Sources &amp; Headers</Filter>
     </ClCompile>
@@ -237,6 +238,7 @@
     <ClInclude Include="ArnXmlLoader.h">
       <Filter>Arn</Filter>
     </ClInclude>
+    <ClInclude Include="BwWin32Timer.h" />
     <ClInclude Include="doxygen_main.h" />
     <ClInclude Include="DungeonInterface.h">
       <Filter>Sources &amp; Headers</Filter>

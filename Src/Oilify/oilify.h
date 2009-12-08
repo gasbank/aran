@@ -45,6 +45,7 @@
 // Aran
 //
 #include "AranApi.h"
+#include "BwWin32Timer.h"
 
 //
 // DevIL

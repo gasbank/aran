@@ -4,7 +4,7 @@
 #include <sys/time.h>
 #endif
 
-class BwWin32Timer
+class ARAN_API BwWin32Timer
 {
 public:
 	BwWin32Timer(void);

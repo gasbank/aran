@@ -76,19 +76,17 @@
       <EnableEnhancedInstructionSet>NotSet</EnableEnhancedInstructionSet>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>AranPCH.h</PrecompiledHeaderFile>
-      <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <DisableSpecificWarnings>4127;4512;4100;4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>AranMath_D.lib;tinyxmlSTL_D.lib;DevIL.lib;zlib1d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AranMath_D.lib;tinyxmlSTL_D.lib;DevIL.lib;zlib1d.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
-      <OutputFile>$(TargetPath)</OutputFile>
     </Link>
     <PostBuildEvent>
       <Command>
@@ -121,9 +119,8 @@
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>AranMath.lib;tinyxmlSTL.lib;DevIL.lib;zlib1.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AranMath.lib;tinyxmlSTL.lib;DevIL.lib;zlib1.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../ReleaseDLL;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Release_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>$(OutDir)$(TargetName).lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
@@ -177,6 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="BwWin32Timer.cpp" />
     <ClCompile Include="DungeonInterface.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="MyError.cpp" />
@@ -211,6 +209,7 @@
     <ClInclude Include="Animation.h" />
     <ClInclude Include="AranApi.h" />
     <ClInclude Include="AranPCH.h" />
+    <ClInclude Include="BwWin32Timer.h" />
     <ClInclude Include="DungeonInterface.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="MyError.h" />

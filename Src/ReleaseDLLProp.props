@@ -5,7 +5,8 @@
   </PropertyGroup>
   <ItemDefinitionGroup>
     <Link>
-      <OutputFile>$(WORKING)/$(ProjectName).dll</OutputFile>
+      <OutputFile>$(TargetPath)</OutputFile>
+      <ImportLibrary>../ReleaseDLL/$(TargetName).lib</ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
 </Project>

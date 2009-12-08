@@ -387,8 +387,8 @@ cl_device_id oclGetFirstDev(cl_context cxGPUContext)
 int main (int argc, const char* argv[])
 {
 	// Default parameters
-	int radius = 4;
-	float exponent = 8.0f;
+	int radius = 2;
+	float exponent = 10.0f;
 
 	// Parse arguments
 	if (argc == 3)
@@ -459,15 +459,8 @@ int main (int argc, const char* argv[])
 		Cleanup(oc);
 		exit(EXIT_FAILURE);
 	}
-	/*
-	// Build the program with 'mad' Optimization option
-#ifdef MAC
-	char* flags = "-cl-mad-enable -DMAC";
-#else
-	char* flags = "-cl-mad-enable";
-#endif
-	*/
-	ciErr1 = clBuildProgram(oc.cpProgram, 0, NULL, "-cl-opt-disable", NULL, NULL);
+	
+	ciErr1 = clBuildProgram(oc.cpProgram, 0, NULL, "-cl-unsafe-math-optimizations -cl-finite-math-only -cl-fast-relaxed-math", NULL, NULL);
 	oclLogBuildInfo(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext));
 	oclLogPtx(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext), "oilify-log.ptx");
 	if (ciErr1 != CL_SUCCESS)
@@ -528,10 +521,17 @@ int main (int argc, const char* argv[])
 	size_t szGlobalWorkSize[2];
 	size_t szLocalWorkSize[2];
 	const size_t pixelNeighborSize = 9;
+	
+	/*
 	szGlobalWorkSize[0] = shrRoundUp(pixelNeighborSize, w);
 	szGlobalWorkSize[1] = shrRoundUp(pixelNeighborSize, h);
 	szLocalWorkSize[0] = pixelNeighborSize;
 	szLocalWorkSize[1] = pixelNeighborSize;
+	*/
+	szLocalWorkSize[0] = 256;
+	szLocalWorkSize[1] = 1;
+	szGlobalWorkSize[0] = shrRoundUp(256, w*h);
+	szGlobalWorkSize[1] = 1;
 	
 	// Allocate the OpenCL buffer memory objects for source and result on the device GMEM
     printf("Actual global work size            = %d = %dx%d\n", w*h, w, h);
@@ -556,7 +556,7 @@ int main (int argc, const char* argv[])
     ciErr1 = clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.rgba);
     ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.inten);
     ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outRgba);
-	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outDebug);
+	//ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outDebug);
     ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&w);
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&h);
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&radius);
@@ -568,7 +568,11 @@ int main (int argc, const char* argv[])
 		exit(EXIT_FAILURE);
     }
 
+
+	
 	std::vector<unsigned char> srcInten(w * h);
+	BwWin32Timer timer;
+	timer.start();
 #pragma omp parallel for schedule(dynamic)
 	for (int y = 0; y < h; ++y)
 	{
@@ -582,10 +586,10 @@ int main (int argc, const char* argv[])
 
 	// --------------------------------------------------------
     // Start Core sequence... copy input data to GPU, compute, copy results back
-
+	
     // Asynchronous write of data to GPU device
-    ciErr1 = clEnqueueWriteBuffer(oc.cqCommandQueue, oc.rgba, CL_TRUE, 0, sizeof(cl_uchar4) * w * h, &rgbData[0], 0, NULL, NULL);
-    ciErr1 |= clEnqueueWriteBuffer(oc.cqCommandQueue, oc.inten, CL_TRUE, 0, sizeof(cl_uchar) * w * h, &srcInten[0], 0, NULL, NULL);
+    ciErr1 = clEnqueueWriteBuffer(oc.cqCommandQueue, oc.rgba, CL_FALSE, 0, sizeof(cl_uchar4) * w * h, &rgbData[0], 0, NULL, NULL);
+    ciErr1 |= clEnqueueWriteBuffer(oc.cqCommandQueue, oc.inten, CL_FALSE, 0, sizeof(cl_uchar) * w * h, &srcInten[0], 0, NULL, NULL);
     if (ciErr1 != CL_SUCCESS)
     {
         printf("Error in clEnqueueWriteBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
@@ -595,7 +599,7 @@ int main (int argc, const char* argv[])
 
 	
     // Launch kernel
-    ciErr1 = clEnqueueNDRangeKernel(oc.cqCommandQueue, oc.ckKernel, 2, NULL, szGlobalWorkSize, szLocalWorkSize, 0, NULL, NULL);
+    ciErr1 = clEnqueueNDRangeKernel(oc.cqCommandQueue, oc.ckKernel, 1, NULL, szGlobalWorkSize, szLocalWorkSize, 0, NULL, NULL);
     if (ciErr1 != CL_SUCCESS)
     {
         printf("Error in clEnqueueNDRangeKernel, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
@@ -604,9 +608,6 @@ int main (int argc, const char* argv[])
     }
 
 	std::vector<unsigned char> outData(w * h * 4); // output image consists of RGB channels
-	std::vector<float> outDebug(w * h * 4); // output image consists of RGB channels
-
-	
     // Synchronous/blocking read of results, and check accumulated errors
     ciErr1 = clEnqueueReadBuffer(oc.cqCommandQueue, oc.outRgba, CL_TRUE, 0, sizeof(cl_uchar4) * w * h, &outData[0], 0, NULL, NULL);
     if (ciErr1 != CL_SUCCESS)
@@ -615,61 +616,7 @@ int main (int argc, const char* argv[])
         Cleanup(oc);
 		exit(EXIT_FAILURE);
     }
-	ciErr1 = clEnqueueReadBuffer(oc.cqCommandQueue, oc.outDebug, CL_TRUE, 0, sizeof(cl_float4) * w * h, &outDebug[0], 0, NULL, NULL);
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clEnqueueReadBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
-	int a = 10;
-    //--------------------------------------------------------
-
-	/*
-#pragma omp parallel for schedule(dynamic)
-	for (int y = 0; y < h; ++y)
-	{
-		//printf("row %d / %d...\n", y+1, h);
-		for (int x = 0; x < w; ++x)
-		{
-			int hist[HISTSIZE];
-			int histRgb[4][HISTSIZE];
-			memset(hist, 0, sizeof(hist));
-			memset(histRgb, 0, sizeof(histRgb));
-
-			const int mask_x1 = CLAMP((x - radius), 0, w-1);
-			const int mask_y1 = CLAMP((y - radius), 0, h-1);
-			const int mask_x2 = CLAMP((x + radius + 1), 0, w-1);
-			const int mask_y2 = CLAMP((y + radius + 1), 0, h-1);
-
-			for (int mask_y = mask_y1; mask_y < mask_y2; ++mask_y)
-			{
-				const int dy_squared = (mask_y - y)*(mask_y - y);
-				for (int mask_x = mask_x1; mask_x < mask_x2; ++mask_x)
-				{
-					const int dx_squared = (mask_x - x)*(mask_x - x);
-					if ((dx_squared + dy_squared) > (radius*radius))
-						continue;
-
-					const int maskOffset = w*mask_y + mask_x;
-					unsigned char inten = srcInten[maskOffset];
-					++hist[inten];
-					for (int b = 0; b < 3; ++b)
-						histRgb[b][inten] += rgbData[bpp*maskOffset + b];
-				}
-			}
-			unsigned char dest[4];
-			weighted_average_color(hist, histRgb, exponent, dest, bpp);
-
-
-			const int yFlippedPixelOffset = w*(h-1-y) + x;
-			outData[3*yFlippedPixelOffset + 0] = dest[0];
-			outData[3*yFlippedPixelOffset + 1] = dest[1];
-			outData[3*yFlippedPixelOffset + 2] = dest[2];
-
-		}
-	}
-	*/
+	printf("Process time: %lf ms\n", timer.getTicks());
 
 	delete texture;
 
@@ -680,26 +627,7 @@ int main (int argc, const char* argv[])
 	ilEnable(IL_FILE_OVERWRITE);
 	ilSave(IL_PNG, outputFileName);
 	ilDeleteImages(1, &ImageName);
-	
-	std::vector<unsigned char> intenData(w*h*3);
-	for (int y = 0; y < h; ++y)
-	{
-		for (int x = 0; x < w; ++x)
-		{
-			const int pixelOffset = w*y + x;
-			const int yFlippedPixelOffset = w*(h-1-y) + x;
-			intenData[3*yFlippedPixelOffset + 0] = srcInten[pixelOffset];
-			intenData[3*yFlippedPixelOffset + 1] = srcInten[pixelOffset];
-			intenData[3*yFlippedPixelOffset + 2] = srcInten[pixelOffset];
-		}
-	}
-	ilGenImages(1, &ImageName);
-	ilBindImage(ImageName);
-	ilTexImage(w, h, 1, 3, IL_RGB, IL_UNSIGNED_BYTE, &intenData[0]);
-	ilEnable(IL_FILE_OVERWRITE);
-	ilSave(IL_PNG, "output_inten.png");
-	ilDeleteImages(1, &ImageName);
-	
+		
 	if (ArnCleanupImageLibrary() < 0)
 	{
 		printf("Image library cleanup failed.\n");
