@@ -51,4 +51,7 @@
 //
 #include "IL/il.h"
 
+#include <CL/cl.h>
+#include <CL/clext.h>
+
 #endif // OILIFY_H_INCLUDED
