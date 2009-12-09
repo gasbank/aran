@@ -23,8 +23,14 @@
     <ClInclude Include="oilify.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="oilify_api.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="oilify.cl" />
+    <None Include="oilify.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

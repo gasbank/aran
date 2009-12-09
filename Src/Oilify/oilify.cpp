@@ -1,4 +1,5 @@
 #include "oilify.h"
+#include "oilify_api.h"
 
 #define HDASHLINE "-----------------------------------------------------------\n"
 #define CLAMP(v,lo,hi) ((v)<(lo))?(lo):((v)>(hi))?(hi):(v)
@@ -129,77 +130,6 @@ inline static void
 	printf("    %s input.png output.png\n", cmdname);
 	printf("    %s input.png output.png 6.0\n", cmdname);
 	printf("    %s input.png output.png 2.0 4.0\n", cmdname);
-}
-
-struct OclContext
-{
-	cl_context			cxGpuContext;
-	cl_device_id*		cdDevices;
-	cl_command_queue	cqCommandQueue;
-	char*				cSourceCL;
-	cl_kernel			ckKernel;
-	cl_program			cpProgram;
-	cl_mem				rgba;
-	cl_mem				inten;
-	cl_mem				outRgba;
-	cl_mem				outDebug;
-};
-
-OclContext oc;
-
-void Cleanup (OclContext& oc)
-{
-	if (oc.cxGpuContext)
-	{
-		clReleaseContext(oc.cxGpuContext);
-		oc.cxGpuContext = 0;
-	}
-	if(oc.cqCommandQueue)
-	{
-		clReleaseCommandQueue(oc.cqCommandQueue);
-		oc.cqCommandQueue = 0;
-	}
-	if(oc.cdDevices)
-	{
-		free(oc.cdDevices);
-		oc.cdDevices = 0;
-	}
-	if(oc.cSourceCL)
-	{
-		free(oc.cSourceCL);
-		oc.cSourceCL = 0;
-	}
-	if(oc.ckKernel)
-	{
-		clReleaseKernel(oc.ckKernel);
-		oc.ckKernel = 0;
-	}
-	if(oc.cpProgram)
-	{
-		clReleaseProgram(oc.cpProgram);
-		oc.cpProgram = 0;
-	}
-
-	if(oc.rgba)
-	{
-		clReleaseMemObject(oc.rgba);
-		oc.rgba = 0;
-	}
-	if(oc.inten)
-	{
-		clReleaseMemObject(oc.inten);
-		oc.inten = 0;
-	}
-	if(oc.outRgba)
-	{
-		clReleaseMemObject(oc.outRgba);
-		oc.outRgba = 0;
-	}
-	if(oc.outDebug)
-	{
-		clReleaseMemObject(oc.outDebug);
-		oc.outDebug = 0;
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -350,7 +280,7 @@ void oclLogPtx(cl_program cpProgram, cl_device_id cdDevice, const char* cPtxFile
         }
     }
 
-    // Cleanup
+    // oilify_cleanup
     free(devices);
     free(binary_sizes);
     for(unsigned int i = 0; i < num_devices; ++i)
@@ -384,11 +314,250 @@ cl_device_id oclGetFirstDev(cl_context cxGPUContext)
     return first;
 }
 
+int oilify_cleanup(OclContext* pOc)
+{
+	assert(pOc);
+	OclContext& oc = *pOc;
+
+	if (oc.cxGpuContext)
+	{
+		clReleaseContext(oc.cxGpuContext);
+		oc.cxGpuContext = 0;
+	}
+	if(oc.cqCommandQueue)
+	{
+		clReleaseCommandQueue(oc.cqCommandQueue);
+		oc.cqCommandQueue = 0;
+	}
+	if(oc.cdDevices)
+	{
+		free(oc.cdDevices);
+		oc.cdDevices = 0;
+	}
+	if(oc.cSourceCL)
+	{
+		free(oc.cSourceCL);
+		oc.cSourceCL = 0;
+	}
+	if(oc.ckKernel)
+	{
+		clReleaseKernel(oc.ckKernel);
+		oc.ckKernel = 0;
+	}
+	if(oc.cpProgram)
+	{
+		clReleaseProgram(oc.cpProgram);
+		oc.cpProgram = 0;
+	}
+
+	if(oc.rgba)
+	{
+		clReleaseMemObject(oc.rgba);
+		oc.rgba = 0;
+	}
+	if(oc.inten)
+	{
+		clReleaseMemObject(oc.inten);
+		oc.inten = 0;
+	}
+	if(oc.outRgba)
+	{
+		clReleaseMemObject(oc.outRgba);
+		oc.outRgba = 0;
+	}
+	if(oc.outDebug)
+	{
+		clReleaseMemObject(oc.outDebug);
+		oc.outDebug = 0;
+	}
+	return 0;
+}
+
+int oilify_prepare(OclContext* pOc, unsigned int w, unsigned int h, unsigned int radius, unsigned int exponent, int bFlipY)
+{
+	assert(pOc);
+	OclContext& oc = *pOc;
+
+	cl_int ciErr1, ciErr2;
+	memset(&oc, 0, sizeof(OclContext));
+	oc.cxGpuContext = clCreateContextFromType(0, CL_DEVICE_TYPE_GPU, NULL, NULL, &ciErr1);
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clCreateBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+
+	// Get the list of GPU devices associated with context
+	size_t szParmDataBytes;
+	ciErr1 = clGetContextInfo(oc.cxGpuContext, CL_CONTEXT_DEVICES, 0, NULL, &szParmDataBytes);
+	oc.cdDevices = (cl_device_id*)malloc(szParmDataBytes);
+	ciErr1 |= clGetContextInfo(oc.cxGpuContext, CL_CONTEXT_DEVICES, szParmDataBytes, oc.cdDevices, NULL);
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clGetContextInfo, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+
+	// Create a command-queue on the first device
+	oc.cqCommandQueue = clCreateCommandQueue(oc.cxGpuContext, oc.cdDevices[0], 0, &ciErr1);
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clCreateCommandQueue, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+
+	size_t szKernelLength;
+	oc.cSourceCL = oclLoadProgSource("d:/devel3/aran/src/oilify/oilify.cl", "", &szKernelLength);
+
+	// Create the program
+	oc.cpProgram = clCreateProgramWithSource(oc.cxGpuContext, 1, (const char **)&oc.cSourceCL, &szKernelLength, &ciErr1);
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clCreateProgramWithSource, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+	
+	ciErr1 = clBuildProgram(oc.cpProgram, 0, NULL, "-cl-unsafe-math-optimizations -cl-finite-math-only -cl-fast-relaxed-math", NULL, NULL);
+	oclLogBuildInfo(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext));
+	oclLogPtx(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext), "oilify-log.ptx");
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clBuildProgram, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+
+	// Create the kernel
+	oc.ckKernel = clCreateKernel(oc.cpProgram, "Oilify", &ciErr1);
+	if (ciErr1 != CL_SUCCESS)
+	{
+		printf("Error in clCreateKernel, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+		oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+	}
+
+	// Global and local work size calculation
+	//
+	// two-dimension work-item
+	// Use 9x9 neighbor pixels are used to calculate a pixel output
+	//
+
+	
+	//static const size_t pixelNeighborSize = 9;
+	
+	/*
+	szGlobalWorkSize[0] = shrRoundUp(pixelNeighborSize, w);
+	szGlobalWorkSize[1] = shrRoundUp(pixelNeighborSize, h);
+	szLocalWorkSize[0] = pixelNeighborSize;
+	szLocalWorkSize[1] = pixelNeighborSize;
+	*/
+	oc.szLocalWorkSize[0] = 256;
+	oc.szLocalWorkSize[1] = 1;
+	oc.szGlobalWorkSize[0] = shrRoundUp(256, w*h);
+	oc.szGlobalWorkSize[1] = 1;
+	
+	// Allocate the OpenCL buffer memory objects for source and result on the device GMEM
+    printf("Actual global work size            = %d = %dx%d\n", w*h, w, h);
+	printf("szGlobalWorkSize                   = %d = %dx%d\n", oc.szGlobalWorkSize[0]*oc.szGlobalWorkSize[1], oc.szGlobalWorkSize[0], oc.szGlobalWorkSize[1]);
+	printf("szLocalWorkSize                    = %d = %dx%d\n", oc.szLocalWorkSize[0]*oc.szLocalWorkSize[1], oc.szLocalWorkSize[0], oc.szLocalWorkSize[1]);
+	oc.rgba = clCreateBuffer(oc.cxGpuContext, CL_MEM_READ_ONLY, sizeof(cl_uchar4) * oc.szGlobalWorkSize[0] * oc.szGlobalWorkSize[1], NULL, &ciErr1);
+    oc.inten = clCreateBuffer(oc.cxGpuContext, CL_MEM_READ_ONLY, sizeof(cl_uchar) * oc.szGlobalWorkSize[0] * oc.szGlobalWorkSize[1], NULL, &ciErr2);
+    ciErr1 |= ciErr2;
+    oc.outRgba = clCreateBuffer(oc.cxGpuContext, CL_MEM_WRITE_ONLY, sizeof(cl_uchar4) * oc.szGlobalWorkSize[0] * oc.szGlobalWorkSize[1], NULL, &ciErr2);
+    ciErr1 |= ciErr2;
+	oc.outDebug = clCreateBuffer(oc.cxGpuContext, CL_MEM_WRITE_ONLY, sizeof(cl_float4) * oc.szGlobalWorkSize[0] * oc.szGlobalWorkSize[1], NULL, &ciErr2);
+    ciErr1 |= ciErr2;
+    if (ciErr1 != CL_SUCCESS)
+    {
+        printf("Error in clCreateBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+        oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+    }
+
+    // Set the Argument values
+	int argIdx = 0;
+    ciErr1 = clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.rgba);
+    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.inten);
+    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outRgba);
+    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&w);
+	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&h);
+	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&radius);
+	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&exponent);
+	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&bFlipY);
+	
+    if (ciErr1 != CL_SUCCESS)
+    {
+        printf("Error in clSetKernelArg, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+        oilify_cleanup(pOc);
+		exit(EXIT_FAILURE);
+    }
+
+	return 0;
+}
+
+int oilify_run(const OclContext* pOc, const unsigned char * const rgbData, unsigned int w, unsigned int h, unsigned char* ub_out)
+{
+	assert(pOc);
+	const OclContext& oc = *pOc;
+	static const int bpp = 4;
+
+	cl_int ciErr1;
+
+	std::vector<unsigned char> srcInten(w * h);
+	BwWin32Timer timer;
+	timer.start();
+#pragma omp parallel for schedule(dynamic)
+	for (int y = 0; y < (int)h; ++y)
+	{
+		for (int x = 0; x < (int)w; ++x)
+		{
+			const int pixelOffset = w*y + x;
+			unsigned char srcRgb[3] = { rgbData[bpp*pixelOffset + 0], rgbData[bpp*pixelOffset + 1], rgbData[bpp*pixelOffset + 2] };
+			srcInten[pixelOffset] = intensityFromRgb(srcRgb);
+		}
+	}
+
+	// --------------------------------------------------------
+    // Start Core sequence... copy input data to GPU, compute, copy results back
+	
+    // Asynchronous write of data to GPU device
+    ciErr1 = clEnqueueWriteBuffer(oc.cqCommandQueue, oc.rgba, CL_FALSE, 0, sizeof(cl_uchar4) * w * h, &rgbData[0], 0, NULL, NULL);
+    ciErr1 |= clEnqueueWriteBuffer(oc.cqCommandQueue, oc.inten, CL_FALSE, 0, sizeof(cl_uchar) * w * h, &srcInten[0], 0, NULL, NULL);
+    if (ciErr1 != CL_SUCCESS)
+    {
+        printf("Error in clEnqueueWriteBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+        return -1;
+    }
+
+	
+    // Launch kernel
+    ciErr1 = clEnqueueNDRangeKernel(oc.cqCommandQueue, oc.ckKernel, 1, NULL, oc.szGlobalWorkSize, oc.szLocalWorkSize, 0, NULL, NULL);
+    if (ciErr1 != CL_SUCCESS)
+    {
+        printf("Error in clEnqueueNDRangeKernel, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+        return -2;
+    }
+
+    // Synchronous/blocking read of results, and check accumulated errors
+    ciErr1 = clEnqueueReadBuffer(oc.cqCommandQueue, oc.outRgba, CL_TRUE, 0, sizeof(cl_uchar4) * w * h, ub_out, 0, NULL, NULL);
+    if (ciErr1 != CL_SUCCESS)
+    {
+        printf("Error in clEnqueueReadBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+        return -3;
+    }
+	printf("Process time: %lf ms\n", timer.getTicks());
+	return 0;
+}
+
 int main (int argc, const char* argv[])
 {
 	// Default parameters
 	int radius = 2;
-	float exponent = 10.0f;
+	int exponent = 10;
 
 	// Parse arguments
 	if (argc == 3)
@@ -401,7 +570,7 @@ int main (int argc, const char* argv[])
 	else if (argc == 5)
 	{
 		radius = atoi(argv[3]);
-		exponent = (float)atof(argv[4]);
+		exponent = atoi(argv[4]);
 	}
 	else
 	{
@@ -416,71 +585,6 @@ int main (int argc, const char* argv[])
 		return 0;
 	}
 
-	cl_int ciErr1, ciErr2;
-	OclContext oc;
-	memset(&oc, 0, sizeof(OclContext));
-	oc.cxGpuContext = clCreateContextFromType(0, CL_DEVICE_TYPE_GPU, NULL, NULL, &ciErr1);
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clCreateBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-
-	// Get the list of GPU devices associated with context
-	size_t szParmDataBytes;
-	ciErr1 = clGetContextInfo(oc.cxGpuContext, CL_CONTEXT_DEVICES, 0, NULL, &szParmDataBytes);
-	oc.cdDevices = (cl_device_id*)malloc(szParmDataBytes);
-	ciErr1 |= clGetContextInfo(oc.cxGpuContext, CL_CONTEXT_DEVICES, szParmDataBytes, oc.cdDevices, NULL);
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clGetContextInfo, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-
-	// Create a command-queue on the first device
-	oc.cqCommandQueue = clCreateCommandQueue(oc.cxGpuContext, oc.cdDevices[0], 0, &ciErr1);
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clCreateCommandQueue, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-
-	size_t szKernelLength;
-	oc.cSourceCL = oclLoadProgSource("d:/devel3/aran/src/oilify/oilify.cl", "", &szKernelLength);
-
-	// Create the program
-	oc.cpProgram = clCreateProgramWithSource(oc.cxGpuContext, 1, (const char **)&oc.cSourceCL, &szKernelLength, &ciErr1);
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clCreateProgramWithSource, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-	
-	ciErr1 = clBuildProgram(oc.cpProgram, 0, NULL, "-cl-unsafe-math-optimizations -cl-finite-math-only -cl-fast-relaxed-math", NULL, NULL);
-	oclLogBuildInfo(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext));
-	oclLogPtx(oc.cpProgram, oclGetFirstDev(oc.cxGpuContext), "oilify-log.ptx");
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clBuildProgram, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-
-	// Create the kernel
-	oc.ckKernel = clCreateKernel(oc.cpProgram, "Oilify", &ciErr1);
-	if (ciErr1 != CL_SUCCESS)
-	{
-		printf("Error in clCreateKernel, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-		Cleanup(oc);
-		exit(EXIT_FAILURE);
-	}
-
-
-
 	const char* inputFileName = argv[1];
 	const char* outputFileName = argv[2];
 
@@ -490,6 +594,7 @@ int main (int argc, const char* argv[])
 		abort();
 	}
 
+	// Load an input image file.
 	ArnTexture* texture = ArnTexture::createFrom(inputFileName);
 	texture->init();
 	printf("Dimension : %d x %d\n", texture->getWidth(), texture->getHeight());
@@ -510,113 +615,13 @@ int main (int argc, const char* argv[])
 	const int bpp = texture->getBpp();
 	assert(rgbData.size() == w*h*texture->getBpp());
 
-	
-
-	// Global and local work size calculation
-	//
-	// two-dimension work-item
-	// Use 9x9 neighbor pixels are used to calculate a pixel output
-	//
-
-	size_t szGlobalWorkSize[2];
-	size_t szLocalWorkSize[2];
-	const size_t pixelNeighborSize = 9;
-	
-	/*
-	szGlobalWorkSize[0] = shrRoundUp(pixelNeighborSize, w);
-	szGlobalWorkSize[1] = shrRoundUp(pixelNeighborSize, h);
-	szLocalWorkSize[0] = pixelNeighborSize;
-	szLocalWorkSize[1] = pixelNeighborSize;
-	*/
-	szLocalWorkSize[0] = 256;
-	szLocalWorkSize[1] = 1;
-	szGlobalWorkSize[0] = shrRoundUp(256, w*h);
-	szGlobalWorkSize[1] = 1;
-	
-	// Allocate the OpenCL buffer memory objects for source and result on the device GMEM
-    printf("Actual global work size            = %d = %dx%d\n", w*h, w, h);
-	printf("szGlobalWorkSize                   = %d = %dx%d\n", szGlobalWorkSize[0]*szGlobalWorkSize[1], szGlobalWorkSize[0], szGlobalWorkSize[1]);
-	printf("szLocalWorkSize                    = %d = %dx%d\n", szLocalWorkSize[0]*szLocalWorkSize[1], szLocalWorkSize[0], szLocalWorkSize[1]);
-	oc.rgba = clCreateBuffer(oc.cxGpuContext, CL_MEM_READ_ONLY, sizeof(cl_uchar4) * szGlobalWorkSize[0] * szGlobalWorkSize[1], NULL, &ciErr1);
-    oc.inten = clCreateBuffer(oc.cxGpuContext, CL_MEM_READ_ONLY, sizeof(cl_uchar) * szGlobalWorkSize[0] * szGlobalWorkSize[1], NULL, &ciErr2);
-    ciErr1 |= ciErr2;
-    oc.outRgba = clCreateBuffer(oc.cxGpuContext, CL_MEM_WRITE_ONLY, sizeof(cl_uchar4) * szGlobalWorkSize[0] * szGlobalWorkSize[1], NULL, &ciErr2);
-    ciErr1 |= ciErr2;
-	oc.outDebug = clCreateBuffer(oc.cxGpuContext, CL_MEM_WRITE_ONLY, sizeof(cl_float4) * szGlobalWorkSize[0] * szGlobalWorkSize[1], NULL, &ciErr2);
-    ciErr1 |= ciErr2;
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clCreateBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
-
-    // Set the Argument values
-	int argIdx = 0;
-    ciErr1 = clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.rgba);
-    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.inten);
-    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outRgba);
-	//ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outDebug);
-    ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&w);
-	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&h);
-	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&radius);
-	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_float), (void*)&exponent);
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clSetKernelArg, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
-
-
-	
-	std::vector<unsigned char> srcInten(w * h);
-	BwWin32Timer timer;
-	timer.start();
-#pragma omp parallel for schedule(dynamic)
-	for (int y = 0; y < h; ++y)
-	{
-		for (int x = 0; x < w; ++x)
-		{
-			const int pixelOffset = w*y + x;
-			unsigned char srcRgb[3] = { rgbData[bpp*pixelOffset + 0], rgbData[bpp*pixelOffset + 1], rgbData[bpp*pixelOffset + 2] };
-			srcInten[pixelOffset] = intensityFromRgb(srcRgb);
-		}
-	}
-
-	// --------------------------------------------------------
-    // Start Core sequence... copy input data to GPU, compute, copy results back
-	
-    // Asynchronous write of data to GPU device
-    ciErr1 = clEnqueueWriteBuffer(oc.cqCommandQueue, oc.rgba, CL_FALSE, 0, sizeof(cl_uchar4) * w * h, &rgbData[0], 0, NULL, NULL);
-    ciErr1 |= clEnqueueWriteBuffer(oc.cqCommandQueue, oc.inten, CL_FALSE, 0, sizeof(cl_uchar) * w * h, &srcInten[0], 0, NULL, NULL);
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clEnqueueWriteBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
-
-	
-    // Launch kernel
-    ciErr1 = clEnqueueNDRangeKernel(oc.cqCommandQueue, oc.ckKernel, 1, NULL, szGlobalWorkSize, szLocalWorkSize, 0, NULL, NULL);
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clEnqueueNDRangeKernel, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
+	OclContext oc;
+	oilify_prepare(&oc, w, h, radius, exponent, true);
 
 	std::vector<unsigned char> outData(w * h * 4); // output image consists of RGB channels
-    // Synchronous/blocking read of results, and check accumulated errors
-    ciErr1 = clEnqueueReadBuffer(oc.cqCommandQueue, oc.outRgba, CL_TRUE, 0, sizeof(cl_uchar4) * w * h, &outData[0], 0, NULL, NULL);
-    if (ciErr1 != CL_SUCCESS)
-    {
-        printf("Error in clEnqueueReadBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
-        Cleanup(oc);
-		exit(EXIT_FAILURE);
-    }
-	printf("Process time: %lf ms\n", timer.getTicks());
+	oilify_run(&oc, &rgbData[0], w, h, &outData[0]);
+	
+	oilify_cleanup(&oc);
 
 	delete texture;
 
@@ -632,8 +637,5 @@ int main (int argc, const char* argv[])
 	{
 		printf("Image library cleanup failed.\n");
 	}
-	
-	Cleanup(oc);
-
 	return 0;
 }

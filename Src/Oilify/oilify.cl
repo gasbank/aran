@@ -1,16 +1,14 @@
-#define BLOCK_SIZE (9)
-
 int clamp_int(int v, int lo, int hi)
 {
 	return ((v)<(lo))?(lo):((v)>(hi))?(hi):(v);
 }
 
-__kernel void Oilify(__global const uchar4* rgba, __global const uchar* inten, __global uchar4* outRgba, int w, int h, int radius, float exponent)
+__kernel void Oilify(__global const uchar4* rgba, __global const uchar* inten,
+	__global uchar4* outRgba, int w, int h, int radius, int exponent, int bFlipY)
 {
 	const uint idx = get_global_id(0);
 	const uint x = idx % w;
     const uint y = idx / w;
-	const uint flipped_idx = (h - y - 1)*w+ x;
 	
 	if (x >= w || y >= h)
 		return;
@@ -67,9 +65,9 @@ __kernel void Oilify(__global const uchar4* rgba, __global const uchar* inten, _
 		div += weight;
 	}
 
-
-	outRgba[flipped_idx].x = (uchar)(color.x / div);
-	outRgba[flipped_idx].y = (uchar)(color.y / div);
-	outRgba[flipped_idx].z = (uchar)(color.z / div);
-	outRgba[flipped_idx].w = 255; // alpha remains saturated.
+	int dest_idx = bFlipY ? ((h - y - 1)*w+ x) : idx;
+	outRgba[dest_idx].x = (uchar)(color.x / div);
+	outRgba[dest_idx].y = (uchar)(color.y / div);
+	outRgba[dest_idx].z = (uchar)(color.z / div);
+	outRgba[dest_idx].w = 255; // alpha remains saturated.
 }
