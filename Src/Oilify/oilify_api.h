@@ -25,6 +25,8 @@ extern "C" {
 int oilify_prepare(OclContext* pOc, unsigned int w, unsigned int h, unsigned int radius, unsigned int exponent, int bFlipY);
 int oilify_run(const OclContext* pOc, const unsigned char * const rgbData, unsigned int w, unsigned int h, unsigned char* ub_out);
 int oilify_cleanup(OclContext* pOc);
+int oilify_radius(const OclContext* pOc, unsigned int radius);
+int oilify_exponent(const OclContext* pOc, unsigned int exponent);
 #ifdef __cplusplus
 }
 #endif

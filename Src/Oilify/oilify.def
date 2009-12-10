@@ -2,3 +2,5 @@ EXPORTS
 oilify_prepare
 oilify_run
 oilify_cleanup
+oilify_radius
+oilify_exponent

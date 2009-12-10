@@ -373,6 +373,19 @@ int oilify_cleanup(OclContext* pOc)
 	return 0;
 }
 
+static int radius_arg_index;
+static int exponent_arg_index;
+
+int oilify_radius(const OclContext* pOc, unsigned int radius)
+{
+	return clSetKernelArg(pOc->ckKernel, radius_arg_index, sizeof(cl_int), (void*)&radius);
+}
+
+int oilify_exponent(const OclContext* pOc, unsigned int exponent)
+{
+	return clSetKernelArg(pOc->ckKernel, exponent_arg_index, sizeof(cl_int), (void*)&exponent);
+}
+
 int oilify_prepare(OclContext* pOc, unsigned int w, unsigned int h, unsigned int radius, unsigned int exponent, int bFlipY)
 {
 	assert(pOc);
@@ -485,7 +498,9 @@ int oilify_prepare(OclContext* pOc, unsigned int w, unsigned int h, unsigned int
     ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_mem), (void*)&oc.outRgba);
     ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&w);
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&h);
+	radius_arg_index = argIdx; // Will be used later
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&radius);
+	exponent_arg_index = argIdx; // Will be used later
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&exponent);
 	ciErr1 |= clSetKernelArg(oc.ckKernel, argIdx++, sizeof(cl_int), (void*)&bFlipY);
 	
@@ -549,7 +564,7 @@ int oilify_run(const OclContext* pOc, const unsigned char * const rgbData, unsig
         printf("Error in clEnqueueReadBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
         return -3;
     }
-	printf("Process time: %lf ms\n", timer.getTicks());
+	//printf("Process time: %lf ms\n", timer.getTicks());
 	return 0;
 }
 
