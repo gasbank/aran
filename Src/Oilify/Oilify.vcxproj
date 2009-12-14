@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="oilify-cpu.cpp" />
     <ClCompile Include="oilify.cpp" />
   </ItemGroup>
   <ItemGroup>

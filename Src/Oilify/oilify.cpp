@@ -564,7 +564,7 @@ int oilify_run(const OclContext* pOc, const unsigned char * const rgbData, unsig
         printf("Error in clEnqueueReadBuffer, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
         return -3;
     }
-	//printf("Process time: %lf ms\n", timer.getTicks());
+	printf("Process time: %lf ms\n", timer.getTicks());
 	return 0;
 }
 

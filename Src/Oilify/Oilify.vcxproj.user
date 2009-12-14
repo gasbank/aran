@@ -6,7 +6,7 @@
     <LocalDebuggerWorkingDirectory>$(WORKING)</LocalDebuggerWorkingDirectory>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LocalDebuggerCommandArguments>d:\oblivion-house.png a.png 5 8</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>d:\oblivion-house-320x240.png a.png</LocalDebuggerCommandArguments>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LocalDebuggerWorkingDirectory>$(WORKING)</LocalDebuggerWorkingDirectory>

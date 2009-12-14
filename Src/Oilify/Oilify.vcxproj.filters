@@ -15,6 +15,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="oilify-cpu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="oilify.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
