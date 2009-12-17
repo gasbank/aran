@@ -98,7 +98,13 @@ enum NODE_DATA_TYPE // or NDD_DATA_TYPE
 	NDT_ACTION4,						// not used
 	NDT_ACTION5,						// not used
 
-	// Runtime objects RTTI
+	/*
+	 * Runtime objects RTTI
+	 *
+	 * You should modify the function if you would like to modify the following NDT_RT_*:
+	 *    void ArnGetNameFromRtNdt(char out[64], NODE_DATA_TYPE ndt)
+	 *
+	 */
 	NDT_RT_CONTAINER		= 0x10000000,
 	NDT_RT_MESH,
 	NDT_RT_CAMERA,

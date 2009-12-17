@@ -51,19 +51,6 @@ ArnSceneGraph::initRendererObjects()
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-ArnNode*
-ArnSceneGraph::findFirstNodeOfType( NODE_DATA_TYPE ndt )
-{
-	foreach (ArnNode* node, getChildren())
-	{
-		if (node->getType() == ndt)
-		{
-			return node;
-		}
-	}
-	return 0;
-}
-
 ArnCamera*
 ArnSceneGraph::getNextCamera(const ArnCamera* cam) const
 {

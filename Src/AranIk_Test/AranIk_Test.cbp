@@ -77,8 +77,6 @@
 		<Unit filename="BwPlaybackSlider.h" />
 		<Unit filename="BwTopWindow.cpp" />
 		<Unit filename="BwTopWindow.h" />
-		<Unit filename="BwWin32Timer.cpp" />
-		<Unit filename="BwWin32Timer.h" />
 		<Unit filename="ConvexHull.cpp" />
 		<Unit filename="ConvexHull.h" />
 		<Extensions>

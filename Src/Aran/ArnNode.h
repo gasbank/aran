@@ -22,6 +22,7 @@ public:
 	ArnNode*						getNodeByName(const std::string& name);  // Cannot be const function since it can return itself(this pointer).
 	const ArnNode*					getConstNodeByName(const std::string& name) const;
 	ArnNode*						getNodeAt(unsigned int idx) const;
+	int								getIndexOfChild(const ArnNode* c) const;
 	ArnNode*						getNodeById(unsigned int id); // Cannot be const function since it can return itself(this pointer).
 	const ArnNode*					getConstNodeById(unsigned int id) const;
 	inline unsigned int				getNodeCount() const;
@@ -33,11 +34,11 @@ public:
 	virtual void					update(double fTime, float fElapsedTime);
 	void							printNodeHierarchy(int depth) const;
 	const ArnRenderableObject*		getRenderableObject() const; // Return a first renderable object(should be unique) from direct(depth 0) children.
+	ArnNode*						findFirstNodeOfType(NODE_DATA_TYPE ndt);
 
-	/*! @name Internal use only methods
-	These methods are exposed in order to make internal linkage between objects or initialization.
-	Clients should aware that these are not for client-side APIs.
-	*/
+	/*!
+	 * @internalonly
+	 */
 	//@{
 	virtual void					interconnect(ArnNode* sceneRoot) = 0;
 	//@}
@@ -51,5 +52,8 @@ private:
 	std::string						m_parentName;
 	ArnNodeList						m_children;
 };
+
+ARAN_API void ArnGetNameFromRtNdt(char out[64], NODE_DATA_TYPE ndt);
+ARAN_API void ArnPrintNodes(const ArnNode* n, int step = 0);
 
 #include "ArnNode.inl"

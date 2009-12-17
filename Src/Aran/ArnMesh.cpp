@@ -216,12 +216,16 @@ struct ArnxBoneInf
 	float weight;
 };
 
+bool InfIdxPairComp(const std::pair< float, int > &v1, const std::pair< float, int > &v2)
+{
+    return v1.first > v2.first;
+}
+
 void
 ArnMesh::computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[4], int m[4]) const
 {
-	*numInf = 0;
+    std::vector< std::pair< float, int > > infIdxPair;
 	int vgIdx = 0;
-	float sumWeight = 0;
 	foreach (const VertexGroup& vg, m_vertexGroup)
 	{
 		if (vg.vertGroupChunk)
@@ -232,16 +236,23 @@ ArnMesh::computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[
 				const ArnxBoneInf* binf = reinterpret_cast<const ArnxBoneInf*>(vg.vertGroupChunk->getRecordAt(i));
 				if (binf->vertexId == vIdx)
 				{
-					assert(*numInf < 4);
-					influences[*numInf] = binf->weight;
-					m[*numInf] = vgIdx;
-					sumWeight += binf->weight;
-					++(*numInf);
+                    infIdxPair.push_back (std::make_pair (binf->weight, vgIdx));
 				}
 			}
 		}
 		++vgIdx;
-	}
+    }
+
+    // Apply only top 4 largest weights and ignore others.
+    std::sort (infIdxPair.begin (), infIdxPair.end (), InfIdxPairComp);
+    *numInf = std::min(infIdxPair.size(), (size_t)4);
+    float sumWeight = 0;
+    for (int i = 0; i < *numInf; ++i)
+    {
+        sumWeight += infIdxPair[i].first;
+        influences[i] = infIdxPair[i].first;
+        m[i] = infIdxPair[i].second;
+    }
 
 	// Normalize bone weights here.
 	if (sumWeight)

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <boost/array.hpp>
+
 #include "Macros.h"
 #include "ArnCommonTypes.h"
 #include "Structs.h"

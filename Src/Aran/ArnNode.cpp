@@ -185,3 +185,79 @@ ArnNode::getRenderableObject() const
 	}
 	return 0;
 }
+
+int
+ArnNode::getIndexOfChild(const ArnNode* c) const
+{
+	int ret = 0;
+	foreach (const ArnNode* n, getChildren())
+	{
+		if (n == c)
+			break;
+		++ret;
+	}
+	if (ret == getChildren().size())
+		return -1;
+	else
+		return ret;
+}
+
+ArnNode*
+ArnNode::findFirstNodeOfType( NODE_DATA_TYPE ndt )
+{
+	foreach (ArnNode* node, getChildren())
+	{
+		if (node->getType() == ndt)
+		{
+			return node;
+		}
+	}
+	return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////
+
+void ArnGetNameFromRtNdt(char out[64], NODE_DATA_TYPE ndt)
+{
+	const char* name;
+	switch (ndt)
+	{
+		case NDT_RT_CONTAINER: name = "Container"; break;
+		case NDT_RT_MESH: name = "Mesh"; break;
+		case NDT_RT_CAMERA: name = "Camera"; break;
+		case NDT_RT_LIGHT: name = "Light"; break;
+		case NDT_RT_ANIM: name = "Animation"; break;
+		case NDT_RT_MATERIAL: name = "Material"; break;
+		case NDT_RT_HIERARCHY: name = "Hierarchy"; break;
+		case NDT_RT_SKELETON: name = "Skeleton"; break;
+		case NDT_RT_BONE: name ="Bone"; break;
+		case NDT_RT_IPO: name = "IPO"; break;
+		case NDT_RT_ACTIONS: name = "Actions"; break;
+		case NDT_RT_SYMLINK: name = "Symlink"; break;
+		case NDT_RT_SCENEGRAPH: name = "SceneGraph"; break;
+		case NDT_RT_TEXTURE: name = "Texture"; break;
+		case NDT_RT_RENDERABLEOBJECT: name = "RenderableObject"; break;
+		case NDT_RT_BINARYCHUNK: name = "BinaryChunk"; break;
+		case NDT_RT_IKNODE: name = "IkNode"; break;
+		case NDT_RT_GENERALBODY: name = "GeneralBody"; break;
+		case NDT_RT_GENERALJOINT: name = "GeneralJoint"; break;
+		default: name = "Unknown";
+	}
+	strncpy(out, name, 64);
+}
+
+void ArnPrintNodes(const ArnNode* n, int step)
+{
+    if (n)
+    {
+        for (int i = 0; i < step; ++i)
+            std::cout << "    ";
+        std::cout << n->getName() << std::endl;
+
+        foreach (ArnNode* c, n->getChildren())
+        {
+            ArnPrintNodes(c, step+1);
+        }
+    }
+}
