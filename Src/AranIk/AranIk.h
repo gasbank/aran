@@ -16,3 +16,4 @@ TYPEDEF_SHARED_PTR(ArnSceneGraph)
  * @remarks ArnSkeleton을 재귀적으로 모두 찾는 것이 아니라 최상위 노드(root)에서만 검색합니다.
  */
 ARANIK_API void ArnCreateArnIkSolversOnSceneGraph( std::vector<ArnIkSolver*>& ikSolvers, ArnSceneGraphPtr sg );
+ARANIK_API void ArnCreateArnIkSolversOnSceneGraph( std::vector<ArnIkSolver*>& ikSolvers, ArnSceneGraph* sg );

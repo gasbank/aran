@@ -6,6 +6,12 @@
 void
 ArnCreateArnIkSolversOnSceneGraph( std::vector<ArnIkSolver*>& ikSolvers, ArnSceneGraphPtr sg )
 {
+	ArnCreateArnIkSolversOnSceneGraph( ikSolvers, sg.get() );
+}
+
+void
+ArnCreateArnIkSolversOnSceneGraph( std::vector<ArnIkSolver*>& ikSolvers, ArnSceneGraph* sg )
+{
 	assert(ikSolvers.size() == 0);
 	foreach(ArnNode* node, sg->getChildren())
 	{
