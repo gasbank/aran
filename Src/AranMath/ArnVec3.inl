@@ -64,12 +64,8 @@ void
 ArnVec3::getFormatString( char* buf, size_t bufSize ) const
 {
 	assert(buf);
-#ifdef WIN32
-	sprintf_s(buf, bufSize, "(x %6.3f, y %6.3f, z %6.3f)", x, y, z);
-#else
 	sprintf(buf, "(x %6.3f, y %6.3f, z %6.3f)", x, y, z);
 	assert(strlen(buf) < bufSize);
-#endif
 }
 
 void

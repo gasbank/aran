@@ -71,7 +71,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib tinyxmlSTL_D.lib DevIL.lib zlib1d.lib"
+				AdditionalDependencies="AranMath_D.lib tinyxmlSTL_D.lib DevIL.lib zlib1d.lib winmm.lib"
 				AdditionalLibraryDirectories="&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;;&quot;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -558,6 +558,14 @@
 		</File>
 		<File
 			RelativePath=".\ArnJoint.h"
+			>
+		</File>
+		<File
+			RelativePath=".\BwWin32Timer.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\BwWin32Timer.h"
 			>
 		</File>
 		<File

@@ -54,7 +54,26 @@ ArnTextureGl::init()
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, static_cast<GLfloat>(m_target->isWrap() ? GL_REPEAT : GL_CLAMP) );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, static_cast<GLfloat>(m_target->isWrap() ? GL_REPEAT : GL_CLAMP) );
 
-	gluBuild2DMipmaps( GL_TEXTURE_2D, m_target->getBpp(), m_target->getWidth(), m_target->getHeight(), fmt, GL_UNSIGNED_BYTE, &m_target->getRawData()[0] );
+	const char *fileName = m_target->getFileName ();
+	assert (fileName);
+	const size_t fileNameLen = strlen (fileName);
+	assert (fileNameLen > 0);
+	if (strcmp (&fileName[fileNameLen - 4], ".tga") == 0)
+	{
+		// TODO: DevIL TGA loading bug? Y-axis flip is needed.
+		unsigned char *flipped = new unsigned char[m_target->getBpp () * m_target->getWidth () * m_target->getHeight ()];
+		for (unsigned int i = 0; i < m_target->getHeight (); ++i)
+		{
+			memcpy (&flipped[ m_target->getBpp () * m_target->getWidth () * (m_target->getHeight () - 1 - i) ],
+				&m_target->getRawData()[ m_target->getBpp () * m_target->getWidth () * i ],
+				m_target->getBpp () * m_target->getWidth ());
+		}
+		gluBuild2DMipmaps( GL_TEXTURE_2D, m_target->getBpp(), m_target->getWidth(), m_target->getHeight(), fmt, GL_UNSIGNED_BYTE, flipped );
+	}
+	else
+	{
+		gluBuild2DMipmaps( GL_TEXTURE_2D, m_target->getBpp(), m_target->getWidth(), m_target->getHeight(), fmt, GL_UNSIGNED_BYTE, &m_target->getRawData()[0] );
+	}
 	glBindTexture( GL_TEXTURE_2D, 0 );
 	return 0;
 }

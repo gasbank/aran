@@ -245,7 +245,7 @@ ArnMesh::computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[
 
     // Apply only top 4 largest weights and ignore others.
     std::sort (infIdxPair.begin (), infIdxPair.end (), InfIdxPairComp);
-    *numInf = std::min(infIdxPair.size(), (size_t)4);
+    *numInf = std::min<size_t>(infIdxPair.size(), 4); // use std::min<T> instead of std::min because MSVC defines 'min' macro -_-;
     float sumWeight = 0;
     for (int i = 0; i < *numInf; ++i)
     {

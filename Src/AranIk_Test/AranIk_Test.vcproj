@@ -243,14 +243,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\BwWin32Timer.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\BwWin32Timer.h"
-			>
-		</File>
-		<File
 			RelativePath=".\ConvexHull.cpp"
 			>
 		</File>

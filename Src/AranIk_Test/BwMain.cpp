@@ -653,7 +653,8 @@ InitializeRendererIndependentsFromSg(BwAppContext& ac)
 			ac.sgPtr->attachChildToFront(trunkSkel);
 		}
 	}
-	ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
+	// TODO: Attaching ArnIkSolver onto specific skeletons makes crash for some cases
+	//ArnCreateArnIkSolversOnSceneGraph(ac.ikSolvers, ac.sgPtr);
 	UpdateSceneGraphList(ac);
 	return 0;
 }
@@ -1003,7 +1004,6 @@ int main(int argc, char **argv)
 		sbh[2].mhr = MHR_NEXT_SCENE;
 
 
-/*
 		Fl_Button reloadSceneButton(10, 5, 70, 30, "Reload");
 		reloadSceneButton.callback(scene_buttons_cb, &sbh[0]);
 		Fl_Button nextSceneButton(10+75, 5, 50, 30, "Prev");
@@ -1057,9 +1057,9 @@ int main(int argc, char **argv)
 		{
 			sceneList.add(scene.c_str());
 		}
-*/
 
-		//ret = Fl::run();
+
+		ret = Fl::run();
 
 		std::ofstream windowPosAndSize("BwWindow.txt");
 		windowPosAndSize << topWindow.x() << " " << topWindow.y() << " " << topWindow.w() << " " << topWindow.h() << std::endl;
