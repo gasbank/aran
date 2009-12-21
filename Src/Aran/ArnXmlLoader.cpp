@@ -865,6 +865,10 @@ ArnBone::createFrom( const TiXmlElement* elm )
 	ArnBone* ret = ArnBone::createFrom(length, ArnToRadian(roll));
 	SetupArnXformableCommonPart(ret, elm);
 
+    // This assures that the object is locally transformed
+    // by local xform in t=0.
+    ret->setAnimLocalXform (ret->getLocalXform ());
+
 	for (const TiXmlElement* e = elm->FirstChildElement("object"); e; e = e->NextSiblingElement("object"))
 	{
 		const TiXmlElement* boneElm = e;

@@ -33,10 +33,21 @@ ArnIkSolver::createFrom(const ArnSkeleton* skel)
 	foreach (const ArnNode* node, skel->getChildren())
 	{
 		// This loop should be called once.
-		assert(node->getType() == NDT_RT_BONE);
-		const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
-		prevNode = ret->addToTree(prevNode, skel, bone, firstChild);
-		firstChild = false;
+
+        if (node->getType () == NDT_RT_BONE)
+        {
+            const ArnBone* bone = reinterpret_cast<const ArnBone*>(node);
+            prevNode = ret->addToTree(prevNode, skel, bone, firstChild);
+            firstChild = false;
+        }
+        else if (node->getType() == NDT_RT_MESH)
+        {
+            // 'skel' can have a mesh as its child('node') when it is skinned.
+        }
+        else
+        {
+            // otherwise, a serious thing happened...
+        }
 	}
 
 	ret->initializeJacobian();
@@ -59,6 +70,11 @@ CreateNodeFromArnBone(const ArnSkeleton* skel, const ArnBone* bone, bool bEndEff
 	ArnVec3 arnHeadPoint;
 	ArnVec3 arnTailPoint;
 	bone->computeWorldHeadTail(arnHeadPoint, arnTailPoint);
+
+    std::cout << bone->getName () << " /"
+            << " Head : " << arnHeadPoint.x << " " << arnHeadPoint.y << " " << arnHeadPoint.z
+            << " Tail : " << arnTailPoint.x << " " << arnTailPoint.y << " " << arnTailPoint.z << std::endl;
+
 	ArnVec3Assign(tailPoint, arnTailPoint);
 	VectorR3 rotAxis;
 	double size = 1.0;
@@ -89,6 +105,11 @@ GetJointRotAxisOfBoneFromName(bool& x, bool& y, bool& z, const ArnBone* bone)
 	x = false;
 	y = false;
 	z = false;
+    /*
+     * Bone name convention:
+     *
+     *     { { X? Y? Z? } | E } _ name
+     */
 	while (bone->getName()[offset] != '_' && offset < nameLen )
 	{
 		if (bone->getName()[offset] == 'X')
@@ -105,7 +126,21 @@ GetJointRotAxisOfBoneFromName(bool& x, bool& y, bool& z, const ArnBone* bone)
 		}
 		else
 		{
-			ARN_THROW_UNEXPECTED_CASE_ERROR
+            // This name of bone does not follows the convetion
+            if (bone->getChildren ().size ())
+            {
+                x = true;
+                y = true;
+                z = true;
+            }
+            else
+            {
+                x = false;
+                y = false;
+                z = false;
+            }
+            std::cout << "WARN: [Bone " << bone->getName () << "] does not following the naming convention." << std::endl;
+            return;
 		}
 		++offset;
 	}
@@ -161,11 +196,11 @@ ArnIkSolver::addToTree(Node* prevNode, const ArnSkeleton* skel, const ArnBone* b
 	{
 		bEndEffector = true;
 	}
-	bool rx, ry, rz;
-	GetJointRotAxisOfBoneFromName(rx, ry, rz, bone);
+    bool r[3];
+    GetJointRotAxisOfBoneFromName(r[0], r[1], r[2], bone);
 	Node* firstCreated = 0;
 
-	if (!(rx || ry || rz))
+    if (!(r[0] || r[1] || r[2]))
 	{
 		// End-effector
 		assert(bEndEffector);
@@ -191,141 +226,60 @@ ArnIkSolver::addToTree(Node* prevNode, const ArnSkeleton* skel, const ArnBone* b
 		if (!firstCreated)
 			firstCreated = prevNode;
 	}
-	if (rx)
-	{
-		Node* rxNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
-		rxNode->setRotationAxis(VectorR3::UnitX);
-		const size_t boneNameLen = strlen(bone->getName());
-		size_t pos = 0;
-		while (bone->getName()[pos] != '_' && pos < boneNameLen)
-		{
-			++pos;
-		}
-		std::string bn = "X_";
-		bn += &bone->getName()[pos+1];
-		rxNode->setName(bn.c_str());
 
-		if (bone->getChildBoneCount(false) == 1)
-		{
-			SetJointLimitFromBone(rxNode, bone->getFirstChildBone());
-		}
+    std::string bn[3] = { "X_", "Y_", "Z_" };
+    static const VectorR3 rotAxis[3] = { VectorR3::UnitX, VectorR3::UnitY, VectorR3::UnitZ };
+    for (int i = 0; i < 3; ++i)
+    {
+        if (r[i])
+        {
+            Node* rNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
+            rNode->setRotationAxis(rotAxis[i]);
+            const size_t boneNameLen = strlen(bone->getName());
+            size_t pos = 0;
+            while (bone->getName()[pos] != '_' && pos < boneNameLen)
+            {
+                ++pos;
+            }
+            if (pos == boneNameLen) // If there is no '_' in the bone name
+                bn[i] += bone->getName();
+            else
+                bn[i] += &bone->getName()[pos+1];
+            rNode->setName(bn[i].c_str());
 
-		if (prevNode && firstChild)
-		{
-			// b is a child of prevNode.
-			m_tree->InsertLeftChild(prevNode, rxNode);
-		}
-		else if (prevNode && !firstChild)
-		{
-			// b is a sibling of prevNode.
-			m_tree->InsertRightSibling(prevNode, rxNode);
-			firstChild = true;
-		}
-		else
-		{
-			ARN_THROW_UNEXPECTED_CASE_ERROR
-		}
+            if (bone->getChildBoneCount(false) == 1)
+            {
+                SetJointLimitFromBone(rNode, bone->getFirstChildBone());
+            }
 
-		prevNode = rxNode;
-		if (!firstCreated)
-		{
-			firstCreated = prevNode;
-		}
-		else
-		{
-			rxNode->setAdditionalNode(true);
-		}
-	}
-	if (ry)
-	{
-		Node* ryNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
-		ryNode->setRotationAxis(VectorR3::UnitY);
-		const size_t boneNameLen = strlen(bone->getName());
-		size_t pos = 0;
-		while (bone->getName()[pos] != '_' && pos < boneNameLen)
-		{
-			++pos;
-		}
-		std::string bn = "Y_";
-		bn += &bone->getName()[pos+1];
-		ryNode->setName(bn.c_str());
+            if (prevNode && firstChild)
+            {
+                // b is a child of prevNode.
+                m_tree->InsertLeftChild(prevNode, rNode);
+            }
+            else if (prevNode && !firstChild)
+            {
+                // b is a sibling of prevNode.
+                m_tree->InsertRightSibling(prevNode, rNode);
+                firstChild = true;
+            }
+            else
+            {
+                ARN_THROW_UNEXPECTED_CASE_ERROR
+            }
 
-		if (bone->getChildBoneCount(false) == 1)
-		{
-			SetJointLimitFromBone(ryNode, bone->getFirstChildBone());
-		}
+            prevNode = rNode;
+            if (!firstCreated)
+            {
+                firstCreated = prevNode;
+            }
+            else
+            {
+                rNode->setAdditionalNode(true);
+            }
+        }
+    }
 
-		if (prevNode && firstChild)
-		{
-			// b is a child of prevNode.
-			m_tree->InsertLeftChild(prevNode, ryNode);
-		}
-		else if (prevNode && !firstChild)
-		{
-			// b is a sibling of prevNode.
-			m_tree->InsertRightSibling(prevNode, ryNode);
-			firstChild = true;
-		}
-		else
-		{
-			ARN_THROW_UNEXPECTED_CASE_ERROR
-		}
-
-		prevNode = ryNode;
-		if (!firstCreated)
-		{
-			firstCreated = prevNode;
-		}
-		else
-		{
-			ryNode->setAdditionalNode(true);
-		}
-	}
-	if (rz)
-	{
-		Node* rzNode = CreateNodeFromArnBone(skel, bone, bEndEffector);
-		rzNode->setRotationAxis(VectorR3::UnitZ);
-		const size_t boneNameLen = strlen(bone->getName());
-		size_t pos = 0;
-		while (bone->getName()[pos] != '_' && pos < boneNameLen)
-		{
-			++pos;
-		}
-		std::string bn = "Z_";
-		bn += &bone->getName()[pos+1];
-		rzNode->setName(bn.c_str());
-
-		if (bone->getChildBoneCount(false) == 1)
-		{
-			SetJointLimitFromBone(rzNode, bone->getFirstChildBone());
-		}
-
-		if (prevNode && firstChild)
-		{
-			// b is a child of prevNode.
-			m_tree->InsertLeftChild(prevNode, rzNode);
-		}
-		else if (prevNode && !firstChild)
-		{
-			// b is a sibling of prevNode.
-			m_tree->InsertRightSibling(prevNode, rzNode);
-			firstChild = true;
-		}
-		else
-		{
-			ARN_THROW_UNEXPECTED_CASE_ERROR
-		}
-
-		prevNode = rzNode;
-		if (!firstCreated)
-		{
-			firstCreated = prevNode;
-		}
-		else
-		{
-			rzNode->setAdditionalNode(true);
-		}
-	}
 	assert(prevNode);
 	Node* nextPrevNode = prevNode;
 	bool nextFirstChild = true;

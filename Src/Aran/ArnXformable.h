@@ -179,6 +179,7 @@ public:
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
 	void										setLocalXform(const ArnMatrix& localXform);
+    void                                        setAnimLocalXform(const ArnMatrix& localXform);
 	virtual void								update(double fTime, float fElapsedTime);
 	inline void									setAnimCtrl(ArnAnimationController* animCtrl);
 	void										configureAnimCtrl();
@@ -204,5 +205,8 @@ private:
 	std::string									m_ipoName;
 	ArnIpo*										m_ipo;
 };
+
+ARAN_API void
+ArnPrintXformData (const ArnMatrix &xform);
 
 #include "ArnXformable.inl"

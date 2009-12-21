@@ -144,6 +144,14 @@ ArnXformable::update( double fTime, float fElapsedTime )
 	ArnNode::update(fTime, fElapsedTime);
 }
 
+void
+ArnXformable::setAnimLocalXform( const ArnMatrix& animLocalXform )
+{
+    m_animLocalXform = animLocalXform;
+    ArnMatrixDecompose(&m_animLocalXform_Scale, &m_animLocalXform_Rot, &m_animLocalXform_Trans, &m_animLocalXform);
+    m_bAnimLocalXformDirty = false;
+}
+
 // Explicitly set m_localXform, and therefore, Scale, rotation(quat) and translation values are recalculated.
 void
 ArnXformable::setLocalXform( const ArnMatrix& localXform )
@@ -176,7 +184,7 @@ ArnXformable::getAutoLocalXform() const
 	if (m_ipo)
 	{
 		assert(m_bAnimLocalXformDirty == false);
-		return m_animLocalXform;
+        return m_animLocalXform;
 	}
 	else
 	{
@@ -269,4 +277,24 @@ ArnXformable::isVisible() const
 	else
 		return m_bVisible;
 	*/
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+
+void
+ArnPrintXformData (const ArnMatrix &xform)
+{
+    ArnVec3 scale, trans;
+    ArnQuat rot;
+    ArnMatrixDecompose(&scale, &rot, &trans, &xform);
+
+    ArnVec3 eul = ArnQuatToEuler(&rot);
+    printf("    scaling        ( %.3f, %.3f, %.3f)\n",
+           scale.x, scale.y, scale.z);
+    printf("    Rotation Quat  (w%.3f, %.3f, %.3f, %.3f)\n",
+           rot.w, rot.x, rot.y, rot.z);
+    printf("    Rotation Euler ( %.3f, %.3f, %.3f)\n",
+           eul.x * 180 / M_PI, eul.y * 180 / M_PI, eul.z * 180 / M_PI);
+    printf("    translation    ( %.3f, %.3f, %.3f)\n",
+           trans.x, trans.y, trans.z);
 }
