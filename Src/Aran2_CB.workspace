@@ -5,14 +5,14 @@
 		<Project filename="AranMath/AranMath.cbp" />
 		<Project filename="AranGl/AranGl.cbp" />
 		<Project filename="AranPhy/AranPhy.cbp" />
-		<Project filename="SceneViewer/SceneViewer.cbp">
+		<Project filename="SceneViewer/SceneViewer.cbp" active="1">
 			<Depends filename="Aran/AranCB.cbp" />
 			<Depends filename="AranMath/AranMath.cbp" />
 			<Depends filename="AranGl/AranGl.cbp" />
 			<Depends filename="AranPhy/AranPhy.cbp" />
 			<Depends filename="AranIk/AranIk.cbp" />
 		</Project>
-		<Project filename="AranIk_Test/AranIk_Test.cbp" active="1">
+		<Project filename="AranIk_Test/AranIk_Test.cbp">
 			<Depends filename="Aran/AranCB.cbp" />
 			<Depends filename="AranMath/AranMath.cbp" />
 			<Depends filename="AranGl/AranGl.cbp" />

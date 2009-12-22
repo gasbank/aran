@@ -196,7 +196,7 @@ Node::getNodeByObjectId( unsigned int id )
 		if (ret)
 			return ret;
 	}
-	return ret;
+    return 0;
 }
 
 void Node::setMinTheta( double v )
