@@ -29,6 +29,7 @@ ARANGL_API void						ArnConfigureViewportProjectionMatrixGl(const ArnViewportDat
 ARANGL_API void						ArnConfigureProjectionMatrixGl(const ArnViewportData* viewportData, const ArnCamera* cam);
 ARANGL_API void						ArnConfigureLightGl(GLuint lightId, const ArnLight* light);
 ARANGL_API void						ArnConfigureViewMatrixGl(ArnCamera* cam);
+ARANGL_API void						ArnConfigureViewMatrixGl2(const ArnCamera *cam, const ArnVec3 *dPos, const ArnQuat *dQuat);
 ARANGL_API GLuint					ArnCreateNormalizationCubeMapGl();
 ARANGL_API void						ArnInitializeRenderableObjectsGl(ArnNode* node);
 /*!

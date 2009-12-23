@@ -356,7 +356,7 @@ ArnIkSolver::reconfigureRoot(Node* newRoot)
 	assert(m_tree->hasNode(newRoot));
 
 	TreePtr newTree(new Tree);
-	newTree->InsertCopiedNodesBySwitchingRoot(0, newRoot, true, 0);
+    newTree->InsertCopiedNodesBySwitchingRoot(0, newRoot, true, 0);
 	newTree->updatePurpose();
 	m_tree = newTree;
 
@@ -366,7 +366,8 @@ ArnIkSolver::reconfigureRoot(Node* newRoot)
 	std::cout << "   # of End-effectors : " << std::setw(10) << getTree()->GetNumEffector() << std::endl;
 	std::cout << "   # of Joints        : " << std::setw(10) << getTree()->GetNumJoint() << std::endl;
 	std::cout << " ---------------------------------------" << std::endl;
-	printHierarchy();
+    printHierarchy();
+
 	m_selectedEndeffector = 0;
 }
 

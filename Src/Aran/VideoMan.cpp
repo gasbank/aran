@@ -653,6 +653,8 @@ ArnIntersectGl( ArnMesh* pMesh, const ArnVec3* pRayPos, const ArnVec3* pRayDir, 
 	{
 		unsigned int triCount, quadCount;
 		pMesh->getFaceCount(triCount, quadCount, fg);
+
+        // Ray-intersection supported only on triangles.
 		for (unsigned int tc = 0; tc < triCount; ++tc)
 		{
 			unsigned int totalIndex;

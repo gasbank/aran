@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __ARANGLPCH_H__
+#define __ARANGLPCH_H__
 
 #ifdef WIN32
 	#define WIN32_LEAN_AND_MEAN
@@ -51,3 +52,5 @@
 //
 #include "AranApi.h"
 #include "ArnGlExt.h"
+
+#endif

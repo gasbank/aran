@@ -135,18 +135,18 @@ Node* Node::getNodeByName(const char* name)
 	if (strcmp(m_name.c_str(), name) == 0)
 		return this;
 
-	Node* ret;
+    Node* ret = 0;
 	if (m_right)
 		ret = m_right->getNodeByName(name);
 	if (ret)
 		return ret;
-	else if (m_left)
-		return m_left->getNodeByName(name);
-	else
-	{
-		assert(!ret);
-		return 0;
-	}
+
+    if (m_left)
+        ret = m_left->getNodeByName(name);
+    if (ret)
+        return ret;
+
+    return 0;
 }
 
 void Node::updatePurpose()

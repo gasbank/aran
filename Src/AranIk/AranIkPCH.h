@@ -1,3 +1,6 @@
+#ifndef __ARANIKPCH_H__
+#define __ARANIKPCH_H__
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -32,3 +35,5 @@ using namespace std;
 // Aran Library
 //
 #include "AranApi.h"
+
+#endif

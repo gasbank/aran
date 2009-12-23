@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __ARANPHYPCH_H__
+#define __ARANPHYPCH_H__
 
 #ifdef WIN32
 #include <windows.h>
@@ -49,3 +50,5 @@
 #include "ArnMatrix.h"
 #include "ArnMath.h"
 #include "AranPhyStructs.h"
+
+#endif

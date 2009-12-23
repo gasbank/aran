@@ -282,8 +282,11 @@ void Tree::InsertCopiedNodesBySwitchingRoot(Node* prevInsertedNode, Node* node, 
 
 	if (node->getRealParent())
 	{
-		if (!getNodeByName(node->getRealParent()->getName()))
+        const char *realParentName = node->getRealParent()->getName();
+        Node *alreadyExists = getNodeByName(realParentName);
+        if (!alreadyExists)
 		{
+            // Insert only if it is not exist on newly created tree.
 			InsertCopiedNodesBySwitchingRoot(createdNode, node->getRealParent(), false, node);
 		}
 	}

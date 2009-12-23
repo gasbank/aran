@@ -64,8 +64,7 @@ ArnConfigureProjectionMatrixGl( const ArnViewportData* viewportData, const ArnCa
 void
 ArnConfigureViewMatrixGl(ArnCamera* cam)
 {
-	//ArnMatrix localTf = cam->getLocalXform();
-	ArnMatrix localTf = cam->getAutoLocalXform();
+    const ArnMatrix &localTf = cam->getAutoLocalXform();
 
 	ARN_CAMERA mainCamera;
 	mainCamera.eye.x = localTf.m[0][3];
@@ -81,6 +80,7 @@ ArnConfigureViewMatrixGl(ArnCamera* cam)
 	mainCamera.farClip = cam->getFarClip();
 	mainCamera.angle = cam->getFov(); // FOV in radian
 
+    // TODO: what?
 	cam->getCameraData().pos = mainCamera.eye;
 	cam->getCameraData().upVector = mainCamera.up;
 	cam->getCameraData().targetPos = mainCamera.at;
@@ -91,6 +91,55 @@ ArnConfigureViewMatrixGl(ArnCamera* cam)
 		mainCamera.eye.x, mainCamera.eye.y, mainCamera.eye.z,
 		mainCamera.at.x, mainCamera.at.y, mainCamera.at.z,
 		mainCamera.up.x, mainCamera.up.y, mainCamera.up.z );
+}
+
+void
+ArnConfigureViewMatrixGl2(const ArnCamera *cam, const ArnVec3 *dPos, const ArnQuat *dQuat)
+{
+    const ArnMatrix &localTf = cam->getAutoLocalXform();
+
+    float eyePos[3];
+    if (dPos)
+    {
+        eyePos[0] = localTf.m[0][3] + dPos->x;
+        eyePos[1] = localTf.m[1][3] + dPos->y;
+        eyePos[2] = localTf.m[2][3] + dPos->z;
+    }
+    else
+    {
+        eyePos[0] = localTf.m[0][3];
+        eyePos[1] = localTf.m[1][3];
+        eyePos[2] = localTf.m[2][3];
+    }
+
+    ArnQuat q;
+    ArnMatrix qMat;
+    if (dQuat)
+        q = (*dQuat) * cam->getLocalXform_Rot();
+    else
+        q = cam->getLocalXform_Rot();
+    q.getRotationMatrix(&qMat);
+
+    ARN_CAMERA mainCamera;
+    mainCamera.eye.x = eyePos[0];
+    mainCamera.eye.y = eyePos[1];
+    mainCamera.eye.z = eyePos[2];
+    mainCamera.at.x = eyePos[0] - qMat.m[0][2];
+    mainCamera.at.y = eyePos[1] - qMat.m[1][2];
+    mainCamera.at.z = eyePos[2] - qMat.m[2][2];
+    mainCamera.up.x = qMat.m[0][1];
+    mainCamera.up.y = qMat.m[1][1];
+    mainCamera.up.z = qMat.m[2][1];
+    mainCamera.nearClip = cam->getNearClip();
+    mainCamera.farClip = cam->getFarClip();
+    mainCamera.angle = cam->getFov(); // FOV in radian
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(
+        mainCamera.eye.x, mainCamera.eye.y, mainCamera.eye.z,
+        mainCamera.at.x, mainCamera.at.y, mainCamera.at.z,
+        mainCamera.up.x, mainCamera.up.y, mainCamera.up.z );
 }
 
 void

@@ -364,7 +364,7 @@ ArnMeshGl::renderXml(bool bIncludeShadeless) const
 		// No push, pop matrix needed. It is done in the previous call level.
 		//glPushMatrix();
 
-		glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT);
+        glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT | GL_LINE_BIT | GL_COLOR_BUFFER_BIT);
 		{
 			assert(m_target->isLocalXformDirty() == false);
 

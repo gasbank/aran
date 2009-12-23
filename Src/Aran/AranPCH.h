@@ -1,6 +1,8 @@
 // AranPCH.h
 // 2008, 2009 Geoyeob Kim (gasbank@gmail.com)
-#pragma once
+#ifndef __ARANPCH_H__
+#define __ARANPCH_H__
+
 #ifdef WIN32
 	#define WIN32_LEAN_AND_MEAN
 	#include <windows.h>
@@ -76,3 +78,5 @@ public:
 		delete [] d;
 	}
 };
+
+#endif

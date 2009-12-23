@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __ARANMATHPCH_H__
+#define __ARANMATHPCH_H__
 
 #ifdef WIN32
 	#define NOMINMAX
@@ -40,3 +41,5 @@
 #include "Macros.h"
 #include "ArnCommonTypes.h"
 #include "AranMathTypeDefs.h"
+
+#endif
