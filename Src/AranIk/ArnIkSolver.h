@@ -30,6 +30,7 @@ public:
 	Node*							getNodeByObjectId(unsigned int id);
 	void							setSelectedEndeffector(Node* node) { m_selectedEndeffector = node; }
 	Node*							getSelectedEndeffector() const { return m_selectedEndeffector; }
+    const ArnSkeleton               *getSkeleton() const { return m_skel; }
 protected:
 private:
 									ArnIkSolver();

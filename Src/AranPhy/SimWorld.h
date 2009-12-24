@@ -23,6 +23,7 @@ typedef std::set<GeneralBodyPtr>						GeneralBodyPtrSet;
 typedef std::set<GeneralJointPtr>						GeneralJointPtrSet;
 typedef std::vector<SliderJoint*>						SliderJointVector;
 
+#include "GeneralBody.h"
 struct SimWorldState
 {
 	std::vector<GeneralBodyState> generalBodyState;
