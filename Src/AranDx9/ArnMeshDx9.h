@@ -2,18 +2,24 @@
 
 #include "ArnMesh.h"
 
-class ArnMeshDx9 : public ArnMesh
+class ArnMeshDx9 : public ArnRenderableObject
 {
 public:
+											~ArnMeshDx9(void);
+	static ArnMeshDx9*						createFrom(const ArnMesh* mesh);
+	virtual int								render(bool bIncludeShadeless) const;
+	virtual void							cleanup();
+
+	/* Should be removed V */
 	static ArnMeshDx9*						createFrom(const NodeBase* nodeBase);
-	~ArnMeshDx9(void);
-	// ********************************* INTERNAL USE ONLY START *********************************
 	virtual void							interconnect(ArnNode* sceneRoot);
-	// *********************************  INTERNAL USE ONLY END  *********************************
+	/* Should be removed ^ */
 private:
 											ArnMeshDx9(void);
+	/* Should be removed V */
 	void									buildFrom(const NodeMesh2* nm);
 	void									buildFrom(const NodeMesh3* nm);
+	/* Should be removed ^ */
 
 	LPD3DXMESH								m_d3dxMesh;
 };

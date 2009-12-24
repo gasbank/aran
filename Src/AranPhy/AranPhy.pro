@@ -4,6 +4,23 @@ DEPENDPATH += .
 
 include(../PathInc.pro)
 
+win32 {
+    DEFINES += WIN32 \
+        _USRDLL \
+        ARANPHY_EXPORTS
+    CONFIG -= embed_manifest_dll
+    CONFIG(debug, debug|release) {
+        LIBS += $${WORKING_ROOT}/AranMathD.lib
+        LIBS += $${WORKING_ROOT}/AranD.lib
+        LIBS += $${OPENDE_PATH}/lib/DebugDoubleDLL/ode_doubled.lib
+    }
+    else {
+        LIBS += $${WORKING_ROOT}/AranMath.lib
+        LIBS += $${WORKING_ROOT}/Aran.lib
+        LIBS += $${OPENDE_PATH}/lib/ReleaseDoubleDLL/ode_double.lib
+    }
+}
+
 # OpenDE physics engine with double precision
 DEFINES += dDOUBLE
 

@@ -1,5 +1,6 @@
-#include "AranPCH.h"
+#include "AranDx9PCH.h"
 #include "ArnFile.h"
+#include "Log.h"
 
 void load_arnfile( const TCHAR* fileName, ArnFileData& afd )
 {

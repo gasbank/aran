@@ -1,9 +1,13 @@
 TEMPLATE = lib
 CONFIG += dll precompile_header
 DEPENDPATH += .
-CXXFLAGS += -fPIC
 
 include(../PathInc.pro)
+
+win32 {
+DEFINES += WIN32 _USRDLL ARANMATH_EXPORTS
+CONFIG -= embed_manifest_dll
+}
 
 # Input
 PRECOMPILED_HEADER = AranMathPCH.h

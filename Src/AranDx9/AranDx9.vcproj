@@ -17,7 +17,7 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="Debug|Win32"
+			Name="DebugDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
@@ -93,7 +93,7 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Release|Win32"
+			Name="ReleaseDLL|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
@@ -184,7 +184,7 @@
 				RelativePath=".\AranDx9PCH.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="DebugDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -192,7 +192,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="ReleaseDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -201,11 +201,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\ArnActions.cpp"
+				RelativePath=".\ArnAnim.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\ArnAnim.cpp"
+				RelativePath=".\ArnDx9Dev.cpp"
 				>
 			</File>
 			<File
@@ -222,10 +222,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnNodeFactory.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSceneGraphDx9.cpp"
 				>
 			</File>
 			<File
@@ -256,7 +252,7 @@
 				RelativePath=".\dllmain.cpp"
 				>
 				<FileConfiguration
-					Name="Debug|Win32"
+					Name="DebugDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -265,7 +261,7 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="Release|Win32"
+					Name="ReleaseDLL|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -329,6 +325,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\ArnDx9Dev.h"
+				>
+			</File>
+			<File
 				RelativePath=".\ArnFile.h"
 				>
 			</File>
@@ -342,10 +342,6 @@
 			</File>
 			<File
 				RelativePath=".\ArnNodeFactory.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnSceneGraphDx9.h"
 				>
 			</File>
 			<File

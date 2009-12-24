@@ -1,6 +1,6 @@
 #pragma once
 
-class ArnSceneGraphDx9
+class ArnSceneGraphDx9 : public ArnSceneGraph
 {
 public:
 									~ArnSceneGraphDx9(void);

@@ -394,7 +394,7 @@ VideoMan::InitMaterial()
 HRESULT
 VideoMan::SetCurrentFrameIndex(int idx)
 {
-	ASSERTCHECK(idx >= 0);
+        assert (idx >= 0);
 	this->curFrameIndex = idx;
 	return S_OK;
 }

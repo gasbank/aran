@@ -58,7 +58,7 @@ ArnNode::deleteAllChildren()
 ArnNode*
 ArnNode::getLastNode()
 {
-	ArnNodeList::const_reverse_iterator it = m_children.rbegin();
+        ArnNodeList::reverse_iterator it = m_children.rbegin();
 	if (it != m_children.rend())
 		return *it;
 	else

@@ -75,7 +75,7 @@ void ArnIpo::buildFrom( const NodeIpo2* ni )
 			if ( (float)((int)btd.vec[1][0]) - btd.vec[1][0] > 0.01f )
 			{
 				#ifdef WIN32
-				OutputDebugString(_T("WARN: Bezier key points X value should be integer\n"));
+                                OutputDebugStringA("WARN: Bezier key points X value should be integer\n");
 				DebugBreak();
 				#else
 				std::cerr << _T("WARN: Bezier key points X value should be integer\n") << std::endl;

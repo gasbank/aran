@@ -1,5 +1,6 @@
 #include "AranDx9PCH.h"
 #include "ArnMeshDx9.h"
+#include "AranDx9.h"
 
 ArnMeshDx9::ArnMeshDx9(void)
 : m_d3dxMesh(0)
@@ -14,7 +15,8 @@ ArnMeshDx9::~ArnMeshDx9(void)
 ArnMeshDx9*
 ArnMeshDx9::createFrom( const NodeBase* nodeBase )
 {
-	ArnMesh* node = new ArnMesh();
+	/*
+	ArnMeshDx9* node = new ArnMeshDx9();
 	node->setName(nodeBase->m_nodeName);
 	try
 	{
@@ -36,20 +38,92 @@ ArnMeshDx9::createFrom( const NodeBase* nodeBase )
 		throw e;
 	}
 	return node;
+	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+}
+
+ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
+{
+	ArnMeshDx9 *ret = new ArnMeshDx9 ();
+	/*
+	 * Should set the following members of NodeMesh3:
+	 *
+	 *   - m_armatureName to NULL
+	 *   - m_meshFacesCount
+	 *   - m_meshVerticesCount
+	 *   - m_vertex
+	 *   - m_faces
+	 *   - m_attr
+	 */
+	NodeMesh3 nm3;
+	nm3.m_armatureName = 0;
+
+	nm3.m_meshVerticesCount = mesh->getVertCountOfVertGroup (0);
+	ArnVertex *vertex_mem = new ArnVertex[nm3.m_meshVerticesCount];
+	for (unsigned int v = 0; v < nm3.m_meshVerticesCount; ++v)
+	{
+		ArnVec3 pos, nor, uv;
+		mesh->getVert (&pos, &nor, &uv, v, false);
+		ArnVertex vert;
+		vert.x = pos.x;		vert.y = pos.y;		vert.z = pos.z;
+		vert.nx = nor.x;	vert.ny = nor.y;	vert.nz = nor.z;
+		vert.u = uv.x;		vert.v = uv.y;
+		vertex_mem[v] = vert;
+	}
+	nm3.m_vertex = vertex_mem;
+
+	std::vector <unsigned short> faces;
+	std::vector <DWORD> attr;
+	unsigned int fgCount = mesh->getFaceGroupCount ();
+	for (unsigned int fg = 0; fg < fgCount; ++fg)
+	{
+		unsigned int triCount, quadCount;
+		mesh->getFaceCount (triCount, quadCount, fg);
+		assert (quadCount == 0); // Not supporting quad faces yet.
+
+		for (unsigned int t = 0; t < triCount; ++t)
+		{
+			unsigned int faceIdx;
+			unsigned int vind[3];
+			mesh->getTriFace (faceIdx, vind, fg, t);
+			for (int i = 0; i < 3; ++i)
+			{
+				assert (vind[i] < 0x0000ffff);
+				faces.push_back (vind[i]);
+			}
+			attr.push_back (fg);
+		}
+	}
+	unsigned short *faces_mem = new unsigned short[faces.size ()];
+	memcpy (faces_mem, &faces[0], sizeof (unsigned short) * faces.size () );
+	nm3.m_faces = faces_mem;
+	assert (faces.size () % 3 == 0);
+	nm3.m_meshFacesCount = faces.size () / 3;
+	assert (nm3.m_meshFacesCount == attr.size ());
+	DWORD *attr_mem = new DWORD[nm3.m_meshFacesCount];
+	memcpy (attr_mem, &attr[0], sizeof (DWORD) * attr.size ());
+	nm3.m_attr = attr_mem;
+	
+	arn_build_mesh (ArnDx9Dev::Get (), &nm3, ret->m_d3dxMesh);
+	return ret;
 }
 
 void ArnMeshDx9::interconnect( ArnNode* sceneRoot )
 {
+	/*
 	if (m_data.armatureName.length())
 	{
 		m_skeleton = dynamic_cast<ArnHierarchy*>(sceneRoot->getNodeByName(m_data.armatureName));
 		assert(m_skeleton);
 	}
 	ArnMesh::interconnect(sceneRoot);
+	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 void
-ArnMesh::buildFrom(const NodeMesh2* nm)
+ArnMeshDx9::buildFrom(const NodeMesh2* nm)
 {
+	/*
 	m_data.vertexCount		= nm->m_meshVerticesCount;
 	m_data.faceCount		= nm->m_meshFacesCount;
 	m_data.materialCount	= nm->m_materialCount;
@@ -60,11 +134,14 @@ ArnMesh::buildFrom(const NodeMesh2* nm)
 		arn_build_mesh(VideoMan::getSingleton().GetDev(), nm, d3dxMesh);
 		m_d3dxMesh = d3dxMesh;
 	}
+	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
 void
-ArnMesh::buildFrom(const NodeMesh3* nm)
+ArnMeshDx9::buildFrom(const NodeMesh3* nm)
 {
+	/*
 	unsigned int i, j, k;
 	m_data.vertexCount		= nm->m_meshVerticesCount;
 	m_data.faceCount		= nm->m_meshFacesCount;
@@ -116,4 +193,6 @@ ArnMesh::buildFrom(const NodeMesh3* nm)
 			}
 		}
 	}
+	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }

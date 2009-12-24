@@ -4,7 +4,8 @@ class ArnSkeletonDx9
 {
 public:
 										~ArnSkeletonDx9(void);
-	static ArnSkeleton*					createFrom(const NodeBase* nodeBase);
+	static ArnSkeletonDx9				*createFrom(const ArnSkeleton *skel);
+	static ArnSkeletonDx9				*createFrom(const NodeBase* nodeBase);
 	const SkeletonData&					getSkeletonData() const { return m_data; }
 
 private:

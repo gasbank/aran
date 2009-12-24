@@ -56,7 +56,7 @@ public:
 		default:								m_str = _T("<Should not see me! Never!>");											break;
 		}
 	}
-	const TCHAR* toString() const { return m_str.c_str(); }
+        const char* toString() const { return m_str.c_str(); }
 private:
-	std::tstring m_str;
+        std::string m_str;
 };

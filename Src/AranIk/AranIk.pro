@@ -4,6 +4,21 @@ DEPENDPATH += .
 
 include(../PathInc.pro)
 
+win32 {
+    DEFINES += WIN32 \
+        _USRDLL \
+        ARANIK_EXPORTS
+    CONFIG -= embed_manifest_dll
+    CONFIG(debug, debug|release) {
+        LIBS += $${WORKING_ROOT}/AranMathD.lib
+        LIBS += $${WORKING_ROOT}/AranD.lib
+    }
+    else {
+        LIBS += $${WORKING_ROOT}/AranMath.lib
+        LIBS += $${WORKING_ROOT}/Aran.lib
+    }
+}
+
 # Input
 PRECOMPILED_HEADER = AranIkPCH.h
 HEADERS += AranIk.h \

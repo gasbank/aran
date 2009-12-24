@@ -2,7 +2,7 @@
 // 2007, 2008, 2009 Geoyeob Kim
 //
 
-#include "AranPCH.h"
+#include "AranDx9PCH.h"
 #include "ModelReader.h"
 #include "ArnTexture.h"
 #include "Animation.h"

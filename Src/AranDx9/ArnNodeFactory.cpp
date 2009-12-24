@@ -1,4 +1,4 @@
-#include "AranPCH.h"
+#include "AranDx9PCH.h"
 #include "ArnNodeFactory.h"
 #include "ArnMesh.h"
 #include "ArnSkeleton.h"
@@ -10,10 +10,10 @@
 #include "ArnBone.h"
 #include "ArnMaterial.h"
 #include "ArnIpo.h"
-#include "ArnActions.h"
 
 ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 {
+	/*
 	ArnNode* node = 0;
 	switch (nodeBase->m_ndt)
 	{
@@ -60,4 +60,6 @@ ArnNode* ArnNodeFactory::createFromNodeBase( const NodeBase* nodeBase )
 	}
 
 	return node;
+	*/
+	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
