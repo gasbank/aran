@@ -7,7 +7,7 @@ win32 {
     DEFINES += WIN32 \
         _USRDLL \
         ARAN_EXPORTS
-    CONFIG -= embed_manifest_dll
+    #CONFIG -= embed_manifest_dll
     CONFIG(debug, debug|release) {
         LIBS += $${WORKING_ROOT}/AranMathD.lib
         LIBS += $${TINYXML_ROOT}/tinyxml/Debug/tinyxmld.lib

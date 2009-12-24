@@ -68,6 +68,10 @@
 #include <QtGui/QLabel>
 #include <QtGui/QCheckBox>
 
+#ifdef WIN32
+#include "glext.h"
+#endif
+
 //
 // ARAN Library
 //

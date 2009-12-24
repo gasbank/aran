@@ -16,6 +16,7 @@ GlWindow::GlWindow(QWidget *parent)
     : QGLWidget(parent)
     , m_sg(0)
     , m_activeCam(0)
+    , m_activeLight(0)
     , m_bRefresh(true)
     , m_bDrawJointIndicator(false)
     , m_bDrawEndeffectorIndicator(false)
@@ -231,6 +232,7 @@ void GlWindow::setActiveCam(ArnCamera *cam)
     updateGL();
 }
 
+
 void GlWindow::timerEvent(QTimerEvent * event)
 {
     if (event->timerId() == m_refreshTimer)
@@ -243,6 +245,7 @@ void GlWindow::timerEvent(QTimerEvent * event)
         }
     }
 }
+
 
 void GlWindow::setRefresh(bool refresh)
 {

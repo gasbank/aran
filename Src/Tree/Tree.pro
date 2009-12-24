@@ -1,12 +1,31 @@
 TEMPLATE = app
 CONFIG += precompile_header
 
-# CONFIG += console
+#CONFIG += console
 DEPENDPATH += . \
     Build
-include(/devel/devel/aran/Src/PathInc.pro)
-QT += opengl
-DEFINES += dDOUBLE
+include(../PathInc.pro)
+
+win32 {
+    DEFINES += WIN32
+    #CONFIG -= embed_manifest_exe
+    CONFIG(debug, debug|release) {
+        LIBS += $${WORKING_ROOT}/AranMathD.lib
+        LIBS += $${WORKING_ROOT}/AranD.lib
+        LIBS += $${WORKING_ROOT}/AranIkD.lib
+        LIBS += $${WORKING_ROOT}/AranPhyD.lib
+        LIBS += $${WORKING_ROOT}/AranGlD.lib
+    }
+    else {
+        LIBS += $${WORKING_ROOT}/AranMath.lib
+        LIBS += $${WORKING_ROOT}/Aran.lib
+        LIBS += $${WORKING_ROOT}/AranIk.lib
+        LIBS += $${WORKING_ROOT}/AranPhy.lib
+        LIBS += $${WORKING_ROOT}/AranGl.lib
+    }
+}
+
+unix {
 CONFIG(debug, debug|release):LIBS += -lAranD \
     -lAranMathD \
     -lAranGlD \
@@ -21,6 +40,12 @@ else:LIBS += -lAran \
     -lAranPhy \
     -lIL \
     -lode
+}
+
+QT += opengl
+DEFINES += dDOUBLE
+
+
 
 # Input
 PRECOMPILED_HEADER = TreePch.h

@@ -42,23 +42,29 @@ int main(int argc, char **argv)
     err = ArnInitializeImageLibrary();
     Q_ASSERT(err == 0);
 
-	QApplication app(argc, argv);
+    QApplication app(argc, argv);
     app.setOrganizationName("Geoyeob Kim");
     app.setApplicationName("ARAN Scene Graph Reader");
     TreeMainWindow mainWin;
     RestoreAppLayout(mainWin);
 #ifndef WIN32
     QPoint windowFrameOffset(3, 24);
+#endif
+
+    // Calling QMainWindow::show() is crucial for Qt app.
     mainWin.show();
+
+#ifndef WIN32
     mainWin.move(mainWin.pos() - windowFrameOffset);
 #endif
-	int retCode = app.exec();
-	SaveAppLayout(mainWin);
+
+    int retCode = app.exec();
+    SaveAppLayout(mainWin);
 
     ArnCleanupXmlParser();
     ArnCleanupImageLibrary();
-    //ArnCleanupPhysics();
+    ArnCleanupPhysics();
     ArnCleanupGl();
 
-	return retCode;
+    return retCode;
 }

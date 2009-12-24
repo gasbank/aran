@@ -6,7 +6,7 @@ include(../PathInc.pro)
 
 win32 {
 DEFINES += WIN32 _USRDLL ARANMATH_EXPORTS
-CONFIG -= embed_manifest_dll
+#CONFIG -= embed_manifest_dll
 }
 
 # Input
