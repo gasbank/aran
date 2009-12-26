@@ -57,7 +57,6 @@ int main(int argc, char **argv)
 #ifndef WIN32
     mainWin.move(mainWin.pos() - windowFrameOffset);
 #endif
-
     int retCode = app.exec();
     SaveAppLayout(mainWin);
 

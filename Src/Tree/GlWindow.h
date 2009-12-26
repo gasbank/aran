@@ -25,6 +25,7 @@ signals:
     void selectedChanged (const ArnNode *node);
     void activeNodeChanged (const ArnIkSolver *ikSolver, const Node *node);
     void ikSolversChanged (const std::vector <ArnIkSolver *> &newIkSolvers);
+    void refreshChanged (bool refresh);
 
 public slots:
     void setRefresh (bool refresh);

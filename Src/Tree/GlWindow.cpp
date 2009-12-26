@@ -17,7 +17,7 @@ GlWindow::GlWindow(QWidget *parent)
     , m_sg(0)
     , m_activeCam(0)
     , m_activeLight(0)
-    , m_bRefresh(true)
+    , m_bRefresh(false)
     , m_bDrawJointIndicator(false)
     , m_bDrawEndeffectorIndicator(false)
     , m_bDrawJointAxisIndicator(false)
@@ -38,6 +38,7 @@ GlWindow::GlWindow(QWidget *parent)
     avd.Height	= height();
     avd.MinZ	= 0;
     avd.MaxZ	= 1.0f;
+
 }
 
 void GlWindow::initializeGL()
@@ -64,6 +65,8 @@ void GlWindow::initializeGL()
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     static GLfloat lightPosition[4] = { 0.5, 5.0, 7.0, 1.0 };
     glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+
+    emit refreshChanged(m_bRefresh);
 }
 
 void GlWindow::resizeGL(int width, int height)
@@ -337,10 +340,6 @@ void GlWindow::selectGraphicObject (const float mousePx, const float mousePy)
                     if (strlen (parentName) == 0)
                         parentName = "<Unnamed>";
 
-                    /*
-                    printf("[Object 0x%p ID %d %s (Parent Object 0x%p ID %d %s)]\n",
-                        node, node->getObjectId(), name, parentNode, parentNode->getObjectId(), parentName);
-                    */
                     std::cout << "[Object ";
                     std::cout << std::setw(8) << std::setfill('0') << node;
                     std::cout << " ID " << std::dec << node->getObjectId() << " " << name;
@@ -351,10 +350,6 @@ void GlWindow::selectGraphicObject (const float mousePx, const float mousePy)
                 }
                 else
                 {
-                    /*
-                    printf("[Object 0x%p ID %d %s]\n",
-                        node, node->getObjectId(), name);
-                    */
                     std::cout << "[Object 0x" << std::hex << std::setw(8) << std::setfill('0') << node;
                     std::cout << " ID " << node->getObjectId() << " " << name;
                     std::cout << "]" << std::endl;
@@ -378,9 +373,6 @@ void GlWindow::selectGraphicObject (const float mousePx, const float mousePy)
                 {
                     assert (node->getObjectId () == buff[h].contents);
 
-                    //printf("[Object 0x%p ID %d %s] Endeffector=%d\n",
-                    //    node, node->getObjectId(), node->getName(), node->isEndeffector());
-
                     std::cout << "[Object " << std::hex << node;
                     std::cout << " ID " << std::dec << node->getObjectId() << " " << node->getName();
                     std::cout << " Endeffector=" << node->isEndeffector() << std::endl;
@@ -403,10 +395,16 @@ void GlWindow::selectGraphicObject (const float mousePx, const float mousePy)
     {
         if (buff[0].contents) // Zero means that ray hit on bounding box area.
         {
-            const ArnNode *node = m_sg->getConstNodeById (buff[0].contents);
+            ArnNode *node = m_sg->getNodeById (buff[0].contents);
             if (node)
             {
+                ArnMesh *mesh = dynamic_cast <ArnMesh *> (node->getParent ());
+                if (mesh)
+                {
+                    mesh->setRenderBoundingBox (!mesh->isRenderBoundingBox ());
+                }
                 emit selectedChanged (node);
+                updateGL();
             }
         }
     }
@@ -419,6 +417,7 @@ void GlWindow::selectGraphicObject (const float mousePx, const float mousePy)
 void GlWindow::mousePressEvent (QMouseEvent * event)
 {
     m_lastPos = event->pos ();
+
 
     selectGraphicObject(float(event->x()),
                         float(height() - event->y()) // Note that Y-coord flipped.

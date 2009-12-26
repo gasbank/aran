@@ -52,6 +52,7 @@ TreeMainWindow::TreeMainWindow(QWidget *parent)
     m_refreshGl->setChecked(true);
     m_refreshGl->setStyleSheet("* { background: rgb(0,255,0); border: 3px solid white } *:!checked { background: rgb(255, 0, 0) }");
     connect(m_refreshGl, SIGNAL(clicked(bool)), m_glWindow, SLOT(setRefresh(bool)));
+    connect(m_glWindow, SIGNAL(refreshChanged(bool)), m_refreshGl, SLOT(setChecked(bool)));
 
 
 
@@ -153,7 +154,9 @@ void TreeMainWindow::selectedNodeChanged_Int (const ArnNode *selected, const QMo
 void TreeMainWindow::selectedNodeChanged(const ArnNode *selected)
 {
     if (selected)
+    {
         selectedNodeChanged_Int(selected);
+    }
     else
     {
         m_sgTreeView->selectionModel()->clearSelection();
@@ -306,7 +309,7 @@ void TreeMainWindow::loadFile(const QString &fileName)
     m_sgModel->setRootItem (m_sg);
     m_nodeProp->setNode (0);
 
-    m_sceneName->setText(fileName);
+    m_sceneName->setText (strippedName (fileName));
 
     // Update camera buttons according to the cameras existing in the scene graph
     m_cameras.clear();

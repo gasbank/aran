@@ -186,6 +186,8 @@ public:
 	void									computeBoneMatIndicesOfVert(unsigned int vIdx, int m[4]) const;
 	void									computeBoneDataOfVert(unsigned int vIdx, int* numInf, float influences[4], int m[4]) const;
 
+    void									setRenderBoundingBox (bool b) { m_bRenderBoundingBox = b; }
+    bool									isRenderBoundingBox () const { return m_bRenderBoundingBox; }
 	//@}
 	/*!
 	 * @internalonly
