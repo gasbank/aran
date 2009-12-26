@@ -20,6 +20,7 @@ public:
     GlWindow (QWidget *parent);
     void setSceneGraph (ArnSceneGraph *sg);
     void setActiveCam (ArnCamera *cam);
+    bool isRefresh() const { return m_bRefresh; }
 
 signals:
     void selectedChanged (const ArnNode *node);

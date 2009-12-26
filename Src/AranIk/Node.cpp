@@ -208,3 +208,47 @@ void Node::setMaxTheta( double v )
 {
 	m_maxTheta = v;
 }
+
+Node *Node::getChildNodeAt (unsigned int idx) const
+{
+    if (!m_left)
+        return 0;
+    else
+    {
+        Node *ret = m_left;
+        while (idx && ret)
+        {
+            ret = ret->getRightNode ();
+            --idx;
+        }
+        return ret;
+    }
+}
+
+int Node::getIndexOfChildNode(const Node *c) const
+{
+    int ret = 0;
+    Node *child = m_left;
+    while (child && (child != c))
+    {
+        child = child->getRightNode ();
+        ++ret;
+    }
+
+    if (child)
+        return ret;
+    else
+        return -1;
+}
+
+unsigned int Node::getChildNodeCount () const
+{
+    int count = 0;
+    Node *child = m_left;
+    while (child)
+    {
+        child = child->getRightNode ();
+        ++count;
+    }
+    return count;
+}

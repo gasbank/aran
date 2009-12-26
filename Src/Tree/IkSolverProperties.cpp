@@ -1,5 +1,6 @@
 #include "TreePch.h"
 #include "IkSolverProperties.h"
+#include "IkSolverTreeModel.h"
 
 IkSolverProperties::IkSolverProperties (QWidget *parent)
     : QWidget (parent)
@@ -11,8 +12,8 @@ IkSolverProperties::IkSolverProperties (QWidget *parent)
     m_ikSolverList->setSizeAdjustPolicy(QComboBox::AdjustToContents);
     m_ikTreeView = new QTreeView(this);
     m_propView = new QTreeView(this);
-    //m_model = new NodePropertiesModel(this);
-    //m_propView->setModel(m_model);
+    m_treeModel = new IkSolverTreeModel(this);
+    m_ikTreeView->setModel(m_treeModel);
     //m_alternativeMsg = new QLabel("Not availble.", this);
 
     QHBoxLayout *list = new QHBoxLayout();
@@ -39,9 +40,21 @@ void IkSolverProperties::setIkSolvers (const std::vector <ArnIkSolver *> &ikSolv
 
 void IkSolverProperties::currentIndexChanged (int ikSolverIdx)
 {
-    const ArnIkSolver *ikSolver = m_ikSolverList->itemData(ikSolverIdx, Qt::UserRole).value<const ArnIkSolver *>();
+    const ArnIkSolver *ikSolver = 0;
+    if (ikSolverIdx >= 0)
+        ikSolver = m_ikSolverList->itemData(ikSolverIdx, Qt::UserRole).value<const ArnIkSolver *>();
+
     if (ikSolver)
     {
-        std::cout << ikSolver->getSkeleton ()->getName () << std::endl;
+        m_treeModel->setNode (ikSolver->getTree ()->GetRoot ());
     }
+    else
+    {
+        m_treeModel->setNode (0);
+    }
+}
+
+int IkSolverProperties::getCurrentIkSolverIndex () const
+{
+    return m_ikSolverList->currentIndex ();
 }

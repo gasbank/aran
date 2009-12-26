@@ -2,6 +2,7 @@
 #define IKSOLVERPROPERTIES_H
 
 class ArnIkSolver;
+class IkSolverTreeModel;
 
 class IkSolverProperties : public QWidget
 {
@@ -9,15 +10,15 @@ class IkSolverProperties : public QWidget
 public:
     explicit IkSolverProperties (QWidget *parent = 0);
 
+    int getCurrentIkSolverIndex () const;
 public slots:
     void setIkSolvers (const std::vector <ArnIkSolver *> &ikSolvers);
-
-private slots:
     void currentIndexChanged (int ikSolverIdx);
 
 private:
     QComboBox *m_ikSolverList;
     QTreeView *m_ikTreeView;
+    IkSolverTreeModel *m_treeModel;
     QTreeView *m_propView;
 };
 

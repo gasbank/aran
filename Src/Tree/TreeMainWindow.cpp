@@ -49,10 +49,11 @@ TreeMainWindow::TreeMainWindow(QWidget *parent)
 
     m_refreshGl = new QPushButton("Refresh", this);
     m_refreshGl->setCheckable(true);
-    m_refreshGl->setChecked(true);
+    m_refreshGl->setChecked (m_glWindow->isRefresh ());
     m_refreshGl->setStyleSheet("* { background: rgb(0,255,0); border: 3px solid white } *:!checked { background: rgb(255, 0, 0) }");
     connect(m_refreshGl, SIGNAL(clicked(bool)), m_glWindow, SLOT(setRefresh(bool)));
     connect(m_glWindow, SIGNAL(refreshChanged(bool)), m_refreshGl, SLOT(setChecked(bool)));
+
 
 
 
@@ -435,4 +436,6 @@ void TreeMainWindow::resetIkRoot ()
 {
     Node *newNode = m_glWindow->resetIkRoot ();
     m_reconstructIkLabel->setText(tr("(current: %1)").arg (newNode->getName ()));
+
+    m_ikSolverProp->currentIndexChanged (m_ikSolverProp->getCurrentIkSolverIndex ());
 }

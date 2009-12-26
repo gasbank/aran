@@ -70,6 +70,9 @@ public:
 	bool								hasNode(const Node* node) const;
 	Node*								getNodeByName(const char* name);
 	Node*								getNodeByObjectId(unsigned int id);
+    Node                                *getChildNodeAt (unsigned int idx) const;
+    unsigned int                        getChildNodeCount () const;
+    int                                 getIndexOfChildNode(const Node *c) const;
 	void								updatePurpose();
 	void								setTarget(const VectorR3& v) { assert(m_purpose==ENDEFFECTOR); m_target = v; }
 	void								setTargetDiff(double dx, double dy, double dz) { assert(m_purpose==ENDEFFECTOR); m_target.x += dx, m_target.y += dy, m_target.z += dz; }

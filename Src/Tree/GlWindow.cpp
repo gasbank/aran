@@ -38,7 +38,6 @@ GlWindow::GlWindow(QWidget *parent)
     avd.Height	= height();
     avd.MinZ	= 0;
     avd.MaxZ	= 1.0f;
-
 }
 
 void GlWindow::initializeGL()
