@@ -93,6 +93,9 @@ public:
 	 */
 	GeneralBodyPtr								getBodyByBodyIdFromSet(dBodyID bodyId) const;
 
+	const GeneralBodyPtrSet&					getGeneralBodyPtrSet() const { return m_bodiesPtr; }
+	const GeneralJointPtrSet&					getGeneralJointPtrSet() const { return m_jointsPtr; }
+
 	void										getSimWorldState(SimWorldState& state) const;
 	void										setSimWorldState(const SimWorldState& state);
 

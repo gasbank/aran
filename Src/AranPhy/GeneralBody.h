@@ -61,6 +61,7 @@ public:
 	 * @param kg	질량
 	*/
 	void							setMass(float kg) { m_mass = kg; }
+	float							getMass() const { return m_mass; }
 	/*!
 	 * @name 위치
 	 * 강체의 위치를 COM 기준으로 설정하거나 읽어올 수 있습니다.

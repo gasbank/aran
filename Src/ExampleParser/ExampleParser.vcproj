@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="AranPhy"
-	ProjectGUID="{AEC44099-4FE2-471B-BD32-7B3DED5BFEE5}"
-	RootNamespace="AranPhy"
+	Name="ExampleParser"
+	ProjectGUID="{3E234BB5-C139-4BEE-8495-EB48D6FC1D0F}"
+	RootNamespace="ExampleParser"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -17,11 +17,11 @@
 	</ToolFiles>
 	<Configurations>
 		<Configuration
-			Name="DebugDLL|Win32"
+			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
+			ConfigurationType="1"
+			InheritedPropertySheets="..\EnvVar.vsprops"
 			CharacterSet="1"
 			>
 			<Tool
@@ -42,13 +42,12 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS;dDOUBLE"
+				AdditionalIncludeDirectories="../AranPhy;&quot;$(CODEBASE)/opende/include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranPhyPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="4"
 			/>
@@ -63,11 +62,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran_D.lib ode_doubled.lib"
+				AdditionalDependencies="Aran_D.lib AranMath_D.lib AranPhy_D.lib"
+				OutputFile="$(WORKING)/$(ProjectName)_D.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/DebugDoubleDLL&quot;;&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="../DebugDLL"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -93,11 +93,11 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="ReleaseDLL|Win32"
+			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="..\EnvVar.vsprops;..\ReleaseDLLProp.vsprops"
+			ConfigurationType="1"
+			InheritedPropertySheets="..\EnvVar.vsprops"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
@@ -120,12 +120,10 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath;&quot;$(CODEBASE)/opende/include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ARANPHY_EXPORTS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
-				PrecompiledHeaderThrough="AranPhyPCH.h"
 				WarningLevel="3"
 				DebugInformationFormat="3"
 			/>
@@ -140,14 +138,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ode_double.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;$(CODEBASE)/opende/lib/ReleaseDoubleDLL&quot;"
 				GenerateDebugInformation="true"
-				SubSystem="2"
+				SubSystem="1"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -182,18 +177,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\AngularJoint.cpp"
+				RelativePath=".\ExampleParser.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\AranPhy.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\AranPhyPCH.cpp"
+				RelativePath=".\stdafx.cpp"
 				>
 				<FileConfiguration
-					Name="DebugDLL|Win32"
+					Name="Debug|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
@@ -201,57 +192,13 @@
 					/>
 				</FileConfiguration>
 				<FileConfiguration
-					Name="ReleaseDLL|Win32"
+					Name="Release|Win32"
 					>
 					<Tool
 						Name="VCCLCompilerTool"
 						UsePrecompiledHeader="1"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ArnPhyBox.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\BallSocketJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Biped.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GeneralBody.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\GeneralJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\HingeJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\LinearJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SimWorld.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\SliderJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UniversalJoint.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\UtilFunc.cpp"
-				>
 			</File>
 		</Filter>
 		<Filter
@@ -260,79 +207,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\AngularJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AranPhy.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AranPhyPCH.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AranPhyStructs.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnPhyBox.h"
-				>
-			</File>
-			<File
-				RelativePath=".\BallSocketJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Biped.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GeneralBody.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GeneralJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\GeneralJoint.inl"
-				>
-			</File>
-			<File
-				RelativePath=".\HingeJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\LinearJoint.h"
-				>
-			</File>
-			<File
-				RelativePath="..\Macros.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SimWorld.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SixDofJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\SliderJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\targetver.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UniversalJoint.h"
-				>
-			</File>
-			<File
-				RelativePath=".\UtilFunc.h"
+				RelativePath=".\stdafx.h"
 				>
 			</File>
 		</Filter>

@@ -310,8 +310,8 @@ struct MyFrame : public ArnFrame
 	, firstChild(0xffffffff)
 	{
 		this->Name = this->nameFixed;
-		ZeroMemory(&combinedMatrix, sizeof(ArnMatrix));
-		ZeroMemory(&TransformationMatrix, sizeof(ArnMatrix));
+		memset(&combinedMatrix, 0, sizeof(ArnMatrix));
+		memset(&TransformationMatrix, 0, sizeof(ArnMatrix));
 	}
 	~MyFrame() {}
 	char		nameFixed[128];

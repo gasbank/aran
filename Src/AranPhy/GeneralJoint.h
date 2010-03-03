@@ -7,6 +7,7 @@
 #define GENERALJOINT_H
 
 #include "ArnObject.h"
+#include "ArnXformable.h"
 
 class GeneralBody;
 class BasicObjects;
@@ -116,6 +117,8 @@ public:
 	dJointFeedback*				getSetJointFeedback() { return dJointGetFeedback(m_joint); }
 	void						enableJointFeedback() { dJointSetFeedback(m_joint, &m_jointFeedback); }
 	virtual void				addTorque(AxisEnum anum, float torque);
+	void						setJointData(const ArnJointData& ajd) { m_ajd = ajd; }
+	const ArnJointData&			getJointData() const { return m_ajd; }
 protected:
 								GeneralJoint(const OdeSpaceContext* osc);
 	dJointID					getId() const { return m_joint; }
@@ -144,6 +147,7 @@ private:
 	dJointFeedback				m_jointFeedback;
 	GeneralBodyPtr				m_body1;
 	GeneralBodyPtr				m_body2;
+	ArnJointData				m_ajd;
 };
 
 #include "GeneralJoint.inl"

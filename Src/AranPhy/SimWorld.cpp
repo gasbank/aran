@@ -114,8 +114,11 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 						else if (ajl.type.compare("AngZ") == 0)
 							bsjPtr->setParamLoHiStop(3, ajl.minimum, ajl.maximum);
 						else
-							ARN_THROW_UNEXPECTED_CASE_ERROR
+						{
+							fprintf(stderr, "Unsupported joint limit type. (%s)\n", jointName.c_str());
+						}
 					}
+					bsjPtr->setJointData(ajd);
 				}
 			}
 		}

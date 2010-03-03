@@ -170,7 +170,10 @@ ArnNode::printNodeHierarchy(int depth) const
 	{
 		for (int i = 0; i < depth; ++i)
 			printf("     ");
-		printf("%s\n", (*cit)->getName());
+		if (strlen((*cit)->getName()) > 0)
+			printf("%s\n", (*cit)->getName());
+		else
+			printf("[Unnamed]\n");
 		(*cit)->printNodeHierarchy(depth + 1);
 	}
 }

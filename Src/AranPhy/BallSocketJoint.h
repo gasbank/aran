@@ -1,8 +1,8 @@
 /*!
-@file BallSocketJoint.h
-@author Geoyeob Kim
-@date 2009
-*/
+ * @file BallSocketJoint.h
+ * @author Geoyeob Kim
+ * @date 2009
+ */
 #ifndef BALLSOCKETJOINT_H
 #define BALLSOCKETJOINT_H
 
@@ -12,8 +12,8 @@ TYPEDEF_SHARED_PTR(BallSocketJoint);
 TYPEDEF_SHARED_PTR(GeneralBody);
 
 /*!
-@brief Ball-socket 형태의 관절 관련 함수 ODE 랩퍼
-*/
+ * @brief Ball-socket 형태의 관절 관련 함수 ODE 랩퍼
+ */
 class ARANPHY_API BallSocketJoint : public AngularJoint
 {
 public:
