@@ -34,6 +34,7 @@ public:
 	virtual void					update(double fTime, float fElapsedTime);
 	void							printNodeHierarchy(int depth) const;
 	const ArnRenderableObject*		getRenderableObject() const; // Return a first renderable object(should be unique) from direct(depth 0) children.
+	void							detachRenderableObjects();
 	ArnNode*						findFirstNodeOfType(NODE_DATA_TYPE ndt);
 
 	/*!
@@ -55,5 +56,6 @@ private:
 
 ARAN_API void ArnGetNameFromRtNdt(char out[64], NODE_DATA_TYPE ndt);
 ARAN_API void ArnPrintNodes(const ArnNode* n, int step = 0);
+ARAN_API void ArnDetachRenderableObjects(ArnNode* node);
 
 #include "ArnNode.inl"

@@ -27,25 +27,20 @@ TreeMainWindow::TreeMainWindow(QWidget *parent)
     m_sgTreeView = new QTreeView();
     m_sgModel = new SceneGraphModel(this);
     m_sgTreeView->setModel(m_sgModel);
+    m_sgTreeView->setIndentation (10);
 
 
     QDockWidget *viewOptionsDock = new QDockWidget("View Options", this);
     viewOptionsDock->setObjectName("view-options-dock");
     m_viewOptions = new ViewOptions(this, m_glWindow);
     viewOptionsDock->setWidget(m_viewOptions);
-    addDockWidget(Qt::TopDockWidgetArea, viewOptionsDock);
+    addDockWidget(Qt::LeftDockWidgetArea, viewOptionsDock);
 
     QDockWidget *nodePropDock = new QDockWidget("Node Properties", this);
     nodePropDock->setObjectName("node-properties-dock");
     m_nodeProp = new NodeProperties(this);
     nodePropDock->setWidget(m_nodeProp);
-    addDockWidget(Qt::TopDockWidgetArea, nodePropDock);
-
-    QDockWidget *ikSolverPropDock = new QDockWidget ("IK Solver Properties", this);
-    ikSolverPropDock->setObjectName ("ik-solver-properties-dock");
-    m_ikSolverProp = new IkSolverProperties (this);
-    ikSolverPropDock->setWidget (m_ikSolverProp);
-    addDockWidget(Qt::TopDockWidgetArea, ikSolverPropDock);
+    addDockWidget(Qt::LeftDockWidgetArea, nodePropDock);
 
     m_refreshGl = new QPushButton("Refresh", this);
     m_refreshGl->setCheckable(true);
@@ -53,9 +48,6 @@ TreeMainWindow::TreeMainWindow(QWidget *parent)
     m_refreshGl->setStyleSheet("* { background: rgb(0,255,0); border: 3px solid white } *:!checked { background: rgb(255, 0, 0) }");
     connect(m_refreshGl, SIGNAL(clicked(bool)), m_glWindow, SLOT(setRefresh(bool)));
     connect(m_glWindow, SIGNAL(refreshChanged(bool)), m_refreshGl, SLOT(setChecked(bool)));
-
-
-
 
     QHBoxLayout *reconstructIkTreeLayout = new QHBoxLayout ();
     m_resetIkTreeRootButton = new QPushButton ("No IK node selected", this);
@@ -80,6 +72,12 @@ TreeMainWindow::TreeMainWindow(QWidget *parent)
     toolboxWidget->setLayout(toolboxLayout);
     toolboxDock->setWidget(toolboxWidget);
     addDockWidget(Qt::RightDockWidgetArea, toolboxDock);
+
+    QDockWidget *ikSolverPropDock = new QDockWidget ("IK Solver Properties", this);
+    ikSolverPropDock->setObjectName ("ik-solver-properties-dock");
+    m_ikSolverProp = new IkSolverProperties (this);
+    ikSolverPropDock->setWidget (m_ikSolverProp);
+    addDockWidget(Qt::RightDockWidgetArea, ikSolverPropDock);
 
     QHBoxLayout *topLayout = new QHBoxLayout();
     topLayout->addWidget(m_glWindow);
@@ -429,7 +427,7 @@ void TreeMainWindow::createHorizontalGroupBox()
 
 void TreeMainWindow::resetDockingStates()
 {
-    system("rm Tree.docklayout");
+    assert (!"Not implemented yet.");
 }
 
 void TreeMainWindow::resetIkRoot ()

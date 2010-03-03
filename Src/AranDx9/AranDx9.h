@@ -15,3 +15,4 @@ ARANDX9_API const D3DMATERIAL9*		ArnMaterialGetConstDxPtr(const ArnMaterialData&
 ARANDX9_API D3DMATERIAL9*			ArnMaterialGetDxPtr(ArnMaterialData& amd);
 ARANDX9_API const D3DXMATRIX*		ArnMatrixGetConstDxPtr(const ArnMatrix& mat);
 ARANDX9_API D3DXMATRIX*				ArnMatrixGetDxPtr(ArnMatrix& mat);
+ARANDX9_API void					ArnInitializeRenderableObjectsDx9(ArnNode* node);

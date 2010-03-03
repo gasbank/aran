@@ -1,6 +1,7 @@
 #include "TreePch.h"
 #include "IkSolverProperties.h"
 #include "IkSolverTreeModel.h"
+#include "IkSolverNodeModel.h"
 
 IkSolverProperties::IkSolverProperties (QWidget *parent)
     : QWidget (parent)
@@ -8,12 +9,17 @@ IkSolverProperties::IkSolverProperties (QWidget *parent)
     QVBoxLayout *layout = new QVBoxLayout();
     layout->setSpacing (2);
     layout->setContentsMargins (2,2,2,2);
-    m_ikSolverList = new QComboBox(this);
-    m_ikSolverList->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    m_ikTreeView = new QTreeView(this);
-    m_propView = new QTreeView(this);
-    m_treeModel = new IkSolverTreeModel(this);
-    m_ikTreeView->setModel(m_treeModel);
+    m_ikSolverList = new QComboBox (this);
+    m_ikSolverList->setSizeAdjustPolicy (QComboBox::AdjustToContents);
+    m_ikTreeView = new QTreeView (this);
+    m_nodePropView = new QTreeView (this);
+    m_treeModel = new IkSolverTreeModel (this);
+    m_ikTreeView->setModel (m_treeModel);
+    m_ikTreeView->setIndentation (10);
+
+    m_nodeModel = new IkSolverNodeModel (this);
+    m_nodePropView->setModel (m_nodeModel);
+
     //m_alternativeMsg = new QLabel("Not availble.", this);
 
     QHBoxLayout *list = new QHBoxLayout();
@@ -23,10 +29,17 @@ IkSolverProperties::IkSolverProperties (QWidget *parent)
 
     layout->addLayout (list);
     layout->addWidget (m_ikTreeView);
-    layout->addWidget (m_propView);
+    layout->addWidget (m_nodePropView);
     setLayout (layout);
 
     connect (m_ikSolverList, SIGNAL(currentIndexChanged(int)), this, SLOT(currentIndexChanged(int)));
+    connect (m_ikTreeView->selectionModel (), SIGNAL (currentChanged (QModelIndex, QModelIndex)), this, SLOT (nodeChanged (QModelIndex, QModelIndex)));
+    connect (m_ikTreeView, SIGNAL(expanded(QModelIndex)), this, SLOT(resizeIkTreeViewColumn(QModelIndex)));
+}
+
+void IkSolverProperties::resizeIkTreeViewColumn(QModelIndex col)
+{
+    m_ikTreeView->resizeColumnToContents (col.column ());
 }
 
 void IkSolverProperties::setIkSolvers (const std::vector <ArnIkSolver *> &ikSolvers)
@@ -47,6 +60,8 @@ void IkSolverProperties::currentIndexChanged (int ikSolverIdx)
     if (ikSolver)
     {
         m_treeModel->setNode (ikSolver->getTree ()->GetRoot ());
+
+        m_ikTreeView->resizeColumnToContents(0);
     }
     else
     {
@@ -57,4 +72,10 @@ void IkSolverProperties::currentIndexChanged (int ikSolverIdx)
 int IkSolverProperties::getCurrentIkSolverIndex () const
 {
     return m_ikSolverList->currentIndex ();
+}
+
+void IkSolverProperties::nodeChanged (QModelIndex newIdx, QModelIndex prevIdx)
+{
+    const Node *node = static_cast <const Node *> (newIdx.internalPointer ());
+    m_nodeModel->setNode (node);
 }

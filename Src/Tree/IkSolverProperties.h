@@ -3,6 +3,7 @@
 
 class ArnIkSolver;
 class IkSolverTreeModel;
+class IkSolverNodeModel;
 
 class IkSolverProperties : public QWidget
 {
@@ -15,11 +16,16 @@ public slots:
     void setIkSolvers (const std::vector <ArnIkSolver *> &ikSolvers);
     void currentIndexChanged (int ikSolverIdx);
 
+private slots:
+    void nodeChanged (QModelIndex newIdx, QModelIndex prevIdx);
+    void resizeIkTreeViewColumn(QModelIndex col);
+
 private:
     QComboBox *m_ikSolverList;
     QTreeView *m_ikTreeView;
     IkSolverTreeModel *m_treeModel;
-    QTreeView *m_propView;
+    QTreeView *m_nodePropView;
+    IkSolverNodeModel *m_nodeModel;
 };
 
 #endif // IKSOLVERPROPERTIES_H

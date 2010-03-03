@@ -9,6 +9,9 @@
 #include "ArnMaterial.h"
 #include "ArnTexture.h"
 #include "ArnIpo.h"
+#include "InputMan.h"
+#include "AranDx9.h"
+#include "ModelReader.h"
 
 VideoManDx9::VideoManDx9()
 : VideoMan()
@@ -251,7 +254,7 @@ HRESULT
 VideoManDx9::InitLight_Internal()
 {
 
-	this->lpD3DDevice->SetLight(0, getDefaultLight().getConstDxPtr());
+	this->lpD3DDevice->SetLight(0, (CONST D3DLIGHT9 *)&getDefaultLight());
 	//this->lpD3DDevice->SetLight(0, &this->pointLight);
 	this->lpD3DDevice->LightEnable(0, TRUE);
 
@@ -558,53 +561,53 @@ HRESULT
 VideoManDx9::InitBoxVertexBuffer()
 {
 	ARN_VDD data[] = {
-		{ -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB(255, 255, 255),     { 0.0f, 0.0f, }  },
-		{  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB(255, 255, 255),     { 1.0f, 0.0f, }  },
-		{ -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB(255, 255, 255),     { 0.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB(255, 255, 255),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB(255, 255, 255),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB(255, 255, 255),     { 0.0f, 1.0f, }  },
 
-		{  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB( 50,  50,  50),     { 1.0f, 0.0f, }  },
-		{  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB( 50,  50,  50),     { 1.0f, 1.0f, }  },
-		{ -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, -1.0f, D3DCOLOR_XRGB( 50,  50,  50),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB( 50,  50,  50),     { 1.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB( 50,  50,  50),     { 1.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f),  ArnVec3(0.0f,  0.0f, -1.0f), D3DCOLOR_XRGB( 50,  50,  50),     { 0.0f, 1.0f, }  },
 
-		{ -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(255,   0,   0),     { 0.0f, 1.0f, }  },
-		{  1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(  0, 255,   0),     { 1.0f, 0.0f, }  },
-		{ -1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(  0,   0, 255),     { 0.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(255,   0,   0),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(  0, 255,   0),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(  0,   0, 255),     { 0.0f, 0.0f, }  },
 
-		{ -1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(  0, 255, 255),     { 0.0f, 1.0f, }  },
-		{  1.0f, -1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(255,   0, 255),     { 1.0f, 1.0f, }  },
-		{  1.0f,  1.0f,  1.0f,  0.0f,  0.0f,  1.0f, D3DCOLOR_XRGB(255, 255, 255),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(  0, 255, 255),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(255,   0, 255),     { 1.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f),  ArnVec3(0.0f,  0.0f,  1.0f), D3DCOLOR_XRGB(255, 255, 255),     { 1.0f, 0.0f, }  },
 
-		{  1.0f,  1.0f, -1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(200,  10,  10),     { 0.0f, 0.0f, }  },
-		{  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(100, 100, 100),     { 1.0f, 0.0f, }  },
-		{  1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f, -1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(200,  10,  10),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(100, 100, 100),     { 1.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f, -1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 1.0f, }  },
 
-		{  1.0f,  1.0f,  1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 0.0f, }  },
-		{  1.0f, -1.0f,  1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(100, 100, 100),     { 1.0f, 0.0f, }  },
-		{  1.0f, -1.0f, -1.0f,  1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f,  1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(100, 100, 100),     { 1.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f, -1.0f),  ArnVec3(1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(100, 100, 100),     { 0.0f, 1.0f, }  },
 
-		{ -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 200),     { 0.0f, 1.0f, }  },
-		{ -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 200),     { 1.0f, 1.0f, }  },
-		{ -1.0f,  1.0f, -1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 200),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 200),     { 0.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f,  1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 200),     { 1.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f, -1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 200),     { 1.0f, 0.0f, }  },
 
-		{ -1.0f, -1.0f, -1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 255),     { 0.0f, 1.0f, }  },
-		{ -1.0f, -1.0f,  1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 255),     { 1.0f, 1.0f, }  },
-		{ -1.0f,  1.0f,  1.0f, -1.0f,  0.0f,  0.0f, D3DCOLOR_XRGB(  0,   0, 255),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 255),     { 0.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f,  1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 255),     { 1.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f,  1.0f), ArnVec3(-1.0f,  0.0f,  0.0f), D3DCOLOR_XRGB(  0,   0, 255),     { 1.0f, 0.0f, }  },
 
-		{ -1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
-		{  1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 0.0f, }  },
-		{ -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f,  1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f, -1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
 
-		{  1.0f,  1.0f,  1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
-		{  1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 0.0f, }  },
-		{ -1.0f,  1.0f, -1.0f,  0.0f,  1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f,  1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f,  1.0f, -1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 0.0f, }  },
+		{ ArnVec3(-1.0f,  1.0f, -1.0f), ArnVec3( 0.0f,  1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
 
-		{ -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
-		{  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 1.0f, }  },
-		{ -1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f,  1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f,  1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 0.0f, 1.0f, }  },
 
-		{ -1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(255, 255,   0),     { 0.0f, 0.0f, }  },
-		{  1.0f, -1.0f, -1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(255, 255,   0),     { 1.0f, 0.0f, }  },
-		{  1.0f, -1.0f,  1.0f,  0.0f, -1.0f,  0.0f, D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 1.0f, }  },
+		{ ArnVec3(-1.0f, -1.0f, -1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(255, 255,   0),     { 0.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f, -1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(255, 255,   0),     { 1.0f, 0.0f, }  },
+		{ ArnVec3( 1.0f, -1.0f,  1.0f), ArnVec3( 0.0f, -1.0f,  0.0f), D3DCOLOR_XRGB(200, 200, 200),     { 1.0f, 1.0f, }  },
 	};
 
 
@@ -706,7 +709,7 @@ VideoManDx9::TurnModelLightOn(ModelReader *pMR, ArnMatrix* worldTransformMatrix)
 			light.Direction.z = lightDirection.z;
 		}
 
-		this->lpD3DDevice->SetLight(getTotalLightCount(), light.getConstDxPtr());
+		this->lpD3DDevice->SetLight(getTotalLightCount(), (CONST D3DLIGHT9 *)&light);
 		this->lpD3DDevice->LightEnable(getTotalLightCount(), TRUE);
 		setTotalLightCount( getTotalLightCount() + 1 );
 	}
@@ -801,7 +804,7 @@ VideoManDx9::RenderModel1(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 					}
 
 				}
-				this->lpD3DDevice->SetMaterial(matRef->getConstDxPtr());
+				this->lpD3DDevice->SetMaterial((CONST D3DMATERIAL9 *)matRef);
 				this->lpD3DDevice->SetTexture(0, texRef);
 
 				//
@@ -828,7 +831,7 @@ VideoManDx9::RenderModel1(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 		else if (materialCount == 0) // use default material and texture when there is no material defined explicitly
 		{
 			matRef = &getDefaultMaterial();
-			this->lpD3DDevice->SetMaterial(matRef->getConstDxPtr());
+			this->lpD3DDevice->SetMaterial((CONST D3DMATERIAL9 *)matRef);
 			this->lpD3DDevice->SetTexture(0, 0);
 			int faceStartOffset = pMR->GetMaterialReferenceFast(i, 0); // ..Fast
 			int faceCount = pMR->GetFaceCount(i) - pMR->GetMaterialReferenceFast(i, 0); //..Fast this material is last one, always.
@@ -894,7 +897,7 @@ VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 			for (j = 0; j < matCount; j++)
 			{
 				const ArnMaterialData* matPointer = pMR->GetMaterial(j + accum);
-				this->lpD3DDevice->SetMaterial(matPointer->getConstDxPtr());
+				this->lpD3DDevice->SetMaterial((CONST D3DMATERIAL9 *)matPointer);
 
 				LPDIRECT3DTEXTURE9 texPointer = (LPDIRECT3DTEXTURE9)pMR->GetTexture(j + accum);
 				this->lpD3DDevice->SetTexture(0, texPointer);
@@ -994,7 +997,7 @@ HRESULT
 VideoManDx9::InitCustomMesh()
 {
 	HRESULT hr = 0;
-	hr = ArnCreateMeshFVF(12, 24, MY_CUSTOM_MESH_VERTEX::MY_CUSTOM_MESH_VERTEX_FVF, this, &this->lpCustomMesh);
+	hr = ArnCreateMeshFVF(12, 24, MY_CUSTOM_MESH_VERTEX::MY_CUSTOM_MESH_VERTEX_FVF, lpD3DDevice, &this->lpCustomMesh);
 	if (FAILED(hr))
 	{
 		MessageBox(0, _T("Custom Mesh creation failed."), _T("Error"), MB_OK | MB_ICONERROR);
@@ -1367,17 +1370,31 @@ VideoManDx9::renderSingleMesh( ArnMesh* mesh, const ArnMatrix& globalXform /*= D
 	if (mesh->isVisible())
 	{
 		unsigned int j;
-		ArnMatrix finalXform = ArnMatrixMultiply(mesh->getFinalXform(), globalXform);
+		ArnMatrix zinvert;
+		ArnMatrixIdentity(&zinvert);
+		zinvert.m[2][2] = -1; // Z-index
+
+		ArnMatrix finalXform = ArnMatrixMultiply(mesh->getAutoLocalXform().transpose(), globalXform);
+		finalXform = finalXform * zinvert;
 		GetDev()->SetTransform(D3DTS_WORLD, ArnMatrixGetConstDxPtr(finalXform));
 		unsigned int subsetCount = mesh->getMeshData().materialCount;
 		for (j = 0; j < subsetCount; ++j)
 		{
-			GetDev()->SetMaterial(mesh->getMaterial(j)->getConstDxPtr());
-			ArnMaterial* matNode = mesh->getMaterialNode(j);
-			ArnTexture* texture = matNode->getD3DTexture(0);
-			if (texture)
-				GetDev()->SetTexture(0, texture->getDxTexture());
-			mesh->getD3DXMesh()->DrawSubset(j);
+			CONST D3DMATERIAL9 *mtrl = (CONST D3DMATERIAL9 *)mesh->getMaterial(j);
+			if (mtrl)
+			{
+				GetDev()->SetMaterial(mtrl);
+				ArnMaterial* matNode = mesh->getMaterialNode(j);
+				ArnTexture* texture = matNode->getD3DTexture(0);
+				if (texture)
+				{
+					// TODO: Texture in DX9
+					//GetDev()->SetTexture(0, texture->getDxTexture());
+				}
+			}
+			// TODO: Mesh render in DX9
+			assert (mesh->getRenderableObject ());
+			mesh->getRenderableObject ()->render (0);
 		}
 	}
 }

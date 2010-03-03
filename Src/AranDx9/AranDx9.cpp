@@ -4,6 +4,7 @@
 #include "AranDx9PCH.h"
 #include "AranDx9.h"
 #include "StructsDx9.h"
+#include "ArnMeshDx9.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -127,7 +128,8 @@ HRESULT arn_build_mesh( IN LPDIRECT3DDEVICE9 dev, IN const NodeMesh3* nm, OUT LP
 
 HRESULT ArnCreateMeshFVF(IN DWORD NumFaces, IN DWORD NumVertices, IN DWORD FVF, IN LPDIRECT3DDEVICE9 dev, OUT LPD3DXMESH* ppMesh)
 {
-	V_OKAY( D3DXCreateMeshFVF(NumFaces, NumVertices, 0, FVF, dev, ppMesh) );
+	DWORD flags = D3DXMESH_VB_MANAGED | D3DXMESH_VB_WRITEONLY | D3DXMESH_IB_MANAGED | D3DXMESH_IB_WRITEONLY | D3DXMESH_MANAGED | D3DXMESH_WRITEONLY;
+	V_OKAY( D3DXCreateMeshFVF(NumFaces, NumVertices, flags, FVF, dev, ppMesh) );
 	return S_OK;
 }
 
@@ -160,4 +162,34 @@ const D3DXMATRIX* ArnMatrixGetConstDxPtr(const ArnMatrix& mat)
 D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
 {
 	return reinterpret_cast<D3DXMATRIX*>(&mat);
+}
+
+static void
+InitializeArnMeshRenderableObjectDx9( INOUT ArnMesh* mesh )
+{
+	mesh->attachChild( ArnMeshDx9::createFrom(mesh) );
+}
+
+void ArnInitializeRenderableObjectsDx9( ArnNode* node )
+{
+	if (node->getType() == NDT_RT_MESH)
+	{
+		ArnMesh* mesh = static_cast<ArnMesh*>(node);
+		InitializeArnMeshRenderableObjectDx9(mesh);
+	}
+	else if (node->getType() == NDT_RT_MATERIAL)
+	{
+		//ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
+		//InitializeArnMaterialRenderableObjectGl(mtrl);
+	}
+	else if (node->getType() == NDT_RT_SKELETON)
+	{
+		//ArnSkeleton* skel = static_cast<ArnSkeleton*>(node);
+		//skel->configureIpos();
+	}
+
+	foreach (ArnNode* child, node->getChildren())
+	{
+		ArnInitializeRenderableObjectsDx9(child);
+	}
 }

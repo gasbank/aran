@@ -273,9 +273,3 @@ HRESULT ArnCreateAnimationController( UINT MaxNumMatrices, UINT MaxNumAnimationS
 	*ppAnimController = ArnAnimationController::create(MaxNumMatrices, MaxNumAnimationSets, MaxNumTracks, MaxNumEvents);
 	return S_OK;
 }
-
-HRESULT ArnFrameRegisterNamedMatrices( const ArnFrame* frameRoot, ArnAnimationController* animCtrl )
-{
-	ARN_THROW_NOT_IMPLEMENTED_ERROR
-}
-

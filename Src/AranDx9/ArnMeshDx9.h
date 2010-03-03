@@ -10,6 +10,8 @@ public:
 	virtual int								render(bool bIncludeShadeless) const;
 	virtual void							cleanup();
 
+	LPD3DXMESH								getDxMesh () const { return m_d3dxMesh; }
+
 	/* Should be removed V */
 	static ArnMeshDx9*						createFrom(const NodeBase* nodeBase);
 	virtual void							interconnect(ArnNode* sceneRoot);

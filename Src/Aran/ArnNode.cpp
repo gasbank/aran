@@ -215,6 +215,19 @@ ArnNode::findFirstNodeOfType( NODE_DATA_TYPE ndt )
 	return 0;
 }
 
+void ArnNode::detachRenderableObjects()
+{
+	ArnNodeList toBeDeleted;
+	foreach (ArnNode *renderable, m_children)
+	{
+		if (renderable->getType() == NDT_RT_RENDERABLEOBJECT)
+			toBeDeleted.push_back(renderable);
+	}
+	foreach (ArnNode *renderable, toBeDeleted)
+	{
+		delete renderable;
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////////////////
 
@@ -260,4 +273,12 @@ void ArnPrintNodes(const ArnNode* n, int step)
             ArnPrintNodes(c, step+1);
         }
     }
+}
+
+void ArnDetachRenderableObjects( ArnNode* node )
+{
+	if (node)
+		node->detachRenderableObjects ();
+	foreach (ArnNode *n, node->getChildren ())
+		ArnDetachRenderableObjects (n);
 }

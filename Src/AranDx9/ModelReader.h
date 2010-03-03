@@ -142,4 +142,8 @@ private:
 
 };
 
+//////////////////////////////////////////////////////////////////////////
+
+
+HRESULT ArnFrameRegisterNamedMatrices(const ArnFrame* frameRoot, ArnAnimationController* animCtrl);
 

@@ -25,6 +25,10 @@ ArnMesh::ArnMesh()
 , m_nodeMesh3(0)
 {
 	memset(&m_boundingBoxPoints[0], 0, sizeof(m_boundingBoxPoints));
+
+	m_data.faceCount = 0;
+	m_data.materialCount = 0;
+	m_data.vertexCount = 0;
 }
 
 ArnMesh::~ArnMesh(void)
@@ -79,7 +83,18 @@ ArnMesh::interconnect( ArnNode* sceneRoot )
 const ArnMaterialData*
 ArnMesh::getMaterial( unsigned int i ) const
 {
-	return &m_materialRefList[i]->getD3DMaterialData();
+	if (i < m_materialRefList.size())
+		return &m_materialRefList[i]->getD3DMaterialData();
+	else
+	{
+		static bool b = true;
+		if (b)
+		{
+			std::cerr << "Material index corruption on ArnMesh." << std::endl;
+			b = false;
+			return 0;
+		}
+	}
 }
 
 void

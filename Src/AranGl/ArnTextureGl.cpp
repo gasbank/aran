@@ -57,7 +57,7 @@ ArnTextureGl::init()
 	const char *fileName = m_target->getFileName ();
 	assert (fileName);
 	const size_t fileNameLen = strlen (fileName);
-	assert (fileNameLen > 0);
+	// assert (fileNameLen > 0);
 	if (strcmp (&fileName[fileNameLen - 4], ".tga") == 0)
 	{
 		// TODO: DevIL TGA loading bug? Y-axis flip is needed.

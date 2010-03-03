@@ -1,6 +1,7 @@
 #include "AranDx9PCH.h"
 #include "ArnMeshDx9.h"
 #include "AranDx9.h"
+#include "VideoManDx9.h"
 
 ArnMeshDx9::ArnMeshDx9(void)
 : m_d3dxMesh(0)
@@ -9,7 +10,7 @@ ArnMeshDx9::ArnMeshDx9(void)
 
 ArnMeshDx9::~ArnMeshDx9(void)
 {
-	SAFE_DELETE(m_d3dxMesh);
+	SAFE_RELEASE(m_d3dxMesh);
 }
 
 ArnMeshDx9*
@@ -104,8 +105,16 @@ ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
 	memcpy (attr_mem, &attr[0], sizeof (DWORD) * attr.size ());
 	nm3.m_attr = attr_mem;
 	
-	arn_build_mesh (ArnDx9Dev::Get (), &nm3, ret->m_d3dxMesh);
-	return ret;
+	if (arn_build_mesh (GetVideoManagerDx9 ().GetDev (), &nm3, ret->m_d3dxMesh) < 0)
+	{
+		std::cerr << "arn_build_mesh() returns error. Mesh creation failed on " << mesh->getName() << "." << std::endl;
+		delete ret;
+		return 0;
+	}
+	else
+	{
+		return ret;
+	}
 }
 
 void ArnMeshDx9::interconnect( ArnNode* sceneRoot )
@@ -195,4 +204,15 @@ ArnMeshDx9::buildFrom(const NodeMesh3* nm)
 	}
 	*/
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
+}
+
+int ArnMeshDx9::render( bool bIncludeShadeless ) const
+{
+	assert (m_d3dxMesh);
+	return m_d3dxMesh->DrawSubset (0);
+}
+
+void ArnMeshDx9::cleanup()
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }

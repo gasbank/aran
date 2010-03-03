@@ -615,6 +615,8 @@ ArnMesh::createFrom(const TiXmlElement* elm, const char* binaryChunkBasePtr)
 			ARN_THROW_UNEXPECTED_CASE_ERROR
 		}
 	}
+
+	ret->m_data.materialCount = ret->m_mtrlRefNameList.size();
 	return ret;
 }
 

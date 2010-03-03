@@ -7,7 +7,10 @@
 
 #include "VideoMan.h"
 
-class VideoManDx9 : public VideoMan
+class ModelReader;
+class InputMan;
+
+class ARANDX9_API VideoManDx9 : public VideoMan
 {
 public:
 	virtual											~VideoManDx9() {}
@@ -58,7 +61,6 @@ private:
 	HRESULT											TurnModelLightOn(ModelReader *pMR, ArnMatrix* worldTransformMatrix = 0);
 	virtual void									setClearColor_Internal();
 
-	LP
 	InputMan*										pInputMan;
 	ModelReader*									pDrawingModel; // indicates drawing model at editor
 	ModelReader*									mr1;
@@ -81,7 +83,6 @@ private:
 	LPDIRECT3DTEXTURE9								lpTex1;
 	LPD3DXFONT										lpFont;
 	LPD3DXBUFFER									lpCompiledFragments;
-	LPD3DXFRAGMENTLINKER							lpFragmentLinker;
 	LPDIRECT3DVERTEXSHADER9							lpVertexShader;
 	LPD3DXCONSTANTTABLE								lpConstantTable;
 	LPD3DXEFFECT									lpEffect;
@@ -102,9 +103,11 @@ private:
 	static const DWORD								MY_COLOR_VERTEX_FVF = D3DFVF_XYZ | D3DFVF_DIFFUSE;
 };
 
+inline VideoManDx9& GetVideoManagerDx9 () { return reinterpret_cast<VideoManDx9 &> (VideoMan::getSingleton ()); }
+
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT 
+ARANDX9_API HRESULT
 ArnIntersectDx9(
 				LPD3DXMESH pMesh,
 				const ArnVec3* pRayPos,

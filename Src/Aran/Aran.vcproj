@@ -45,7 +45,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../;../AranMath;../AranPhy"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARAN_EXPORTS;TIXML_USE_STL"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARAN_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -71,8 +71,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="AranMath_D.lib tinyxmlSTL_D.lib DevIL.lib zlib1d.lib winmm.lib"
-				AdditionalLibraryDirectories="&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;;&quot;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL&quot;;&quot;$(OutDir)&quot;"
+				AdditionalDependencies="AranMath_D.lib tinyxmld.lib DevIL.lib zlib1d.lib winmm.lib"
+				AdditionalLibraryDirectories="&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug&quot;;&quot;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug&quot;;&quot;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib&quot;;&quot;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug&quot;;&quot;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug&quot;;&quot;$(OutDir)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				TargetMachine="1"

@@ -1518,3 +1518,12 @@ const ArnMaterialData* ModelReader::GetMaterial( int referenceIndex ) const
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
+
+//////////////////////////////////////////////////////////////////////////
+
+
+HRESULT ArnFrameRegisterNamedMatrices( const ArnFrame* frameRoot, ArnAnimationController* animCtrl )
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+

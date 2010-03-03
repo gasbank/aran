@@ -4,7 +4,7 @@ CML_ROOT = "d:/devel3/cml-1_0_1"
 TINYXML_ROOT = "d:/Devel3/tinyxml_2_5_3"
 WORKING_ROOT = "D:/Devel3/Working"
 
-BOOST_PATH = "C:/boost_1_36_0"
+BOOST_PATH = "e:/boost_1_37_0"
 DEVIL_PATH = "D:/Devel3/DevIL-SDK-x86-1.7.8"
 OPENDE_PATH = "D:/Devel3/opende"
 ZLIB_PATH = D:/Devel3/zlib-1.2.3

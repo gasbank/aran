@@ -251,7 +251,7 @@ CreateFontTextureWithFreeType(const char* sceneFileName)
 		return 0;
 	}
 	FT_Face face;
-	ftError = FT_New_Face(library, "tahoma.ttf", 0, &face);
+	ftError = FT_New_Face(library, "c:/windows/fonts/tahoma.ttf", 0, &face);
 	if (ftError)
 	{
 		std::cerr << "FreeType new face creation failed.(File not found?)" << std::endl;

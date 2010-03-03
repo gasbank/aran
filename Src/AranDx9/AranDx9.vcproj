@@ -22,7 +22,7 @@
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="..\EnvVar.vsprops;..\DebugDLLProp.vsprops"
-			CharacterSet="1"
+			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -42,7 +42,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../;../Aran;../AranMath"
+				AdditionalIncludeDirectories="../;../Aran;../AranMath;../AranIk"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;ARANDX9_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -63,7 +63,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="Aran_D.lib AranMath_D.lib d3dx9d.lib"
+				AdditionalDependencies="AranMath_D.lib AranIk_D.lib Aran_D.lib d3d9.lib d3dx9d.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="../DebugDLL"
 				GenerateDebugInformation="true"
@@ -205,10 +205,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ArnDx9Dev.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ArnFile.cpp"
 				>
 			</File>
@@ -322,10 +318,6 @@
 			</File>
 			<File
 				RelativePath="..\ArnCommonTypes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\ArnDx9Dev.h"
 				>
 			</File>
 			<File

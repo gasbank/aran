@@ -12,7 +12,7 @@
 #define LOG_FAIL false
 #endif
 
-class LOGMANAGER : public Singleton<LOGMANAGER>
+class ARAN_API LOGMANAGER : public Singleton<LOGMANAGER>
 {
 public:
 	LOGMANAGER();

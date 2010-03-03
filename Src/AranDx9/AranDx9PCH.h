@@ -45,4 +45,4 @@
 #include "MyError.h"
 #include "StructsDx9.h"
 #include "ArnRenderableObject.h"
-#include "ArnDx9Dev.h"
+#include "Log.h"

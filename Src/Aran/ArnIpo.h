@@ -22,7 +22,7 @@ struct NodeIpo2;
 
 class ArnIpo;
 
-class ArnIpo : public ArnNode
+class ARAN_API ArnIpo : public ArnNode
 {
 public:
 											~ArnIpo(void);
@@ -83,7 +83,7 @@ private:
 
 //////////////////////////////////////////////////////////////////////////
 
-HRESULT ArnCreateKeyframedAnimationSet( const char* pName,
+HRESULT ARAN_API ArnCreateKeyframedAnimationSet( const char* pName,
 									   double TicksPerSecond,
 									   ARNPLAYBACK_TYPE Playback,
 									   UINT NumAnimations,

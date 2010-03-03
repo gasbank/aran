@@ -116,5 +116,3 @@ HRESULT ArnCreateAnimationController(UINT MaxNumMatrices,
 									 UINT MaxNumTracks,
 									 UINT MaxNumEvents,
 									 ArnAnimationController** ppAnimController);
-
-HRESULT ArnFrameRegisterNamedMatrices(const ArnFrame* frameRoot, ArnAnimationController* animCtrl);

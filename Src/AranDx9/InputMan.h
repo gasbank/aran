@@ -64,8 +64,8 @@ public:
 	// Player character control
 	void WalkCharacterForward( float amount = 0.2f );
 	void WalkCharacterBackward( float amount = 0.2f );
-	void TurnCharacterLeft( float amount = ArnToRadian( 5 ) );
-	void TurnCharacterRight( float amount = ArnToRadian( 5 ) );
+	void TurnCharacterLeft( float amount = ArnToRadian( 5.0 ) );
+	void TurnCharacterRight( float amount = ArnToRadian( 5.0 ) );
 	const ArnMatrix* GetFinalTransform() const;
 
 	void StopCharacterWalking();
