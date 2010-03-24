@@ -146,44 +146,44 @@ def ProcessFD(pos, posd, ang, angd):
 	
 	cornersX, cornersXd = BoxCorners(pos, posd, ang, angd, box_size)
 	static_contacts, dynamic_contacts = DetermineContactPoints(cornersX, cornersXd)
+	
+	n_cs = len(static_contacts)
+	n_cd = len(dynamic_contacts)
+	n_u = 0
 
 	# For COM
 	A_a_com, b_a_com = LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu)
 	A_com_next, b_com_next = NextPointPositionMatrix(A_a_com, b_a_com, pos, posd, dt)
-	A_alpha = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com)
+	A_alpha, VAI = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com)
+
+	assert A_a_com is 0 or A_a_com.shape == (3, 1+4*n_cs+n_cd)
+	assert b_a_com.shape in [(3, 1), (3,)]
+	assert A_com_next is 0 or A_com_next.shape == (3, 1+4*n_cs+n_cd)
+	assert b_com_next.shape in [(3, 1), (3,)]
+	assert A_alpha is 0 or A_alpha.shape == (3, 1+4*n_cs+n_cd)
+
 	
 	# For contact points
 	friction_constraints = []
 	for i in static_contacts + dynamic_contacts:
 		A_a_q, b_a_q = LinearAccelerationMatrix(A_a_com, b_a_com, cornersX[0:3,i] - pos, A_alpha, angd)
 		A_q_next, b_q_next = NextPointPositionMatrix(A_a_q, b_a_q, cornersX[0:3,i], cornersXd[0:3,i], dt)
+		assert A_a_q.shape == (3, 1+4*n_cs+n_cd)
+		assert b_a_q.shape in [(3, 1), (3,)]
+		assert A_q_next.shape == (3, 1+4*n_cs+n_cd)
+		assert b_q_next.shape in [(3, 1), (3,)]
 		friction_constraints.append((A_q_next, b_q_next))
-		
-	A_a, b_a, A_com, b_cs, b_cd, A_alpha, VAI, static_contacts, dynamic_contacts = BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V)
-	
-	
-	
-	A_com_pz = dot(array([0, 0, 1]), A_com)
-	b_c = b_cs + b_cd;
-	b_c2 = 0
-	for b_cc in b_c:
-		if b_c2 is not 0:
-			b_c2 = concatenate((b_c2,b_cc),axis=1)
-		else:
-			b_c2 = b_cc
-
-	#print b_c2
 
 	x_opt = 0
 	linacc = 0
 	angacc = 0
 
 	# only if there are one or more contacts occurred
-	if len(b_c):
-		b_pz = min(b_c2[2,:])
+	if len(static_contacts + dynamic_contacts):
 		# solve SOCP
 		try:
-			x_opt = SolveSocp(A_com_pz, b_pz, len(b_cs), len(b_cd))
+			global env
+			x_opt = SolveSocp(env, friction_constraints, n_cs, n_cd, n_u)
 		except mosek.Exception, e:
 			print "ERROR: %s" % str(e.errno)
 			if e.msg is not None:
@@ -197,7 +197,7 @@ def ProcessFD(pos, posd, ang, angd):
 			sys.exit(1)
 
 	# accleration calculated from the optimal values
-	linacc = (dot(A_a,x_opt)+b_a.T).flatten()
+	linacc = (dot(A_a_com,x_opt)+b_a_com.T).flatten()
 	angacc = dot(A_alpha,x_opt).flatten()
 
 	assert size(linacc) is 3, 'but %d' % size(linacc)
@@ -359,19 +359,6 @@ def RungeKuttaFD(pos, posd, ang, angd):
 		newAng =  [ang[i]  + dt/6.0 * (angd[i] + 2*angd_b[i] + 2*angd_c[i] + angd_d[i]) for i in range(3)]
 		newAngd = [angd[i] + dt/6.0 * (a_angacc[i] + 2*b_angacc[i] + 2*c_angacc[i] + d_angacc[i]) for i in range(3)]
 
-	"""
-	print 'newPos'
-	print newPos
-	print 'newPosd'
-	print newPosd
-	print 'newAng'
-	print newAng
-	print 'newAngd'
-	print newAngd
-	"""
-	
-	
-
 	return newPos, newPosd, newAng, newAngd, fc_list, rc_list
 
 
@@ -385,16 +372,20 @@ cornersX = 0
 mass = 10
 box_size = [2,1,1]
 H_com = BoxInertia(box_size, mass)
-dt = 0.01
-mu = 0.5
+dt = 0.001
+mu = 2.0
 V = BuildFrictionConeBasis(mu)
 
 # initial Box position(pos) and velocity(posd)
-pos = [0, 0, 4+box_size[2]/2.0]
-posd = [0, 0, 0]
+pos = [0, 0, 2+box_size[2]/2.0]
+posd = [0.1, 0, 0]
 # Box angle(ang) and angular velocity(angd) in radian
-ang = [0, 0, 0]
+ang = [0, pi/4, 0]
 angd = [0, 0, 0]
+
+# Make a MOSEK environment
+env = mosek.Env ()
+mosek.iparam.intpnt_num_threads = 4
 
 main()
 

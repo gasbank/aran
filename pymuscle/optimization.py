@@ -152,8 +152,10 @@ def DetermineContactPoints(cornersX, cornersXd):
 	for i in range(8): # 8 is the maximum number of contact points of a rigid box
 		z = cornersX[2,i]
 		# criterion for contact point registration
+		"""
 		if z < 0:
 			print 'WARN: contact point already penetrated !!! (z=%f)' % z
+		"""
 		if z < 0.01:
 			# tangential velocity of the contact point
 			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 0.01:
@@ -241,8 +243,10 @@ def NextPointPositionMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
 	
 	p_q_next = A_q_next * x_opt + b_q_next
 	"""
-	A_q_next = (dt/2.0)**2*A_a_q
-	b_q_next = (dt/2.0)**2*b_a_q + p_q + [pd_q[i]*dt for i in range(3)]
+	A_q_next = 0
+	if A_a_q is not 0:
+		A_q_next = (dt/2.0)**2*A_a_q
+	b_q_next = ((dt/2.0)**2*b_a_q).flatten() + p_q + [pd_q[i]*dt for i in range(3)]
 	return A_q_next, b_q_next
 
 def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com):
@@ -307,7 +311,7 @@ def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_c
 		S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
 		A_alpha = dot(A_alpha, S_lambda)
 
-	return A_alpha
+	return A_alpha, VAI
 
 def BuildSelectionMatrix(n_cs, n_cd, n_u, sel):
 	"""
@@ -372,7 +376,7 @@ def LinearAccelerationMatrix(A_a_com, b_a_com, r_pq, A_alpha, omega):
 	구해진다. r_pq가 0인 경우 A_alpha와 omega의 값은 무시된다.
 	"""
 	A_a_q = A_a_com - dot(cross_op_mat(r_pq), A_alpha)
-	b_a_q = b_a_com + dot(dot(cross_op_mat(omega), cross_op_mat(omega)), r_pq)
+	b_a_q = b_a_com.flatten() + dot(dot(cross_op_mat(omega), cross_op_mat(omega)), r_pq).flatten()
 
 	return A_a_q, b_a_q
 
@@ -554,14 +558,11 @@ def streamprinter(text):
 
 # We might write everything directly as a script, but it looks nicer
 # to create a function.
-def SolveSocp(A_pz, b_pz, n_cs, n_cd):
-	n_x = 1 + (4*n_cs) + n_cd
+def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
+	# total number of optimization variable is n_x
+	n_x = 1 + (4*n_cs) + n_cd + n_u
 	assert n_cs+n_cd is not 0
-	assert A_pz.shape==(n_x,), 'A_pz.shape should be equal to (%d,), not %s' % (n_x,A_pz.shape)
-
-	# Make a MOSEK environment
-	env = mosek.Env ()
-
+	
 	# Attach a printer to the environment
 	#env.set_Stream (mosek.streamtype.log, streamprinter)
 
@@ -571,20 +572,24 @@ def SolveSocp(A_pz, b_pz, n_cs, n_cd):
 	# Attach a printer to the task
 	#task.set_Stream (mosek.streamtype.log, streamprinter)
 
-	bkc = [ mosek.boundkey.lo ]
-	blc = [ -b_pz ]
-	buc = [ +inf ]
-
+	for fc in friction_constraints:
+		assert fc[0].shape == (3, n_x)
+		assert len(fc[1]) is 3
+	bkc = [ mosek.boundkey.lo ] * len(friction_constraints)
+	blc = [-friction_constraints[i][1][2] for i in range(len(friction_constraints))]
+	buc = [ +inf ] * len(friction_constraints)
+	
 	c   = [1.0] + [0.0]*(n_x-1)
 	bkx = [ mosek.boundkey.fr ] + [mosek.boundkey.lo]*(n_x-1)
 	blx = [       -inf        ] + [0.0]*(n_x-1)
 	bux = [       +inf        ] + [inf]*(n_x-1)
 
-	asub = [ array([0]) ] * n_x
-	aval = []
-	for a_pz in A_pz:
-		aval.append(array([a_pz]))
 
+	A = array([ fc[0][2,:] for fc in friction_constraints ])
+		
+	assert A.shape[1] == n_x
+	asub = [ array(range(A.shape[0])) ] * n_x
+	aval = [ array(A[:,j]) for j in range(A.shape[1]) ]
 
 	NUMVAR = len(bkx)
 	NUMCON = len(bkc)
@@ -614,12 +619,13 @@ def SolveSocp(A_pz, b_pz, n_cs, n_cd):
 		# blx[j] <= x_j <= bux[j] 
 		task.putbound(mosek.accmode.var,j,bkx[j],blx[j],bux[j])
 
-	for j in range(len(aval)):
+	for j in range(n_x):
 		# Input column j of A 
 		task.putavec(mosek.accmode.var,  # Input columns of A.
 				     j,                  # Variable (column) index.
-				     asub[j],            # Row index of non-zeros in column j.
-				     aval[j])            # Non-zero Values of column j. 
+				     list(asub[j]),            # Row index of non-zeros in column j.
+				     list(aval[j]))            # Non-zero Values of column j. 
+
 	for i in range(NUMCON):
 		task.putbound(mosek.accmode.con,i,bkc[i],blc[i],buc[i])
 
