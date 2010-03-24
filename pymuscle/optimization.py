@@ -143,25 +143,275 @@ def expand_vertical(m):
 		mm[i*m.shape[0]:(i+1)*m.shape[0],i] = m[:,i]
 	return mm
 
-def BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V):
+def DetermineContactPoints(cornersX, cornersXd):
 	"""
-	최적화 변수(컨트롤 변수)와 독립적인 값으로 구성할 수 있는
-	모든 행렬 및 벡터를 계산한다.
+	접촉점 리스트 중 static, dynamic 접촉점을 구별해서 인덱스를 리턴한다.
 	"""
 	static_contacts = []
 	dynamic_contacts = []
 	for i in range(8): # 8 is the maximum number of contact points of a rigid box
 		z = cornersX[2,i]
 		# criterion for contact point registration
-		if z < 0.001:
-			if sqrt(dot(cornersXd[0:3,i],cornersXd[0:3,i])) < 0.0001:
+		if z < 0:
+			print 'WARN: contact point already penetrated !!! (z=%f)' % z
+		if z < 0.01:
+			# tangential velocity of the contact point
+			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 0.01:
 				static_contacts.append(i)
 			else:
 				dynamic_contacts.append(i)
 
+	return static_contacts, dynamic_contacts
+
+def BuildP1Matrix(V, n_cs):
+	"""
+	lambda_cs에 곱해져서 static contact force의 합력 f_cs를 구해주는
+	행렬 P1을 구합니다.
+	
+	f_cs = P1 * lambda_cs
+	
+	f_cs      : 3 x 1
+	P1        : 3 x n_cs*4
+	lambda_cs : n_cs*4 x 1
+	"""
+	P1 = 0
+	if n_cs is not 0:
+		P1 = dot(V, concatenate((identity(4),)*n_cs,axis=1))
+		assert P1.shape == (3, n_cs*4)
+	return P1
+
+def BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts):
+	"""
+	lambda_cd에 곱해져서 dynamic contact force의 합력 f_cd를 구해주는
+	행렬 P2을 구합니다.
+	
+	f_cd = P2 * lambda_cd
+	
+	f_cd      : 3 x 1
+	P2        : 3 x n_cd
+	lambda_cd : n_cd x 1
+	"""
+	P2 = 0
+	if n_cd is not 0:
+		P2i = []
+		for i in dynamic_contacts:
+			# extract tangential velocity from cornersXd
+			a=array([0,0,1]) - mu*array([cornersXd[0,i], cornersXd[1,i], 0])
+			P2i.append( array( [ [a[0]], [a[1]], [a[2]] ] ) )
+		P2 = concatenate(P2i, axis=1)
+		assert P2.shape == (3, n_cd)
+	return P2
+
+def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu):
+	"""
+	Center of mass의 선 가속도를 최적화 변수 x_opt에 대한 1차 식으로 나타내는
+	행렬 A_a_com, 벡터 b_a_com을 계산한다.
+	
+	p_comdd = A_a_com*x_opt + b_a_com
+	"""
 	n_cs = len(static_contacts)
 	n_cd = len(dynamic_contacts)
+	n_u = 0
 
+	P1 = BuildP1Matrix(V, n_cs)
+	P2 = BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts)
+	
+	S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
+
+	A_a_com = 0
+	if P1 is not 0 and P2 is not 0:
+		A_a_com = concatenate( (P1,P2), axis=1 )
+	elif P1 is not 0:
+		A_a_com = P1
+	elif P2 is not 0:
+		A_a_com = P2
+
+	if A_a_com is not 0:
+		A_a_com = dot(A_a_com, S_lambda)
+		A_a_com /= mass
+
+	b_a_com = array([ [0], [0], [-9.81/mass] ])
+
+	return A_a_com, b_a_com
+
+def NextPointPositionMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
+	"""
+	다음 스텝에서의 어떤 점 q의 위치를 x_opt에 대한 1차 식으로
+	나타내는 행렬 A_q_next와 b_q_next를 구한다.
+	
+	p_q_next = A_q_next * x_opt + b_q_next
+	"""
+	A_q_next = (dt/2.0)**2*A_a_q
+	b_q_next = (dt/2.0)**2*b_a_q + p_q + [pd_q[i]*dt for i in range(3)]
+	return A_q_next, b_q_next
+
+def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com):
+	"""
+	Center of mass에서의 각 가속도를 최적화 변수 x_opt에 대한 1차 식으로 나타내는
+	행렬 A_alpha_com을 계산한다.
+	
+	alpha_com = A_a_com*x_opt
+	"""
+	n_cs = len(static_contacts)
+	n_cd = len(dynamic_contacts)
+	n_u = 0 # TODO: muscle
+	
+	VAI_list = []
+	V_2 = 0
+	if n_cs is not 0:
+		V_2 = diag_sub(V, n_cs)
+		VAI_list.append(V_2)
+	r_csx = 0
+	for i in static_contacts:
+		r_cs = cornersX[0:3,i] - pos
+		r_cs_i = cross_op_mat(r_cs)
+		if r_csx is 0:
+			r_csx = r_cs_i
+		else:
+			r_csx = concatenate((r_csx,r_cs_i),axis=1)
+
+	r_cdx = 0
+	for i in dynamic_contacts:
+		r_cd = cornersX[0:3,i] - pos
+		r_cd_i = cross_op_mat(r_cd)
+		if r_cdx is 0:
+			r_cdx = r_cd_i
+		else:
+			r_cdx = concatenate((r_cdx,r_cd_i),axis=1)
+
+	r_ux = 0 # TODO: user force (muscle force) vector
+	A_fcd = 0
+	if n_cd is not 0:
+		A_fcd = expand_vertical(BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts))
+		VAI_list.append(A_fcd)
+
+	R = 0
+	if r_csx is not 0 and r_cdx is not 0:
+		R = concatenate((r_csx,r_cdx), axis=1)
+	elif r_csx is not 0:
+		R = r_csx
+	elif r_cdx is not 0:
+		R = r_cdx
+
+	VAI = 0
+	if V_2 is not 0 and A_fcd is not 0:
+		VAI = diag_sub_list((V_2,A_fcd))
+	elif V_2 is not 0:
+		VAI = V_2
+	elif A_fcd is not 0:
+		VAI = A_fcd
+
+	A_alpha = 0
+	if R is not 0 and VAI is not 0:
+		A_alpha = dot( dot( linalg.inv(H_com), R ), VAI )
+		S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
+		A_alpha = dot(A_alpha, S_lambda)
+
+	return A_alpha
+
+def BuildSelectionMatrix(n_cs, n_cd, n_u, sel):
+	"""
+	최적화 벡터 변수 (x_opt)는 여러 변수가 모여 있다.
+	여기서 필요한 변수만 뽑아서 새로운 벡터를 만들어주는
+	선택 행렬(selection matrix)가 필요한 경우가 있는데
+	이 함수는 그것을 만들어 준다.
+	
+	최적화 벡터는 아래와 같이 저장되어 있다고 가정한다.
+	
+	 - lambda_cs_ab: a번째 static friction force의 b번째 basis coefficient
+	 - lambda_cd_a: a번째 dynamic friction force의 coefficient
+	 - u_a: a번째 muscle의 actuating force
+	
+	x_opt = [ epsilon,
+	          lambda_cs_11,
+			  lambda_cs_12,
+			  lambda_cs_13,
+			  lambda_cs_14,
+			  ...,
+			  lambda_cs_n1,
+			  lambda_cs_n2,
+			  lambda_cs_n3,
+			  lambda_cs_n4,
+			  lambda_cd_1,
+			  ...,
+			  lambda_cd_n,
+			  u_1, 
+			  ...
+			  u_n ]^T
+			  
+	즉, x_opt는 길이가 1+(n_cs*4)+n_cd+n_u인 벡터이다.
+	"""
+	S = 0
+	if sel == 'lambda':
+		S = concatenate( (
+		    zeros((4*n_cs+n_cd+n_u, 1)),
+		    identity(4*n_cs+n_cd),
+		    zeros((4*n_cs+n_cd+n_u, n_u))
+		    ), axis=1 )
+	elif sel == 'lambda_fu':
+		S = concatenate( (
+		    zeros((4*n_cs+n_cd+n_u, 1)),
+		    identity(4*n_cs+n_cd+n_u)
+		    ), axis=1 )
+	
+	return S
+
+def LinearAccelerationMatrix(A_a_com, b_a_com, r_pq, A_alpha, omega):
+	"""
+	임의의 점 q에 대해 x_opt에 대한 1차 식으로 표현되는 가속도를 구하는
+	행렬 A_a_q, b_a_q를 계산한다.
+
+	qdd = A_a_q*x_opt + b_a_q
+	
+	현재 각 속도 omega,
+	LinearAccelerationComMatrix() 함수로 구해지는 A_a_com, b_a_com,
+	AngularAccelerationComMatrix() 함수로 구해지는 A_alpha가 인자로 필요하다.
+	
+	벡터 r_pq의 p는 COM을 가리키고 q는 우리가 다음 위치를 알길 원하는 점이다.
+	만일 r_pq를 0으로 설정하면 COM의 다음 위치가 계산되는 1차식의 A_next와 b_next가
+	구해진다. r_pq가 0인 경우 A_alpha와 omega의 값은 무시된다.
+	"""
+	A_a_q = A_a_com - dot(cross_op_mat(r_pq), A_alpha)
+	b_a_q = b_a_com + dot(dot(cross_op_mat(omega), cross_op_mat(omega)), r_pq)
+
+	return A_a_q, b_a_q
+
+def BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V):
+	"""
+	최적화 변수(컨트롤 변수)와 독립적인 값으로 구성할 수 있는
+	모든 행렬 및 벡터를 계산한다.
+
+	pdd = A_a*x_opt + b_a
+	
+	pdd는 강체의 점 p에서의 가속도
+	x_opt는 최적화 변수 벡터이다.
+	이 함수는 행렬 A_a, 벡터 b_a를 계산한다.
+	
+	
+	
+	"""
+	static_contacts = []
+	dynamic_contacts = []
+	for i in range(8): # 8 is the maximum number of contact points of a rigid box
+		z = cornersX[2,i]
+		# criterion for contact point registration
+		if z < 0:
+			print 'WARN: contact point already penetrated !!! (z=%d)' % z
+			
+		if z < 0.01:
+			
+			
+			# tangential velocity of the contact point
+			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 0.01:
+				static_contacts.append(i)
+			else:
+				dynamic_contacts.append(i)
+			
+
+	n_cs = len(static_contacts)
+	n_cd = len(dynamic_contacts)
+	n_u = 0
+	
 	"""
 	print 'Static contacts: %d' % n_cs
 	print 'Dynamic contacts: %d' % n_cd
@@ -175,7 +425,8 @@ def BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V):
 	if n_cd is not 0:
 		P2i = []
 		for i in dynamic_contacts:
-			a=array([0,0,1]) - mu*cornersXd[0:3,i]
+			# extract tangential velocity from cornersXd
+			a=array([0,0,1]) - mu*array([cornersXd[0,i], cornersXd[1,i], 0])
 			P2i.append( array( [ [a[0]], [a[1]], [a[2]] ] ) )
 		"""
 		print 'P2i'
@@ -188,7 +439,8 @@ def BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V):
 	print 'Intermediate test 2'
 	print P2
 	"""
-	S_lambda=concatenate( (zeros((4*n_cs+n_cd, 1)), identity(4*n_cs+n_cd)), axis=1 )
+	
+	S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
 	#print Slambda
 	A_a = 0
 	if P1 is not 0 and P2 is not 0:

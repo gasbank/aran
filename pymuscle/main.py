@@ -142,9 +142,27 @@ def add3(x,y):
 	return x+dt*y
 
 def ProcessFD(pos, posd, ang, angd):
-	global box_size
+	global mass, V, mu, box_size, H_com, dt
+	
 	cornersX, cornersXd = BoxCorners(pos, posd, ang, angd, box_size)
+	static_contacts, dynamic_contacts = DetermineContactPoints(cornersX, cornersXd)
+
+	# For COM
+	A_a_com, b_a_com = LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu)
+	A_com_next, b_com_next = NextPointPositionMatrix(A_a_com, b_a_com, pos, posd, dt)
+	A_alpha = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com)
+	
+	# For contact points
+	friction_constraints = []
+	for i in static_contacts + dynamic_contacts:
+		A_a_q, b_a_q = LinearAccelerationMatrix(A_a_com, b_a_com, cornersX[0:3,i] - pos, A_alpha, angd)
+		A_q_next, b_q_next = NextPointPositionMatrix(A_a_q, b_a_q, cornersX[0:3,i], cornersXd[0:3,i], dt)
+		friction_constraints.append((A_q_next, b_q_next))
+		
 	A_a, b_a, A_com, b_cs, b_cd, A_alpha, VAI, static_contacts, dynamic_contacts = BuildMatrices(mu, cornersX, cornersXd, dt, H_com, mass, pos, V)
+	
+	
+	
 	A_com_pz = dot(array([0, 0, 1]), A_com)
 	b_c = b_cs + b_cd;
 	b_c2 = 0
@@ -306,34 +324,40 @@ def Draw ():
 frame=0
 
 def RungeKuttaFD(pos, posd, ang, angd):
-	
+	rk = 1
+	global dt
 	a_linacc, a_angacc, fc_list, rc_list = ProcessFD(pos, posd, ang, angd)
+	newPosd = [posd[i] + dt*a_linacc[i] for i in range(3)]	
+	newPos = [pos[i] + dt*newPosd[i] for i in range(3)]
+	newAngd = [angd[i] + dt*a_angacc[i] for i in range(3)]	
+	newAng = [ang[i] + dt*newAngd[i] for i in range(3)]
 
-	pos_b  = map(add2,pos,posd)
-	posd_b = map(add2,posd,a_linacc)
-	ang_b  = map(add2,ang,angd)
-	angd_b = map(add2,angd,a_angacc)
-
-	b_linacc, b_angacc = ProcessFD(pos_b, posd_b, ang_b, angd_b)[0:2]
-
-	pos_c  = map(add2,pos,posd_b)
-	posd_c = map(add2,posd,b_linacc)
-	ang_c  = map(add2,ang,angd_b)
-	angd_c = map(add2,angd,b_angacc)
-
-	c_linacc, c_angacc = ProcessFD(pos_c, posd_c, ang_c, angd_c)[0:2]
-
-	pos_d  = map(add2,pos,posd_c)
-	posd_d = map(add2,posd,c_linacc)
-	ang_d  = map(add2,ang,angd_c)
-	angd_d = map(add2,angd,c_angacc)
-
-	d_linacc, d_angacc = ProcessFD(pos_d, posd_d, ang_d, angd_d)[0:2]
-
-	newPos  = [pos[i]  + dt/6.0 * (posd[i] + 2*posd_b[i] + 2*posd_c[i] + posd_d[i]) for i in range(3)]
-	newPosd = [posd[i] + dt/6.0 * (a_linacc[i] + 2*b_linacc[i] + 2*c_linacc[i] + d_linacc[i]) for i in range(3)]
-	newAng =  [ang[i]  + dt/6.0 * (angd[i] + 2*angd_b[i] + 2*angd_c[i] + angd_d[i]) for i in range(3)]
-	newAngd = [angd[i] + dt/6.0 * (a_angacc[i] + 2*b_angacc[i] + 2*c_angacc[i] + d_angacc[i]) for i in range(3)]
+	if rk is not 0:
+		pos_b  = map(add2,pos,posd)
+		posd_b = map(add2,posd,a_linacc)
+		ang_b  = map(add2,ang,angd)
+		angd_b = map(add2,angd,a_angacc)
+	
+		b_linacc, b_angacc = ProcessFD(pos_b, posd_b, ang_b, angd_b)[0:2]
+	
+		pos_c  = map(add2,pos,posd_b)
+		posd_c = map(add2,posd,b_linacc)
+		ang_c  = map(add2,ang,angd_b)
+		angd_c = map(add2,angd,b_angacc)
+	
+		c_linacc, c_angacc = ProcessFD(pos_c, posd_c, ang_c, angd_c)[0:2]
+	
+		pos_d  = map(add2,pos,posd_c)
+		posd_d = map(add2,posd,c_linacc)
+		ang_d  = map(add2,ang,angd_c)
+		angd_d = map(add2,angd,c_angacc)
+	
+		d_linacc, d_angacc = ProcessFD(pos_d, posd_d, ang_d, angd_d)[0:2]
+	
+		newPos  = [pos[i]  + dt/6.0 * (posd[i] + 2*posd_b[i] + 2*posd_c[i] + posd_d[i]) for i in range(3)]
+		newPosd = [posd[i] + dt/6.0 * (a_linacc[i] + 2*b_linacc[i] + 2*c_linacc[i] + d_linacc[i]) for i in range(3)]
+		newAng =  [ang[i]  + dt/6.0 * (angd[i] + 2*angd_b[i] + 2*angd_c[i] + angd_d[i]) for i in range(3)]
+		newAngd = [angd[i] + dt/6.0 * (a_angacc[i] + 2*b_angacc[i] + 2*c_angacc[i] + d_angacc[i]) for i in range(3)]
 
 	"""
 	print 'newPos'
@@ -362,11 +386,11 @@ mass = 10
 box_size = [2,1,1]
 H_com = BoxInertia(box_size, mass)
 dt = 0.01
-mu = 0.8
+mu = 0.5
 V = BuildFrictionConeBasis(mu)
 
 # initial Box position(pos) and velocity(posd)
-pos = [0, 0, 5+box_size[2]/2.0]
+pos = [0, 0, 4+box_size[2]/2.0]
 posd = [0, 0, 0]
 # Box angle(ang) and angular velocity(angd) in radian
 ang = [0, 0, 0]
