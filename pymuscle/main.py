@@ -12,6 +12,7 @@ from OpenGL.GLU import *
 import sys
 from optimization import *
 from ArcBall import *
+from glprim import *
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -141,10 +142,25 @@ def add3(x,y):
 	global dt
 	return x+dt*y
 
+def RollbackIfPenetrated(pos0, posd0, ang0, angd0, pos1, posd1, ang1, angd1, box_size, dt):
+	"""
+	현재 타임 스텝(t=1)에 penetration이 생겼으므로
+	지난 타임 스텝(t=0)을 참고하여 정확한 contact point가 나오도록
+	새로운 현재 타임 스텝의 스테이트를 계산한다.
+	덧붙여 이런 경우에 한해 dt값을 임시적으로 바꿔야 한다.
+	정확한 contact point라 함은 z값이 0인 것이다.
+	"""
+	
 def ProcessFD(pos, posd, ang, angd):
-	global mass, V, mu, box_size, H_com, dt
+	global mass, V, mu_k, box_size, H_com, dt
 	
 	cornersX, cornersXd = BoxCorners(pos, posd, ang, angd, box_size)
+	
+	penetrated = []
+	for i in range(cornersX.shape[1]):
+		if cornersX[2,i] < 0:
+			penetrated.append(list(cornersX[0:3,i]))
+	
 	static_contacts, dynamic_contacts = DetermineContactPoints(cornersX, cornersXd)
 	
 	n_cs = len(static_contacts)
@@ -152,9 +168,9 @@ def ProcessFD(pos, posd, ang, angd):
 	n_u = 0
 
 	# For COM
-	A_a_com, b_a_com = LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu)
+	A_a_com, b_a_com = LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu_k)
 	A_com_next, b_com_next = NextPointPositionMatrix(A_a_com, b_a_com, pos, posd, dt)
-	A_alpha, VAI = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com)
+	A_alpha, VAI = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu_k, H_com)
 
 	assert A_a_com is 0 or A_a_com.shape == (3, 1+4*n_cs+n_cd)
 	assert b_a_com.shape in [(3, 1), (3,)]
@@ -183,6 +199,7 @@ def ProcessFD(pos, posd, ang, angd):
 		# solve SOCP
 		try:
 			global env
+			P2 = BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts)
 			x_opt = SolveSocp(env, friction_constraints, n_cs, n_cd, n_u)
 		except mosek.Exception, e:
 			print "ERROR: %s" % str(e.errno)
@@ -286,6 +303,7 @@ def Draw ():
 	glVertex3f(-plane, -plane, 0)
 	glEnd()
 
+	"""
 	# Contact point candidates
 	glPointSize(6)
 	glBegin(GL_POINTS)
@@ -295,7 +313,7 @@ def Draw ():
 		#ii += 1
 		glVertex3f(cx[0],cx[1],cx[2])
 	glEnd()
-
+	"""
 
 	newPos, newPosd, newAng, newAngd, fc_list, rc_list = RungeKuttaFD(pos, posd, ang, angd)
 	
@@ -307,8 +325,17 @@ def Draw ():
 			glVertex3f(rc_list[i][0], rc_list[i][1], rc_list[i][2])
 			glVertex3f(rc_list[i][0]+fc_list[i][0], rc_list[i][1]+fc_list[i][1], rc_list[i][2]+fc_list[i][2])
 		glEnd()
+
+	# Contact points
+	if fc_list is not 0:
+		glPointSize(6)
+		glBegin(GL_POINTS)
+		#ii = 0
+		for i in range(len(fc_list)):
+			glVertex3f(rc_list[i][0], rc_list[i][1], rc_list[i][2])
+		glEnd()
 	
-	glFlush ()														# // Flush The GL Rendering Pipeline
+	glFlush ()
 	glutSwapBuffers()
 	
 	pos = newPos
@@ -317,7 +344,7 @@ def Draw ():
 	angd = newAngd
 
 	global frame
-	print 'Frame', frame, 'drawn.'
+	#print 'Frame', frame, 'drawn.'
 	frame+=1
 	return
 
@@ -370,17 +397,18 @@ cube = 0
 cornersX = 0
 
 mass = 10
-box_size = [2,1,1]
+box_size = [2,2,1]
 H_com = BoxInertia(box_size, mass)
-dt = 0.001
-mu = 2.0
-V = BuildFrictionConeBasis(mu)
+dt = 0.0001
+mu_s = 1.6 # static friction coefficient
+mu_k = 1.5 # dynamic(kinematic) friction coefficient
+V = BuildFrictionConeBasis(mu_s)
 
 # initial Box position(pos) and velocity(posd)
-pos = [0, 0, 2+box_size[2]/2.0]
-posd = [0.1, 0, 0]
+pos = [0, 0, 1+box_size[2]/2.0]
+posd = [0, 0, 0]
 # Box angle(ang) and angular velocity(angd) in radian
-ang = [0, pi/4, 0]
+ang = [pi/4+0.1, 0, 0]
 angd = [0, 0, 0]
 
 # Make a MOSEK environment

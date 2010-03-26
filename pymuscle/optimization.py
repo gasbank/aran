@@ -10,6 +10,7 @@ import mosek
 from math import cos, sin, atan
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
 from numpy import *
+
 PI2 = 2.0*3.1415926535			# 2 * PI (not squared!) 		// PI Squared
 
 
@@ -33,21 +34,14 @@ g_ArcBall = ArcBallT (640, 480)
 g_isDragging = False
 g_quadratic = None
 
-def BoxInertia(box_size, mass):
-	return diag([
-		mass*(box_size[1]**2+box_size[2]**2)/12.0,
-		mass*(box_size[0]**2+box_size[2]**2)/12.0,
-		mass*(box_size[0]**2+box_size[1]**2)/12.0  ])
-
 
 # friction coefficients and friction cone basis
-def BuildFrictionConeBasis(mu):
-	theta = 1.0/atan(mu)
+def BuildFrictionConeBasis(mu_s):
 	V = array([
-		[  1,  1, sqrt(2)/mu ],
-		[  1, -1, sqrt(2)/mu ],
-		[ -1,  1, sqrt(2)/mu ],
-		[ -1, -1, sqrt(2)/mu ] ])
+		[  1,  1, sqrt(2.0)/mu_s ],
+		[  1, -1, sqrt(2.0)/mu_s ],
+		[ -1,  1, sqrt(2.0)/mu_s ],
+		[ -1, -1, sqrt(2.0)/mu_s ] ])
 	V = V / sqrt(dot(V[0],V[0]))
 	V = V.T
 	"""
@@ -55,12 +49,6 @@ def BuildFrictionConeBasis(mu):
 	print V
 	"""
 	return V
-
-def ibits(i,pos,len):
-	return (i >> pos) & ~(-1 << len)
-def sign(x):
-	if x is 0: return -1
-	else: return 1
 
 #
 # Calcualte box corner position and velocity for given state
@@ -128,14 +116,10 @@ def diag_sub(S, n):
 
 def diag_sub_list(Sl):
 	assert len(Sl) >= 1
-	SS = Sl
-	for S in Sl:
+	SS = Sl[0]
+	for S in Sl[1:]:
 		SS = vstack([hstack([SS,zeros((SS.shape[0],S.shape[1]))]), hstack([zeros((S.shape[0],SS.shape[1])),S])])
 	return SS
-
-def cross_op_mat(v):
-	assert len(v) is 3
-	return array( [ [0,-v[2],v[1]], [v[2],0,-v[0]], [-v[1],v[0],0] ] )
 
 def expand_vertical(m):
 	mm = zeros((m.shape[0]*m.shape[1],m.shape[1]))
@@ -152,13 +136,14 @@ def DetermineContactPoints(cornersX, cornersXd):
 	for i in range(8): # 8 is the maximum number of contact points of a rigid box
 		z = cornersX[2,i]
 		# criterion for contact point registration
-		"""
-		if z < 0:
-			print 'WARN: contact point already penetrated !!! (z=%f)' % z
-		"""
-		if z < 0.01:
+		
+		if z < -0.01:
+			print 'WARN: contact point severely penetrated !!! (z=%.16e)' % z
+			raise Exception, 'penetration'
+		
+		if z < 0.005:
 			# tangential velocity of the contact point
-			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 0.01:
+			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 1:
 				static_contacts.append(i)
 			else:
 				dynamic_contacts.append(i)
@@ -182,7 +167,7 @@ def BuildP1Matrix(V, n_cs):
 		assert P1.shape == (3, n_cs*4)
 	return P1
 
-def BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts):
+def BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts):
 	"""
 	lambda_cd에 곱해져서 dynamic contact force의 합력 f_cd를 구해주는
 	행렬 P2을 구합니다.
@@ -198,13 +183,13 @@ def BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts):
 		P2i = []
 		for i in dynamic_contacts:
 			# extract tangential velocity from cornersXd
-			a=array([0,0,1]) - mu*array([cornersXd[0,i], cornersXd[1,i], 0])
+			a=array([0,0,1]) - mu_k*array([cornersXd[0,i], cornersXd[1,i], 0])
 			P2i.append( array( [ [a[0]], [a[1]], [a[2]] ] ) )
 		P2 = concatenate(P2i, axis=1)
 		assert P2.shape == (3, n_cd)
 	return P2
 
-def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu):
+def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu_k):
 	"""
 	Center of mass의 선 가속도를 최적화 변수 x_opt에 대한 1차 식으로 나타내는
 	행렬 A_a_com, 벡터 b_a_com을 계산한다.
@@ -216,7 +201,7 @@ def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contac
 	n_u = 0
 
 	P1 = BuildP1Matrix(V, n_cs)
-	P2 = BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts)
+	P2 = BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts)
 	
 	S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
 
@@ -249,7 +234,7 @@ def NextPointPositionMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
 	b_q_next = ((dt/2.0)**2*b_a_q).flatten() + p_q + [pd_q[i]*dt for i in range(3)]
 	return A_q_next, b_q_next
 
-def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu, H_com):
+def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu_k, H_com):
 	"""
 	Center of mass에서의 각 가속도를 최적화 변수 x_opt에 대한 1차 식으로 나타내는
 	행렬 A_alpha_com을 계산한다.
@@ -286,7 +271,7 @@ def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_c
 	r_ux = 0 # TODO: user force (muscle force) vector
 	A_fcd = 0
 	if n_cd is not 0:
-		A_fcd = expand_vertical(BuildP2Matrix(mu, n_cd, cornersXd, dynamic_contacts))
+		A_fcd = expand_vertical(BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts))
 		VAI_list.append(A_fcd)
 
 	R = 0
@@ -556,6 +541,24 @@ def streamprinter(text):
 	sys.stdout.write(text)
 	sys.stdout.flush()
 
+"""
+void OrthonormalizeOrientation( matrix_3x3 &Orientation )
+{
+    vector_3 X(Orientation(0,0),Orientation(1,0),Orientation(2,0));
+    vector_3 Y(Orientation(0,1),Orientation(1,1),Orientation(2,1));
+    vector_3 Z;
+
+    X.Normalize();
+    Z = CrossProduct(X,Y).Normalize();
+    Y = CrossProduct(Z,X).Normalize();
+
+    Orientation(0,0) = X(0); Orientation(0,1) = Y(0); Orientation(0,2) = Z(0);
+    Orientation(1,0) = X(1); Orientation(1,1) = Y(1); Orientation(1,2) = Z(1);
+    Orientation(2,0) = X(2); Orientation(2,1) = Y(2); Orientation(2,2) = Z(2);
+}
+"""
+
+	
 # We might write everything directly as a script, but it looks nicer
 # to create a function.
 def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
@@ -651,21 +654,12 @@ def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
 		                  0,NUMVAR,          
 		                  xx)
 
-	if solsta == mosek.solsta.optimal or solsta == mosek.solsta.near_optimal:
-		1==1
-		#print("Optimal solution: %s" % xx)
-	elif solsta == mosek.solsta.dual_infeas_cer: 
-		print("Primal or dual infeasibility.\n")
-	elif solsta == mosek.solsta.prim_infeas_cer:
-		print("Primal or dual infeasibility.\n")
-	elif solsta == mosek.solsta.near_dual_infeas_cer:
-		print("Primal or dual infeasibility.\n")
-	elif  solsta == mosek.solsta.near_prim_infeas_cer:
-		print("Primal or dual infeasibility.\n")
-	elif mosek.solsta.unknown:
-		print("Unknown solution status")
-	else:
-		print("Other solution status")
+	if not (solsta == mosek.solsta.optimal):
+		print("ERROR: MOSEK solver failed due to the following possible reasons:")
+		print(" - Primal or dual infeasibility")
+		print(" - Unknown solution status")
+		print(" - Other solution status")
+		raise Exception, 'mosek failure'
 
 	return xx
 
@@ -765,69 +759,4 @@ def Torus(MinorRadius, MajorRadius):
 			glVertex3f (sin(PI2*(i+1%20+wrapFrac)/20.0)*r, MinorRadius*sinphi, cos(PI2*(i+1%20+wrapFrac)/20.0)*r);
 	glEnd();														# // Done Torus
 	return
-
-
-# // build the display list.
-def BuildList():
-	cube = glGenLists(1);              # // generate storage for 2 lists, and return a pointer to the first.
-	glNewList(cube, GL_COMPILE);       # // store this list at location cube, and compile it once.
-
-	# // cube without the top;
-	glBegin(GL_QUADS);			# // Bottom Face
-
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f(-1.0, -1.0, -1.0);	# // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f( 1.0, -1.0, -1.0);	# // Top Left Of The Texture and Quad
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f( 1.0, -1.0,  1.0);	# // Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f(-1.0, -1.0,  1.0);	# // Bottom Right Of The Texture and Quad
-
-	# // Front Face
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f(-1.0, -1.0,  1.0);	# // Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f( 1.0, -1.0,  1.0);	# // Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f( 1.0,  1.0,  1.0);	# // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f(-1.0,  1.0,  1.0);	# // Top Left Of The Texture and Quad
-
-	# // Back Face
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f(-1.0, -1.0, -1.0);	# // Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f(-1.0,  1.0, -1.0);	# // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f( 1.0,  1.0, -1.0);	# // Top Left Of The Texture and Quad
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f( 1.0, -1.0, -1.0);	# // Bottom Left Of The Texture and Quad
-
-	# // Right face
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f( 1.0, -1.0, -1.0);	# // Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f( 1.0,  1.0, -1.0);	# // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f( 1.0,  1.0,  1.0);	# // Top Left Of The Texture and Quad
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f( 1.0, -1.0,  1.0);	# // Bottom Left Of The Texture and Quad
-
-	# // Left Face
-	glTexCoord2f(0.0, 0.0); 
-	glVertex3f(-1.0, -1.0, -1.0);	# // Bottom Left Of The Texture and Quad
-	glTexCoord2f(1.0, 0.0); 
-	glVertex3f(-1.0, -1.0,  1.0);	# // Bottom Right Of The Texture and Quad
-	glTexCoord2f(1.0, 1.0); 
-	glVertex3f(-1.0,  1.0,  1.0);	# // Top Right Of The Texture and Quad
-	glTexCoord2f(0.0, 1.0); 
-	glVertex3f(-1.0,  1.0, -1.0);	# // Top Left Of The Texture and Quad
-
-	glEnd();
-	glEndList();
-
-	print "List built."
-	return cube
-
 

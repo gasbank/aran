@@ -47,7 +47,7 @@ class ArcBallT:
 		return str_rep
 
 	def setBounds (self, NewWidth, NewHeight):
- 		# //Set new bounds
+		# //Set new bounds
 		assert (NewWidth > 1.0 and NewHeight > 1.0), "Invalid width or height for bounds."
 		# //Set adjustment factor for width/height
 		self.m_AdjustWidth = 1.0 / ((NewWidth - 1.0) * 0.5)
@@ -77,7 +77,7 @@ class ArcBallT:
 			NewVec [Y] = TempPt [Y] * norm;
 			NewVec [Z] = 0.0;
 		else:			# //Else it's on the inside
-        	# //Return a vector to a point mapped inside the sphere sqrt(radius squared - length)
+		# //Return a vector to a point mapped inside the sphere sqrt(radius squared - length)
 			NewVec [X] = TempPt [X]
 			NewVec [Y] = TempPt [Y]
 			NewVec [Z] = sqrt (1.0 - length)
@@ -116,7 +116,7 @@ class ArcBallT:
 		else:		#                            //if its zero
 			# //The begin and end vectors coincide, so return a quaternion of zero matrix (no rotation)
 			NewRot[X] = NewRot[Y] = NewRot[Z] = NewRot[W] = 0.0;
-			
+
 		return NewRot
 
 
@@ -161,7 +161,7 @@ def Vector3fLength (u):
 	mag_squared = sum(Numeric.dot (u,u))
 	mag = sqrt (mag_squared)
 	return mag
-	
+
 def Matrix3fSetIdentity ():
 	return Numeric.identity (3, 'f')
 
@@ -177,8 +177,8 @@ def Matrix4fSVD (NewObj):
 	Z = 2
 	s = sqrt ( 
 		( (NewObj [X][X] * NewObj [X][X]) + (NewObj [X][Y] * NewObj [X][Y]) + (NewObj [X][Z] * NewObj [X][Z]) +
-		(NewObj [Y][X] * NewObj [Y][X]) + (NewObj [Y][Y] * NewObj [Y][Y]) + (NewObj [Y][Z] * NewObj [Y][Z]) +
-		(NewObj [Z][X] * NewObj [Z][X]) + (NewObj [Z][Y] * NewObj [Z][Y]) + (NewObj [Z][Z] * NewObj [Z][Z]) ) / 3.0 )
+		  (NewObj [Y][X] * NewObj [Y][X]) + (NewObj [Y][Y] * NewObj [Y][Y]) + (NewObj [Y][Z] * NewObj [Y][Z]) +
+		  (NewObj [Z][X] * NewObj [Z][X]) + (NewObj [Z][Y] * NewObj [Z][Y]) + (NewObj [Z][Z] * NewObj [Z][Z]) ) / 3.0 )
 	return s
 
 def Matrix4fSetRotationScaleFromMatrix3f(NewObj, three_by_three_matrix):
