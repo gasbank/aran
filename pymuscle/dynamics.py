@@ -41,11 +41,14 @@ def BoxCorners2(r_CM, v_CM, A, omega, box_size):
 		for j in range(3):
 			r_corners_local[j,i] = box_size[j]/2.0*sign(ibits(i,j,1))
 	r_corners = dot(A, r_corners_local)
+	cc = [] # Contact Candidates
 	for i in range(8):
 		r_corners[:,i] += r_CM
+		if r_corners[2,i] < 0.005:
+			cc.append(i)
 	
 	v_corners = zeros((3,8))
 	for i in range(8):
 		v_corners[:,i] = v_CM + cross(omega, r_corners_local[:,i])
-		
-	return r_corners, v_corners
+	
+	return r_corners, v_corners, cc

@@ -219,13 +219,17 @@ def Draw ():
 	# Global(inertial) frame indicator
 	RenderAxis()
 
-	r_corners, v_corners = BoxCorners2(r_CM, v_CM, A, omega, box_size)
+	r_corners, v_corners, cc = BoxCorners2(r_CM, v_CM, A, omega, box_size)
 	glPointSize(6)
-	glColor3f(0,0,1)
 	glBegin(GL_POINTS)
-	for c in r_corners.T:
-		glVertex3f(c[0], c[1], c[2])
+	for i in range(8):
+		if i in cc:
+			glColor3f(1,0,0)
+		else:
+			glColor3f(0,0,1)
+		glVertex3f(r_corners[0,i], r_corners[1,i], r_corners[2,i])
 	glEnd()
+	glColor3f(0,0,1)
 	glBegin(GL_LINES)
 	for i in range(8):
 		glVertex3f(r_corners[0,i],
@@ -282,6 +286,13 @@ L_CM = array([10., 10, 20])
 #   Compute initial auxiliary quantities:
 I_CM_inv = dot(A, dot(I_CM_inv_bar, A.T))
 omega = dot(I_CM_inv, L_CM)
+
+
+A=array([[1.,2,3],[4,5,6],[7,8,9]])
+x=array([10.,20,30])
+
+print cross_op_mat(dot(A,x))
+print dot(A, cross_op_mat(x))
 
 main()
 
