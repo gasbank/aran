@@ -13,6 +13,11 @@ from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from lemke import *
+from SymbolicMC import *
+from SymbolicForce import *
+from SymbolicPenetration import *
+from SymbolicTensor import *
+from glprim import *
 import sys
 
 # Some api in the chain is translating the keystrokes to this octal string
@@ -131,35 +136,23 @@ def main():
 	# Turn on wireframe mode
 	glPolygonMode(GL_FRONT, GL_LINE)
 	glPolygonMode(GL_BACK, GL_LINE)
+	
+	
+	global cube
+	cube = BuildList()
 
 	# Start Event Processing Engine	
 	glutMainLoop()
 
+def RotationMatrixFromEulerAngles(phi, theta, psix):
+	return array([[ cos(phi)*cos(psix) - cos(theta)*sin(phi)*sin(psix), - cos(psix)*sin(phi) - cos(phi)*cos(theta)*sin(psix),  sin(psix)*sin(theta)],
+	              [ cos(phi)*sin(psix) + cos(psix)*cos(theta)*sin(phi),   cos(phi)*cos(psix)*cos(theta) - sin(phi)*sin(psix), -cos(psix)*sin(theta)],
+	              [                                sin(phi)*sin(theta),                                  cos(phi)*sin(theta),            cos(theta)]])
+	
 def Draw ():
-	global rl, vl, n, h, m, D, alpha_0, Msym, M, frame
+	global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0
+	global cube
 	
-	q1 = dot(D.T, vl + h/m*fg)
-	q2 = (dot(n, rl) - alpha_0)/h + dot(n, vl + h/m*fg)
-	q = array(list(q1) + [q2] + [0.])
-	
-	z0 = zeros((M.shape[0]))
-	x_opt, err = lemke(M, q, z0)
-	if err != 0:
-		raise Exception, 'Lemke\'s algorithm failed'
-	beta = x_opt[0:8]
-	cn = x_opt[8]
-	lamb = x_opt[9]
-	
-	rl2 = rl + h*(vl + 1.0/m*(cn*n+dot(D, beta)+h*fg))	
-	vl2 = vl + 1.0/m*(cn*n + dot(D, beta) + h*fg)
-
-	rl = rl2
-	vl = vl2
-	
-	frame = frame + 1
-	#print 'Frame', frame, 'err', err
-	#print rl, vl, cn, beta, lamb
-
 	###########################################################################
 	
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
@@ -167,22 +160,19 @@ def Draw ():
 
 	gluLookAt(8,-13,8,0,0,0,0,0,1);
 
-	glPointSize(10.0)
 	glColor3f(1,0,0)
-	glBegin(GL_POINTS)
-	glVertex3f(rl[0], rl[1], rl[2])
-	glEnd()
-	
-	f = n*cn + dot(D,beta)
-	#print f
-
-	# Scale for rendering
-	f *= 5000
-	glColor3f(0,0,1)
-	glBegin(GL_LINES)
-	glVertex3f(rl[0], rl[1], rl[2])
-	glVertex3f(rl[0]+f[0], rl[1]+f[1], rl[2]+f[2])
-	glEnd()
+	glPushMatrix()
+	glTranslatef(q[0], q[1], q[2])
+	A_homo = identity(4)
+	A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
+	A_homo[0:3,0:3] = A
+	glMultMatrixd(A_homo.T.flatten())
+	# box(body) frame indicator
+	RenderAxis()
+	glScalef(sx/2.0, sy/2.0, sz/2.0)
+	glColor3f(1,0,0)
+	glCallList(cube)
+	glPopMatrix()
 	
 	
 	# Plane
@@ -198,42 +188,126 @@ def Draw ():
 	
 	glFlush ()
 	glutSwapBuffers()
+	
+	###########################################################################
+	
+	activeCorners = []
+	for i in range(8):
+		c = q[0:3] + dot(A, corners[i])
+		if c[2] < alpha0:
+			activeCorners.append(i)
+	
+	p = len(activeCorners)
+	#M = SymbolicM(q + h*qd, (Ixx, Iyy, Izz, Iww))
+	#Minv = linalg.inv(M)
+	Minv = SymbolicMinv(q + h*qd, (Ixx, Iyy, Izz, Iww))
+	Cqd = SymbolicCqd(q + h*qd/2, qd, (Ixx, Iyy, Izz, Iww))
+	
+	# Add gravitational force to the Coriolis term
+	fg = SymbolicForce(q, (0, 0, -9.81 * mass), (0, 0, 0))
+	Cqd = Cqd + fg
+	err = 0
+	if p > 0:
+		# Basis for contact normal forces (matrix N)
+		N = zeros((6,p))
+		for i in range(p):
+			N[:,i] = SymbolicForce(q, (0, 0, 1), corners[activeCorners[i]])
+		
+		# Basis for tangential(frictional) forces (matrix D)
+		D = zeros((6,8*p))
+		for i in range(p):
+			Di = zeros((6,8)) # Eight basis for tangential forces
+			for j in range(8):
+				Di[:,j] = SymbolicForce(q, di[j], corners[activeCorners[i]])
+			D[:,8*i:8*(i+1)] = Di
+			
+		M00 = dot(dot(N.T, Minv), N)
+		M10 = dot(dot(D.T, Minv), N)
+		M11 = dot(dot(D.T, Minv), D)
+		Z0 = zeros((p,p))
+		
+		# Friction coefficient
+		Mu = diag([mu]*p)
+		# matrix E
+		E = zeros((8*p,p))
+		for i in range(p):
+			for j in range(8):
+				E[8*i+j,i] = 1
 
+		LCP_M = vstack([hstack([ M00 ,  M10.T ,  Z0 ]),
+			            hstack([ M10 ,  M11   ,  E  ]),
+			            hstack([ Mu  ,  -E.T  ,  Z0 ])])
+	
+		LCP_q0 = h * dot(dot(N.T, Minv), Cqd) + dot(N.T, qd)
+		LCP_q1 = h * dot(dot(D.T, Minv), Cqd) + dot(D.T, qd)
+		LCP_q2 = zeros((p))
+		# hstack() does not matter since it is a column vector
+		LCP_q = hstack([ LCP_q0 ,
+			             LCP_q1 ,
+			             LCP_q2 ])
+		
+		z0 = zeros((LCP_M.shape[0]))
+		x_opt, err = lemke(LCP_M, LCP_q, z0)
+		if err != 0:
+			raise Exception, 'Lemke\'s algorithm failed'
+		cn   = x_opt[0    :p]
+		beta = x_opt[p    :p+8*p]
+		lamb = x_opt[p+8*p:p+8*p+p]
+		qd_next = dot(Minv, dot(N, cn) + dot(D, beta) + h*Cqd) + qd
+	else:
+		# No contact point
+		qd_next = dot(Minv, h*Cqd) + qd
+		
+	q_next  = h * qd_next + q
+	q = q_next
+	qd = qd_next
+	
+	#frame = frame + 1
+	#print 'Frame', frame, 'err', err, 'p', p
+	
+
+def ang_vel(q, v):
+	x, y, z, phi, theta, psi = q
+	xd, yd, zd, phid, thetad, psid = v
+	return array([phid*sin(theta)*sin(psi)+thetad*cos(psi),
+	              phid*sin(theta)*cos(psi)-thetad*sin(psi),
+	              phid*cos(theta)+psid])
+	
 ################################################################################
-
-# Contact normal
-n = array([0.,0,1])
-# Friction cone direction basis
-
-D = array([[1, 0, 0],
-           [cos(pi/4), sin(pi/4), 0],
-           [0, 1, 0],
-           [-cos(pi/4), sin(pi/4), 0],
-           [-1, 0, 0],
-           [-cos(pi/4), -sin(pi/4), 0],
-           [0, -1, 0],
-           [cos(pi/4), -sin(pi/4), 0]]).T
-
-#D = array([[1,0,0],]*8).T
 # Friction coefficient
-mu = 0.05
-e = array([1.]*8)
-alpha_0 = 0.001
-h = 0.0005
-m = 0.1
-fg = array([0.,0,-9.81])
+mu = 1.0
+# timestep
+h = 0.001
+alpha0 = 0.0005
+mass = 1.1
+sx = 3
+sy = 2
+sz = 1
+rho = mass / (sx*sy*sz)
+Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)
 
-M = zeros((10,10))
-M[0:8,0:8] = dot(D.T, D)/m
-M[0:8,8] = dot(D.T,n)/m
-M[0:8,9] = e
-M[8,0:8] = dot(n.T, D)/m
-M[8,8] = dot(n.T,n)/m
-M[9,0:8] = -e.T
-M[9,8] = mu
+q = array([0, 0, 7, 1.01, 1.02, 0.03])
+qd = array([1, 1, 0, 0, 0, 0])
 
-rl = array([-3.,-3,3])
-vl = array([3,3,20])
+corners = [ ( sx/2,  sy/2,  sz/2),
+            ( sx/2,  sy/2, -sz/2),
+            ( sx/2, -sy/2,  sz/2),
+            ( sx/2, -sy/2, -sz/2),
+            (-sx/2,  sy/2,  sz/2),
+            (-sx/2,  sy/2, -sz/2),
+            (-sx/2, -sy/2,  sz/2),
+            (-sx/2, -sy/2, -sz/2) ]
+
+di = [ (1, 0, 0),
+       (cos(pi/4), sin(pi/4), 0),
+       (0, 1, 0),
+       (-cos(pi/4), sin(pi/4), 0),
+       (-1, 0, 0),
+       (-cos(pi/4), -sin(pi/4), 0),
+       (0, -1, 0),
+       (cos(pi/4), -sin(pi/4), 0) ]
+
 frame = 0
+cube = 0
 
 main()

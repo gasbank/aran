@@ -11,6 +11,17 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from dynamics import *
 
+
+
+def RenderAxis():
+	axis=[[1,0,0],[0,1,0],[0,0,1]]
+	glBegin(GL_LINES)
+	for a in axis:
+		glColor3f(a[0],a[1],a[2])
+		glVertex3f(0,0,0)
+		glVertex3f(a[0],a[1],a[2])
+	glEnd()
+	
 # // build the display list.
 def BuildList():
 	cube = glGenLists(1);              # // generate storage for 2 lists, and return a pointer to the first.
