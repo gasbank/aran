@@ -86,8 +86,8 @@ def main():
 	# Depth buffer
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
 
-	width = 320
-	height = 240
+	width = 320*3
+	height = 240*3
 
 	glutInitWindowSize(width, height)
 
@@ -150,7 +150,9 @@ def RotationMatrixFromEulerAngles(phi, theta, psix):
 	              [                                sin(phi)*sin(theta),                                  cos(phi)*sin(theta),            cos(theta)]])
 	
 def Draw ():
-	global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0
+	#global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0, z0
+	global h, mu, di, frame, alpha0, z0
+	global configured
 	global cube
 	
 	###########################################################################
@@ -158,21 +160,25 @@ def Draw ():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
 	glLoadIdentity()											# // Reset The Current Modelview Matrix
 
-	gluLookAt(8,-13,8,0,0,0,0,0,1);
+	gluLookAt(5,-10,5,0,0,0,0,0,1);
 
-	glColor3f(1,0,0)
-	glPushMatrix()
-	glTranslatef(q[0], q[1], q[2])
-	A_homo = identity(4)
-	A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
-	A_homo[0:3,0:3] = A
-	glMultMatrixd(A_homo.T.flatten())
-	# box(body) frame indicator
-	RenderAxis()
-	glScalef(sx/2.0, sy/2.0, sz/2.0)
-	glColor3f(1,0,0)
-	glCallList(cube)
-	glPopMatrix()
+	for cfg in configured:
+		mass, size, inertia, q, qd, corners = cfg
+		sx, sy, sz = size
+		
+		glColor3f(1,0,0)
+		glPushMatrix()
+		glTranslatef(q[0], q[1], q[2])
+		A_homo = identity(4)
+		A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
+		A_homo[0:3,0:3] = A
+		glMultMatrixd(A_homo.T.flatten())
+		# box(body) frame indicator
+		RenderAxis()
+		glScalef(sx/2.0, sy/2.0, sz/2.0)
+		glColor3f(1,0,0)
+		glCallList(cube)
+		glPopMatrix()
 	
 	
 	# Plane
@@ -190,81 +196,161 @@ def Draw ():
 	glutSwapBuffers()
 	
 	###########################################################################
-	
+
+	# Total number of rigid bodies
+	nb = len(configured)
+
+	# 'activeCorners' has tuples.
+	# (body index, corner index)
 	activeCorners = []
-	for i in range(8):
-		c = q[0:3] + dot(A, corners[i])
-		if c[2] < alpha0:
-			activeCorners.append(i)
+	activeBodies = set([])
+	for k in range(nb):
+		# Check all eight corners
+		mass, size, inertia, q, qd, corners = configured[k]
+		for i in range(8):
+			A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
+			c = q[0:3] + dot(A, corners[i])
+			if c[2] < alpha0:
+				activeCorners.append( (k, i) )
+				activeBodies.add(k)
 	
+	# Indices for active/inactive bodies
+	inactiveBodies = list(set(range(nb)) - activeBodies)
+	activeBodies = list(activeBodies)
+
+	"""
+	# Debug purpose
+	inactiveBodies = []
+	activeBodies = range(nb)
+	"""
+	
+	# Total number of contact points
 	p = len(activeCorners)
-	#M = SymbolicM(q + h*qd, (Ixx, Iyy, Izz, Iww))
-	#Minv = linalg.inv(M)
-	Minv = SymbolicMinv(q + h*qd, (Ixx, Iyy, Izz, Iww))
-	Cqd = SymbolicCqd(q + h*qd/2, qd, (Ixx, Iyy, Izz, Iww))
-	
-	# Add gravitational force to the Coriolis term
-	fg = SymbolicForce(q, (0, 0, -9.81 * mass), (0, 0, 0))
-	Cqd = Cqd + fg
-	err = 0
+	# Total number of active/inactive bodies
+	nba = len(activeBodies)
+	nbi = len(inactiveBodies)
+	Minv_a = zeros((6*nba, 6*nba))
+	Minv_i = zeros((6*nbi, 6*nbi))
+	Cqd_a = zeros((6*nba))
+	Cqd_i = zeros((6*nbi))
+	Q_a = zeros((6*nba))
+	Q_i = zeros((6*nbi))
+	Qd_a = zeros((6*nba))
+	Qd_i = zeros((6*nbi))
+	for k in range(nb):
+		mass, size, inertia, q, qd, corners = configured[k]
+		
+		Minv_k = SymbolicMinv(q + h*qd, inertia)
+		Cqd_k = SymbolicCqd(q + h*qd/2, qd, inertia)
+		# Add gravitational force to the Coriolis term
+		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
+		Cqd_k = Cqd_k + fg
+		
+		if k in activeBodies:
+			kk = activeBodies.index(k)
+			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
+			Cqd_a[6*kk:6*(kk+1)] = Cqd_k
+			Q_a[6*kk:6*(kk+1)] = q
+			Qd_a[6*kk:6*(kk+1)] = qd
+		elif k in inactiveBodies:
+			kk = inactiveBodies.index(k)
+			Minv_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
+			Cqd_i[6*kk:6*(kk+1)] = Cqd_k
+			Q_i[6*kk:6*(kk+1)] = q
+			Qd_i[6*kk:6*(kk+1)] = qd
+		else:
+			raise Exception, 'What the...'
+		
+	err = 0 # Lemke's algorithm return code: 0 means success
 	if p > 0:
 		# Basis for contact normal forces (matrix N)
-		N = zeros((6,p))
-		for i in range(p):
-			N[:,i] = SymbolicForce(q, (0, 0, 1), corners[activeCorners[i]])
-		
+		N = zeros((6*nba, p))
 		# Basis for tangential(frictional) forces (matrix D)
-		D = zeros((6,8*p))
+		D = zeros((6*nba,8*p))
 		for i in range(p):
-			Di = zeros((6,8)) # Eight basis for tangential forces
-			for j in range(8):
-				Di[:,j] = SymbolicForce(q, di[j], corners[activeCorners[i]])
-			D[:,8*i:8*(i+1)] = Di
+			# kp: Body index
+			# cp: Corner index
+			kp, cp = activeCorners[i]
+			mass, size, inertia, q, qd, corners = configured[kp]
+			k = activeBodies.index(kp)
 			
-		M00 = dot(dot(N.T, Minv), N)
-		M10 = dot(dot(D.T, Minv), N)
-		M11 = dot(dot(D.T, Minv), D)
+			N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
+			Di = zeros((6*nba,8)) # Eight basis for tangential forces
+			for j in range(8):
+				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, di[j], corners[cp])
+			D[:, 8*i:8*(i+1)] = Di
+
+		#print '-----------------------------------------------------'
+		#print Minv_a, N, D
+		
+		M00 = dot(dot(N.T, Minv_a), N)
+		M10 = dot(dot(D.T, Minv_a), N)
+		M11 = dot(dot(D.T, Minv_a), D)
 		Z0 = zeros((p,p))
 		
 		# Friction coefficient
 		Mu = diag([mu]*p)
 		# matrix E
-		E = zeros((8*p,p))
+		E = zeros((8*p, p))
 		for i in range(p):
 			for j in range(8):
-				E[8*i+j,i] = 1
-
+				E[8*i+j, i] = 1
+		
+		"""
+		# Assertion for positive definite mass matrix
+		Minve, Minvu = linalg.eig(Minv_cp)
+		assert all([me > 0 for me in Minve])
+		"""
+		
 		LCP_M = vstack([hstack([ M00 ,  M10.T ,  Z0 ]),
 			            hstack([ M10 ,  M11   ,  E  ]),
 			            hstack([ Mu  ,  -E.T  ,  Z0 ])])
 	
-		LCP_q0 = h * dot(dot(N.T, Minv), Cqd) + dot(N.T, qd)
-		LCP_q1 = h * dot(dot(D.T, Minv), Cqd) + dot(D.T, qd)
+		LCP_q0 = h * dot(dot(N.T, Minv_a), Cqd_a) + dot(N.T, Qd_a)
+		LCP_q1 = h * dot(dot(D.T, Minv_a), Cqd_a) + dot(D.T, Qd_a)
 		LCP_q2 = zeros((p))
 		# hstack() does not matter since it is a column vector
 		LCP_q = hstack([ LCP_q0 ,
 			             LCP_q1 ,
 			             LCP_q2 ])
 		
+		if (z0 is 0) or (len(z0) != LCP_M.shape[0]):
+			z0 = zeros((LCP_M.shape[0]))
 		z0 = zeros((LCP_M.shape[0]))
 		x_opt, err = lemke(LCP_M, LCP_q, z0)
 		if err != 0:
 			raise Exception, 'Lemke\'s algorithm failed'
+		z0 = x_opt
+		#print frame, x_opt
 		cn   = x_opt[0    :p]
 		beta = x_opt[p    :p+8*p]
 		lamb = x_opt[p+8*p:p+8*p+p]
-		qd_next = dot(Minv, dot(N, cn) + dot(D, beta) + h*Cqd) + qd
-	else:
-		# No contact point
-		qd_next = dot(Minv, h*Cqd) + qd
 		
-	q_next  = h * qd_next + q
-	q = q_next
-	qd = qd_next
+		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*Cqd_a) + Qd_a
+		Q_a_next  = h * Qd_a_next + Q_a
+		
+		for k in activeBodies:
+			kk = activeBodies.index(k)
+			configured[k][ 3 ] = Q_a_next[6*kk:6*(kk+1)]
+			configured[k][ 4 ] = Qd_a_next[6*kk:6*(kk+1)]
+
+		"""
+		contactforce = dot(N, cn) + dot(D, beta)		
+		assert all([cf - z == 0 for cf, z in zip(contactforce[6:12], zeros((6)))])
+		print contactforce[6:12]
+		"""
 	
-	#frame = frame + 1
-	#print 'Frame', frame, 'err', err, 'p', p
-	
+	for k in inactiveBodies:
+		# No contact point
+		kk = inactiveBodies.index(k)
+		Qd_i_next = dot(Minv_i, h*Cqd_i) + Qd_i
+		Q_i_next  = h * Qd_i_next + Q_i
+		configured[k][ 3 ] = Q_i_next[6*kk:6*(kk+1)]
+		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
+		z0 = 0
+
+	frame = frame + 1
+	print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
 
 def ang_vel(q, v):
 	x, y, z, phi, theta, psi = q
@@ -276,28 +362,11 @@ def ang_vel(q, v):
 ################################################################################
 # Friction coefficient
 mu = 1.0
-# timestep
-h = 0.001
-alpha0 = 0.0005
-mass = 1.1
-sx = 3
-sy = 2
-sz = 1
-rho = mass / (sx*sy*sz)
-Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)
-
-q = array([0, 0, 7, 1.01, 1.02, 0.03])
-qd = array([1, 1, 0, 0, 0, 0])
-
-corners = [ ( sx/2,  sy/2,  sz/2),
-            ( sx/2,  sy/2, -sz/2),
-            ( sx/2, -sy/2,  sz/2),
-            ( sx/2, -sy/2, -sz/2),
-            (-sx/2,  sy/2,  sz/2),
-            (-sx/2,  sy/2, -sz/2),
-            (-sx/2, -sy/2,  sz/2),
-            (-sx/2, -sy/2, -sz/2) ]
-
+# Simulation Timestep
+h = 0.0025
+# Contact threshold
+alpha0 = 0
+# Eight basis of friction force
 di = [ (1, 0, 0),
        (cos(pi/4), sin(pi/4), 0),
        (0, 1, 0),
@@ -307,7 +376,54 @@ di = [ (1, 0, 0),
        (0, -1, 0),
        (cos(pi/4), -sin(pi/4), 0) ]
 
+
+# Body specific parameters and state vectors
+config = [ ( 1.1,                                  # Mass
+            (0.3, 0.2, 0.1),                       # Size
+            (0, 0, 0, 0),                          # Inertia tensor
+            array([-1,   0,   3, 0.3,   0.2,   0.1]),   # q  (position)
+            array([0, 0, 0, 0, 3, 0]),             # qd (velocity)
+            [] ),                                  # Corners
+           ( 1.1,
+            (0.3, 0.2, 0.1),
+            (0, 0, 0, 0),
+            array([5,   -1,   4, 0.3,  0.3,  0.1]),
+            array([0, 0, 0, 0, 0, 0]),
+            [] ),
+           ( 1.1,
+            (0.3, 0.2, 0.1),
+            (0, 0, 0, 0),
+            array([-3, 0, 5, 0.3, 0.2, 0.1]),
+            array([3, 0, 0, 0, 0, 0]),
+            [] ) ]
+
+#config = config[0:1]
+
+configured = []
+for cfg in config:
+	mass, size, inertia, q, qd, corners = cfg
+	sx, sy, sz = size
+	rho = mass / (sx*sy*sz)
+	Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)	
+	inertia = (Ixx, Iyy, Izz, Iww)
+	# Corner points of a box in local coordinates
+	corners = [ ( sx/2,  sy/2,  sz/2),
+		        ( sx/2,  sy/2, -sz/2),
+		        ( sx/2, -sy/2,  sz/2),
+		        ( sx/2, -sy/2, -sz/2),
+		        (-sx/2,  sy/2,  sz/2),
+		        (-sx/2,  sy/2, -sz/2),
+		        (-sx/2, -sy/2,  sz/2),
+		        (-sx/2, -sy/2, -sz/2) ]
+	configured.append( [mass, size, inertia, q, qd, corners] )
+
+
+# For advanced(warm) start of solving LCP
+z0 = 0
+# Current frame number
 frame = 0
+# Cube display list
 cube = 0
 
+# Let's go!
 main()
