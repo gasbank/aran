@@ -12,7 +12,7 @@ from numpy import *
 def lemke(M, q, z0):
 	n = len(q)
 	assert M.shape == (n,n)
-	z0 = zeros((n)) # z0 is zero-vector for now...
+	z0 = zeros((n)) # z0 is zero-vector for now...z
 	zer_tol = 1e-5
 	piv_tol = 1e-8
 	maxiter = min(1000,50*n)
