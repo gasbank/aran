@@ -4,7 +4,7 @@
 Optimization-based rigid body simulator
 2010 Geoyeob Kim
 
-Single particle LCP-based simulator
+Rigid box LCP-based simulator
 (without MOSEK optimizer)
 """
 from numpy import *
@@ -203,6 +203,7 @@ def Draw ():
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
 	activeCorners = []
+	activeBodies = set([])
 	for k in range(nb):
 		# Check all eight corners
 		mass, size, inertia, q, qd, corners = configured[k]
@@ -211,15 +212,31 @@ def Draw ():
 			c = q[0:3] + dot(A, corners[i])
 			if c[2] < alpha0:
 				activeCorners.append( (k, i) )
+				activeBodies.add(k)
 	
+	# Indices for active/inactive bodies
+	inactiveBodies = list(set(range(nb)) - activeBodies)
+	activeBodies = list(activeBodies)
+
+	"""
+	# Debug purpose
+	inactiveBodies = []
+	activeBodies = range(nb)
+	"""
 	
 	# Total number of contact points
 	p = len(activeCorners)
 	# Total number of active/inactive bodies
-	Minv = zeros((6*nb, 6*nb))
-	Cqd = zeros((6*nb))
-	Q = zeros((6*nb))
-	Qd = zeros((6*nb))
+	nba = len(activeBodies)
+	nbi = len(inactiveBodies)
+	Minv_a = zeros((6*nba, 6*nba))
+	Minv_i = zeros((6*nbi, 6*nbi))
+	Cqd_a = zeros((6*nba))
+	Cqd_i = zeros((6*nbi))
+	Q_a = zeros((6*nba))
+	Q_i = zeros((6*nbi))
+	Qd_a = zeros((6*nba))
+	Qd_i = zeros((6*nbi))
 	for k in range(nb):
 		mass, size, inertia, q, qd, corners = configured[k]
 		
@@ -229,26 +246,36 @@ def Draw ():
 		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
 		Cqd_k = Cqd_k + fg
 		
-		Minv[6*k:6*(k+1), 6*k:6*(k+1)] = Minv_k
-		Cqd[6*k:6*(k+1)] = Cqd_k
-		Q[6*k:6*(k+1)] = q
-		Qd[6*k:6*(k+1)] = qd
-		
+		if k in activeBodies:
+			kk = activeBodies.index(k)
+			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
+			Cqd_a[6*kk:6*(kk+1)] = Cqd_k
+			Q_a[6*kk:6*(kk+1)] = q
+			Qd_a[6*kk:6*(kk+1)] = qd
+		elif k in inactiveBodies:
+			kk = inactiveBodies.index(k)
+			Minv_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
+			Cqd_i[6*kk:6*(kk+1)] = Cqd_k
+			Q_i[6*kk:6*(kk+1)] = q
+			Qd_i[6*kk:6*(kk+1)] = qd
+		else:
+			raise Exception, 'What the...'
 		
 	err = 0 # Lemke's algorithm return code: 0 means success
 	if p > 0:
 		# Basis for contact normal forces (matrix N)
-		N = zeros((6*nb, p))
+		N = zeros((6*nba, p))
 		# Basis for tangential(frictional) forces (matrix D)
-		D = zeros((6*nb,8*p))
+		D = zeros((6*nba,8*p))
 		for i in range(p):
 			# kp: Body index
 			# cp: Corner index
-			k, cp = activeCorners[i]
-			mass, size, inertia, q, qd, corners = configured[k]
+			kp, cp = activeCorners[i]
+			mass, size, inertia, q, qd, corners = configured[kp]
+			k = activeBodies.index(kp)
 			
 			N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
-			Di = zeros((6*nb,8)) # Eight basis for tangential forces
+			Di = zeros((6*nba,8)) # Eight basis for tangential forces
 			for j in range(8):
 				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, di[j], corners[cp])
 			D[:, 8*i:8*(i+1)] = Di
@@ -256,9 +283,9 @@ def Draw ():
 		#print '-----------------------------------------------------'
 		#print Minv_a, N, D
 		
-		M00 = dot(dot(N.T, Minv), N)
-		M10 = dot(dot(D.T, Minv), N)
-		M11 = dot(dot(D.T, Minv), D)
+		M00 = dot(dot(N.T, Minv_a), N)
+		M10 = dot(dot(D.T, Minv_a), N)
+		M11 = dot(dot(D.T, Minv_a), D)
 		Z0 = zeros((p,p))
 		
 		# Friction coefficient
@@ -279,8 +306,8 @@ def Draw ():
 			            hstack([ M10 ,  M11   ,  E  ]),
 			            hstack([ Mu  ,  -E.T  ,  Z0 ])])
 	
-		LCP_q0 = h * dot(dot(N.T, Minv), Cqd) + dot(N.T, Qd)
-		LCP_q1 = h * dot(dot(D.T, Minv), Cqd) + dot(D.T, Qd)
+		LCP_q0 = h * dot(dot(N.T, Minv_a), Cqd_a) + dot(N.T, Qd_a)
+		LCP_q1 = h * dot(dot(D.T, Minv_a), Cqd_a) + dot(D.T, Qd_a)
 		LCP_q2 = zeros((p))
 		# hstack() does not matter since it is a column vector
 		LCP_q = hstack([ LCP_q0 ,
@@ -289,7 +316,7 @@ def Draw ():
 		
 		if (z0 is 0) or (len(z0) != LCP_M.shape[0]):
 			z0 = zeros((LCP_M.shape[0]))
-		#z0 = zeros((LCP_M.shape[0]))
+		z0 = zeros((LCP_M.shape[0]))
 		x_opt, err = lemke(LCP_M, LCP_q, z0)
 		if err != 0:
 			raise Exception, 'Lemke\'s algorithm failed'
@@ -299,20 +326,31 @@ def Draw ():
 		beta = x_opt[p    :p+8*p]
 		lamb = x_opt[p+8*p:p+8*p+p]
 		
-		Qd_next = dot(Minv, dot(N, cn) + dot(D, beta) + h*Cqd) + Qd
-	else:
+		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*Cqd_a) + Qd_a
+		Q_a_next  = h * Qd_a_next + Q_a
+		
+		for k in activeBodies:
+			kk = activeBodies.index(k)
+			configured[k][ 3 ] = Q_a_next[6*kk:6*(kk+1)]
+			configured[k][ 4 ] = Qd_a_next[6*kk:6*(kk+1)]
+
+		"""
+		contactforce = dot(N, cn) + dot(D, beta)		
+		assert all([cf - z == 0 for cf, z in zip(contactforce[6:12], zeros((6)))])
+		print contactforce[6:12]
+		"""
+	
+	for k in inactiveBodies:
 		# No contact point
-		Qd_next = dot(Minv, h*Cqd) + Qd
+		kk = inactiveBodies.index(k)
+		Qd_i_next = dot(Minv_i, h*Cqd_i) + Qd_i
+		Q_i_next  = h * Qd_i_next + Q_i
+		configured[k][ 3 ] = Q_i_next[6*kk:6*(kk+1)]
+		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 
-	Q_next  = h * Qd_next + Q
-		
-	for k, cfg in zip(range(nb), configured):
-		cfg[ 3 ] = Q_next[6*k:6*(k+1)]
-		cfg[ 4 ] = Qd_next[6*k:6*(k+1)]
-		
 	frame = frame + 1
-	print frame, 'err', err, 'p', p, 'Corners', activeCorners
+	print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
 
 def ang_vel(q, v):
 	x, y, z, phi, theta, psi = q
@@ -325,7 +363,7 @@ def ang_vel(q, v):
 # Friction coefficient
 mu = 1.0
 # Simulation Timestep
-h = 0.0025
+h = 0.002
 # Contact threshold
 alpha0 = 0.0005
 # Eight basis of friction force
@@ -339,24 +377,25 @@ di = [ (1, 0, 0),
        (cos(pi/4), -sin(pi/4), 0) ]
 
 
+
 # Body specific parameters and state vectors
 config = [ ( 1.1,                                  # Mass
             (0.3, 0.2, 0.1),                       # Size
             (0, 0, 0, 0),                          # Inertia tensor
-            array([-1,   0,   3, 0.3,   0.2,   0.1]),   # q  (position)
-            array([0, 0, 0, 0, 3, 0]),             # qd (velocity)
+            array([-1, -1, 2, 0.3,   0.2,   0.1]),   # q  (position)
+            array([0, 0, 0, 0, 0, 0]),             # qd (velocity)
             [] ),                                  # Corners
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
-            array([5,   -1,   4, 0.3,  0.3,  0.1]),
+            array([-1, 0,  2, 0.3,  0.2,  0.1]),
             array([0, 0, 0, 0, 0, 0]),
             [] ),
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
-            array([-3, 0, 5, 0.3, 0.2, 0.1]),
-            array([3, 0, 0, 0, 0, 0]),
+            array([-1, 1,  2, 0.3, 0.2, 0.1]),
+            array([-20, 0, 0, 0, 0, 0]),
             [] ) ]
 
 #config = config[0:1]

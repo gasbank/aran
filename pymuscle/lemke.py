@@ -108,7 +108,10 @@ def lemke(M, q, z0):
 			theta = max(d[j])
 			lvindex = list(d).index(max(d[j]))
 			lvindex = list(nonzero(d[j] == theta)[0])
+			
 			lvindex = int(ceil((len(lvindex)-1)*random.random()))
+			#lvindex = 0
+
 			lvindex = j[lvindex]
 		leaving = bas[lvindex]
 		
