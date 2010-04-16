@@ -9,10 +9,11 @@ Symbolic form of penetration constraints for a rigid body (FLAT ground)
 from numpy import *
 from math import pow, sin, cos
 
-def SymbolicPenetration(q):
-	gf = zeros((6))
+def SymbolicPenetration(q, corner):
+	cc = zeros((6))
 
 	cx, cy, cz, phi, theta, psix = q
+	px, py, pz = corner
 
 	cc[0] = 0.0
 	cc[1] = 0.0

@@ -273,8 +273,12 @@ def Draw ():
 			kp, cp = activeCorners[i]
 			mass, size, inertia, q, qd, corners = configured[kp]
 			k = activeBodies.index(kp)
+
+			# Which one is right?
+			#N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
+			N[6*k:6*(k+1), i] = SymbolicPenetration(q + h*qd/2, corners[cp])
 			
-			N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
+			
 			Di = zeros((6*nba,8)) # Eight basis for tangential forces
 			for j in range(8):
 				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, di[j], corners[cp])
@@ -361,7 +365,7 @@ def ang_vel(q, v):
 	
 ################################################################################
 # Friction coefficient
-mu = 1.0
+mu = 0.3
 # Simulation Timestep
 h = 0.002
 # Contact threshold
@@ -382,20 +386,20 @@ di = [ (1, 0, 0),
 config = [ ( 1.1,                                  # Mass
             (0.3, 0.2, 0.1),                       # Size
             (0, 0, 0, 0),                          # Inertia tensor
-            array([-1, -1, 2, 0.3,   0.2,   0.1]),   # q  (position)
-            array([0, 0, 0, 0, 0, 0]),             # qd (velocity)
+            array([0, 0, 2, 0.3,   0.2,   0.1]),   # q  (position)
+            array([-4, 0, 0, 0, 0, 0]),             # qd (velocity)
             [] ),                                  # Corners
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
-            array([-1, 0,  2, 0.3,  0.2,  0.1]),
-            array([0, 0, 0, 0, 0, 0]),
+            array([0, 0,  2, 0.3,  0.2,  0.1]),
+            array([4, 0, 0, 0, 0, 0]),
             [] ),
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
             array([-1, 1,  2, 0.3, 0.2, 0.1]),
-            array([-20, 0, 0, 0, 0, 0]),
+            array([0, 2, 0, 0, 0, 0]),
             [] ) ]
 
 #config = config[0:1]

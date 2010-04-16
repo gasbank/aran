@@ -1,15 +1,15 @@
 function [M, Mqdd, Cqd, G, gf, cc] = create_system()
 
 syms   cx   cy   cz   phi   theta   psix real
-syms  dcx  dcy  dcz  dphi  dtheta  dpsi real
-syms ddcx ddcy ddcz ddphi ddtheta ddpsi real
+syms  dcx  dcy  dcz  dphi  dtheta  dpsix real
+syms ddcx ddcy ddcz ddphi ddtheta ddpsix real
 syms Ixx Iyy Izz Iww real
 syms px py pz real
 syms fx fy fz real
 
 q = [ cx cy cz phi theta psix ]';
-qd = [ dcx dcy dcz dphi dtheta dpsi ]';
-qdd = [ ddcx ddcy ddcz ddphi ddtheta ddpsi ]';
+qd = [ dcx dcy dcz dphi dtheta dpsix ]';
+qdd = [ ddcx ddcy ddcz ddphi ddtheta ddpsix ]';
 
 D1 = [ cos(phi)  -sin(phi)  0;
       sin(phi) cos(phi) 0;
@@ -38,7 +38,7 @@ ddWi = 0;
 for j=1:6
     tj = 0;
     for k=1:6
-        tj = tj + diff(Wi, q(k), q(j))*qd(k);
+        tj = tj + diff(diff(Wi, q(k)), q(j))*qd(k); 
     end
     tj = tj * qd(j);
     tj = tj + diff(Wi, q(j))*qdd(j);
