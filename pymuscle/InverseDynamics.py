@@ -31,17 +31,17 @@ qdd_file.readline()
 metastr.strip()
 noFrame, nb = map(int, metastr.split())
 
-bodyCfg = [ [ 0.493, 0.987, 0.179, 1 ],     # Hips (root)
-            [ 0.054, 0.274, 0.054, 1 ],     # LHipJoint
-            [ 0.054, 0.274, 0.054, 1 ],     # RHipJoint
-            [ 0.145, 0.450, 0.145, 1 ],     # LeftHip
-            [ 0.145, 0.450, 0.145, 1 ],     # RightHip
-            [ 0.145, 0.450, 0.145, 1 ],     # LeftKnee
-            [ 0.145, 0.450, 0.145, 1 ],     # RightKnee
-            [ 0.184, 0.210, 0.090, 1 ],     # LeftAnkle
-            [ 0.184, 0.210, 0.090, 1 ],     # RightAnkle
-            [ 0.184, 0.105, 0.090, 1 ],     # LeftToe
-            [ 0.184, 0.105, 0.090, 1 ] ]    # RightToe
+bodyCfg = [ [ 0.493, 0.987, 0.179, 30 ],     # Hips (root)
+            [ 0.054, 0.274, 0.054, 3 ],     # LHipJoint
+            [ 0.054, 0.274, 0.054, 3 ],     # RHipJoint
+            [ 0.145, 0.450, 0.145, 3 ],     # LeftHip
+            [ 0.145, 0.450, 0.145, 3 ],     # RightHip
+            [ 0.145, 0.450, 0.145, 3 ],     # LeftKnee
+            [ 0.145, 0.450, 0.145, 3 ],     # RightKnee
+            [ 0.184, 0.210, 0.090, 3 ],     # LeftAnkle
+            [ 0.184, 0.210, 0.090, 3 ],     # RightAnkle
+            [ 0.184, 0.105, 0.090, 3 ],     # LeftToe
+            [ 0.184, 0.105, 0.090, 3 ] ]    # RightToe
 I = []
 for bc in bodyCfg:
 	sx, sy, sz, mass = bc
@@ -50,6 +50,8 @@ for bc in bodyCfg:
 
 torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'w')
 torque_file.write(metastr)
+
+
 for i in range(noFrame-2):
 	for j in range(nb):
 		q_ij = map(float, q_file.readline().strip().split())
@@ -60,8 +62,15 @@ for i in range(noFrame-2):
 		Cqd_ij = SymbolicCqd(q_ij, qd_ij, I[j])
 		# Calculate generalized torques
 		t_ij = dot(M_ij, qdd_ij) + Cqd_ij
-		tstr = '%f %f %f %f %f %f\n' % tuple(t_ij)
+		tstr = ('%15e'*6 % tuple(t_ij)) + '\n'
 		torque_file.write(tstr)
+		
+		
+		Minv_ij = SymbolicMinv(q_ij, I[j])
+		expected_qdd_ij = dot(Minv_ij, t_ij - Cqd_ij)
+		print linalg.norm(qdd_ij - expected_qdd_ij)
+		
+		
 torque_file.close()
 q_file.close()
 qd_file.close()

@@ -13,11 +13,12 @@ from dynamics import *
 
 
 
-def RenderAxis():
-	axis=[[1,0,0],[0,1,0],[0,0,1]]
+def RenderAxis(size=1.):
+	axis=[[size,0,0],[0,size,0],[0,0,size]]
+	col=[[1,0,0],[0,1,0],[0,0,1]]
 	glBegin(GL_LINES)
-	for a in axis:
-		glColor3f(a[0],a[1],a[2])
+	for a,c in zip(axis,col):
+		glColor3f(c[0],c[1],c[2])
 		glVertex3f(0,0,0)
 		glVertex3f(a[0],a[1],a[2])
 	glEnd()
