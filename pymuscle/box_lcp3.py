@@ -365,11 +365,11 @@ def ang_vel(q, v):
 	
 ################################################################################
 # Friction coefficient
-mu = 0.3
+mu = 1.7
 # Simulation Timestep
-h = 0.002
+h = 0.0025
 # Contact threshold
-alpha0 = 0.0005
+alpha0 = 0.001
 # Eight basis of friction force
 di = [ (1, 0, 0),
        (cos(pi/4), sin(pi/4), 0),
@@ -387,13 +387,13 @@ config = [ ( 1.1,                                  # Mass
             (0.3, 0.2, 0.1),                       # Size
             (0, 0, 0, 0),                          # Inertia tensor
             array([0, 0, 2, 0.3,   0.2,   0.1]),   # q  (position)
-            array([-4, 0, 0, 0, 0, 0]),             # qd (velocity)
+            array([-4, 0, 0, 0, 2, 2]),             # qd (velocity)
             [] ),                                  # Corners
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
-            array([0, 0,  2, 0.3,  0.2,  0.1]),
-            array([4, 0, 0, 0, 0, 0]),
+            array([0, 0,  2, 0.0,  0.0001,  0.0]),
+            array([0, 0, 0, 0, 3, 0]),
             [] ),
            ( 1.1,
             (0.3, 0.2, 0.1),
@@ -402,7 +402,7 @@ config = [ ( 1.1,                                  # Mass
             array([0, 2, 0, 0, 0, 0]),
             [] ) ]
 
-#config = config[0:1]
+config = config[0:2]
 
 configured = []
 for cfg in config:

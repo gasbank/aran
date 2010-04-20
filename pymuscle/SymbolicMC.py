@@ -9,12 +9,58 @@ Symbolic form of a mass matrix and a Coriolis matrix for a rigid body
 from numpy import *
 from math import pow, sin, cos
 
+
+
+def SymbolicM(q, I):
+	M = zeros((6,6))
+	Ixx, Iyy, Izz, Iww = I
+	cx, cy, cz, phi, theta, psix = q
+	
+	M[0,0] = Iww
+	M[0,1] = 0.0
+	M[0,2] = 0.0
+	M[0,3] = 0.0
+	M[0,4] = 0.0
+	M[0,5] = 0.0
+	M[1,0] = 0.0
+	M[1,1] = Iww
+	M[1,2] = 0.0
+	M[1,3] = 0.0
+	M[1,4] = 0.0
+	M[1,5] = 0.0
+	M[2,0] = 0.0
+	M[2,1] = 0.0
+	M[2,2] = Iww
+	M[2,3] = 0.0
+	M[2,4] = 0.0
+	M[2,5] = 0.0
+	M[3,0] = 0.0
+	M[3,1] = 0.0
+	M[3,2] = 0.0
+	M[3,3] = Ixx+Iyy
+	M[3,4] = 0.0
+	M[3,5] = cos(theta)*(Ixx+Iyy)
+	M[4,0] = 0.0
+	M[4,1] = 0.0
+	M[4,2] = 0.0
+	M[4,3] = 0.0
+	M[4,4] = Ixx+Izz-Ixx*pow(cos(phi),2.0)+Iyy*pow(cos(phi),2.0)
+	M[4,5] = -cos(phi)*sin(phi)*sin(theta)*(Ixx-Iyy)
+	M[5,0] = 0.0
+	M[5,1] = 0.0
+	M[5,2] = 0.0
+	M[5,3] = cos(theta)*(Ixx+Iyy)
+	M[5,4] = -cos(phi)*sin(phi)*sin(theta)*(Ixx-Iyy)
+	M[5,5] = Ixx+Iyy-Iyy*pow(sin(theta),2.0)+Izz*pow(sin(theta),2.0)-Ixx*pow(sin(phi),2.0)*pow(sin(theta),2.0)+Iyy*pow(sin(phi),2.0)*pow(sin(theta),2.0)
+	
+	return M
+
 def SymbolicMinv(q, I):
 	Minv = zeros((6,6))
 
 	Ixx, Iyy, Izz, Iww = I
 	cx, cy, cz, phi, theta, psix = q
-	
+
 	Minv[0,0] = 1/Iww
 	Minv[0,1] = 0.0
 	Minv[0,2] = 0.0
