@@ -18,34 +18,49 @@ from SymbolicForce import *
 from SymbolicPenetration import *
 from SymbolicTensor import *
 from glprim import *
+from MathUtil import *
 import sys
+import PIL.Image as pil
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'
+LEFTARROW = 100
+RIGHTARROW = 102
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-	global g_quadratic
-
-	glClearColor(0.8, 0.8, 1.0, 1.0)					# This Will Clear The Background Color To Black
+	glClearColor(222./255, 227./255, 216./255, 1.0)					# This Will Clear The Background Color To Black
 	glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
 	glDepthFunc(GL_LEQUAL)								# The Type Of Depth Test To Do
 	glEnable(GL_DEPTH_TEST)								# Enables Depth Testing
 	glShadeModel (GL_FLAT);								# Select Flat Shading (Nice Definition Of Objects)
 	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) 	# Really Nice Perspective Calculations
-
-	g_quadratic = gluNewQuadric();
-	gluQuadricNormals(g_quadratic, GLU_SMOOTH);
-	gluQuadricDrawStyle(g_quadratic, GLU_FILL); 
-	# Why? this tutorial never maps any textures?! ? 
-	# gluQuadricTexture(g_quadratic, GL_TRUE);			# // Create Texture Coords
-
 	glEnable (GL_LIGHT0)
 	glEnable (GL_LIGHTING)
-
 	glEnable (GL_COLOR_MATERIAL)
-
+	glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
+	glEnable(GL_TEXTURE_2D)
+	#glDisable(GL_LIGHTING)
+	# Turn on wireframe mode
+	#glPolygonMode(GL_FRONT, GL_LINE)
+	#glPolygonMode(GL_BACK, GL_LINE)
+	global gnd_texture
+	gnd_texture = glGenTextures(1)
+	assert gnd_texture > 0
+	im = pil.open('ground.png') # Open the ground texture image
+	im = im.convert('RGB')
+	ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBX", 0, -1)
+	assert ix*iy*4 == len(image)
+	glBindTexture(GL_TEXTURE_2D, gnd_texture)
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
+	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGBA, ix, iy, GL_RGBA, GL_UNSIGNED_BYTE, image );
+	
+	global quadric
+	quadric = gluNewQuadric(1)
+	
 	return True
 
 # Reshape The Window When It's Moved Or Resized
@@ -59,7 +74,7 @@ def ReSizeGLScene(Width, Height):
 	# // field of view, aspect ratio, near and far
 	# This will squash and stretch our objects as the window is resized.
 	# Note that the near clip plane is 1 (hither) and the far plane is 1000 (yon)
-	gluPerspective(45.0, float(Width)/float(Height), 1, 100.0)
+	gluPerspective(45.0, float(Width)/float(Height), 1, 1000.0)
 
 	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
 	glLoadIdentity ();					# // Reset The Modelview Matrix
@@ -67,13 +82,20 @@ def ReSizeGLScene(Width, Height):
 
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
 def keyPressed(*args):
-	global g_quadratic
 	# If escape is pressed, kill everything.
 	key = args [0]
 	if key == ESCAPE:
-		gluDeleteQuadric (g_quadratic)
 		sys.exit ()
+	#print 'Key pressed', key
 
+def specialKeyPressed(*args):
+	# If escape is pressed, kill everything.
+	key = args [0]
+	if key == LEFTARROW:
+		frame = frame - 1
+	elif key == RIGHTARROW:
+		frame = frame + 1
+	#print 'Special key pressed', key
 
 def main():
 	# pass arguments to init
@@ -115,6 +137,7 @@ def main():
 
 	# Register the function called when the keyboard is pressed.  
 	glutKeyboardFunc(keyPressed)
+	glutSpecialFunc(specialKeyPressed) # Non-ascii characters
 
 
 
@@ -126,41 +149,8 @@ def main():
 	# Call to perform inital GL setup (the clear colors, enabling modes
 	Initialize (width, height)
 
-	glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
-	glClearDepth(1.0)					# Enables Clearing Of The Depth Buffer
-	glEnable(GL_DEPTH_TEST)				# Enables Depth Testing
-	glDepthFunc(GL_LEQUAL)				# The Type Of Depth Test To Do
-	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Really Nice Perspective Calculations
-	glDisable(GL_LIGHTING)
-	# Turn on wireframe mode
-	glPolygonMode(GL_FRONT, GL_LINE)
-	glPolygonMode(GL_BACK, GL_LINE)
-	
-	
-	global cube
-	cube = BuildList()
-
 	# Start Event Processing Engine	
 	glutMainLoop()
-
-# z-x-z
-def RotationMatrixFromEulerAngles_zxz(phi, theta, psix):
-	c1,s1 = cos(phi), sin(phi)
-	c2,s2 = cos(theta), sin(theta)
-	c3,s3 = cos(psix), sin(psix)
-	return array([ [ c1*c3 - c2*s1*s3,  -c3*s1 - c1*c2*s3,   s2*s3],
-	               [ c2*c3*s1 + c1*s3,   c1*c2*c3 - s1*s3,  -c3*s2],
-	               [ s1*s2,              c1*s2,              c2   ] ])
-
-
-# x-y-z
-def RotationMatrixFromEulerAngles_xyz(phi, theta, psix):
-	c1,s1 = cos(phi), sin(phi)
-	c2,s2 = cos(theta), sin(theta)
-	c3,s3 = cos(psix), sin(psix)
-	return array([ [ c2*c3, c3*s1*s2-c1*s3, c1*c3*s2+s1*s3],
-	               [ c2*s3, c1*c3+s1*s2*s3, c1*s2*s3-c3*s1],        
-	               [ -s2,   c2*s1,          c1*c2         ] ])
 
 def Draw ():
 	#global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0, z0
@@ -173,18 +163,32 @@ def Draw ():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
 	glLoadIdentity()											# // Reset The Current Modelview Matrix
 
-	xeye, yeye, zeye = 14, -3.98, 2.53
-	xcenter, ycenter, zcenter = 2.90, -3.39, 1.21
+	xeye, yeye, zeye = 10, -5, 2.5
+	xcenter, ycenter, zcenter = 2.90, -4, 0.5
 	xup, yup, zup = 0, 0, 1
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
-	
-	RenderAxis()
 
-	for cfg in configured:
-		mass, size, inertia, q, qd, corners = cfg
+	# Plane
+	global gnd_texture
+	glDisable(GL_LIGHTING)
+	glBindTexture(GL_TEXTURE_2D, gnd_texture)
+	glColor3f(1,1,1)
+	plane=40
+	tex_repeat=10
+	glBegin(GL_QUADS)
+	glTexCoord2f(0, 0);                   glVertex3f(-plane, -plane, 0)
+	glTexCoord2f(tex_repeat, 0);          glVertex3f( plane, -plane, 0)
+	glTexCoord2f(tex_repeat, tex_repeat); glVertex3f( plane,  plane, 0)
+	glTexCoord2f(0, tex_repeat);          glVertex3f(-plane,  plane, 0)
+	glEnd()
+	glEnable(GL_LIGHTING)
+	# Render the fancy global(inertial) coordinates
+	RenderFancyGlobalAxis(quadric, 0.7/2, 0.3/2, 0.025)
+		
+	for i, cfg in zip(range(len(configured)), configured):
+		mass, size, inertia, q, qd, corners, dc = cfg
 		sx, sy, sz = size
 		
-		glColor3f(1,0,0)
 		glPushMatrix()
 		glTranslatef(q[0], q[1], q[2])
 		A_homo = identity(4)
@@ -193,22 +197,31 @@ def Draw ():
 		glMultMatrixd(A_homo.T.flatten())
 		# box(body) frame indicator
 		RenderAxis(0.2)
-		glScalef(sx/2.0, sy/2.0, sz/2.0)
-		glColor3f(1,0,0)
-		glCallList(cube)
+		glScalef(sx, sy, sz)
+		glColor3f(dc[0],dc[1],dc[2])
+		
+		if i >= 8:
+			# Ankles and toes are rendered as solid cube
+			glutSolidCube(1.)
+		else:
+			glRotatef(-90,1,0,0)
+			glTranslatef(0,0,-0.5)
+			
+			# Bottom cap
+			glPushMatrix()
+			glRotatef(180,1,0,0) # Flip the bottom-side cap to invert the normal
+			gluDisk(quadric, 0, 0.5, 6, 1)
+			glPopMatrix()
+			
+			gluCylinder(quadric, 0.5, 0.5, 1.0, 6, 8);
+			
+			# Top cap
+			glTranslate(0,0,1)
+			gluDisk(quadric, 0, 0.5, 6, 1)
 		glPopMatrix()
 	
 	
-	# Plane
-	glColor3f(0,0,0)
-	plane=3
-	glBegin(GL_LINE_STRIP)
-	glVertex3f(-plane, -plane, 0)
-	glVertex3f( plane, -plane, 0)
-	glVertex3f( plane,  plane, 0)
-	glVertex3f(-plane,  plane, 0)
-	glVertex3f(-plane, -plane, 0)
-	glEnd()
+	
 	
 	
 	###########################################################################
@@ -223,7 +236,7 @@ def Draw ():
 	activeCornerPoints = []
 	for k in range(nb):
 		# Check all eight corners
-		mass, size, inertia, q, qd, corners = configured[k]
+		mass, size, inertia, q, qd, corners, dc = configured[k]
 		for i in range(8):
 			A = RotationMatrixFromEulerAngles_xyz(q[3], q[4], q[5])
 			c = q[0:3] + dot(A, corners[i])
@@ -232,11 +245,16 @@ def Draw ():
 				activeBodies.add(k)
 				activeCornerPoints.append(c)
 
-	glPointSize(5.)
-	glBegin(GL_POINTS)
+	glColor3f(0.9, 0.2, 0.1)
+	#glPointSize(5.)
+	#glBegin(GL_POINTS)
 	for acp in activeCornerPoints:
-		glVertex3f(acp[0], acp[1], acp[2])
-	glEnd()
+		#glVertex3f(acp[0], acp[1], acp[2])
+		glPushMatrix()
+		glTranslated(acp[0], acp[1], acp[2])
+		glutSolidSphere(0.05, 8, 8)
+		glPopMatrix()
+	#glEnd()
 	# Indices for active/inactive bodies
 	inactiveBodies = list(set(range(nb)) - activeBodies)
 	activeBodies = list(activeBodies)
@@ -261,7 +279,7 @@ def Draw ():
 	Qd_a = zeros((6*nba))
 	Qd_i = zeros((6*nbi))
 	for k in range(nb):
-		mass, size, inertia, q, qd, corners = configured[k]
+		mass, size, inertia, q, qd, corners, dc = configured[k]
 		
 		Minv_k = SymbolicMinv(q + h*qd, inertia)
 		Cqd_k = SymbolicCqd(q + h*qd/2, qd, inertia)
@@ -296,7 +314,7 @@ def Draw ():
 			# kp: Body index
 			# cp: Corner index
 			kp, cp = activeCorners[i]
-			mass, size, inertia, q, qd, corners = configured[kp]
+			mass, size, inertia, q, qd, corners, dc = configured[kp]
 			k = activeBodies.index(kp)
 
 			# Which one is right?
@@ -359,21 +377,37 @@ def Draw ():
 		Q_a_next  = h * Qd_a_next + Q_a
 		
 		# Contact force visualization
-		glBegin(GL_LINES)
+		glColor3f(0.8,0.3,0.2)
 		beta_reshaped = beta.reshape(p,8)
-		scaleFactor = 500
+		scaleFactor = 250
+		#glBegin(GL_LINES)
 		for i, acp, cn_i, beta_i, ac_i in zip(range(p), activeCornerPoints, cn, beta_reshaped, activeCorners):
 			#bv = dot(D, beta_reshaped)
 			bodyidx = activeBodies.index(ac_i[0])
 			fric = dot(D[:, 8*i:8*(i+1)], beta_i)[6*bodyidx:6*(bodyidx+1)]
+			fricdir = array([fric[0]*scaleFactor,
+			                 fric[1]*scaleFactor,
+			                 cn_i*scaleFactor])
+			friclen = linalg.norm(fricdir)			
+			fricdirn = fricdir / friclen
+			rotaxis = cross([0,0,1.], fricdirn)
+			rotangle = acos(dot(fricdirn,[0,0,1.]))
+			glPushMatrix()
+			glTranslatef(acp[0], acp[1], acp[2])
+			glRotatef(rotangle/math.pi*180,rotaxis[0],rotaxis[1],rotaxis[2])
+			RenderArrow(quadric, friclen*0.8, friclen*0.2, 0.015)
+			glPopMatrix()
+			"""
 			glVertex3f(acp[0],
 			           acp[1],
 			           acp[2])
-			glVertex3f(acp[0] + fric[0]*scaleFactor,
-			           acp[1] + fric[1]*scaleFactor,
-			           acp[2] + cn_i*scaleFactor)
+			glVertex3f(acp[0] + fricdir[0],
+			           acp[1] + fricdir[1],
+			           acp[2] + fricdir[2])
+			"""
 			#print fric[0], fric[1], cn_i
-		glEnd()
+		#glEnd()
+		
 		
 		for k in activeBodies:
 			kk = activeBodies.index(k)
@@ -436,18 +470,18 @@ di = [ (1, 0, 0),
        (cos(pi/4), -sin(pi/4), 0) ]
 
 
-bodyCfg = [ [ 0.115, 0.144, 0.085, 3 ],     # Hips (root)
-            [ 0.427, 0.720, 0.184, 30],     # lowerback (trunk)
-            [ 0.054, 0.274, 0.054, 3 ],     # LHipJoint
-            [ 0.054, 0.274, 0.054, 3 ],     # RHipJoint
-            [ 0.145, 0.450, 0.145, 3 ],     # LeftHip
-            [ 0.145, 0.450, 0.145, 3 ],     # RightHip
-            [ 0.145, 0.450, 0.145, 3 ],     # LeftKnee
-            [ 0.145, 0.450, 0.145, 3 ],     # RightKnee
-            [ 0.184, 0.210, 0.090, 3 ],     # LeftAnkle
-            [ 0.184, 0.210, 0.090, 3 ],     # RightAnkle
-            [ 0.184, 0.105, 0.090, 3 ],     # LeftToe
-            [ 0.184, 0.105, 0.090, 3 ] ]    # RightToe
+bodyCfg = [ [ 0.115, 0.144, 0.085, 3,  (0.2,0.1,0.2) ],     # Hips (root)
+            [ 0.427, 0.720, 0.184, 30, (0.2,0.1,0.2) ],     # lowerback (trunk)
+            [ 0.054, 0.274, 0.054, 3,  (0.2,0.1,0.2) ],     # LHipJoint
+            [ 0.054, 0.274, 0.054, 3,  (0.2,0.1,0.2) ],     # RHipJoint
+            [ 0.145, 0.450, 0.145, 3,  (0.1,0.6,0.0) ],     # LeftHip
+            [ 0.145, 0.450, 0.145, 3,  (0.0,0.2,0.6) ],     # RightHip
+            [ 0.145, 0.450, 0.145, 3,  (0.1,0.6,0.0) ],     # LeftKnee
+            [ 0.145, 0.450, 0.145, 3,  (0.0,0.2,0.6) ],     # RightKnee
+            [ 0.184, 0.210, 0.090, 3,  (0.1,0.6,0.0) ],     # LeftAnkle
+            [ 0.184, 0.210, 0.090, 3,  (0.0,0.2,0.6) ],     # RightAnkle
+            [ 0.184, 0.105, 0.090, 3,  (0.1,0.6,0.0) ],     # LeftToe
+            [ 0.184, 0.105, 0.090, 3,  (0.0,0.2,0.6) ] ]    # RightToe
 
 q_file = open('/media/vm/devel/aran/pymuscle/traj_q.txt', 'r')
 qd_file = open('/media/vm/devel/aran/pymuscle/traj_qd.txt', 'r')
@@ -487,7 +521,7 @@ torque_file.readline()
 # Body specific parameters and state vectors
 configured = []
 for bc in bodyCfg:
-	sx, sy, sz, mass = bc
+	sx, sy, sz, mass, dc = bc
 	rho = mass / (sx*sy*sz) # density of the body
 	Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)
 	
@@ -509,7 +543,9 @@ for bc in bodyCfg:
 	      (Ixx, Iyy, Izz, Iww),       # Inertia tensor
 	      array(q_ij),                # q (position)
 	      array(qd_ij),               # qd (velocity)
-	      corners ]                   # Corners
+	      corners,                    # Corners
+	      dc ]                        # Drawing color
+	      
 	configured.append(c)
 
 	
@@ -520,7 +556,10 @@ z0 = 0
 # Current frame number
 frame = 0
 # Cube display list
-cube = 0
-
+cube = 0        # Cube(display list)
+gnd_texture = 0 # Ground texture
+cylinder = 0    # GLU quadric
+arrowtip = 0    # GLU quadric
+quadric = 0
 # Let's go!
 main()

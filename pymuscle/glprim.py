@@ -22,7 +22,33 @@ def RenderAxis(size=1.):
 		glVertex3f(0,0,0)
 		glVertex3f(a[0],a[1],a[2])
 	glEnd()
+
+def RenderArrow(quadric, arrowlen, arrowtiplen, arrowthickness):
+	glPushMatrix()
+	gluCylinder(quadric, arrowthickness, arrowthickness, arrowlen, 32, 8);
+	glTranslatef(0,0,arrowlen)
+
+	# Rotate the bottom cap to flip the normal
+	glPushMatrix()
+	glRotate(180,1,0,0)
+	gluDisk(quadric, 0, arrowthickness*3, 32, 1)
+	glPopMatrix()
 	
+	gluCylinder(quadric, arrowthickness*3, 0, arrowtiplen, 32, 8);
+	glPopMatrix()
+	
+def RenderFancyGlobalAxis(quadric, arrowlen, arrowtiplen, arrowthickness):
+	glPushMatrix()
+	glColor3f(0,0,1)
+	RenderArrow(quadric, arrowlen, arrowtiplen, arrowthickness)
+	glRotatef(90, 0, 1, 0)
+	glColor3f(1,0,0)
+	RenderArrow(quadric, arrowlen, arrowtiplen, arrowthickness)
+	glRotatef(-90, 1, 0, 0)
+	glColor3f(0,1,0)
+	RenderArrow(quadric, arrowlen, arrowtiplen, arrowthickness)
+	glPopMatrix()
+
 # // build the display list.
 def BuildList():
 	cube = glGenLists(1);              # // generate storage for 2 lists, and return a pointer to the first.
