@@ -11,15 +11,16 @@ q = [ cx cy cz phi theta psix ]';
 qd = [ dcx dcy dcz dphi dtheta dpsix ]';
 qdd = [ ddcx ddcy ddcz ddphi ddtheta ddpsix ]';
 
-D1 = [ cos(phi)  -sin(phi)  0;
-      sin(phi) cos(phi) 0;
-      0 0 1 ];
-C1 = [ 1 0 0;
-      0 cos(theta) -sin(theta);
-      0 sin(theta) cos(theta) ];
-B1 = [ cos(psix) -sin(psix) 0;
-     sin(psix) cos(psix) 0;
-     0 0 1 ];
+% z-x-z moving frame convention
+D1 = [ cos(phi)  -sin(phi)   0;
+      sin(phi)     cos(phi)  0;
+          0          0       1 ];
+C1 = [ 1       0              0;
+       0   cos(theta)    -sin(theta);
+       0   sin(theta)     cos(theta) ];
+B1 = [ cos(psix)   -sin(psix)   0;
+       sin(psix)   cos(psix)    0;
+          0             0       1 ];
 
 A = B1*C1*D1;
 
@@ -34,7 +35,7 @@ for j=1:6
 end
 dWi = simplify(dWi);
 
-ddWi = 0;
+ddWi = sym(zeros(4,4));
 for j=1:6
     tj = 0;
     for k=1:6
@@ -53,13 +54,21 @@ ddWi = simplify(ddWi);
 %Mi
 Mi = diag([Ixx Iyy Izz Iww]);
 
-X = [];
+findsym(Mi)
+findsym(ddWi)
+X = sym(zeros(6,1));
 for j=1:6
     j
-    X = [X simplify(trace(diff(Wi, q(j)) * Mi * ddWi'),10)];
+    %findsym(diff(Wi, q(j)))
+    
+    mmm = simplify(diff(Wi, q(j)) * Mi * ddWi', 10);
+    
+    findsym(mmm)
+    findsym(simplify(trace( mmm )))
+    X(j) = simplify(trace( mmm ),10);
+    %findsym(X(j))
 end
-X = X';
-
+findsym(X)
 %
 % M(q)*qdd + C(q,qd)*qd + G(q)
 %
@@ -67,14 +76,13 @@ Cqd_G = simplify(subs(X, qdd, zeros(6,1)), 10)
 G = simplify(subs(Cqd_G, qd, zeros(6,1)), 10)
 Cqd = simplify(Cqd_G - G, 10)
 Mqdd = simplify(X - Cqd_G, 10)
-M = [];
+M = sym(zeros(6,6));
 for j=1:6
     j
-    z = zeros(6,1);
-    z(j) = 1;
-    M = [M simplify(subs(Mqdd, qdd, z))];
+    z = sym(zeros(6,1));
+    z(j) = sym(1);
+    M(:,j) = simplify(subs(Mqdd, qdd, z));
 end
-M = M';
 
 M
 Cqd

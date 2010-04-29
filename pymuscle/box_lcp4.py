@@ -21,6 +21,11 @@ from glprim import *
 from MathUtil import *
 import sys
 import PIL.Image as pil
+import pygame
+from pygame.font import *
+from PmBody import *
+from PmMuscle import *
+from GlobalContext import *
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -29,8 +34,11 @@ LEFTARROW = 100
 RIGHTARROW = 102
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
-def Initialize (Width, Height):				# We call this right after our OpenGL window is created.
-	glClearColor(222./255, 227./255, 216./255, 1.0)					# This Will Clear The Background Color To Black
+def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
+	glClearColor(gCon.clearColor[0],
+	             gCon.clearColor[1],
+	             gCon.clearColor[2],
+	             1.0)
 	glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
 	glDepthFunc(GL_LEQUAL)								# The Type Of Depth Test To Do
 	glEnable(GL_DEPTH_TEST)								# Enables Depth Testing
@@ -39,65 +47,106 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	glEnable (GL_LIGHT0)
 	glEnable (GL_LIGHTING)
 	glEnable (GL_COLOR_MATERIAL)
-	glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
+	#glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
 	glEnable(GL_TEXTURE_2D)
-	#glDisable(GL_LIGHTING)
+
 	# Turn on wireframe mode
 	#glPolygonMode(GL_FRONT, GL_LINE)
 	#glPolygonMode(GL_BACK, GL_LINE)
-	global gnd_texture
-	gnd_texture = glGenTextures(1)
-	assert gnd_texture > 0
+
+	gndTex = glGenTextures(1)
+	assert gndTex > 0
 	im = pil.open('ground.png') # Open the ground texture image
 	im = im.convert('RGB')
 	ix, iy, image = im.size[0], im.size[1], im.tostring("raw", "RGBX", 0, -1)
 	assert ix*iy*4 == len(image)
-	glBindTexture(GL_TEXTURE_2D, gnd_texture)
+	glBindTexture(GL_TEXTURE_2D, gndTex)
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
 	gluBuild2DMipmaps( GL_TEXTURE_2D, GL_RGBA, ix, iy, GL_RGBA, GL_UNSIGNED_BYTE, image );
-	
-	global quadric
-	quadric = gluNewQuadric(1)
-	
+	gCon.gndTex = gndTex
+
+	gCon.quadric = gluNewQuadric(1)
+
+	pygame.font.init()
+	if not pygame.font.get_init():
+		print 'Could not render font.'
+		sys.exit(0)
+	myFont = pygame.font.Font('ARIALN.TTF',30)
+	gCon.myChar = []
+	for c in range(256):
+		s = chr(c)
+		try:
+			letter_render = myFont.render(s, 1, (255,255,255), (0,0,0))
+			letter = pygame.image.tostring(letter_render, 'RGBA', 1)
+			letter_w, letter_h = letter_render.get_size()
+		except:
+			letter = None
+			letter_w = 0
+			letter_h = 0
+		gCon.myChar.append( (letter, letter_w, letter_h) )
+	gCon.myChar = tuple(gCon.myChar)
+	gCon.myLw = gCon.myChar[ord('0')][1]
+	gCon.myLh = gCon.myChar[ord('0')][2]
+
 	return True
 
+def TextView(winWidth, winHeight):
+	glViewport(0, 0, winWidth, winHeight)
+	glMatrixMode(GL_PROJECTION)
+	glLoadIdentity()
+	glOrtho(0.0, winWidth - 1.0, 0.0, winHeight - 1.0, -1.0, 1.0)
+	glMatrixMode(GL_MODELVIEW)
+	glLoadIdentity()
+	
+def Print(gCon, s, x, y):
+	s = str(s)
+	i = 0
+	lx = 0
+	length = len(s)
+	TextView(gCon.winWidth, gCon.winHeight)
+	glPushMatrix()
+	while i < length:
+		glRasterPos2i(x + lx, y)
+		ch = gCon.myChar[ ord( s[i] ) ]
+		glDrawPixels(ch[1], ch[2], GL_RGBA, GL_UNSIGNED_BYTE, ch[0])
+		lx += ch[1]
+		i += 1
+	glPopMatrix()
+
 # Reshape The Window When It's Moved Or Resized
-def ReSizeGLScene(Width, Height):
-	if Height == 0:						# Prevent A Divide By Zero If The Window Is Too Small 
-		Height = 1
+def ResizeGlScene(winWidth, winHeight):
+	if winHeight == 0:						# Prevent A Divide By Zero If The Window Is Too Small 
+		winHeight = 1
 
-	glViewport(0, 0, Width, Height)		# Reset The Current Viewport And Perspective Transformation
-	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-	glLoadIdentity()					# // Reset The Projection Matrix
-	# // field of view, aspect ratio, near and far
-	# This will squash and stretch our objects as the window is resized.
-	# Note that the near clip plane is 1 (hither) and the far plane is 1000 (yon)
-	gluPerspective(45.0, float(Width)/float(Height), 1, 1000.0)
-
-	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-	glLoadIdentity ();					# // Reset The Modelview Matrix
-
+	global gCon
+	gCon.winWidth  = winWidth
+	gCon.winHeight = winHeight
 
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
-def keyPressed(*args):
+def KeyPressed(*args):
 	# If escape is pressed, kill everything.
 	key = args [0]
 	if key == ESCAPE:
 		sys.exit ()
 	#print 'Key pressed', key
 
-def specialKeyPressed(*args):
+def SpecialKeyPressed(*args):
 	# If escape is pressed, kill everything.
+	global gCon
 	key = args [0]
 	if key == LEFTARROW:
-		frame = frame - 1
+		if gCon.curFrame > 0:
+			gCon.curFrame = gCon.curFrame - 1
+			glutPostRedisplay()
 	elif key == RIGHTARROW:
-		frame = frame + 1
-	#print 'Special key pressed', key
+		if gCon.curFrame < gCon.noFrame-3:
+			gCon.curFrame = gCon.curFrame + 1
+			glutPostRedisplay()
+	print 'Special key pressed', key, 'Frame', gCon.curFrame
 
-def main():
+def Main(gCon):
 	# pass arguments to init
 	glutInit(sys.argv)
 
@@ -108,10 +157,7 @@ def main():
 	# Depth buffer
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
 
-	width = int(320*2.5)
-	height = int(240*2.5)
-
-	glutInitWindowSize(width, height)
+	glutInitWindowSize(gCon.winWidth, gCon.winHeight)
 
 	# the window starts at the upper left corner of the screen 
 	glutInitWindowPosition(0, 0)
@@ -130,16 +176,14 @@ def main():
 	#glutFullScreen()
 
 	# When we are doing nothing, redraw the scene.
-	glutIdleFunc(Draw)
+	#glutIdleFunc(Draw)
 
 	# Register the function called when our window is resized.
-	glutReshapeFunc(ReSizeGLScene)
+	glutReshapeFunc(ResizeGlScene)
 
 	# Register the function called when the keyboard is pressed.  
-	glutKeyboardFunc(keyPressed)
-	glutSpecialFunc(specialKeyPressed) # Non-ascii characters
-
-
+	glutKeyboardFunc(KeyPressed)
+	glutSpecialFunc(SpecialKeyPressed) # Non-ascii characters
 
 	# We've told Glut the type of window we want, and we've told glut about
 	# various functions that we want invoked (idle, resizing, keyboard events).
@@ -147,48 +191,125 @@ def main():
 	# tying in a rendering context, so we are ready to start making immediate mode
 	# GL calls.
 	# Call to perform inital GL setup (the clear colors, enabling modes
-	Initialize (width, height)
+	InitializeGl (gCon)
 
 	# Start Event Processing Engine	
 	glutMainLoop()
 
-def Draw ():
-	#global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0, z0
-	global h, mu, di, frame, alpha0, z0, torque
-	global configured
-	global cube
+def Draw():
+	FrameMove()
 	
-	###########################################################################
-	
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
-	glLoadIdentity()											# // Reset The Current Modelview Matrix
+	Prerender()
+	RenderPerspectiveWindow()
+	RenderLegMonitorWindow('LeftAnkle')
+	RenderLegMonitorWindow('RightAnkle')
+	RenderSideCameraWindow()
+	RenderHud()
+	Postrender()
 
-	xeye, yeye, zeye = 10, -5, 2.5
-	xcenter, ycenter, zcenter = 2.90, -4, 0.5
+def Prerender():
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
+	#print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
+	
+def Postrender():
+	
+	glutSwapBuffers()
+
+	# Take a shot of this frame
+	"""
+	glPixelStorei(GL_PACK_ALIGNMENT, 4)
+	glPixelStorei(GL_PACK_ROW_LENGTH, 0)
+	glPixelStorei(GL_PACK_SKIP_ROWS, 0)
+	glPixelStorei(GL_PACK_SKIP_PIXELS, 0)
+
+	pixels = glReadPixels(0, 0, glWidth, glHeight, GL_RGBA, GL_UNSIGNED_BYTE)
+	surface = pygame.image.fromstring(pixels, (glWidth,glHeight), 'RGBA', 1)
+	pygame.image.save(surface,'/home/johnu/ss/%04d.jpg'%curFrame)
+	"""
+	
+def RenderHud():
+	global gCon
+	curFrame = gCon.curFrame
+	if curFrame <= 26:
+		curPhase = '.....'
+	elif curFrame <= 31:
+		curPhase = 'initial contact'
+	elif curFrame <= 44:
+		curPhase = 'loading response'
+	elif curFrame <= 68:
+		curPhase = 'mid stance'
+	elif curFrame <= 92:
+		curPhase = 'terminal stance'
+	elif curFrame <= 99:
+		curPhase = 'pre swing'
+	elif curFrame <= 107:
+		curPhase = 'initial swing'
+	elif curFrame <= 128:
+		curPhase = 'mid swing'
+	elif curFrame <= 161:
+		curPhase = 'terminal swing'
+	else:
+		curPhase = '.....'
+	Print(gCon, 'Frame ' + str(gCon.curFrame) + ' ' + curPhase, 0, 0)
+
+def RenderLegMonitorWindow(legName):
+	global gCon
+	ankleIdx = FindBodyIndex(legName)
+	ankleGlobalPos = gCon.configured[ankleIdx].globalPos((0,0,0))
+	
+	glWidth, glHeight = gCon.winWidth, gCon.winHeight
+	perpW, perpH      = gCon.perpW, gCon.perpH
+	legW, legH        = glWidth-int(glWidth*perpW), int(glHeight*perpH/2.)
+	aspectRatio       = float(legW) / legH
+	quadric           = gCon.quadric
+	
+	if legName == 'LeftAnkle':
+		glViewport(int(glWidth*perpW), 0, legW, legH)
+	elif legName == 'RightAnkle':
+		glViewport(int(glWidth*perpW), legH, legW, legH)
+	else:
+		raise Exception('Unexpected leg name')
+	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
+	glLoadIdentity()					# // Reset The Projection Matrix
+	glOrtho(-aspectRatio/2., aspectRatio/2., -1./2, 1./2, 1, 1000)
+	
+	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
+	glLoadIdentity ();					# // Reset The Modelview Matrix
+	
+	xeye, yeye, zeye = 5, ankleGlobalPos[1], 0.35
+	xcenter, ycenter, zcenter = 0, ankleGlobalPos[1], 0.35
 	xup, yup, zup = 0, 0, 1
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
-
-	# Plane
-	global gnd_texture
+	
+	# Draw ground in cross section
+	glPushAttrib(GL_LIGHTING_BIT)
 	glDisable(GL_LIGHTING)
-	glBindTexture(GL_TEXTURE_2D, gnd_texture)
-	glColor3f(1,1,1)
-	plane=40
+	glBindTexture(GL_TEXTURE_2D, gCon.gndTex)
+	glColor3f(1, 1, 1)
 	tex_repeat=10
 	glBegin(GL_QUADS)
-	glTexCoord2f(0, 0);                   glVertex3f(-plane, -plane, 0)
-	glTexCoord2f(tex_repeat, 0);          glVertex3f( plane, -plane, 0)
-	glTexCoord2f(tex_repeat, tex_repeat); glVertex3f( plane,  plane, 0)
-	glTexCoord2f(0, tex_repeat);          glVertex3f(-plane,  plane, 0)
+	texRep = gCon.gndTexRep
+	plane = gCon.planeSize
+	
+	glTexCoord2f(0, 0);            glVertex3f(0, plane, 0)
+	glTexCoord2f(texRep*2, 0);       glVertex3f(0,-plane, 0)
+	glTexCoord2f(texRep*2, texRep*2);  glVertex3f(0,-plane,-1)
+	glTexCoord2f(0, texRep*2);       glVertex3f(0, plane,-1)
 	glEnd()
-	glEnable(GL_LIGHTING)
-	# Render the fancy global(inertial) coordinates
-	RenderFancyGlobalAxis(quadric, 0.7/2, 0.3/2, 0.025)
-		
-	for i, cfg in zip(range(len(configured)), configured):
-		mass, size, inertia, q, qd, corners, dc = cfg
+	glPopAttrib()
+	
+	DrawBiped(drawAxis=False, wireframe=True)
+	DrawBipedFibers()
+	DrawBipedContactPoints()
+
+def DrawBiped(drawAxis, wireframe):
+	global gCon
+	nb = len(gCon.configured)
+	for i, bd in zip(range(nb), gCon.configured):
+		mass, size, inertia = bd.mass, bd.boxsize, bd.I
+		q, qd, corners, dc = bd.q, bd.qd, bd.corners, bd.dc
 		sx, sy, sz = size
-		
+
 		glPushMatrix()
 		glTranslatef(q[0], q[1], q[2])
 		A_homo = identity(4)
@@ -196,75 +317,206 @@ def Draw ():
 		A_homo[0:3,0:3] = A
 		glMultMatrixd(A_homo.T.flatten())
 		# box(body) frame indicator
-		RenderAxis(0.2)
+		if drawAxis:
+			RenderAxis(0.2)
 		glScalef(sx, sy, sz)
 		glColor3f(dc[0],dc[1],dc[2])
-		
-		if i >= 8:
+				
+		if i >= 0:
 			# Ankles and toes are rendered as solid cube
-			glutSolidCube(1.)
+			if wireframe:
+				glutWireCube(1.)
+			else:
+				glutSolidCube(1.)
 		else:
 			glRotatef(-90,1,0,0)
 			glTranslatef(0,0,-0.5)
-			
+
 			# Bottom cap
 			glPushMatrix()
 			glRotatef(180,1,0,0) # Flip the bottom-side cap to invert the normal
 			gluDisk(quadric, 0, 0.5, 6, 1)
 			glPopMatrix()
-			
+
 			gluCylinder(quadric, 0.5, 0.5, 1.0, 6, 8);
-			
+
 			# Top cap
 			glTranslate(0,0,1)
 			gluDisk(quadric, 0, 0.5, 6, 1)
 		glPopMatrix()
 	
+def RenderSideCameraWindow():
+	global gCon
+	glWidth, glHeight = gCon.winWidth, gCon.winHeight
+	perpW, perpH      = gCon.perpW, gCon.perpH
+	sideW, sideH      = glWidth, glHeight-int(glHeight*perpH)
+	aspectRatio       = float(sideW) / sideH
+	quadric           = gCon.quadric
 	
-	
-	
-	
-	###########################################################################
+	glViewport(0, int(glHeight*perpH), sideW, sideH)		# Reset The Current Viewport And Perspective Transformation
 
+	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
+	glLoadIdentity()					# // Reset The Projection Matrix
+	glOrtho(-aspectRatio, aspectRatio, -1, 1, 1, 1000)
+	#glOrtho(-15.5, 15.5, -15.5, 15.5, 1, 1000)
+	
+	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
+	glLoadIdentity ();					# // Reset The Modelview Matrix
+
+	xeye, yeye, zeye = 10, -5, 0.8
+	xcenter, ycenter, zcenter = 0, -5, 0.8
+	xup, yup, zup = 0, 0, 1
+	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+	
+	# Render the fancy global(inertial) coordinates
+	RenderFancyGlobalAxis(quadric, 0.7/2, 0.3/2, 0.025)
+	
+	# Draw ground in cross section
+	glPushAttrib(GL_LIGHTING_BIT)
+	glDisable(GL_LIGHTING)
+	glBindTexture(GL_TEXTURE_2D, gCon.gndTex)
+	glColor3f(1, 1, 1)
+	texRep = gCon.gndTexRep
+	plane = gCon.planeSize
+	
+	glBegin(GL_QUADS)
+	glTexCoord2f(0, 0);            glVertex3f(0, plane, 0)
+	glTexCoord2f(texRep, 0);       glVertex3f(0,-plane, 0)
+	glTexCoord2f(texRep, texRep);  glVertex3f(0,-plane,-1)
+	glTexCoord2f(0, texRep);       glVertex3f(0, plane,-1)
+	glEnd()
+	glPopAttrib()
+	
+	DrawBiped(drawAxis=False, wireframe=False)
+	DrawBipedFibers()
+	DrawBipedContactPoints()
+	DrawBipedContactForces()
+	
+def DrawBipedFibers():
+	global gCon
+	# Draw muscle/ligament fibers
+	for m in gCon.fibers:
+		orgBodyIdx = FindBodyIndex(m.orgBody)
+		insBodyIdx = FindBodyIndex(m.insBody)
+		borg = gCon.configured[orgBodyIdx]
+		bins = gCon.configured[insBodyIdx]
+		
+		localorg = array([b/2. * p for b,p in zip(borg.boxsize, m.orgPos)])
+		localins = array([b/2. * p for b,p in zip(bins.boxsize, m.insPos)])
+		
+		globalorg = borg.globalPos(localorg)
+		globalins = bins.globalPos(localins)
+		
+		if m.mType == 'MUSCLE':
+			dc = (1,0,0)
+			radius1 = 0.015
+			radius2 = 0.020
+		else:
+			dc = (0.1,0.1,0.1)
+			radius1 = 0.010
+			radius2 = 0.010
+		DrawMuscleFiber2(gCon.quadric, globalorg, globalins,
+		                 radius1, radius2, dc)
+		
+def DrawBipedContactPoints():
+	global gCon
+	glColor3f(0.1, 0.2, 0.9)
+	for acp in gCon.activeCornerPoints:
+		glPushMatrix()
+		glTranslated(acp[0], acp[1], acp[2])
+		glutSolidSphere(0.035, 8, 8)
+		glPopMatrix()
+		
+def DrawBipedContactForces():
+	global gCon
+	glColor3f(1.0,0.7,0.5) # Contact force arrow color
+	for cf, acp in zip(gCon.contactForces, gCon.activeCornerPoints):
+		fricdirn, friclen = cf
+		rotaxis = cross([0,0,1.], fricdirn)
+		rotangle = acos(dot(fricdirn,[0,0,1.]))
+		
+		glPushMatrix()
+		glTranslatef(acp[0], acp[1], acp[2])
+		glRotatef(rotangle/math.pi*180,rotaxis[0],rotaxis[1],rotaxis[2])
+		RenderArrow(gCon.quadric, friclen*0.8, friclen*0.2, 0.015)
+		glPopMatrix()
+
+def RenderPerspectiveWindow():
+	global gCon
+	glWidth, glHeight = gCon.winWidth, gCon.winHeight
+	perpW, perpH      = gCon.perpW, gCon.perpW
+	quadric           = gCon.quadric
+	
+	glViewport(0, 0, int(glWidth*perpW), int(glHeight*perpH))		# Reset The Current Viewport And Perspective Transformation
+
+	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
+	glLoadIdentity()					# // Reset The Projection Matrix
+	gluPerspective(45.0, float(glWidth)/float(glHeight), 1, 1000.0)
+	
+	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
+	glLoadIdentity ();					# // Reset The Modelview Matrix
+
+	xeye, yeye, zeye = 10, -5, 2.5
+	xcenter, ycenter, zcenter = 2.90, -4, 0.5
+	xup, yup, zup = 0, 0, 1
+	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+
+	# Plane
+	gnd_texture = gCon.gndTex
+	
+	glDisable(GL_LIGHTING)
+	glBindTexture(GL_TEXTURE_2D, gnd_texture)
+	glColor3f(1,1,1)
+	texRep = gCon.gndTexRep
+	plane = gCon.planeSize
+	
+	glBegin(GL_QUADS)
+	glTexCoord2f(0, 0);            glVertex3f(-plane, -plane, 0)
+	glTexCoord2f(texRep, 0);       glVertex3f( plane, -plane, 0)
+	glTexCoord2f(texRep, texRep);  glVertex3f( plane,  plane, 0)
+	glTexCoord2f(0, texRep);       glVertex3f(-plane,  plane, 0)
+	glEnd()
+	glEnable(GL_LIGHTING)
+	# Render the fancy global(inertial) coordinates
+	RenderFancyGlobalAxis(quadric, 0.7/2, 0.3/2, 0.025)
+
+	DrawBiped(drawAxis=True, wireframe=False)
+	DrawBipedFibers()
+	DrawBipedContactPoints()
+	DrawBipedContactForces()
+
+def FrameMove():
+	global gCon
 	# Total number of rigid bodies
-	nb = len(configured)
-
+	nb = len(gCon.configured)
+	h  = gCon.h
+	mu = gCon.mu
+	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
 	activeCorners = []
-	activeBodies = set([])
+	activeBodies = set()
 	activeCornerPoints = []
 	for k in range(nb):
 		# Check all eight corners
-		mass, size, inertia, q, qd, corners, dc = configured[k]
+		bd = gCon.configured[k]
+		mass, size, inertia = bd.mass, bd.boxsize, bd.I
+		q, qd, corners, dc = bd.q, bd.qd, bd.corners, bd.dc
+		sx, sy, sz = size
+		
 		for i in range(8):
 			A = RotationMatrixFromEulerAngles_xyz(q[3], q[4], q[5])
 			c = q[0:3] + dot(A, corners[i])
-			if c[2] < alpha0:
+			if c[2] < gCon.alpha0:
 				activeCorners.append( (k, i) )
 				activeBodies.add(k)
 				activeCornerPoints.append(c)
-
-	glColor3f(0.9, 0.2, 0.1)
-	#glPointSize(5.)
-	#glBegin(GL_POINTS)
-	for acp in activeCornerPoints:
-		#glVertex3f(acp[0], acp[1], acp[2])
-		glPushMatrix()
-		glTranslated(acp[0], acp[1], acp[2])
-		glutSolidSphere(0.05, 8, 8)
-		glPopMatrix()
-	#glEnd()
+	gCon.activeCornerPoints = activeCornerPoints
+	
 	# Indices for active/inactive bodies
 	inactiveBodies = list(set(range(nb)) - activeBodies)
 	activeBodies = list(activeBodies)
 
-	"""
-	# Debug purpose
-	inactiveBodies = []
-	activeBodies = range(nb)
-	"""
-	
 	# Total number of contact points
 	p = len(activeCorners)
 	# Total number of active/inactive bodies
@@ -279,16 +531,19 @@ def Draw ():
 	Qd_a = zeros((6*nba))
 	Qd_i = zeros((6*nbi))
 	for k in range(nb):
-		mass, size, inertia, q, qd, corners, dc = configured[k]
-		
+		bd = gCon.configured[k]
+		mass, size, inertia = bd.mass, bd.boxsize, bd.I
+		q, qd, corners, dc = bd.q, bd.qd, bd.corners, bd.dc
+		sx, sy, sz = size
+
 		Minv_k = SymbolicMinv(q + h*qd, inertia)
 		Cqd_k = SymbolicCqd(q + h*qd/2, qd, inertia)
-		
+
 		# Add gravitational force to the Coriolis term
 		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
 		#Cqd_k = Cqd_k + fg
 		#Cqd_k = Cqd_k - torque[(int)(frame*h)][k]*h
-		
+
 		if k in activeBodies:
 			kk = activeBodies.index(k)
 			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
@@ -303,7 +558,7 @@ def Draw ():
 			Qd_i[6*kk:6*(kk+1)] = qd
 		else:
 			raise Exception, 'What the...'
-		
+
 	err = 0 # Lemke's algorithm return code: 0 means success
 	if p > 0:
 		# Basis for contact normal forces (matrix N)
@@ -314,27 +569,30 @@ def Draw ():
 			# kp: Body index
 			# cp: Corner index
 			kp, cp = activeCorners[i]
-			mass, size, inertia, q, qd, corners, dc = configured[kp]
+			bd = gCon.configured[kp]
+			mass, size, inertia = bd.mass, bd.boxsize, bd.I
+			q, qd, corners, dc = bd.q, bd.qd, bd.corners, bd.dc
+			sx, sy, sz = size
 			k = activeBodies.index(kp)
 
 			# Which one is right?
 			#N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
 			N[6*k:6*(k+1), i] = SymbolicPenetration(q + h*qd/2, corners[cp])
-			
-			
+
+
 			Di = zeros((6*nba,8)) # Eight basis for tangential forces
 			for j in range(8):
-				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, di[j], corners[cp])
+				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, gCon.di[j], corners[cp])
 			D[:, 8*i:8*(i+1)] = Di
 
 		#print '-----------------------------------------------------'
 		#print Minv_a, N, D
-		
+
 		M00 = dot(dot(N.T, Minv_a), N)
 		M10 = dot(dot(D.T, Minv_a), N)
 		M11 = dot(dot(D.T, Minv_a), D)
 		Z0 = zeros((p,p))
-		
+
 		# Friction coefficient
 		Mu = diag([mu]*p)
 		# matrix E
@@ -342,27 +600,20 @@ def Draw ():
 		for i in range(p):
 			for j in range(8):
 				E[8*i+j, i] = 1
-		
-		"""
-		# Assertion for positive definite mass matrix
-		Minve, Minvu = linalg.eig(Minv_cp)
-		assert all([me > 0 for me in Minve])
-		"""
+
 		
 		LCP_M = vstack([hstack([ M00 ,  M10.T ,  Z0 ]),
-			            hstack([ M10 ,  M11   ,  E  ]),
-			            hstack([ Mu  ,  -E.T  ,  Z0 ])])
-	
+				        hstack([ M10 ,  M11   ,  E  ]),
+				        hstack([ Mu  ,  -E.T  ,  Z0 ])])
+
 		LCP_q0 = h * dot(dot(N.T, Minv_a), Cqd_a) + dot(N.T, Qd_a)
 		LCP_q1 = h * dot(dot(D.T, Minv_a), Cqd_a) + dot(D.T, Qd_a)
 		LCP_q2 = zeros((p))
 		# hstack() does not matter since it is a column vector
 		LCP_q = hstack([ LCP_q0 ,
-			             LCP_q1 ,
-			             LCP_q2 ])
-		
-		if (z0 is 0) or (len(z0) != LCP_M.shape[0]):
-			z0 = zeros((LCP_M.shape[0]))
+				         LCP_q1 ,
+				         LCP_q2 ])
+
 		z0 = zeros((LCP_M.shape[0]))
 		x_opt, err = lemke(LCP_M, LCP_q, z0)
 		if err != 0:
@@ -375,191 +626,72 @@ def Draw ():
 		ground_reaction_force = dot(N, cn) + dot(D, beta)
 		Qd_a_next = dot(Minv_a, ground_reaction_force + h*Cqd_a) + Qd_a
 		Q_a_next  = h * Qd_a_next + Q_a
-		
-		# Contact force visualization
-		glColor3f(0.8,0.3,0.2)
+
 		beta_reshaped = beta.reshape(p,8)
-		scaleFactor = 250
-		#glBegin(GL_LINES)
-		for i, acp, cn_i, beta_i, ac_i in zip(range(p), activeCornerPoints, cn, beta_reshaped, activeCorners):
-			#bv = dot(D, beta_reshaped)
+		gCon.contactForces = []
+		for i, acp, cn_i, beta_i, ac_i in zip(range(p),
+		                                      activeCornerPoints,
+		                                      cn,
+		                                      beta_reshaped,
+		                                      activeCorners):
 			bodyidx = activeBodies.index(ac_i[0])
 			fric = dot(D[:, 8*i:8*(i+1)], beta_i)[6*bodyidx:6*(bodyidx+1)]
-			fricdir = array([fric[0]*scaleFactor,
-			                 fric[1]*scaleFactor,
-			                 cn_i*scaleFactor])
+			fricdir = array([fric[0]*gCon.cfScaleFactor,
+		                 fric[1]*gCon.cfScaleFactor,
+		                 cn_i*gCon.cfScaleFactor])
 			friclen = linalg.norm(fricdir)			
 			fricdirn = fricdir / friclen
-			rotaxis = cross([0,0,1.], fricdirn)
-			rotangle = acos(dot(fricdirn,[0,0,1.]))
-			glPushMatrix()
-			glTranslatef(acp[0], acp[1], acp[2])
-			glRotatef(rotangle/math.pi*180,rotaxis[0],rotaxis[1],rotaxis[2])
-			RenderArrow(quadric, friclen*0.8, friclen*0.2, 0.015)
-			glPopMatrix()
-			"""
-			glVertex3f(acp[0],
-			           acp[1],
-			           acp[2])
-			glVertex3f(acp[0] + fricdir[0],
-			           acp[1] + fricdir[1],
-			           acp[2] + fricdir[2])
-			"""
-			#print fric[0], fric[1], cn_i
-		#glEnd()
-		
-		
+			
+			cf = (fricdirn, friclen)
+			gCon.contactForces.append(cf)
+
 		for k in activeBodies:
 			kk = activeBodies.index(k)
-			configured[k][ 3 ] = Q_a_next[6*kk:6*(kk+1)]
-			configured[k][ 4 ] = Qd_a_next[6*kk:6*(kk+1)]
+			gCon.configured[k].q  = Q_a_next[6*kk:6*(kk+1)]
+			gCon.configured[k].qd = Qd_a_next[6*kk:6*(kk+1)]
 
-		"""
-		contactforce = dot(N, cn) + dot(D, beta)		
-		assert all([cf - z == 0 for cf, z in zip(contactforce[6:12], zeros((6)))])
-		print contactforce[6:12]
-		"""
-	
+
 	for k in inactiveBodies:
 		# No contact point
 		kk = inactiveBodies.index(k)
 		Qd_i_next = dot(Minv_i, h*Cqd_i) + Qd_i
 		Q_i_next  = h * Qd_i_next + Q_i
-		configured[k][ 3 ] = Q_i_next[6*kk:6*(kk+1)]
-		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
+		gCon.configured[k].q  = Q_i_next[6*kk:6*(kk+1)]
+		gCon.configured[k].qd = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 
-	frame = frame + 1
-	#print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
-	
-	if frame >= noFrame-2:
-		frame = 0
-		
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
-		configured[k][ 3 ] = q_data[frame][k]
-		configured[k][ 4 ] = qd_data[frame][k]
-	
-	
-	glFlush ()
-	glutSwapBuffers()
+		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
+		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
+		
+	if gCon.autoPlay:
+		gCon.curFrame = gCon.curFrame + 1
+		if gCon.curFrame >= gCon.noFrame-2:
+			gCon.curFrame = 0
 
-	
+"""
 def ang_vel(q, v):
 	x, y, z, phi, theta, psi = q
 	xd, yd, zd, phid, thetad, psid = v
 	return array([phid*sin(theta)*sin(psi)+thetad*cos(psi),
-	              phid*sin(theta)*cos(psi)-thetad*sin(psi),
-	              phid*cos(theta)+psid])
-	
+		          phid*sin(theta)*cos(psi)-thetad*sin(psi),
+		          phid*cos(theta)+psid])
+"""
+
+def FindBodyIndex(name):
+	global gCon
+	nb = len(gCon.bodyList)
+	for i, n in zip(range(nb), gCon.bodyList):
+		bodyName, pBodyName = n
+		if bodyName == name:
+			return i
+	raise Exception('Wrong body name!')
+
 ################################################################################
-# Friction coefficient
-mu = 1.7
-# Simulation Timestep
-h = 1.
-# Contact threshold
-alpha0 = 0.025
-# Eight basis of friction force
-di = [ (1, 0, 0),
-       (cos(pi/4), sin(pi/4), 0),
-       (0, 1, 0),
-       (-cos(pi/4), sin(pi/4), 0),
-       (-1, 0, 0),
-       (-cos(pi/4), -sin(pi/4), 0),
-       (0, -1, 0),
-       (cos(pi/4), -sin(pi/4), 0) ]
+################################################################################
+################################################################################
 
-
-bodyCfg = [ [ 0.115, 0.144, 0.085, 3,  (0.2,0.1,0.2) ],     # Hips (root)
-            [ 0.427, 0.720, 0.184, 30, (0.2,0.1,0.2) ],     # lowerback (trunk)
-            [ 0.054, 0.274, 0.054, 3,  (0.2,0.1,0.2) ],     # LHipJoint
-            [ 0.054, 0.274, 0.054, 3,  (0.2,0.1,0.2) ],     # RHipJoint
-            [ 0.145, 0.450, 0.145, 3,  (0.1,0.6,0.0) ],     # LeftHip
-            [ 0.145, 0.450, 0.145, 3,  (0.0,0.2,0.6) ],     # RightHip
-            [ 0.145, 0.450, 0.145, 3,  (0.1,0.6,0.0) ],     # LeftKnee
-            [ 0.145, 0.450, 0.145, 3,  (0.0,0.2,0.6) ],     # RightKnee
-            [ 0.184, 0.210, 0.090, 3,  (0.1,0.6,0.0) ],     # LeftAnkle
-            [ 0.184, 0.210, 0.090, 3,  (0.0,0.2,0.6) ],     # RightAnkle
-            [ 0.184, 0.105, 0.090, 3,  (0.1,0.6,0.0) ],     # LeftToe
-            [ 0.184, 0.105, 0.090, 3,  (0.0,0.2,0.6) ] ]    # RightToe
-
-q_file = open('/media/vm/devel/aran/pymuscle/traj_q.txt', 'r')
-qd_file = open('/media/vm/devel/aran/pymuscle/traj_qd.txt', 'r')
-qdd_file = open('/media/vm/devel/aran/pymuscle/traj_qdd.txt', 'r')
-torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'r')
-# Ignore the first line
-noFrame, nb = map(int, q_file.readline().strip().split())
-qd_file.readline()
-qdd_file.readline()
-torque_file.readline()
-q_data = []
-qd_data = []
-torque_data = []
-for i in range(noFrame-2):
-	q_i = []
-	qd_i = []
-	t_i = []
-	for j in range(nb):
-		q_ij = array( map(float, q_file.readline().strip().split()) )
-		q_i.append(q_ij)
-		qd_ij = array( map(float, qd_file.readline().strip().split()) )
-		qd_i.append(qd_ij)
-		t_ij = array( map(float, torque_file.readline().strip().split()) )
-		t_i.append(t_ij)
-	q_data.append(q_i)
-	qd_data.append(qd_i)
-	torque_data.append(t_i)
-
-q_file.seek(0, 0)
-q_file.readline()
-qd_file.seek(0, 0)
-qd_file.readline()
-qdd_file.seek(0, 0)
-qdd_file.readline()
-torque_file.seek(0, 0)
-torque_file.readline()
-# Body specific parameters and state vectors
-configured = []
-for bc in bodyCfg:
-	sx, sy, sz, mass, dc = bc
-	rho = mass / (sx*sy*sz) # density of the body
-	Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)
-	
-	q_ij = array( map(float, q_file.readline().strip().split()) )
-	qd_ij = array( map(float, qd_file.readline().strip().split()) )
-	#qd_ij = zeros((6))
-	
-	corners = [ ( sx/2,  sy/2,  sz/2),
-		        ( sx/2,  sy/2, -sz/2),
-		        ( sx/2, -sy/2,  sz/2),
-		        ( sx/2, -sy/2, -sz/2),
-		        (-sx/2,  sy/2,  sz/2),
-		        (-sx/2,  sy/2, -sz/2),
-		        (-sx/2, -sy/2,  sz/2),
-		        (-sx/2, -sy/2, -sz/2) ]
-
-	c = [ mass,                       # Mass
-	      (sx, sy, sz),               # Size
-	      (Ixx, Iyy, Izz, Iww),       # Inertia tensor
-	      array(q_ij),                # q (position)
-	      array(qd_ij),               # qd (velocity)
-	      corners,                    # Corners
-	      dc ]                        # Drawing color
-	      
-	configured.append(c)
-
-	
-
-#configured = configured[0:1]
-# For advanced(warm) start of solving LCP
-z0 = 0
-# Current frame number
-frame = 0
-# Cube display list
-cube = 0        # Cube(display list)
-gnd_texture = 0 # Ground texture
-cylinder = 0    # GLU quadric
-arrowtip = 0    # GLU quadric
-quadric = 0
 # Let's go!
-main()
+gCon = GlobalContext()
+Main(gCon)
