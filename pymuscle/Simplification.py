@@ -137,11 +137,29 @@ dfdY[14,12] = qdz*qx*2.0-qdx*qz*2.0-qx*((Ixx*qw*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.
 dfdY[14,13] = qdz*qy*2.0-qdy*qz*2.0-qy*((Iyy*qw*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Ixx-(Iyy*qx*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Ixx-(Izz*qw*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Ixx+(Izz*qx*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Ixx)*(1.0/2.0)+qw*((Ixx*qw*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Izz-(Iyy*qw*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Izz+(Ixx*qz*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Izz-(Iyy*qz*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Izz)*(1.0/2.0)+qx*((Ixx*qx*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Iyy-(Ixx*qz*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Iyy-(Izz*qx*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Iyy+(Izz*qz*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Iyy)*(1.0/2.0);
 dfdY[14,14] = qdw*qw*2.0+qdx*qx*2.0+qdy*qy*2.0+qdz*qz*2.0-qy*((Iyy*qw*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Ixx+(Iyy*qx*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Ixx-(Izz*qw*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Ixx-(Izz*qx*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Ixx)*(1.0/2.0)-qx*((Ixx*qw*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Iyy-(Ixx*qy*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Iyy-(Izz*qw*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Iyy+(Izz*qy*(qdz*qw-qdy*qx+qdx*qy-qdw*qz)*4.0)/Iyy)*(1.0/2.0)+qw*((Ixx*qx*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Izz-(Ixx*qy*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Izz-(Iyy*qx*(qdx*qw-qdw*qx-qdz*qy+qdy*qz)*4.0)/Izz+(Iyy*qy*(qdy*qw+qdz*qx-qdw*qy-qdx*qz)*4.0)/Izz)*(1.0/2.0);
 
+# Test for tension calculation
+# Should print -300.
+tensionEq = f[7]
+tensionTestCase = zip([A,KPE,KSE,Ten,b,fibWx,fibWy,fibWz,fibbx,fibby,fibbz,px,py,pz,qdw,qdx,qdy,qdz,qw,qx,qy,qz,vx,vy,vz,xrest],
+                      [0, 1.0, 2.0, 0, 0.001, 0, 0, 1.0, 0, 0, 0.14999999999999999, 0.0, 0.0, 0.5, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0, 0, 0, 0.5])
+tV = tensionEq.subs(tensionTestCase)
+print 'Test for tension equation (should yield -300.0)...'
+print '        tV =', tV,
+print 'Okay.' if tV == -300. else 'FAILED!!!'
+
+# Test for the simplification of tension equation
+eqOptimized = together(tensionEq)
+tV = eqOptimized.subs(tensionTestCase)
+print 'Test for tension equation (should yield -300.0)...'
+print '        tV =', tV,
+print 'Okay.' if tV == -300. else 'FAILED!!!'
+
 print 'Pre-simplifying each expression...'
 longeqs = []
 for k, v in f.iteritems():
 	v = together(v)
 	longeqs.append(v)
+
 for k, v in dfdY.iteritems():
 	v = together(v)
 	longeqs.append(v)

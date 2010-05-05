@@ -16,6 +16,7 @@ from MathUtil import EulerAnglesFromQuaternion
 from scipy import sparse
 from scipy.sparse import linalg as spla
 from math import sin, pi
+import cPickle
 #from scipy import sparse, linsolve
 
 p0 = array([0, 0, 0.5])
@@ -34,16 +35,18 @@ Icm0 = array([m*(sy*sy + sz*sz)/12.,
 
 #KPE, KSE, b, xrest = fibParam
 #fibx, fiby, fibz = fibFixPos
-fibParam = (185000., 185000., 18500.0001, 0)  # Muscle fiber parameters
+#fibParam = (185000., 185000., 1850.0001, 0)  # Muscle fiber parameters
+#fibParam = (1., 2., 0.001, 0.5)  # Muscle fiber parameters
+fibParam = (185000., 185000., 18500.001, 0.5)  # Muscle fiber parameters
 fibFixPos = (0, 0, 1.) # Muscle fixed position (oppsite to a box)
-#bodyFixPos = (0.1/2, 0.2/2, 0.3/2) # Muscle fixed position on the body in body coordinates
-#bodyFixPos = (0,0,0) # Muscle fixed position on the body in body coordinates
-bodyFixPos = (sx/2,sy/2,sz/2) # Muscle fixed position on the body in body coordinates
-Ten0 = 0 # Initial muscle tension
+bodyFixPos = (0,0,0) # Muscle fixed position on the body in body coordinates
+#bodyFixPos = (0,0,sz/2) # Muscle fixed position on the body in body coordinates
+#bodyFixPos = (sx/2,sy/2,sz/2) # Muscle fixed position on the body in body coordinates
+Ten0 = 9.81*m # Initial muscle tension
 A0 = 0 # Initial muscle actuating force
 
 
-simLen = 100
+simLen = 1000
 
 # Linear position history for plotting
 pHistory = [zeros(simLen), zeros(simLen), zeros(simLen)]
@@ -54,7 +57,18 @@ tenHistory = zeros(simLen)
 
 Ioverh = sparse.lil_matrix((15, 15))
 Ioverh.setdiag([1./h,]*15)
-	
+
+
+try:
+	lastStateFile = open('lastState.dat','r')
+	lastState = cPickle.load(lastStateFile)
+	p0, q0, Ten0, v0, qd0 = lastState
+	lastStateFile.close()
+	print 'Last state loaded.'
+except:
+	print 'WARN: No last state file found or exceptional file format.'
+
+
 for i in range(simLen):
 	#A0 = 3*sin(float(i)/simLen*4*pi)
 	if i%50 == 0:
@@ -78,8 +92,18 @@ for i in range(simLen):
 	v0 += (dvx, dvy, dvz)
 	qd0 += (dqdw, dqdx, dqdy, dqdz)
 	Ten0 += dTen
-	
-	
+
+lastStateFile = open('lastState.dat','w')
+lastState = (p0, q0, Ten0, v0, qd0)
+cPickle.dump(lastState, lastStateFile)
+lastStateFile.close()
+print 'Last State Report'
+print 'p0 =', p0
+print 'q0 =', q0
+print 'Ten0 =', Ten0
+print 'v0 =', v0
+print 'qd0 =', qd0
+print 'Last state written.'
 	
 plt.figure(1)
 plt.subplot(311)

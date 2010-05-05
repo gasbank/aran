@@ -7,8 +7,7 @@ Optimization-based rigid body simulator
 Equation simplify check routine
 """
 
-from sympy import Symbol, cos, sqrt, symbols, S, var
-from sympy.simplify.cse_main import cse
+from sympy import Symbol, cos, sqrt, symbols, S, var, ccode
 from numpy import zeros, array
 from scipy import sparse
 import cPickle
@@ -30,15 +29,17 @@ replacementsFile.close()
 
 simpFile = open(basePath+'simplified.txt', 'w')
 for x, expression in replacements:
-	simpFile.write('\t%s = %s\n' % (x, expression))
+	simpFile.write('\t%s = %s\n' % (x, ccode(expression)))
 
 
 	
 for i, expression in zip(range(15), reducedExprs[0:15]):
-	simpFile.write('\tf[%d] = %s\n' % (i, expression))
+	simpFile.write('\tf[%d] = %s\n' % (i, ccode(expression)))
+
 
 assert len(reducedExprs) - 15 == len(dfdYKeys)
 for expression, k in zip(reducedExprs[15:], dfdYKeys):
-	simpFile.write('\tdfdY[%d,%d] = %s\n' % (k[0],k[1], expression))
+	simpFile.write('\tdfdY[%d,%d] = %s\n' % (k[0],k[1], ccode(expression)))
+
 
 simpFile.close()
