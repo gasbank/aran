@@ -28,17 +28,17 @@ replacements = cPickle.load(replacementsFile)
 replacementsFile.close()
 
 
-simpFile = open('simplified.txt', 'w')
+simpFile = open(basePath+'simplified.txt', 'w')
 for x, expression in replacements:
-	simpFile.write('%s = %s\n' % (x, expression))
+	simpFile.write('\t%s = %s\n' % (x, expression))
 
 
 	
 for i, expression in zip(range(15), reducedExprs[0:15]):
-	simpFile.write('f[%d] = %s\n' % (i, expression))
+	simpFile.write('\tf[%d] = %s\n' % (i, expression))
 
 assert len(reducedExprs) - 15 == len(dfdYKeys)
 for expression, k in zip(reducedExprs[15:], dfdYKeys):
-	simpFile.write('dfdY[%d,%d] = %s\n' % (k[0],k[1], expression))
+	simpFile.write('\tdfdY[%d,%d] = %s\n' % (k[0],k[1], expression))
 
 simpFile.close()

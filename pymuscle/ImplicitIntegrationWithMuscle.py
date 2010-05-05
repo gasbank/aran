@@ -23,8 +23,8 @@ q0 = array([1., 0, 0, 0])
 v0 = array([0, 0, 0])
 w0 = array([0.0, 0, 0])
 qd0 = 0.5*array(quat_mult(q0, hstack([0, w0])))
-h = 0.01
-m = 1.
+h = 0.005
+m = 10.
 F = array([0,0,-9.81*m])
 T = array([0,0,0])
 sx, sy, sz = 0.1, 0.2, 0.3
@@ -34,12 +34,12 @@ Icm0 = array([m*(sy*sy + sz*sz)/12.,
 
 #KPE, KSE, b, xrest = fibParam
 #fibx, fiby, fibz = fibFixPos
-fibParam = (185000., 185000., 0.0001, 0.5)  # Muscle fiber parameters
+fibParam = (185000., 185000., 18500.0001, 0)  # Muscle fiber parameters
 fibFixPos = (0, 0, 1.) # Muscle fixed position (oppsite to a box)
 #bodyFixPos = (0.1/2, 0.2/2, 0.3/2) # Muscle fixed position on the body in body coordinates
 #bodyFixPos = (0,0,0) # Muscle fixed position on the body in body coordinates
-bodyFixPos = (0,0,sz/2) # Muscle fixed position on the body in body coordinates
-Ten0 = 9.81*m # Initial muscle tension
+bodyFixPos = (sx/2,sy/2,sz/2) # Muscle fixed position on the body in body coordinates
+Ten0 = 0 # Initial muscle tension
 A0 = 0 # Initial muscle actuating force
 
 
