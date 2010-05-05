@@ -344,7 +344,7 @@ def Draw ():
 	angd = newAngd
 
 	global frame
-	#print 'Frame', frame, 'drawn.'
+	print 'Frame', frame, 'drawn.'
 	frame+=1
 	return
 
@@ -399,7 +399,7 @@ cornersX = 0
 mass = 10
 box_size = [2,2,1]
 H_com = BoxInertia(box_size, mass)
-dt = 0.0001
+dt = 0.005
 mu_s = 1.6 # static friction coefficient
 mu_k = 1.5 # dynamic(kinematic) friction coefficient
 V = BuildFrictionConeBasis(mu_s)

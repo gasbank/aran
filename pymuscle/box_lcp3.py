@@ -19,6 +19,7 @@ from SymbolicPenetration import *
 from SymbolicTensor import *
 from glprim import *
 import sys
+import matplotlib.pyplot as pit
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -144,11 +145,13 @@ def main():
 	# Start Event Processing Engine	
 	glutMainLoop()
 
+"""
 def RotationMatrixFromEulerAngles(phi, theta, psix):
 	return array([[ cos(phi)*cos(psix) - cos(theta)*sin(phi)*sin(psix), - cos(psix)*sin(phi) - cos(phi)*cos(theta)*sin(psix),  sin(psix)*sin(theta)],
 	              [ cos(phi)*sin(psix) + cos(psix)*cos(theta)*sin(phi),   cos(phi)*cos(psix)*cos(theta) - sin(phi)*sin(psix), -cos(psix)*sin(theta)],
 	              [                                sin(phi)*sin(theta),                                  cos(phi)*sin(theta),            cos(theta)]])
-	
+"""
+
 def Draw ():
 	#global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0, z0
 	global h, mu, di, frame, alpha0, z0
@@ -170,7 +173,7 @@ def Draw ():
 		glPushMatrix()
 		glTranslatef(q[0], q[1], q[2])
 		A_homo = identity(4)
-		A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
+		A = RotationMatrixFromEulerAngles_zxz(q[3], q[4], q[5])
 		A_homo[0:3,0:3] = A
 		glMultMatrixd(A_homo.T.flatten())
 		# box(body) frame indicator
@@ -208,7 +211,7 @@ def Draw ():
 		# Check all eight corners
 		mass, size, inertia, q, qd, corners = configured[k]
 		for i in range(8):
-			A = RotationMatrixFromEulerAngles(q[3], q[4], q[5])
+			A = RotationMatrixFromEulerAngles_zxz(q[3], q[4], q[5])
 			c = q[0:3] + dot(A, corners[i])
 			if c[2] < alpha0:
 				activeCorners.append( (k, i) )
@@ -353,9 +356,42 @@ def Draw ():
 		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 
+	if frame == 535:
+		t = arange(0.,(frame-1)*h, h)
+		pit.figure(1)
+		pit.plot(plotvalue1, 'r^', plotvalue1, 'r',
+		         plotvalue2, 'g^', plotvalue2, 'g',
+		         plotvalue3, 'b^', plotvalue3, 'b')
+		pit.ylabel('body0 rot deg')
+		"""
+		pit.figure(2)
+		pit.plot(plotvalue3, 'r^', plotvalue3, 'r',
+		         plotvalue4, 'g^', plotvalue4, 'g',
+		         plotvalue5, 'b^', plotvalue5, 'b')
+		pit.ylabel('body1 rot deg')
+		"""
+		pit.show()
+		
+	plotvalue1.append(configured[0][3][3]/pi*180)
+	plotvalue2.append(configured[0][3][4]/pi*180)
+	plotvalue3.append(configured[0][3][5]/pi*180)
+	"""
+	plotvalue4.append(configured[1][3][3]/pi*180)
+	plotvalue5.append(configured[1][3][4]/pi*180)
+	plotvalue6.append(configured[1][3][5]/pi*180)
+	"""
+	
 	frame = frame + 1
 	print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
+	
+plotvalue1 = []
+plotvalue2 = []
+plotvalue3 = []
 
+plotvalue4 = []
+plotvalue5 = []
+plotvalue6 = []
+	
 def ang_vel(q, v):
 	x, y, z, phi, theta, psi = q
 	xd, yd, zd, phid, thetad, psid = v
@@ -365,7 +401,7 @@ def ang_vel(q, v):
 	
 ################################################################################
 # Friction coefficient
-mu = 1.7
+mu = 0.2
 # Simulation Timestep
 h = 0.0025
 # Contact threshold
@@ -398,11 +434,14 @@ config = [ ( 1.1,                                  # Mass
            ( 1.1,
             (0.3, 0.2, 0.1),
             (0, 0, 0, 0),
-            array([-1, 1,  2, 0.3, 0.2, 0.1]),
-            array([0, 2, 0, 0, 0, 0]),
+            array([-1, 1,  9, pi/4,pi/2,-pi/2]),
+            array([0, 0, 0, 0, -pi/1.9999999, 0]),
             [] ) ]
 
-config = config[0:2]
+#config = config[0:1]
+#config = config[1:2]
+config = config[2:3]
+#config = config[0:2]
 
 configured = []
 for cfg in config:

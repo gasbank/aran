@@ -6,7 +6,7 @@ Optimization-based rigid body simulator
 
 Common math routines
 """
-from math import cos, sin
+from math import cos, sin, atan2, asin
 from numpy import array, dot, linalg
 #
 # z-x-z (moving frame set)
@@ -43,3 +43,15 @@ def RotationMatrixFromEulerAngles_xyz(phi, theta, psix):
 	return array([ [ c2*c3, c3*s1*s2-c1*s3, c1*c3*s2+s1*s3],
 	               [ c2*s3, c1*c3+s1*s2*s3, c1*s2*s3-c3*s1],        
 	               [ -s2,   c2*s1,          c1*c2         ] ])
+
+
+#
+# Quaternion to euler angles (?-?-? convention)
+# IMPORTANT: scalar component first
+#
+def EulerAnglesFromQuaternion(q):
+	q0,q1,q2,q3 = q
+	phi_   = atan2(2*(q0*q1+q2*q3), 1.-2*(q1**2+q2**2))
+	theta_ = asin(2*(q0*q2-q3*q1))
+	psi_   = atan2(2*(q0*q3+q1*q2), 1.-2*(q2**2+q3**2))
+	return (phi_, theta_, psi_)

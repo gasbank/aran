@@ -20,9 +20,24 @@ def SymbolicM_Global(oRb, s1, s2, s3, mass):
 	Global(inertial) coordinate mass matrix for a box
 	oRb is the coordinate system of body {b} viewed from the frame {o}
 	"""
+	"""
 	R = vstack([hstack([    oRb      ,  zeros((3,3)) ]),
 	            hstack([ zeros((3,3)),     oRb       ]) ])
 	return dot(dot(R, SymbolicM_Local(s1, s2, s3, mass)), R.T)
+	"""
+	sx,sy,sz = s1,s2,s3
+	m = mass
+	
+	Icm0 = diag([m*(sy*sy + sz*sz)/12.,
+			 m*(sx*sx + sz*sz)/12.,
+			 m*(sx*sx + sy*sy)/12.])
+	A = oRb
+	Icm = dot(dot(A, Icm0), A.T)
+	M = vstack([ hstack([ m*identity(3),   zeros((3,3))  ]),
+	             hstack([ zeros((3,3)),    Icm ])
+	             ])
+	return M
+	
 	
 def SymbolicC_Local(omega, s1, s2, s3, mass):
 	"""
@@ -36,9 +51,20 @@ def SymbolicC_Global(oRb, omega, s1, s2, s3, mass):
 	Global(inertial) coordinate Coriolis and other terms vector
 	oRb is the coordinate system of body {b} viewed from the frame {o}
 	"""
+	"""
 	R = vstack([hstack([    oRb      ,  zeros((3,3)) ]),
 	            hstack([ zeros((3,3)),     oRb       ]) ])
 	return dot(R, SymbolicC_Local(omega, s1, s2, s3, mass))
+	"""
+	sx,sy,sz = s1,s2,s3
+	m = mass
+	
+	Icm0 = diag([m*(sy*sy + sz*sz)/12.,
+			 m*(sx*sx + sz*sz)/12.,
+			 m*(sx*sx + sy*sy)/12.])
+	A = oRb
+	Icm = dot(dot(A, Icm0), A.T)
+	return hstack([0,0,0,cross(omega, dot(Icm, omega))])
 
 def SymbolicM_Manual(q, s1, s2, s3, mass):
 	M = zeros((6,6))
@@ -201,3 +227,5 @@ def SymbolicCqd(q, qd, I):
 	Cqd[5] = Ixx*(dtheta*dtheta)*sin(phi*2.0+theta)*(-1.0/4.0)+Iyy*(dtheta*dtheta)*sin(phi*2.0+theta)*(1.0/4.0)-Ixx*(dtheta*dtheta)*sin(phi*2.0-theta)*(1.0/4.0)+Iyy*(dtheta*dtheta)*sin(phi*2.0-theta)*(1.0/4.0)-Ixx*dphi*dtheta*sin(theta)-Iyy*dphi*dtheta*sin(theta)-Ixx*dphi*dtheta*sin(phi*2.0+theta)*(1.0/2.0)+Iyy*dphi*dtheta*sin(phi*2.0+theta)*(1.0/2.0)-Ixx*dphi*dpsix*sin(phi*2.0)*(1.0/2.0)+Iyy*dphi*dpsix*sin(phi*2.0)*(1.0/2.0)-Ixx*dpsix*dtheta*sin(theta*2.0)*(1.0/2.0)-Iyy*dpsix*dtheta*sin(theta*2.0)*(1.0/2.0)+Izz*dpsix*dtheta*sin(theta*2.0)+Ixx*dphi*dpsix*sin(phi*2.0-theta*2.0)*(1.0/4.0)+Ixx*dphi*dpsix*sin(phi*2.0+theta*2.0)*(1.0/4.0)-Iyy*dphi*dpsix*sin(phi*2.0-theta*2.0)*(1.0/4.0)-Iyy*dphi*dpsix*sin(phi*2.0+theta*2.0)*(1.0/4.0)+Ixx*dphi*dtheta*sin(phi*2.0-theta)*(1.0/2.0)-Ixx*dpsix*dtheta*sin(phi*2.0-theta*2.0)*(1.0/4.0)+Ixx*dpsix*dtheta*sin(phi*2.0+theta*2.0)*(1.0/4.0)-Iyy*dphi*dtheta*sin(phi*2.0-theta)*(1.0/2.0)+Iyy*dpsix*dtheta*sin(phi*2.0-theta*2.0)*(1.0/4.0)-Iyy*dpsix*dtheta*sin(phi*2.0+theta*2.0)*(1.0/4.0)
 
 	return Cqd
+
+

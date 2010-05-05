@@ -13,11 +13,11 @@ from PmBody import *
 class GlobalContext:
 	def __init__(self):
 		# Friction coefficient
-		self.mu = 1.7
+		self.mu = 1.4
 		# Simulation Timestep
-		self.h = 1.
+		self.h = 0.001
 		# Contact threshold
-		self.alpha0 = 0.020
+		self.alpha0 = 0.025
 		# Eight basis of friction force
 		self.di = [ (1, 0, 0),
 		            (cos(pi/4), sin(pi/4), 0),
@@ -163,7 +163,7 @@ class GlobalContext:
 		
 		self.clearColor = (202./255, 207./255, 206./255)
 		self.cfScaleFactor = 250 # Contact force arrow length multiplier
-		self.perpW = 0.7         # Ratio of perspective viewport width
+		self.perpW = 0.5         # Ratio of perspective viewport width
 		self.perpH = 0.75         # Ratio of perspective viewport height
 		
 		self.planeSize = 40      # Half of ground plane size

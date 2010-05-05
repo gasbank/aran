@@ -176,7 +176,7 @@ def Main(gCon):
 	#glutFullScreen()
 
 	# When we are doing nothing, redraw the scene.
-	#glutIdleFunc(Draw)
+	glutIdleFunc(Draw)
 
 	# Register the function called when our window is resized.
 	glutReshapeFunc(ResizeGlScene)
@@ -201,8 +201,10 @@ def Draw():
 	
 	Prerender()
 	RenderPerspectiveWindow()
-	RenderLegMonitorWindow('LeftAnkle')
-	RenderLegMonitorWindow('RightAnkle')
+	RenderLegMonitorWindow('LeftAnkle', 'SIDE')
+	RenderLegMonitorWindow('LeftAnkle', 'FRONT')
+	RenderLegMonitorWindow('RightAnkle', 'SIDE')
+	RenderLegMonitorWindow('RightAnkle', 'FRONT')
 	RenderSideCameraWindow()
 	RenderHud()
 	Postrender()
@@ -252,23 +254,31 @@ def RenderHud():
 		curPhase = '.....'
 	Print(gCon, 'Frame ' + str(gCon.curFrame) + ' ' + curPhase, 0, 0)
 
-def RenderLegMonitorWindow(legName):
+def RenderLegMonitorWindow(legName, viewDir):
+	assert(legName in ['LeftAnkle', 'RightAnkle'])
+	assert(viewDir in ['SIDE', 'FRONT'])
+
 	global gCon
 	ankleIdx = FindBodyIndex(legName)
 	ankleGlobalPos = gCon.configured[ankleIdx].globalPos((0,0,0))
 	
 	glWidth, glHeight = gCon.winWidth, gCon.winHeight
 	perpW, perpH      = gCon.perpW, gCon.perpH
-	legW, legH        = glWidth-int(glWidth*perpW), int(glHeight*perpH/2.)
+	legW, legH        = int(glWidth-glWidth*perpW)/2, int(glHeight*perpH/2.)
 	aspectRatio       = float(legW) / legH
 	quadric           = gCon.quadric
 	
+	
 	if legName == 'LeftAnkle':
-		glViewport(int(glWidth*perpW), 0, legW, legH)
+		vpX, vpY = int(glWidth*perpW), 0
 	elif legName == 'RightAnkle':
-		glViewport(int(glWidth*perpW), legH, legW, legH)
+		vpX, vpY = int(glWidth*perpW), legH
 	else:
 		raise Exception('Unexpected leg name')
+	if viewDir == 'FRONT':
+			vpX = vpX + legW
+	glViewport(vpX, vpY, legW, legH)
+	
 	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
 	glLoadIdentity()					# // Reset The Projection Matrix
 	glOrtho(-aspectRatio/2., aspectRatio/2., -1./2, 1./2, 1, 1000)
@@ -276,8 +286,14 @@ def RenderLegMonitorWindow(legName):
 	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
 	glLoadIdentity ();					# // Reset The Modelview Matrix
 	
-	xeye, yeye, zeye = 5, ankleGlobalPos[1], 0.35
-	xcenter, ycenter, zcenter = 0, ankleGlobalPos[1], 0.35
+	if viewDir == 'SIDE':
+		xeye, yeye, zeye = 5, ankleGlobalPos[1], 0.35
+		xcenter, ycenter, zcenter = 0, ankleGlobalPos[1], 0.35
+	elif viewDir == 'FRONT':
+		xeye, yeye, zeye = ankleGlobalPos[0], -100, 0.35
+		xcenter, ycenter, zcenter = ankleGlobalPos[0], 0, 0.35
+	else:
+		raise Exception('What the...')
 	xup, yup, zup = 0, 0, 1
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 	
@@ -290,16 +306,21 @@ def RenderLegMonitorWindow(legName):
 	glBegin(GL_QUADS)
 	texRep = gCon.gndTexRep
 	plane = gCon.planeSize
-	
-	glTexCoord2f(0, 0);            glVertex3f(0, plane, 0)
-	glTexCoord2f(texRep*2, 0);       glVertex3f(0,-plane, 0)
-	glTexCoord2f(texRep*2, texRep*2);  glVertex3f(0,-plane,-1)
-	glTexCoord2f(0, texRep*2);       glVertex3f(0, plane,-1)
+	if viewDir == 'SIDE':
+		gx = 0
+		gy = plane
+	else:
+		gx = plane
+		gy = 0
+	glTexCoord2f(0, 0);               glVertex3f( gx, gy, 0)
+	glTexCoord2f(texRep*2, 0);        glVertex3f(-gx,-gy, 0)
+	glTexCoord2f(texRep*2, texRep*2); glVertex3f(-gx,-gy,-1)
+	glTexCoord2f(0, texRep*2);        glVertex3f( gx, gy,-1)
 	glEnd()
 	glPopAttrib()
 	
 	DrawBiped(drawAxis=False, wireframe=True)
-	DrawBipedFibers()
+	DrawBipedFibers(drawAsLine=True)
 	DrawBipedContactPoints()
 
 def DrawBiped(drawAxis, wireframe):
@@ -392,7 +413,7 @@ def RenderSideCameraWindow():
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
 	
-def DrawBipedFibers():
+def DrawBipedFibers(drawAsLine=False):
 	global gCon
 	# Draw muscle/ligament fibers
 	for m in gCon.fibers:
@@ -415,8 +436,11 @@ def DrawBipedFibers():
 			dc = (0.1,0.1,0.1)
 			radius1 = 0.010
 			radius2 = 0.010
-		DrawMuscleFiber2(gCon.quadric, globalorg, globalins,
-		                 radius1, radius2, dc)
+		if drawAsLine:
+			DrawMuscleFiber3(globalorg, globalins, 2.0, dc)
+		else:
+			DrawMuscleFiber2(gCon.quadric, globalorg, globalins,
+			                 radius1, radius2, dc)
 		
 def DrawBipedContactPoints():
 	global gCon
@@ -492,6 +516,13 @@ def FrameMove():
 	h  = gCon.h
 	mu = gCon.mu
 	
+	"""
+	### TRAJECTORY INPUT ###
+	for k in range(nb):
+		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
+		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
+	"""
+	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
 	activeCorners = []
@@ -541,7 +572,7 @@ def FrameMove():
 
 		# Add gravitational force to the Coriolis term
 		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
-		#Cqd_k = Cqd_k + fg
+		Cqd_k = Cqd_k + fg
 		#Cqd_k = Cqd_k - torque[(int)(frame*h)][k]*h
 
 		if k in activeBodies:
@@ -660,15 +691,20 @@ def FrameMove():
 		gCon.configured[k].qd = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 
+	"""
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
 		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
 		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
-		
+	"""
+	
 	if gCon.autoPlay:
+		"""
 		gCon.curFrame = gCon.curFrame + 1
 		if gCon.curFrame >= gCon.noFrame-2:
 			gCon.curFrame = 0
+		"""
+		gCon.curFrame = gCon.curFrame + 1
 
 """
 def ang_vel(q, v):

@@ -41,7 +41,7 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	glEnable (GL_LIGHT0)
 	glEnable (GL_LIGHTING)
 	glEnable (GL_COLOR_MATERIAL)
-	glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
+	#glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
 	glEnable(GL_TEXTURE_2D)
 
 	# Turn on wireframe mode
@@ -140,6 +140,9 @@ def keyPressed(*args):
 	key = args [0]
 	if key == ESCAPE:
 		sys.exit ()
+	elif key == 't':
+		global Ten
+		print Ten
 	#print 'Key pressed', key
 
 def specialKeyPressed(*args):
@@ -287,11 +290,11 @@ def Draw():
 	muscleLenRate = dot(muscleDir, muscleAttachedVel)
 	global Ten, xRest
 	#Ten = MuscleFiberTension(0, muscleLen, muscleLenRate, Ten)
-	Ten = -20.5*(xRest-muscleLen)
+	Ten = -200.5*(xRest-muscleLen)
 	#print curFrame, q[3],q[4],q[5], tension, omega, muscleLenRate
 	tensionG = SymbolicForce_Manual2(oRb, tuple(muscleDir*Ten), tuple(muscleAttachedPosLocal))
 	ext = ext + tensionG
-	print Ten, xRest-muscleLen, muscleLenRate
+	#print Ten, xRest-muscleLen, muscleLenRate
 	
 	acc = dot(Minv, ext - C)
 	linacc = acc[0:3]
@@ -303,14 +306,19 @@ def Draw():
 	omega = omega + h*angacc
 	#print rcm
 	
-	omega = omega*0.999
-	vcm = vcm*0.9995
+	#omega = omega*0.9999
+	#vcm = vcm*0.9995
 
 	oRb = OrthonormalizedOfOrientation(oRb)
 
 	############################################################################
-	DrawMuscleFiber(quadric, muscleAttachedPosGlobal, muscleDir, muscleLen)
-	
+	DrawMuscleFiber(quadric,
+	                muscleAttachedPosGlobal,
+	                muscleDir,
+	                muscleLen,
+	                0.05,
+	                0.08,
+	                (1.0,0.1,0.2) )
 	glutSwapBuffers()
 	############################################################################
 
@@ -325,7 +333,7 @@ curFrame = 0           # Current frame number
 # Determine body constants
 size = array([0.3, 0.5, 0.2])
 s1, s2, s3 = size
-mass = 1
+mass = 2.
 Hcm = diag([mass*(s2*s2+s3*s3)/12, mass*(s1*s1+s3*s3)/12, mass*(s1*s1+s2*s2)/12])
 Hcminv = linalg.inv(Hcm)
 h = 0.001
@@ -339,16 +347,17 @@ HcmX = dot(dot(oRb, Hcminv), oRb.T)
 omega = dot(HcmX, Lcm)
 
 muscleFixPos = array([0.,0,3])
-muscleAttachedPosLocal = array(size/2)
+#muscleAttachedPosLocal = array(size/2)
+muscleAttachedPosLocal = zeros(3)
 
 glWidth = 800
 glHeight = 600
 
 
-KSE = 1.51             # Serial spring constant
+KSE = 0.51             # Serial spring constant
 KPE = 0.01            # Parallel spring constant
 Kb = 0.0001                # Viscosity constant
-xRest = 1.25             # Muscle fiber rest length
+xRest = 1.5             # Muscle fiber rest length
 tau = Kb/(KSE+KPE)      # Time constant for the muscle fiber system
 Ten = 0
 

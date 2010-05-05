@@ -10,6 +10,7 @@ import mosek
 from math import cos, sin, atan
 from ArcBall import * 				# ArcBallT and this tutorials set of points/vectors/matrix types
 from numpy import *
+from dynamics import *
 
 PI2 = 2.0*3.1415926535			# 2 * PI (not squared!) 		// PI Squared
 
@@ -49,6 +50,13 @@ def BuildFrictionConeBasis(mu_s):
 	print V
 	"""
 	return V
+
+def ibits(i,pos,len):
+	return (i >> pos) & ~(-1 << len)
+
+def sign(x):
+	if x is 0: return -1
+	else: return 1
 
 #
 # Calcualte box corner position and velocity for given state

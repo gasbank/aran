@@ -56,12 +56,6 @@ def BuildFrictionConeBasis(mu):
 	"""
 	return V
 
-def ibits(i,pos,len):
-	return (i >> pos) & ~(-1 << len)
-def sign(x):
-	if x is 0: return -1
-	else: return 1
-
 #
 # Calcualte box corner position and velocity for given state
 #

@@ -53,6 +53,16 @@ def RenderFancyGlobalAxis(quadric, arrowlen, arrowtiplen, arrowthickness):
 	RenderArrow(quadric, arrowlen, arrowtiplen, arrowthickness)
 	glPopMatrix()
 
+def DrawMuscleFiber3(origin, insertion, thickness, dc):
+	glPushAttrib(GL_LINE_BIT | GL_LIGHTING_BIT)
+	glLineWidth(thickness)
+	glColor3f(dc[0], dc[1], dc[2])
+	glBegin(GL_LINES)
+	glVertex3f(origin[0], origin[1], origin[2])
+	glVertex3f(insertion[0], insertion[1], insertion[2])
+	glEnd()
+	glPopAttrib()
+	
 def DrawMuscleFiber2(quadric, origin, insertion, radius1, radius2, dc):
 	direction = insertion - origin
 	length = linalg.norm(direction)
