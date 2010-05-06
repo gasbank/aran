@@ -40,15 +40,6 @@ r_i = [ v
         quat_mult(qd, qbarqd) + 0.5*quat_mult(q, [0; omegatildot]) ];
 r_i = simplify(r_i)
 
-%% 'q_i' computation
-
-% Body-fixed position of the muscle fiber (in body cooridnates)
-syms fibbx fibby fibbz real
-syms fibbFx fibbFy fibbFz real
-
-fibb = [fibbx fibby fibbz]';
-fibbF = [fibbFx fibbFy fibbFz]';
-q_i = Compute__q_i(q, m, Iinv, fibb, fibbF);
 
 
 %% 'CapQ_i (Q_i)' computation
@@ -60,12 +51,14 @@ q_i = Compute__q_i(q, m, Iinv, fibb, fibbF);
 syms px_ki py_ki pz_ki qx_ki qy_ki qz_ki qw_ki real
 syms vx_ki vy_ki vz_ki qdx_ki qdy_ki qdz_ki qdw_ki real
 syms fibbx_ki fibby_ki fibbz_ki real
+syms m_ki Ixx_ki Iyy_ki Izz_ki real
 
 syms px_ji py_ji pz_ji qx_ji qy_ji qz_ji qw_ji real
 syms vx_ji vy_ji vz_ji qdx_ji qdy_ji qdz_ji qdw_ji real
 syms fibbx_ji fibby_ji fibbz_ji real
+syms m_ji Ixx_ji Iyy_ji Izz_ji real
 
-syms A_i xrest KSE KPE b Ten real % Muscle fiber related params
+syms A_i xrest_i KSE_i KPE_i b_i Ten_i real % Muscle fiber related params
 
 p_ki = [px_ki py_ki pz_ki]'; % Position
 q_ki = [qw_ki qx_ki qy_ki qz_ki]'; % Orientation
@@ -73,6 +66,7 @@ qbar_ki = [qw_ki -qx_ki -qy_ki -qz_ki]'; % Conjugate quaternion
 v_ki = [vx_ki vy_ki vz_ki]'; % Velocity
 qd_ki = [qdw_ki qdx_ki qdy_ki qdz_ki]'; % Orientation rate of change
 fibb_ki = [ fibbx_ki fibby_ki fibbz_ki ]';
+Iinv_ki = diag([1/Ixx_ki 1/Iyy_ki 1/Izz_ki]);
 
 p_ji = [px_ji py_ji pz_ji]'; % Position
 q_ji = [qw_ji qx_ji qy_ji qz_ji]'; % Orientation
@@ -80,6 +74,7 @@ qbar_ji = [qw_ji -qx_ji -qy_ji -qz_ji]'; % Conjugate quaternion
 v_ji = [vx_ji vy_ji vz_ji]'; % Velocity
 qd_ji = [qdw_ji qdx_ji qdy_ji qdz_ji]'; % Orientation rate of change
 fibb_ji = [ fibbx_ji fibby_ji fibbz_ji ]';
+Iinv_ji = diag([1/Ixx_ji 1/Iyy_ji 1/Izz_ji]);
 
 omega_ki = 2*quat_mult(qbar_ki, qd_ki);
 omega_ki = simplify(omega_ki(2:4));
@@ -100,13 +95,13 @@ fibbdW_ji = simplify(v_ji + fibbdW_ji_temp(2:4));
 fibDiffW = simplify(fibbW_ji - fibbW_ki);
 fiblen = simplify(sqrt(dot(fibDiffW, fibDiffW)));
 fibDirW = fibDiffW / fiblen;
-deltax = simplify(fiblen - xrest);
+deltax = simplify(fiblen - xrest_i);
 xd = dot(fibDirW, fibbdW_ji - fibbdW_ki);
-T_i = simplify(KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*Ten + A_i), 10);
+Tend_i = KSE_i/b_i*(KPE_i*deltax + b_i*xd - (1+KPE_i/KSE_i)*Ten_i + A_i);
 
 % q_i affects origin body (q^k_i)
-q_i_org = 0;
+q_i_org = Compute__q_i(q_ki, m_ki, Iinv_ki, fibb_ki, Ten_i*fibDirW);
 % q_i affects insertion body (q^j_i)
-q_i_ins = 0;
+q_i_ins = Compute__q_i(q_ji, m_ji, Iinv_ji, fibb_ji, -Ten_i*fibDirW);
 
-
+diff(q_i_org, qx_ki)

@@ -1,4 +1,4 @@
-function q_i = Compute__q_i(q, m, Iinv, fibb, fibbF)
+function q_i = Compute__q_i(q, m, Iinv, fibb, fibbFW)
 % 'q_i' computation
 % i-th rigid body motion affected only by a muscle fiber
 % a muscle fiber is connected to the position fibb (in body coordinates)
@@ -10,8 +10,8 @@ function q_i = Compute__q_i(q, m, Iinv, fibb, fibbF)
 qbar = [q(1) -q(2) -q(3) -q(4)]'; % Conjugate quaternion
 
 % fibbForceW: Force vector in global coordinates
-fibbFWtemp = quat_mult(q, quat_mult([0; fibbF], qbar));
-fibbFW = simplify(fibbFWtemp(2:4));
+fibbFtemp = quat_mult(qbar, quat_mult([0; fibbFW], q));
+fibbF = simplify(fibbFtemp(2:4));
 % Torque effects the body in body coordinates
 torque = cross(fibb, fibbF);
 
