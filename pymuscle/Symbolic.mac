@@ -42,23 +42,15 @@ Y : append(p, q, v, qd)$
 
 r_i$
 
+optimprefix:_x;
 r_i_optimized : optimize(r_i)$
+load("PrintClike.mac");
+WriteBlockToClike("r_i", r_i_optimized);
 
-
-/*
-fortran(r_i_optimized);
-fortran(sin(x)+cos(y)^2);
-quit();
-*/
 
 dr_idY : optimize(jacobian(r_i, Y));
-stringout("dridy.txt", dr_idY);
-save("dridy.lisp", dr_idY);
+WriteBlockToClike("dr_idY", dr_idY);
 quit();
-fortran(dr_idY);
-
-quit();
-
 
 /*
 %% 'CapQ_i (Q_i)' computation
