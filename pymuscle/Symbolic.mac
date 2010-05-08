@@ -45,12 +45,12 @@ r_i$
 optimprefix:_x;
 r_i_optimized : optimize(r_i)$
 load("PrintClike.mac");
-WriteBlockToClike("r_i", r_i_optimized);
+WriteBlockToClike("r_i", r_i_optimized, [14,1]);
 
 
 dr_idY : optimize(jacobian(r_i, Y));
-WriteBlockToClike("dr_idY", dr_idY);
-quit();
+WriteBlockToClike("dr_idY", dr_idY, [14,14]);
+
 
 /*
 %% 'CapQ_i (Q_i)' computation
@@ -78,11 +78,11 @@ fibb_ji : [ fibbx_ji, fibby_ji, fibbz_ji ]$
 Iinv_ji : matrix([1/Ixx_ji,0,0],[0,1/Iyy_ji,0],[0,0,1/Izz_ji])$
 
 omega_ki : rest(2*quat_mult(qbar_ki, qd_ki), 1)$
-fibbW_ki : rest(quat_mult(q_ki, quat_mult(append([0], fibb_ki), qbar_ki)), 1)$
+fibbW_ki : p_ki + rest(quat_mult(q_ki, quat_mult(append([0], fibb_ki), qbar_ki)), 1)$
 fibbdW_ki : v_ki + rest(quat_mult(q_ki, quat_mult(append([0], cross(omega_ki, fibb_ki)), qbar_ki)), 1)$
 
 omega_ji : rest(2*quat_mult(qbar_ji, qd_ji), 1)$
-fibbW_ji : rest(quat_mult(q_ji, quat_mult(append([0], fibb_ji), qbar_ji)), 1)$
+fibbW_ji : p_ji + rest(quat_mult(q_ji, quat_mult(append([0], fibb_ji), qbar_ji)), 1)$
 fibbdW_ji : v_ji + rest(quat_mult(q_ji, quat_mult(append([0], cross(omega_ji, fibb_ji)), qbar_ji)), 1)$
 
 
@@ -92,30 +92,56 @@ Tension
 */
 fibDiffW : fibbW_ji - fibbW_ki$
 fiblen : sqrt(fibDiffW . fibDiffW)$
+/* fiblen TEST
+length(fiblen);
+fiblen;
+at(fiblen, [px_ki = 1,   py_ki = 0, pz_ki = 3, qw_ki = 1, qx_ki = 0, qy_ki = 0, qz_ki = 0, fibbx_ki = 0, fibby_ki = 0, fibbz_ki = 0,
+ px_ji = 0.5, py_ji = 0, pz_ji = 3, qw_ji = 1, qx_ji = 0, qy_ji = 0, qz_ji = 0, fibbx_ji = 0, fibby_ji = 0, fibbz_ji = 0 ]);
+*/
 fibDirW : fibDiffW / fiblen$
 deltax : fiblen - xrest$
 xd : fibDirW . (fibbdW_ji - fibbdW_ki)$
 Tend_i : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*Ten_i + A_i)$
 
-optimize(Tend_i)$
+Tend_i_optimized : optimize(Tend_i)$
 
-diff(Tend_i, px_ki)$
-diff(Tend_i, py_ki)$
-diff(Tend_i, pz_ki)$
-diff(Tend_i, qw_ki)$
-diff(Tend_i, qx_ki)$
-diff(Tend_i, qy_ki)$
-diff(Tend_i, qz_ki)$
-diff(Tend_i, vx_ki)$
-diff(Tend_i, vy_ki)$
-diff(Tend_i, vz_ki)$
-diff(Tend_i, qdw_ki)$
-diff(Tend_i, qdx_ki)$
-diff(Tend_i, qdy_ki)$
-diff(Tend_i, qdz_ki)$
-diff(Tend_i, Ten_i)$ /* ratsimp() can be used */
+WriteBlockToClike("Tend_i", Tend_i_optimized, [1,1]);
 
-quit();
+/********************** y_ki / y_ji ***************************/
+
+y_ki : [px_ki, py_ki, pz_ki, qw_ki, qx_ki, qy_ki, qz_ki, vx_ki, vy_ki, vz_ki, qdw_ki, qdx_ki, qdy_ki, qdz_ki];
+dTend_idy_ki : makelist(concat("dTend_idy_ki",i),i,1,length(y_ki))$
+for j:1 thru length(y_ki) do (
+	/*ldisplay(y_ki[j]),*/
+	dTend_idy_ki[j] : diff(Tend_i, y_ki[j])
+	/*ldisplay(dTend_idy_ki[j])*/
+)$
+length(dTend_idy_ki);
+display("Optimizing...");
+dTend_idy_ki_optimized : optimize(dTend_idy_ki)$
+display("Optimized.");
+WriteBlockToClike("dTend_idy_ki", dTend_idy_ki_optimized, [1,14]);
+
+
+
+y_ji : [px_ji, py_ji, pz_ji, qw_ji, qx_ji, qy_ji, qz_ji, vx_ji, vy_ji, vz_ji, qdw_ji, qdx_ji, qdy_ji, qdz_ji];
+dTend_idy_ji : makelist(concat("dTend_idy_ji",i),i,1,length(y_ji))$
+for j:1 thru length(y_ji) do (
+	/*ldisplay(y_ji[j]),*/
+	dTend_idy_ji[j] : diff(Tend_i, y_ji[j])
+	/*ldisplay(dTend_idy_ji[j])*/
+)$
+length(dTend_idy_ji);
+display("Optimizing...");
+dTend_idy_ji_optimized : optimize(dTend_idy_ji)$
+display("Optimized.");
+WriteBlockToClike("dTend_idy_ji", dTend_idy_ji_optimized, [1,14]);
+
+
+WriteBlockToClike("dTend_idTen_i", optimize(ratsimp(diff(Tend_i, Ten_i))), [1,1]);
+
+
+/*************** s_ki / s_ji ************************/
 
 fibbFW : Ten_i*fibDirW$
 fibbF : rest(quat_mult(qbar_ki, quat_mult(append([0], fibbFW), q_ki)),1)$
@@ -125,21 +151,54 @@ omegabardot : Iinv_ki.(0+torque)$
 s_ki : append([ 0,0,0,  0,0,0,0 ],  (fibbFW)/m_ki, 0.5*quat_mult(q_ki, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
 length(s_ki);
 
-diff(s_ki, px_ki);
-diff(s_ki, py_ki)$
-diff(s_ki, pz_ki)$
-diff(s_ki, qw_ki)$
-diff(s_ki, qx_ki)$
-diff(s_ki, qy_ki)$
-diff(s_ki, qz_ki)$
-diff(s_ki, vx_ki)$
-diff(s_ki, vy_ki)$
-diff(s_ki, vz_ki)$
-diff(s_ki, qdw_ki)$
-diff(s_ki, qdx_ki)$
-diff(s_ki, qdy_ki)$
-diff(s_ki, qdz_ki)$
-diff(s_ki, Ten_i)$
+WriteBlockToClike("s_ki", optimize(s_ki), [14,1])$
+
+fibbFW : -Ten_i*fibDirW$
+fibbF : rest(quat_mult(qbar_ji, quat_mult(append([0], fibbFW), q_ji)),1)$
+torque : cross(fibb_ji, fibbF)$
+omegabardot : Iinv_ji.(0+torque)$
+
+s_ji : append([ 0,0,0,  0,0,0,0 ],  (fibbFW)/m_ji, 0.5*quat_mult(q_ji, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
+length(s_ji);
+
+WriteBlockToClike("s_ji", optimize(s_ji), [14,1])$
+
+
+quit();
+
+/*
+ds_kidy_ki : makelist(concat("ds_kidy_ki",i),i,1,length(y_ki))$
+for j:1 thru length(y_ki) do (
+	ds_kidy_ki[j] : diff(s_ki, y_ki[j])
+)$
+length(ds_kidy_ki);
+*/
+ds_kidy_ki : jacobian(s_ki, y_ki)$
+display("Optimizing...");
+ds_kidy_ki_optimized : optimize(ds_kidy_ki)$
+display("Optimized.");
+WriteBlockToClike("ds_kidy_ki", ds_kidy_ki_optimized, [14,14]);
+
+
+/*
+diff(s_i, px_ki);
+diff(s_i, py_ki)$
+diff(s_i, pz_ki)$
+diff(s_i, qw_ki)$
+diff(s_i, qx_ki)$
+diff(s_i, qy_ki)$
+diff(s_i, qz_ki)$
+diff(s_i, vx_ki)$
+diff(s_i, vy_ki)$
+diff(s_i, vz_ki)$
+diff(s_i, qdw_ki)$
+diff(s_i, qdx_ki)$
+diff(s_i, qdy_ki)$
+diff(s_i, qdz_ki)$
+diff(s_i, Ten_i)$
+*/
+
+
 
 /*
 

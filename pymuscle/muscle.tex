@@ -1,16 +1,196 @@
 \documentclass[a4paper,10pt]{article}
-\usepackage[landscape]{geometry}
+%\usepackage[landscape]{geometry}
 \begin{document}
 
 
 %%%%%%%%% TITLE
-\title{Biped Control with a Biomechanical Model}
+\title{A biomechanical approach on biped dynamics}
 
 \author{Geoyeob Kim\\
-KAIST
+Computer Graphics Lab., KAIST
 }
 \date{2010}
 \maketitle
+
+\section{Introduction}
+Biped character animation technique is a very interesting
+research topic since it is an essential component of almost every movies
+and video game industries. By designing and controlling the character
+with a consistent dynamics model, a realistic and physically correct
+motion can be synthesized automatically instead of manually keyframing
+the motion. There has been a lot of approaches related to
+synthesize the character motion with a physically-simulated manner.
+Most of these work are based on a model with articulated figures and
+actuacted joint motors. In this model, human's body parts are considered
+as rigid bodies. Joints are connecting these rigid bodies. This kind of model is
+vastly used since it is suitable to formulate the Lagrangian equation of motion
+using the generalized coordinates which helps to reduce the number of degree of freedom(DoF).
+The joints used in the model are ideal rigid joints, which means
+each of them connects the two rigid bodies with a certain DoF. For example,
+a hinge joint which has 1-DoF is used at knees or elbows and a ball joint
+which has 3-DoF is used at hips. Actuation on the joints are occured
+in their respecive DoFs. So it is natural to call these kind of joints
+\emph{motor joints}. Various animations can be created by controlling these joint
+motors properly. In robotics area, this kind of approach is much more
+common. So far the heart of creating the motion with dynamics model is
+how to design motor controllers.
+
+However, the motor joints are inherently nonsense in the perspective of
+physical realism. No human has that kind of motors in their joints.
+Instead, they control their legs or arms by pulling bones using attached
+muscle fibers. This mechanism is quite complicated to understand completely.
+However, the structure of human muscle fibers is well-known and the biomechanical
+experiments concerning the most basic actions like walking are exist.
+
+This thesis introduces a biomechanical approach on biped dynamics. Basically,
+we introduces muscle fibers as the only actuating elements
+of the biped and get rids of all motor joints existed in typical biped
+model. Joints are not rigid anymore. Instead, in the place of joints,
+we use ligaments to hold the bodies firmly but not rigidly to simulate
+cartilages. The ligaments connecting rigid bodies provide a shock absorption
+structure to sustain stability when external or internal disturbances exist.
+Besides, we control the rigid bodies with muscle fibers which are modeled as
+spring-damper system. Every muscle fiber has a linear actuator and the
+motions are created by controlling these actuators. Instead of controlling
+the bodies with motor joints, it is highly effective in energy concern
+since torques are created more easily by pulling the bones with the muscle fiber.
+
+Gait analysis is also very extensively studied area. It concerns the
+mechanisms of human locomotion by throughly experementing and measuring
+the subjects. They classified the human walking cycle into some divisions
+and each division has its own objectvies. The most of work so far did not
+exploit this kind of research results. They rely on optimization-based
+techniques such as a motion tracker with linear quadratic regulator (LQR)
+or a optimizer with heuristic objective functions not concerning the
+biological human behavior.
+
+The optimization-based approach is also used in this thesis. However,
+we take gait phases analyzed in [Perry] into account. Given motion
+capture data containing locomotion of human, we classify the motion
+sequence automatically into respective phases. For each phase,
+an optimization formulation is built to calculate muscle actuation forces
+of our biped model. The passive and active muscles are explicitly defined
+with respect to a phase. This helps our approach speed-up the simulation
+and also gives more energy-efficient and biologically-correct result.
+
+Since the goal of motion synthesizing of humanoid characters is to
+create desired and realistic motion without laborious keyframing, we
+need not only a proper controlling scheme but also 
+
+
+
+\section{Related work}
+
+\section{Problem definition}
+
+\section{Biped dynamics}
+
+Rigid body dynamics are commonly used in physical character model.
+Our character model consists of 7 rigid bodies. One of these is
+head-trunk-arms (HAT) body. By using HAT instead of every upper body
+part, we can concentrate our concern to legs which are essential to
+walking. The forward dynamics algorithm gives the following equation:
+
+
+\begin{equation}
+\ddot\chi =\mathbf{M}^{-1}(\chi) ( \tau - C(\chi,\dot\chi) )
+\end{equation}
+where $\mathbf{M}$ is a mass matrix and $\chi$ is a linear and angular position
+vector and $\dot\chi$, $\ddot\chi$ are its first and second time derivatives,
+respectively. $C$ represents all the other forces except the actuated and
+external forces represented as $\tau$. For the case of freely moving single
+rigid body with 6-DoF, $\mathbf{M}$ will be $6\times 6$ matrix and $\chi$,
+$\tau$ and $C$ will be a 6-dimensional vector.
+
+We define a discrete-time state vector $Y$. For brevity, we use $Y^{(l)}$
+to indicate a discrete-time value of $Y$ at $l$-th time step $Y(t_l)$.
+We use an explicit Euler integration
+scheme using both $Y$ and the equations of motion to yield a complete
+forward dynamics formulation.
+
+
+\begin{equation}
+Y^{(l)} =
+\left[ {\begin{array}{cc}
+ \chi^{(l)}   \\
+ \dot\chi^{(l)}   \\
+ \end{array} } \right]
+\end{equation}
+
+
+\begin{equation}
+f(Y^{(l)})=\dot{Y}^{(l)}
+=
+\left[ {\begin{array}{cc}
+ \dot\chi^{(l)}   \\
+ \ddot\chi^{(l)}   \\
+ \end{array} } \right]
+ =
+\left[ {\begin{array}{cc}
+ \dot\chi^{(l)}   \\
+ \mathbf{M}^{-1}(\chi^{(l)}) ( \tau^{(l)} - C(\chi^{(l)},\dot\chi^{(l)}) )   \\
+ \end{array} } \right]
+\end{equation}
+
+\begin{equation}
+Y^{(l+1)}=Y^{(l)}+hf(Y^{(l)})
+\end{equation}
+
+\subsection{Rigid body dynamics}
+
+\subsection{Muscle fiber model}
+
+There are many variants of muscle model used in biomechanical area range
+from a simple spring model to a time-varying nonlinear model. Although
+a more sophisticated model gives us a more realistic behavior, unnecessarily
+complicated models will make the biped hard to simulate. For a compromise,
+we use one of the simplest time-invariant spring-damper model described in [Shadmehr].
+Basically, the model consists of two springs and a viscous damper.
+The damper and the spring are connected in parallel and one spring is
+connected in serial way. The active component in which our controller
+can actuate resides in parallel side. A bundle of muscle fibers can be
+categorized according to their structure and we treat this bundle as
+a single fiber to simplify the model. For each muscle fiber, we need three
+parameters: a serial spring constant $k_{se}$, a parallel spring constant $k_{pe}$,
+a viscosity $b$ and a rest length $x_{r}$. The model can be formulated
+as a first-order ordinary differential equation of a tension $T$ exerted
+at the end of the fiber:
+
+\begin{equation}
+\dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+A   \right)
+\end{equation}
+where $x$ is the length of the fiber and $A$ is applied force in the active
+component. Note that every quantities shown in the equation are scalar values.
+Since a muscle fiber always connects two bones (rigid bodies) and the
+tension applied to the both of them, we need a clear definition of signedness
+of the tension $T$. Researchers in biology defined the term $origin$ and $insertion$.
+Origin and insertion indicate where a muscle fiber originated from and inserted
+to, repectively. If we call the origin and insertion position of the fiber
+as $p_{org}$ and $p_{ins}$, the normalized direction of the fiber can be
+defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$. With these quantities, we can think that
+the tension $T\hat{d}$ and $-T\hat{d}$ are applied to the origin and insertion body
+of the fiber, respectively.
+
+THE INTERPRETATION OF THE EQUATION GOES HERE
+
+\subsection{Whole biped model}
+
+By modeling the bones as rigid bodies and the bunch of muscles as muscle
+fibers described so far, we can build the whole biped model.
+
+
+\section{Contact model}
+
+\section{Implicit integration}
+
+\section{Gait phases}
+
+\section{Controller design}
+
+
+\section{Result}
+
+\section{Conclusion}
 
 
 \begin{equation}
