@@ -156,7 +156,7 @@ a viscosity $b$ and a rest length $x_{r}$. The model can be formulated
 as a first-order ordinary differential equation of a tension $T$ exerted
 at the end of the fiber:
 
-\begin{equation}
+\begin{equation}\label{muscle-ode}
 \dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+A   \right)
 \end{equation}
 where $x$ is the length of the fiber and $A$ is applied force in the active
@@ -176,12 +176,229 @@ THE INTERPRETATION OF THE EQUATION GOES HERE
 \subsection{Whole biped model}
 
 By modeling the bones as rigid bodies and the bunch of muscles as muscle
-fibers described so far, we can build the whole biped model.
+fibers described so far, we can build the whole biped model. Assume that
+we have $n$ rigid bodies and $m$ muscle fibers on the biped. The state vector
+$Y$ can be defined:
 
+\begin{equation}
+Y = [ p_1, q_1, \dot{p}_1, \dot{q}_1, \cdots ,
+      p_n, q_n, \dot{p}_n, \dot{q}_n,
+      T_1, \cdots, T_m]
+\end{equation}
+where $p_i$ and $q_i$ represent linear and angular position of body $i$.
+Note that we omitted the transpose operator on vector quantities like $p$,
+$q$ and $Y$ for brevity. Time derivate of the state vector can be easily
+formulated.
+
+\begin{equation}
+\dot{Y} = [ \dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1, \cdots ,
+            \dot{p}_n, \dot{q}_n, \ddot{p}_n, \ddot{q}_n,
+            \dot{T}_1, \cdots, \dot{T}_m]
+\end{equation}
+Our concern is mostly concentrated to the quantities like $\ddot{p}$,
+$\ddot{q}$ and $\dot{T}$ since the differential equations are fomulated
+in these variables. The vector $\dot{Y}$ is mixture
+of the dynamic formula for rigid bodies and muscle fibers. We can separate
+the vector into two parts to help the further analysis and control like the
+following:
+
+\begin{eqnarray*}\label{dotY1}
+\dot{Y} & = & [ \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, \cdots ,
+                \dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n,
+                0, \cdots, 0] \\
+        &   & + [ 0, 0, \ddot{\bar{p}}_1, \ddot{\bar{q}}_1, \cdots ,
+                0, 0, \ddot{\bar{p}}_n, \ddot{\bar{q}}_n,
+                \dot{T}_1, \cdots, \dot{T}_m]\\
+        & = & \dot{Y}_R + \dot{Y}_Q
+\end{eqnarray*}
+Since we separate the rigid body parts and muscle fiber parts, if we
+assume $\dot{Y}_Q$ equals to 0 we simply simulate the $n$ individual
+rigid bodies freely move around the space with rotations. If we develop
+this kind of separation process further, we get the equations:
+
+\begin{eqnarray*}\label{dotY2}
+\dot{Y}_R & = & [ (\dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1),
+                  0_{4x}, (0, \cdots , 0)]\\
+          &   & + [ 0_{4x}, (\dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2),
+                  0_{4x}, (0, \cdots , 0)]\\
+          &   & + \cdots\\
+          &   & + [ 0_{4x}, (\dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n),
+                  (0, \cdots , 0)]\\
+          & = & \sum_{i=1}^{n}{\dot{Y}_{R,i}}\\
+\dot{Y}_Q & = & [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}),
+                  0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}),
+                  0_{4x}, (\dot{T}_1, 0, \cdots, 0)]\\
+          &   & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}),
+                    0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}),
+                    0_{4x}, (0, \dot{T}_2, 0, \cdots, 0)]\\
+          &   & + \cdots\\
+          &   & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{org}, \ddot{\bar{q}}_{T,m}^{org}),
+                    0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{ins}, \ddot{\bar{q}}_{T,m}^{ins}),
+                    0_{4x}, (0, \cdots, 0, \dot{T}_m)]\\
+          & = & \sum_{i=1}^{m}{\dot{Y}_{Q,i}}\\
+\end{eqnarray*}
+Here $0_{4x}$ denotes an arbitrary zero vector whose dimension is multiple of four.
+Parentheses are added just for clarify the structure.
+$\dot{Y}_{R,i}$ represents the first derivative of the state vector of the body $i$
+when there is no muslce fiber attached to it. $\dot{Y}_{Q,i}$ denotes the effects of
+the muscle fiber $i$ affecting the origin and insertion body. Specifically,
+$ \ddot{\bar{p}}_{T,i}^{org} $ and $ \ddot{\bar{q}}_{T,i}^{org} $ are the force and
+torque affecting the origin body. This kind of separation gives us a simplified
+way to analyze the whole system. For instance, if we set $\dot{Y}_{Q_i}$ to 0 then
+the effect of muscle fiber $i$ is entirely removed from the simulation.
 
 \section{Contact model}
 
 \section{Implicit integration}
+
+Most of rigid body systems can be simulated using an explicit Euler method
+as far as there is no stiff component exists. The explicit integration
+allows us a simple implementation and fast computation of a next state,
+however, it has the potential of unstability when the time step is larger
+then a certain threshold. The threshold is mainly determined by a time
+constant of a given differential equation we need to integrate. In our case, the time
+constant is dominated by muscle fibers because they consists
+of highly stiff springs (\ref{muscle-ode}). Even if we use very small time step
+such as $h=10^{-6}$, our system diverges very quickly with the explicit
+integration. To make the simulation stable, we used an implicit integration
+method.
+
+\begin{equation}
+Y^{(l+1)}=Y^{(l)}+hf(Y^{(l+1)})
+\end{equation}
+That is, we want to find the next state $Y^{(l+1)}$ where we
+reverse the time step by $-h$ from $Y^{(l+1)}$, we get to the current state
+$Y^{(l)}$. In most cases, $f$ is a nonlinear function of $Y$, so we need to
+linearize it to find closed form solution of $Y^{(l+1)}$. If we define a
+variable $\Delta Y = Y^{(l+1)}-Y^{(l)}$, it can be calculated using the
+following equation:
+
+\begin{equation}
+\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} f(Y^{(l)})
+\end{equation}
+where $\mathbf{1}$ is an identity matrix. We need an analytic form of
+Jacobian $\partial f / \partial Y$ to calculate the next state in the
+implicit integration. From (\ref{dotY1}) and (\ref{dotY2}), we can see that
+Jacobian also can be calculated in separated manner.
+
+\begin{eqnarray*}
+\frac{\partial f}{\partial Y}
+        & = & \frac{\partial\dot{Y}}{\partial Y}\\
+        & = & \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\\
+        & = & \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
+\end{eqnarray*}
+
+
+\section{A concrete example}
+
+To explain the dynamics model in more specific manner, let us consider
+a concrete example consists of three rigid bodies $R_1$, $R_2$ and $R_3$
+and three muscle fibers $F_1$, $F_2$ and $F_3$. $R_1$ and $R_2$ are connected
+by both of $F_1$ and $F_2$ whereas $F_3$ connects $R_2$ and $R_3$. The
+origin and insertion of muscle fibers are described in Figure xx.
+
+A 45-dimension state vector $Y$ is
+
+\begin{eqnarray*}
+Y & = & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\\
+  &   &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\\
+  &   &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\\
+  &   & T_1, T_2, T_3]^T
+\end{eqnarray*}
+where all variables are scalers. You may notice that we used quaternions
+to parameterize the rotation of rigid bodies. This allows us a freedom
+from the gimbal lock problem by sacrificing dimensional complexity. From
+now on, we will denote the three or four dimentional vectors is its shorthand
+form, i.e., $p_i=[p_i^x, p_i^y, p_i^z]^T$ and $q_i=[q_i^w, q_i^x, q_i^y, q_i^z]^T$.
+
+\begin{eqnarray*}
+\dot{Y} & = & [\dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1,
+               \dot{p}_2, \dot{q}_2, \ddot{p}_2, \ddot{q}_2,
+               \dot{p}_3, \dot{q}_3, \ddot{p}_3, \ddot{q}_3,
+               \dot{T}_1, \dot{T}_2, \dot{T}_3]
+\end{eqnarray*}
+Again we omit the transpose operators at the places where they needed
+unless the omission misleads our exposition.
+
+
+\begin{eqnarray*}
+\dot{Y}_R & = & \dot{Y}_{R,1} + \dot{Y}_{R,2} + \dot{Y}_{R,3}\\
+          & = & [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\\
+          &   & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\\
+          &   & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]
+\end{eqnarray*}
+\begin{eqnarray*}
+\dot{Y}_Q & = & \dot{Y}_{Q,1} + \dot{Y}_{Q,2} + \dot{Y}_{Q,3}\\
+          & = &   [ 0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}, 0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}, 0, 0, 0, 0, \dot{T}_1, 0, 0 ]\\
+          &   & + [ 0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}, 0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}, 0, 0, 0, 0, 0, \dot{T}_2, 0 ]\\
+          &   & + [ 0, 0, \ddot{\bar{p}}_{T,3}^{ins}, \ddot{\bar{q}}_{T,3}^{ins}, 0, 0, 0, 0, 0, 0, \ddot{\bar{p}}_{T,3}^{org}, \ddot{\bar{q}}_{T,3}^{org}, 0, 0, \dot{T}_3 ]
+\end{eqnarray*}
+\begin{eqnarray*}
+\frac{\partial f}{\partial Y}
+        & = & \frac{\partial\dot{Y}_{R,1}}{\partial Y} + \frac{\partial\dot{Y}_{R,2}}{\partial Y} + \frac{\partial\dot{Y}_{R,3}}{\partial Y}
+              + \frac{\partial\dot{Y}_{Q,1}}{\partial Y} + \frac{\partial\dot{Y}_{Q,2}}{\partial Y} + \frac{\partial\dot{Y}_{Q,3}}{\partial Y}
+\end{eqnarray*}
+
+
+\begin{equation}
+y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
+\end{equation}
+
+\begin{equation}
+\dot{y}_{R,i} = [\dot{p}_i, \dot{q}_i, \ddot{\tilde{p}}_i, \ddot{\tilde{q}}_i]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,1}}{\partial Y}=
+\left[ \begin{array}{cccc}
+\partial \dot{y}_{R,1} / \partial y_1  & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\end{array} \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,2}}{\partial Y}=
+\left[ \begin{array}{cccc}
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & \partial \dot{y}_{R,2} / \partial y_2 & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,3}}{\partial Y}=
+\left[ \begin{array}{cccc}
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
+0_{14 , 14} & 0_{14 , 14} & \partial \dot{y}_{R,3} / \partial y_3 & 0_{14 , 3}\\
+0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\end{array}  \right]
+\end{equation}
+
+
+\begin{equation}
+\dot{y}_{Q,i}^{org} = [0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}]
+\end{equation}
+
+\begin{equation}
+\dot{y}_{Q,i}^{ins} = [0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,1}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,1}^{org} / \partial y_1 & \partial\dot{y}_{Q,1}^{org} / \partial y_2 & 0_{14,14} & \partial\dot{y}_{Q,1}^{org} / \partial T_1 & 0_{14,1} & 0_{14,1}\\
+\partial\dot{y}_{Q,1}^{ins} / \partial y_1 & \partial\dot{y}_{Q,1}^{ins} / \partial y_2 & 0_{14,14} & \partial\dot{y}_{Q,1}^{ins} / \partial T_1 & 0_{14,1} & 0_{14,1}\\
+0_{14,14} & 0_{14,14} & 0_{14,14} & 0_{14,1} & 0_{14,1} & 0_{14,1} \\
+\partial\dot{T}_1 / \partial y_1 & \partial\dot{T}_1 / \partial y_2  & 0_{1,14} & \partial\dot{T}_1 / \partial T_1 & 0 & 0\\
+0_{1,14} & 0_{1,14} & 0_{1,14} & 0 & 0 & 0\\
+0_{1,14} & 0_{1,14} & 0_{1,14} & 0 & 0 & 0\\
+\end{array}  \right]
+\end{equation}
+
 
 \section{Gait phases}
 
