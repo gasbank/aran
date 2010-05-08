@@ -1,7 +1,10 @@
 \documentclass[a4paper,10pt]{article}
 %\usepackage[landscape]{geometry}
-\begin{document}
+\usepackage{color}
 
+\definecolor{orange}{rgb}{1,0.5,0}
+\definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
+\begin{document}
 
 %%%%%%%%% TITLE
 \title{A biomechanical approach on biped dynamics}
@@ -34,6 +37,7 @@ in their respecive DoFs. So it is natural to call these kind of joints
 motors properly. In robotics area, this kind of approach is much more
 common. So far the heart of creating the motion with dynamics model is
 how to design motor controllers.
+
 
 However, the motor joints are inherently nonsense in the perspective of
 physical realism. No human has that kind of motors in their joints.
@@ -348,33 +352,39 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 \dot{y}_{R,i} = [\dot{p}_i, \dot{q}_i, \ddot{\tilde{p}}_i, \ddot{\tilde{q}}_i]
 \end{equation}
 
+% User-defined macro for printing zero matrix in opaque color.
+% Should be used in math blocks.
+% Usage) \zm{2,3}
+%        \zm{}
+\newcommand{\zm}[1]{\ensuremath{ {\color{opaqueblue} 0_{#1} } }}
+
 \begin{equation}
 \frac{\partial\dot{Y}_{R,1}}{\partial Y}=
 \left[ \begin{array}{cccc}
-\partial \dot{y}_{R,1} / \partial y_1  & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\partial \dot{y}_{R,1} / \partial y_1 & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{14,14}                            & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{14,14}                            & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{3,14}                             & \zm{3,14}  & \zm{3,14}  & \zm{3,3}\\
 \end{array} \right]
 \end{equation}
 
 \begin{equation}
 \frac{\partial\dot{Y}_{R,2}}{\partial Y}=
 \left[ \begin{array}{cccc}
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & \partial \dot{y}_{R,2} / \partial y_2 & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\zm{14,14} & \zm{14,14}                            & \zm{14,14} & \zm{14,3}\\
+\zm{14,14} & \partial \dot{y}_{R,2} / \partial y_2 & \zm{14,14} & \zm{14,3}\\
+\zm{14,14} & \zm{14,14}                            & \zm{14,14} & \zm{14,3}\\
+\zm{3,14}  & \zm{3,14}                             & \zm{3,14}  & \zm{3,3}\\
 \end{array}  \right]
 \end{equation}
 
 \begin{equation}
 \frac{\partial\dot{Y}_{R,3}}{\partial Y}=
 \left[ \begin{array}{cccc}
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & 0_{14 , 14} & 0_{14 , 14} & 0_{14 , 3}\\
-0_{14 , 14} & 0_{14 , 14} & \partial \dot{y}_{R,3} / \partial y_3 & 0_{14 , 3}\\
-0_{3 , 14} & 0_{3 , 14} & 0_{3 , 14} & 0_{3 , 3}\\
+\zm{14,14} & \zm{14,14} & \zm{14,14}                            & \zm{14,3}\\
+\zm{14,14} & \zm{14,14} & \zm{14,14}                            & \zm{14,3}\\
+\zm{14,14} & \zm{14,14} & \partial \dot{y}_{R,3} / \partial y_3 & \zm{14,3}\\
+\zm{3,14}  & \zm{3,14}  & \zm{3,14}                             & \zm{3,3}\\
 \end{array}  \right]
 \end{equation}
 
@@ -390,12 +400,36 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 \begin{equation}
 \frac{\partial\dot{Y}_{Q,1}}{\partial Y}=
 \left[ \begin{array}{cccccc}
-\partial\dot{y}_{Q,1}^{org} / \partial y_1 & \partial\dot{y}_{Q,1}^{org} / \partial y_2 & 0_{14,14} & \partial\dot{y}_{Q,1}^{org} / \partial T_1 & 0_{14,1} & 0_{14,1}\\
-\partial\dot{y}_{Q,1}^{ins} / \partial y_1 & \partial\dot{y}_{Q,1}^{ins} / \partial y_2 & 0_{14,14} & \partial\dot{y}_{Q,1}^{ins} / \partial T_1 & 0_{14,1} & 0_{14,1}\\
-0_{14,14} & 0_{14,14} & 0_{14,14} & 0_{14,1} & 0_{14,1} & 0_{14,1} \\
-\partial\dot{T}_1 / \partial y_1 & \partial\dot{T}_1 / \partial y_2  & 0_{1,14} & \partial\dot{T}_1 / \partial T_1 & 0 & 0\\
-0_{1,14} & 0_{1,14} & 0_{1,14} & 0 & 0 & 0\\
-0_{1,14} & 0_{1,14} & 0_{1,14} & 0 & 0 & 0\\
+\partial\dot{y}_{Q,1}^{org} / \partial y_1 & \partial\dot{y}_{Q,1}^{org} / \partial y_2 & \zm{14,14} & \partial\dot{y}_{Q,1}^{org} / \partial T_1 & \zm{14,1} & \zm{14,1} \\
+\partial\dot{y}_{Q,1}^{ins} / \partial y_1 & \partial\dot{y}_{Q,1}^{ins} / \partial y_2 & \zm{14,14} & \partial\dot{y}_{Q,1}^{ins} / \partial T_1 & \zm{14,1} & \zm{14,1} \\
+\zm{14,14}                                 & \zm{14,14}                                 & \zm{14,14} & \zm{14,1}                                  & \zm{14,1} & \zm{14,1} \\
+\partial\dot{T}_1 / \partial y_1           & \partial\dot{T}_1 / \partial y_2           & \zm{1,14}  & \partial\dot{T}_1 / \partial T_1           & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}                                      & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}                                      & \zm{}     & \zm{} \\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,2}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,2}^{ins} / \partial y_1 & \partial\dot{y}_{Q,2}^{ins} / \partial y_2 & \zm{14,14} & \zm{14,1} & \partial\dot{y}_{Q,2}^{ins} / \partial T_2 & \zm{14,1} \\
+\partial\dot{y}_{Q,2}^{org} / \partial y_1 & \partial\dot{y}_{Q,2}^{org} / \partial y_2 & \zm{14,14} & \zm{14,1} & \partial\dot{y}_{Q,2}^{org} / \partial T_2 & \zm{14,1} \\
+\zm{14,14}                                 & \zm{14,14}                                 & \zm{14,14} & \zm{14,1} & \zm{14,1}                                  & \zm{14,1} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}     & \zm{}                                      & \zm{} \\
+\partial\dot{T}_2 / \partial y_1           & \partial\dot{T}_2 / \partial y_2           & \zm{1,14}  & \zm{}     & \partial\dot{T}_2 / \partial T_2           & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}     & \zm{}                                      & \zm{} \\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,3}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,3}^{ins} / \partial y_1 & \zm{14,14} & \partial\dot{y}_{Q,3}^{ins} / \partial y_3 & \zm{14,1} & \zm{14,1} & \partial\dot{y}_{Q,3}^{ins} / \partial T_3  \\
+\zm{14,14}                                 & \zm{14,14} & \zm{14,14}                                 & \zm{14,1} & \zm{14,1} & \zm{14,1} \\
+\partial\dot{y}_{Q,3}^{org} / \partial y_1 & \zm{14,14} & \partial\dot{y}_{Q,3}^{org} / \partial y_3 & \zm{14,1} & \zm{14,1} & \partial\dot{y}_{Q,3}^{org} / \partial T_3  \\
+\zm{1,14}                                  & \zm{1,14}  & \zm{1,14}                                  & \zm{}     & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}  & \zm{1,14}                                  & \zm{}     & \zm{}     & \zm{} \\
+\partial\dot{T}_3 / \partial y_1           & \zm{1,14}  & \partial\dot{T}_3 / \partial y_3           & \zm{}     & \zm{}     & \partial\dot{T}_3 / \partial T_3 \\
 \end{array}  \right]
 \end{equation}
 
