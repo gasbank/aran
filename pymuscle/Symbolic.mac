@@ -1,5 +1,4 @@
 load(vect)$
-load(f90)$
 
 quat_mult(q1, q2) := 
   block( [a1: q1[1], b1: q1[2], c1: q1[3], d1:q1[4],
@@ -178,36 +177,3 @@ display("Optimizing...");
 ds_kidy_ki_optimized : optimize(ds_kidy_ki)$
 display("Optimized.");
 WriteBlockToClike("ds_kidy_ki", ds_kidy_ki_optimized, [14,14]);
-
-
-/*
-diff(s_i, px_ki);
-diff(s_i, py_ki)$
-diff(s_i, pz_ki)$
-diff(s_i, qw_ki)$
-diff(s_i, qx_ki)$
-diff(s_i, qy_ki)$
-diff(s_i, qz_ki)$
-diff(s_i, vx_ki)$
-diff(s_i, vy_ki)$
-diff(s_i, vz_ki)$
-diff(s_i, qdw_ki)$
-diff(s_i, qdx_ki)$
-diff(s_i, qdy_ki)$
-diff(s_i, qdz_ki)$
-diff(s_i, Ten_i)$
-*/
-
-
-
-/*
-
-
-
-% q_i affects origin body (q^k_i)
-q_i_org = Compute__q_i(q, m, Iinv, fibb, T_i*fibDirW);
-% q_i affects insertion body (q^j_i)
-q_i_ins = Compute__q_i(q, m, Iinv, fibb, -T_i*fibDirW);
-
-
-*/
