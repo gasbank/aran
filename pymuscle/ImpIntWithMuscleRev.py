@@ -87,7 +87,7 @@ def BuildMuscleEquations(orgIdx, # Origin body's index
 	#    {org,ins}
 	#
 	dYd_QidY[nBody*14 + mIdx, orgIdx*14:(orgIdx+1)*14] = dTddy_orgins[ORIGIN,:]
-	dYd_QidY[nBody*14 + mIdx, orgIdx*14:(insIdx+1)*14] = dTddy_orgins[INSERTION,:]
+	dYd_QidY[nBody*14 + mIdx, insIdx*14:(insIdx+1)*14] = dTddy_orgins[INSERTION,:]
 
 	# (4)(5)
 	#
@@ -97,8 +97,10 @@ def BuildMuscleEquations(orgIdx, # Origin body's index
 	# ------
 	# d T
 	#
-	dYd_QidY[orgIdx*14:(orgIdx+1)*14, nBody*14 + mIdx ] = dyd_Q_orgdT
-	dYd_QidY[orgIdx*14:(insIdx+1)*14, nBody*14 + mIdx ] = dyd_Q_insdT
+	for j in range(14):
+		dYd_QidY[orgIdx*14 + j, nBody*14 + mIdx ] = dyd_Q_orgdT[j]
+	for j in range(14):
+		dYd_QidY[insIdx*14 + j, nBody*14 + mIdx ] = dyd_Q_insdT[j]
 	
 	# (6)(7)(8)(9)
 	#
