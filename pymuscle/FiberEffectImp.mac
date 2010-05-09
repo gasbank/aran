@@ -17,14 +17,14 @@ showtime: true;
  */
 /* Related to the origin body */
 p_org : [px_org, py_org, pz_org]$ /* Position */
-pd_org : [vx_org, vy_org, vz_org]$ /* Velocity */
+pd_org : [pdx_org, pdy_org, pdz_org]$ /* Velocity */
 q_org : [qw_org, qx_org, qy_org, qz_org]$ /* Orientation */
 qd_org : [qdw_org, qdx_org, qdy_org, qdz_org]$ /* Orientation rate of change */
 fibb_org : [ fibbx_org, fibby_org, fibbz_org ]$
 Iinv_org : matrix([1/Ixx_org,0,0],[0,1/Iyy_org,0],[0,0,1/Izz_org])$
 /* Related to the insertion body */
 p_ins : [px_ins, py_ins, pz_ins]$ /* Position */
-pd_ins : [vx_ins, vy_ins, vz_ins]$ /* Velocity */
+pd_ins : [pdx_ins, pdy_ins, pdz_ins]$ /* Velocity */
 q_ins : [qw_ins, qx_ins, qy_ins, qz_ins]$ /* Orientation */
 qd_ins : [qdw_ins, qdx_ins, qdy_ins, qdz_ins]$ /* Orientation rate of change */
 fibb_ins : [ fibbx_ins, fibby_ins, fibbz_ins ]$
@@ -68,87 +68,74 @@ fibDirW : fibDiffW / fiblen$ /* Normalized fiber direction */
 deltax : fiblen - xrest$
 /* Relative velocity projected to the normalized fiber direction */
 xd : fibDirW . (fibbdW_ins - fibbdW_org)$
-Td : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*T + A_i)$
+Td : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*T + A)$
 
 Td_optimized : optimize(Td)$ /* To be written */
 
 
 /*
- * Calculation of dTddy_org =
+ * Calculation of dTddy_org and dTddy_ins =
+ * 
+ *    .
+ * d  T
+ * -------
+ * d y
+ *    org
+ * 
+ * A 1x14 row vector.
  * 
  *    .
  * d  T
  * -------
  * d y
  *    ins
+ * 
+ * A 1x14 row vector.
+ * 
+ * Make these two to a 2x14 matrix called 'dTddy_orgins'.
+ * 
  */
 y_org : append(p_org, q_org, pd_org, qd_org)$
+y_ins : append(p_ins, q_ins, pd_ins, qd_ins)$
 dTddy_org : makelist(concat("dTddy_org",i),i,1,length(y_org))$
+dTddy_ins : makelist(concat("dTddy_ins",i),i,1,length(y_ins))$
 for j:1 thru length(y_org) do (
 	/*ldisplay(y_org[j]),*/
-	dTddy_org[j] : diff(Td, y_org[j])
+	dTddy_org[j] : diff(Td, y_org[j]),
+	dTddy_ins[j] : diff(Td, y_ins[j])
 	/*ldisplay(dTend_idy_org[j])*/
 )$
-length(dTddy_org);
-display("Optimizing dTddy_org...");
-dTddy_org_optimized : optimize(dTddy_org)$ /* To be written */
-display("Optimized.");
-
-/*
- * Calculation of dTddy_ins =
- * 
- *    .
- * d  T
- * -------
- * d y
- *    ins
- */
-y_ins : append(p_ins, q_ins, pd_ins, qd_ins)$
-dTddy_ins : makelist(concat("dTddy_ins",i),i,1,length(y_ins))$
-for j:1 thru length(y_ins) do (
-	/*ldisplay(y_ins[j]),*/
-	dTddy_ins[j] : diff(Td, y_ins[j])
-	/*ldisplay(dTend_idy_ins[j])*/
-)$
-length(dTddy_ins);
-display("Optimizing dTddy_ins...");
-dTddy_ins_optimized : optimize(dTddy_ins)$
+dTddy_orgins : matrix(dTddy_org, dTddy_ins)$
+display("Optimizing dTddy_orgins...");
+dTddy_orgins_optimized : optimize(dTddy_orgins)$ /* To be written */
 display("Optimized.");
 
 
 /*
- * Calculation of yd_Q_org =
+ * Calculation of yd_Q_{org/ins} =
  * 
- * . org
+ * . {org/ins}
  * y
  *   Q
- */
-fibbFW : T*fibDirW$
-fibbF : rest(quat_mult(qbar_org, quat_mult(append([0], fibbFW), q_org)),1)$
-torque : cross(fibb_org, fibbF)$
-omegabardot : Iinv_org . (0+torque)$
-yd_Q_org : append([0,0,0], [0,0,0,0], (fibbFW)/m_org, 0.5*quat_mult(q_org, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
-length(yd_Q_org);
-display("Optimizing yd_Q_org...");
-yd_Q_org_optimized : optimize(yd_Q_org)$
-display("Optimized.");
-
-/*
- * Calculation of yd_Q_ins =
  * 
- * . org
- * y
- *   Q
+ * A scalar variable 'orgOrIns' indicates
+ * whether it is yd_Q_org (if 0) or yd_Q_ins (if 1).
  */
-/* Note that the tension force direction is reversed */
-fibbFW : -1*T*fibDirW$
-fibbF : rest(quat_mult(qbar_ins, quat_mult(append([0], fibbFW), q_ins)),1)$
-torque : cross(fibb_ins, fibbF)$
-omegabardot : Iinv_ins . (0+torque)$
-yd_Q_ins : append([0,0,0], [0,0,0,0], (fibbFW)/m_ins, 0.5*quat_mult(q_ins, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
-length(yd_Q_ins);
-display("Optimizing yd_Q_ins...");
-yd_Q_ins_optimized : optimize(yd_Q_ins)$
+direction : (-2*orgOrIns+1)$
+q_xxx : (1-orgOrIns)*q_org + orgOrIns*q_ins$
+qbar_xxx : (1-orgOrIns)*qbar_org + orgOrIns*qbar_ins$
+fibb_xxx : (1-orgOrIns)*fibb_org + orgOrIns*fibb_ins$
+Iinv_xxx : (1-orgOrIns)*Iinv_org + orgOrIns*Iinv_ins$
+m_xxx : (1-orgOrIns)*m_org + orgOrIns*m_ins$
+
+fibbFW : direction*T*fibDirW$
+fibbF : rest(quat_mult(qbar_xxx, quat_mult(append([0], fibbFW), q_xxx)),1)$
+torque : cross(fibb_xxx, fibbF)$
+omegabardot : Iinv_xxx . (0+torque)$
+yd_Q_xxx : append([0,0,0], [0,0,0,0], (fibbFW)/m_xxx, 0.5*quat_mult(q_xxx, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
+length(yd_Q_xxx);
+display("Optimizing yd_Q_xxx...");
+yd_Q_xxx_optimized : optimize(yd_Q_xxx)$
 display("Optimized.");
 
 
@@ -172,47 +159,112 @@ dTddT_optimized : optimize(ratsimp(diff(Td, T)))$
  * --------
  * d T
  */
-dyd_Q_orgdT_optimized : optimize(diff(yd_Q_org, T))$
-dyd_Q_insdT_optimized : optimize(diff(yd_Q_ins, T))$
+dyd_Q_xxxdT_optimized : optimize(diff(yd_Q_xxx, T))$
 
 /*
- * Calculation of dyd_Q_orgdy_org =
+ * Calculation of dyd_Q_{org/ins}dy_org and dyd_Q_{org/ins}dy_ins =
  * 
- *    . org
+ *    . {org/ins}
  *  d y
  *      Q
  * ---------
  *  d y
  *     org
+ * 
+ * A 14 x 14 matrix.
+ * 
+ *    . {org/ins}
+ *  d y
+ *      Q
+ * ---------
+ *  d y
+ *     ins
+ * 
+ * A 14 x 14 matrix.
+ * 
+ * Concatenate two matrices to make 28 x 14 matrix 'dyd_Q_xxxdy_orgins'.
+ * 
  */
-/*
-dyd_Q_orgdy_org : jacobian(yd_Q_org, y_org)$
-display("Optimizing dyd_Q_orgdy_org...");
-dyd_Q_orgdy_org_optimized : optimize(dyd_Q_orgdy_org)$
+
+dyd_Q_xxxdy_org : jacobian(yd_Q_xxx, y_org)$
+dyd_Q_xxxdy_ins : jacobian(yd_Q_xxx, y_ins)$
+dyd_Q_xxxdy_orgins : dyd_Q_xxxdy_org$
+for j:1 thru length(dyd_Q_xxxdy_org) do (
+	dyd_Q_xxxdy_orgins : addrow(dyd_Q_xxxdy_orgins, dyd_Q_xxxdy_ins[j])
+)$
+display("Optimizing dyd_Q_xxxdy_orgins...");
+dyd_Q_xxxdy_orgins_optimized : optimize(dyd_Q_xxxdy_orgins)$
 display("Optimized.");
-*/
 
 
 /*
  * Writing phase
  */
 OpenFile("FiberEffectImp.py");
-/* Writing Yd_Q =
- * 
- * .
- * Y
- *  Q
- */
-WriteBlockToClike("yd_Q_org", yd_Q_org_optimized, [14,1])$
-WriteBlockToClike("yd_Q_ins", yd_Q_ins_optimized, [14,1])$
+WriteDirectToFile("from numpy import *~%");
+WriteDirectToFile("from math import pow, sin, cos~%");
+WriteDirectToFile("from scipy import sparse~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def FiberEffectImp_1(p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,~%");
+WriteDirectToFile("                     p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,~%");
+WriteDirectToFile("                     KSE, KPE, b, xrest, T, A):~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    px_org, py_org, pz_org = p_org~%");
+WriteDirectToFile("    qw_org, qx_org, qy_org, qz_org = q_org~%");
+WriteDirectToFile("    pdx_org, pdy_org, pdz_org = pd_org~%");
+WriteDirectToFile("    qdw_org, qdx_org, qdy_org, qdz_org = qd_org~%");
+WriteDirectToFile("    Ixx_org, Iyy_org, Izz_org = Idiag_org~%");
+WriteDirectToFile("    fibbx_org, fibby_org, fibbz_org = fibb_org~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    px_ins, py_ins, pz_ins = p_ins~%");
+WriteDirectToFile("    qw_ins, qx_ins, qy_ins, qz_ins = q_ins~%");
+WriteDirectToFile("    pdx_ins, pdy_ins, pdz_ins = pd_ins~%");
+WriteDirectToFile("    qdw_ins, qdx_ins, qdy_ins, qdz_ins = qd_ins~%");
+WriteDirectToFile("    Ixx_ins, Iyy_ins, Izz_ins = Idiag_ins~%");
+WriteDirectToFile("    fibbx_ins, fibby_ins, fibbz_ins = fibb_ins~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    dTddy_orgins = zeros((2,14))~%");
+WriteDirectToFile("~%");
+
 WriteBlockToClike("Td", Td_optimized, [1,1]);
-
-/*WriteBlockToClike("dyd_Q_orgdy_org", dyd_Q_orgdy_org_optimized, [14,14]);*/
-
-WriteBlockToClike("dTddy_org", dTddy_org_optimized, [1,14]);
-WriteBlockToClike("dTddy_ins", dTddy_ins_optimized, [1,14]);
-
-WriteBlockToClike("dyd_Q_orgdT", dyd_Q_orgdT_optimized, [14,1]);
-WriteBlockToClike("dyd_Q_insdT", dyd_Q_insdT_optimized, [14,1]);
-
 WriteBlockToClike("dTddT", dTddT_optimized, [1,1]);
+WriteBlockToClike("dTddy_orgins", dTddy_orgins_optimized, [2,14]);
+
+WriteDirectToFile("~%");
+WriteDirectToFile("    return Td, dTddy_orgins, dTddT~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("~%");
+
+
+
+WriteDirectToFile("def FiberEffectImp_2(orgOrIns,~%");
+WriteDirectToFile("                     p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,~%");
+WriteDirectToFile("                     p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,~%");
+WriteDirectToFile("                     KSE, KPE, b, xrest, T, A):~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    px_org, py_org, pz_org = p_org~%");
+WriteDirectToFile("    qw_org, qx_org, qy_org, qz_org = q_org~%");
+WriteDirectToFile("    pdx_org, pdy_org, pdz_org = pd_org~%");
+WriteDirectToFile("    qdw_org, qdx_org, qdy_org, qdz_org = qd_org~%");
+WriteDirectToFile("    Ixx_org, Iyy_org, Izz_org = Idiag_org~%");
+WriteDirectToFile("    fibbx_org, fibby_org, fibbz_org = fibb_org~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    px_ins, py_ins, pz_ins = p_ins~%");
+WriteDirectToFile("    qw_ins, qx_ins, qy_ins, qz_ins = q_ins~%");
+WriteDirectToFile("    pdx_ins, pdy_ins, pdz_ins = pd_ins~%");
+WriteDirectToFile("    qdw_ins, qdx_ins, qdy_ins, qdz_ins = qd_ins~%");
+WriteDirectToFile("    Ixx_ins, Iyy_ins, Izz_ins = Idiag_ins~%");
+WriteDirectToFile("    fibbx_ins, fibby_ins, fibbz_ins = fibb_ins~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    yd_Q_xxx = zeros((14))~%");
+WriteDirectToFile("    dyd_Q_xxxdy_orgins = sparse.lil_matrix((28, 14))~%");
+WriteDirectToFile("    dyd_Q_xxxdT = zeros((14))~%");
+WriteDirectToFile("~%");
+
+WriteBlockToClike("yd_Q_xxx", yd_Q_xxx_optimized, [14,1])$
+WriteBlockToClike("dyd_Q_xxxdy_orgins", dyd_Q_xxxdy_orgins_optimized, [28,14]);
+WriteBlockToClike("dyd_Q_xxxdT", dyd_Q_xxxdT_optimized, [14,1]);
+
+WriteDirectToFile("~%");
+WriteDirectToFile("    return yd_Q_xxx, dyd_Q_xxxdy_orgins, dyd_Q_xxxdT~%");
