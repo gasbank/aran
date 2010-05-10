@@ -1,6 +1,8 @@
 \documentclass[a4paper,10pt]{article}
 %\usepackage[landscape]{geometry}
 \usepackage{color}
+\usepackage{amsmath}
+\usepackage{graphicx}
 
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
@@ -14,6 +16,8 @@ Computer Graphics Lab., KAIST
 }
 \date{2010}
 \maketitle
+
+
 
 \section{Introduction}
 Biped character animation technique is a very interesting
@@ -37,6 +41,7 @@ in their respecive DoFs. So it is natural to call these kind of joints
 motors properly. In robotics area, this kind of approach is much more
 common. So far the heart of creating the motion with dynamics model is
 how to design motor controllers.
+
 
 
 However, the motor joints are inherently nonsense in the perspective of
@@ -285,13 +290,15 @@ Jacobian $\partial f / \partial Y$ to calculate the next state in the
 implicit integration. From (\ref{dotY1}) and (\ref{dotY2}), we can see that
 Jacobian also can be calculated in separated manner.
 
-\begin{eqnarray*}
-\frac{\partial f}{\partial Y}
-        & = & \frac{\partial\dot{Y}}{\partial Y}\\
-        & = & \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\\
-        & = & \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
-\end{eqnarray*}
 
+\begin{align*}
+\frac{\partial f}{\partial Y}
+        & = \frac{\partial\dot{Y}}{\partial Y}\\
+        & = \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\\
+        & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
+\end{align*}
+
+\includegraphics[width=120mm]{testplot}
 
 \section{A concrete example}
 
@@ -303,34 +310,34 @@ origin and insertion of muscle fibers are described in Figure xx.
 
 A 45-dimension state vector $Y$ is
 
-\begin{eqnarray*}
-Y & = & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\\
-  &   &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\\
-  &   &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\\
-  &   & T_1, T_2, T_3]^T
-\end{eqnarray*}
+\begin{align*}
+Y = {} & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\\
+       &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\\
+       &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\\
+       & T_1, T_2, T_3]^T
+\end{align*}
 where all variables are scalers. You may notice that we used quaternions
 to parameterize the rotation of rigid bodies. This allows us a freedom
 from the gimbal lock problem by sacrificing dimensional complexity. From
 now on, we will denote the three or four dimentional vectors is its shorthand
 form, i.e., $p_i=[p_i^x, p_i^y, p_i^z]^T$ and $q_i=[q_i^w, q_i^x, q_i^y, q_i^z]^T$.
 
-\begin{eqnarray*}
-\dot{Y} & = & [\dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1,
+\begin{equation}
+\dot{Y}  =  [\dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1,
                \dot{p}_2, \dot{q}_2, \ddot{p}_2, \ddot{q}_2,
                \dot{p}_3, \dot{q}_3, \ddot{p}_3, \ddot{q}_3,
                \dot{T}_1, \dot{T}_2, \dot{T}_3]
-\end{eqnarray*}
+\end{equation}
 Again we omit the transpose operators at the places where they needed
 unless the omission misleads our exposition.
 
 
-\begin{eqnarray*}
-\dot{Y}_R & = & \dot{Y}_{R,1} + \dot{Y}_{R,2} + \dot{Y}_{R,3}\\
-          & = & [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\\
-          &   & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\\
-          &   & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]
-\end{eqnarray*}
+\begin{align*}
+\dot{Y}_R = {} & \dot{Y}_{R,1} + \dot{Y}_{R,2} + \dot{Y}_{R,3}\\
+         =  {} &  [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\\
+               & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\\
+               & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]
+\end{align*}
 \begin{eqnarray*}
 \dot{Y}_Q & = & \dot{Y}_{Q,1} + \dot{Y}_{Q,2} + \dot{Y}_{Q,3}\\
           & = &   [ 0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}, 0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}, 0, 0, 0, 0, \dot{T}_1, 0, 0 ]\\
@@ -435,7 +442,10 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 
 
 \section{Gait phases}
-
+Aha!
+Change this...
+fdsfsd
+Whoooooooooooa~
 \section{Controller design}
 
 

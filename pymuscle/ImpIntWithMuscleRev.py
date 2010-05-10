@@ -18,9 +18,9 @@ INSERTION = 1
 def BuildRigidBodyEquations(rbIdx, # Origin body's index
                             nBody, # Total number of rigid bodies
                             nMuscle, # Total number of muscle fibers
-                            p, q, pd, qd, m, Idiag, Fr, Tr):
+                            body):
 	
-	yd_Ri, dyd_RidY = OneRbImp(p, q, pd, qd, m, Idiag, Fr, Tr)
+	yd_Ri, dyd_RidY = OneRbImp(body)
 
 	matSize = nBody*14 + nMuscle
 	
@@ -37,26 +37,16 @@ def BuildMuscleEquations(orgIdx, # Origin body's index
                          mIdx, # Muscle fiber's index
                          nBody, # Total number of rigid bodies
                          nMuscle, # Total number of muscle fibers
-                         p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-                         p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-                         KSE, KPE, b, xrest, T, A):
+                         body_org, body_ins,
+                         muscle):
 
-	Td, dTddy_orgins, dTddT = FiberEffectImp_1(
-		p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-		p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-		KSE, KPE, b, xrest, T, A)
+	Td, dTddy_orgins, dTddT = FiberEffectImp_1(body_org, body_ins, muscle)
 
 	yd_Q_org, dyd_Q_orgdy_orgins, dyd_Q_orgdT = FiberEffectImp_2(
-		ORIGIN,
-		p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-		p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-		KSE, KPE, b, xrest, T, A)
+	    ORIGIN, body_org, body_ins, muscle)
 
 	yd_Q_ins, dyd_Q_insdy_orgins, dyd_Q_insdT = FiberEffectImp_2(
-		INSERTION,
-		p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-		p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-		KSE, KPE, b, xrest, T, A)
+		INSERTION, body_org, body_ins, muscle)
 	
 	matSize = nBody*14 + nMuscle
 	
@@ -96,6 +86,11 @@ def BuildMuscleEquations(orgIdx, # Origin body's index
 	#     Q
 	# ------
 	# d T
+	#
+	#
+	# Seem to be this kind of assignment has a problem:
+	#
+	# dYd_QidY[orgIdx*14:(orgIdx+1)*14, nBody*14 + mIdx ] = dyd_Q_orgdT
 	#
 	for j in range(14):
 		dYd_QidY[orgIdx*14 + j, nBody*14 + mIdx ] = dyd_Q_orgdT[j]

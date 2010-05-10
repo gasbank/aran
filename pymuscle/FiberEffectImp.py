@@ -5,23 +5,24 @@ from numpy import *
 from math import pow, sin, cos
 from scipy import sparse
 
-def FiberEffectImp_1(p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-                     p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-                     KSE, KPE, b, xrest, T, A):
+def FiberEffectImp_1(body_org, body_ins, muscle):
 
-    px_org, py_org, pz_org = p_org
-    qw_org, qx_org, qy_org, qz_org = q_org
-    pdx_org, pdy_org, pdz_org = pd_org
-    qdw_org, qdx_org, qdy_org, qdz_org = qd_org
-    Ixx_org, Iyy_org, Izz_org = Idiag_org
-    fibbx_org, fibby_org, fibbz_org = fibb_org
-
-    px_ins, py_ins, pz_ins = p_ins
-    qw_ins, qx_ins, qy_ins, qz_ins = q_ins
-    pdx_ins, pdy_ins, pdz_ins = pd_ins
-    qdw_ins, qdx_ins, qdy_ins, qdz_ins = qd_ins
-    Ixx_ins, Iyy_ins, Izz_ins = Idiag_ins
-    fibbx_ins, fibby_ins, fibbz_ins = fibb_ins
+    px_org, py_org, pz_org = body_org.p
+    qw_org, qx_org, qy_org, qz_org = body_org.q
+    pdx_org, pdy_org, pdz_org = body_org.pd
+    qdw_org, qdx_org, qdy_org, qdz_org = body_org.qd
+    Ixx_org, Iyy_org, Izz_org = body_org.Idiag
+    
+    px_ins, py_ins, pz_ins = body_ins.p
+    qw_ins, qx_ins, qy_ins, qz_ins = body_ins.q
+    pdx_ins, pdy_ins, pdz_ins = body_ins.pd
+    qdw_ins, qdx_ins, qdy_ins, qdz_ins = body_ins.qd
+    Ixx_ins, Iyy_ins, Izz_ins = body_ins.Idiag
+    
+    fibbx_org, fibby_org, fibbz_org = muscle.fibb_org
+    fibbx_ins, fibby_ins, fibbz_ins = muscle.fibb_ins
+    
+    KSE, KPE, b, xrest, T, A = muscle.KSE, muscle.KPE, muscle.b, muscle.xrest, muscle.T, muscle.A
 
     dTddy_orgins = zeros((2,14))
 
@@ -448,24 +449,29 @@ def FiberEffectImp_1(p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
 
 
 
-def FiberEffectImp_2(orgOrIns,
-                     p_org, q_org, pd_org, qd_org, m_org, Idiag_org, fibb_org,
-                     p_ins, q_ins, pd_ins, qd_ins, m_ins, Idiag_ins, fibb_ins,
-                     KSE, KPE, b, xrest, T, A):
+def FiberEffectImp_2(orgOrIns, body_org, body_ins, muscle):
 
-    px_org, py_org, pz_org = p_org
-    qw_org, qx_org, qy_org, qz_org = q_org
-    pdx_org, pdy_org, pdz_org = pd_org
-    qdw_org, qdx_org, qdy_org, qdz_org = qd_org
-    Ixx_org, Iyy_org, Izz_org = Idiag_org
-    fibbx_org, fibby_org, fibbz_org = fibb_org
+    px_org, py_org, pz_org = body_org.p
+    qw_org, qx_org, qy_org, qz_org = body_org.q
+    pdx_org, pdy_org, pdz_org = body_org.pd
+    qdw_org, qdx_org, qdy_org, qdz_org = body_org.qd
+    m_org = body_org.m
+    Ixx_org, Iyy_org, Izz_org = body_org.Idiag
+    
+    
+    px_ins, py_ins, pz_ins = body_ins.p
+    qw_ins, qx_ins, qy_ins, qz_ins = body_ins.q
+    pdx_ins, pdy_ins, pdz_ins = body_ins.pd
+    qdw_ins, qdx_ins, qdy_ins, qdz_ins = body_ins.qd
+    m_ins = body_ins.m    
+    Ixx_ins, Iyy_ins, Izz_ins = body_ins.Idiag
+    
+    
+    fibbx_org, fibby_org, fibbz_org = muscle.fibb_org
+    fibbx_ins, fibby_ins, fibbz_ins = muscle.fibb_ins
+    
+    KSE, KPE, b, xrest, T, A = muscle.KSE, muscle.KPE, muscle.b, muscle.xrest, muscle.T, muscle.A
 
-    px_ins, py_ins, pz_ins = p_ins
-    qw_ins, qx_ins, qy_ins, qz_ins = q_ins
-    pdx_ins, pdy_ins, pdz_ins = pd_ins
-    qdw_ins, qdx_ins, qdy_ins, qdz_ins = qd_ins
-    Ixx_ins, Iyy_ins, Izz_ins = Idiag_ins
-    fibbx_ins, fibby_ins, fibbz_ins = fibb_ins
 
     yd_Q_xxx = zeros((14))
     dyd_Q_xxxdy_orgins = sparse.lil_matrix((28, 14))
@@ -826,104 +832,7 @@ def FiberEffectImp_2(orgOrIns,
     _x302 = orgOrIns*_x41*_x153
     _x303 = orgOrIns*_x70*_x179
     _x304 = orgOrIns*_x74*_x167
-    dyd_Q_xxxdy_orgins[  0,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  0,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  0,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  0,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  0,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  0,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  0,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  0,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  0,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  0,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  0, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  0, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  0, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  0, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  1,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  1,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  1,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  1,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  1,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  1,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  1,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  1,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  1,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  1,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  1, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  1, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  1, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  1, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  2,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  2,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  2,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  2,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  2,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  2,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  2,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  2,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  2,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  2,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  2, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  2, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  2, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  2, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  3,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  3,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  3,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  3,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  3,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  3,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  3,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  3,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  3,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  3,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  3, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  3, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  3, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  3, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  4,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  4,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  4,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  4,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  4,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  4,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  4,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  4,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  4,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  4,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  4, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  4, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  4, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  4, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  5,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  5,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  5,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  5,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  5,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  5,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  5,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  5,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  5,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  5,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  5, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  5, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  5, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  5, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[  6,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[  6,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[  6,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[  6,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[  6,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[  6,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[  6,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[  6,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[  6,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[  6,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[  6, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[  6, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[  6, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[  6, 13] = _x1[13]
+
     dyd_Q_xxxdy_orgins[  7,  0] = _x22+_x11*_x17*_x18*_x20*T
     dyd_Q_xxxdy_orgins[  7,  1] = _x23
     dyd_Q_xxxdy_orgins[  7,  2] = _x24
@@ -973,104 +882,7 @@ def FiberEffectImp_2(orgOrIns,
     dyd_Q_xxxdy_orgins[ 13,  4] = 0.5*(_x182+_x74*_x42*_x150+_x70*_x45*_x149+_x41*_x57*_x145)
     dyd_Q_xxxdy_orgins[ 13,  5] = 0.5*(_x135*_x41*_x153+_x41*_x57*_x165+_x70*_x45*_x164+_x74*_x42*_x162)
     dyd_Q_xxxdy_orgins[ 13,  6] = 0.5*(_x41*_x57*_x178+_x74*_x42*_x177+_x70*_x45*_x175)
-    dyd_Q_xxxdy_orgins[ 14,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 14,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 14,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 14,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 14,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 14,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 14,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 14,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 14,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 14,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 14, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 14, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 14, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 14, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 15,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 15,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 15,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 15,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 15,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 15,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 15,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 15,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 15,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 15,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 15, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 15, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 15, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 15, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 16,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 16,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 16,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 16,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 16,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 16,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 16,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 16,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 16,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 16,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 16, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 16, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 16, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 16, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 17,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 17,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 17,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 17,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 17,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 17,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 17,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 17,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 17,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 17,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 17, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 17, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 17, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 17, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 18,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 18,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 18,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 18,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 18,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 18,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 18,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 18,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 18,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 18,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 18, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 18, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 18, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 18, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 19,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 19,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 19,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 19,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 19,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 19,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 19,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 19,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 19,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 19,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 19, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 19, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 19, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 19, 13] = _x1[13]
-    dyd_Q_xxxdy_orgins[ 20,  0] = _x1[0]
-    dyd_Q_xxxdy_orgins[ 20,  1] = _x1[1]
-    dyd_Q_xxxdy_orgins[ 20,  2] = _x1[2]
-    dyd_Q_xxxdy_orgins[ 20,  3] = _x1[3]
-    dyd_Q_xxxdy_orgins[ 20,  4] = _x1[4]
-    dyd_Q_xxxdy_orgins[ 20,  5] = _x1[5]
-    dyd_Q_xxxdy_orgins[ 20,  6] = _x1[6]
-    dyd_Q_xxxdy_orgins[ 20,  7] = _x1[7]
-    dyd_Q_xxxdy_orgins[ 20,  8] = _x1[8]
-    dyd_Q_xxxdy_orgins[ 20,  9] = _x1[9]
-    dyd_Q_xxxdy_orgins[ 20, 10] = _x1[10]
-    dyd_Q_xxxdy_orgins[ 20, 11] = _x1[11]
-    dyd_Q_xxxdy_orgins[ 20, 12] = _x1[12]
-    dyd_Q_xxxdy_orgins[ 20, 13] = _x1[13]
+
     dyd_Q_xxxdy_orgins[ 21,  0] = _x183-_x11*_x17*_x18*_x20*T
     dyd_Q_xxxdy_orgins[ 21,  1] = _x184
     dyd_Q_xxxdy_orgins[ 21,  2] = _x185

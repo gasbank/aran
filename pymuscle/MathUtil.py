@@ -45,11 +45,13 @@ def RotationMatrixFromEulerAngles_xyz(phi, theta, psix):
 	               [ -s2,   c2*s1,          c1*c2         ] ])
 
 
-#
-# Quaternion to euler angles (?-?-? convention)
-# IMPORTANT: scalar component first
-#
 def EulerAnglesFromQuaternion(q):
+	#
+	# Quaternion to euler angles (?-?-? convention)
+	# IMPORTANT: scalar component first
+	#
+	# THIS FUNCTION SUFFERS FROM THE SINGULARITY PROBLEM
+	#
 	q0,q1,q2,q3 = q
 	phi_   = atan2(2*(q0*q1+q2*q3), 1.-2*(q1**2+q2**2))
 	theta_ = asin(2*(q0*q2-q3*q1))

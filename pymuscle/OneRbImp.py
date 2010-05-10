@@ -4,15 +4,16 @@
 from numpy import *
 from math import pow, sin, cos
 from scipy import sparse
-def OneRbImp(p, q, pd, qd, m, Idiag, Fr, Tr):
-    px, py, pz = p
-    qw, qx, qy, qz = q
-    pdx, pdy, pdz = pd
-    qdw, qdx, qdy, qdz = qd
-    Ixx, Iyy, Izz = Idiag
-    Frx, Fry, Frz = Fr
-    Trx, Try, Trz = Tr
-
+def OneRbImp(body):
+    px, py, pz = body.p
+    qw, qx, qy, qz = body.q
+    pdx, pdy, pdz = body.pd
+    qdw, qdx, qdy, qdz = body.qd
+    Ixx, Iyy, Izz = body.Idiag
+    Frx, Fry, Frz = body.Fr
+    Trx, Try, Trz = body.Tr
+    m = body.m
+    
     yd_R = zeros((14))
     dyd_RdY = sparse.lil_matrix((14, 14))
     ################################################
@@ -123,48 +124,7 @@ def OneRbImp(p, q, pd, qd, m, Idiag, Fr, Tr):
     dyd_RdY[  4, 11] = 1
     dyd_RdY[  5, 12] = 1
     dyd_RdY[  6, 13] = 1
-    dyd_RdY[  7,  0] = _x1[0]
-    dyd_RdY[  7,  1] = _x1[1]
-    dyd_RdY[  7,  2] = _x1[2]
-    dyd_RdY[  7,  3] = _x1[3]
-    dyd_RdY[  7,  4] = _x1[4]
-    dyd_RdY[  7,  5] = _x1[5]
-    dyd_RdY[  7,  6] = _x1[6]
-    dyd_RdY[  7,  7] = _x1[7]
-    dyd_RdY[  7,  8] = _x1[8]
-    dyd_RdY[  7,  9] = _x1[9]
-    dyd_RdY[  7, 10] = _x1[10]
-    dyd_RdY[  7, 11] = _x1[11]
-    dyd_RdY[  7, 12] = _x1[12]
-    dyd_RdY[  7, 13] = _x1[13]
-    dyd_RdY[  8,  0] = _x1[0]
-    dyd_RdY[  8,  1] = _x1[1]
-    dyd_RdY[  8,  2] = _x1[2]
-    dyd_RdY[  8,  3] = _x1[3]
-    dyd_RdY[  8,  4] = _x1[4]
-    dyd_RdY[  8,  5] = _x1[5]
-    dyd_RdY[  8,  6] = _x1[6]
-    dyd_RdY[  8,  7] = _x1[7]
-    dyd_RdY[  8,  8] = _x1[8]
-    dyd_RdY[  8,  9] = _x1[9]
-    dyd_RdY[  8, 10] = _x1[10]
-    dyd_RdY[  8, 11] = _x1[11]
-    dyd_RdY[  8, 12] = _x1[12]
-    dyd_RdY[  8, 13] = _x1[13]
-    dyd_RdY[  9,  0] = _x1[0]
-    dyd_RdY[  9,  1] = _x1[1]
-    dyd_RdY[  9,  2] = _x1[2]
-    dyd_RdY[  9,  3] = _x1[3]
-    dyd_RdY[  9,  4] = _x1[4]
-    dyd_RdY[  9,  5] = _x1[5]
-    dyd_RdY[  9,  6] = _x1[6]
-    dyd_RdY[  9,  7] = _x1[7]
-    dyd_RdY[  9,  8] = _x1[8]
-    dyd_RdY[  9,  9] = _x1[9]
-    dyd_RdY[  9, 10] = _x1[10]
-    dyd_RdY[  9, 11] = _x1[11]
-    dyd_RdY[  9, 12] = _x1[12]
-    dyd_RdY[  9, 13] = _x1[13]
+
     dyd_RdY[ 10,  3] = 0.5*(4*_x18*qy*_x20+4*_x14*qz*_x17+4*_x9*qx*_x13)+_x8+_x6+_x4+_x2
     dyd_RdY[ 10,  4] = 0.5*(_x28+4*_x14*qz*_x26+4*_x18*qy*_x25+4*_x9*qx*_x24)+_x21
     dyd_RdY[ 10,  5] = 0.5*(_x35+4*_x18*qy*_x33+4*_x14*qz*_x31+4*_x9*qx*_x30)+_x29
