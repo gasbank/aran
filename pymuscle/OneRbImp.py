@@ -15,7 +15,7 @@ def OneRbImp(body):
     m = body.m
     
     yd_R = zeros((14))
-    dyd_RdY = sparse.lil_matrix((14, 14))
+    dyd_RdY = sparse.dok_matrix((14, 14))
     ################################################
     #      Variable: yd_R
     ################################################

@@ -18,7 +18,10 @@ from scipy.sparse import linalg as spla
 from math import sin, pi
 import cPickle
 from ImpIntWithMuscleRev import *
+from FiberEffectImpWrapper import *
 
+ORIGIN = 0
+INSERTION = 1
 
 class ImBody:
 	def __init__(self):
@@ -44,6 +47,12 @@ class ImBody:
 		self.Idiag = [ self.m*(self.sy*self.sy + self.sz*self.sz)/12.,
 		               self.m*(self.sx*self.sx + self.sz*self.sz)/12.,
 		               self.m*(self.sx*self.sx + self.sy*self.sy)/12. ];
+	def flatten(self):
+		return [ self.p[0], self.p[1], self.p[2],
+		         self.q[0], self.q[1], self.q[2], self.q[3],
+		         self.pd[0], self.pd[1], self.pd[2],
+		         self.qd[0], self.qd[1], self.qd[2], self.qd[3],
+		         self.m, self.Idiag[0], self.Idiag[1], self.Idiag[2] ]
 
 class ImMuscle:
 	def __init__(self, orgIdx, insIdx, fibb_org, fibb_ins):
@@ -58,13 +67,18 @@ class ImMuscle:
 		self.insIdx = insIdx
 		self.fibb_org = fibb_org
 		self.fibb_ins = fibb_ins
+	def flatten(self):
+		return [ self.KSE, self.KPE, self.b, self.xrest, self.T, self.A,
+		         self.fibb_org[0], self.fibb_org[1], self.fibb_org[2],
+		         self.fibb_ins[0], self.fibb_ins[1], self.fibb_ins[2] ]
+		        
 
 
 def GoTest():
 	# Simulation time step in seconds
 	h = 0.001
 	# Simulation time step count
-	simLen = 100
+	simLen = 2000
 			
 	nBody = 2
 	body = [ ImBody(), ImBody() ]
@@ -72,7 +86,7 @@ def GoTest():
 	body[0].p[2] = 0
 	body[0].setMassAndSize(1.,0.1, 0.2, 0.3)
 	body[1].p[2] = 1
-	body[1].setMassAndSize(100.,0.1, 0.2, 0.3)
+	body[1].setMassAndSize(3.,0.1, 0.2, 0.3)
 	
 	nMuscle = 1
 	muscle = [ ImMuscle(0, 1, [.1,0,0], [0,0,0]) ]
@@ -93,7 +107,8 @@ def GoTest():
 		else:
 			body[1].Fr[2] = -9.81*body[1].m
 		
-		print 'Simulating', i, 'step... (', float(i)/simLen*100,'%)'
+		if (i % 10) == 0:
+			print 'Simulating %d step (%6.2f %%)' % (i, float(i)/simLen*100)
 	
 		# Renormalize the quaternion
 		for j in range(nBody):
@@ -106,29 +121,110 @@ def GoTest():
 		
 		dfdY = sparse.lil_matrix((matSize, matSize))
 		f = zeros(matSize)
+		
+		
 		for j in range(nBody):
-			Yd_Rj, dYd_RjdY = BuildRigidBodyEquations(j,       # Body's index
-				                                      nBody,   # Total number of rigid bodies
-				                                      nMuscle, # Total number of muscle fibers
-				                                      body[j])
-			f += Yd_Rj
-			dfdY += dYd_RjdY
+			yd_Rj, dyd_RjdY = OneRbImp(body[j])
+			f[j*14:(j+1)*14] += yd_Rj
+			for (k,v) in dyd_RjdY.iteritems():
+				dfdY[j*14 + k[0], j*14 + k[1]] = v
+
 		for j in range(nMuscle):
 			mj = muscle[j]
 			body_org = body[mj.orgIdx]
 			body_ins = body[mj.insIdx]
 			
-			Yd_Qj, dYd_QjdY = BuildMuscleEquations(mj.orgIdx,  # Origin body's index
-				                                   mj.insIdx,  # Insertion body's index
-				                                   j,          # Muscle fiber's index
-				                                   nBody,      # Total number of rigid bodies
-				                                   nMuscle,    # Total number of muscle fibers
-				                                   body_org, body_ins,
-			                                       mj)
+			fiberRet = FiberEffectImp(body_org, body_ins, mj)
+			#fiberRet = FiberEffectImpWrapper(body_org, body_ins, mj)
 			
-			f += Yd_Qj
-			dfdY += dYd_QjdY
-				
+			Td, dTddy_orgins, dTddT, yd_Q_orgins, dyd_Q_orginsdy_orgins, dyd_Q_orginsdT = fiberRet
+			
+			f[mj.orgIdx*14 + 7 : mj.orgIdx*14 + 14] += yd_Q_orgins[ORIGIN, 7:14]
+			f[mj.insIdx*14 + 7 : mj.insIdx*14 + 14] += yd_Q_orgins[INSERTION, 7:14]
+			f[nBody*14 + j] = Td
+			
+			# We have 9 blocks in dYd_Qi_dY
+
+			# (1) Starting from the easiest...
+			#
+			#   .
+			# d T
+			# ---
+			# d T
+			#
+			dfdY[nBody*14 + j, nBody*14 + j] = dTddT
+		
+			# (2)(3)
+			#
+			#   .
+			# d T
+			# ------
+			# d y
+			#    {org,ins}
+			#
+			for k in range(14):
+				dfdY[nBody*14 + j, mj.orgIdx*14 + k] = dTddy_orgins[ORIGIN,k]
+				dfdY[nBody*14 + j, mj.insIdx*14 + k] = dTddy_orgins[INSERTION,k]
+			
+			# (4)(5)
+			#
+			#   . {org,ins}
+			# d y
+			#     Q
+			# ------
+			# d T
+			#
+			#
+			# Seem to be this kind of assignment has a problem:
+			#
+			# dYd_QidY[orgIdx*14:(orgIdx+1)*14, nBody*14 + mIdx ] = dyd_Q_orgdT
+			#
+			for k in range(14):
+				dfdY[mj.orgIdx*14 + k, nBody*14 + j ] = dyd_Q_orginsdT[ORIGIN,k]
+				dfdY[mj.insIdx*14 + k, nBody*14 + j ] = dyd_Q_orginsdT[INSERTION,k]
+			
+			# (6)(7)(8)(9)
+			#
+			#    . {org/ins}
+			#  d y
+			#      Q
+			# ---------
+			#  d y
+			#     org
+			# 
+			# 
+			#    . {org/ins}
+			#  d y
+			#      Q
+			# ---------
+			#  d y
+			#     ins
+			#
+			
+			
+			for (k, v) in dyd_Q_orginsdy_orgins.iteritems():
+				if k[0] < 14:
+					r = mj.orgIdx*14 + k[0]
+					c = mj.orgIdx*14 + k[1]
+				elif k[0] < 28:
+					r = mj.orgIdx*14 + k[0] - 14
+					c = mj.insIdx*14 + k[1]
+				elif k[0] < 42:
+					r = mj.insIdx*14 + k[0] - 28
+					c = mj.orgIdx*14 + k[1]
+				else:
+					r = mj.insIdx*14 + k[0] - 42
+					c = mj.insIdx*14 + k[1]
+
+				dfdY[r, c] += v
+			
+			"""
+			dfdY[mj.orgIdx*14:(mj.orgIdx+1)*14, mj.orgIdx*14:(mj.orgIdx+1)*14] += dyd_Q_orginsdy_orgins[0:14,:]
+			dfdY[mj.orgIdx*14:(mj.orgIdx+1)*14, mj.insIdx*14:(mj.insIdx+1)*14] += dyd_Q_orginsdy_orgins[14:28,:]
+			dfdY[mj.insIdx*14:(mj.insIdx+1)*14, mj.orgIdx*14:(mj.orgIdx+1)*14] += dyd_Q_orginsdy_orgins[28:42,:]
+			dfdY[mj.insIdx*14:(mj.insIdx+1)*14, mj.insIdx*14:(mj.insIdx+1)*14] += dyd_Q_orginsdy_orgins[42:56,:]
+			"""
+		
 		deltaY = spla.spsolve(Ioverh - dfdY, f)
 		for j in range(nBody):
 			dpx, dpy, dpz, dqw, dqx, dqy, dqz, dpdx, dpdy, dpdz, dqdw, dqdx, dqdy, dqdz = deltaY[14*j:14*(j+1)]

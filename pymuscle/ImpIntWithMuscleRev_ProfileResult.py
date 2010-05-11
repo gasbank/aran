@@ -8,12 +8,7 @@ A generalized approach of simulating
 rigid bodies and muscle fibers
 with an implicit integration technique
 """
-import cProfile
-from ImpIntWithMuscleRev_Test import GoTest
-
-cProfile.run('GoTest()', 'profiled_result')
-
 import pstats
 p = pstats.Stats('profiled_result')
-p.sort_stats('cumulative').print_stats(10)
-p.sort_stats('time').print_stats(10)
+p.sort_stats('cumulative').print_stats(20)
+p.sort_stats('time').print_stats(20)

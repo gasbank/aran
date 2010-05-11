@@ -133,9 +133,12 @@ fibbF : rest(quat_mult(qbar_xxx, quat_mult(append([0], fibbFW), q_xxx)),1)$
 torque : cross(fibb_xxx, fibbF)$
 omegabardot : Iinv_xxx . (0+torque)$
 yd_Q_xxx : append([0,0,0], [0,0,0,0], (fibbFW)/m_xxx, 0.5*quat_mult(q_xxx, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
-length(yd_Q_xxx);
-display("Optimizing yd_Q_xxx...");
-yd_Q_xxx_optimized : optimize(yd_Q_xxx)$
+
+yd_Q_org : at(yd_Q_xxx, [orgOrIns=0])$
+yd_Q_ins : at(yd_Q_xxx, [orgOrIns=1])$
+yd_Q_orgins : matrix(yd_Q_org, yd_Q_ins)$
+display("Optimizing yd_Q_orgins...");
+yd_Q_orgins_optimized : optimize(yd_Q_orgins)$
 display("Optimized.");
 
 
@@ -159,7 +162,12 @@ dTddT_optimized : optimize(ratsimp(diff(Td, T)))$
  * --------
  * d T
  */
-dyd_Q_xxxdT_optimized : optimize(diff(yd_Q_xxx, T))$
+dyd_Q_orgdT : diff(at(yd_Q_xxx, [orgOrIns=0]), T)$
+dyd_Q_insdT : diff(at(yd_Q_xxx, [orgOrIns=1]), T)$
+dyd_Q_orginsdT : matrix(dyd_Q_orgdT, dyd_Q_insdT)$
+display("Optimizing dyd_Q_orginsdT...");
+dyd_Q_orginsdT_optimized : optimize(dyd_Q_orginsdT)$
+display("Optimized.");
 
 /*
  * Calculation of dyd_Q_{org/ins}dy_org and dyd_Q_{org/ins}dy_ins =
@@ -186,14 +194,23 @@ dyd_Q_xxxdT_optimized : optimize(diff(yd_Q_xxx, T))$
  * 
  */
 
-dyd_Q_xxxdy_org : jacobian(yd_Q_xxx, y_org)$
-dyd_Q_xxxdy_ins : jacobian(yd_Q_xxx, y_ins)$
-dyd_Q_xxxdy_orgins : dyd_Q_xxxdy_org$
-for j:1 thru length(dyd_Q_xxxdy_org) do (
-	dyd_Q_xxxdy_orgins : addrow(dyd_Q_xxxdy_orgins, dyd_Q_xxxdy_ins[j])
+dyd_Q_orgdy_org : jacobian(at(yd_Q_xxx, [orgOrIns=0]), y_org)$
+dyd_Q_orgdy_ins : jacobian(at(yd_Q_xxx, [orgOrIns=0]), y_ins)$
+dyd_Q_insdy_org : jacobian(at(yd_Q_xxx, [orgOrIns=1]), y_org)$
+dyd_Q_insdy_ins : jacobian(at(yd_Q_xxx, [orgOrIns=1]), y_ins)$
+
+dyd_Q_orginsdy_orgins : dyd_Q_orgdy_org$
+for j:1 thru length(dyd_Q_orgdy_ins) do (
+	dyd_Q_orginsdy_orgins : addrow(dyd_Q_orginsdy_orgins, dyd_Q_orgdy_ins[j])
 )$
-display("Optimizing dyd_Q_xxxdy_orgins...");
-dyd_Q_xxxdy_orgins_optimized : optimize(dyd_Q_xxxdy_orgins)$
+for j:1 thru length(dyd_Q_orgdy_ins) do (
+	dyd_Q_orginsdy_orgins : addrow(dyd_Q_orginsdy_orgins, dyd_Q_insdy_org[j])
+)$
+for j:1 thru length(dyd_Q_orgdy_ins) do (
+	dyd_Q_orginsdy_orgins : addrow(dyd_Q_orginsdy_orgins, dyd_Q_insdy_ins[j])
+)$
+display("Optimizing dyd_Q_orginsdy_orgins...");
+dyd_Q_orginsdy_orgins_optimized : optimize(dyd_Q_orginsdy_orgins)$
 display("Optimized.");
 
 
@@ -257,14 +274,14 @@ WriteDirectToFile("    qdw_ins, qdx_ins, qdy_ins, qdz_ins = qd_ins~%");
 WriteDirectToFile("    Ixx_ins, Iyy_ins, Izz_ins = Idiag_ins~%");
 WriteDirectToFile("    fibbx_ins, fibby_ins, fibbz_ins = fibb_ins~%");
 WriteDirectToFile("~%");
-WriteDirectToFile("    yd_Q_xxx = zeros((14))~%");
-WriteDirectToFile("    dyd_Q_xxxdy_orgins = sparse.lil_matrix((28, 14))~%");
-WriteDirectToFile("    dyd_Q_xxxdT = zeros((14))~%");
+WriteDirectToFile("    yd_Q_orgins = zeros((2,14))~%");
+WriteDirectToFile("    dyd_Q_orginsdy_orgins = sparse.lil_matrix((56, 14))~%");
+WriteDirectToFile("    dyd_Q_orginsdT = zeros((2,14))~%");
 WriteDirectToFile("~%");
 
-WriteBlockToClike("yd_Q_xxx", yd_Q_xxx_optimized, [14,1])$
-WriteBlockToClike("dyd_Q_xxxdy_orgins", dyd_Q_xxxdy_orgins_optimized, [28,14]);
-WriteBlockToClike("dyd_Q_xxxdT", dyd_Q_xxxdT_optimized, [14,1]);
+WriteBlockToClike("yd_Q_orgins", yd_Q_orgins_optimized, [2,14])$
+WriteBlockToClike("dyd_Q_orginsdy_orgins", dyd_Q_orginsdy_orgins_optimized, [56,14]);
+WriteBlockToClike("dyd_Q_orginsdT", dyd_Q_orginsdT_optimized, [2,14]);
 
 WriteDirectToFile("~%");
-WriteDirectToFile("    return yd_Q_xxx, dyd_Q_xxxdy_orgins, dyd_Q_xxxdT~%");
+WriteDirectToFile("    return yd_Q_orgins, dyd_Q_orginsdy_orgins, dyd_Q_orginsdT~%");

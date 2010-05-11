@@ -20,58 +20,61 @@ Computer Graphics Lab., KAIST
 
 
 \section{Introduction}
-Biped character animation technique is a very interesting
-research topic since it is an essential component of almost every movies
-and video game industries. By designing and controlling the character
-with a consistent dynamics model, a realistic and physically correct
-motion can be synthesized automatically instead of manually keyframing
-the motion. There has been a lot of approaches related to
+A character animation technique related to bipedal characters is
+a very interesting research topic since it is an essential component
+of every movie and video game. By designing and controlling the character
+With a consistent dynamics model, a realistic and physically correct
+motion can be synthesized automatically instead of key-framing the motion
+manually. There has been a lot of approaches related to
 synthesize the character motion with a physically-simulated manner.
 Most of these work are based on a model with articulated figures and
-actuacted joint motors. In this model, human's body parts are considered
-as rigid bodies. Joints are connecting these rigid bodies. This kind of model is
-vastly used since it is suitable to formulate the Lagrangian equation of motion
-using the generalized coordinates which helps to reduce the number of degree of freedom(DoF).
-The joints used in the model are ideal rigid joints, which means
+actuated joints. In this model the character's body segments are considered
+as a set of rigid bodies. Joints are connecting these rigid bodies.
+This kind of model is
+vastly used since it is suitable to formulate the Lagrangian equations of motion
+using the generalized coordinates which helps to reduce the number of degree-of-freedom (DoF).
+The joints used in the model are considered as ideal rigid joints, which means
 each of them connects the two rigid bodies with a certain DoF. For example,
 a hinge joint which has 1-DoF is used at knees or elbows and a ball joint
-which has 3-DoF is used at hips. Actuation on the joints are occured
-in their respecive DoFs. So it is natural to call these kind of joints
-\emph{motor joints}. Various animations can be created by controlling these joint
-motors properly. In robotics area, this kind of approach is much more
-common. So far the heart of creating the motion with dynamics model is
-how to design motor controllers.
+which has 3-DoF is used at hips. Actuation on the joints are occurred
+in their respective DoF. So it is natural to call these kind of joints
+\emph{actuated motor joints}. Various animations can be created by controlling these motor joints properly. In robotics this kind of approach is much more
+common. The main interest of creating motions with dynamics model is focused on how to design the motor joint controllers.
 
 
-
-However, the motor joints are inherently nonsense in the perspective of
-physical realism. No human has that kind of motors in their joints.
+The motor joints are inherently nonsense in the perspective of
+physical realism. No human being has that kind of motors in their joints.
 Instead, they control their legs or arms by pulling bones using attached
-muscle fibers. This mechanism is quite complicated to understand completely.
-However, the structure of human muscle fibers is well-known and the biomechanical
-experiments concerning the most basic actions like walking are exist.
+muscles. Unfortunately, the whole mechanism is quite complicated to understand completely.
+However the structure of human muscle fibers is well-known and there exist the biomechanical experiments concerning the most basic human actions such as walking and jumping.[REF NEEDED]
 
 This thesis introduces a biomechanical approach on biped dynamics. Basically,
 we introduces muscle fibers as the only actuating elements
-of the biped and get rids of all motor joints existed in typical biped
-model. Joints are not rigid anymore. Instead, in the place of joints,
-we use ligaments to hold the bodies firmly but not rigidly to simulate
-cartilages. The ligaments connecting rigid bodies provide a shock absorption
-structure to sustain stability when external or internal disturbances exist.
-Besides, we control the rigid bodies with muscle fibers which are modeled as
-spring-damper system. Every muscle fiber has a linear actuator and the
-motions are created by controlling these actuators. Instead of controlling
+of the biped and get rid of all rigid motor joints existed in the previous biped
+model. Therefore joints are not rigid anymore. Instead, in the place of joints,
+we use ligaments to hold the bodies firmly but not rigidly. This substitution
+simulates human cartilages. The cartilages provide a shock absorption
+system to sustain stability when external or internal disturbances exist.
+We control the rigid bodies with muscle fibers which are modeled as
+spring-damper system. Every muscle fiber has a linear actuator and
+motions are created by controlling the actuator. Instead of controlling
 the bodies with motor joints, it is highly effective in energy concern
-since torques are created more easily by pulling the bones with the muscle fiber.
+since torques are created more easily by pulling the bones with the muscle fiber on a distant place from an axis of rotation such as hips or ankles.
 
-Gait analysis is also very extensively studied area. It concerns the
-mechanisms of human locomotion by throughly experementing and measuring
-the subjects. They classified the human walking cycle into some divisions
-and each division has its own objectvies. The most of work so far did not
+Human gait analysis is also very extensively studied area.[REF] It deals
+with the mechanisms of human locomotion by throughly experimenting and measuring
+the subjects. They classified human walking cycle in which a division
+has its own objectives and features.
+In computer animation, the most of work so far did not
 exploit this kind of research results. They rely on optimization-based
-techniques such as a motion tracker with linear quadratic regulator (LQR)
-or a optimizer with heuristic objective functions not concerning the
-biological human behavior.
+techniques such as a motion tracker with a linear quadratic regulator (LQR)
+or a quadratic programming optimizer attained by heuristic observations
+such as 'minimize the actuation energy all the time' or 'follow the
+reference trajectory with all your best'. They blindly seek the
+natural human behavior of locomotion with these macroscopic objectives.
+Although it seemed to have succeeded for generating nice-looking motion,
+it can be enhanced by introducing biomechanical knowledge into the both of
+a dynamics model and an optimization scheme.
 
 The optimization-based approach is also used in this thesis. However,
 we take gait phases analyzed in [Perry] into account. Given motion
@@ -79,12 +82,10 @@ capture data containing locomotion of human, we classify the motion
 sequence automatically into respective phases. For each phase,
 an optimization formulation is built to calculate muscle actuation forces
 of our biped model. The passive and active muscles are explicitly defined
-with respect to a phase. This helps our approach speed-up the simulation
-and also gives more energy-efficient and biologically-correct result.
-
-Since the goal of motion synthesizing of humanoid characters is to
-create desired and realistic motion without laborious keyframing, we
-need not only a proper controlling scheme but also 
+with respect to a corresponding phase.
+This helps our approach speed-up the simulation
+and also gives more energy-efficient and biomechanically-correct result.
+[CLEAR MENTION OF CONTRIBUTION IS NEEDED]
 
 
 
@@ -171,10 +172,10 @@ at the end of the fiber:
 where $x$ is the length of the fiber and $A$ is applied force in the active
 component. Note that every quantities shown in the equation are scalar values.
 Since a muscle fiber always connects two bones (rigid bodies) and the
-tension applied to the both of them, we need a clear definition of signedness
+tension applied to the both of them, we need a clear definition of signed-ness
 of the tension $T$. Researchers in biology defined the term $origin$ and $insertion$.
 Origin and insertion indicate where a muscle fiber originated from and inserted
-to, repectively. If we call the origin and insertion position of the fiber
+to, respectively. If we call the origin and insertion position of the fiber
 as $p_{org}$ and $p_{ins}$, the normalized direction of the fiber can be
 defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$. With these quantities, we can think that
 the tension $T\hat{d}$ and $-T\hat{d}$ are applied to the origin and insertion body
@@ -205,7 +206,7 @@ formulated.
             \dot{T}_1, \cdots, \dot{T}_m]
 \end{equation}
 Our concern is mostly concentrated to the quantities like $\ddot{p}$,
-$\ddot{q}$ and $\dot{T}$ since the differential equations are fomulated
+$\ddot{q}$ and $\dot{T}$ since the differential equations are formulated
 in these variables. The vector $\dot{Y}$ is mixture
 of the dynamic formula for rigid bodies and muscle fibers. We can separate
 the vector into two parts to help the further analysis and control like the
@@ -249,7 +250,7 @@ this kind of separation process further, we get the equations:
 Here $0_{4x}$ denotes an arbitrary zero vector whose dimension is multiple of four.
 Parentheses are added just for clarify the structure.
 $\dot{Y}_{R,i}$ represents the first derivative of the state vector of the body $i$
-when there is no muslce fiber attached to it. $\dot{Y}_{Q,i}$ denotes the effects of
+when there is no muscle fiber attached to it. $\dot{Y}_{Q,i}$ denotes the effects of
 the muscle fiber $i$ affecting the origin and insertion body. Specifically,
 $ \ddot{\bar{p}}_{T,i}^{org} $ and $ \ddot{\bar{q}}_{T,i}^{org} $ are the force and
 torque affecting the origin body. This kind of separation gives us a simplified
@@ -263,7 +264,7 @@ the effect of muscle fiber $i$ is entirely removed from the simulation.
 Most of rigid body systems can be simulated using an explicit Euler method
 as far as there is no stiff component exists. The explicit integration
 allows us a simple implementation and fast computation of a next state,
-however, it has the potential of unstability when the time step is larger
+however, it has the potential of instability when the time step is larger
 then a certain threshold. The threshold is mainly determined by a time
 constant of a given differential equation we need to integrate. In our case, the time
 constant is dominated by muscle fibers because they consists
@@ -319,7 +320,7 @@ Y = {} & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_
 where all variables are scalers. You may notice that we used quaternions
 to parameterize the rotation of rigid bodies. This allows us a freedom
 from the gimbal lock problem by sacrificing dimensional complexity. From
-now on, we will denote the three or four dimentional vectors is its shorthand
+now on, we will denote the three or four dimensional vectors is its shorthand
 form, i.e., $p_i=[p_i^x, p_i^y, p_i^z]^T$ and $q_i=[q_i^w, q_i^x, q_i^y, q_i^z]^T$.
 
 \begin{equation}
@@ -442,6 +443,18 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 
 
 \section{Gait phases}
+
+Locomotion such as walking or running is performed by a periodic way.
+A gait cycle or stride contains eight functional patterns(FIGURE xx).
+[Perry] These patterns are called \emph{gait phases}. Each phase has its
+own features and objectives. For example, during mid-swing and terminal swing
+phase, one of primary muscle called 'biceps femoris' and 'semimembranosis' is
+activated to extend our swing leg forward.
+
+terminal stance phase one
+of the muscle  we will use this fact
+to our locomotion controller.
+
 Aha!
 Change this...
 fdsfsd
