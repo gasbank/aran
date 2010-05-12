@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <libconfig.h>
 
 #include "TripletMatrix.h"
 #include "FiberEffectImpAll.h"
@@ -34,32 +35,146 @@ void QuatToEuler(double eul[3], double q[4])
     eul[1] = asin(2*(q[0]*q[2]-q[3]*q[1]));
     eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
 }
+void BoxInertiaTensorFromMassAndSize(double Ixyz[3], double m, double sx, double sy, double sz)
+{
+    Ixyz[0] = m*(sy*sy + sz*sz)/12.;
+    Ixyz[1] = m*(sx*sx + sz*sz)/12.;
+    Ixyz[2] = m*(sx*sx + sy*sy)/12.;
+}
+
+int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn)
+{
+    int i;
+    for (i = 0; i < nBody; ++i)
+    {
+        if (strncmp(bodyName[i], bn, 128) == 0)
+            return i;
+    }
+    return -1;
+}
 
 int main()
 {
-	const unsigned int nBody = 2;
-	const unsigned int nMuscle = 1;
-	double body[nBody][18];
+    int j, k;
+    config_t conf;
+    config_init(&conf);
+    config_set_auto_convert(&conf, 1);
+    int confret = config_read_file(&conf, "pymuscle.conf");
+    assert(confret == CONFIG_TRUE);
+
+    const char *ver;
+    config_lookup_string(&conf, "version", &ver);
+    printf("Version: %s\n", ver);
+
+    /*
+     * Parse body configurations
+     */
+    config_setting_t *bodyConf = config_lookup(&conf, "body");
+    assert(bodyConf);
+    const unsigned int nBody = config_setting_length(bodyConf);
+    double body[nBody][18];
 	double extForce[nBody][6];
+	char bodyName[nBody][128];
+	memset(extForce, 0, sizeof(double)*nBody*6); /* NOTE: No external force for now. */
+    for (j = 0; j < nBody; ++j)
+    {
+        config_setting_t *bConf = config_setting_get_elem(bodyConf, j);
+        const char *bName;
+        config_setting_lookup_string(bConf, "name", &bName);
+        strncpy(bodyName[j], bName, 128);
+        printf("Body %d name: %s\n", j, bName);
+        #define csgfe(a,b) config_setting_get_float_elem(a,b)
+        config_setting_t *p = config_setting_get_member(bConf, "p"); assert(p);
+        body[j][0] = csgfe(p, 0); body[j][1] = csgfe(p, 1); body[j][2] = csgfe(p, 2);
+        config_setting_t *q = config_setting_get_member(bConf, "q"); assert(q);
+        body[j][3] = csgfe(q, 0); body[j][4] = csgfe(q, 1); body[j][5] = csgfe(q, 2); body[j][6] = csgfe(q, 3);
+        config_setting_t *pd = config_setting_get_member(bConf, "pd"); assert(pd);
+        body[j][7] = csgfe(pd, 0); body[j][8] = csgfe(pd, 1); body[j][9] = csgfe(pd, 2);
+        config_setting_t *qd = config_setting_get_member(bConf, "qd"); assert(qd);
+        body[j][10] = csgfe(qd, 0); body[j][11] = csgfe(qd, 1); body[j][12] = csgfe(qd, 2); body[j][13] = csgfe(qd, 3);
+        config_setting_t *mass = config_setting_get_member(bConf, "mass"); assert(mass);
+        body[j][14] = config_setting_get_float(mass);
+        config_setting_t *size = config_setting_get_member(bConf, "size"); assert(size);
+        double sx = csgfe(size, 0), sy = csgfe(size, 1), sz = csgfe(size, 2);
+        BoxInertiaTensorFromMassAndSize(&body[j][15], body[j][14], sx, sy, sz);
+        #undef csgfe
+    }
+    /*
+     * Parse fiber configurations
+     */
+    config_setting_t *muscleConf = config_lookup(&conf, "muscle");
+    assert(muscleConf);
+	const unsigned int nMuscle = config_setting_length(muscleConf);
 	double muscle[nMuscle][12];
 	unsigned int musclePair[nMuscle][2];
-	int j, k;
+	char muscleName[nMuscle][128];
+    for (j = 0; j < nMuscle; ++j)
+    {
+        config_setting_t *mConf = config_setting_get_elem(muscleConf, j);
+        const char *mName;
+        config_setting_lookup_string(mConf, "name", &mName);
+        strncpy(muscleName[j], mName, 128);
+        printf("Muscle %d name: %s\n", j, mName);
+        config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
+        muscle[j][0] = config_setting_get_float(KSE);
+        config_setting_t *KPE = config_setting_get_member(mConf, "KPE"); assert(KPE);
+        muscle[j][1] = config_setting_get_float(KPE);
+        config_setting_t *b = config_setting_get_member(mConf, "b"); assert(b);
+        muscle[j][2] = config_setting_get_float(b);
+        config_setting_t *xrest = config_setting_get_member(mConf, "xrest"); assert(xrest);
+        muscle[j][3] = config_setting_get_float(xrest);
+        config_setting_t *T = config_setting_get_member(mConf, "T"); assert(T);
+        muscle[j][4] = config_setting_get_float(T);
+        config_setting_t *A = config_setting_get_member(mConf, "A"); assert(A);
+        muscle[j][5] = config_setting_get_float(A);
+        #define csgfe(a,b) config_setting_get_float_elem(a,b)
+        config_setting_t *originPos = config_setting_get_member(mConf, "originPos"); assert(originPos);
+        muscle[j][6] = csgfe(originPos, 0);
+        muscle[j][7] = csgfe(originPos, 1);
+        muscle[j][8] = csgfe(originPos, 2);
+        config_setting_t *insertionPos = config_setting_get_member(mConf, "insertionPos"); assert(insertionPos);
+        muscle[j][9] = csgfe(insertionPos, 0);
+        muscle[j][10] = csgfe(insertionPos, 1);
+        muscle[j][11] = csgfe(insertionPos, 2);
+        #undef csgfe
+
+        const char *orgBodyName, *insBodyName;
+        config_setting_lookup_string(mConf, "origin", &orgBodyName);
+        config_setting_lookup_string(mConf, "insertion", &insBodyName);
+        int boIdx = FindBodyIndex(nBody, bodyName, orgBodyName);
+        int biIdx = FindBodyIndex(nBody, bodyName, insBodyName);
+        assert(boIdx >= 0 && biIdx >= 0);
+        musclePair[j][0] = boIdx;
+        musclePair[j][1] = biIdx;
+    }
+
+    double h; /* simulation time step */
+    confret = config_lookup_float(&conf, "h", &h);
+    assert(confret == CONFIG_TRUE);
+    int simFrame; /* simulation length */
+    confret = config_lookup_int(&conf, "simFrame", &simFrame);
+    assert(confret == CONFIG_TRUE);
+
+    config_destroy(&conf);
+
+    /***************************************************************/
+
+
+    /*
 	for (j = 0; j < nMuscle; ++j)
 	{
 		musclePair[j][0] = 0;
 		musclePair[j][1] = 1;
 		LoadDoublesFromFile(12, muscle[j], "muscle0.txt");
 	}
-
-	LoadDoublesFromFile(18, body[0], "body0.txt");
-	LoadDoublesFromFile(18, body[1], "body1.txt");
-
-	memset(extForce, 0, sizeof(double)*nBody*6); // No external force for now.
+    */
+	//LoadDoublesFromFile(18, body[0], "body0.txt");
+	//LoadDoublesFromFile(18, body[1], "body1.txt");
 
 
-    const double h = 0.001; /* simulation time step */
+
     unsigned int curFrame;
-    const unsigned int simFrame = 100000;
+
     const unsigned int matSize = 14*nBody + nMuscle;
     const unsigned int plotSamplingRate = 20; /* Write 1 sample per 'plotSamplingRate' */
     FILE *sr = fopen("simresult.txt", "w");
