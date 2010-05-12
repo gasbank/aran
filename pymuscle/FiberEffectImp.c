@@ -1308,73 +1308,71 @@ int FiberEffectImp(const Double_48 input,
     /*################################################;
     #      Variable: dyd_Q_orginsdT;
     ################################################*/
-    {
-        _x1 = pow(m_org,-1);
-        _x2 = -fibbx_ins*qy_ins+fibby_ins*qx_ins+fibbz_ins*qw_ins;
-        _x3 = -fibbx_org*qy_org+fibby_org*qx_org+fibbz_org*qw_org;
-        _x4 = fibbx_ins*qz_ins-fibbz_ins*qx_ins+fibby_ins*qw_ins;
-        _x5 = -fibby_ins*qz_ins+fibbz_ins*qy_ins+fibbx_ins*qw_ins;
-        _x6 = fibbz_ins*qz_ins+fibby_ins*qy_ins+fibbx_ins*qx_ins;
-        _x7 = fibbx_org*qz_org-fibbz_org*qx_org+fibby_org*qw_org;
-        _x8 = -fibby_org*qz_org+fibbz_org*qy_org+fibbx_org*qw_org;
-        _x9 = fibbz_org*qz_org+fibby_org*qy_org+fibbx_org*qx_org;
-        _x10 = -qx_org*_x9-qw_org*_x8+qz_org*_x7+qx_ins*_x6+qw_ins*_x5-qz_ins*_x4-qy_org*_x3+qy_ins*_x2-px_org+px_ins;
-        _x11 = -qy_org*_x9-qz_org*_x8-qw_org*_x7+qy_ins*_x6+qz_ins*_x5+qw_ins*_x4+qx_org*_x3-qx_ins*_x2-py_org+py_ins;
-        _x12 = -qz_org*_x9+qy_org*_x8-qx_org*_x7+qz_ins*_x6-qy_ins*_x5+qx_ins*_x4-qw_org*_x3+qw_ins*_x2-pz_org+pz_ins;
-        _x13 = pow(pow(_x12,2)+pow(_x11,2)+pow(_x10,2),-1./2);
-        _x14 = pow(Izz_org,-1);
-        _x15 = qw_org*_x12*_x13-qx_org*_x11*_x13+qy_org*_x10*_x13;
-        _x16 = qx_org*_x12*_x13+qw_org*_x11*_x13-qz_org*_x10*_x13;
-        _x17 = -qy_org*_x12*_x13+qz_org*_x11*_x13+qw_org*_x10*_x13;
-        _x18 = -qz_org*_x12*_x13-qy_org*_x11*_x13-qx_org*_x10*_x13;
-        _x19 = -qx_org*_x18+qw_org*_x17+qz_org*_x16-qy_org*_x15;
-        _x20 = -qy_org*_x18-qz_org*_x17+qw_org*_x16+qx_org*_x15;
-        _x21 = fibbx_org*_x20-fibby_org*_x19;
-        _x22 = pow(Iyy_org,-1);
-        _x23 = -qz_org*_x18+qy_org*_x17-qx_org*_x16+qw_org*_x15;
-        _x24 = fibbz_org*_x19-fibbx_org*_x23;
-        _x25 = pow(Ixx_org,-1);
-        _x26 = fibby_org*_x23-fibbz_org*_x20;
-        _x27 = pow(m_ins,-1);
-        _x28 = pow(Izz_ins,-1);
-        _x29 = -qw_ins*_x12*_x13+qx_ins*_x11*_x13-qy_ins*_x10*_x13;
-        _x30 = -qx_ins*_x12*_x13-qw_ins*_x11*_x13+qz_ins*_x10*_x13;
-        _x31 = qy_ins*_x12*_x13-qz_ins*_x11*_x13-qw_ins*_x10*_x13;
-        _x32 = qz_ins*_x12*_x13+qy_ins*_x11*_x13+qx_ins*_x10*_x13;
-        _x33 = -qx_ins*_x32+qw_ins*_x31+qz_ins*_x30-qy_ins*_x29;
-        _x34 = -qy_ins*_x32-qz_ins*_x31+qw_ins*_x30+qx_ins*_x29;
-        _x35 = fibbx_ins*_x34-fibby_ins*_x33;
-        _x36 = pow(Iyy_ins,-1);
-        _x37 = -qz_ins*_x32+qy_ins*_x31-qx_ins*_x30+qw_ins*_x29;
-        _x38 = fibbz_ins*_x33-fibbx_ins*_x37;
-        _x39 = pow(Ixx_ins,-1);
-        _x40 = fibby_ins*_x37-fibbz_ins*_x34;
-        dyd_Q_orginsdT[  0][  7] = _x1*_x10*_x13;
-        dyd_Q_orginsdT[  0][  8] = _x1*_x11*_x13;
-        dyd_Q_orginsdT[  0][  9] = _x1*_x12*_x13;
-        dyd_Q_orginsdT[  0][ 10] = 0.5*(-_x25*qx_org*_x26-_x22*qy_org*_x24-_x14*qz_org*_x21);
-        dyd_Q_orginsdT[  0][ 11] = 0.5*(_x25*qw_org*_x26-_x22*qz_org*_x24+_x14*qy_org*_x21);
-        dyd_Q_orginsdT[  0][ 12] = 0.5*(_x25*qz_org*_x26+_x22*qw_org*_x24-_x14*qx_org*_x21);
-        dyd_Q_orginsdT[  0][ 13] = 0.5*(-_x25*qy_org*_x26+_x22*qx_org*_x24+_x14*qw_org*_x21);
-        dyd_Q_orginsdT[  1][  7] = -_x27*_x10*_x13;
-        dyd_Q_orginsdT[  1][  8] = -_x27*_x11*_x13;
-        dyd_Q_orginsdT[  1][  9] = -_x27*_x12*_x13;
-        dyd_Q_orginsdT[  1][ 10] = 0.5*(-_x39*qx_ins*_x40-_x36*qy_ins*_x38-_x28*qz_ins*_x35);
-        dyd_Q_orginsdT[  1][ 11] = 0.5*(_x39*qw_ins*_x40-_x36*qz_ins*_x38+_x28*qy_ins*_x35);
-        dyd_Q_orginsdT[  1][ 12] = 0.5*(_x39*qz_ins*_x40+_x36*qw_ins*_x38-_x28*qx_ins*_x35);
-        dyd_Q_orginsdT[  1][ 13] = 0.5*(-_x39*qy_ins*_x40+_x36*qx_ins*_x38+_x28*qw_ins*_x35);
+    _x1 = pow(m_org,-1);
+    _x2 = -fibbx_ins*qy_ins+fibby_ins*qx_ins+fibbz_ins*qw_ins;
+    _x3 = -fibbx_org*qy_org+fibby_org*qx_org+fibbz_org*qw_org;
+    _x4 = fibbx_ins*qz_ins-fibbz_ins*qx_ins+fibby_ins*qw_ins;
+    _x5 = -fibby_ins*qz_ins+fibbz_ins*qy_ins+fibbx_ins*qw_ins;
+    _x6 = fibbz_ins*qz_ins+fibby_ins*qy_ins+fibbx_ins*qx_ins;
+    _x7 = fibbx_org*qz_org-fibbz_org*qx_org+fibby_org*qw_org;
+    _x8 = -fibby_org*qz_org+fibbz_org*qy_org+fibbx_org*qw_org;
+    _x9 = fibbz_org*qz_org+fibby_org*qy_org+fibbx_org*qx_org;
+    _x10 = -qx_org*_x9-qw_org*_x8+qz_org*_x7+qx_ins*_x6+qw_ins*_x5-qz_ins*_x4-qy_org*_x3+qy_ins*_x2-px_org+px_ins;
+    _x11 = -qy_org*_x9-qz_org*_x8-qw_org*_x7+qy_ins*_x6+qz_ins*_x5+qw_ins*_x4+qx_org*_x3-qx_ins*_x2-py_org+py_ins;
+    _x12 = -qz_org*_x9+qy_org*_x8-qx_org*_x7+qz_ins*_x6-qy_ins*_x5+qx_ins*_x4-qw_org*_x3+qw_ins*_x2-pz_org+pz_ins;
+    _x13 = pow(pow(_x12,2)+pow(_x11,2)+pow(_x10,2),-1./2);
+    _x14 = pow(Izz_org,-1);
+    _x15 = qw_org*_x12*_x13-qx_org*_x11*_x13+qy_org*_x10*_x13;
+    _x16 = qx_org*_x12*_x13+qw_org*_x11*_x13-qz_org*_x10*_x13;
+    _x17 = -qy_org*_x12*_x13+qz_org*_x11*_x13+qw_org*_x10*_x13;
+    _x18 = -qz_org*_x12*_x13-qy_org*_x11*_x13-qx_org*_x10*_x13;
+    _x19 = -qx_org*_x18+qw_org*_x17+qz_org*_x16-qy_org*_x15;
+    _x20 = -qy_org*_x18-qz_org*_x17+qw_org*_x16+qx_org*_x15;
+    _x21 = fibbx_org*_x20-fibby_org*_x19;
+    _x22 = pow(Iyy_org,-1);
+    _x23 = -qz_org*_x18+qy_org*_x17-qx_org*_x16+qw_org*_x15;
+    _x24 = fibbz_org*_x19-fibbx_org*_x23;
+    _x25 = pow(Ixx_org,-1);
+    _x26 = fibby_org*_x23-fibbz_org*_x20;
+    _x27 = pow(m_ins,-1);
+    _x28 = pow(Izz_ins,-1);
+    _x29 = -qw_ins*_x12*_x13+qx_ins*_x11*_x13-qy_ins*_x10*_x13;
+    _x30 = -qx_ins*_x12*_x13-qw_ins*_x11*_x13+qz_ins*_x10*_x13;
+    _x31 = qy_ins*_x12*_x13-qz_ins*_x11*_x13-qw_ins*_x10*_x13;
+    _x32 = qz_ins*_x12*_x13+qy_ins*_x11*_x13+qx_ins*_x10*_x13;
+    _x33 = -qx_ins*_x32+qw_ins*_x31+qz_ins*_x30-qy_ins*_x29;
+    _x34 = -qy_ins*_x32-qz_ins*_x31+qw_ins*_x30+qx_ins*_x29;
+    _x35 = fibbx_ins*_x34-fibby_ins*_x33;
+    _x36 = pow(Iyy_ins,-1);
+    _x37 = -qz_ins*_x32+qy_ins*_x31-qx_ins*_x30+qw_ins*_x29;
+    _x38 = fibbz_ins*_x33-fibbx_ins*_x37;
+    _x39 = pow(Ixx_ins,-1);
+    _x40 = fibby_ins*_x37-fibbz_ins*_x34;
+    dyd_Q_orginsdT[  0][  7] = _x1*_x10*_x13;
+    dyd_Q_orginsdT[  0][  8] = _x1*_x11*_x13;
+    dyd_Q_orginsdT[  0][  9] = _x1*_x12*_x13;
+    dyd_Q_orginsdT[  0][ 10] = 0.5*(-_x25*qx_org*_x26-_x22*qy_org*_x24-_x14*qz_org*_x21);
+    dyd_Q_orginsdT[  0][ 11] = 0.5*(_x25*qw_org*_x26-_x22*qz_org*_x24+_x14*qy_org*_x21);
+    dyd_Q_orginsdT[  0][ 12] = 0.5*(_x25*qz_org*_x26+_x22*qw_org*_x24-_x14*qx_org*_x21);
+    dyd_Q_orginsdT[  0][ 13] = 0.5*(-_x25*qy_org*_x26+_x22*qx_org*_x24+_x14*qw_org*_x21);
+    dyd_Q_orginsdT[  1][  7] = -_x27*_x10*_x13;
+    dyd_Q_orginsdT[  1][  8] = -_x27*_x11*_x13;
+    dyd_Q_orginsdT[  1][  9] = -_x27*_x12*_x13;
+    dyd_Q_orginsdT[  1][ 10] = 0.5*(-_x39*qx_ins*_x40-_x36*qy_ins*_x38-_x28*qz_ins*_x35);
+    dyd_Q_orginsdT[  1][ 11] = 0.5*(_x39*qw_ins*_x40-_x36*qz_ins*_x38+_x28*qy_ins*_x35);
+    dyd_Q_orginsdT[  1][ 12] = 0.5*(_x39*qz_ins*_x40+_x36*qw_ins*_x38-_x28*qx_ins*_x35);
+    dyd_Q_orginsdT[  1][ 13] = 0.5*(-_x39*qy_ins*_x40+_x36*qx_ins*_x38+_x28*qw_ins*_x35);
 
-        /*
-        int aa, bb;
-        for (aa = 0; aa < 2; ++aa)
+    /*
+    int aa, bb;
+    for (aa = 0; aa < 2; ++aa)
+    {
+        for (bb = 0; bb < 14; ++bb)
         {
-            for (bb = 0; bb < 14; ++bb)
-            {
-                printf("dyd_Q_orginsdT[%d][%d] = %lf\n", aa, bb, dyd_Q_orginsdT[aa][bb]);
-            }
+            printf("dyd_Q_orginsdT[%d][%d] = %lf\n", aa, bb, dyd_Q_orginsdT[aa][bb]);
         }
-        */
     }
+    */
 
 	return dyd_Q_orginsdy_orgins_count;
 }

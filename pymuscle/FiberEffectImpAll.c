@@ -20,16 +20,20 @@
 #define ORIGIN    (0)
 #define INSERTION (1)
 
-int ImpAll( const unsigned int nBody,
+int ImpAll(
+           const unsigned int nBody,
                        const unsigned int nMuscle,
                        TripletMatrix *dfdY_R[nBody],
                        TripletMatrix *dfdY_Q[nMuscle],
+                       double f[nBody*14 + nMuscle],
                        double body[nBody][18],
                        double extForce[nBody][6],
                        double muscle[nMuscle][12],
-                       unsigned int musclePair[nMuscle][2])
+                       unsigned int musclePair[nMuscle][2],
+                       const double h)
 {
 	int matSize = nBody*14 + nMuscle;
+    memset(f, 0, sizeof(double)*matSize); /* f(Y0) */
 
 	int j, k;
 
@@ -45,6 +49,9 @@ int ImpAll( const unsigned int nBody,
                                      yd_R, dyd_RdY_keys, dyd_RdY_values);
         assert(dyd_RdY_count >= 0);
 
+        for (k = 0; k < 14; ++k)
+            f[j*14 + k] = yd_R[k];
+
         dfdY_R[j] = tm_allocate(matSize, matSize, dyd_RdY_count);
         for (k = 0; k < dyd_RdY_count; ++k)
         {
@@ -52,7 +59,7 @@ int ImpAll( const unsigned int nBody,
             int c = j*14 + dyd_RdY_keys[k][1];
             tm_add_entry(dfdY_R[j], r, c, dyd_RdY_values[k]);
         }
-        printf("dfdY_R[%d] nonzeros = %d\n", j, dfdY_R[j]->nz);
+        //printf("dfdY_R[%d] nonzeros = %d\n", j, dfdY_R[j]->nz);
 	}
 
 
@@ -94,6 +101,15 @@ int ImpAll( const unsigned int nBody,
 		                         dyd_Q_orginsdy_orgins_keys,
 		                         dyd_Q_orginsdy_orgins_values);
         assert(dyd_Q_orginsdy_orgins_count >= 0);
+
+        for (k = 0; k < 14; ++k)
+        {
+            f[boIdx*14 + k] += yd_Q_orgins[ORIGIN][k];
+            f[biIdx*14 + k] += yd_Q_orgins[INSERTION][k];
+            f[nBody*14 + j] = Td;
+        }
+
+
         const int dfdY_j_maxNnz = dyd_Q_orginsdy_orgins_count+14+14+14+14+1;
         dfdY_Q[j] = tm_allocate(matSize, matSize, dfdY_j_maxNnz);
 
@@ -138,7 +154,7 @@ int ImpAll( const unsigned int nBody,
         # dYd_QidY[orgIdx*14:(orgIdx+1)*14, nBody*14 + mIdx ] = dyd_Q_orgdT
         #
         */
-        for (k = 0; k < 14; ++k)
+        for (k = 7 /* STARTING FROM 7! */; k < 14; ++k)
         {
             tm_add_entry(dfdY_Q[j], boIdx*14 + k, nBody*14 + j, dyd_Q_orginsdT[ORIGIN][k]);
             tm_add_entry(dfdY_Q[j], biIdx*14 + k, nBody*14 + j, dyd_Q_orginsdT[INSERTION][k]);
@@ -192,7 +208,7 @@ int ImpAll( const unsigned int nBody,
 
             tm_add_entry(dfdY_Q[j], r, c, v);
         }
-        printf("dfdY_Q[%d] nonzeros = %d\n", j, dfdY_Q[j]->nz);
+        //printf("dfdY_Q[%d] nonzeros = %d\n", j, dfdY_Q[j]->nz);
     }
 
 
