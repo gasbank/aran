@@ -50,7 +50,9 @@ int ImpAll(
         assert(dyd_RdY_count >= 0);
 
         for (k = 0; k < 14; ++k)
+        {
             f[j*14 + k] = yd_R[k];
+        }
 
         dfdY_R[j] = tm_allocate(matSize, matSize, dyd_RdY_count);
         for (k = 0; k < dyd_RdY_count; ++k)

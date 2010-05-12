@@ -56,11 +56,11 @@ class ImBody:
 
 class ImMuscle:
 	def __init__(self, orgIdx, insIdx, fibb_org, fibb_ins):
-		self.KSE = 50000.
-		self.KPE = 45000.
-		self.b = 5000.1
-		self.xrest = 0.05
-		self.T = 10.
+		self.KSE = 5000.
+		self.KPE = 4500.
+		self.b = 5000.
+		self.xrest = 0.45
+		self.T = 0.
 		self.A = 0.
 		
 		self.orgIdx = orgIdx
@@ -76,9 +76,9 @@ class ImMuscle:
 
 def GoTest():
 	# Simulation time step in seconds
-	h = 0.001
+	h = 5.
 	# Simulation time step count
-	simLen = 2000
+	simLen = 1000
 			
 	nBody = 2
 	body = [ ImBody(), ImBody() ]
@@ -89,7 +89,7 @@ def GoTest():
 	body[1].setMassAndSize(3.,0.1, 0.2, 0.3)
 	
 	nMuscle = 1
-	muscle = [ ImMuscle(0, 1, [.1,0,0], [0,0,0]) ]
+	muscle = [ ImMuscle(0, 1, [0,0,0], [0,0,0]) ]
 	
 	
 	# Linear position history for plotting
@@ -126,6 +126,7 @@ def GoTest():
 		for j in range(nBody):
 			yd_Rj, dyd_RjdY = OneRbImp(body[j])
 			f[j*14:(j+1)*14] += yd_Rj
+			
 			for (k,v) in dyd_RjdY.iteritems():
 				dfdY[j*14 + k[0], j*14 + k[1]] = v
 
@@ -142,7 +143,7 @@ def GoTest():
 			f[mj.orgIdx*14 + 7 : mj.orgIdx*14 + 14] += yd_Q_orgins[ORIGIN, 7:14]
 			f[mj.insIdx*14 + 7 : mj.insIdx*14 + 14] += yd_Q_orgins[INSERTION, 7:14]
 			f[nBody*14 + j] = Td
-			
+
 			# We have 9 blocks in dYd_Qi_dY
 
 			# (1) Starting from the easiest...
@@ -224,6 +225,8 @@ def GoTest():
 			dfdY[mj.insIdx*14:(mj.insIdx+1)*14, mj.orgIdx*14:(mj.orgIdx+1)*14] += dyd_Q_orginsdy_orgins[28:42,:]
 			dfdY[mj.insIdx*14:(mj.insIdx+1)*14, mj.insIdx*14:(mj.insIdx+1)*14] += dyd_Q_orginsdy_orgins[42:56,:]
 			"""
+		
+		print f
 		
 		deltaY = spla.spsolve(Ioverh - dfdY, f)
 		for j in range(nBody):

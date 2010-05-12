@@ -21,10 +21,13 @@ TripletMatrix *tm_allocate(int row, int col, int maxNz)
 
 TripletMatrix *tm_free(TripletMatrix *mat)
 {
-    free(mat->Ti);
-    free(mat->Tj);
-    free(mat->Tx);
-    mat->n_row = mat->n_col = mat->nz = mat->maxNz = -1;
+    if (mat)
+    {
+        free(mat->Ti);
+        free(mat->Tj);
+        free(mat->Tx);
+        mat->n_row = mat->n_col = mat->nz = mat->maxNz = -1;
+    }
     return 0;
 }
 
@@ -46,6 +49,10 @@ void tm_add_entry(TripletMatrix *mat, int i, int j, double v)
 
 TripletMatrix *tm_merge(int n, TripletMatrix *mat[n])
 {
+    assert(n>=0);
+    if (n==0)
+        return 0;
+
     int i;
     int maxNz = 0;
     for (i = 0; i < n; ++i)

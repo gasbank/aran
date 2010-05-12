@@ -31,13 +31,13 @@
 #define Ixx body[15]
 #define Iyy body[16]
 #define Izz body[17]
-/* EXTERNAL FORCE RELATED VARIABLES (6) */
-#define Frx extForce[18]
-#define Fry extForce[19]
-#define Frz extForce[20]
-#define Trx extForce[21]
-#define Try extForce[22]
-#define Trz extForce[23]
+/* EXTERNAL FORCE RELATED VARIABLES (6) START INDEX AGAIN!!! */
+#define Frx extForce[0]
+#define Fry extForce[1]
+#define Frz extForce[2]
+#define Trx extForce[3]
+#define Try extForce[4]
+#define Trz extForce[5]
 
 
 int OneRbImp(const Double_18  body,
@@ -50,9 +50,9 @@ int OneRbImp(const Double_18  body,
 {
     if (bClearVariable)
 	{
-		memset(yd_R, 0, sizeof(yd_R));
-		memset(dyd_RdY_keys, 0, sizeof(dyd_RdY_keys));
-		memset(dyd_RdY_values, 0, sizeof(dyd_RdY_values));
+		memset(yd_R, 0, sizeof(Double_14));
+		memset(dyd_RdY_keys, 0, sizeof(Uint_196x2));
+		memset(dyd_RdY_values, 0, sizeof(Double_196));
     }
     /*;
     ################################################;

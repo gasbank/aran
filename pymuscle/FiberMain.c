@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <math.h>
+
 #include "TripletMatrix.h"
 #include "FiberEffectImpAll.h"
 #include "umfpack.h"
@@ -24,6 +26,13 @@ void LoadDoublesFromFile(const unsigned int len, double body[len], const char *f
 		assert(ret == 1);
 	}
 	fclose(f);
+}
+
+void QuatToEuler(double eul[3], double q[4])
+{
+    eul[0] = atan2(2*(q[0]*q[1]+q[2]*q[3]), 1.-2*(q[1]*q[1]+q[2]*q[2]));
+    eul[1] = asin(2*(q[0]*q[2]-q[3]*q[1]));
+    eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
 }
 
 int main()
@@ -45,21 +54,59 @@ int main()
 	LoadDoublesFromFile(18, body[0], "body0.txt");
 	LoadDoublesFromFile(18, body[1], "body1.txt");
 
-	memset(extForce, 0, sizeof(extForce)); // No external force for now.
+	memset(extForce, 0, sizeof(double)*nBody*6); // No external force for now.
 
-    TripletMatrix *dfdY_R[nBody]; /* be allocated by the following function */
-    TripletMatrix *dfdY_Q[nMuscle]; /* be allocated by the following function */
-    double f[nBody*14 + nMuscle];
-    const double h = 0.025; /* simulation time step */
+
+    const double h = 0.001; /* simulation time step */
     unsigned int curFrame;
-    const unsigned int simFrame = 2000;
+    const unsigned int simFrame = 100000;
+    const unsigned int matSize = 14*nBody + nMuscle;
+    const unsigned int plotSamplingRate = 20; /* Write 1 sample per 'plotSamplingRate' */
+    FILE *sr = fopen("simresult.txt", "w");
+    assert(sr);
+    fprintf(sr, "# curFrame p1[x] p1[y] p1[z] p1[e1] p1[e2] p1[e3] ... pn[x] pn[y] pn[z] pn[e1] pn[e2] pn[e3] T1 ... Tm\n");
     for (curFrame = 0; curFrame < simFrame; ++curFrame)
     {
+        int writeSample = (curFrame % plotSamplingRate == 0);
+
+        TripletMatrix *dfdY_R[nBody]; /* be allocated by the following function */
+        TripletMatrix *dfdY_Q[nMuscle]; /* be allocated by the following function */
+        double f[nBody*14 + nMuscle];
+
+        if (writeSample)
+            fprintf(sr, "%d", curFrame);
+        for (j = 0; j < nBody; ++j)
+        {
+            /* Renormalize quaternions for each body */
+            double qw = body[j][3], qx = body[j][4], qy = body[j][5], qz = body[j][6];
+            double qlen = sqrt(qw*qw + qx*qx + qy*qy + qz*qz);
+            body[j][3] /= qlen;
+            body[j][4] /= qlen;
+            body[j][5] /= qlen;
+            body[j][6] /= qlen;
+
+            /* Write the angular and linear position to the file. (for plotting) */
+            /* Euler angles instead of quaternions used (human friendly) */
+            double bjEul[3];
+            QuatToEuler(bjEul, &body[j][3]);
+            if (writeSample)
+                fprintf(sr, " %lf %lf %lf %lf %lf %lf",
+                            body[j][0], body[j][1], body[j][2],
+                            bjEul[0], bjEul[1], bjEul[2]);
+        }
+        for (j = 0; j < nMuscle; ++j)
+            if (writeSample)
+                fprintf(sr, " %lf", muscle[j][4]);
+        if (writeSample)
+            fprintf(sr, "\n");
+
+
         ImpAll(nBody, nMuscle, dfdY_R, dfdY_Q, f, body, extForce, muscle, musclePair, h);
+
 
         if (curFrame % 100 == 0)
         {
-            printf("  - Simulating %5d frame... (%6.2f %)\n", curFrame, (float)curFrame/simFrame*100);
+            printf("  - Simulating %5d frame... (%6.2f %%)\n", curFrame, (float)curFrame/simFrame*100);
         }
         /*
         for (j = 0; j < dfdY_Q[0]->nz; ++j)
@@ -68,9 +115,9 @@ int main()
         }
         */
 
-        const unsigned int matSize = 14*nBody + nMuscle;
 
-        TripletMatrix *dfdY_RQ_merged[2];
+
+        TripletMatrix *dfdY_RQ_merged[2] = { 0, 0 };
         dfdY_RQ_merged[0] = tm_merge(nBody, dfdY_R);
         dfdY_RQ_merged[1] = tm_merge(nMuscle, dfdY_Q);
         /* dfdY_R and dfdY_Q are unnecessary */
@@ -79,7 +126,10 @@ int main()
         for (j = 0; j < nMuscle; ++j)
             dfdY_Q[j] = tm_free(dfdY_Q[j]);
         TripletMatrix *dfdY_merged;
-        dfdY_merged = tm_merge(2, dfdY_RQ_merged);
+        if (nMuscle)
+            dfdY_merged = tm_merge(2, dfdY_RQ_merged);
+        else
+            dfdY_merged = tm_merge(1, dfdY_RQ_merged);
         /* dfdY_RQ_merged is unnecessary */
         dfdY_RQ_merged[0] = tm_free(dfdY_RQ_merged[0]);
         dfdY_RQ_merged[1] = tm_free(dfdY_RQ_merged[1]);
@@ -171,7 +221,7 @@ int main()
         umfpack_di_free_symbolic (&Symbolic) ;
         (void) umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, x, b, Numeric, null, null) ;
         umfpack_di_free_numeric (&Numeric) ;
-        //for (j = 0 ; j < n ; j++) printf ("x [%d] = %g\n", j, x [j]) ;
+        //for (j = 0 ; j < 3 ; j++) printf ("x [%d] = %g  ", j, x [j]) ;
 
         /* Since x := deltaY, we should update our state vector accordingly. */
         for (k = 0; k < nBody; ++k)
@@ -187,6 +237,7 @@ int main()
             muscle[k][4 /* watch out! */] += x[nBody*14 + k];
         }
     }
+    fclose(sr);
 	return (0);
 }
 
