@@ -72,13 +72,21 @@ double NormalizeVector(int dim, double v[dim])
     return len;
 }
 
-int main()
+int main(int argc, const char **argv)
 {
+    if (argc != 2)
+    {
+        /* extract the executable file name only */
+        const char *exeName = strrchr(argv[0], '/') + 1;
+        printf("\n\nUsage) %s configuration_file\n\n", exeName);
+        return -20;
+    }
+    const char *fnConf = argv[1];
     int j, k;
     config_t conf;
     config_init(&conf);
     config_set_auto_convert(&conf, 1);
-    int confret = config_read_file(&conf, "pymuscle.conf");
+    int confret = config_read_file(&conf, fnConf);
     if (confret != CONFIG_TRUE)
     {
         const char *errText = config_error_text(&conf);

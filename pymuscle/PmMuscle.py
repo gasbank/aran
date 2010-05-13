@@ -10,7 +10,7 @@ from SymbolicTensor import *
 from MathUtil import *
 
 class PmMuscle:
-	def __init__(self, name, orgBody, orgPos, insBody, insPos, mType):
+	def __init__(self, name, orgBody, orgPos, insBody, insPos, mType, bAttachedPosNormalized):
 		"""
 		orgBody/Pos: the muscle fiber's origin body name
 					and position in local coordinates
@@ -24,3 +24,14 @@ class PmMuscle:
 		self.insPos  = insPos
 		self.mType   = mType
 		assert(mType in ['MUSCLE', 'LIGAMENT'])
+		self.bAttachedPosNormalized = bAttachedPosNormalized
+		assert(bAttachedPosNormalized in [True, False])
+		#
+		# Dynamics properties
+		#
+		self.KSE     = 5000.
+		self.KPE     = 4500.
+		self.b       = 200.
+		self.xrest   = 0.45
+		self.T       = 0
+		self.A       = 0

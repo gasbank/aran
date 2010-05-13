@@ -424,8 +424,12 @@ def DrawBipedFibers(drawAsLine=False):
 		borg = gCon.configured[orgBodyIdx]
 		bins = gCon.configured[insBodyIdx]
 		
-		localorg = array([b/2. * p for b,p in zip(borg.boxsize, m.orgPos)])
-		localins = array([b/2. * p for b,p in zip(bins.boxsize, m.insPos)])
+		if m.bAttachedPosNormalized:
+			localorg = array([b/2. * p for b,p in zip(borg.boxsize, m.orgPos)])
+			localins = array([b/2. * p for b,p in zip(bins.boxsize, m.insPos)])
+		else:
+			localorg = m.orgPos
+			localins = m.insPos
 		
 		globalorg = borg.globalPos(localorg)
 		globalins = bins.globalPos(localins)
@@ -470,14 +474,14 @@ def DrawBipedContactForces():
 def RenderPerspectiveWindow():
 	global gCon
 	glWidth, glHeight = gCon.winWidth, gCon.winHeight
-	perpW, perpH      = gCon.perpW, gCon.perpW
+	perpW, perpH      = gCon.perpW, gCon.perpH
 	quadric           = gCon.quadric
 	
 	glViewport(0, 0, int(glWidth*perpW), int(glHeight*perpH))		# Reset The Current Viewport And Perspective Transformation
 
 	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
 	glLoadIdentity()					# // Reset The Projection Matrix
-	gluPerspective(45.0, float(glWidth)/float(glHeight), 1, 1000.0)
+	gluPerspective(45.0, float(glWidth*perpW)/float(glHeight*perpH), 1, 1000.0)
 	
 	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
 	glLoadIdentity ();					# // Reset The Modelview Matrix
@@ -523,7 +527,6 @@ def FrameMove():
 	for k in range(nb):
 		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
 		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
-	
 	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
@@ -693,20 +696,17 @@ def FrameMove():
 		gCon.configured[k].qd = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 
-	"""
+
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
 		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
 		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
-	"""
+
 	
 	if gCon.autoPlay:
-		"""
 		gCon.curFrame = gCon.curFrame + 1
 		if gCon.curFrame >= gCon.noFrame-2:
 			gCon.curFrame = 0
-		"""
-		gCon.curFrame = gCon.curFrame + 1
 
 """
 def ang_vel(q, v):
@@ -717,14 +717,6 @@ def ang_vel(q, v):
 		          phid*cos(theta)+psid])
 """
 
-def FindBodyIndex(name):
-	global gCon
-	nb = len(gCon.bodyList)
-	for i, n in zip(range(nb), gCon.bodyList):
-		bodyName, pBodyName = n
-		if bodyName == name:
-			return i
-	raise Exception('Wrong body name!')
 
 ################################################################################
 ################################################################################

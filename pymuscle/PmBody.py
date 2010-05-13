@@ -10,7 +10,7 @@ from SymbolicTensor import *
 from MathUtil import *
 
 class PmBody:
-	def __init__(self, name, pName, mass, boxsize, q, qd, dc, rotParm):
+	def __init__(self, name, pName, mass, boxsize, q, qd, dc, rotParam):
 		"""
 		mass: mass of the body
 		size: size tuple (sx, sy, sz) of rigid body
@@ -37,17 +37,20 @@ class PmBody:
 		                 (-sx/2,  sy/2, -sz/2),
 		                 (-sx/2, -sy/2,  sz/2),
 		                 (-sx/2, -sy/2, -sz/2) ]
-		assert(rotParm in ['EULER_XYZ', 'EULER_ZXZ'])
-		self.rotParm  = rotParm
+		assert(rotParam in ['EULER_XYZ', 'EULER_ZXZ', 'QUAT_WFIRST'])
+		self.rotParam  = rotParam
 	
 	def globalPos(self, localPos):
 		if self.rotParm == 'EULER_XYZ':
 			A = RotationMatrixFromEulerAngles_xyz(self.q[3], self.q[4], self.q[5])
 		elif self.rotParm == 'EULER_ZXZ':
 			A = RotationMatrixFromEulerAngles_zxz(self.q[3], self.q[4], self.q[5])
+		elif self.rotParm == 'QUAT_WFIRST':
+			A = RotationMatrixFromQuaternion(self.q[3], self.q[4], self.q[5], self.q[6])
 		return self.q[0:3] + dot(A, localPos)
+	
 	def __str__(self):
 		ret = 'PmBody %s, parent %s\n' % (self.name, self.pName)
 		ret = ret + 'q: %s\n' % self.q
-		ret = ret + 'qd: %s' % self.qd
+		ret = ret + 'qd: %s (%s)' % (self.qd, self.rotParam)
 		return ret

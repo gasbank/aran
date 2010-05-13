@@ -11,13 +11,15 @@ from PmMuscle import *
 from PmBody import *
 
 class GlobalContext:
-	def __init__(self):
+	def __init__(self, fnPrefix, rotParam):
+		assert rotParam in ['EULER_XYZ', 'EULER_ZXZ', 'QUAT_WFIRST']
+		
 		# Friction coefficient
 		self.mu = 1.4
 		# Simulation Timestep
 		self.h = 0.001
 		# Contact threshold
-		self.alpha0 = 0.025
+		self.alpha0 = 0.02
 		# Eight basis of friction force
 		self.di = [ (1, 0, 0),
 		            (cos(pi/4), sin(pi/4), 0),
@@ -97,23 +99,25 @@ class GlobalContext:
 		self.fibers = []
 		for name in muscleCfg:
 			orgBody, orgPos, insBody, insPos = muscleCfg[name]
-			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'MUSCLE')
+			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'MUSCLE', True)
 			self.fibers.append(pm)
 		for name in ligaCfg:
 			orgBody, orgPos, insBody, insPos = ligaCfg[name]
-			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'LIGAMENT')
+			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'LIGAMENT', True)
 			self.fibers.append(pm)
 		
-		q_file = open('/media/vm/devel/aran/pymuscle/traj_q.txt', 'r')
-		qd_file = open('/media/vm/devel/aran/pymuscle/traj_qd.txt', 'r')
-		qdd_file = open('/media/vm/devel/aran/pymuscle/traj_qdd.txt', 'r')
-		torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'r')
+		fnPrefix += rotParam + '_'
+		q_file = open(fnPrefix + 'q.txt', 'r')
+		qd_file = open(fnPrefix + 'qd.txt', 'r')
+		qdd_file = open(fnPrefix + 'qdd.txt', 'r')
+		#torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'r')
+		
 		# Ignore the first line
 		noFrame, nb = map(int, q_file.readline().strip().split())
 		self.noFrame = noFrame
 		qd_file.readline()
 		qdd_file.readline()
-		torque_file.readline()
+		#torque_file.readline()
 		self.q_data = []
 		self.qd_data = []
 		self.torque_data = []
@@ -126,11 +130,11 @@ class GlobalContext:
 				q_i.append(q_ij)
 				qd_ij = array( map(float, qd_file.readline().strip().split()) )
 				qd_i.append(qd_ij)
-				t_ij = array( map(float, torque_file.readline().strip().split()) )
-				t_i.append(t_ij)
+				#t_ij = array( map(float, torque_file.readline().strip().split()) )
+				#t_i.append(t_ij)
 			self.q_data.append(q_i)
 			self.qd_data.append(qd_i)
-			self.torque_data.append(t_i)
+			#self.torque_data.append(t_i)
 		
 		q_file.seek(0, 0)
 		q_file.readline()
@@ -138,8 +142,9 @@ class GlobalContext:
 		qd_file.readline()
 		qdd_file.seek(0, 0)
 		qdd_file.readline()
-		torque_file.seek(0, 0)
-		torque_file.readline()
+		#torque_file.seek(0, 0)
+		#torque_file.readline()
+		
 		# Body specific parameters and state vectors
 		self.configured = []
 		for bodyName, pBodyName in bodyList:
@@ -147,16 +152,17 @@ class GlobalContext:
 			q_ij = array( map(float, q_file.readline().strip().split()) )
 			qd_ij = array( map(float, qd_file.readline().strip().split()) )
 			
-			body = PmBody(bodyName, pBodyName, mass, boxsize, q_ij, qd_ij, dc, 'EULER_XYZ')
+			body = PmBody(bodyName, pBodyName, mass, boxsize, q_ij, qd_ij, dc, rotParam)
 			self.configured.append(body)
-			
+		
+		self.rotParam = rotParam
 		self.cube = 0               # Cube(display list)
 		self.gnd_texture = 0        # Ground texture
 		self.quadric = 0            # OpenGL quadric object
 		self.curFrame = 0           # Current frame number
-		self.autoPlay = False
+		self.autoPlay = True
 		self.drawCoupon = 1
-		self.winWidth = int(320*2.5)
+		self.winWidth = int(320*4)
 		self.winHeight = int(240*2.5)
 		self.drawOrtho = False
 		self.myChar = 0
@@ -168,3 +174,80 @@ class GlobalContext:
 		
 		self.planeSize = 40      # Half of ground plane size
 		self.gndTexRep = 16      # Ground texture repeatation
+
+	def findBodyIndex(self, name):
+		nb = len(self.bodyList)
+		for i, n in zip(range(nb), self.bodyList):
+			bodyName, pBodyName = n
+			if bodyName == name:
+				return i
+		raise Exception('Wrong body name!')
+
+def WriteConfigurationFile(gCon):
+	assert gCon.rotParam == 'QUAT_WFIRST'
+	
+	nb = len(gCon.configured)
+	bodyConf = open('/home/johnu/pymuscle/body.conf', 'w')
+	bodyConf.write('body=\n')
+	bodyConf.write('(\n');
+	for k in range(nb):
+		p  = tuple(gCon.configured[k].q[0:3])     # Linear position
+		q  = tuple(gCon.configured[k].q[3:7])     # Quaternion orientation
+		pd = tuple(gCon.configured[k].qd[0:3])    # Linear velocity
+		qd = tuple(gCon.configured[k].qd[3:7])    # Time rate of quaternion orientation
+		
+		bodyConf.write('\t{\n')
+		bodyConf.write('\t\tname = \"' + gCon.bodyList[k][0] + '\";\n')
+		bodyConf.write('\t\tp = [%f,%f,%f]\n' % p)
+		bodyConf.write('\t\tq = [%f,%f,%f,%f]\n' % q)
+		bodyConf.write('\t\tpd = [%f,%f,%f]\n' % pd)
+		bodyConf.write('\t\tqd = [%f,%f,%f,%f]\n' % qd)
+		bodyConf.write('\t\tmass = %lf\n' % gCon.configured[k].mass)
+		bodyConf.write('\t\tsize = [%f,%f,%f]\n' % tuple(gCon.configured[k].boxsize))
+		bodyConf.write('\t\tgrav = true\n')
+		bodyConf.write('\t}%s\n' % (',' if k<nb-1 else ''))
+	bodyConf.write(');')
+	bodyConf.close()
+
+	nMuscle = len(gCon.fibers)
+	muscleConf = open('/home/johnu/pymuscle/muscle.conf', 'w')
+	muscleConf.write('muscle=\n')
+	muscleConf.write('(\n');
+	for k in range(nMuscle):
+		mus = gCon.fibers[k]
+		
+		if mus.bAttachedPosNormalized:
+			orgBodyIdx = gCon.findBodyIndex(mus.orgBody)
+			insBodyIdx = gCon.findBodyIndex(mus.insBody)
+			borg = gCon.configured[orgBodyIdx]
+			bins = gCon.configured[insBodyIdx]
+			
+			localorg = tuple([b/2. * p for b,p in zip(borg.boxsize, mus.orgPos)])
+			localins = tuple([b/2. * p for b,p in zip(bins.boxsize, mus.insPos)])
+		else:
+			localorg = tuple(mus.orgPos)
+			localins = tuple(mus.insPos)
+	
+		muscleConf.write('\t{\n')
+		muscleConf.write('\t\tname = \"' + mus.name + '\";\n')
+		muscleConf.write('\t\torigin = \"' + mus.orgBody + '\";\n')
+		muscleConf.write('\t\tinsertion = \"' + mus.insBody + '\";\n')
+		muscleConf.write('\t\tinsertion = \"' + mus.insBody + '\";\n')
+		muscleConf.write('\t\tKSE = %lf\n' % mus.KSE)
+		muscleConf.write('\t\tKPE = %lf\n' % mus.KPE)
+		muscleConf.write('\t\tb = %lf\n' % mus.b)
+		muscleConf.write('\t\txrest = %lf\n' % mus.xrest)
+		muscleConf.write('\t\tT = %lf\n' % mus.T)
+		muscleConf.write('\t\tA = %lf\n' % mus.A)
+		muscleConf.write('\t\toriginPos = [%f,%f,%f]\n' % localorg)
+		muscleConf.write('\t\tinsertionPos = [%f,%f,%f]\n' % localins)
+		muscleConf.write('\t}%s\n' % (',' if k<nMuscle-1 else ''))
+	muscleConf.write(');')
+	muscleConf.close()
+		
+
+if __name__ == '__main__':
+	gCon = GlobalContext('/home/johnu/pymuscle/traj_', 'QUAT_WFIRST')
+	WriteConfigurationFile(gCon)
+	
+	
