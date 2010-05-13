@@ -33,6 +33,8 @@ ESCAPE = '\033'
 LEFTARROW = 100
 RIGHTARROW = 102
 
+seterr(all='raise')
+
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
 	glClearColor(gCon.clearColor[0],
@@ -516,12 +518,12 @@ def FrameMove():
 	h  = gCon.h
 	mu = gCon.mu
 	
-	"""
+	
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
 		gCon.configured[k].q  = gCon.q_data[gCon.curFrame][k]
 		gCon.configured[k].qd = gCon.qd_data[gCon.curFrame][k]
-	"""
+	
 	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
@@ -670,11 +672,11 @@ def FrameMove():
 			fricdir = array([fric[0]*gCon.cfScaleFactor,
 		                 fric[1]*gCon.cfScaleFactor,
 		                 cn_i*gCon.cfScaleFactor])
-			friclen = linalg.norm(fricdir)			
-			fricdirn = fricdir / friclen
-			
-			cf = (fricdirn, friclen)
-			gCon.contactForces.append(cf)
+			friclen = linalg.norm(fricdir)
+			if friclen > 0:
+				fricdirn = fricdir / friclen
+				cf = (fricdirn, friclen)
+				gCon.contactForces.append(cf)
 
 		for k in activeBodies:
 			kk = activeBodies.index(k)

@@ -16,6 +16,9 @@
 #include "FiberEffectImpAll.h"
 #include "umfpack.h"
 
+#define PYM_MIN(a,b) (a)>(b)?(b):(a)
+#define PYM_MAX(a,b) (b)>(a)?(b):(a)
+
 void LoadDoublesFromFile(const unsigned int len, double body[len], const char *fileName)
 {
 	FILE *f = fopen(fileName, "r");
@@ -32,7 +35,11 @@ void LoadDoublesFromFile(const unsigned int len, double body[len], const char *f
 void QuatToEuler(double eul[3], double q[4])
 {
     eul[0] = atan2(2*(q[0]*q[1]+q[2]*q[3]), 1.-2*(q[1]*q[1]+q[2]*q[2]));
-    eul[1] = asin(2*(q[0]*q[2]-q[3]*q[1]));
+    /* asin(x) need x in range of [-1.,1.] */
+    double clamped;
+    clamped = PYM_MIN(1., 2*(q[0]*q[2]-q[3]*q[1]));
+    clamped = PYM_MAX(-1., clamped);
+    eul[1] = asin(clamped);
     eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
 }
 void BoxInertiaTensorFromMassAndSize(double Ixyz[3], double m, double sx, double sy, double sz)
@@ -53,6 +60,18 @@ int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn)
     return -1;
 }
 
+double NormalizeVector(int dim, double v[dim])
+{
+    double len = 0;
+    int i;
+    for (i = 0; i < dim; ++i)
+        len += v[i]*v[i];
+    len = sqrt(len);
+    for (i = 0; i < dim; ++i)
+        v[i] /= len;
+    return len;
+}
+
 int main()
 {
     int j, k;
@@ -60,7 +79,15 @@ int main()
     config_init(&conf);
     config_set_auto_convert(&conf, 1);
     int confret = config_read_file(&conf, "pymuscle.conf");
-    assert(confret == CONFIG_TRUE);
+    if (confret != CONFIG_TRUE)
+    {
+        const char *errText = config_error_text(&conf);
+        const char *errFile = config_error_file(&conf);
+        const int errLine = config_error_line(&conf);
+        printf("Configuration file %s (line %d) %s!\n", errFile, errLine, errText);
+        config_destroy(&conf);
+        exit(-10);
+    }
 
     const char *ver;
     config_lookup_string(&conf, "version", &ver);
@@ -97,6 +124,25 @@ int main()
         config_setting_t *size = config_setting_get_member(bConf, "size"); assert(size);
         double sx = csgfe(size, 0), sy = csgfe(size, 1), sz = csgfe(size, 2);
         BoxInertiaTensorFromMassAndSize(&body[j][15], body[j][14], sx, sy, sz);
+        config_setting_t *cExtForce = config_setting_get_member(bConf, "extForce");
+        if (cExtForce)
+        {
+            extForce[j][0] = csgfe(cExtForce, 0);
+            extForce[j][1] = csgfe(cExtForce, 1);
+            extForce[j][2] = csgfe(cExtForce, 2);
+        }
+        config_setting_t *cExtTorque = config_setting_get_member(bConf, "extTorque");
+        if (cExtTorque)
+        {
+            extForce[j][3] = csgfe(cExtTorque, 0);
+            extForce[j][4] = csgfe(cExtTorque, 1);
+            extForce[j][5] = csgfe(cExtTorque, 2);
+        }
+        config_setting_t *grav = config_setting_get_member(bConf, "grav");
+        if (grav && config_setting_get_bool(grav))
+        {
+            extForce[j][2] += body[j][14]*(-9.81);
+        }
         #undef csgfe
     }
     /*
@@ -154,29 +200,16 @@ int main()
     int simFrame; /* simulation length */
     confret = config_lookup_int(&conf, "simFrame", &simFrame);
     assert(confret == CONFIG_TRUE);
+    int plotSamplingRate; /* Write 1 sample per 'plotSamplingRate' */
+    confret = config_lookup_int(&conf, "plotSamplingRate", &plotSamplingRate);
+    assert(confret == CONFIG_TRUE);
 
     config_destroy(&conf);
 
     /***************************************************************/
 
-
-    /*
-	for (j = 0; j < nMuscle; ++j)
-	{
-		musclePair[j][0] = 0;
-		musclePair[j][1] = 1;
-		LoadDoublesFromFile(12, muscle[j], "muscle0.txt");
-	}
-    */
-	//LoadDoublesFromFile(18, body[0], "body0.txt");
-	//LoadDoublesFromFile(18, body[1], "body1.txt");
-
-
-
     unsigned int curFrame;
-
     const unsigned int matSize = 14*nBody + nMuscle;
-    const unsigned int plotSamplingRate = 20; /* Write 1 sample per 'plotSamplingRate' */
     FILE *sr = fopen("simresult.txt", "w");
     assert(sr);
     fprintf(sr, "# curFrame p1[x] p1[y] p1[z] p1[e1] p1[e2] p1[e3] ... pn[x] pn[y] pn[z] pn[e1] pn[e2] pn[e3] T1 ... Tm\n");
@@ -193,12 +226,7 @@ int main()
         for (j = 0; j < nBody; ++j)
         {
             /* Renormalize quaternions for each body */
-            double qw = body[j][3], qx = body[j][4], qy = body[j][5], qz = body[j][6];
-            double qlen = sqrt(qw*qw + qx*qx + qy*qy + qz*qz);
-            body[j][3] /= qlen;
-            body[j][4] /= qlen;
-            body[j][5] /= qlen;
-            body[j][6] /= qlen;
+            NormalizeVector(4, &body[j][3]);
 
             /* Write the angular and linear position to the file. (for plotting) */
             /* Euler angles instead of quaternions used (human friendly) */

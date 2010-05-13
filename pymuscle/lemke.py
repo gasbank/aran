@@ -8,7 +8,7 @@ Lemke's algorithm for solving LCP
 """
 
 from numpy import *
-
+seterr(divide='raise')
 def lemke(M, q, z0):
 	n = len(q)
 	assert M.shape == (n,n)

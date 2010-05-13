@@ -6,7 +6,7 @@ Optimization-based rigid body simulator
 
 Common math routines
 """
-from math import cos, sin, atan2, asin
+from math import cos, sin, atan2, asin, sqrt
 from numpy import array, dot, linalg
 #
 # z-x-z (moving frame set)
@@ -50,10 +50,18 @@ def EulerAnglesFromQuaternion(q):
 	# Quaternion to euler angles (?-?-? convention)
 	# IMPORTANT: scalar component first
 	#
-	# THIS FUNCTION SUFFERS FROM THE SINGULARITY PROBLEM
-	#
 	q0,q1,q2,q3 = q
 	phi_   = atan2(2*(q0*q1+q2*q3), 1.-2*(q1**2+q2**2))
-	theta_ = asin(2*(q0*q2-q3*q1))
+	# asin(x) need x in range of [-1,1]
+	clamped = min(1., 2*(q0*q2-q3*q1))
+	clamped = max(-1., clamped)
+	theta_ = asin(clamped)
 	psi_   = atan2(2*(q0*q3+q1*q2), 1.-2*(q2**2+q3**2))
 	return (phi_, theta_, psi_)
+
+
+if __name__ == '__main__':
+	q = array([sqrt(2.)/2, 0, sqrt(2.)/2, 0])
+	q /= linalg.norm(q)
+	print EulerAnglesFromQuaternion(q)
+	
