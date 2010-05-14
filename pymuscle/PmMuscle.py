@@ -10,13 +10,15 @@ from SymbolicTensor import *
 from MathUtil import *
 
 class PmMuscle:
-	def __init__(self, name, orgBody, orgPos, insBody, insPos, mType, bAttachedPosNormalized):
+	def __init__(self, name, cfg, mType, bAttachedPosNormalized):
 		"""
 		orgBody/Pos: the muscle fiber's origin body name
 					and position in local coordinates
 		insBody/Pos: the muscle fiber's insertion body name
 					and position in local coordinates
 		"""
+		orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
+		
 		self.name    = name
 		self.orgBody = orgBody
 		self.orgPos  = orgPos
@@ -29,9 +31,10 @@ class PmMuscle:
 		#
 		# Dynamics properties
 		#
-		self.KSE     = 5000.
-		self.KPE     = 4500.
-		self.b       = 200.
-		self.xrest   = 0.45
-		self.T       = 0
-		self.A       = 0
+		self.KSE     = KSE
+		self.KPE     = KPE
+		self.b       = b
+		self.xrest   = xrest
+		self.T       = T
+		self.A       = A
+		

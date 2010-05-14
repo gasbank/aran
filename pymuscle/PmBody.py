@@ -41,11 +41,11 @@ class PmBody:
 		self.rotParam  = rotParam
 	
 	def globalPos(self, localPos):
-		if self.rotParm == 'EULER_XYZ':
+		if self.rotParam == 'EULER_XYZ':
 			A = RotationMatrixFromEulerAngles_xyz(self.q[3], self.q[4], self.q[5])
-		elif self.rotParm == 'EULER_ZXZ':
+		elif self.rotParam == 'EULER_ZXZ':
 			A = RotationMatrixFromEulerAngles_zxz(self.q[3], self.q[4], self.q[5])
-		elif self.rotParm == 'QUAT_WFIRST':
+		elif self.rotParam == 'QUAT_WFIRST':
 			A = RotationMatrixFromQuaternion(self.q[3], self.q[4], self.q[5], self.q[6])
 		return self.q[0:3] + dot(A, localPos)
 	

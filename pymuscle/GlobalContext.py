@@ -62,48 +62,67 @@ class GlobalContext:
 				     'LeftToe'   : [ (0.184, 0.105, 0.090), 3,  (0.1,0.6,0.0) ],
 				     'RightToe'  : [ (0.184, 0.105, 0.090), 3,  (0.0,0.2,0.6) ] }
 		
+
+
 		# MUSCLE CONFIGURATION
 		#              name         : ( origin    , originPos
-		#                               insertion , insertionPos )
+		#                               insertion , insertionPos, 
+		#                               KSE, KPE, b, xrest, T, A )
 		#-------------------------------------------------------------------------------
 		muscleCfg = { 'Lhamstring1' : ('lowerback', (1,-1,-1),
-				                       'LeftHip',   (0,-0.5,-1)),
+				                       'LeftHip',   (0,-0.5,-1),
+		                               5000, 4500, 500, 0.1, 0, 0),
 				      'Lhamstring2' : ('lowerback', (1,-1,-1),
-				                       'LeftKnee',  (0,0,-1)),
+				                       'LeftKnee',  (0,0,-1),
+		                               5000, 4500, 500, 0.1, 0, 0),
 				      'Lgastro'     : ('LeftHip',   (0,1,-1),
-				                       'LeftAnkle', (0,-1,-1)),
+				                       'LeftAnkle', (0,-1,-1),
+		                               5000, 4500, 500, 0.1, 0, 0),
 				      'Lfemoris1'   : ('lowerback', (1,-1,1),
-				                       'LeftHip',   (0,-0.5,1)),
+				                       'LeftHip',   (0,-0.5,1),
+		                               5000, 4500, 500, 0.1, 0, 0),
 				      'Lfemoris2'   : ('lowerback', (1,-1,1),
-				                       'LeftHip',   (0,1,1))        }
+				                       'LeftHip',   (0,1,1),
+		                               5000, 4500, 500, 0.1, 0, 0)        }
 		
 		ligaCfg = { 'LhipLiga'      : ('lowerback', (1,-1,0),
-				                       'LeftHip',   (0,-1,0)),
+				                       'LeftHip',   (0,-1,0),
+		                               50000, 45000, 500, 0.05, 0, 0),
 				    'LkneeLiga1'    : ('LeftHip',   (0,1,1),
-				                       'LeftKnee',  (0,-1,-1)),
+				                       'LeftKnee',  (0,-1,-1),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LkneeLiga2'    : ('LeftHip',   (0,1,-1),
-				                       'LeftKnee',  (0,-1,1)),
+				                       'LeftKnee',  (0,-1,1),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LkneeLiga3'    : ('LeftHip',   (1,1,0),
-				                       'LeftKnee',  (1,-1,0)),
+				                       'LeftKnee',  (1,-1,0),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LkneeLiga4'    : ('LeftHip',   (-1,1,0),
-				                       'LeftKnee',  (-1,-1,0)),
+				                       'LeftKnee',  (-1,-1,0),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LankleLiga1'   : ('LeftKnee',  (0,1,1),
-				                       'LeftAnkle', (0,-1,-1)),
+				                       'LeftAnkle', (0,-1,-1),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LankleLiga2'   : ('LeftKnee',  (0,1,-1),
-				                       'LeftAnkle', (0,1,-1)),
+				                       'LeftAnkle', (0,1,-1),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LtoeLiga1'     : ('LeftAnkle', (0,1,-1),
-				                       'LeftToe',   (0,-1,1)),
+				                       'LeftToe',   (0,-1,1),
+		                               5000, 4500, 500, 0.05, 0, 0),
 				    'LtoeLiga2'     : ('LeftAnkle', (0,1,1),
-				                       'LeftToe',   (0,-1,-1))    }
+				                       'LeftToe',   (0,-1,-1),
+		                               5000, 4500, 500, 0.05, 0, 0)    }
+
+
 		
 		self.fibers = []
+		"""
 		for name in muscleCfg:
-			orgBody, orgPos, insBody, insPos = muscleCfg[name]
-			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'MUSCLE', True)
+			pm = PmMuscle(name, muscleCfg[name], 'MUSCLE', True)
 			self.fibers.append(pm)
+		"""
 		for name in ligaCfg:
-			orgBody, orgPos, insBody, insPos = ligaCfg[name]
-			pm = PmMuscle(name, orgBody, orgPos, insBody, insPos, 'LIGAMENT', True)
+			pm = PmMuscle(name, ligaCfg[name], 'LIGAMENT', True)
 			self.fibers.append(pm)
 		
 		fnPrefix += rotParam + '_'
@@ -162,8 +181,8 @@ class GlobalContext:
 		self.curFrame = 0           # Current frame number
 		self.autoPlay = True
 		self.drawCoupon = 1
-		self.winWidth = int(320*4)
-		self.winHeight = int(240*2.5)
+		self.winWidth = 1000
+		self.winHeight = 900
 		self.drawOrtho = False
 		self.myChar = 0
 		
@@ -182,7 +201,15 @@ class GlobalContext:
 			if bodyName == name:
 				return i
 		raise Exception('Wrong body name!')
-
+	def findBodyIndex2(self, nameList):
+		for nl in nameList:
+			try:
+				return self.findBodyIndex(nl)
+			except Exception as inst:
+				if inst[0] == 'Wrong body name!':
+					pass
+		raise Exception('Wrong body name!')
+	
 def WriteConfigurationFile(gCon):
 	assert gCon.rotParam == 'QUAT_WFIRST'
 	
@@ -198,13 +225,13 @@ def WriteConfigurationFile(gCon):
 		
 		bodyConf.write('\t{\n')
 		bodyConf.write('\t\tname = \"' + gCon.bodyList[k][0] + '\";\n')
-		bodyConf.write('\t\tp = [%f,%f,%f]\n' % p)
-		bodyConf.write('\t\tq = [%f,%f,%f,%f]\n' % q)
-		bodyConf.write('\t\tpd = [%f,%f,%f]\n' % pd)
-		bodyConf.write('\t\tqd = [%f,%f,%f,%f]\n' % qd)
-		bodyConf.write('\t\tmass = %lf\n' % gCon.configured[k].mass)
-		bodyConf.write('\t\tsize = [%f,%f,%f]\n' % tuple(gCon.configured[k].boxsize))
-		bodyConf.write('\t\tgrav = true\n')
+		bodyConf.write('\t\tp = [%f,%f,%f];\n' % p)
+		bodyConf.write('\t\tq = [%f,%f,%f,%f];\n' % q)
+		bodyConf.write('\t\tpd = [%f,%f,%f];\n' % pd)
+		bodyConf.write('\t\tqd = [%f,%f,%f,%f];\n' % qd)
+		bodyConf.write('\t\tmass = %lf;\n' % gCon.configured[k].mass)
+		bodyConf.write('\t\tsize = [%f,%f,%f];\n' % tuple(gCon.configured[k].boxsize))
+		#bodyConf.write('\t\tgrav = true;\n')
 		bodyConf.write('\t}%s\n' % (',' if k<nb-1 else ''))
 	bodyConf.write(');')
 	bodyConf.close()
@@ -232,15 +259,14 @@ def WriteConfigurationFile(gCon):
 		muscleConf.write('\t\tname = \"' + mus.name + '\";\n')
 		muscleConf.write('\t\torigin = \"' + mus.orgBody + '\";\n')
 		muscleConf.write('\t\tinsertion = \"' + mus.insBody + '\";\n')
-		muscleConf.write('\t\tinsertion = \"' + mus.insBody + '\";\n')
-		muscleConf.write('\t\tKSE = %lf\n' % mus.KSE)
-		muscleConf.write('\t\tKPE = %lf\n' % mus.KPE)
-		muscleConf.write('\t\tb = %lf\n' % mus.b)
-		muscleConf.write('\t\txrest = %lf\n' % mus.xrest)
-		muscleConf.write('\t\tT = %lf\n' % mus.T)
-		muscleConf.write('\t\tA = %lf\n' % mus.A)
-		muscleConf.write('\t\toriginPos = [%f,%f,%f]\n' % localorg)
-		muscleConf.write('\t\tinsertionPos = [%f,%f,%f]\n' % localins)
+		muscleConf.write('\t\tKSE = %lf;\n' % mus.KSE)
+		muscleConf.write('\t\tKPE = %lf;\n' % mus.KPE)
+		muscleConf.write('\t\tb = %lf;\n' % mus.b)
+		muscleConf.write('\t\txrest = %lf;\n' % mus.xrest)
+		muscleConf.write('\t\tT = %lf;\n' % mus.T)
+		muscleConf.write('\t\tA = %lf;\n' % mus.A)
+		muscleConf.write('\t\toriginPos = [%f,%f,%f];\n' % localorg)
+		muscleConf.write('\t\tinsertionPos = [%f,%f,%f];\n' % localins)
 		muscleConf.write('\t}%s\n' % (',' if k<nMuscle-1 else ''))
 	muscleConf.write(');')
 	muscleConf.close()

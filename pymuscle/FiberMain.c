@@ -1,9 +1,9 @@
 /*
- * FiberEffectImpAll.c
+ * FiberMain.c
  * 2010 Geoyeob Kim
  * As a part of the thesis implementation
  *
- * Fiber effect equations (all fiber)
+ * Entry point
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,9 +12,8 @@
 #include <math.h>
 #include <libconfig.h>
 
-#include "TripletMatrix.h"
-#include "FiberEffectImpAll.h"
-#include "umfpack.h"
+#include "MathUtil.h"
+#include "SimCore.h"
 
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
@@ -60,29 +59,61 @@ int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn)
     return -1;
 }
 
-double NormalizeVector(int dim, double v[dim])
+int WriteState(FILE *sr, int curFrame, int nBody, int nMuscle, double body[nBody][18], double muscle[nMuscle][12])
 {
-    double len = 0;
-    int i;
-    for (i = 0; i < dim; ++i)
-        len += v[i]*v[i];
-    len = sqrt(len);
-    for (i = 0; i < dim; ++i)
-        v[i] /= len;
-    return len;
+    assert(sr);
+    fprintf(sr, "%d", curFrame);
+    int j;
+    for (j = 0; j < nBody; ++j)
+    {
+        /* Write the angular and linear position to the file. (for plotting) */
+        /* Euler angles instead of quaternions used (human friendly) */
+        double bjEul[3];
+        QuatToEuler(bjEul, &body[j][3]);
+        fprintf(sr, " %lf %lf %lf %lf %lf %lf",
+                    body[j][0], body[j][1], body[j][2],
+                    bjEul[0], bjEul[1], bjEul[2]);
+    }
+    for (j = 0; j < nMuscle; ++j)
+        fprintf(sr, " %lf", muscle[j][4]);
+    fprintf(sr, "\n");
+    return 0;
+}
+
+void CreateOutputTableHeader(char tableHeader[4096], int nBody, int nMuscle,
+                             char bodyName[nBody][128], char muscleName[nBody][128])
+{
+    strcat(tableHeader, "frame");
+    int j;
+    for (j = 0; j < nBody; ++j)
+    {
+        char tableHeaderTemp[128];
+        snprintf(tableHeaderTemp, 128, " %s[x] %s[y] %s[z] %s[e1] %s[e2] %s[e3]",
+                 bodyName[j], bodyName[j], bodyName[j], bodyName[j], bodyName[j], bodyName[j]);
+        strncat(tableHeader, tableHeaderTemp, 4095);
+    }
+    for (j = 0; j < nMuscle; ++j)
+    {
+        char tableHeaderTemp[128];
+        sprintf(tableHeaderTemp, " %s", muscleName[j]);
+        strncat(tableHeader, tableHeaderTemp, 4095);
+    }
+    strncat(tableHeader, "\n", 4095);
 }
 
 int main(int argc, const char **argv)
 {
+    printf("Rigid body and muscle fiber simulator\n");
+    printf("  2010 Geoyeob Kim\n\n");
     if (argc != 2)
     {
         /* extract the executable file name only */
         const char *exeName = strrchr(argv[0], '/') + 1;
-        printf("\n\nUsage) %s configuration_file\n\n", exeName);
+        printf("Usage) %s configuration_file\n\n", exeName);
         return -20;
     }
     const char *fnConf = argv[1];
-    int j, k;
+    int j;
     config_t conf;
     config_init(&conf);
     config_set_auto_convert(&conf, 1);
@@ -99,7 +130,7 @@ int main(int argc, const char **argv)
 
     const char *ver;
     config_lookup_string(&conf, "version", &ver);
-    printf("Version: %s\n", ver);
+    printf("  Config file version: %s\n", ver);
 
     /*
      * Parse body configurations
@@ -117,7 +148,7 @@ int main(int argc, const char **argv)
         const char *bName;
         config_setting_lookup_string(bConf, "name", &bName);
         strncpy(bodyName[j], bName, 128);
-        printf("Body %d name: %s\n", j, bName);
+        printf("    Body %d name: %s\n", j, bName);
         #define csgfe(a,b) config_setting_get_float_elem(a,b)
         config_setting_t *p = config_setting_get_member(bConf, "p"); assert(p);
         body[j][0] = csgfe(p, 0); body[j][1] = csgfe(p, 1); body[j][2] = csgfe(p, 2);
@@ -168,7 +199,7 @@ int main(int argc, const char **argv)
         const char *mName;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
-        printf("Muscle %d name: %s\n", j, mName);
+        printf("    Muscle %d name: %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         muscle[j][0] = config_setting_get_float(KSE);
         config_setting_t *KPE = config_setting_get_member(mConf, "KPE"); assert(KPE);
@@ -211,187 +242,63 @@ int main(int argc, const char **argv)
     int plotSamplingRate; /* Write 1 sample per 'plotSamplingRate' */
     confret = config_lookup_int(&conf, "plotSamplingRate", &plotSamplingRate);
     assert(confret == CONFIG_TRUE);
-
+    char cOutput[128]; /* File name result is written */
+    const char *cOutputTemp;
+    confret = config_lookup_string(&conf, "output", &cOutputTemp);
+    assert(confret == CONFIG_TRUE);
+    strncpy(cOutput, cOutputTemp, 128);
     config_destroy(&conf);
 
     /***************************************************************/
+    for (j = 0; j < nBody; ++j)
+    {
+        /*
+         * Normalize the quaternions for each body
+         * to ensure they represent rotations.
+         */
+        NormalizeVector(4, &body[j][3]);
+    }
+    /***************************************************************/
+
 
     unsigned int curFrame;
-    const unsigned int matSize = 14*nBody + nMuscle;
-    FILE *sr = fopen("simresult.txt", "w");
+    printf("  Opening %s for output\n", cOutput);
+    FILE *sr = fopen(cOutput, "w");
     assert(sr);
-    fprintf(sr, "# curFrame p1[x] p1[y] p1[z] p1[e1] p1[e2] p1[e3] ... pn[x] pn[y] pn[z] pn[e1] pn[e2] pn[e3] T1 ... Tm\n");
+    /*
+     * tableHeader looks like this :
+     *   frame p1[x] p1[y] p1[z] p1[e1] p1[e2] p1[e3]
+     *     .... pn[x] pn[y] pn[z] pn[e1] pn[e2] pn[e3]
+     *     T1 ... Tm
+     */
+    char tableHeader[4096] = { 0 };
+    CreateOutputTableHeader(tableHeader, nBody, nMuscle, bodyName, muscleName);
+    fprintf(sr, "%s", tableHeader);
+
+    /*********** START SIMULATION ************/
     for (curFrame = 0; curFrame < simFrame; ++curFrame)
     {
-        int writeSample = (curFrame % plotSamplingRate == 0);
-
-        TripletMatrix *dfdY_R[nBody]; /* be allocated by the following function */
-        TripletMatrix *dfdY_Q[nMuscle]; /* be allocated by the following function */
-        double f[nBody*14 + nMuscle];
-
-        if (writeSample)
-            fprintf(sr, "%d", curFrame);
-        for (j = 0; j < nBody; ++j)
-        {
-            /* Renormalize quaternions for each body */
-            NormalizeVector(4, &body[j][3]);
-
-            /* Write the angular and linear position to the file. (for plotting) */
-            /* Euler angles instead of quaternions used (human friendly) */
-            double bjEul[3];
-            QuatToEuler(bjEul, &body[j][3]);
-            if (writeSample)
-                fprintf(sr, " %lf %lf %lf %lf %lf %lf",
-                            body[j][0], body[j][1], body[j][2],
-                            bjEul[0], bjEul[1], bjEul[2]);
-        }
-        for (j = 0; j < nMuscle; ++j)
-            if (writeSample)
-                fprintf(sr, " %lf", muscle[j][4]);
-        if (writeSample)
-            fprintf(sr, "\n");
-
-
-        ImpAll(nBody, nMuscle, dfdY_R, dfdY_Q, f, body, extForce, muscle, musclePair, h);
-
-
         if (curFrame % 100 == 0)
         {
             printf("  - Simulating %5d frame... (%6.2f %%)\n", curFrame, (float)curFrame/simFrame*100);
         }
-        /*
-        for (j = 0; j < dfdY_Q[0]->nz; ++j)
-        {
-            printf("dfdY_Q[0] (%d, %d) = %lf\n", dfdY_Q[0]->Ti[j], dfdY_Q[0]->Tj[j], dfdY_Q[0]->Tx[j]);
-        }
-        */
 
+        int bWriteSample = (curFrame % plotSamplingRate == 0);
+        if (bWriteSample)
+            WriteState(sr, curFrame, nBody, nMuscle, body, muscle);
 
-
-        TripletMatrix *dfdY_RQ_merged[2] = { 0, 0 };
-        dfdY_RQ_merged[0] = tm_merge(nBody, dfdY_R);
-        dfdY_RQ_merged[1] = tm_merge(nMuscle, dfdY_Q);
-        /* dfdY_R and dfdY_Q are unnecessary */
-        for (j = 0; j < nBody; ++j)
-            dfdY_R[j] = tm_free(dfdY_R[j]);
-        for (j = 0; j < nMuscle; ++j)
-            dfdY_Q[j] = tm_free(dfdY_Q[j]);
-        TripletMatrix *dfdY_merged;
-        if (nMuscle)
-            dfdY_merged = tm_merge(2, dfdY_RQ_merged);
-        else
-            dfdY_merged = tm_merge(1, dfdY_RQ_merged);
-        /* dfdY_RQ_merged is unnecessary */
-        dfdY_RQ_merged[0] = tm_free(dfdY_RQ_merged[0]);
-        dfdY_RQ_merged[1] = tm_free(dfdY_RQ_merged[1]);
-
-        int Ap[dfdY_merged->n_col + 1];
-        int Ai[dfdY_merged->nz];
-        int status;
-        int *Map = 0;
-        double Ax[dfdY_merged->nz];
-        status = umfpack_di_triplet_to_col (dfdY_merged->n_row,
-                                            dfdY_merged->n_col,
-                                            dfdY_merged->nz,
-                                            dfdY_merged->Ti,
-                                            dfdY_merged->Tj,
-                                            dfdY_merged->Tx,
-                                            Ap, Ai, Ax, Map);
-        assert(status == UMFPACK_OK);
-        /* Ap[n_col] or Ap[matSize] is the number of nonzeros in the sparse matrix. */
-        //printf("dfdY_merged nz = %d\n", Ap[matSize]);
-
-        double Control [UMFPACK_CONTROL];
-        Control[UMFPACK_PRL] = 5;
-        /*
-        umfpack_di_report_matrix(matSize, matSize, Ap, Ai, Ax, 1, Control);
-        */
-
-
-        /*
-         * Now we have f, dfdY.
-         * Let's start implicit integration step.
-         * Build the following matrix.
-         *
-         *               (identity matrix)        d f
-         * tripletA  =  -------------------  -  ------
-         *                      h                 d Y
-         */
-        int tripletA_nzMax = matSize + Ap[matSize];
-        TripletMatrix *tripletA = tm_allocate(matSize, matSize, tripletA_nzMax);
-        for (j = 0; j < matSize; ++j)
-        {
-            tm_add_entry(tripletA, j, j, 1./h);
-        }
-        int Tj[Ap[matSize]];
-        status = umfpack_di_col_to_triplet (matSize, Ap, Tj) ;
-        assert(status == UMFPACK_OK);
-        /* We can access dfdY by using Ai (row indices), Tj (column indices) and Ax (numerical values). */
-        /* Number of nonzero values is Ap[matSize]. */
-        for (j = 0; j < Ap[matSize]; ++j)
-        {
-            tm_add_entry(tripletA, Ai[j], Tj[j], - Ax[j]);
-        }
-        /* tripletA is constructed. Convert it to column-compressed format. */
-        int tripAp[matSize + 1];
-        int tripAi[tripletA_nzMax];
-        int *tripMap = 0;
-        double tripAx[tripletA_nzMax];
-        status = umfpack_di_triplet_to_col (tripletA->n_row,
-                                            tripletA->n_col,
-                                            tripletA->nz,
-                                            tripletA->Ti,
-                                            tripletA->Tj,
-                                            tripletA->Tx,
-                                            tripAp, tripAi, tripAx, tripMap);
-        assert(status == UMFPACK_OK);
-        //printf("tripletA nonzeros = %d\n", tripAp[matSize]);
-
-        //umfpack_di_report_matrix(matSize, matSize, tripAp, tripAi, tripAx, 1, Control);
-
-        tripletA = tm_free(tripletA);
-        dfdY_merged = tm_free(dfdY_merged);
-
-        /*
-         * Linear system solving
-         *
-         * A x = b
-         *
-         * A := tripletA
-         * x := delta Y
-         * b := f(Y0)
-         */
-        double *null = (double *) NULL ;
-
-        void *Symbolic, *Numeric ;
-        int n = matSize;
-        double *b = f;
-        double x[matSize];
-        (void) umfpack_di_symbolic (n, n, tripAp, tripAi, tripAx, &Symbolic, null, null) ;
-        (void) umfpack_di_numeric (tripAp, tripAi, tripAx, Symbolic, &Numeric, null, null) ;
-        umfpack_di_free_symbolic (&Symbolic) ;
-        (void) umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, x, b, Numeric, null, null) ;
-        umfpack_di_free_numeric (&Numeric) ;
-        //for (j = 0 ; j < 3 ; j++) printf ("x [%d] = %g  ", j, x [j]) ;
-
-        /* Since x := deltaY, we should update our state vector accordingly. */
-        for (k = 0; k < nBody; ++k)
-        {
-            /* Update p(3), q(4), pd(3), qd(4) for each body */
-            for (j = 0; j < 14; ++j)
-            {
-                body[k][j] += x[k*14 + j];
-            }
-        }
-        for (k = 0; k < nMuscle; ++k)
-        {
-            muscle[k][4 /* watch out! */] += x[nBody*14 + k];
-        }
+        SimCore(h, nBody, nMuscle, body, extForce, muscle, musclePair);
     }
+    printf("  - Simulating %5d frame... (%6.2f %%)\n", curFrame, (float)curFrame/simFrame*100);
+    /* Write the final state */
+    WriteState(sr, curFrame, nBody, nMuscle, body, muscle);
     fclose(sr);
+    printf("  Closing %s\n", cOutput);
+    printf("  Finished.\n");
 	return (0);
 }
 
+/*
 int SolverTest()
 {
     int    n = 5 ;
@@ -414,3 +321,4 @@ int SolverTest()
 
     return 0;
 }
+*/

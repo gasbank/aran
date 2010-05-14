@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="simcore" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/libsimcore_debug" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/libsimcore_release" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="3" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Option createStaticLib="1" />
+				<Compiler>
+					<Add option="-march=core2" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-fPIC" />
+			<Add directory="/home/johnu/src/include" />
+		</Compiler>
+		<Linker>
+			<Add library="umfpack" />
+			<Add library="cholmod" />
+			<Add library="amd" />
+			<Add library="metis" />
+			<Add library="camd" />
+			<Add library="gfortran" />
+			<Add library="ccolamd" />
+			<Add library="colamd" />
+			<Add library="fblas" />
+			<Add directory="/home/johnu/src/lib" />
+			<Add directory="/home/jonu/src/lib/atlas/lib" />
+			<Add directory="/home/johnu/src/blas" />
+		</Linker>
+		<Unit filename="FiberEffectImp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="FiberEffectImp.h" />
+		<Unit filename="FiberEffectImpAll.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="FiberEffectImpAll.h" />
+		<Unit filename="MathUtil.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="MathUtil.h" />
+		<Unit filename="OneRbImp.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="OneRbImp.h" />
+		<Unit filename="SimCore.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SimCore.h" />
+		<Unit filename="TripletMatrix.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="TripletMatrix.h" />
+		<Unit filename="TypeDefs.h" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<lib_finder disable_auto="1" />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

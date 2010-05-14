@@ -26,6 +26,11 @@ from pygame.font import *
 from PmBody import *
 from PmMuscle import *
 from GlobalContext import *
+import ctypes as ct
+from Parameters import *
+
+libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Release/libsimcore_release.so')
+C_SimCore = libsimcore.SimCore
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -33,6 +38,8 @@ ESCAPE = '\033'
 LEFTARROW = 100
 RIGHTARROW = 102
 
+# Always raise an exception when there is a numerically
+# incorrect value appeared in NumPy module.
 seterr(all='raise')
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
@@ -48,10 +55,24 @@ def InitializeGl (gCon):				# We call this right after our OpenGL window is crea
 	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) 	# Really Nice Perspective Calculations
 	glEnable (GL_LIGHT0)
 	glEnable (GL_LIGHTING)
-	glEnable (GL_COLOR_MATERIAL)
+	
+	noAmbient = [0.0, 0.0, 0.0, 1.0]
+	whiteDiffuse = [1.0, 1.0, 1.0, 1.0]
+	"""
+	Directional light source (w = 0)
+	The light source is at an infinite distance,
+	all the ray are parallel and have the direction (x, y, z).
+	"""
+	position = [0.2, -1.0, 1.0, 0.0]
+	
+	glLightfv(GL_LIGHT0, GL_AMBIENT, noAmbient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteDiffuse);
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+	
+	#glEnable (GL_COLOR_MATERIAL)
 	#glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
 	glEnable(GL_TEXTURE_2D)
-
+	glEnable(GL_NORMALIZE)
 	# Turn on wireframe mode
 	#glPolygonMode(GL_FRONT, GL_LINE)
 	#glPolygonMode(GL_BACK, GL_LINE)
@@ -203,10 +224,11 @@ def Draw():
 	
 	Prerender()
 	RenderPerspectiveWindow()
-	RenderLegMonitorWindow('LeftAnkle', 'SIDE')
-	RenderLegMonitorWindow('LeftAnkle', 'FRONT')
-	RenderLegMonitorWindow('RightAnkle', 'SIDE')
-	RenderLegMonitorWindow('RightAnkle', 'FRONT')
+	if gRunMode == 'MOCAP':
+		RenderLegMonitorWindow('LeftAnkle', 'SIDE')
+		RenderLegMonitorWindow('LeftAnkle', 'FRONT')
+		RenderLegMonitorWindow('RightAnkle', 'SIDE')
+		RenderLegMonitorWindow('RightAnkle', 'FRONT')
 	RenderSideCameraWindow()
 	RenderHud()
 	Postrender()
@@ -261,7 +283,7 @@ def RenderLegMonitorWindow(legName, viewDir):
 	assert(viewDir in ['SIDE', 'FRONT'])
 
 	global gCon
-	ankleIdx = FindBodyIndex(legName)
+	ankleIdx = gCon.findBodyIndex(legName)
 	ankleGlobalPos = gCon.configured[ankleIdx].globalPos((0,0,0))
 	
 	glWidth, glHeight = gCon.winWidth, gCon.winHeight
@@ -336,7 +358,14 @@ def DrawBiped(drawAxis, wireframe):
 		glPushMatrix()
 		glTranslatef(q[0], q[1], q[2])
 		A_homo = identity(4)
-		A = RotationMatrixFromEulerAngles_xyz(q[3], q[4], q[5])
+		if gCon.rotParam == 'EULER_XYZ':
+			A = RotationMatrixFromEulerAngles_xyz(q[3], q[4], q[5])
+		elif gCon.rotParam == 'EULER_ZXZ':
+			A = RotationMatrixFromEulerAngles_zxz(q[3], q[4], q[5])
+		elif gCon.rotParam == 'QUAT_WFIRST':
+			A = RotationMatrixFromQuaternion(q[3], q[4], q[5], q[6])
+		else:
+			raise Exception('unknown rotation parameterization.')
 		A_homo[0:3,0:3] = A
 		glMultMatrixd(A_homo.T.flatten())
 		# box(body) frame indicator
@@ -419,8 +448,8 @@ def DrawBipedFibers(drawAsLine=False):
 	global gCon
 	# Draw muscle/ligament fibers
 	for m in gCon.fibers:
-		orgBodyIdx = FindBodyIndex(m.orgBody)
-		insBodyIdx = FindBodyIndex(m.insBody)
+		orgBodyIdx = gCon.findBodyIndex(m.orgBody)
+		insBodyIdx = gCon.findBodyIndex(m.insBody)
 		borg = gCon.configured[orgBodyIdx]
 		bins = gCon.configured[insBodyIdx]
 		
@@ -451,25 +480,27 @@ def DrawBipedFibers(drawAsLine=False):
 def DrawBipedContactPoints():
 	global gCon
 	glColor3f(0.1, 0.2, 0.9)
-	for acp in gCon.activeCornerPoints:
-		glPushMatrix()
-		glTranslated(acp[0], acp[1], acp[2])
-		glutSolidSphere(0.035, 8, 8)
-		glPopMatrix()
+	if hasattr(gCon, 'activeCornerPoints'):
+		for acp in gCon.activeCornerPoints:
+			glPushMatrix()
+			glTranslated(acp[0], acp[1], acp[2])
+			glutSolidSphere(0.035, 8, 8)
+			glPopMatrix()
 		
 def DrawBipedContactForces():
 	global gCon
 	glColor3f(1.0,0.7,0.5) # Contact force arrow color
-	for cf, acp in zip(gCon.contactForces, gCon.activeCornerPoints):
-		fricdirn, friclen = cf
-		rotaxis = cross([0,0,1.], fricdirn)
-		rotangle = acos(dot(fricdirn,[0,0,1.]))
-		
-		glPushMatrix()
-		glTranslatef(acp[0], acp[1], acp[2])
-		glRotatef(rotangle/math.pi*180,rotaxis[0],rotaxis[1],rotaxis[2])
-		RenderArrow(gCon.quadric, friclen*0.8, friclen*0.2, 0.015)
-		glPopMatrix()
+	if hasattr(gCon, 'contactForces') and hasattr(gCon, 'activeCornerPoints'):
+		for cf, acp in zip(gCon.contactForces, gCon.activeCornerPoints):
+			fricdirn, friclen = cf
+			rotaxis = cross([0,0,1.], fricdirn)
+			rotangle = acos(dot(fricdirn,[0,0,1.]))
+			
+			glPushMatrix()
+			glTranslatef(acp[0], acp[1], acp[2])
+			glRotatef(rotangle/math.pi*180,rotaxis[0],rotaxis[1],rotaxis[2])
+			RenderArrow(gCon.quadric, friclen*0.8, friclen*0.2, 0.015)
+			glPopMatrix()
 
 def RenderPerspectiveWindow():
 	global gCon
@@ -486,14 +517,19 @@ def RenderPerspectiveWindow():
 	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
 	glLoadIdentity ();					# // Reset The Modelview Matrix
 
-	xeye, yeye, zeye = 10, -5, 2.5
-	xcenter, ycenter, zcenter = 2.90, -4, 0.5
+	# Point Of Interest
+	poi = gCon.findBodyIndex2(['lowerback', 'trunk'])
+	poiPos = array(gCon.configured[poi].q[0:3])
+	
+	xeye, yeye, zeye = poiPos + array([3,-3,0.2])
+	xcenter, ycenter, zcenter = poiPos + array([0,0,-0.5])
 	xup, yup, zup = 0, 0, 1
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 
 	# Plane
 	gnd_texture = gCon.gndTex
 	
+	glPushAttrib(GL_LIGHTING_BIT)
 	glDisable(GL_LIGHTING)
 	glBindTexture(GL_TEXTURE_2D, gnd_texture)
 	glColor3f(1,1,1)
@@ -506,7 +542,7 @@ def RenderPerspectiveWindow():
 	glTexCoord2f(texRep, texRep);  glVertex3f( plane,  plane, 0)
 	glTexCoord2f(0, texRep);       glVertex3f(-plane,  plane, 0)
 	glEnd()
-	glEnable(GL_LIGHTING)
+	glPopAttrib()
 	# Render the fancy global(inertial) coordinates
 	RenderFancyGlobalAxis(quadric, 0.7/2, 0.3/2, 0.025)
 
@@ -516,6 +552,85 @@ def RenderPerspectiveWindow():
 	DrawBipedContactForces()
 
 def FrameMove():
+	if gRunMode == 'IMPINT':
+		FrameMove_ImpInt()
+	else:
+		FrameMove_Mocap()
+	
+def FrameMove_ImpInt():
+	global gCon
+	"""
+	void SimCore(const double h, const int nBody, const int nMuscle,
+             double body[nBody][18], double extForce[nBody][6],
+             double muscle[nMuscle][12], unsigned int musclePair[nMuscle][2])
+	"""
+	nBody = len(gCon.configured)
+	nMuscle = len(gCon.fibers)
+	
+	DBL_nBodyx18  = (ct.c_double * 18) * nBody
+	DBL_nBodyx6  = (ct.c_double * 6) * nBody
+	DBL_nMusclex12  = (ct.c_double * 12) * nMuscle
+	UINT_nMusclex2  = (ct.c_uint * 2) * nMuscle
+	
+	# Input parameters
+	C_h = ct.c_double(gCon.h)
+	C_nBody = ct.c_int(len(gCon.configured))
+	C_nMuscle = ct.c_int(len(gCon.fibers))
+	C_extForce = DBL_nBodyx6()
+	# Set gravitational forces
+	
+	for i in range(nBody):
+		C_extForce[i][2] = -9.81 * gCon.configured[i].mass
+	
+	C_musclePair = UINT_nMusclex2()
+	for i in range(nMuscle):
+		C_musclePair[i][0] = gCon.findBodyIndex( gCon.fibers[i].orgBody )
+		C_musclePair[i][1] = gCon.findBodyIndex( gCon.fibers[i].insBody )
+	# Input/output parameters
+	## Body
+	C_body = DBL_nBodyx18()
+	for i in range(nBody):
+		body = gCon.configured[i]
+		C_body[i][0:7] = body.q
+		C_body[i][7:14] = body.qd
+		C_body[i][14] = body.mass
+		inertiaMat = BoxInertia(body.boxsize, body.mass)
+		C_body[i][15:18] = inertiaMat.diagonal()
+	## Muscle
+	C_muscle = DBL_nMusclex12()
+	for i in range(nMuscle):
+		muscle = gCon.fibers[i]
+		
+		orgBodyIdx = gCon.findBodyIndex(muscle.orgBody)
+		insBodyIdx = gCon.findBodyIndex(muscle.insBody)
+		borg = gCon.configured[orgBodyIdx]
+		bins = gCon.configured[insBodyIdx]
+		
+		if muscle.bAttachedPosNormalized:
+			localorg = array([b/2. * p for b,p in zip(borg.boxsize, muscle.orgPos)])
+			localins = array([b/2. * p for b,p in zip(bins.boxsize, muscle.insPos)])
+		else:
+			localorg = muscle.orgPos
+			localins = muscle.insPos
+		
+		C_muscle[i][0:6] = [muscle.KSE, muscle.KPE, muscle.b, muscle.xrest, muscle.T, muscle.A]
+		C_muscle[i][6:9] = localorg
+		C_muscle[i][9:12] = localins
+	
+	# Pass all the variables to the simcore
+	C_SimCore(C_h, C_nBody, C_nMuscle, C_body, C_extForce, C_muscle, C_musclePair)
+
+	# Retrieve the result from the simcore and update our states
+	for i in range(nBody):
+		body = gCon.configured[i]
+		body.q = C_body[i][0:7]
+		body.qd = C_body[i][7:14]
+	for i in range(nMuscle):
+		muscle = gCon.fibers[i]
+		muscle.T = C_muscle[i][4]
+		
+	
+def FrameMove_Mocap():
 	global gCon
 	# Total number of rigid bodies
 	nb = len(gCon.configured)
@@ -723,5 +838,21 @@ def ang_vel(q, v):
 ################################################################################
 
 # Let's go!
-gCon = GlobalContext()
+#
+# Run mode
+#
+gRunMode = 'MOCAP'
+assert gRunMode in ['MOCAP', 'IMPINT']
+
+if gRunMode == 'MOCAP':
+	gCon = GlobalContext('/home/johnu/pymuscle/traj_', 'EULER_XYZ')
+elif gRunMode == 'IMPINT':
+	gCon = GlobalContext('/home/johnu/pymuscle/traj_', 'QUAT_WFIRST')
+	gBipedParam = BipedParameter()
+	gCon.configured = gBipedParam.buildBody()
+	gCon.fibers = gBipedParam.buildFiber()
+	gCon.bodyList = []
+	for b in gCon.configured:
+		gCon.bodyList.append( (b.name, None) )
+
 Main(gCon)

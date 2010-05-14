@@ -8,6 +8,13 @@ Common math routines
 """
 from math import cos, sin, atan2, asin, sqrt
 from numpy import array, dot, linalg
+
+def RotationMatrixFromQuaternion(a,b,c,d):
+	# 'a' is a scalar part
+	return array([[a**2+b**2-c**2-d**2,  2*b*c-2*a*d,  2*b*d+2*a*c],
+	              [2*b*c+2*a*d,  a**2-b**2+c**2-d**2,  2*c*d-2*a*b],
+	              [2*b*d-2*a*c,  2*c*d+2*a*b,  a**2-b**2-c**2+d**2]])
+
 #
 # z-x-z (moving frame set)
 #
@@ -33,6 +40,8 @@ def EulerAngleRateFromAngularVelocity_zxz(phi, theta, psix, omega):
 	            [sin(theta)*cos(phi), -sin(phi),   0],
 	            [      cos(theta)   ,      0   ,   1] ])
 	return dot(linalg.inv(X), omega)
+
+
 #
 # x-y-z (fixed angle set)
 #
