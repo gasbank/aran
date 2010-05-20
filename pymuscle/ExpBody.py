@@ -14,7 +14,7 @@ from numpy import hstack, identity, hstack, vstack, array
 from SymbolicTensor import *
 
 class ExpBody:
-	def __init__(self, name, pName, mass, boxsize, q, linvel, omega_wc, dc):
+	def __init__(self, name, pName, mass, boxsize, q, linvel, angvel, dc):
 		"""
 		mass: mass of the body
 		size: size tuple (sx, sy, sz) of rigid body
@@ -29,8 +29,10 @@ class ExpBody:
 		self.mass       = mass
 		self.boxsize    = boxsize
 		self.q          = q
-		self.omega_wc   = omega_wc
-		self.setQd(linvel, omega_wc)  # setQd() sets self.qd
+		#self.omega_wc   = omega_wc
+		#self.setQd(linvel, omega_wc)  # setQd() sets self.qd
+		self.qd         = hstack([linvel, angvel])
+		
 		self.qdCo       = 'EXP'
 		self.dc         = dc
 		self.rho        = mass / (sx*sy*sz) # density of the body

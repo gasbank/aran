@@ -98,6 +98,8 @@ def keyPressed(*args):
 		gWireframe = not gWireframe
 	elif key == 'r':
 		gResetState = True
+	elif key == 'a':
+		gBody.q[3:6] += array([0.05,0.05,0.05])
 
 def main():
 	# pass arguments to init
@@ -110,8 +112,8 @@ def main():
 	# Depth buffer
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
 
-	width = 320*3
-	height = 240*3
+	width = 320*2
+	height = 240*2
 
 	glutInitWindowSize(width, height)
 
@@ -196,7 +198,7 @@ def Draw():
 		
 	RenderBox()
 	
-	#print frame, gBody.qd[3:6]
+	print frame
 	
 	
 	if gResetState:
@@ -274,7 +276,6 @@ def FrameMove():
 		fg = GeneralizedForce(gBody.q[3:6] + h*gBody.qd[3:6]/2,
 		                      (0., 0., -9.81 * gBody.mass),
 		                      (0., 0., 0.))
-		#Cqd_k = Cqd_k + fg
 		
 		if k in activeBodies:
 			kk = activeBodies.index(k)
@@ -364,7 +365,7 @@ def FrameMove():
 		beta = x_opt[p    :p+8*p]
 		lamb = x_opt[p+8*p:p+8*p+p]
 		
-		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*Cqd_a) + Qd_a
+		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*(fg - Cqd_a)) + Qd_a
 		Q_a_next  = h * Qd_a_next + Q_a
 		
 		for k in activeBodies:
@@ -381,13 +382,16 @@ def FrameMove():
 	for k in inactiveBodies:
 		# No contact point
 		kk = inactiveBodies.index(k)
-		Qd_i_next = dot(Minv_i, -h*Cqd_i) + Qd_i
+
+		Qacc = dot(Minv_i, fg-Cqd_i)
+		#print Qacc
+		Qd_i_next = h*Qacc + Qd_i
 		Q_i_next  = h * Qd_i_next + Q_i
 		gBody.q = Q_i_next[6*kk:6*(kk+1)]
 		gBody.qd = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
 		
-		print Qd_i_next, gBody.omega_wc
+		#print Qd_i_next, gBody.omega_wc
 	
 	for i in range(6):
 		plotvalues[i].append(gBody.q[i])
@@ -399,7 +403,7 @@ def RenderBox():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
 	glLoadIdentity()											# // Reset The Current Modelview Matrix
 
-	gluLookAt(8,-6,5,
+	gluLookAt(8,8,8,
 	          0,0,0,
 	          0,0,1);
 		
@@ -431,9 +435,13 @@ def RenderBox():
 			glPopMatrix()
 			if minZ > wc[cp][2]:
 				minZ = wc[cp][2]
-		print minZ
+		
+		#print minZ
+		'''
 		if minZ < 0:
 			gBody.q[2] -= minZ
+		'''
+		
 	omega_wc = gBody.omega_wc
 	glColor(0,0,0)
 	glPushMatrix()
@@ -470,7 +478,7 @@ plotvalue6 = []
 	
 ################################################################################
 # Friction coefficient
-mu = 1.2
+mu = 10.
 # Simulation Timestep
 h = 0.0025
 # contact level threshold
@@ -494,14 +502,17 @@ di = array([ [        1.,         0., 0],
              [ cos(pi/4), -sin(pi/4), 0] ])
 di = di.T
 
+# Initial position (lin and ang)
 pos0_wc   = array([0.,0.,3])
+rot0_wc   = array([0.5,0.3,0.7])
+# Initial velocity (lin and ang)
 vel0_wc   = array([0.,0,0])
-rot0_wc   = array([0.0,0.0,0.0])
-omega0_wc = array([0.,1,1])
+omega0_wc = array([0.,0,0])
+angvel0_wc = array([20,0,0])
 
-gBody = ExpBody.ExpBody('singlerb', None, 2., array([0.5,0.7,0.9]),
+gBody = ExpBody.ExpBody('singlerb', None, 3., array([0.5,0.7,2.5]),
                       hstack([ pos0_wc, rot0_wc ]),
-                      vel0_wc, omega0_wc,
+                      vel0_wc, angvel0_wc,
                       [0.1,0.2,0.3])
 
 # Current frame number

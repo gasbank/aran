@@ -107,6 +107,11 @@ printMatDim(TOT); /* TOT is not a matrix. */
 
 Cqd_G : at(TOT, [pdd1=0, pdd2=0, pdd3=0, vdd1=0, vdd2=0, vdd3=0])$
 G     : at(Cqd_G, [pd1=0, pd2=0, pd3=0, vd1=0, vd2=0, vd3=0])$
+
+G;
+Cqd_G[4];
+quit();
+
 Cqd   : Cqd_G - G$
 MXdd  : TOT - Cqd_G$
 M     : matrix([0,0,0,0,0,0],
