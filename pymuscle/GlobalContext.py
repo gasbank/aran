@@ -125,54 +125,55 @@ class GlobalContext:
 			pm = PmMuscle(name, ligaCfg[name], 'LIGAMENT', True)
 			self.fibers.append(pm)
 		
-		fnPrefix += rotParam + '_'
-		q_file = open(fnPrefix + 'q.txt', 'r')
-		qd_file = open(fnPrefix + 'qd.txt', 'r')
-		qdd_file = open(fnPrefix + 'qdd.txt', 'r')
-		#torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'r')
-		
-		# Ignore the first line
-		noFrame, nb = map(int, q_file.readline().strip().split())
-		self.noFrame = noFrame
-		qd_file.readline()
-		qdd_file.readline()
-		#torque_file.readline()
-		self.q_data = []
-		self.qd_data = []
-		self.torque_data = []
-		for i in range(noFrame-2):
-			q_i = []
-			qd_i = []
-			t_i = []
-			for j in range(nb):
-				q_ij = array( map(float, q_file.readline().strip().split()) )
-				q_i.append(q_ij)
-				qd_ij = array( map(float, qd_file.readline().strip().split()) )
-				qd_i.append(qd_ij)
-				#t_ij = array( map(float, torque_file.readline().strip().split()) )
-				#t_i.append(t_ij)
-			self.q_data.append(q_i)
-			self.qd_data.append(qd_i)
-			#self.torque_data.append(t_i)
-		
-		q_file.seek(0, 0)
-		q_file.readline()
-		qd_file.seek(0, 0)
-		qd_file.readline()
-		qdd_file.seek(0, 0)
-		qdd_file.readline()
-		#torque_file.seek(0, 0)
-		#torque_file.readline()
-		
-		# Body specific parameters and state vectors
-		self.configured = []
-		for bodyName, pBodyName in bodyList:
-			boxsize, mass, dc = bodyCfg[bodyName]
-			q_ij = array( map(float, q_file.readline().strip().split()) )
-			qd_ij = array( map(float, qd_file.readline().strip().split()) )
+		if fnPrefix is not None:
+			fnPrefix += rotParam + '_'
+			q_file = open(fnPrefix + 'q.txt', 'r')
+			qd_file = open(fnPrefix + 'qd.txt', 'r')
+			qdd_file = open(fnPrefix + 'qdd.txt', 'r')
+			#torque_file = open('/media/vm/devel/aran/pymuscle/torque.txt', 'r')
 			
-			body = PmBody(bodyName, pBodyName, mass, boxsize, q_ij, qd_ij, dc, rotParam)
-			self.configured.append(body)
+			# Ignore the first line
+			noFrame, nb = map(int, q_file.readline().strip().split())
+			self.noFrame = noFrame
+			qd_file.readline()
+			qdd_file.readline()
+			#torque_file.readline()
+			self.q_data = []
+			self.qd_data = []
+			self.torque_data = []
+			for i in range(noFrame-2):
+				q_i = []
+				qd_i = []
+				t_i = []
+				for j in range(nb):
+					q_ij = array( map(float, q_file.readline().strip().split()) )
+					q_i.append(q_ij)
+					qd_ij = array( map(float, qd_file.readline().strip().split()) )
+					qd_i.append(qd_ij)
+					#t_ij = array( map(float, torque_file.readline().strip().split()) )
+					#t_i.append(t_ij)
+				self.q_data.append(q_i)
+				self.qd_data.append(qd_i)
+				#self.torque_data.append(t_i)
+			
+			q_file.seek(0, 0)
+			q_file.readline()
+			qd_file.seek(0, 0)
+			qd_file.readline()
+			qdd_file.seek(0, 0)
+			qdd_file.readline()
+			#torque_file.seek(0, 0)
+			#torque_file.readline()
+			
+			# Body specific parameters and state vectors
+			self.body = []
+			for bodyName, pBodyName in bodyList:
+				boxsize, mass, dc = bodyCfg[bodyName]
+				q_ij = array( map(float, q_file.readline().strip().split()) )
+				qd_ij = array( map(float, qd_file.readline().strip().split()) )
+				
+				body = PmBody(bodyName, pBodyName, mass, boxsize, q_ij, qd_ij, dc, rotParam)
+				self.body.append(body)
 		
 		self.rotParam = rotParam
 		self.cube = 0               # Cube(display list)
@@ -213,15 +214,15 @@ class GlobalContext:
 def WriteConfigurationFile(gCon):
 	assert gCon.rotParam == 'QUAT_WFIRST'
 	
-	nb = len(gCon.configured)
+	nb = len(gCon.body)
 	bodyConf = open('/home/johnu/pymuscle/body.conf', 'w')
 	bodyConf.write('body=\n')
 	bodyConf.write('(\n');
 	for k in range(nb):
-		p  = tuple(gCon.configured[k].q[0:3])     # Linear position
-		q  = tuple(gCon.configured[k].q[3:7])     # Quaternion orientation
-		pd = tuple(gCon.configured[k].qd[0:3])    # Linear velocity
-		qd = tuple(gCon.configured[k].qd[3:7])    # Time rate of quaternion orientation
+		p  = tuple(gCon.body[k].q[0:3])     # Linear position
+		q  = tuple(gCon.body[k].q[3:7])     # Quaternion orientation
+		pd = tuple(gCon.body[k].qd[0:3])    # Linear velocity
+		qd = tuple(gCon.body[k].qd[3:7])    # Time rate of quaternion orientation
 		
 		bodyConf.write('\t{\n')
 		bodyConf.write('\t\tname = \"' + gCon.bodyList[k][0] + '\";\n')
@@ -229,8 +230,8 @@ def WriteConfigurationFile(gCon):
 		bodyConf.write('\t\tq = [%f,%f,%f,%f];\n' % q)
 		bodyConf.write('\t\tpd = [%f,%f,%f];\n' % pd)
 		bodyConf.write('\t\tqd = [%f,%f,%f,%f];\n' % qd)
-		bodyConf.write('\t\tmass = %lf;\n' % gCon.configured[k].mass)
-		bodyConf.write('\t\tsize = [%f,%f,%f];\n' % tuple(gCon.configured[k].boxsize))
+		bodyConf.write('\t\tmass = %lf;\n' % gCon.body[k].mass)
+		bodyConf.write('\t\tsize = [%f,%f,%f];\n' % tuple(gCon.body[k].boxsize))
 		#bodyConf.write('\t\tgrav = true;\n')
 		bodyConf.write('\t}%s\n' % (',' if k<nb-1 else ''))
 	bodyConf.write(');')
@@ -246,8 +247,8 @@ def WriteConfigurationFile(gCon):
 		if mus.bAttachedPosNormalized:
 			orgBodyIdx = gCon.findBodyIndex(mus.orgBody)
 			insBodyIdx = gCon.findBodyIndex(mus.insBody)
-			borg = gCon.configured[orgBodyIdx]
-			bins = gCon.configured[insBodyIdx]
+			borg = gCon.body[orgBodyIdx]
+			bins = gCon.body[insBodyIdx]
 			
 			localorg = tuple([b/2. * p for b,p in zip(borg.boxsize, mus.orgPos)])
 			localins = tuple([b/2. * p for b,p in zip(bins.boxsize, mus.insPos)])

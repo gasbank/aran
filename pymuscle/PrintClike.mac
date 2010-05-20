@@ -50,6 +50,7 @@ printClike(v,vName, matDim) := block(
 
 printMatDim(m) := if matrixp(m) then [length(m),length(m[1])]$
 
+/*
 optimprefix:_x;
 v1:[x+y/z, y^5, y/z];
 v2:[x+y, -y/z, x+y+y/z];
@@ -57,7 +58,7 @@ v2:[x+y, -y/z, x+y+y/z];
 opted : optimize(append(v1, v2))$
 
 ev(opted, [x=1,y=2,z=3]);
-
+*/
 
 WriteBlockToClike(vName, blk, matDim) := block(
 	printf(out, "    ################################################~%"),

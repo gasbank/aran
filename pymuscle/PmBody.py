@@ -8,6 +8,8 @@ Rigid body class
 """
 from SymbolicTensor import *
 from MathUtil import *
+from quat import *
+from dynamics import BoxInertia
 
 class PmBody:
 	def __init__(self, name, pName, mass, boxsize, q, qd, dc, rotParam):
@@ -24,8 +26,9 @@ class PmBody:
 		self.pName   = pName
 		self.mass    = mass
 		self.boxsize = boxsize
-		self.q       = q
-		self.qd      = qd
+		self.q       = q               # Stored in World Coordinates
+		self.qd      = qd              # Stored in World or body coordinates
+		self.qdCo    = 'WC'            # 'WC' or 'BC'
 		self.dc      = dc
 		self.rho     = mass / (sx*sy*sz) # density of the body
 		self.I       = SymbolicTensor(sx, sy, sz, self.rho)
@@ -39,6 +42,10 @@ class PmBody:
 		                 (-sx/2, -sy/2, -sz/2) ]
 		assert(rotParam in ['EULER_XYZ', 'EULER_ZXZ', 'QUAT_WFIRST'])
 		self.rotParam  = rotParam
+		
+		self.ME = identity(3) * self.mass
+		self.IN = BoxInertia(self.boxsize, self.mass)
+		self.M_BC = self.getMassMatrix_BC()
 	
 	def globalPos(self, localPos):
 		if self.rotParam == 'EULER_XYZ':
@@ -54,3 +61,77 @@ class PmBody:
 		ret = ret + 'q: %s\n' % self.q
 		ret = ret + 'qd: %s (%s)' % (self.qd, self.rotParam)
 		return ret
+	
+	def getCorners_WC(self):
+		assert self.rotParam == 'QUAT_WFIRST'
+		cornersWc = []
+		for c in self.corners:
+			cw = self.q[0:3] + quat_rot(self.q[3:7], c)
+			cornersWc.append(cw)
+		return cornersWc
+	
+	def getMassMatrix_BC(self):
+		ret = vstack([  hstack([ self.ME, zeros((3,3)) ]),
+						hstack([ zeros((3,3)), self.IN ]) ])
+		return ret
+	def getMassMatrix_WC(self, q=None):
+		if q==None:
+			q = self.q
+		ret = vstack([  hstack([ self.ME     , zeros((3,3))    ]),
+						hstack([ zeros((3,3)), self.getIN_WC(q) ])   ])
+		return ret
+	def getCoriolisVector_BC(self):
+		assert self.rotParam == 'QUAT_WFIRST'
+		
+		omega = QuatToAngularVel_BC(self.q[3:7], self.qd[3:7])
+		return hstack([zeros(3), array(cross(omega, dot(self.IN, omega)))])
+	def getExtVector_BC(self):
+		omega = QuatToAngularVel_BC(self.q[3:7], self.qd[3:7])
+		V1_world = array([0,0,-9.81]) * self.mass
+		
+		V1_body = quat_rot(quat_conj(self.q[3:7]), V1_world)
+		V2_body = -array(cross(omega, dot(self.IN, omega)))
+		return hstack([V1_body, V2_body])
+
+	def getIN_WC(self, q=None):
+		if q==None:
+			q = self.q
+		A = RotationMatrixFromQuaternion(q[3],q[4],q[5],q[6])
+		return dot(dot(A, self.IN), A.T)
+	
+	def getExtVector_WC(self, q=None, qd=None):
+		if q==None:
+			q = self.q
+		if qd==None:
+			qd = self.qd
+		omega = QuatToAngularVel_WC(q[3:7], qd[3:7])
+		#omega = QuatToAngularVel_BC(self.q[3:7], self.qd[3:7])
+		
+		V1_world = array([0,0,-9.81]) * self.mass
+		#V1_world = array([0,0,-9.81]) * 0
+		
+		#V2_body = -array(cross(omega, dot(self.IN, omega)))
+		V2_world = -array(cross(omega, dot(self.getIN_WC(q), omega)))
+		return hstack([V1_world, V2_world])
+		
+	def explicitStep(self, h, acc):
+		assert self.rotParam == 'QUAT_WFIRST'
+		self.q  += self.qd  * h
+		self.qd += array(acc) * h
+		
+	def getLinearAngularVelocity_BC(self):
+		assert self.rotParam == 'QUAT_WFIRST'
+		if self.qdCo == 'BC':
+			qdLin = self.qd[0:3]
+		else:
+			qdLin = quat_rot(quat_conj(self.q[3:7]), self.qd[0:3])
+			
+		return hstack([ qdLin, QuatToAngularVel_BC( self.q[3:7], self.qd[3:7] ) ])
+	def getLinearAngularVelocity_WC(self):
+		assert self.rotParam == 'QUAT_WFIRST'
+		if self.qdCo == 'BC':
+			qdLin = quat_rot(self.q[3:7], self.qd[0:3])
+		else:
+			qdLin = self.qd[0:3]
+			
+		return hstack([ qdLin, QuatToAngularVel_WC( self.q[3:7], self.qd[3:7] ) ])

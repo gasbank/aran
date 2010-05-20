@@ -17,7 +17,9 @@ def BoxInertia(box_size, mass):
 
 def cross_op_mat(v):
 	assert len(v) is 3
-	return array( [ [0,-v[2],v[1]], [v[2],0,-v[0]], [-v[1],v[0],0] ] )
+	return array( [ [     0, -v[2],  v[1] ],
+	                [  v[2],     0, -v[0] ],
+	                [ -v[1],  v[0],     0 ] ] )
 
 def OrthonormalizedOfOrientation(o):
 	assert o.shape == (3,3)

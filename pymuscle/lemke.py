@@ -6,6 +6,8 @@ Optimization-based rigid body simulator
 
 Lemke's algorithm for solving LCP
 """
+import lsqr
+
 
 from numpy import *
 seterr(divide='raise')
@@ -60,6 +62,8 @@ def lemke(M, q, z0):
 		    return z, err
 		"""
 		x = -linalg.solve(B, q)
+		#x = -linalg.lstsq(B, q)
+		#x = x[0]
 
 	# Check if initial basis provides solution
 	if all([xi>=0 for xi in x]):
@@ -94,6 +98,8 @@ def lemke(M, q, z0):
 			entering = leaving - n
 			Be = M[:, entering]
 		d = linalg.solve(B, Be)
+		#d = linalg.lstsq(B, Be)
+		#d = d[0] # we only need the solution
 		
 		# Find new leaving variable
 		j = nonzero(d>piv_tol)[0]

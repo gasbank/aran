@@ -14,7 +14,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from lemke import *
 import sys
-
+import lwp
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'
@@ -143,7 +143,17 @@ def Draw ():
 	q = array(list(q1) + [q2] + [0.])
 	
 	z0 = zeros((M.shape[0]))
+
+	#------------------------------------------------------------------
+	# Use the code ported from Matlab
 	x_opt, err = lemke(M, q, z0)
+	
+	# Or use this!
+	#err = 0	
+	#x_opt = [0.,]*M.shape[0]
+	#lwp.clemke(1985, list(M.T.flatten()), list(q.flatten()), x_opt)
+	#------------------------------------------------------------------
+	
 	if err != 0:
 		raise Exception, 'Lemke\'s algorithm failed'
 	beta = x_opt[0:8]
@@ -169,9 +179,17 @@ def Draw ():
 
 	glPointSize(10.0)
 	glColor3f(1,0,0)
+	'''
+	glPushMatrix()
+	glTranslate(rl[0], rl[1], rl[2])
+	glutSolidSphere(0.3, 16, 16)
+	glPopMatrix()
+	'''
 	glBegin(GL_POINTS)
-	glVertex3f(rl[0], rl[1], rl[2])
+	glColor(1,0,0); glVertex(rl[0], rl[1], rl[2])
+	glColor(0.8,0.8,0.8); glVertex(rl[0], rl[1], 0)
 	glEnd()
+	
 	
 	f = n*cn + dot(D,beta)
 	#print f
@@ -216,12 +234,12 @@ D = array([[1, 0, 0],
 
 #D = array([[1,0,0],]*8).T
 # Friction coefficient
-mu = 0.05
+mu = 1.2
 e = array([1.]*8)
 alpha_0 = 0.001
 h = 0.0005
 m = 0.1
-fg = array([0.,0,-9.81])
+fg = array([0.,0,-9.81]) # Gravitational acceleration
 
 M = zeros((10,10))
 M[0:8,0:8] = dot(D.T, D)/m
@@ -229,11 +247,17 @@ M[0:8,8] = dot(D.T,n)/m
 M[0:8,9] = e
 M[8,0:8] = dot(n.T, D)/m
 M[8,8] = dot(n.T,n)/m
-M[9,0:8] = -e.T
+M[9,0:8] = -e
 M[9,8] = mu
 
-rl = array([-3.,-3,3])
-vl = array([3,3,20])
+'''
+M = vstack([  hstack([  dot(D.T,D)/m, dot(D.T,n)/m, e ]),
+              hstack([  dot(n.T,D)/m, dot(n.T,n)/m, 0 ]),
+              hstack([    -e.T      ,    mu       , 0 ])  ])
+'''
+
+rl = array([-60,0,0])
+vl = array([100,0,20])
 frame = 0
 
 main()

@@ -258,6 +258,26 @@ way to analyze the whole system. For instance, if we set $\dot{Y}_{Q_i}$ to 0 th
 the effect of muscle fiber $i$ is entirely removed from the simulation.
 
 \section{Contact model}
+There are various kind of techniques to deal with the calculation of
+contact forces between rigid bodies. The existing algorithms can be
+divided into three categories: constraint-based, penalty-based and
+impulse-based approaches. In constraint-based methods, the contact
+forces are computed by solving an optimization problem such as
+linear complementarity problems (LCP). The contact forces are calculated
+precisely in this case. It is not well suited in the environments
+which contain many contact points. Penalty-based methods compute
+the contact forces by considering a contact as a spring-damper.
+It is scalable and easy to implement. However it requires very short
+integration step especially at collisions and in most cases nonpenetration
+conditions are violated. Impulse-based methods model contacts
+as successive collisions instead of persisting contacts.
+
+Since our simulation environment contains a small number of contact points
+and the precise contact forces helps the physical realism in animation,
+we choose a time-stepping method introduced in [STEWART, ANITESCU].
+
+Contact forces are confined in the Coulomb friction cone
+
 
 \section{Implicit integration}
 

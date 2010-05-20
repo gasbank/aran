@@ -6,14 +6,16 @@ Optimization-based rigid body simulator
 
 Common math routines
 """
-from math import cos, sin, atan2, asin, sqrt
+from math import cos, sin, atan2, asin, sqrt, tan
 from numpy import array, dot, linalg
+
+def cot(x): return 1./tan(x)
 
 def RotationMatrixFromQuaternion(a,b,c,d):
 	# 'a' is a scalar part
-	return array([[a**2+b**2-c**2-d**2,  2*b*c-2*a*d,  2*b*d+2*a*c],
-	              [2*b*c+2*a*d,  a**2-b**2+c**2-d**2,  2*c*d-2*a*b],
-	              [2*b*d-2*a*c,  2*c*d+2*a*b,  a**2-b**2-c**2+d**2]])
+	return array([ [a**2+b**2-c**2-d**2,  2*b*c-2*a*d,          2*b*d+2*a*c        ],
+	               [2*b*c+2*a*d,          a**2-b**2+c**2-d**2,  2*c*d-2*a*b        ],
+	               [2*b*d-2*a*c,          2*c*d+2*a*b,          a**2-b**2-c**2+d**2] ])
 
 #
 # z-x-z (moving frame set)
@@ -67,6 +69,17 @@ def EulerAnglesFromQuaternion(q):
 	theta_ = asin(clamped)
 	psi_   = atan2(2*(q0*q3+q1*q2), 1.-2*(q2**2+q3**2))
 	return (phi_, theta_, psi_)
+
+
+
+# NOT USED
+def ang_vel(q, v):
+	x, y, z, phi, theta, psi = q
+	xd, yd, zd, phid, thetad, psid = v
+	return array([phid*sin(theta)*sin(psi)+thetad*cos(psi),
+		          phid*sin(theta)*cos(psi)-thetad*sin(psi),
+		          phid*cos(theta)+psid])
+
 
 
 if __name__ == '__main__':

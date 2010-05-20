@@ -5,7 +5,7 @@ Optimization-based rigid body simulator
 2010 Geoyeob Kim
 
 Rigid box LCP-based simulator
-(without MOSEK optimizer)
+(rotation parameterization with the exponential map)
 """
 from numpy import *
 from math import *
@@ -20,6 +20,11 @@ from SymbolicTensor import *
 from glprim import *
 import sys
 import matplotlib.pyplot as pit
+import ExpBody
+from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
+from ExpBodyMoEq_real import MassMatrixAndCqdVector
+from quat import quat_mult, quat_conj
+
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -39,11 +44,23 @@ def Initialize (Width, Height):				# We call this right after our OpenGL window 
 	g_quadratic = gluNewQuadric();
 	gluQuadricNormals(g_quadratic, GLU_SMOOTH);
 	gluQuadricDrawStyle(g_quadratic, GLU_FILL); 
-	# Why? this tutorial never maps any textures?! ? 
-	# gluQuadricTexture(g_quadratic, GL_TRUE);			# // Create Texture Coords
 
 	glEnable (GL_LIGHT0)
 	glEnable (GL_LIGHTING)
+	glEnable(GL_NORMALIZE)
+	
+	noAmbient = [0.0, 0.0, 0.0, 1.0]
+	whiteDiffuse = [1.0, 1.0, 1.0, 1.0]
+	"""
+	Directional light source (w = 0)
+	The light source is at an infinite distance,
+	all the ray are parallel and have the direction (x, y, z).
+	"""
+	position = [0.2, -1.0, 1.0, 0.0]
+	
+	glLightfv(GL_LIGHT0, GL_AMBIENT, noAmbient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteDiffuse);
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
 
 	glEnable (GL_COLOR_MATERIAL)
 
@@ -69,12 +86,18 @@ def ReSizeGLScene(Width, Height):
 # The function called whenever a key is pressed. Note the use of Python tuples to pass in: (key, x, y)  
 def keyPressed(*args):
 	global g_quadratic
+	global gWireframe
+	global gResetState
+	
 	# If escape is pressed, kill everything.
 	key = args [0]
 	if key == ESCAPE:
 		gluDeleteQuadric (g_quadratic)
 		sys.exit ()
-
+	elif key == 'z':
+		gWireframe = not gWireframe
+	elif key == 'r':
+		gResetState = True
 
 def main():
 	# pass arguments to init
@@ -133,10 +156,6 @@ def main():
 	glEnable(GL_DEPTH_TEST)				# Enables Depth Testing
 	glDepthFunc(GL_LEQUAL)				# The Type Of Depth Test To Do
 	glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) # Really Nice Perspective Calculations
-	glDisable(GL_LIGHTING)
-	# Turn on wireframe mode
-	glPolygonMode(GL_FRONT, GL_LINE)
-	glPolygonMode(GL_BACK, GL_LINE)
 	
 	
 	global cube
@@ -145,87 +164,89 @@ def main():
 	# Start Event Processing Engine	
 	glutMainLoop()
 
-"""
-def RotationMatrixFromEulerAngles(phi, theta, psix):
-	return array([[ cos(phi)*cos(psix) - cos(theta)*sin(phi)*sin(psix), - cos(psix)*sin(phi) - cos(phi)*cos(theta)*sin(psix),  sin(psix)*sin(theta)],
-	              [ cos(phi)*sin(psix) + cos(psix)*cos(theta)*sin(phi),   cos(phi)*cos(psix)*cos(theta) - sin(phi)*sin(psix), -cos(psix)*sin(theta)],
-	              [                                sin(phi)*sin(theta),                                  cos(phi)*sin(theta),            cos(theta)]])
-"""
-
-def Draw ():
-	#global mass, Ixx, Iyy, Izz, Iww, q, qd, h, sx, sy, sz, corners, mu, di, frame, alpha0, z0
-	global h, mu, di, frame, alpha0, z0
-	global configured
-	global cube
+def Draw():
+	global gResetState
 	
-	###########################################################################
-	
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
-	glLoadIdentity()											# // Reset The Current Modelview Matrix
-
-	gluLookAt(5,-10,5,0,0,0,0,0,1);
-
-	for cfg in configured:
-		mass, size, inertia, q, qd, corners = cfg
-		sx, sy, sz = size
+	FrameMove()
+	try:
+		pass
+	except:
+		t = arange(0.,(frame-1)*h, h)
+		for i in range(7):
+			plotvalues[i] = plotvalues[i][0:frame-10]
+		pit.figure(1)
+		pit.plot(plotvalues[0], 'r',
+	             plotvalues[1], 'g',
+	             plotvalues[2], 'b')
+		pit.ylabel('lin_pos')
 		
-		glColor3f(1,0,0)
-		glPushMatrix()
-		glTranslatef(q[0], q[1], q[2])
-		A_homo = identity(4)
-		A = RotationMatrixFromEulerAngles_zxz(q[3], q[4], q[5])
-		A_homo[0:3,0:3] = A
-		glMultMatrixd(A_homo.T.flatten())
-		# box(body) frame indicator
-		RenderAxis()
-		glScalef(sx/2.0, sy/2.0, sz/2.0)
-		glColor3f(1,0,0)
-		glCallList(cube)
-		glPopMatrix()
+		pit.figure(2)
+		pit.plot(plotvalues[3], 'r',
+	             plotvalues[4], 'g',
+	             plotvalues[5], 'b')
+		pit.ylabel('rot_pos')
+		
+		pit.figure(3)
+		pit.plot(plotvalues[6], 'r')
+		pit.ylabel('rot_mag')
+		
+		# Show the plot and pause the app
+		pit.show()
+		sys.exit(-100)
+		
+	RenderBox()
+	
+	#print frame, gBody.qd[3:6]
 	
 	
-	# Plane
-	glColor3f(0,0,0)
-	plane=3
-	glBegin(GL_LINE_STRIP)
-	glVertex3f(-plane, -plane, 0)
-	glVertex3f( plane, -plane, 0)
-	glVertex3f( plane,  plane, 0)
-	glVertex3f(-plane,  plane, 0)
-	glVertex3f(-plane, -plane, 0)
-	glEnd()
+	if gResetState:
+		gBody.q = hstack([pos0_wc, rot0_wc])
+		gBody.setQd(vel0_wc, omega0_wc)
+		gResetState = False
+		
 	
-	glFlush ()
-	glutSwapBuffers()
+		
+def FrameMove():
+	global frame
 	
-	###########################################################################
-
-	# Total number of rigid bodies
-	nb = len(configured)
-
+	nb = 1 # Single rigid body test case
+	
+	# Dynamic reparameterization of rotation vector
+	r = gBody.q[3:6]
+	th = linalg.norm(r)
+	if (th > pi):
+		r = (1.-2*pi/th)*r
+		gBody.q[3:6] = r
+	
+	th = linalg.norm(r)
+	v1,v2,v3 = r
+	if th < 0.01: coeff = 0.5 - (th**2)/48.
+	else: coeff = sin(0.5*th)/th
+	quat = array([cos(0.5*th),
+                  coeff*v1,
+                  coeff*v2,
+                  coeff*v3])
+	quatd = QuatdFromV(gBody.q[3:6], gBody.qd[3:6])
+	omega_wc = 2*quat_mult(quatd, quat_conj(quat))[1:4]
+	gBody.omega_wc = omega_wc
+	
+	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
 	activeCorners = []
 	activeBodies = set([])
+	gBody.contactPoints = []
 	for k in range(nb):
 		# Check all eight corners
-		mass, size, inertia, q, qd, corners = configured[k]
-		for i in range(8):
-			A = RotationMatrixFromEulerAngles_zxz(q[3], q[4], q[5])
-			c = q[0:3] + dot(A, corners[i])
-			if c[2] < alpha0:
+		for i, c in zip(range(8), gBody.getCorners_WC()):			
+			if c[2] <= alpha0:
 				activeCorners.append( (k, i) )
 				activeBodies.add(k)
+				gBody.contactPoints.append(i)
 	
 	# Indices for active/inactive bodies
 	inactiveBodies = list(set(range(nb)) - activeBodies)
 	activeBodies = list(activeBodies)
-
-	"""
-	# Debug purpose
-	inactiveBodies = []
-	activeBodies = range(nb)
-	"""
 	
 	# Total number of contact points
 	p = len(activeCorners)
@@ -241,26 +262,32 @@ def Draw ():
 	Qd_a = zeros((6*nba))
 	Qd_i = zeros((6*nbi))
 	for k in range(nb):
-		mass, size, inertia, q, qd, corners = configured[k]
+		q_est  = gBody.q + h*gBody.qd;
+		#M, Cqd = MassMatrixAndCqdVector(q_est[0:3], q_est[3:6], gBody.qd[0:3], gBody.qd[3:6], gBody.I)
+		M, Cqd = MassMatrixAndCqdVector(gBody.q[0:3], gBody.q[3:6], gBody.qd[0:3], gBody.qd[3:6], gBody.I)
+		Minv_k = linalg.inv(M)
+		Cqd_k  = Cqd
 		
-		Minv_k = SymbolicMinv(q + h*qd, inertia)
-		Cqd_k = SymbolicCqd(q + h*qd/2, qd, inertia)
+		
 		# Add gravitational force to the Coriolis term
-		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
-		Cqd_k = Cqd_k + fg
+		# v, Fr, r
+		fg = GeneralizedForce(gBody.q[3:6] + h*gBody.qd[3:6]/2,
+		                      (0., 0., -9.81 * gBody.mass),
+		                      (0., 0., 0.))
+		#Cqd_k = Cqd_k + fg
 		
 		if k in activeBodies:
 			kk = activeBodies.index(k)
 			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
 			Cqd_a[6*kk:6*(kk+1)] = Cqd_k
-			Q_a[6*kk:6*(kk+1)] = q
-			Qd_a[6*kk:6*(kk+1)] = qd
+			Q_a[6*kk:6*(kk+1)] = gBody.q
+			Qd_a[6*kk:6*(kk+1)] = gBody.qd
 		elif k in inactiveBodies:
 			kk = inactiveBodies.index(k)
 			Minv_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
 			Cqd_i[6*kk:6*(kk+1)] = Cqd_k
-			Q_i[6*kk:6*(kk+1)] = q
-			Qd_i[6*kk:6*(kk+1)] = qd
+			Q_i[6*kk:6*(kk+1)] = gBody.q
+			Qd_i[6*kk:6*(kk+1)] = gBody.qd
 		else:
 			raise Exception, 'What the...'
 		
@@ -274,17 +301,20 @@ def Draw ():
 			# kp: Body index
 			# cp: Corner index
 			kp, cp = activeCorners[i]
-			mass, size, inertia, q, qd, corners = configured[kp]
 			k = activeBodies.index(kp)
 
-			# Which one is right?
-			#N[6*k:6*(k+1), i] = SymbolicForce(q + h*qd/2, (0, 0, 1), corners[cp])
-			N[6*k:6*(k+1), i] = SymbolicPenetration(q + h*qd/2, corners[cp])
-			
+			q_est  = gBody.q + h/2*gBody.qd;
+			# Gradient of the admissible function f(q)
+			#          d f(q)
+			#         --------
+			#           d q
+			# { q | f(q) >= 0 }
+			#
+			N[6*k:6*(k+1), i] = dfxdX(q_est[0:3], q_est[3:6], gBody.corners[cp])
 			
 			Di = zeros((6*nba,8)) # Eight basis for tangential forces
 			for j in range(8):
-				Di[6*k:6*(k+1), j] = SymbolicForce(q + h*qd/2, di[j], corners[cp])
+				Di[6*k:6*(k+1), j] = GeneralizedForce(q_est[3:6], di[:,j], gBody.corners[cp])
 			D[:, 8*i:8*(i+1)] = Di
 
 		#print '-----------------------------------------------------'
@@ -321,11 +351,12 @@ def Draw ():
 			             LCP_q1 ,
 			             LCP_q2 ])
 		
-		if (z0 is 0) or (len(z0) != LCP_M.shape[0]):
-			z0 = zeros((LCP_M.shape[0]))
+		# Case 1: Python code (from Matlab)
 		z0 = zeros((LCP_M.shape[0]))
 		x_opt, err = lemke(LCP_M, LCP_q, z0)
-		if err != 0:
+		
+		checkValidity = linalg.norm(dot(dot(LCP_M, x_opt) + LCP_q, x_opt))
+		if err != 0 or checkValidity > 1.:
 			raise Exception, 'Lemke\'s algorithm failed'
 		z0 = x_opt
 		#print frame, x_opt
@@ -338,8 +369,8 @@ def Draw ():
 		
 		for k in activeBodies:
 			kk = activeBodies.index(k)
-			configured[k][ 3 ] = Q_a_next[6*kk:6*(kk+1)]
-			configured[k][ 4 ] = Qd_a_next[6*kk:6*(kk+1)]
+			gBody.q = Q_a_next[6*kk:6*(kk+1)]
+			gBody.qd = Qd_a_next[6*kk:6*(kk+1)]
 
 		"""
 		contactforce = dot(N, cn) + dot(D, beta)		
@@ -350,51 +381,85 @@ def Draw ():
 	for k in inactiveBodies:
 		# No contact point
 		kk = inactiveBodies.index(k)
-		Qd_i_next = dot(Minv_i, h*Cqd_i) + Qd_i
+		Qd_i_next = dot(Minv_i, -h*Cqd_i) + Qd_i
 		Q_i_next  = h * Qd_i_next + Q_i
-		configured[k][ 3 ] = Q_i_next[6*kk:6*(kk+1)]
-		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
+		gBody.q = Q_i_next[6*kk:6*(kk+1)]
+		gBody.qd = Qd_i_next[6*kk:6*(kk+1)]
 		z0 = 0
-
-	if frame == 1500:
-		t = arange(0.,(frame-1)*h, h)
-		pit.figure(1)
-		pit.plot(plotvalue1, 'r^', plotvalue1, 'r',
-		         plotvalue2, 'g^', plotvalue2, 'g',
-		         plotvalue3, 'b^', plotvalue3, 'b')
-		pit.ylabel('body0 rot deg')
-		"""
-		pit.figure(2)
-		pit.plot(plotvalue3, 'r^', plotvalue3, 'r',
-		         plotvalue4, 'g^', plotvalue4, 'g',
-		         plotvalue5, 'b^', plotvalue5, 'b')
-		pit.ylabel('body1 rot deg')
-		"""
 		
-		# Show the plot and pause the app
-		pit.show()
+		print Qd_i_next, gBody.omega_wc
 	
-	angang = [math.sin(v) for v in configured[2][3][3:6]]
-	plotvalue1.append(angang[0])
-	plotvalue2.append(angang[1])
-	plotvalue3.append(angang[2])
-	"""	
-	plotvalue1.append(configured[0][3][3]/pi*180)
-	plotvalue2.append(configured[0][3][4]/pi*180)
-	plotvalue3.append(configured[0][3][5]/pi*180)
-	"""
-	
-	"""
-	plotvalue4.append(configured[1][3][3]/pi*180)
-	plotvalue5.append(configured[1][3][4]/pi*180)
-	plotvalue6.append(configured[1][3][5]/pi*180)
-	"""
-	
+	for i in range(6):
+		plotvalues[i].append(gBody.q[i])
+	plotvalues[6].append(linalg.norm(gBody.q[3:6]))
+		
 	frame = frame + 1
-	print configured[2][3][2]
 	
-	#print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
+def RenderBox():
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
+	glLoadIdentity()											# // Reset The Current Modelview Matrix
+
+	gluLookAt(8,-6,5,
+	          0,0,0,
+	          0,0,1);
+		
+	glColor3f(1,0,0)
+	glPushMatrix()
+	glTranslatef(gBody.q[0], gBody.q[1], gBody.q[2])
+	A_homo = identity(4)
+	A = gBody.getRotMat()
+	A_homo[0:3,0:3] = A
+	glMultMatrixd(A_homo.T.flatten())
+	# box(body) frame indicator
+	RenderAxis()
+	glScalef(gBody.boxsize[0], gBody.boxsize[1], gBody.boxsize[2])
+	glColor3f(0.5,0.7,0.9)
+	if gWireframe:
+		glutWireCube(1)
+	else:
+		glutSolidCube(1)
+	glPopMatrix()
 	
+	if hasattr(gBody, 'contactPoints'):
+		wc = gBody.getCorners_WC()
+		glColor3f(0.9,0.2,0.2)
+		minZ = 10000000.
+		for cp in gBody.contactPoints:
+			glPushMatrix()
+			glTranslate(wc[cp][0], wc[cp][1], wc[cp][2])
+			glutSolidSphere(0.1,4,4)
+			glPopMatrix()
+			if minZ > wc[cp][2]:
+				minZ = wc[cp][2]
+		print minZ
+		if minZ < 0:
+			gBody.q[2] -= minZ
+	omega_wc = gBody.omega_wc
+	glColor(0,0,0)
+	glPushMatrix()
+	glTranslatef(gBody.q[0], gBody.q[1], gBody.q[2])
+	glBegin(GL_LINES)
+	glVertex( omega_wc[0],  omega_wc[1],  omega_wc[2])
+	glVertex(-omega_wc[0], -omega_wc[1], -omega_wc[2])
+	glEnd()
+	glPopMatrix()
+	
+		
+	# Plane
+	glColor3f(0,0,0)
+	plane=3
+	glBegin(GL_LINE_STRIP)
+	glVertex3f(-plane, -plane, 0)
+	glVertex3f( plane, -plane, 0)
+	glVertex3f( plane,  plane, 0)
+	glVertex3f(-plane,  plane, 0)
+	glVertex3f(-plane, -plane, 0)
+	glEnd()
+	
+	glFlush ()
+	glutSwapBuffers()
+	
+
 plotvalue1 = []
 plotvalue2 = []
 plotvalue3 = []
@@ -403,96 +468,45 @@ plotvalue4 = []
 plotvalue5 = []
 plotvalue6 = []
 	
-def ang_vel(q, v):
-	x, y, z, phi, theta, psi = q
-	xd, yd, zd, phid, thetad, psid = v
-	return array([phid*sin(theta)*sin(psi)+thetad*cos(psi),
-	              phid*sin(theta)*cos(psi)-thetad*sin(psi),
-	              phid*cos(theta)+psid])
-	
 ################################################################################
 # Friction coefficient
 mu = 1.2
 # Simulation Timestep
-h = 0.001
-# Contact threshold
-alpha0 = 0.001
+h = 0.0025
+# contact level threshold
+alpha0 = 0
+
+# Always raise an exception when there is a numerically
+# incorrect value appeared in NumPy module.
+seterr(all='raise')
+
+plotvalues = [ [],[],[],[],[],[],[] ]
+
+
 # Eight basis of friction force
-di = [ (1, 0, 0),
-       (cos(pi/4), sin(pi/4), 0),
-       (0, 1, 0),
-       (-cos(pi/4), sin(pi/4), 0),
-       (-1, 0, 0),
-       (-cos(pi/4), -sin(pi/4), 0),
-       (0, -1, 0),
-       (cos(pi/4), -sin(pi/4), 0) ]
+di = array([ [        1.,         0., 0],
+             [ cos(pi/4),  sin(pi/4), 0],
+             [        0.,         1., 0],
+             [-cos(pi/4),  sin(pi/4), 0],
+             [       -1.,         0., 0],
+             [-cos(pi/4), -sin(pi/4), 0],
+             [         0,        -1., 0],
+             [ cos(pi/4), -sin(pi/4), 0] ])
+di = di.T
 
+pos0_wc   = array([0.,0.,3])
+vel0_wc   = array([0.,0,0])
+rot0_wc   = array([0.0,0.0,0.0])
+omega0_wc = array([0.,1,1])
 
+gBody = ExpBody.ExpBody('singlerb', None, 2., array([0.5,0.7,0.9]),
+                      hstack([ pos0_wc, rot0_wc ]),
+                      vel0_wc, omega0_wc,
+                      [0.1,0.2,0.3])
 
-# Body specific parameters and state vectors
-config = [ ( 1.1,                                  # Mass
-            (0.3, 0.2, 0.1),                       # Size
-            (0, 0, 0, 0),                          # Inertia tensor
-            array([0, 0, 2, 0.3,   0.2,   0.1]),   # q  (position)
-            array([-4, 0, 0, 0, 2, 2]),             # qd (velocity)
-            [] ),                                  # Corners
-            
-           ( 1.1,
-            (0.3, 0.2, 0.1),
-            (0, 0, 0, 0),
-            array([0, 0,  2, 0.0,  math.pi/2,  0.0]),
-            array([0, 0, 0, 0, 0, 0]),
-            [] ),
-           ( 1.1,
-            (0.3, 0.2, 0.1),
-            (0, 0, 0, 0),
-            array([1, 0,  2, 0.0,  math.pi/2,  0.0]),
-            array([0, 0, 0, 0, 0, 0]),
-            [] ),
-           ( 1.1,
-            (0.3, 0.2, 0.1),
-            (0, 0, 0, 0),
-            array([0, 50,  50, 0.0,  math.pi/2,  0.0]),
-            array([0, -50, -50, 0, 0, 0]),
-            [] ),
-            
-           ( 1.1,
-            (0.3, 0.2, 0.1),
-            (0, 0, 0, 0),
-            array([-1, 1,  9, pi/4,pi/2,-pi/2]),
-            array([0, 0, 0, 0, -pi/1.9999999, 0]),
-            [] ) ]
-
-#config = config[0:1]
-config = config[1:4]
-#config = config[2:3]
-#config = config[0:2]
-
-configured = []
-for cfg in config:
-	mass, size, inertia, q, qd, corners = cfg
-	sx, sy, sz = size
-	rho = mass / (sx*sy*sz)
-	Ixx, Iyy, Izz, Iww = SymbolicTensor(sx, sy, sz, rho)	
-	inertia = (Ixx, Iyy, Izz, Iww)
-	# Corner points of a box in local coordinates
-	corners = [ ( sx/2,  sy/2,  sz/2),
-		        ( sx/2,  sy/2, -sz/2),
-		        ( sx/2, -sy/2,  sz/2),
-		        ( sx/2, -sy/2, -sz/2),
-		        (-sx/2,  sy/2,  sz/2),
-		        (-sx/2,  sy/2, -sz/2),
-		        (-sx/2, -sy/2,  sz/2),
-		        (-sx/2, -sy/2, -sz/2) ]
-	configured.append( [mass, size, inertia, q, qd, corners] )
-
-
-# For advanced(warm) start of solving LCP
-z0 = 0
 # Current frame number
 frame = 0
-# Cube display list
-cube = 0
-
+gWireframe = False
+gResetState = False
 # Let's go!
 main()
