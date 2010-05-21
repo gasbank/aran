@@ -28,35 +28,23 @@ thsimplify(ex) := block(
  */
 assume(th >= 0)$
 
-X : [p1, p2, p3, v1, v2, v3]$
-Xd : [pd1, pd2, pd3, vd1, vd2, vd3]$
-Xdd : [pdd1, pdd2, pdd3, vdd1, vdd2, vdd3]$
+X   : [p1  , p2  , p3  , v1  , v2  , v3  ];
+Xd  : [pd1 , pd2 , pd3 , vd1 , vd2 , vd3 ];
+Xdd : [pdd1, pdd2, pdd3, vdd1, vdd2, vdd3];
+
 
 /* Rotation vector */
 v : [v1, v2, v3]$
 /* Length(angle) of rotation vector */
-theta : sqrt(v1^2+v2^2+v3^2)$
+theta : sqrt(v1^2 + v2^2 + v3^2)$
 /* Rotation quaternion */
-qx : sin(0.5*theta) * v1 / theta$
-qy : sin(0.5*theta) * v2 / theta$
-qz : sin(0.5*theta) * v3 / theta$
-qw : cos(0.5*theta)$
+qw : cos(theta/2)$
+qx : sin(theta/2) * v1 / theta$
+qy : sin(theta/2) * v2 / theta$
+qz : sin(theta/2) * v3 / theta$
 q : [qw, qx, qy, qz]$
 /* Rotation matrix */
 R : RotationMatrixFromQuaternion(qw,qx,qy,qz)$
-/* Derivatives */
-dRdv1 : diff(R, v1)$ /* 3x3 matrix */
-dRdv2 : diff(R, v2)$ /* 3x3 matrix */
-dRdv3 : diff(R, v3)$ /* 3x3 matrix */
-/* theta^2 expressions are substituted to thsq */
-dRdv1_s : thsimplify(dRdv1)$
-dRdv2_s : thsimplify(dRdv2)$
-dRdv3_s : thsimplify(dRdv3)$
-/* Taylor expension form for very small values of thsq */
-dRdv1_s0 : taylor(dRdv1_s, th, 0, 3)$
-dRdv2_s0 : taylor(dRdv2_s, th, 0, 3)$
-dRdv3_s0 : taylor(dRdv3_s, th, 0, 3)$
-
 
 Wi : matrix([ R[1,1], R[1,2], R[1,3], p1 ],
             [ R[2,1], R[2,2], R[2,3], p2 ],
@@ -85,6 +73,11 @@ for j:1 thru 6 do (
 length(ddWi);
 length(ddWi[1]);
 
+Ixx;
+Iyy;
+Izz;
+Iww;
+
 
 Mi : matrix([Ixx, 0, 0, 0],
             [0, Iyy, 0, 0],
@@ -100,38 +93,58 @@ for j:1 thru 6 do (
     length(tot[1]),
     TOT[j] : tot[1,1] + tot[2,2] + tot[3,3] + tot[4,4]
 )$
+
+
 TOT : thsimplify(TOT)$
 TOT : ratsimp(TOT)$
 
+
 printMatDim(TOT); /* TOT is not a matrix. */
 
-Cqd_G : at(TOT, [pdd1=0, pdd2=0, pdd3=0, vdd1=0, vdd2=0, vdd3=0])$
-G     : at(Cqd_G, [pd1=0, pd2=0, pd3=0, vd1=0, vd2=0, vd3=0])$
-
-G;
-Cqd_G[4];
-quit();
-
+Cqd_G : ev(TOT, [pdd1=0, pdd2=0, pdd3=0, vdd1=0, vdd2=0, vdd3=0])$
+G     : ev(Cqd_G, [pd1=0, pd2=0, pd3=0, vd1=0, vd2=0, vd3=0])$
 Cqd   : Cqd_G - G$
 MXdd  : TOT - Cqd_G$
-M     : matrix([0,0,0,0,0,0],
-               [0,0,0,0,0,0],
-               [0,0,0,0,0,0],
-               [0,0,0,0,0,0],
-               [0,0,0,0,0,0],
-               [0,0,0,0,0,0])$
-printMatDim(M);	
-for j:1 thru 6 do(
-	z      : [0,0,0,0,0,0],
-	z[j]   : 1,
-	Mj     : at(MXdd, [pdd1=z[1], pdd2=z[2], pdd3=z[3], vdd1=z[4], vdd2=z[5], vdd3=z[6]]),
-	for k:1 thru 6 do (
-		M[k,j] : Mj[k]
-	)
-)$
+
+M : coefmatrix([MXdd[1]=0, MXdd[2]=0, MXdd[3]=0, MXdd[4]=0, MXdd[5]=0, MXdd[6]=0], Xdd)$
 
 M   : ratsimp(M)$
-Cqd : trigsimp(Cqd)$
+Cqd : ratsimp(Cqd)$
+
+ratsimp(M . Xdd + Cqd + G - TOT);
+
+
+Minv : M^^-1$
+
+acctest : Minv . (-Cqd)$
+
+float(at(acctest, [p1=0, p2=0, p3=0, v1=1, v2=0, v3=0,
+             pd1=0, pd2=0, pd3=0, vd1=0, vd2=0, vd3=0,
+             Ixx=0.20833333333333331, Iyy=0.20833333333333331, Izz=3.333333333333333, Iww=10, th=1]));
+
+
+float(at(acctest, [p1=0, p2=0, p3=5, v1=3, v2=0, v3=0,
+             pd1=0, pd2=0, pd3=0, vd1=10, vd2=0, vd3=0,
+             Ixx=0.20833333333333331, Iyy=0.20833333333333331, Izz=3.333333333333333, Iww=10, th=3]));
+
+float(at(acctest, [p1=0, p2=0, p3=5, v1=2, v2=2, v3=0,
+             pd1=0, pd2=0, pd3=0, vd1=10, vd2=10, vd3=0,
+             Ixx=0.20833333333333331, Iyy=0.20833333333333331, Izz=3.333333333333333, Iww=10, th=sqrt(2^2+2^2)]));
+
+float(at(acctest, [p1=0, p2=0, p3=5, v1=0, v2=0, v3=1,
+             pd1=0, pd2=0, pd3=0, vd1=0, vd2=0, vd3=-10,
+             Ixx=0.20833333333333331, Iyy=0.20833333333333331, Izz=3.333333333333333, Iww=10, th=1]));
+
+float(at(acctest, [p1=0, p2=0, p3=5, v1=0, v2=2, v3=2,
+                   pd1=0, pd2=0, pd3=0, vd1=0, vd2=1, vd3=1,
+                   Ixx=0.20833333333333331, Iyy=0.20833333333333331, Izz=3.333333333333333, Iww=10, th=sqrt(2^2+2^2)]));
+
+float(at(acctest, [p1=0, p2=0, p3=5, v1=1, v2=2, v3=0,
+                   pd1=0, pd2=0, pd3=0, vd1=30, vd2=60, vd3=0,
+                   Ixx=3.20833333333333331, Iyy=3.20833333333333331, Izz=3.333333333333333, Iww=1, th=sqrt(1^2+2^2)]));
+
+
+quit();
 
 M0    : matrix([0,0,0,0,0,0],
                [0,0,0,0,0,0],
@@ -150,6 +163,7 @@ for j:1 thru 6 do(
 	printf(true, "Cqd0...~%"),
 	Cqd0[j] : taylor(Cqd[j], th, 0, 3)
 )$
+
 
 
 OpenFile("ExpBodyMoEq.py");

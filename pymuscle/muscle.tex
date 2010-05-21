@@ -148,6 +148,58 @@ Y^{(l+1)}=Y^{(l)}+hf(Y^{(l)})
 
 \subsection{Rigid body dynamics}
 
+As stated in the previous section most of the existing work on
+character animation used an articulated body to represent a character.
+In the articulated body each body is connected to another body with
+various types of joints. Since we use no joint at all in the character
+model the mathematics involved in the dynamics system becomes quite
+simple. We do not need to impose implicit or explicit constraints.
+Rigid bodies are independent to each other and thus we just build the
+equations of motion which have $n$ rigid bodies floating around the
+space freely with 6-DoF.
+
+The equations of motion for a single rigid body is as follows:
+
+\begin{equation}
+\left[ {\begin{array}{cc}
+ m\mathbf{I}  &  0 \\
+ 0            & \mathbf{H}  \\
+ \end{array} } \right]
+ \left[ {\begin{array}{c}
+ a  \\
+ \alpha              \\
+ \end{array} } \right]
+ +
+ \left[ {\begin{array}{c}
+ 0  \\
+ \omega\times(\mathbf{H}\omega)   \\
+ \end{array} } \right]
+ =
+ \left[ {\begin{array}{c}
+ f  \\
+ \tau   \\
+ \end{array} } \right].
+\end{equation}
+
+This formulation is very easy to understand the structure of
+the physical system. It reveals the linear and angular quantities
+directly as well as the external forces and torques.
+
+
+\begin{tabular}{ r c l }
+Symbol       & Dimension  & Name \\
+$m$          &            & body mass \\
+$\mathbf{H}$ & $3\times3$ & inertia of tensor \\
+$a$          & $3\times1$ & linear acceleration \\ 
+$\alpha$     & $3\times1$ & angular acceleration \\
+$\omega$     & $3\times1$ & angular velocity \\
+$f$          & $3\times1$ & external force\\
+$\tau$       & $3\times1$ & external torque force\\
+\end{tabular}
+
+
+
+
 \subsection{Muscle fiber model}
 
 There are many variants of muscle model used in biomechanical area range
@@ -272,11 +324,17 @@ integration step especially at collisions and in most cases nonpenetration
 conditions are violated. Impulse-based methods model contacts
 as successive collisions instead of persisting contacts.
 
-Since our simulation environment contains a small number of contact points
-and the precise contact forces helps the physical realism in animation,
-we choose a time-stepping method introduced in [STEWART, ANITESCU].
+The simulation environment contains a relatively small number
+of contact points. The precise contact forces are necessary because
+the global alignment of the character only depends on that forces.
+Although physically conforming contact forces are not strictly needed in
+the point of believable character animation, our controller uses the
+ground reaction forces as input to compute desired actuation forces.
 
-Contact forces are confined in the Coulomb friction cone
+We choose a time-stepping method introduced in [STEWART, ANITESCU].
+If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
+derived in a generalized coordinate as well as a state and its time derivatives
+the solution will give us contact forces at the instant.
 
 
 \section{Implicit integration}

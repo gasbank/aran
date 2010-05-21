@@ -49,6 +49,7 @@ class ExpBody:
 		self.ME         = identity(3) * self.mass
 		self.IN         = BoxInertia(self.boxsize, self.mass)
 		self.M_BC       = self.getMassMatrix_BC()
+		self.cf         = []
 
 	def setQd(self, linvel, omega_wc):
 		self.qd         = hstack([linvel, VdotFromOmega(self.q[3:6], omega_wc)])

@@ -205,7 +205,7 @@ def FrameMove():
 	#M = gBody.getMassMatrix_WC()
 	#fext = gBody.getExtVector_WC()
 	
-	print linalg.eig(M)[0]
+	#print linalg.eig(M)[0]
 	
 	J = array(zeros((6*N, 3*K)))
 	for i in range(N):
@@ -490,7 +490,7 @@ eta = di.shape[1] # Column size equals to the number of basis
 
 q0 = array([1.,0,0,0])
 q0 /= linalg.norm(q0)
-omega0_wc = array([0.,0,20])
+omega0_wc = array([0.,0,0])
 qd0 = 0.5*quat_mult([0]+list(omega0_wc), q0)
 
 gBody = PmBody.PmBody('singlerb', None, 2., array([1.,1,1]),

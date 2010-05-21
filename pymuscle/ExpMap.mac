@@ -117,7 +117,7 @@ dfxdv1_s0 : taylor(dfxdv1_s, th, 0, 3)$
 dfxdv2_s0 : taylor(dfxdv2_s, th, 0, 3)$
 dfxdv3_s0 : taylor(dfxdv3_s, th, 0, 3)$
 
-dfxdX : [ dfxdp1, dfxdp2, dfxdp3, dfxdv1_s, dfxdv2_s, dfxdv3_s ]$
+dfxdX  : [ dfxdp1, dfxdp2, dfxdp3, dfxdv1_s, dfxdv2_s, dfxdv3_s ]$
 dfxdX0 : [ dfxdp1, dfxdp2, dfxdp3, dfxdv1_s0, dfxdv2_s0, dfxdv3_s0 ]$
 
 WriteDirectToFile("~%");

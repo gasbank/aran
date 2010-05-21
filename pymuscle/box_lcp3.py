@@ -240,25 +240,29 @@ def Draw ():
 	Q_i = zeros((6*nbi))
 	Qd_a = zeros((6*nba))
 	Qd_i = zeros((6*nbi))
+	fg_a = zeros((6*nba))
+	fg_i = zeros((6*nbi))
 	for k in range(nb):
 		mass, size, inertia, q, qd, corners = configured[k]
 		
 		Minv_k = SymbolicMinv(q + h*qd, inertia)
 		Cqd_k = SymbolicCqd(q + h*qd/2, qd, inertia)
-		# Add gravitational force to the Coriolis term
+		# Gravitational force
 		fg = SymbolicForce(q + h*qd/2, (0, 0, -9.81 * mass), (0, 0, 0))
-		Cqd_k = Cqd_k + fg
+		
 		
 		if k in activeBodies:
 			kk = activeBodies.index(k)
 			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
 			Cqd_a[6*kk:6*(kk+1)] = Cqd_k
+			fg_a[6*kk:6*(kk+1)] = fg
 			Q_a[6*kk:6*(kk+1)] = q
 			Qd_a[6*kk:6*(kk+1)] = qd
 		elif k in inactiveBodies:
 			kk = inactiveBodies.index(k)
 			Minv_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
 			Cqd_i[6*kk:6*(kk+1)] = Cqd_k
+			fg_i[6*kk:6*(kk+1)] = fg
 			Q_i[6*kk:6*(kk+1)] = q
 			Qd_i[6*kk:6*(kk+1)] = qd
 		else:
@@ -333,7 +337,7 @@ def Draw ():
 		beta = x_opt[p    :p+8*p]
 		lamb = x_opt[p+8*p:p+8*p+p]
 		
-		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*Cqd_a) + Qd_a
+		Qd_a_next = dot(Minv_a, dot(N, cn) + dot(D, beta) + h*(fg_a - Cqd_a)) + Qd_a
 		Q_a_next  = h * Qd_a_next + Q_a
 		
 		for k in activeBodies:
@@ -350,7 +354,7 @@ def Draw ():
 	for k in inactiveBodies:
 		# No contact point
 		kk = inactiveBodies.index(k)
-		Qd_i_next = dot(Minv_i, h*Cqd_i) + Qd_i
+		Qd_i_next = dot(Minv_i, h*(fg_i - Cqd_i)) + Qd_i
 		Q_i_next  = h * Qd_i_next + Q_i
 		configured[k][ 3 ] = Q_i_next[6*kk:6*(kk+1)]
 		configured[k][ 4 ] = Qd_i_next[6*kk:6*(kk+1)]
@@ -374,10 +378,14 @@ def Draw ():
 		# Show the plot and pause the app
 		pit.show()
 	
+	'''
 	angang = [math.sin(v) for v in configured[2][3][3:6]]
 	plotvalue1.append(angang[0])
 	plotvalue2.append(angang[1])
 	plotvalue3.append(angang[2])
+	'''
+	print configured[0][3][2]
+	
 	"""	
 	plotvalue1.append(configured[0][3][3]/pi*180)
 	plotvalue2.append(configured[0][3][4]/pi*180)
@@ -391,7 +399,6 @@ def Draw ():
 	"""
 	
 	frame = frame + 1
-	print configured[2][3][2]
 	
 	#print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
 	
@@ -464,7 +471,7 @@ config = [ ( 1.1,                                  # Mass
             [] ) ]
 
 #config = config[0:1]
-config = config[1:4]
+config = config[1:3]
 #config = config[2:3]
 #config = config[0:2]
 
