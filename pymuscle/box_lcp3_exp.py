@@ -184,8 +184,15 @@ def main():
 
 def Draw():
 	global gResetState
+	global gNextTestSet
+	global gFrame
+	global gBody
 	
-	FrameMove()
+	if gNextTestSet is not None:
+		gBody = ExpBodyFromTestSet(gNextTestSet)
+		gNextTestSet = None
+	
+	FrameMove(gBody)
 	'''
 	if frame > 40000:
 		t = arange(0.,(frame-1)*h, h)
@@ -212,49 +219,59 @@ def Draw():
 		sys.exit(-100)
 	'''	
 	RenderBox()
+	
+	gFrame = gFrame + 1
 		
 	if gResetState:
 		gBody.q = hstack([pos0_wc, rot0_wc])
 		gBody.qd = hstack([vel0_wc, angvel0_wc])
 		gResetState = False
 
-def DynamicReparam(r):
-	assert len(r) == 3
-	th = linalg.norm(r)
-	if (th > pi):
-		#print 'reparmed.'
-		return (1.-2*pi/th)*r
-	else:
-		return r
-		
-def FrameMove():
-	global frame
-	global gNextTestSet
-	global gBody
+def DynamicReparam(v, vd):
+	# v: rotation position
+	# vd: rotation velocity
+	assert len(v) == 3
+	assert len(vd) == 3
+	th = linalg.norm(v)
 	
-	if gNextTestSet is not None:
-		gBody = ExpBodyFromTestSet(gNextTestSet)
-		gNextTestSet = None
+	if (th > pi):
+		print 'reparmed.', gFrame
+		v_r = (1.-2*pi/th)*v
+		vnext = v + h*vd
+		vnextmag = linalg.norm(vnext)
+		vd_r = vd + 2*pi/(th*h)*v - 2*pi/(h*vnextmag)*vnext
+		
+		v_r_mag = linalg.norm(v_r)
+		vnext_r_mag = linalg.norm(v_r+h*vd_r)
+		
+		return v_r, vd_r
+	else:
+		return v, vd
+
+def NewDynamicReparam(v, vnext):
+	assert len(v) == 3 and len(vnext) == 3
+	th = linalg.norm(v)
+	thnext = linalg.norm(vnext)
+	v_r = (1.-2*pi/th)*v
+	vnext_r = (1.-2*pi/thnext)*vnext
+	vd_r = (vnext_r - v_r)/h
+	return v_r, vd_r
+	
+def FrameMove(body):
+	gBody = body
 	
 	nb = 1 # Single rigid body test case
-	
+
 	# Dynamic reparameterization of rotation vector
-	gBody.q[3:6] = DynamicReparam(gBody.q[3:6])
-	r = gBody.q[3:6]
+	#gBody.q[3:6], gBody.qd[3:6] = DynamicReparam(gBody.q[3:6], gBody.qd[3:6])
 	
-	'''
-	th = linalg.norm(r)
-	v1,v2,v3 = r
-	if th < 0.031622776601683791: coeff = 0.5 - (th**2)/48.
-	else: coeff = sin(0.5*th)/th
-	quat = array([cos(0.5*th),
-                  coeff*v1,
-                  coeff*v2,
-                  coeff*v3])
-	quatd = QuatdFromV(gBody.q[3:6], gBody.qd[3:6])
-	omega_wc = 2*quat_mult(quatd, quat_conj(quat))[1:4]
-	gBody.omega_wc = omega_wc
-	'''
+	
+	
+	
+
+	
+	qPrev = gBody.q
+	qdPrev = gBody.qd
 	
 	# 'activeCorners' has tuples.
 	# (body index, corner index)
@@ -288,21 +305,26 @@ def FrameMove():
 	Qd_a = zeros((6*nba))
 	Qd_i = zeros((6*nbi))
 	for k in range(nb):
-		q_est  = gBody.q + h*gBody.qd/2;
-		q_est[3:6] = DynamicReparam(q_est[3:6])
+		q_est  = gBody.q + h*gBody.qd;
+		qd_est = gBody.qd;
+		#q_est[3:6], qd_est[3:6] = DynamicReparam(q_est[3:6], qd_est[3:6])
 		
-		M, Cqd = MassMatrixAndCqdVector(q_est[0:3], q_est[3:6], gBody.qd[0:3], gBody.qd[3:6], gBody.I)
-		#M, Cqd = MassMatrixAndCqdVector(gBody.q[0:3], gBody.q[3:6], gBody.qd[0:3], gBody.qd[3:6], gBody.I)
+		M, Cqd = MassMatrixAndCqdVector(q_est[0:3], q_est[3:6],
+	                                    qd_est[0:3], qd_est[3:6], gBody.I)
+		'''
+		M, Cqd = MassMatrixAndCqdVector(gBody.q[0:3], gBody.q[3:6],
+										gBody.qd[0:3], gBody.qd[3:6], gBody.I)
+		'''
 		Minv_k = linalg.inv(M)
 		Cqd_k  = Cqd
 		
 		fg = GeneralizedForce(q_est[3:6],
-		                      (0., 0., -9.81 * gBody.mass),
-		                      (0., 0., 0.))
+	                          (0., 0., -9.81 * gBody.mass),
+	                          (0., 0., 0.))
 		'''
 		fg = GeneralizedForce(gBody.q[3:6],
-		                      (0., 0., -9.81 * gBody.mass),
-		                      (0., 0., 0.))
+							  (0., 0., -9.81 * gBody.mass),
+							  (0., 0., 0.))
 		'''
 		#fg = 0
 		
@@ -376,8 +398,8 @@ def FrameMove():
 		
 		
 		LCP_M = vstack([hstack([ M00 ,  M10.T ,  Z0 ]),
-		                hstack([ M10 ,  M11   ,  E  ]),
-			            hstack([ Mu  ,  -E.T  ,  Z0 ])])
+	                    hstack([ M10 ,  M11   ,  E  ]),
+	                    hstack([ Mu  ,  -E.T  ,  Z0 ])])
 	
 		LCP_q0 = h * dot(dot(N.T, Minv_a), fg - Cqd_a) + dot(N.T, Qd_a)
 		LCP_q1 = h * dot(dot(D.T, Minv_a), fg - Cqd_a) + dot(D.T, Qd_a)		
@@ -386,8 +408,8 @@ def FrameMove():
 		
 		'''
 		LCP_M = vstack([hstack([ M11   , M10 , E  ]),
-		                hstack([ M10.T , M00 , Z0 ]),
-		                hstack([ -E.T  , Mu  , Z0 ])])
+						hstack([ M10.T , M00 , Z0 ]),
+						hstack([ -E.T  , Mu  , Z0 ])])
 	
 		LCP_q0 = h * dot(dot(D.T, Minv_a), fg - Cqd_a) + dot(D.T, Qd_a)
 		LCP_q1 = h * dot(dot(N.T, Minv_a), fg - Cqd_a) + dot(N.T, Qd_a)
@@ -395,8 +417,8 @@ def FrameMove():
 		'''
 		# hstack() does not matter since it is a column vector
 		LCP_q = hstack([ LCP_q0 ,
-			             LCP_q1 ,
-			             LCP_q2 ])
+	                     LCP_q1 ,
+	                     LCP_q2 ])
 		
 		# Case 1: Python code (from Matlab)
 		z0 = zeros((LCP_M.shape[0]))
@@ -406,6 +428,7 @@ def FrameMove():
 		# Allow a very small error (EPS) due to the numerical errors
 		# in x_opt and checkW. (mathematically x_opt >= 0 and checkW >= 0)
 		# TODO: IS THIS ESSENTIAL?
+		'''
 		EPS = 1e-5
 		for i, x, w in zip(range(len(x_opt)), x_opt, checkW):
 			# Treat the values between [-EPS,0) as the exact 0.
@@ -417,9 +440,11 @@ def FrameMove():
 		# Check the validity of the LCP solution
 		all_x_opt_positive = all([val >= 0 for val in x_opt])
 		all_w_positive = all([val >= 0 for val in checkW])
+		'''
 		wTx = linalg.norm(dot(checkW, x_opt)) # should be zero
-		EPS2 = 1e-12
-		if err != 0 or wTx > EPS2 or all_x_opt_positive == False or all_w_positive == False:
+		EPS2 = 1e-3
+		#if err != 0 or wTx > EPS2 or all_x_opt_positive == False or all_w_positive == False:
+		if err != 0 or wTx > EPS2:
 			raise Exception, 'Lemke\'s algorithm failed!!!!!!!!!!!!!!!'
 		
 		cn   = x_opt[0    :p]
@@ -455,13 +480,41 @@ def FrameMove():
 		Qd_i_next = h * Qacc + Qd_i
 		Q_i_next  = h * Qd_i_next + Q_i
 		#print Qacc
+
+		
 		gBody.q = Q_i_next
 		gBody.qd = Qd_i_next
 		z0 = 0
 		
-		#gBody.q += h*gBody.qd
+	
+	r = gBody.q[3:6]
+	th = linalg.norm(r)
+	v1,v2,v3 = r
+	if th < 0.031622776601683791: coeff = 0.5 - (th**2)/48.
+	else: coeff = sin(0.5*th)/th
+	quat = array([cos(0.5*th),
+                  coeff*v1,
+                  coeff*v2,
+                  coeff*v3])
+	quatd = QuatdFromV(gBody.q[3:6], gBody.qd[3:6])
+	omega_wc = 2*quat_mult(quatd, quat_conj(quat))[1:4]
+	gBody.omega_wc = omega_wc
+	
+		
+	th = linalg.norm(gBody.q[3:6])
+	if th > pi:
+		th = linalg.norm(gBody.q[3:6])
+		gBody.q[3:6] = (1.-2*pi/th)*gBody.q[3:6]
+		qprevmag = linalg.norm(qPrev[3:6])
+		qPrev[3:6] = (1.-2*pi/qprevmag)*qPrev[3:6]
+		gBody.qd[3:6] = (gBody.q[3:6] - qPrev[3:6])/h
+		print 'Reparmed at frame', gFrame
+		
 
-				
+	
+	
+		
+		
 	minZ = min([cps[2] for cps in gBody.getCorners_WC()])
 	if minZ < 0:
 		# Project to the admissible region
@@ -477,15 +530,14 @@ def FrameMove():
 		for cp, cf in zip(gBody.contactPoints, gBody.cf):
 			cfTotal += linalg.norm(cf)
 			
-	#print 'cfTotal :', cfTotal, '/ minZ :', minZ, ' / pos :', gBody.q[0:3]
 	print 'minZ :', minZ, '/ posz :', gBody.q[2], '/ velz :', gBody.qd[2], '/ cfTotal :', cfTotal
+	#print linalg.norm(gBody.omega_wc)
 
 	
 	for i in range(6):
 		plotvalues[i].append(gBody.q[i])
 	plotvalues[6].append(linalg.norm(gBody.q[3:6]))
 		
-	frame = frame + 1
 	
 def RenderBox():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
@@ -587,25 +639,27 @@ di = array([ [        1.,         0., 0],
              [ cos(pi/4), -sin(pi/4), 0] ])
 di = di.T
 
-#---------------------------------------------------------------------------------
-# TEST SET      POS0         ROT0       VEL0      ANGVEL0    BOXSIZE      MASS
-#---------------------------------------------------------------------------------
+#--------------------------------------------------------------------------------------------------------
+# TEST SET      POS0               ROT0           VEL0        ANGVEL0        BOXSIZE      MASS
+#--------------------------------------------------------------------------------------------------------
 TESTSET = (  # Stationary box
-             ( (0,0,0.5)  , (0,0,0)  ,  (0,0,0) , (0,0,0),    (1,1,1)  ,    1  ),
+             ( (0,0,0.5)      , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # Stationary box slightly rotated in z-axis
-             ( (0,0,0.5)  , (0,0,2)  ,  (0,0,0) , (0,0,0),    (1,1,1)  ,    1  ),
+             ( (0,0,0.5)      , (0,0,2)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # Straight free-fall
-             ( (0,0,3)    , (0,0,0)  ,  (0,0,0) , (0,0,0),    (1,1,1)  ,    1  ),
+             ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # z-axis rotating free fall
-             ( (0,0,3)    , (0,0,0)  ,  (0,0,0),  (0,0,80),   (1,1,1)  ,    1 ),
+             ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    ,  (0,0,40) ,   (3,1,1)   ,     1 ),
              # projectile test
-             ( (-3,0,3)   , (0,0,0)  ,  (10,0,0) , (0,0,0),   (1,1,1)  ,    1 ),
+             ( (-3,0,3)       ,  (0,0,0)      ,  (10,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
              # projectile test (faster)
-             ( (-5,0,3)    , (0,0,0)  ,  (20,0,0), (0,0,0),   (1,1,1)  ,    1 ),
+             ( (-5,0,3)       , (0,0,0)       ,  (20,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
              # free-fall of arbitrary rotated state with no angular velocity
-             ( (0,0,3)    , (1,2,3)  ,  (0,0,0) , (0,0,0),    (1,1,1)  ,    1 ),
+             ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity
-             ( (0,0,5)    , (1,2,3)  ,  (0,0,0) , (30,40,50),    (1,1,1)  ,    1 )
+             ( (0,0,25)        , (1,2,3)       ,  (0,0,0)    , (10,20,30),    (1,1,1)  ,     1 ),
+             # free-fall of arbitrary rotated state with some angular velocity (general box shape)
+             ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
         )
 
 def ExpBodyFromTestSet(i):
@@ -619,15 +673,17 @@ def ExpBodyFromTestSet(i):
 	                       hstack([ pos0_wc, rot0_wc ]),
 	                       vel0_wc, angvel0_wc,
 	                       [0.1,0.2,0.3])
+def GetTestSetCount(): return len(TESTSET)
 
-gBody = ExpBodyFromTestSet(0)
-gNextTestSet = None
-
-print 'Initial position :', gBody.q[0:3]
-
-# Current frame number
-frame = 0
-gWireframe = False
-gResetState = False
-# Let's go!
-main()
+if __name__ == '__main__':
+	gBody = ExpBodyFromTestSet(0)
+	gNextTestSet = None
+	
+	print 'Initial position :', gBody.q[0:3]
+	
+	# Current frame number
+	gFrame = 0
+	gWireframe = False
+	gResetState = False
+	# Let's go!
+	main()

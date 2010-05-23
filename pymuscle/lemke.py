@@ -97,9 +97,9 @@ def lemke(M, q, z0):
 		else:
 			entering = leaving - n
 			Be = M[:, entering]
-		d = linalg.solve(B, Be)
-		#d = linalg.lstsq(B, Be)
-		#d = d[0] # we only need the solution
+		#d = linalg.solve(B, Be)
+		d = linalg.lstsq(B, Be)
+		d = d[0] # we only need the solution
 		
 		# Find new leaving variable
 		j = nonzero(d>piv_tol)[0]
