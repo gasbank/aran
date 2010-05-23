@@ -24,7 +24,7 @@ import ExpBody
 from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
 from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
 from quat import quat_mult, quat_conj
-
+import lwp
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -363,9 +363,9 @@ def FrameMove(body):
 			#           d q
 			# { q | f(q) >= 0 }
 			#
-			N[6*k:6*(k+1), i] = dfxdX(q_est[0:3], q_est[3:6], gBody.corners[cp])
+			#N[6*k:6*(k+1), i] = dfxdX(q_est[0:3], q_est[3:6], gBody.corners[cp])
 			#N[6*k:6*(k+1), i] = dfxdX(gBody.q[0:3], gBody.q[3:6], gBody.corners[cp])
-			#N[6*k:6*(k+1), i] = GeneralizedForce(q_est[3:6], array([0.,0,1]), gBody.corners[cp])
+			N[6*k:6*(k+1), i] = GeneralizedForce(q_est[3:6], array([0.,0,1]), gBody.corners[cp])
 			#N[6*k:6*(k+1), i] = GeneralizedForce(gBody.q[3:6], array([0.,0,1]), gBody.corners[cp])
 			
 			
@@ -402,7 +402,7 @@ def FrameMove(body):
 	                    hstack([ Mu  ,  -E.T  ,  Z0 ])])
 	
 		LCP_q0 = h * dot(dot(N.T, Minv_a), fg - Cqd_a) + dot(N.T, Qd_a)
-		LCP_q1 = h * dot(dot(D.T, Minv_a), fg - Cqd_a) + dot(D.T, Qd_a)		
+		LCP_q1 = h * dot(dot(D.T, Minv_a), fg - Cqd_a) + dot(D.T, Qd_a)
 		LCP_q2 = zeros((p))
 		
 		
@@ -415,21 +415,41 @@ def FrameMove(body):
 		LCP_q1 = h * dot(dot(N.T, Minv_a), fg - Cqd_a) + dot(N.T, Qd_a)
 		LCP_q2 = zeros((p))
 		'''
+		
+		
 		# hstack() does not matter since it is a column vector
 		LCP_q = hstack([ LCP_q0 ,
 	                     LCP_q1 ,
 	                     LCP_q2 ])
 		
 		# Case 1: Python code (from Matlab)
-		z0 = zeros((LCP_M.shape[0]))
+		'''
+		global z0
+		if z0 is not 0 and len(z0) == LCP_M.shape[0]:
+			pass
+		else:
+			z0 = zeros((LCP_M.shape[0]))
+		'''
+		z0 = zeros(LCP_M.shape[0])
 		x_opt, err = lemke(LCP_M, LCP_q, z0)
+		z0 = x_opt
+		
+		'''
+		# Case 2: LCP (Ocaml)
+		C_LCP_M = list(LCP_M.flatten())
+		C_LCP_q = list(LCP_q)
+		C_x_opt = [0.,]*len(LCP_q)
+		lwp.clemke(1985, C_LCP_M, C_LCP_q, C_x_opt)
+		x_opt = array(C_x_opt)
+		err = 0
+		'''
+		
 		checkW = dot(LCP_M, x_opt) + LCP_q # To verify the solution correctness
 		
 		# Allow a very small error (EPS) due to the numerical errors
 		# in x_opt and checkW. (mathematically x_opt >= 0 and checkW >= 0)
 		# TODO: IS THIS ESSENTIAL?
-		'''
-		EPS = 1e-5
+		EPS = 1e-1
 		for i, x, w in zip(range(len(x_opt)), x_opt, checkW):
 			# Treat the values between [-EPS,0) as the exact 0.
 			if -EPS <= x and x < 0:
@@ -440,11 +460,11 @@ def FrameMove(body):
 		# Check the validity of the LCP solution
 		all_x_opt_positive = all([val >= 0 for val in x_opt])
 		all_w_positive = all([val >= 0 for val in checkW])
-		'''
+		
 		wTx = linalg.norm(dot(checkW, x_opt)) # should be zero
-		EPS2 = 1e-3
-		#if err != 0 or wTx > EPS2 or all_x_opt_positive == False or all_w_positive == False:
-		if err != 0 or wTx > EPS2:
+		EPS2 = 1e-2
+		if err != 0 or wTx > EPS2 or all_x_opt_positive == False or all_w_positive == False:
+		#if err != 0 or wTx > EPS2:
 			raise Exception, 'Lemke\'s algorithm failed!!!!!!!!!!!!!!!'
 		
 		cn   = x_opt[0    :p]
@@ -490,7 +510,7 @@ def FrameMove(body):
 	r = gBody.q[3:6]
 	th = linalg.norm(r)
 	v1,v2,v3 = r
-	if th < 0.031622776601683791: coeff = 0.5 - (th**2)/48.
+	if th < 0.0001: coeff = 0.5 - (th**2)/48.
 	else: coeff = sin(0.5*th)/th
 	quat = array([cos(0.5*th),
                   coeff*v1,
@@ -657,7 +677,7 @@ TESTSET = (  # Stationary box
              # free-fall of arbitrary rotated state with no angular velocity
              ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity
-             ( (0,0,25)        , (1,2,3)       ,  (0,0,0)    , (10,20,30),    (1,1,1)  ,     1 ),
+             ( (0,0,25)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,7),    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity (general box shape)
              ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
         )
@@ -678,7 +698,7 @@ def GetTestSetCount(): return len(TESTSET)
 if __name__ == '__main__':
 	gBody = ExpBodyFromTestSet(0)
 	gNextTestSet = None
-	
+	z0 = 0
 	print 'Initial position :', gBody.q[0:3]
 	
 	# Current frame number

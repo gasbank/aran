@@ -14,17 +14,19 @@ seterr(divide='raise')
 def lemke(M, q, z0):
 	n = len(q)
 	assert M.shape == (n,n)
-	z0 = zeros((n)) # z0 is zero-vector for now...
+	
+	#z0 = zeros((n)) # z0 is zero-vector for now...
+
 	zer_tol = 1e-5
 	piv_tol = 1e-8
 	maxiter = min(1000,50*n)
 	err = 0
-	
+
 	# Trivial solution exists
 	if all([qi>=0 for qi in q]):
 		z = zeros((n))
 		return z, err
-	
+
 	# Initializations
 	# (note: all variables are initialized to their appropriate sizes)
 	z = zeros((2*n))
@@ -37,10 +39,10 @@ def lemke(M, q, z0):
 	x = q
 	bas = zeros((n))
 	nonbas = zeros((n))
-	
+
 	t = 2*n         # Artificial variable
 	entering = t    # is the first entering variable
-	
+
 	# Determine initial basis
 	if len(z0) == 0:
 		bas = array([],dtype=int64)
@@ -51,16 +53,19 @@ def lemke(M, q, z0):
 
 	# allocate memory for B
 	B = -identity(n)
-	
+
 	# Determine initial values
 	if len(bas) != 0:
 		B = concatenate((M[:,bas], B[:,nonbas]), axis=1)
-		"""
-		if condest(B) > 1e16:
+		'''
+		condest = sum(abs(linalg.inv(B)))
+		print condest
+		if condest > 1e16:
 			z=[]
-		    err=3
-		    return z, err
-		"""
+			err=3
+			return z, err
+		'''
+
 		x = -linalg.solve(B, q)
 		#x = -linalg.lstsq(B, q)
 		#x = x[0]
@@ -70,21 +75,21 @@ def lemke(M, q, z0):
 		z[ bas ] = x[ range(len(bas)) ]
 		z = z[ range(n) ]
 		return z, err
-	
+
 	# Determine initial leaving variable
 	tval = max(-x)
 	lvindex = list(x).index(-max(-x))
 	bas = concatenate((bas,array([n+nonbasi for nonbasi in nonbas])))
 	leaving = bas[lvindex]
-	
+
 	bas[lvindex] = t # pivot in the artificial variable
-	
+
 	U=array([(xi<0)*1.0 for xi in x])
 	Be=-dot(B, U)
 	x = x + tval*U
 	x[lvindex] = tval
 	B[:, lvindex] = Be
-	
+
 	# Main iterations begin here
 	for iterr in range(maxiter):
 		# Check if done; if not, get new entering variable
@@ -97,10 +102,10 @@ def lemke(M, q, z0):
 		else:
 			entering = leaving - n
 			Be = M[:, entering]
-		#d = linalg.solve(B, Be)
-		d = linalg.lstsq(B, Be)
-		d = d[0] # we only need the solution
-		
+		d = linalg.solve(B, Be)
+		#d = linalg.lstsq(B, Be)
+		#d = d[0] # we only need the solution
+
 		# Find new leaving variable
 		j = nonzero(d>piv_tol)[0]
 		if len(j) == 0:
@@ -114,13 +119,13 @@ def lemke(M, q, z0):
 			theta = max(d[j])
 			lvindex = list(d).index(max(d[j]))
 			lvindex = list(nonzero(d[j] == theta)[0])
-			
+
 			lvindex = int(ceil((len(lvindex)-1)*random.random()))
 			#lvindex = 0
 
 			lvindex = j[lvindex]
 		leaving = bas[lvindex]
-		
+
 		if type(lvindex) is int64:
 			pass
 		elif len(lvindex) == 1:
@@ -134,7 +139,7 @@ def lemke(M, q, z0):
 		B[:,lvindex] = Be
 		bas[lvindex] = entering
 		# end of iterations
-		
+
 	if iterr >= maxiter and leaving[0] != t:
 		err = 1
 
@@ -142,7 +147,7 @@ def lemke(M, q, z0):
 		z = concatenate((z,zeros((max(bas)-len(z)+1))))
 	z[bas] = x
 	z = z[range(n)]
-	
+
 	# Display warning messages if no error code is returned
 	if err != 0:
 		s = 'Warning: solution not found - '

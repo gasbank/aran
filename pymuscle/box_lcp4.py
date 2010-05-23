@@ -657,12 +657,15 @@ def BuildEquationsOfMotion(body, bodies, h):
 		assert len(q) == 6 and len(qd) == 6
 		sx, sy, sz = size
 
+		#
+		# NOTE: M*qdd + Cqdx      = fg
+		#       M*qdd + Cqdx - fg = 0
+		#       M*qdd + Cqd_k     = 0
+		#
 		Minv_k = SymbolicMinv(q + h * qd / 2, inertia)
 		Cqd_k = SymbolicCqd(q + h * qd / 2, qd, inertia)
-
-		# Add gravitational force to the Coriolis term
 		fg = SymbolicForce(q + h * qd / 2, (0, 0, -9.81 * mass), (0, 0, 0))
-		Cqd_k = Cqd_k + fg
+		Cqd_k = Cqd_k - fg
 		#Cqd_k = Cqd_k - torque[(int)(frame*h)][k]*h
 
 		kk = bodies.index(k)
@@ -723,8 +726,13 @@ def BuildLcpAndSolve(activeBodies, activeCorners, activeCornerPoints, h, mu, Min
 			        hstack([ M10 , M11   , E  ]),
 			        hstack([ Mu  , -E.T  , Z0 ])])
 
-	LCP_q0 = h * dot(dot(N.T, Minv_a), Cqd_a) + dot(N.T, Qd_a)
-	LCP_q1 = h * dot(dot(D.T, Minv_a), Cqd_a) + dot(D.T, Qd_a)
+	#
+	# NOTE: M*qdd + Cqd = 0
+	#
+	# in Cqd, '-fg' term included.
+	#
+	LCP_q0 = h * dot(dot(N.T, Minv_a), -Cqd_a) + dot(N.T, Qd_a)
+	LCP_q1 = h * dot(dot(D.T, Minv_a), -Cqd_a) + dot(D.T, Qd_a)
 	LCP_q2 = zeros((p))
 	# hstack() does not matter since it is a column vector
 	LCP_q = hstack([ LCP_q0 ,
@@ -751,12 +759,12 @@ def FrameMove_Mocap():
 	h = gCon.h
 	mu = gCon.mu
 	
-	'''
+
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
 		gCon.body[k].q = gCon.q_data[gCon.curFrame][k]
 		gCon.body[k].qd = gCon.qd_data[gCon.curFrame][k]
-	'''
+
 	
 	activeCorners, activeCornerPoints, activeBodies, inactiveBodies = DetermineActiveness(gCon.body, gCon.alpha0)
 	# Active corner points are used later. Keep them in gCon.
@@ -828,12 +836,12 @@ def FrameMove_Mocap():
 	'''
 	
 	
-	'''
+
 	### TRAJECTORY INPUT ###
 	for k in range(nb):
 		gCon.body[k].q = gCon.q_data[gCon.curFrame][k]
 		gCon.body[k].qd = gCon.qd_data[gCon.curFrame][k]
-	'''
+
 	
 	if gCon.autoPlay:
 		gCon.curFrame = gCon.curFrame + 1
@@ -846,7 +854,7 @@ def FrameMove_Mocap():
 
 if __name__ == '__main__':
 	gWorkDir = '/home/johnu/pymuscle/'
-	gRunMode = 'MOCAP'
+	gRunMode = 'IMPINT'
 	assert gRunMode in ['MOCAP',         # Motion capture data player with contact force calc
 					    'IMPINT',        # Implicit integration tester
 					    'SINGLE'         # Single rigid body tester

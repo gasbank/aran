@@ -256,13 +256,13 @@ int setDefaultSolverOptions(SolverOptions* options)
   options->numberOfInternalSolvers=0;
   options->isSet=1;
   options->filterOn=1;
-  options->iSize=5;
-  options->dSize =5;
+  options->iSize=10;
+  options->dSize =10;
   options->iparam = (int *)malloc(options->iSize*sizeof(int));
   options->dparam = (double *)malloc(options->dSize*sizeof(double));
   options->dWork =NULL;
   options->iWork =NULL;
-  for (i=0; i<5; i++)
+  for (i=0; i<10; i++)
   {
     options->iparam[i]=0;
     options->dparam[i]=0.0;
@@ -315,7 +315,7 @@ int main()
 		fscanf(M, "%lf", &mii);
 		lcp.M[i] = mii;
 		
-		printf("%lf ", mii);
+		printf("%10.4lf ", mii);
 	}
 	printf("\n\n");
 	printf("q vector ========================\n\n");
@@ -325,7 +325,7 @@ int main()
 		fscanf(q, "%lf", &qi);
 		lcp.q[i] = qi;
 		
-		printf("%lf ", qi);
+		printf("%10.4lf ", qi);
 	}
 	printf("\n");
 	
