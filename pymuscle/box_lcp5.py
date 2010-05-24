@@ -758,17 +758,13 @@ def FrameMove_ImpInt():
 			#print footBodyNames[kp], ':', cf
 			
 			# Resultant force in 'world' coordinates
-			C_extForce[fbi][0] += cf_wc[0]
-			C_extForce[fbi][1] += cf_wc[1]
-			C_extForce[fbi][2] += cf_wc[2]
+			C_extForce[fbi][0:3] += cf_wc
 			
 			r_bc = footBodies[kp].corners[cp]
 			cf_bc = footBodies[kp].localVec(cf_wc)
 			resTorque_bc = cross(r_bc, cf_bc)
 			# Resultant torque in 'body' coordinates
-			C_extForce[fbi][3] += resTorque_bc[0]
-			C_extForce[fbi][4] += resTorque_bc[1]
-			C_extForce[fbi][5] += resTorque_bc[2]
+			C_extForce[fbi][3:6] += resTorque_bc
 
 	# Pass all the variables to the simcore
 	C_SimCore(C_h, C_nBody, C_nMuscle, C_body, C_extForce, C_muscle, C_musclePair)

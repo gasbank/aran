@@ -214,19 +214,29 @@ class BipedParameter:
 		      ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  3.),
 		      ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   3.) ]
 
-		# DEBUGGING
+		'''
+		# DEBUGGING START
 		l = l[0:1]
+		# DEBUGGING NED
+		'''
 		
 		for i, ll in zip(range(len(l+l[1:])), l+l[1:]):
-			
 			identityQuaternion = [1.,0,0,0]
-
-			#DEBUGGING
+			pos0 = hstack([ ll[2], identityQuaternion ])
+			vel0 = zeros(7)
+			drawingColor = (0.2,0.1,0.2)
+			
+			'''
+			#DEBUGGING START
 			identityQuaternion = [1,1,2,3]
 			identityQuaternion = quat_normalize(identityQuaternion)
+			pos0[3:7] = identityQuaternion
+			pos0[2] += 0.2 # Start from the sky
+			vel0[3:7] = [0.1,0.2,0.3,0.4]
+			#DEBUGGING END
+			'''
 			
-			pos0 = hstack([ ll[2], identityQuaternion ])
-			pos0[2] += 0.2
+			
 			if i < len(l):
 				# Trunk and left leg body segments
 				name = ll[0]
@@ -235,14 +245,17 @@ class BipedParameter:
 				name = ll[0][:-1] + 'R'
 				pos0[0] *= -1
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
-			b = PmBody(name, None, ll[3], ll[1], pos0, zeros(7), (0.2,0.1,0.2), 'QUAT_WFIRST')
+			b = PmBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, 'QUAT_WFIRST')
 			body.append(b)
 		return body
 	def buildFiber(self):
 		fiber = []
-
-		# DEBUGGING
+		
+		'''
+		# DEBUGGING START
 		return fiber
+		# DEBUGGING END
+		'''
 		
 		KSE = 5000000.
 		KPE = 5000000.
