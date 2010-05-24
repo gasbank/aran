@@ -48,14 +48,28 @@ class PmBody:
 		self.M_BC = self.getMassMatrix_BC()
 	
 	def globalPos(self, localPos):
+		'''
+		Transform local coordinate position(point) to global coordinate position
+		'''
 		if self.rotParam == 'EULER_XYZ':
 			A = RotationMatrixFromEulerAngles_xyz(self.q[3], self.q[4], self.q[5])
 		elif self.rotParam == 'EULER_ZXZ':
 			A = RotationMatrixFromEulerAngles_zxz(self.q[3], self.q[4], self.q[5])
 		elif self.rotParam == 'QUAT_WFIRST':
 			A = RotationMatrixFromQuaternion(self.q[3], self.q[4], self.q[5], self.q[6])
+		else:
+			raise Exception, 'Unknown rotation parameterization'
 		return self.q[0:3] + dot(A, localPos)
-	
+	def localVec(self, globalVec):
+		'''
+		Transform global coordinate vector to local coordinate vector
+		'''
+		if self.rotParam == 'QUAT_WFIRST':
+			A = RotationMatrixFromQuaternion(self.q[3], -self.q[4], -self.q[5], -self.q[6])
+		else:
+			raise Exception, 'Unknown rotation parameterization'
+		return dot(A, globalVec)
+		
 	def __str__(self):
 		ret = 'PmBody %s, parent %s\n' % (self.name, self.pName)
 		ret = ret + 'q: %s\n' % self.q

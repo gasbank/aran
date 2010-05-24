@@ -6,8 +6,9 @@ Optimization-based rigid body simulator
 
 Common math routines
 """
-from math import cos, sin, atan2, asin, sqrt, tan
-from numpy import array, dot, linalg
+from math import cos, sin, atan2, asin, sqrt, tan, acos
+from numpy import array, dot, linalg, cross
+from quat import QuatToAngularVel_WC
 
 def cot(x): return 1./tan(x)
 
@@ -80,8 +81,34 @@ def ang_vel(q, v):
 		          phid*sin(theta)*cos(psi)-thetad*sin(psi),
 		          phid*cos(theta)+psid])
 
-
-
+def QuatToV(q):
+	'''
+	Convert orientation quaternion to Exp rotation
+	'''
+	assert len(q) == 4
+	qw, qx, qy, qz = q
+	qv = array([qx,qy,qz])
+	qv_mag = linalg.norm(qv)
+	if qv_mag < 0.0001:
+		return 1/(0.5-qv_mag**2/48)*qv
+	else:
+		return 2*acos(qw)/qv_mag*qv
+	
+def QuatdToVd(q, qd, v):
+	'''
+	Convert quaternion time derivative to Exp rotation time derivative
+	'''
+	omega_wc = QuatToAngularVel_WC(q, qd)
+	th = linalg.norm(v)
+	p = cross(omega_wc, v)
+	if th < 0.0001:
+		gamma = (12-th**2)/6
+		eta = dot(omega_wc, v)*(60+th**2)/360
+	else:
+		gamma = th/tan(0.5*th)
+		eta = dot(omega_wc, v)/th*(1/tan(0.5*th)-2/th)
+	return 0.5*(gamma*omega_wc + p - eta*v)
+	
 if __name__ == '__main__':
 	q = array([sqrt(2.)/2, 0, sqrt(2.)/2, 0])
 	q /= linalg.norm(q)

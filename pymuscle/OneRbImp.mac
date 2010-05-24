@@ -21,8 +21,8 @@ qbar : [qw, -qx, -qy, -qz]$ /* Conjugate quaternion (for convenience) */
 I : matrix([Ixx, 0,0],[0,Iyy,0], [0,0,Izz])$ /* 3x3 inertia tensor */
 /* Inverse of the inertia tensor */
 Iinv : matrix([1/Ixx, 0,0],[0,1/Iyy,0], [0,0,1/Izz])$
-Fr : [Frx, Fry, Frz]$ /* External resultant force in global coordinates */
-Tr : [Trx, Try, Trz]$ /* External resultant torque in body coordinates */
+Fr : [Frx, Fry, Frz]$ /* External resultant force in 'global' coordinates */
+Tr : [Trx, Try, Trz]$ /* External resultant torque in 'body' coordinates */
 
 Y : append(p, q, pd, qd)$ /* State vector */
 

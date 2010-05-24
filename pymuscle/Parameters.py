@@ -69,7 +69,7 @@ class BipedParameter:
 
 
 		# 4.p[' Muscle Attachment Parameters
-		self.p['hipMuscleDist']       = 14.
+		self.p['hipMuscleDist']       = 20.
 		self.p['hipMuscleLatDist']    = 14.
 		self.p['hipMuscleDist2']      = self.p['thighWidth']
 		self.p['hipMuscleLatDist2']   = self.p['thighLatWidth']
@@ -189,45 +189,77 @@ class BipedParameter:
 		c = self.getHipJointCenter()
 		p1 = c + array([0, 0, self['trunkThighGap']/2])
 		p2 = c + array([0, 0, -self['trunkThighGap']/2])
-
-		return [ ('hipLiga1L', p1,p2, 'trunk', 'thighL') ]
+		p3 = c + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2])
+		p4 = c + array([0, -self['thighLatWidth']/2, -self['trunkThighGap']/2])
+		p5 = c + array([0, self['trunkLatWidth']/2, self['trunkThighGap']/2])
+		p6 = c + array([0, self['thighLatWidth']/2, -self['trunkThighGap']/2])
+		p7 = c + array([self['hipMuscleDist']/2, 0, self['trunkThighGap']/2])
+		p8 = c + array([self['hipMuscleDist2']/2, 0, -self['trunkThighGap']/2])
+		p9 = c + array([-self['hipMuscleDist']/2, 0, self['trunkThighGap']/2])
+		p10 = c + array([-self['hipMuscleDist2']/2, 0, -self['trunkThighGap']/2])
+		return [ ('hipLiga1L', p1,p2, 'trunk', 'thighL'),
+		         ('hipLiga2L', p3,p4, 'trunk', 'thighL'),
+		         ('hipLiga3L', p5,p6, 'trunk', 'thighL'),
+		         ('hipLiga4L', p7,p8, 'trunk', 'thighL'),
+		         ('hipLiga5L', p9,p10, 'trunk', 'thighL') ]
 	
 	def getAllLigaments(self):
 		return self.getKneeLigaments() + self.getAnkleLigaments() + self.getToeLigaments() + self.getHipLigaments()
 
 	def buildBody(self):
 		body = []
-		l = [ ('trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 30.),
+		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 3.),
 		      ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 3.),
-		      ('calfL', [self['calfWidth'], self['calfLatWidth'], self['calfLen']], self.getCalfPos(), 3.),
-		      ('soleL', [self['soleWidth'], self['soleLen'], self['soleHeight']], self.getSolePos(), 3.),
-		      ('toeL', [self['toeWidth'], self['toeLen'], self['toeHeight']], self.getToePos(), 3.) ]
-		for ll in l:
+		      ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3.),
+		      ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  3.),
+		      ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   3.) ]
+
+		# DEBUGGING
+		l = l[0:1]
+		
+		for i, ll in zip(range(len(l+l[1:])), l+l[1:]):
+			
+			identityQuaternion = [1.,0,0,0]
+
+			#DEBUGGING
+			identityQuaternion = [1,1,2,3]
+			identityQuaternion = quat_normalize(identityQuaternion)
+			
+			pos0 = hstack([ ll[2], identityQuaternion ])
+			pos0[2] += 0.2
+			if i < len(l):
+				# Trunk and left leg body segments
+				name = ll[0]
+			else:
+				# Right leg body segments
+				name = ll[0][:-1] + 'R'
+				pos0[0] *= -1
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
-			b = PmBody(ll[0], None, ll[3], ll[1], list(ll[2])+[1,0,0,0], zeros(7), (0.2,0.1,0.2), 'QUAT_WFIRST')
-			body.append(b)
-		for ll in l[1:]:
-			newName = ll[0][:-1] + 'R'
-			newPos = list(ll[2])
-			newPos[0] *= -1
-			b = PmBody(newName, None, ll[3], ll[1], newPos+[1,0,0,0], zeros(7), (0.2,0.1,0.2), 'QUAT_WFIRST')
+			b = PmBody(name, None, ll[3], ll[1], pos0, zeros(7), (0.2,0.1,0.2), 'QUAT_WFIRST')
 			body.append(b)
 		return body
 	def buildFiber(self):
 		fiber = []
+
+		# DEBUGGING
+		return fiber
+		
+		KSE = 5000000.
+		KPE = 5000000.
+		b = 50000.
+		T = 0.
+		A = 0.
+		
+		# Left-side
 		for (name, orgPosGlobal, insPosGlobal, orgBody, insBody) in self.getAllLigaments():
 			#orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
 			orgPosLocal = self.changeToLocal(orgBody, orgPosGlobal)
 			insPosLocal = self.changeToLocal(insBody, insPosGlobal)
-			KSE = 5000.
-			KPE = 4500.
-			b = 500.
-			T = 0.
-			A = 0.
 			xrest = linalg.norm(orgPosGlobal - insPosGlobal)
 			cfg = (orgBody, orgPosLocal, insBody, insPosLocal, KSE, KPE, b, xrest, T, A)
 			m = PmMuscle(name, cfg, 'LIGAMENT', False)
 			fiber.append(m)
+		# Right-side
 		for (name, orgPosGlobal, insPosGlobal, orgBody, insBody) in self.getAllLigaments():
 			#orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
 			if orgBody[-1] == 'L': newOrgBody = orgBody[:-1] + 'R'
@@ -241,11 +273,6 @@ class BipedParameter:
 			newInsPosGlobal[0] *= -1
 			orgPosLocal = self.changeToLocal(newOrgBody, newOrgPosGlobal)
 			insPosLocal = self.changeToLocal(newInsBody, newInsPosGlobal)
-			KSE = 5000.
-			KPE = 4500.
-			b = 500.
-			T = 0.
-			A = 0.
 			xrest = linalg.norm(orgPosGlobal - insPosGlobal)
 			cfg = (newOrgBody, orgPosLocal, newInsBody, insPosLocal, KSE, KPE, b, xrest, T, A)
 			m = PmMuscle(name, cfg, 'LIGAMENT', False)
@@ -349,6 +376,12 @@ def Draw():
 	gluLookAt(poi[0], poi[1], 100,
 	          poi[0], poi[1], 0,
 	          0, 1, 0);
+	DrawBiped()
+	
+	SetViewport(gWinWidth/2, gWinHeight/2, gWinWidth/2, gWinHeight/2, zoomLevel)
+	gluLookAt(poi[0]+1, poi[1]-1, poi[2]+1,
+	          poi[0], poi[1], poi[2],
+	          0, 0, 1);
 	DrawBiped()
 	
 	

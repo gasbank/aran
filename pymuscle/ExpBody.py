@@ -55,15 +55,25 @@ class ExpBody:
 		self.qd         = hstack([linvel, VdotFromOmega(self.q[3:6], omega_wc)])
 		
 	def globalPos(self, localPos):
+		'''
+		Transform local coordinate position(point) to global coordinate position
+		'''
 		return self.q[0:3] + dot(self.getRotMat(), localPos)
+	def localVec(self, globalVec):
+		'''
+		Transform global coordinate vector to local coordinate vector
+		'''
+		return dot(linalg.inv(self.getRotMat()), globalVec)
 	
 	def getRotMat(self):
 		return RotationMatrixFromV(self.q[3:6])
 	
 	def __str__(self):
 		ret = 'ExpBody %s, parent %s\n' % (self.name, self.pName)
-		ret = ret + 'q: %s\n' % self.q
-		ret = ret + 'qd: %s (%s)' % (self.qd, self.rotParam)
+		ret = ret + '   q: %s\n' % self.q
+		ret = ret + '   qd: %s (%s)\n' % (self.qd, self.rotParam)
+		if hasattr(self, 'extForce'):
+			ret = ret + '   extForce: %s' % self.extForce
 		return ret
 	
 	def getCorners_WC(self):
