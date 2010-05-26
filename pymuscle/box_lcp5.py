@@ -221,9 +221,11 @@ def Draw():
 		RenderLegMonitorWindow('RightAnkle', 'SIDE')
 		RenderLegMonitorWindow('RightAnkle', 'FRONT')
 	elif gRunMode == 'IMPINT':
-		RenderFrontCameraWindow()
-	RenderSideCameraWindow()
-	RenderHud()
+		#RenderFrontCameraWindow()
+		#RenderTopCameraWindow()
+		pass
+	#RenderSideCameraWindow()
+	#RenderHud()
 	Postrender()
 	
 	gFrame += 1
@@ -294,7 +296,7 @@ def RenderFrontCameraWindow():
 	glLoadIdentity ();					# // Reset The Modelview Matrix
 
 	# Point Of Interest
-	poi = gCon.findBodyIndex2(['lowerback', 'trunk'])
+	poi = gCon.findBodyIndex2(poiList)
 	poiPos = array(gCon.body[poi].q[0:3])
 	
 	xeye, yeye, zeye = poiPos + array([0, -10, -0.5])
@@ -446,32 +448,35 @@ def DrawBiped(drawAxis, wireframe):
 			glTranslate(0, 0, 1)
 			gluDisk(gCon.quadric, 0, 0.5, 6, 1)
 		glPopMatrix()
-	
-def RenderSideCameraWindow():
+
+def RenderTopCameraWindow():		
 	global gCon
 	glWidth, glHeight = gCon.winWidth, gCon.winHeight
 	perpW, perpH = gCon.perpW, gCon.perpH
 	sideW, sideH = glWidth, glHeight - int(glHeight * perpH)
+	if gRunMode == 'IMPINT':
+		sideW /= 2.
 	aspectRatio = float(sideW) / sideH
 	quadric = gCon.quadric
 	
-	glViewport(0, int(glHeight * perpH), sideW, sideH)		# Reset The Current Viewport And Perspective Transformation
+	glViewport(int(sideW), int(glHeight * perpH), int(sideW), int(sideH))		# Reset The Current Viewport And Perspective Transformation
 
 	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
 	glLoadIdentity()					# // Reset The Projection Matrix
-	glOrtho(-aspectRatio, aspectRatio, -1, 1, 1, 1000)
+	zoomLevel = 3.0
+	glOrtho(-aspectRatio/zoomLevel, aspectRatio/zoomLevel, -1./zoomLevel, 1./zoomLevel, 1, 1000)
 	#glOrtho(-15.5, 15.5, -15.5, 15.5, 1, 1000)
 	
 	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
 	glLoadIdentity ();					# // Reset The Modelview Matrix
 
 	# Point Of Interest
-	poi = gCon.findBodyIndex2(['lowerback', 'trunk'])
+	poi = gCon.findBodyIndex2(poiList)
 	poiPos = array(gCon.body[poi].q[0:3])
 	
-	xeye, yeye, zeye = poiPos + array([3, 0, -0.5])
-	xcenter, ycenter, zcenter = poiPos + array([0, 0, -0.5])
-	xup, yup, zup = 0, 0, 1
+	xeye, yeye, zeye = poiPos + array([0, 0, 10])
+	xcenter, ycenter, zcenter = poiPos + array([0, 0, 0])
+	xup, yup, zup = 0, 1, 0
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 	
 	'''
@@ -480,9 +485,6 @@ def RenderSideCameraWindow():
 	xup, yup, zup = 0, 0, 1
 	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 	'''
-	
-	# Render the fancy global(inertial) coordinates
-	RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
 	
 	# Draw ground in cross section
 	glPushAttrib(GL_LIGHTING_BIT)
@@ -500,7 +502,68 @@ def RenderSideCameraWindow():
 	glEnd()
 	glPopAttrib()
 	
-	DrawBiped(drawAxis=False, wireframe=False)
+	DrawBiped(drawAxis=False, wireframe=True)
+	DrawBipedFibers()
+	DrawBipedContactPoints()
+	DrawBipedContactForces()
+		
+def RenderSideCameraWindow():
+	global gCon
+	glWidth, glHeight = gCon.winWidth, gCon.winHeight
+	perpW, perpH = gCon.perpW, gCon.perpH
+	sideW, sideH = glWidth, glHeight - int(glHeight * perpH)
+	if gRunMode == 'IMPINT':
+		sideW /= 2.
+	aspectRatio = float(sideW) / sideH
+	quadric = gCon.quadric
+	
+	glViewport(0, int(glHeight * perpH), int(sideW), int(sideH))		# Reset The Current Viewport And Perspective Transformation
+
+	zoomLevel = 2.0
+	glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
+	glLoadIdentity()					# // Reset The Projection Matrix
+	glOrtho(-aspectRatio/zoomLevel, aspectRatio/zoomLevel, -1/zoomLevel, 1/zoomLevel, 1, 1000)
+	#glOrtho(-15.5, 15.5, -15.5, 15.5, 1, 1000)
+	
+	glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
+	glLoadIdentity ();					# // Reset The Modelview Matrix
+
+	# Point Of Interest
+	poi = gCon.findBodyIndex2(poiList)
+	poiPos = array(gCon.body[poi].q[0:3])
+	
+	xeye, yeye, zeye = poiPos + array([3, 0, 0])
+	xcenter, ycenter, zcenter = poiPos + array([0, 0, 0])
+	xup, yup, zup = 0, 0, 1
+	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+	
+	'''
+	xeye, yeye, zeye = 10, -3, 0.8
+	xcenter, ycenter, zcenter = 0, -5, 0.8
+	xup, yup, zup = 0, 0, 1
+	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+	'''
+	
+	# Render the fancy global(inertial) coordinates
+	#RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
+	
+	# Draw ground in cross section
+	glPushAttrib(GL_LIGHTING_BIT)
+	glDisable(GL_LIGHTING)
+	glBindTexture(GL_TEXTURE_2D, gCon.gndTex)
+	glColor3f(1, 1, 1)
+	texRep = gCon.gndTexRep
+	plane = gCon.planeSize
+	
+	glBegin(GL_QUADS)
+	glTexCoord2f(0, 0);            glVertex3f(0, plane, 0)
+	glTexCoord2f(texRep, 0);       glVertex3f(0, -plane, 0)
+	glTexCoord2f(texRep, texRep);  glVertex3f(0, -plane, -1)
+	glTexCoord2f(0, texRep);       glVertex3f(0, plane, -1)
+	glEnd()
+	glPopAttrib()
+	
+	DrawBiped(drawAxis=False, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -562,6 +625,21 @@ def DrawBipedContactForces():
 			glRotatef(rotangle / math.pi * 180, rotaxis[0], rotaxis[1], rotaxis[2])
 			RenderArrow(gCon.quadric, friclen * 0.8, friclen * 0.2, 0.015)
 			glPopMatrix()
+	
+	for bodyk in gCon.body:
+		if hasattr(bodyk, 'contactPoints'):
+			wc = bodyk.getCorners_WC()
+			for cp, cf in zip(bodyk.contactPoints, bodyk.cf):
+				glColor3f(0.9,0.2,0.2) # Contact point indicator color
+				glPushMatrix()
+				glTranslate(wc[cp][0], wc[cp][1], wc[cp][2])
+				glutSolidSphere(0.02,8,8)
+				glPopMatrix()
+				glColor3f(0.9,0.2,0.2) # Contact force vector indicator color
+				glBegin(GL_LINES)
+				glVertex(wc[cp][0]        , wc[cp][1]        , wc[cp][2]        )
+				glVertex(wc[cp][0] + cf[0], wc[cp][1] + cf[1], wc[cp][2] + cf[2])
+				glEnd()
 
 def RenderPerspectiveWindow():
 	global gCon
@@ -579,7 +657,7 @@ def RenderPerspectiveWindow():
 	glLoadIdentity ();					# // Reset The Modelview Matrix
 
 	# Point Of Interest
-	poi = gCon.findBodyIndex2(['lowerback', 'trunk'])
+	poi = gCon.findBodyIndex2(poiList)
 	poiPos = array(gCon.body[poi].q[0:3])
 	
 	xeye, yeye, zeye = poiPos + array([3, -3, 0.2])
@@ -604,8 +682,9 @@ def RenderPerspectiveWindow():
 	glTexCoord2f(0, texRep);       glVertex3f(-plane, plane, 0)
 	glEnd()
 	glPopAttrib()
+	
 	# Render the fancy global(inertial) coordinates
-	RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
+	#RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
 
 	DrawBiped(drawAxis=True, wireframe=False)
 	DrawBipedFibers()
@@ -727,7 +806,7 @@ def FrameMove_ImpInt():
 			expBody.extForce += muscleTension
 		
 		footBodies.append(expBody)
-		
+	'''	
 	print gFrame
 	print 'B', footBodies[0].name,
 	for vv in footBodies[0].q:
@@ -735,7 +814,7 @@ def FrameMove_ImpInt():
 	for vv in footBodies[0].qd:
 		print ' %10.4f' % vv,
 	print
-	
+	'''
 	
 	contactInfo = BLEM.FrameMove(footBodies, gCon.h, True)
 	
@@ -745,7 +824,26 @@ def FrameMove_ImpInt():
 	for vv in footBodies[0].qd:
 		print ' %10.4f' % vv,
 	print
+	print 'A', footBodies[1].name,
+	for vv in footBodies[1].q:
+		print ' %10.4f' % vv,
+	for vv in footBodies[1].qd:
+		print ' %10.4f' % vv,
+	print
 
+	# Contact force visualization
+	for gBodyk in gCon.body:
+		if hasattr(gBodyk, 'contactPoints'):
+			del gBodyk.contactPoints
+		if hasattr(gBodyk, 'cf'):
+			del gBodyk.cf
+			
+	for bodyk, gBodyk in zip(footBodies, gCon.body):
+		if hasattr(bodyk, 'contactPoints') and len(bodyk.contactPoints) > 0:
+			gBodyk.contactPoints = bodyk.contactPoints[:]
+		if hasattr(bodyk, 'cf') and len(bodyk.cf) > 0:
+			gBodyk.cf = bodyk.cf[:]
+			
 	if contactInfo is not None:
 		for (kp, cp) in contactInfo:
 			# kp: Body index
@@ -1014,7 +1112,55 @@ def FrameMove_Mocap():
 
 
 ################################################################################
-
+def WriteSimcoreConfFile(fileName, body, fibers, h):
+	f = open(fileName, 'w')
+	f.write('# Pymuscle: rigid body and muscle fiber simulation\n')
+	f.write('# Application-wide configuration file\n')
+	f.write('version = \"0.1\";\n')
+	f.write('h = %f;   # Simulation timestep\n' % h)    
+	f.write('simFrame = 1000; # Simulation length\n')
+	f.write('plotSamplingRate = 1;\n')
+	f.write('''output = "simresult.txt";\n''')
+	
+	f.write('body = (\n')
+	for b in body:
+		assert b.rotParam == 'QUAT_WFIRST'
+		f.write('{\n')
+		f.write(
+'''
+name = "%s";
+p    =    [%f, %f, %f];
+q    = [%f, %f, %f, %f];
+pd   =    [%f, %f, %f];
+qd   = [%f, %f, %f, %f];
+mass = %f;
+size = [%f, %f, %f];
+grav = true;
+''' % tuple([b.name] + list(b.q) + list(b.qd) + [b.mass] + list(b.boxsize)) )
+		f.write('}%s\n' % (',' if b != body[-1] else ''))
+	f.write(');\n')
+	
+	f.write('muscle = (\n')
+	for fib in fibers:
+		f.write('{\n')
+		f.write(
+'''
+name         = "%s";
+origin       = "%s";     # Origin body name
+insertion    = "%s";     # Insertion body name
+KSE          = %f;        # Serial spring constant
+KPE          = %f;        # Parallel spring constant
+b            = %f;         # Viscosity
+xrest        = %f;        # resting length
+T            = %f;           # initial tension
+A            = %f;           # initial actuation force
+originPos    = [%f, %f, %f];   # Origin muscle attached pos (in origin body coord)
+insertionPos = [%f, %f, %f];   # Insertion muscle attached pos (in insertion body coord)
+''' % tuple([fib.name, fib.orgBody, fib.insBody, fib.KSE, fib.KPE, fib.b, fib.xrest, fib.T, fib.A] + list(fib.orgPos) + list(fib.insPos)))
+		f.write('}%s\n' % (',' if fib != fibers[-1] else ''))
+	f.write(');\n')
+	
+	f.close()
 if __name__ == '__main__':
 	gFrame   = 0
 	gWorkDir = '/home/johnu/pymuscle/'
@@ -1039,7 +1185,7 @@ if __name__ == '__main__':
 	
 	print 'Let\'s go!'
 	
-
+	poiList = ['lowerback', 'trunk', 'soleL', 'thighL', 'calfL']
 	
 	if gRunMode == 'MOCAP':
 		gCon = GlobalContext(gWorkDir + 'traj_', 'EULER_XYZ')	
@@ -1047,10 +1193,14 @@ if __name__ == '__main__':
 		gCon = GlobalContext(gWorkDir + 'traj_', 'QUAT_WFIRST')
 		gBipedParam = BipedParameter()
 		gCon.body = gBipedParam.buildBody()
-		gCon.fibers = gBipedParam.buildFiber()
+		gCon.fibers = gBipedParam.buildFiber([b.name for b in gCon.body])
 		gCon.bodyList = []
 		for b in gCon.body:
 			gCon.bodyList.append((b.name, None))
+			
+		# Write a configuration file containing body and muscle settings.
+		# This file can be read at the simcore side.
+		WriteSimcoreConfFile('box_lcp5.conf', gCon.body, gCon.fibers, gCon.h)
 	elif gRunMode == 'SINGLE':
 		gCon = GlobalContext(None, 'EULER_ZXZ')
 		pb = PmBody('lowerback', None, 1, array([0.1,0.2,0.3]),

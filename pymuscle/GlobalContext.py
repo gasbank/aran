@@ -17,7 +17,7 @@ class GlobalContext:
 		# Friction coefficient
 		self.mu = 1.4
 		# Simulation Timestep
-		self.h = 0.001
+		self.h = 0.0025
 		# Contact threshold
 		self.alpha0 = 0.02
 		# Eight basis of friction force
@@ -190,7 +190,7 @@ class GlobalContext:
 		self.clearColor = (202./255, 207./255, 206./255)
 		self.cfScaleFactor = 250 # Contact force arrow length multiplier
 		self.perpW = 0.5         # Ratio of perspective viewport width
-		self.perpH = 0.75         # Ratio of perspective viewport height
+		self.perpH = 0.6         # Ratio of perspective viewport height
 		
 		self.planeSize = 40      # Half of ground plane size
 		self.gndTexRep = 16      # Ground texture repeatation

@@ -32,21 +32,27 @@ actuated joints. In this model the character's body segments are considered
 as a set of rigid bodies. Joints are connecting these rigid bodies.
 This kind of model is
 vastly used since it is suitable to formulate the Lagrangian equations of motion
-using the generalized coordinates which helps to reduce the number of degree-of-freedom (DoF).
+using the generalized coordinates which helps to reduce the number
+of degree-of-freedom (DoF).
 The joints used in the model are considered as ideal rigid joints, which means
 each of them connects the two rigid bodies with a certain DoF. For example,
 a hinge joint which has 1-DoF is used at knees or elbows and a ball joint
 which has 3-DoF is used at hips. Actuation on the joints are occurred
 in their respective DoF. So it is natural to call these kind of joints
-\emph{actuated motor joints}. Various animations can be created by controlling these motor joints properly. In robotics this kind of approach is much more
-common. The main interest of creating motions with dynamics model is focused on how to design the motor joint controllers.
+\emph{actuated motor joints}. Various animations can be created by
+controlling these motor joints properly. In robotics this kind of
+approach is much more
+common. The main interest of creating motions with dynamics model
+ is focused on how to design the motor joint controllers.
 
 
 The motor joints are inherently nonsense in the perspective of
 physical realism. No human being has that kind of motors in their joints.
 Instead, they control their legs or arms by pulling bones using attached
 muscles. Unfortunately, the whole mechanism is quite complicated to understand completely.
-However the structure of human muscle fibers is well-known and there exist the biomechanical experiments concerning the most basic human actions such as walking and jumping.[REF NEEDED]
+However the structure of human muscle fibers is well-known and there exist
+the biomechanical experiments concerning the most basic human actions
+such as walking and jumping.[REF NEEDED]
 
 This thesis introduces a biomechanical approach on biped dynamics. Basically,
 we introduces muscle fibers as the only actuating elements
@@ -59,7 +65,8 @@ We control the rigid bodies with muscle fibers which are modeled as
 spring-damper system. Every muscle fiber has a linear actuator and
 motions are created by controlling the actuator. Instead of controlling
 the bodies with motor joints, it is highly effective in energy concern
-since torques are created more easily by pulling the bones with the muscle fiber on a distant place from an axis of rotation such as hips or ankles.
+since torques are created more easily by pulling the bones with the muscle
+fiber on a distant place from an axis of rotation such as hips or ankles.
 
 Human gait analysis is also very extensively studied area.[REF] It deals
 with the mechanisms of human locomotion by throughly experimenting and measuring
@@ -77,7 +84,7 @@ it can be enhanced by introducing biomechanical knowledge into the both of
 a dynamics model and an optimization scheme.
 
 The optimization-based approach is also used in this thesis. However,
-we take gait phases analyzed in [Perry] into account. Given motion
+we take gait phases analyzed in [PERRY] into account. Given motion
 capture data containing locomotion of human, we classify the motion
 sequence automatically into respective phases. For each phase,
 an optimization formulation is built to calculate muscle actuation forces
@@ -88,36 +95,130 @@ and also gives more energy-efficient and biomechanically-correct result.
 [CLEAR MENTION OF CONTRIBUTION IS NEEDED]
 
 
-
 \section{Related work}
+Designing and controlling a physically simulated character is a long-standing
+challenge in robotics, biomechanics and computer graphics. A physically
+synthesized motion that actively responds to the environment is quite
+promising because it is hard to keyframing a natural animation for every motion
+manually. The combination of motion capture sequence and manual keyframing
+shows a quality of motion. However it is not straightforward to make a character 
+interacts with its environment if a prerecorded motion is used.
+By adapting physical simulation into a character animation we can overcome
+this issue. The problem is that still there is no ultimate solution for controlling
+a simulated character motion.
+
+Muico and his colleagues presented a contact-aware controller. It is
+heavily based on the theory of optimal control described in [LEWIS]
+especially a linear quadratic regulator (LQR). They modified the LQR
+to consider ground reaction forces. This controller is basically
+a reference-tracking controller. This means that it is not applicable
+to the environment which has large variations since that kind of environments
+requires intentionally deviated reference trajectories.
+
+KangKang Yin and her colleagues presented a simple proportional-derivative (PD) control framework.[SIMBICON]
+Compared to the complexity of dynamics model, the structure of controller
+is quite simple and robust to external disturbances. Since they do not
+consider an energy efficiency or passive forces, the animation shows a kind of
+stiff behavior.
+
+A Optimization-based approach shown to be a good way to address many challenges
+related to the physics-based character animation. Most of work advocate
+their goal to determine the joint torques to make a certain desired pose.
+A pose is calculated by integrating these torques.
+Instead of finding torques, Jain and his colleagues formulated
+an objective function which finds joint angles directly. The joint torques
+are implicitly calculated in the optimization process. The advantage is
+that it is easy to design various types of objectives such as place an arm here
+or move a foot to this place since they used joint angles as optimization
+variables.
+
+
+
+Our goal is not so different from these work. However these work mainly focused
+on the controller design and not the character model itself. Our work is
+partly relies on the idea stuided in the field of biomechanics.
+Some Researchers in biomechanical engineering focus on the movement
+disorder and the biomedical applications such as artificial joints.
+There are abundant work exist which use a model similar to
+a real human body since it is essential to study the mechanism of underlying
+structure of human body. Thelen and his colleagues illustrated
+the algorithm to compute of muscle excitation patterns that produce
+coordinated movements of muscle-actuated dynamic models. They simulated
+a pedaling motion while fixing the upper body to investigate the excitation
+pattern of 30 muscle fibers.
+
+Liu and her colleagues tried to exploit the passive characteristics of
+muscle fiber by including a torsion spring in joints. However the actuation
+is still occurred by joint motors and the muscle fibers are not explicitly used.
+
+The action for each muscle groups can be anticipated by adopting the
+fact regarding to gait phases [PERRY]. The gait phases are the essential component
+when analyzing a person's walking pattern. It directly identifies the
+functional significance of the different motions occurring at the
+individual joints. While controlling the character we
+can determine the current gait phase easily. For each gait phase,
+a set of muscle fibers from the entire muscles is selected to be actuated
+and the others will be unactuated. This approach will give us an explicit
+way to make full use of passive energy.
+
+The muscle fiber model we use is composed of two springs and a damper.
+This simple muscle model is explained in detail in the supplementary
+documents [SHADMEHR]. In the document they assume that spring stiffness constants
+and viscosity of the damper are constants. Some studies suggest that animals
+vary stiffness according to the specific locomotion task.[FARLEY]
+Since the model consists of springs we definitely need rest lengths for that
+springs. However rest lengths are not simply defined on real muscles.
+[SO WHAT?]
 
 \section{Problem definition}
 
+We model a character which consists of rigid bodies and virtual muscle fibers.
+With this biomechanical model we design a reference trajectory tracker.
+More specifically we will build the equations of motion which have the
+form of
+\begin{equation}\label{MoEq}
+\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi) + G(\chi ) = f_c + \tau
+\end{equation}
+where $\mathbf{M}$ is a generalized mass matrix and $\chi$ is a generalized
+linear and angular position
+state vector and $\dot\chi$, $\ddot\chi$ are its first and second time derivatives,
+respectively. $C$ represents Coriolis and centrifugal forces.
+$G$ and $f_c$ represents gravitational forces and contact forces.
+$\tau$ denotes muscle tension forces. For the case of a freely moving single
+rigid body with 6-DoF, $\mathbf{M}$ will be $6\times 6$ matrix and $\chi$,
+$f_c$, $\tau$, $C$ and $G$ will be a 6-dimensional vector. We have control
+over none of the variables such as $\chi$, $\dot\chi$, $\ddot\chi$ and $f_c$.
+Because $\chi$ and $\dot\chi$ are determined by integraing $\ddot\chi$ twice and once,
+respectively. $\ddot\chi$ itself determined by external and inertial forces.
+$f_c$ is also uncontrollable because it is the ground reaction force. This means that
+$f_c$ is a reaction force arises by pushing the ground with the character's feet.
+The only way to set $\chi$ to a certain desired value is controlling $\tau$
+nicely. It is nontrivial to calculate such $\tau$ since \eqref{MoEq}
+is an underactuated high dimensional nonlinear system.
+
+There are two reasons why this problem is challenging. First it is difficult
+to control dynamically simulated characters because they have no direct
+control over their global position and orientation.
+
 \section{Biped dynamics}
 
-Rigid body dynamics are commonly used in physical character model.
+The concept of rigid body is commonly used in a physically-simulated
+character model.
 Our character model consists of 7 rigid bodies. One of these is
-head-trunk-arms (HAT) body. By using HAT instead of every upper body
-part, we can concentrate our concern to legs which are essential to
-walking. The forward dynamics algorithm gives the following equation:
+a head-trunk-arms (HAT) body segment. By using HAT instead of every upper body
+segment, we can concentrate our concern to legs which are essential to
+locomotion. The forward dynamics algorithm gives the following equation:
 
 
 \begin{equation}
-\ddot\chi =\mathbf{M}^{-1}(\chi) ( \tau - C(\chi,\dot\chi) )
+\ddot\chi =\mathbf{M}^{-1}(\chi) ( \tau - C(\chi,\dot\chi) ).
 \end{equation}
-where $\mathbf{M}$ is a mass matrix and $\chi$ is a linear and angular position
-vector and $\dot\chi$, $\ddot\chi$ are its first and second time derivatives,
-respectively. $C$ represents all the other forces except the actuated and
-external forces represented as $\tau$. For the case of freely moving single
-rigid body with 6-DoF, $\mathbf{M}$ will be $6\times 6$ matrix and $\chi$,
-$\tau$ and $C$ will be a 6-dimensional vector.
 
 We define a discrete-time state vector $Y$. For brevity, we use $Y^{(l)}$
 to indicate a discrete-time value of $Y$ at $l$-th time step $Y(t_l)$.
 We use an explicit Euler integration
-scheme using both $Y$ and the equations of motion to yield a complete
+scheme using both $Y$ and the equations of motion to derive a complete
 forward dynamics formulation.
-
 
 \begin{equation}
 Y^{(l)} =
@@ -126,7 +227,6 @@ Y^{(l)} =
  \dot\chi^{(l)}   \\
  \end{array} } \right]
 \end{equation}
-
 
 \begin{equation}
 f(Y^{(l)})=\dot{Y}^{(l)}
@@ -145,6 +245,12 @@ f(Y^{(l)})=\dot{Y}^{(l)}
 \begin{equation}
 Y^{(l+1)}=Y^{(l)}+hf(Y^{(l)})
 \end{equation}
+Note that we need the position and velocity values of a certain time step
+to store the state because the equations of motion for rigid bodies
+are the second order differential equations.
+If we model a dynamics system
+which can be expressed by the first order differential equations of motion
+then we need only a position as the state vector.
 
 \subsection{Rigid body dynamics}
 
@@ -153,8 +259,9 @@ character animation used an articulated body to represent a character.
 In the articulated body each body is connected to another body with
 various types of joints. Since we use no joint at all in the character
 model the mathematics involved in the dynamics system becomes quite
-simple. We do not need to impose implicit or explicit constraints.
-Rigid bodies are independent to each other and thus we just build the
+simple. We do not need to impose implicit or explicit constraints for
+maintaining each body connected by joints stick together.
+We assume that rigid bodies are independent to each other and thus we just build the
 equations of motion which have $n$ rigid bodies floating around the
 space freely with 6-DoF.
 
@@ -162,7 +269,7 @@ The equations of motion for a single rigid body is as follows:
 
 \begin{equation}
 \left[ {\begin{array}{cc}
- m\mathbf{I}  &  0 \\
+ \bar{m}\mathbf{I}  &  0 \\
  0            & \mathbf{H}  \\
  \end{array} } \right]
  \left[ {\begin{array}{c}
@@ -186,15 +293,32 @@ the physical system. It reveals the linear and angular quantities
 directly as well as the external forces and torques.
 
 
-\begin{tabular}{ r c l }
-Symbol       & Dimension  & Name \\
-$m$          &            & body mass \\
-$\mathbf{H}$ & $3\times3$ & inertia of tensor \\
-$a$          & $3\times1$ & linear acceleration \\ 
-$\alpha$     & $3\times1$ & angular acceleration \\
-$\omega$     & $3\times1$ & angular velocity \\
-$f$          & $3\times1$ & external force\\
-$\tau$       & $3\times1$ & external torque force\\
+\begin{tabular}{ c c l }
+Symbol       & Dimension           & Name \\
+$\bar{m}$    &                     & body mass \\
+$\mathbf{H}$ & $3 \times 3$        & moments of inertia \\
+$a$          & $3 \times 1$        & linear acceleration \\ 
+$\alpha$     & $3 \times 1$        & angular acceleration \\
+$\omega$     & $3 \times 1$        & angular velocity \\
+$f$          & $3 \times 1$        & external force\\
+$\tau$       & $3 \times 1$        & external torque force\\
+$n_d$        &                     & degree-of-freedom of a rigid body\\
+$n$          &                     & the number of rigid bodies\\
+$m$          &                     & the number of muscle fibers\\
+$\chi$       & $n_d n  \times 1$   & generalized position\\
+$\dot\chi$   & $n_d n  \times 1$   & generalized velocity\\
+$\ddot\chi$  & $n_d n  \times 1$   & generalized acceleration\\
+$\mathbf{M}$ & $n_d n  \times n_d$ & generalized mass matrix\\
+$Y$          & $2n_d n \times 1$   & generalized state vector\\
+$h$          &                     & simulation time step\\
+$C$          & $2n_d n \times 1$   & Coriolis and centrifugal force\\
+$k_{se}$     &                     & serial spring constant\\
+$k_{pe}$     &                     & parallel spring constant\\
+$x$          &                     & muscle fiber length\\
+$x_r$        &                     & muscle fiber rest length\\
+$b$          &                     & muscle fiber viscosity\\
+$T$          &                     & muscle fiber tension\\
+$A$          &                     & muscle fiber actutation force
 \end{tabular}
 
 
@@ -205,8 +329,8 @@ $\tau$       & $3\times1$ & external torque force\\
 There are many variants of muscle model used in biomechanical area range
 from a simple spring model to a time-varying nonlinear model. Although
 a more sophisticated model gives us a more realistic behavior, unnecessarily
-complicated models will make the biped hard to simulate. For a compromise,
-we use one of the simplest time-invariant spring-damper model described in [Shadmehr].
+complicated models will make the biped hard to simulate and control. For a compromise,
+we use one of the simplest time-invariant spring-damper model described in [SHADMEHR].
 Basically, the model consists of two springs and a viscous damper.
 The damper and the spring are connected in parallel and one spring is
 connected in serial way. The active component in which our controller
@@ -218,7 +342,7 @@ a viscosity $b$ and a rest length $x_{r}$. The model can be formulated
 as a first-order ordinary differential equation of a tension $T$ exerted
 at the end of the fiber:
 
-\begin{equation}\label{muscle-ode}
+\begin{equation}\label{Tension}
 \dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+A   \right)
 \end{equation}
 where $x$ is the length of the fiber and $A$ is applied force in the active
@@ -237,10 +361,9 @@ THE INTERPRETATION OF THE EQUATION GOES HERE
 
 \subsection{Whole biped model}
 
-By modeling the bones as rigid bodies and the bunch of muscles as muscle
-fibers described so far, we can build the whole biped model. Assume that
-we have $n$ rigid bodies and $m$ muscle fibers on the biped. The state vector
-$Y$ can be defined:
+By modeling the bones as rigid bodies and the bunch of muscles as several muscle
+fibers we can build the whole biped model. We have $n$ rigid bodies and
+$m$ muscle fibers on the biped. The state vector $Y$ can be defined:
 
 \begin{equation}
 Y = [ p_1, q_1, \dot{p}_1, \dot{q}_1, \cdots ,
@@ -249,8 +372,8 @@ Y = [ p_1, q_1, \dot{p}_1, \dot{q}_1, \cdots ,
 \end{equation}
 where $p_i$ and $q_i$ represent linear and angular position of body $i$.
 Note that we omitted the transpose operator on vector quantities like $p$,
-$q$ and $Y$ for brevity. Time derivate of the state vector can be easily
-formulated.
+$q$ and $Y$ for brevity. A time derivative of $Y$ can be easily
+calculated.
 
 \begin{equation}
 \dot{Y} = [ \dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1, \cdots ,
@@ -264,41 +387,42 @@ of the dynamic formula for rigid bodies and muscle fibers. We can separate
 the vector into two parts to help the further analysis and control like the
 following:
 
-\begin{eqnarray*}\label{dotY1}
-\dot{Y} & = & [ \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, \cdots ,
+\begin{align}
+\dot{Y} = {} & \quad[ \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, \cdots ,
                 \dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n,
-                0, \cdots, 0] \\
-        &   & + [ 0, 0, \ddot{\bar{p}}_1, \ddot{\bar{q}}_1, \cdots ,
+                0, \cdots, 0]\notag\\
+             & + [ 0, 0, \ddot{\bar{p}}_1, \ddot{\bar{q}}_1, \cdots ,
                 0, 0, \ddot{\bar{p}}_n, \ddot{\bar{q}}_n,
-                \dot{T}_1, \cdots, \dot{T}_m]\\
-        & = & \dot{Y}_R + \dot{Y}_Q
-\end{eqnarray*}
+                \dot{T}_1, \cdots, \dot{T}_m]\notag\\
+        = {} & \dot{Y}_R + \dot{Y}_Q\label{SeparatedYdot}
+\end{align}
+
 Since we separate the rigid body parts and muscle fiber parts, if we
 assume $\dot{Y}_Q$ equals to 0 we simply simulate the $n$ individual
 rigid bodies freely move around the space with rotations. If we develop
 this kind of separation process further, we get the equations:
 
-\begin{eqnarray*}\label{dotY2}
-\dot{Y}_R & = & [ (\dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1),
-                  0_{4x}, (0, \cdots , 0)]\\
-          &   & + [ 0_{4x}, (\dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2),
-                  0_{4x}, (0, \cdots , 0)]\\
-          &   & + \cdots\\
-          &   & + [ 0_{4x}, (\dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n),
-                  (0, \cdots , 0)]\\
-          & = & \sum_{i=1}^{n}{\dot{Y}_{R,i}}\\
-\dot{Y}_Q & = & [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}),
-                  0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}),
-                  0_{4x}, (\dot{T}_1, 0, \cdots, 0)]\\
-          &   & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}),
-                    0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}),
-                    0_{4x}, (0, \dot{T}_2, 0, \cdots, 0)]\\
-          &   & + \cdots\\
-          &   & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{org}, \ddot{\bar{q}}_{T,m}^{org}),
-                    0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{ins}, \ddot{\bar{q}}_{T,m}^{ins}),
-                    0_{4x}, (0, \cdots, 0, \dot{T}_m)]\\
-          & = & \sum_{i=1}^{m}{\dot{Y}_{Q,i}}\\
-\end{eqnarray*}
+\begin{align}
+\dot{Y}_R = {} &  \quad[ (\dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1), 0_{4x}, (0, \cdots , 0)]\notag\\
+               & +[ 0_{4x}, (\dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2), 0_{4x}, (0, \cdots , 0)]\notag\\
+               & + \cdots\notag\\
+               & + [ 0_{4x}, (\dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n), (0, \cdots , 0)]\notag\\
+          = {} & \sum_{i=1}^{n}{\dot{Y}_{R,i}}
+\end{align}
+
+\begin{align}
+\dot{Y}_Q = {} & \quad[ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}),
+                   0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}),
+                   0_{4x}, (\dot{T}_1, 0, \cdots, 0)]\notag\\
+               & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}),
+                     0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}),
+                     0_{4x}, (0, \dot{T}_2, 0, \cdots, 0)]\notag\\
+               & + \cdots\notag\\
+               & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{org}, \ddot{\bar{q}}_{T,m}^{org}),
+                     0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{ins}, \ddot{\bar{q}}_{T,m}^{ins}),
+                     0_{4x}, (0, \cdots, 0, \dot{T}_m)]\notag\\
+          = {} & \sum_{i=1}^{m}{\dot{Y}_{Q,i}}
+\end{align}
 Here $0_{4x}$ denotes an arbitrary zero vector whose dimension is multiple of four.
 Parentheses are added just for clarify the structure.
 $\dot{Y}_{R,i}$ represents the first derivative of the state vector of the body $i$
@@ -309,77 +433,37 @@ torque affecting the origin body. This kind of separation gives us a simplified
 way to analyze the whole system. For instance, if we set $\dot{Y}_{Q_i}$ to 0 then
 the effect of muscle fiber $i$ is entirely removed from the simulation.
 
-\section{Contact model}
-There are various kind of techniques to deal with the calculation of
-contact forces between rigid bodies. The existing algorithms can be
-divided into three categories: constraint-based, penalty-based and
-impulse-based approaches. In constraint-based methods, the contact
-forces are computed by solving an optimization problem such as
-linear complementarity problems (LCP). The contact forces are calculated
-precisely in this case. It is not well suited in the environments
-which contain many contact points. Penalty-based methods compute
-the contact forces by considering a contact as a spring-damper.
-It is scalable and easy to implement. However it requires very short
-integration step especially at collisions and in most cases nonpenetration
-conditions are violated. Impulse-based methods model contacts
-as successive collisions instead of persisting contacts.
+\subsection{Muscle fiber actuation force}
+In \eqref{SeparatedYdot} we can see that the only way to affect the motion
+of rigid bodies is changing $\dot{Y}_Q$. More specifically we need to change
+$\dot{T}_i$ in $\dot{Y}_{Q,i}$. $\dot{T}$ is a linear function of the actuation force $A$
+from \eqref{Tension} if we assume that $T$ is fixed or given at some time instant.
+If we rewrite $\dot{T}$
 
-The simulation environment contains a relatively small number
-of contact points. The precise contact forces are necessary because
-the global alignment of the character only depends on that forces.
-Although physically conforming contact forces are not strictly needed in
-the point of believable character animation, our controller uses the
-ground reaction forces as input to compute desired actuation forces.
+\begin{align}
+\dot{T} = {} &   \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T \right)
+               + \frac{k_{se}}{b}A\notag\\
+        = {} & \dot{T}^U + \dot{T}^A\label{TensionLinear}
+\end{align}
+then $\dot{Y}_{Q,i}$ can be expressed in terms of $A$.
+\begin{align}
+\dot{Y}_{Q,i} = {} & [ \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}),
+                       \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}),
+                       \cdots , (\cdots , \dot{T}_i, \cdots )]\notag\\
+              = {} & \quad[ \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}),
+                       \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}),
+                       \cdots , (\cdots , \dot{T}_i^U, \cdots )]\notag\\
+                   &+[ \cdots , (0, 0, 0, 0),
+                       \cdots , (0, 0, 0, 0),
+                       \cdots , (\cdots , \dot{T}_i^A, \cdots )]\notag\\
+              = {} & \dot{Y}_{Q,i}^U + \dot{Y}_{Q,i}^A\label{ActuationForceRevealed}
+\end{align}
+Because $\dot{Y}_{Q,i}^A$ depends on $A_i$ and $k_{se,i}$ and $b_i$ are constants
+we can control this value arbitrarily as long as $A_i$ is in the range of
+actuation force limit.
+The muscle fiber $i$ will show a passive behavior of we set $A_i$ to zero.
 
-We choose a time-stepping method introduced in [STEWART, ANITESCU].
-If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
-derived in a generalized coordinate as well as a state and its time derivatives
-the solution will give us contact forces at the instant.
-
-
-\section{Implicit integration}
-
-Most of rigid body systems can be simulated using an explicit Euler method
-as far as there is no stiff component exists. The explicit integration
-allows us a simple implementation and fast computation of a next state,
-however, it has the potential of instability when the time step is larger
-then a certain threshold. The threshold is mainly determined by a time
-constant of a given differential equation we need to integrate. In our case, the time
-constant is dominated by muscle fibers because they consists
-of highly stiff springs (\ref{muscle-ode}). Even if we use very small time step
-such as $h=10^{-6}$, our system diverges very quickly with the explicit
-integration. To make the simulation stable, we used an implicit integration
-method.
-
-\begin{equation}
-Y^{(l+1)}=Y^{(l)}+hf(Y^{(l+1)})
-\end{equation}
-That is, we want to find the next state $Y^{(l+1)}$ where we
-reverse the time step by $-h$ from $Y^{(l+1)}$, we get to the current state
-$Y^{(l)}$. In most cases, $f$ is a nonlinear function of $Y$, so we need to
-linearize it to find closed form solution of $Y^{(l+1)}$. If we define a
-variable $\Delta Y = Y^{(l+1)}-Y^{(l)}$, it can be calculated using the
-following equation:
-
-\begin{equation}
-\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} f(Y^{(l)})
-\end{equation}
-where $\mathbf{1}$ is an identity matrix. We need an analytic form of
-Jacobian $\partial f / \partial Y$ to calculate the next state in the
-implicit integration. From (\ref{dotY1}) and (\ref{dotY2}), we can see that
-Jacobian also can be calculated in separated manner.
-
-
-\begin{align*}
-\frac{\partial f}{\partial Y}
-        & = \frac{\partial\dot{Y}}{\partial Y}\\
-        & = \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\\
-        & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
-\end{align*}
-
-\includegraphics[width=120mm]{testplot}
-
-\section{A concrete example}
+\subsection{An example}
 
 To explain the dynamics model in more specific manner, let us consider
 a concrete example consists of three rigid bodies $R_1$, $R_2$ and $R_3$
@@ -389,19 +473,19 @@ origin and insertion of muscle fibers are described in Figure xx.
 
 A 45-dimension state vector $Y$ is
 
-\begin{align*}
-Y = {} & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\\
-       &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\\
-       &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\\
-       & T_1, T_2, T_3]^T
-\end{align*}
+\begin{align}
+Y = {} & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\notag\\
+       &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\notag\\
+       &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\notag\\
+       & T_1, T_2, T_3]^T\label{StateVector}
+\end{align}
 where all variables are scalers. You may notice that we used quaternions
 to parameterize the rotation of rigid bodies. This allows us a freedom
 from the gimbal lock problem by sacrificing dimensional complexity. From
 now on, we will denote the three or four dimensional vectors is its shorthand
 form, i.e., $p_i=[p_i^x, p_i^y, p_i^z]^T$ and $q_i=[q_i^w, q_i^x, q_i^y, q_i^z]^T$.
 
-\begin{equation}
+\begin{equation}\label{StateVectorDerivative}
 \dot{Y}  =  [\dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1,
                \dot{p}_2, \dot{q}_2, \ddot{p}_2, \ddot{q}_2,
                \dot{p}_3, \dot{q}_3, \ddot{p}_3, \ddot{q}_3,
@@ -411,23 +495,26 @@ Again we omit the transpose operators at the places where they needed
 unless the omission misleads our exposition.
 
 
-\begin{align*}
+\begin{align}
 \dot{Y}_R = {} & \dot{Y}_{R,1} + \dot{Y}_{R,2} + \dot{Y}_{R,3}\\
-         =  {} &  [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\\
-               & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\\
-               & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]
-\end{align*}
-\begin{eqnarray*}
-\dot{Y}_Q & = & \dot{Y}_{Q,1} + \dot{Y}_{Q,2} + \dot{Y}_{Q,3}\\
-          & = &   [ 0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}, 0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}, 0, 0, 0, 0, \dot{T}_1, 0, 0 ]\\
-          &   & + [ 0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}, 0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}, 0, 0, 0, 0, 0, \dot{T}_2, 0 ]\\
-          &   & + [ 0, 0, \ddot{\bar{p}}_{T,3}^{ins}, \ddot{\bar{q}}_{T,3}^{ins}, 0, 0, 0, 0, 0, 0, \ddot{\bar{p}}_{T,3}^{org}, \ddot{\bar{q}}_{T,3}^{org}, 0, 0, \dot{T}_3 ]
-\end{eqnarray*}
-\begin{eqnarray*}
+          = {} &  [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\notag\\
+               & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\notag\\
+               & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]\notag
+\end{align}
+
+
+\begin{align}
+\dot{Y}_Q = {} & \dot{Y}_{Q,1} + \dot{Y}_{Q,2} + \dot{Y}_{Q,3}\\
+          = {} &   [ 0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}, 0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}, 0, 0, 0, 0, \dot{T}_1, 0, 0 ]\notag\\
+               & + [ 0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}, 0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}, 0, 0, 0, 0, 0, \dot{T}_2, 0 ]\notag\\
+               & + [ 0, 0, \ddot{\bar{p}}_{T,3}^{ins}, \ddot{\bar{q}}_{T,3}^{ins}, 0, 0, 0, 0, 0, 0, \ddot{\bar{p}}_{T,3}^{org}, \ddot{\bar{q}}_{T,3}^{org}, 0, 0, \dot{T}_3 ]\notag
+\end{align}
+
+\begin{equation}
 \frac{\partial f}{\partial Y}
-        & = & \frac{\partial\dot{Y}_{R,1}}{\partial Y} + \frac{\partial\dot{Y}_{R,2}}{\partial Y} + \frac{\partial\dot{Y}_{R,3}}{\partial Y}
+         =  \frac{\partial\dot{Y}_{R,1}}{\partial Y} + \frac{\partial\dot{Y}_{R,2}}{\partial Y} + \frac{\partial\dot{Y}_{R,3}}{\partial Y}
               + \frac{\partial\dot{Y}_{Q,1}}{\partial Y} + \frac{\partial\dot{Y}_{Q,2}}{\partial Y} + \frac{\partial\dot{Y}_{Q,3}}{\partial Y}
-\end{eqnarray*}
+\end{equation}
 
 
 \begin{equation}
@@ -520,13 +607,85 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 \end{equation}
 
 
+
+\section{Contact model}
+There are various kind of techniques to deal with the calculation of
+contact forces between rigid bodies. The existing algorithms can be
+divided into three categories: constraint-based, penalty-based and
+impulse-based approaches. In constraint-based methods, the contact
+forces are computed by solving an optimization problem such as
+linear complementarity problems (LCP). The contact forces are calculated
+precisely in this case. It is not well suited in the environments
+which contain many contact points. Penalty-based methods compute
+the contact forces by considering a contact as a spring-damper.
+It is scalable and easy to implement. However it requires very short
+integration step especially at collisions and in most cases nonpenetration
+conditions are violated. Impulse-based methods model contacts
+as successive collisions instead of persisting contacts.
+
+The simulation environment contains a relatively small number
+of contact points. The precise contact forces are necessary because
+the global alignment of the character only depends on that forces.
+Although physically conforming contact forces are not strictly needed in
+the point of believable character animation, our controller uses the
+ground reaction forces as input to compute desired actuation forces.
+
+We choose a time-stepping method introduced in [STEWART, ANITESCU].
+If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
+derived in a generalized coordinate as well as a state and its time derivatives
+the solution will give us contact forces at the instant.
+
+
+\section{Implicit integration}
+
+Most of rigid body systems can be simulated using an explicit Euler method
+as far as there is no stiff component exists. The explicit integration
+allows us a simple implementation and fast computation of a next state,
+however, it has the potential of instability when the time step is larger
+then a certain threshold. The threshold is mainly determined by a time
+constant of a given differential equation we need to integrate. In our case, the time
+constant is dominated by muscle fibers because they consists
+of highly stiff springs \eqref{Tension}. Even if we use very small time step
+such as $h=10^{-6}$, our system diverges very quickly with the explicit
+integration. To make the simulation stable, we used an implicit integration
+method.
+
+\begin{equation}
+Y^{(l+1)}=Y^{(l)}+hf(Y^{(l+1)})
+\end{equation}
+That is, we want to find the next state $Y^{(l+1)}$ where we
+reverse the time step by $-h$ from $Y^{(l+1)}$, we get to the current state
+$Y^{(l)}$. In most cases, $f$ is a nonlinear function of $Y$, so we need to
+linearize it to find closed form solution of $Y^{(l+1)}$. If we define a
+variable $\Delta Y = Y^{(l+1)}-Y^{(l)}$, it can be calculated using the
+following equation:
+
+\begin{equation}\label{DeltaY}
+\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} f(Y^{(l)})
+\end{equation}
+where $\mathbf{1}$ is an identity matrix. We need an analytic form of
+Jacobian $\partial f / \partial Y$ to calculate $\Delta Y$.
+From \eqref{SeparatedYdot}, we can see that
+Jacobian also can be calculated in a separated manner.
+
+
+\begin{align}
+\frac{\partial f}{\partial Y}
+        & = \frac{\partial\dot{Y}}{\partial Y}\notag\\
+        & = \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\notag\\
+        & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
+\end{align}
+
+\includegraphics[width=120mm]{testplot}
+
+
 \section{Gait phases}
 
 Locomotion such as walking or running is performed by a periodic way.
 A gait cycle or stride contains eight functional patterns(FIGURE xx).
-[Perry] These patterns are called \emph{gait phases}. Each phase has its
+[PERRY] These patterns are called \emph{gait phases}. Each phase has its
 own features and objectives. For example, during mid-swing and terminal swing
-phase, one of primary muscle called 'biceps femoris' and 'semimembranosis' is
+phase, one of primary muscle called \emph{biceps femoris} and \emph{semimembranosis} is
 activated to extend our swing leg forward.
 
 terminal stance phase one
@@ -537,69 +696,82 @@ Aha!
 Change this...
 fdsfsd
 Whoooooooooooa~
-\section{Controller design}
 
+
+\section{Control}
+
+If we substitute \eqref{SeparatedYdot} and \eqref{ActuationForceRevealed} into
+\eqref{DeltaY} the control structure of $\Delta Y$ is shown.
+
+\begin{equation}\label{DeltaYControl}
+\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} 
+            \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} + \dot{Y}_Q^{A(l)} \right)
+\end{equation}
+$\Delta Y$ can be rearranged to be affine in the control argument $u$ as follows:
+
+\begin{equation}
+\Delta Y(Y^{(l)}, u) = \mathbf{C}(Y^{(l)}) + \mathbf{D}(Y^{(l)})u
+\end{equation}
+where
+\begin{equation}
+\mathbf{C}(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} \right),
+\end{equation}
+
+\begin{equation}
+\mathbf{D}(Y^{(l)}) =
+\mathbf{P}^{-1}(Y^{(l)})
+\left[ \begin{array}{cccccc}
+               &               &               \\
+               & \zm{2n_d n,m} &               \\
+               &               &               \\
+ k_{se,1}/b_1  &               &               \\
+               &   \ddots      &               \\
+               &               &  k_{se,m}/b_m 
+\end{array}  \right],
+\end{equation}
+
+\begin{equation}\label{DeltaYMatrix}
+\mathbf{P}(Y^{(l)}) = \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}},
+\end{equation}
+
+\begin{equation}
+u = [A_1, \cdots, A_m]^T.
+\end{equation}
+
+The controller is based on a optimization. Assume that we are in
+the time step $l$ with the state $Y^{(l)}$ and we want to determine $u$
+which leads the next time state $Y^{(l+1)}$ to $Y_{\text{desired}}$
+as close as possible while using minimal efforts to achieve that goal.
+The optimization problem for finding the solution vector $u^*$ can be stated as
+
+\begin{align}
+u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u} \notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \mathbf{C} + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u}
+\end{align}
+where
+\begin{equation}
+E = Y^{(l)} + \mathbf{C} - Y_\text{desired}.
+\end{equation}
+The weighting between different objective terms is
+usually determined by diagonal semipositive definite matrices $\mathbf{W}_Y$ and $\mathbf{W}_u$.
+Note that $\mathbf{D}$ can be a nonsquare matrix depending on the number of rigid bodies and
+muscles. In most case it is a nonsquare matrix because $n_d n$ is greater than $m$
+in most cases. $u^*$ can be found using a least squares method:
+
+\begin{align}
+\frac{\partial}{\partial u} \left( \| \mathbf{D}u^* + E \|^2_{\mathbf{W}_Y}  + \| u^* \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
+2\mathbf{W}_Y(\mathbf{D}u^*+E) + 2\mathbf{W}_u u^* = {} & 0\notag\\
+(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u^* = {} & -\mathbf{W}_Y E\notag\\
+(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)^T(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u^* = {} & -(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)^T\mathbf{W}_Y E
+\end{align}
+
+\section{Putting it all together}
 
 \section{Result}
 
 \section{Conclusion}
 
-
-\begin{equation}
-\mathbf{A}\vec{\ddot{f}}_b(x) + g(x) = 4x + 11dd
-\end{equation}
-
-\begin{eqnarray*}
-m\vec{a} & = & \vec{f} \\
-         & = & \vec{f}_c+\vec{f}_m+\vec{f}_e \\
-         & = & \sum_{i=1}^{n_c}{\vec{f}_{c,i}} + \sum_{i=1}^{n_m}{\vec{f}_{m,i}} + \sum_{i=1}^{n_e}{\vec{f}_{e,i}}. \\
-\\
-\mathbf{H}\vec\alpha + \vec\omega\times\mathbf{H}\vec\omega
-         & = & \vec\tau \\
-         & = & \sum_{i=1}^{n_c}{\vec{r}_{c,i}\times\vec{f}_{c,i}} + \sum_{i=1}^{n_m}{\vec{r}_{m,i}\times\vec{f}_{m,i}} + \sum_{i=1}^{n_e}{\vec{r}_{e,i}\times\vec{f}_{e,i}}. \\
-\end{eqnarray*}
-
-\begin{equation}
-\frac{\mathrm{v1}\, \cos\!\left(\frac{\sqrt{\mathrm{thetasq}}}{2}\right)}{2\, \mathrm{thetasq}} - \frac{\mathrm{v1}\, \sin\!\left(\frac{\sqrt{\mathrm{thetasq}}}{2}\right)}{{\mathrm{thetasq}}^{\frac{3}{2}}} - \frac{3\, \mathrm{v1}\, {\mathrm{v2}}^2\, \cos\!\left(\frac{\sqrt{\mathrm{thetasq}}}{2}\right)}{2\, {\mathrm{thetasq}}^2} - \frac{\mathrm{v1}\, {\mathrm{v2}}^2\, \sin\!\left(\frac{\sqrt{\mathrm{thetasq}}}{2}\right)}{4\, {\mathrm{thetasq}}^{\frac{3}{2}}} + \frac{3\, \mathrm{v1}\, {\mathrm{v2}}^2\, \sin\!\left(\frac{\sqrt{\mathrm{thetasq}}}{2}\right)}{{\mathrm{thetasq}}^{\frac{5}{2}}}
-\end{equation}
-
-\begin{equation}
-\left(\begin{array}{c} \frac{\mathrm{dv1}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}} + \frac{\mathrm{dv1}\, {\mathrm{v1}}^2}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv1}\, {\mathrm{v1}}^2\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} + \frac{2\, \mathrm{dv3}\, \mathrm{v2}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} - \frac{2\, \mathrm{dv2}\, \mathrm{v3}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} + \frac{\mathrm{dv2}\, \mathrm{v1}\, \mathrm{v2}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} + \frac{\mathrm{dv3}\, \mathrm{v1}\, \mathrm{v3}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv2}\, \mathrm{v1}\, \mathrm{v2}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} - \frac{\mathrm{dv3}\, \mathrm{v1}\, \mathrm{v3}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}}\\ \frac{\mathrm{dv2}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}} + \frac{\mathrm{dv2}\, {\mathrm{v2}}^2}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv2}\, {\mathrm{v2}}^2\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} - \frac{2\, \mathrm{dv3}\, \mathrm{v1}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} + \frac{2\, \mathrm{dv1}\, \mathrm{v3}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} + \frac{\mathrm{dv1}\, \mathrm{v1}\, \mathrm{v2}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} + \frac{\mathrm{dv3}\, \mathrm{v2}\, \mathrm{v3}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv1}\, \mathrm{v1}\, \mathrm{v2}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} - \frac{\mathrm{dv3}\, \mathrm{v2}\, \mathrm{v3}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}}\\ \frac{\mathrm{dv3}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}} + \frac{\mathrm{dv3}\, {\mathrm{v3}}^2}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv3}\, {\mathrm{v3}}^2\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} + \frac{2\, \mathrm{dv2}\, \mathrm{v1}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} - \frac{2\, \mathrm{dv1}\, \mathrm{v2}\, {\sin\!\left(\frac{\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}}{2}\right)}^2}{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2} + \frac{\mathrm{dv1}\, \mathrm{v1}\, \mathrm{v3}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} + \frac{\mathrm{dv2}\, \mathrm{v2}\, \mathrm{v3}}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{3}{4}}} - \frac{\mathrm{dv1}\, \mathrm{v1}\, \mathrm{v3}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} - \frac{\mathrm{dv2}\, \mathrm{v2}\, \mathrm{v3}\, \sin\!\left(\sqrt{{\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2}\right)}{{\left({\mathrm{v1}}^2 + {\mathrm{v2}}^2 + {\mathrm{v3}}^2\right)}^{\frac{5}{4}}} \end{array}\right)
-\end{equation}
-
-If one merely wishes to type in ordinary text, without
-complicated mathematical formulae or special effects such
-as font changes, then one merely has to type it in as it
-is, leaving a completely blank line between successive
-paragraphs.
-
-You do not have to worry about paragraph indentation:
-all paragraphs will be indented with the exception of
-the first paragraph of a new section.
-
-One must take care to distinguish between the `left quote'
-and the `right quote' on the computer terminal.  Also, one
-should use two `single quote' characters in succession if
-one requires ``double quotes''.  One should never use the
-(undirected) `double quote' character on the computer
-terminal, since the computer is unable to tell whether it
-is a `left quote' or a `right quote'.  One also has to
-take care with dashes: a single dash is used for
-hyphenation, whereas three dashes in succession are required
-to produce a dash of the sort used for punctuation---such as
-the one used in this sentence.
-
-\section{Section Headings}
-
-We explain in this section how to obtain headings
-for the various sections and subsections of our
-document.
-
-\subsection{Headings in the `article' Document Style}
-
-In the `article' style, the document may be divided up
-into sections, subsections and subsubsections, and each
-can be given a title, printed in a boldface font,
-simply by issuing the appropriate command.
 
 \end{document}

@@ -72,7 +72,8 @@ Td : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*T + A)$
 
 Td_optimized : optimize(Td)$ /* To be written */
 
-
+diff(Td, A);
+quit();
 /*
  * Calculation of dTddy_org and dTddy_ins =
  * 
@@ -133,6 +134,8 @@ fibbF : rest(quat_mult(qbar_xxx, quat_mult(append([0], fibbFW), q_xxx)),1)$
 torque : cross(fibb_xxx, fibbF)$
 omegabardot : Iinv_xxx . (0+torque)$
 yd_Q_xxx : append([0,0,0], [0,0,0,0], (fibbFW)/m_xxx, 0.5*quat_mult(q_xxx, [0, omegabardot[1][1], omegabardot[2][1], omegabardot[3][1]]) )$
+
+
 
 yd_Q_org : at(yd_Q_xxx, [orgOrIns=0])$
 yd_Q_ins : at(yd_Q_xxx, [orgOrIns=1])$

@@ -89,7 +89,7 @@ def QuatToV(q):
 	qw, qx, qy, qz = q
 	qv = array([qx,qy,qz])
 	qv_mag = linalg.norm(qv)
-	if qv_mag < 0.0001:
+	if qv_mag < 0.01:
 		return 1/(0.5-qv_mag**2/48)*qv
 	else:
 		return 2*acos(qw)/qv_mag*qv
@@ -101,7 +101,7 @@ def QuatdToVd(q, qd, v):
 	omega_wc = QuatToAngularVel_WC(q, qd)
 	th = linalg.norm(v)
 	p = cross(omega_wc, v)
-	if th < 0.0001:
+	if th < 0.01:
 		gamma = (12-th**2)/6
 		eta = dot(omega_wc, v)*(60+th**2)/360
 	else:

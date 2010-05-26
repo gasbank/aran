@@ -428,47 +428,70 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		
 		z0 = zeros(LCP_M.shape[0])
 		rearranged = 0
+		
 		try:
 			x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
 			
 		except:
-			# Do again with rearranged matrix?
-			LCP_M = vstack([hstack([ M11   , M10 , E  ]),
-			                hstack([ M10.T , M00 , Z0 ]),
-			                hstack([ -E.T  , Mu  , Z0 ])])
-			LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-			LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
-			LCP_q2 = zeros((p))
+			print 'WHAT THE............LCP'
+			sys.exit(-1000)
+			# SHIFT ROW DOWN 1
+			LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
+		                    hstack([ M11   , M10 , E  ]),
+		                    hstack([ M10.T , M00 , Z0 ])])
+			LCP_q0 = zeros((p))
+			LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+			LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 			try:
 				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
 				rearranged = 1
 				print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
 			except:
-				LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
-				                hstack([ M11   , M10 , E  ]),
-				                hstack([ M10.T , M00 , Z0 ])])
-				LCP_q0 = zeros((p))
-				LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-				LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+				# Do again with rearranged matrix?
+				# SWAP ROW 1 and ROW 2
+				# SWAP COL 1 and COL 2
+				LCP_M = vstack([hstack([ M11   , M10 , E  ]),
+					            hstack([ M10.T , M00 , Z0 ]),
+					            hstack([ -E.T  , Mu  , Z0 ])])
+				LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+				LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+				LCP_q2 = zeros((p))
+				
 				try:
 					x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
 					rearranged = 2
 					print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
 				except:
-					print 'Doriupda...'
-					sys.exit(-100)
+					# SHIFT ROW DOWN 1
+					LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
+					                hstack([ -E.T  , Mu  , Z0 ]),
+					                hstack([ M11   , M10 , E  ])])
+					LCP_q0 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+					LCP_q1 = zeros((p))
+					LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+					try:
+						x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+						rearranged = 3
+						print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
+					except:
+						print 'Doriupda...'
+						sys.exit(-100)
 			
 		z0 = x_opt
 		
 		
-		if rearranged == False:
+		if rearranged == 0:
 			cn   = x_opt[0    :p]
 			beta = x_opt[p    :p+8*p]
 			lamb = x_opt[p+8*p:p+8*p+p]
-		else:
+		elif rearranged in [1,2,3]:
 			beta = x_opt[0    :8*p]
 			cn   = x_opt[8*p  :8*p+p]
 			lamb = x_opt[8*p+p:8*p+p+p]
+		else:
+			print 'WTF in rearrange.'
+			sys.exit(-100)
+			#raise Exception, 'WTF...'
 
 		Qimp_cont = dot(Minv_a, dot(N, cn) + dot(D, beta))
 		Qd_a_next = h * Minv_fg_Cqd + Qimp_cont + Qd_a

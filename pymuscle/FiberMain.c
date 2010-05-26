@@ -148,7 +148,7 @@ int main(int argc, const char **argv)
         const char *bName;
         config_setting_lookup_string(bConf, "name", &bName);
         strncpy(bodyName[j], bName, 128);
-        printf("    Body %d name: %s\n", j, bName);
+        printf("    Body %3d : %s\n", j, bName);
         #define csgfe(a,b) config_setting_get_float_elem(a,b)
         config_setting_t *p = config_setting_get_member(bConf, "p"); assert(p);
         body[j][0] = csgfe(p, 0); body[j][1] = csgfe(p, 1); body[j][2] = csgfe(p, 2);
@@ -199,7 +199,7 @@ int main(int argc, const char **argv)
         const char *mName;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
-        printf("    Muscle %d name: %s\n", j, mName);
+        printf("    Muscle %3d : %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         muscle[j][0] = config_setting_get_float(KSE);
         config_setting_t *KPE = config_setting_get_member(mConf, "KPE"); assert(KPE);
