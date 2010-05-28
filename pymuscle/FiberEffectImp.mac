@@ -72,8 +72,7 @@ Td : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*T + A)$
 
 Td_optimized : optimize(Td)$ /* To be written */
 
-diff(Td, A);
-quit();
+
 /*
  * Calculation of dTddy_org and dTddy_ins =
  * 
@@ -111,7 +110,6 @@ display("Optimizing dTddy_orgins...");
 dTddy_orgins_optimized : optimize(dTddy_orgins)$ /* To be written */
 display("Optimized.");
 
-
 /*
  * Calculation of yd_Q_{org/ins} =
  * 
@@ -145,6 +143,8 @@ yd_Q_orgins_optimized : optimize(yd_Q_orgins)$
 display("Optimized.");
 
 
+diff(yd_Q_orgins, A);
+quit();
 
 /*
  * Calculation of dTddT =

@@ -25,6 +25,11 @@ from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
 from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
 from quat import quat_mult, quat_conj
 import lwp
+import rpy2.robjects as robjects
+from rpy2.robjects.packages import importr
+
+RMatrix = importr('Matrix')
+
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -428,55 +433,112 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		
 		z0 = zeros(LCP_M.shape[0])
 		rearranged = 0
+		nY = LCP_M.shape[0]
+		
+		'''
+		Mfile = open('LCP_M', 'w')
+		for aa in range(mmm):
+			for bb in range(mmm):
+				separator = ',' if bb < mmm-1 else ''
+				Mfile.write(str(LCP_M[aa,bb])+separator)
+			Mfile.write('\n')
+		Mfile.close()
+		'''
+		
+		try:
+			#LCP_Msym = (LCP_M+LCP_M.T)/2
+			LCP_Msym = dot(LCP_M.T, LCP_M)
+			LCP_Msym_svd = linalg.svd(LCP_Msym)
+			LCP_Msymeig = linalg.eig(LCP_Msym)[0]
+			LCP_Msymeig2 = zeros(len(LCP_Msymeig), dtype=float64)
+			for i in range(len(LCP_Msymeig)):
+				if type(LCP_Msymeig[i]) == complex128:
+					if abs(LCP_Msymeig[i].imag) < 1e-7:
+						LCP_Msymeig2[i] = LCP_Msymeig[i].real
+					else:
+						raise Exception, 'Imaginary part is too large...' + str(LCP_Msymeig[i])
+				else:
+					LCP_Msymeig2[i] = LCP_Msymeig[i]
+				
+				if -1e-7 < LCP_Msymeig2[i] and LCP_Msymeig2[i] < 0:
+						LCP_Msymeig2[i] = 0
+			
+			LCP_Msymeigneg = [eig < 0 for eig in LCP_Msymeig2]
+			if any(LCP_Msymeigneg):
+				print 'LCP_M is not positive semidefinite matrix because of these eigenvalues:'
+				for eig, eigneg in zip(LCP_Msymeig2, LCP_Msymeigneg):
+					if eigneg == True:
+						print eig
+				raise Exception, 'LCP_M is not positive semidefinite matrix'
+		except:
+			LCP_M_Robj_data = robjects.FloatVector(LCP_M.flatten())
+			LCP_M_Robj      = robjects.r['matrix'](LCP_M_Robj_data, nrow = nY)
+			LCP_M_Condx_Robj= robjects.r['nearPD'](LCP_M_Robj, False, False, True, False, 1e-6, 1e-7, 0)
+			LCP_M_Cond_Robj = robjects.r['as.matrix'](LCP_M_Condx_Robj[0])
+			normF           = float(LCP_M_Condx_Robj[3][0])
+			print 'Frobenious norm', normF
+			LCP_M = array(LCP_M_Cond_Robj)
 		
 		try:
 			x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-			
 		except:
-			print 'WHAT THE............LCP'
-			sys.exit(-1000)
-			# SHIFT ROW DOWN 1
-			LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
-		                    hstack([ M11   , M10 , E  ]),
-		                    hstack([ M10.T , M00 , Z0 ])])
-			LCP_q0 = zeros((p))
-			LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-			LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 			try:
-				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-				rearranged = 1
-				print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
-			except:
-				# Do again with rearranged matrix?
-				# SWAP ROW 1 and ROW 2
-				# SWAP COL 1 and COL 2
-				LCP_M = vstack([hstack([ M11   , M10 , E  ]),
-					            hstack([ M10.T , M00 , Z0 ]),
-					            hstack([ -E.T  , Mu  , Z0 ])])
-				LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-				LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
-				LCP_q2 = zeros((p))
+				LCP_M_Robj_data = robjects.FloatVector(LCP_M.flatten())
+				LCP_M_Robj      = robjects.r['matrix'](LCP_M_Robj_data, nrow = nY)
+				LCP_M_Condx_Robj= robjects.r['nearPD'](LCP_M_Robj, False, False, True, False, 1e-6, 1e-7, 0)
+				LCP_M_Cond_Robj = robjects.r['as.matrix'](LCP_M_Condx_Robj[0])
+				normF           = float(LCP_M_Condx_Robj[3][0])
+				print 'Frobenious norm', normF
+				LCP_M = array(LCP_M_Cond_Robj)
 				
+				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+				
+			except:
+				print 'LCP solver failure.'
+				sys.exit(-100)
+				
+				# SHIFT ROW DOWN 1
+				LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
+			                    hstack([ M11   , M10 , E  ]),
+			                    hstack([ M10.T , M00 , Z0 ])])
+				LCP_q0 = zeros((p))
+				LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+				LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 				try:
 					x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-					rearranged = 2
-					print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
+					rearranged = 1
+					print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
 				except:
-					# SHIFT ROW DOWN 1
-					LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
-					                hstack([ -E.T  , Mu  , Z0 ]),
-					                hstack([ M11   , M10 , E  ])])
-					LCP_q0 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
-					LCP_q1 = zeros((p))
-					LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+					# Do again with rearranged matrix?
+					# SWAP ROW 1 and ROW 2
+					# SWAP COL 1 and COL 2
+					LCP_M = vstack([hstack([ M11   , M10 , E  ]),
+				                    hstack([ M10.T , M00 , Z0 ]),
+				                    hstack([ -E.T  , Mu  , Z0 ])])
+					LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+					LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+					LCP_q2 = zeros((p))
+					
 					try:
 						x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-						rearranged = 3
-						print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
+						rearranged = 2
+						print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
 					except:
-						print 'Doriupda...'
-						sys.exit(-100)
-			
+						# SHIFT ROW DOWN 1
+						LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
+					                    hstack([ -E.T  , Mu  , Z0 ]),
+					                    hstack([ M11   , M10 , E  ])])
+						LCP_q0 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+						LCP_q1 = zeros((p))
+						LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+						try:
+							x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+							rearranged = 3
+							print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
+						except:
+							print 'Doriupda...'
+							sys.exit(-100)
+					
 		z0 = x_opt
 		
 		
@@ -565,7 +627,7 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		plotvalues[i].append(gBody.q[i])
 	plotvalues[6].append(linalg.norm(gBody.q[3:6]))
 	'''
-		
+	return False
 	
 def RenderBox():
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
@@ -686,7 +748,7 @@ TESTSET = (  # Stationary box
              # free-fall of arbitrary rotated state with no angular velocity
              ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity
-             ( (0,0,25)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,7),    (1,1,1)  ,     1 ),
+             ( (0,0,5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity (general box shape)
              ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
         )
@@ -713,7 +775,8 @@ def GoTest():
 
 
 if __name__ == '__main__':
-	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
+	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
+	gBodies = [ ExpBodyFromTestSet(7) ]
 	gNextTestSet = None
 	z0 = 0
 	print 'Initial position :', gBodies[0].q[0:3]

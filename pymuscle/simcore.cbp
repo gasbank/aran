@@ -38,6 +38,7 @@
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
 			<Add directory="/home/johnu/src/include" />
+			<Add directory="/home/johnu/src/CHOLMOD/Include" />
 		</Compiler>
 		<Linker>
 			<Add library="umfpack" />
@@ -53,6 +54,10 @@
 			<Add directory="/home/jonu/src/lib/atlas/lib" />
 			<Add directory="/home/johnu/src/blas" />
 		</Linker>
+		<Unit filename="Control.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Control.h" />
 		<Unit filename="FiberEffectImp.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -73,6 +78,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="SimCore.h" />
+		<Unit filename="ToSparse.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="ToSparse.h" />
 		<Unit filename="TripletMatrix.c">
 			<Option compilerVar="CC" />
 		</Unit>

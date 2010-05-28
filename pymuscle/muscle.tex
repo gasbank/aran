@@ -710,28 +710,23 @@ If we substitute \eqref{SeparatedYdot} and \eqref{ActuationForceRevealed} into
 $\Delta Y$ can be rearranged to be affine in the control argument $u$ as follows:
 
 \begin{equation}
-\Delta Y(Y^{(l)}, u) = \mathbf{C}(Y^{(l)}) + \mathbf{D}(Y^{(l)})u
+\Delta Y(Y^{(l)}, u) = C(Y^{(l)}) + \mathbf{D}(Y^{(l)})u
 \end{equation}
 where
 \begin{equation}
-\mathbf{C}(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} \right),
+C(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} \right),
 \end{equation}
 
 \begin{equation}
-\mathbf{D}(Y^{(l)}) =
-\mathbf{P}^{-1}(Y^{(l)})
-\left[ \begin{array}{cccccc}
-               &               &               \\
-               & \zm{2n_d n,m} &               \\
-               &               &               \\
- k_{se,1}/b_1  &               &               \\
-               &   \ddots      &               \\
-               &               &  k_{se,m}/b_m 
-\end{array}  \right],
+\mathbf{D}(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \mathbf{G},
 \end{equation}
 
 \begin{equation}\label{DeltaYMatrix}
 \mathbf{P}(Y^{(l)}) = \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}},
+\end{equation}
+
+\begin{equation}
+\mathbf{G} = \left[ \zm{m, 2n_d n} , \text{diag}(k_{se,1}/b_1, \cdots, k_{se,m}/b_m) \right]^T,
 \end{equation}
 
 \begin{equation}
@@ -745,14 +740,20 @@ as close as possible while using minimal efforts to achieve that goal.
 The optimization problem for finding the solution vector $u^*$ can be stated as
 
 \begin{align}
-u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u} \notag\\
-   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
-   = {} & \arg\min_{u} \| (Y^{(l)} + \mathbf{C} + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
-   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u}
+u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u} \notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \mathbf{C} + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u \|^2_{\mathbf{W}_u}
 \end{align}
 where
 \begin{equation}
-E = Y^{(l)} + \mathbf{C} - Y_\text{desired}.
+E = Y^{(l)} - Y_\text{desired} + C ,
+\end{equation}
+\begin{equation}
+\mathbf{F} = \left[ \begin{array}{c}
+\zm{2n_d n,m}\\
+\mathbf{1}_m
+\end{array}  \right].
 \end{equation}
 The weighting between different objective terms is
 usually determined by diagonal semipositive definite matrices $\mathbf{W}_Y$ and $\mathbf{W}_u$.
@@ -761,10 +762,10 @@ muscles. In most case it is a nonsquare matrix because $n_d n$ is greater than $
 in most cases. $u^*$ can be found using a least squares method:
 
 \begin{align}
-\frac{\partial}{\partial u} \left( \| \mathbf{D}u^* + E \|^2_{\mathbf{W}_Y}  + \| u^* \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
-2\mathbf{W}_Y(\mathbf{D}u^*+E) + 2\mathbf{W}_u u^* = {} & 0\notag\\
-(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u^* = {} & -\mathbf{W}_Y E\notag\\
-(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)^T(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u^* = {} & -(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)^T\mathbf{W}_Y E
+\frac{\partial}{\partial u} \left( \| \mathbf{D}u^* + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u^* \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
+2\mathbf{W}_Y(\mathbf{D}u^*+E) + 2\mathbf{W}_u \mathbf{F}u^* = {} & 0\notag\\
+(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})u^* = {} & -\mathbf{W}_Y E\notag\\
+(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})^T(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})u^* = {} & -(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})^T\mathbf{W}_Y E
 \end{align}
 
 \section{Putting it all together}

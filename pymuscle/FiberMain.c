@@ -11,10 +11,11 @@
 #include <string.h>
 #include <math.h>
 #include <libconfig.h>
-
+#include "umfpack.h"
+#include "cholmod.h"
+#include "Control.h"
 #include "MathUtil.h"
 #include "SimCore.h"
-
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
@@ -59,7 +60,7 @@ int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn)
     return -1;
 }
 
-int WriteState(FILE *sr, int curFrame, int nBody, int nMuscle, double body[nBody][18], double muscle[nMuscle][12])
+int WriteState(FILE *sr, int curFrame, int nBody, int nMuscle, double body[nBody][18], double muscle[nMuscle][12], double cost, double ustar[nMuscle])
 {
     assert(sr);
     fprintf(sr, "%d", curFrame);
@@ -76,6 +77,9 @@ int WriteState(FILE *sr, int curFrame, int nBody, int nMuscle, double body[nBody
     }
     for (j = 0; j < nMuscle; ++j)
         fprintf(sr, " %lf", muscle[j][4]);
+    fprintf(sr, " %lf", cost);
+    for (j = 0; j < nMuscle; ++j)
+        fprintf(sr, " %lf", ustar[j]);
     fprintf(sr, "\n");
     return 0;
 }
@@ -98,8 +102,29 @@ void CreateOutputTableHeader(char tableHeader[4096], int nBody, int nMuscle,
         sprintf(tableHeaderTemp, " %s", muscleName[j]);
         strncat(tableHeader, tableHeaderTemp, 4095);
     }
+    strncat(tableHeader, " cost", 4095);
+    for (j = 0; j < nMuscle; ++j)
+    {
+        char tableHeaderTemp[128];
+        sprintf(tableHeaderTemp, " %s_A", muscleName[j]);
+        strncat(tableHeader, tableHeaderTemp, 4095);
+    }
     strncat(tableHeader, "\n", 4095);
 }
+/*
+int main()
+{
+
+    double a[5][5] = { {1, 0, 0, 4, 5},
+                       {0, 0, 8, 9, 0},
+                       {0, 7, 0,-0, 1e-4},
+                       {1e-15,0, 8, 9, 0},
+                       {0, 7,-8, 9, 0} };
+    ToSparse(5,5,a);
+
+    return 0;
+}
+*/
 
 int main(int argc, const char **argv)
 {
@@ -113,7 +138,7 @@ int main(int argc, const char **argv)
         return -20;
     }
     const char *fnConf = argv[1];
-    int j;
+    int i, j, k;
     config_t conf;
     config_init(&conf);
     config_set_auto_convert(&conf, 1);
@@ -177,6 +202,9 @@ int main(int argc, const char **argv)
             extForce[j][4] = csgfe(cExtTorque, 1);
             extForce[j][5] = csgfe(cExtTorque, 2);
         }
+        /*
+         * Add gravitational force as external force if grav field is true.
+         */
         config_setting_t *grav = config_setting_get_member(bConf, "grav");
         if (grav && config_setting_get_bool(grav))
         {
@@ -275,7 +303,64 @@ int main(int argc, const char **argv)
     CreateOutputTableHeader(tableHeader, nBody, nMuscle, bodyName, muscleName);
     fprintf(sr, "%s", tableHeader);
 
+    double t0, t1;
+    t0 = umfpack_timer ( ) ;
+
+    const unsigned int nd = 3 + 4; /* Degree-of-freedom for a single rigid body */
+    const unsigned int nY = 2*nd*nBody + nMuscle;
+    /*
+     * Desired Y value
+     */
+    double Ydesired[nY];
+    memset(Ydesired, 0, sizeof(double) * nY);
+    for (j = 0, i = 0; j < nBody; ++j)
+    {
+        for (k = 0; k < 14; ++k, ++i)
+        {
+            Ydesired[i] = body[j][k];
+        }
+    }
+    assert(i == (nY - nMuscle));
+
+    /*
+     * Diagonal component of W_Y and W_u
+     */
+    double w_y[nY], w_u[nY];
+    for (j = 0; j < nY; ++j)
+    {
+        if (j < 2*nd*nBody)
+        {
+            w_y[j] = 1;
+            w_u[j] = 0;
+        }
+        else
+        {
+            w_y[j] = 0;
+            w_u[j] = 1;
+        }
+    }
+    /*
+     * Construct the constant matrix F
+     */
+    cholmod_common c ;
+    cholmod_start (&c) ;
+
+    cholmod_sparse *Fsp = constructMatrixF(nd, nBody, nMuscle, &c);
+    cholmod_sparse *W_Ysp = constructSparseDiagonalMatrix(nY, w_y, &c);
+    cholmod_sparse *W_usp = constructSparseDiagonalMatrix(nY, w_u, &c);
+
+    //printf("nY = %d\n", nY);
+    //cholmod_print_sparse(W_Ysp, "W_Ysp", &c);
+    //exit(0);
+
+    /********* DEBUG **********/
+    double fix[14];
+    memcpy(fix, body[1], sizeof(double)*14);
+    Ydesired[2] += 0.5;
     /*********** START SIMULATION ************/
+    double cost = 0;
+    double ustar[nMuscle];
+    memset(ustar, 0, sizeof(double) * nMuscle);
     for (curFrame = 0; curFrame < simFrame; ++curFrame)
     {
         if (curFrame % 100 == 0)
@@ -285,18 +370,32 @@ int main(int argc, const char **argv)
 
         int bWriteSample = (curFrame % plotSamplingRate == 0);
         if (bWriteSample)
-            WriteState(sr, curFrame, nBody, nMuscle, body, muscle);
+            WriteState(sr, curFrame, nBody, nMuscle, body, muscle, cost, ustar);
 
-        SimCore(h, nBody, nMuscle, body, extForce, muscle, musclePair);
+        SimCore(h, nBody, nMuscle, nd, nY, body, extForce, muscle, musclePair, &cost, ustar, Ydesired, w_y, w_u, W_Ysp, W_usp, Fsp, &c);
+
+        /******* DEBUG **********/
+        memcpy(body[1],fix,sizeof(double)*14);
     }
+    t1 = umfpack_timer ( ) ;
+
+    cholmod_free_sparse(&Fsp, &c);
+    cholmod_free_sparse(&W_Ysp, &c);
+    cholmod_free_sparse(&W_usp, &c);
+    cholmod_finish(&c);
+
     printf("  - Simulating %5d frame... (%6.2f %%)\n", curFrame, (float)curFrame/simFrame*100);
+
     /* Write the final state */
-    WriteState(sr, curFrame, nBody, nMuscle, body, muscle);
+    WriteState(sr, curFrame, nBody, nMuscle, body, muscle, cost, ustar);
     fclose(sr);
     printf("  Closing %s\n", cOutput);
     printf("  Finished.\n");
+    printf("  Time elapsed: %lf sec\n", t1-t0);
+
 	return (0);
 }
+
 
 /*
 int SolverTest()

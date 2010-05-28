@@ -29,7 +29,7 @@ import ctypes as ct
 from Parameters import *
 import box_lcp3_exp_multibody as BLEM
 import ExpBody
-from dRdv_real import GeneralizedForce
+from dRdv_real import GeneralizedForce, QuatdFromV
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
@@ -142,6 +142,20 @@ def KeyPressed(*args):
 	key = args [0]
 	if key == ESCAPE:
 		sys.exit ()
+	elif key == 'k':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[1] += 0.01
+	elif key == 'l':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[1] -= 0.01
+	elif key == 'd':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[4] += 0.01
+		gCon.body0[idx].q[3:7] = quat_normalize(gCon.body0[idx].q[3:7])
+	elif key == 'f':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[4] -= 0.01
+		gCon.body0[idx].q[3:7] = quat_normalize(gCon.body0[idx].q[3:7])
 	#print 'Key pressed', key
 
 def SpecialKeyPressed(*args):
@@ -221,11 +235,11 @@ def Draw():
 		RenderLegMonitorWindow('RightAnkle', 'SIDE')
 		RenderLegMonitorWindow('RightAnkle', 'FRONT')
 	elif gRunMode == 'IMPINT':
-		#RenderFrontCameraWindow()
-		#RenderTopCameraWindow()
+		RenderFrontCameraWindow()
+		RenderTopCameraWindow()
 		pass
-	#RenderSideCameraWindow()
-	#RenderHud()
+	RenderSideCameraWindow()
+	RenderHud()
 	Postrender()
 	
 	gFrame += 1
@@ -325,7 +339,8 @@ def RenderFrontCameraWindow():
 	glEnd()
 	glPopAttrib()
 	
-	DrawBiped(drawAxis=False, wireframe=True)
+	DrawBiped(gCon.body, drawAxis=True, wireframe=True)
+	DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -399,10 +414,10 @@ def RenderLegMonitorWindow(legName, viewDir):
 	DrawBipedFibers(drawAsLine=True)
 	DrawBipedContactPoints()
 
-def DrawBiped(drawAxis, wireframe):
+def DrawBiped(drawBody, drawAxis, wireframe):
 	global gCon
-	nb = len(gCon.body)
-	for i, bd in zip(range(nb), gCon.body):
+	nb = len(drawBody)
+	for i, bd in zip(range(nb), drawBody):
 		mass, size, inertia = bd.mass, bd.boxsize, bd.I
 		q, qd, corners, dc = bd.q, bd.qd, bd.corners, bd.dc
 		sx, sy, sz = size
@@ -502,7 +517,8 @@ def RenderTopCameraWindow():
 	glEnd()
 	glPopAttrib()
 	
-	DrawBiped(drawAxis=False, wireframe=True)
+	DrawBiped(gCon.body, drawAxis=True, wireframe=True)
+	DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -563,7 +579,8 @@ def RenderSideCameraWindow():
 	glEnd()
 	glPopAttrib()
 	
-	DrawBiped(drawAxis=False, wireframe=True)
+	DrawBiped(gCon.body, drawAxis=True, wireframe=True)
+	DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -686,7 +703,8 @@ def RenderPerspectiveWindow():
 	# Render the fancy global(inertial) coordinates
 	#RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
 
-	DrawBiped(drawAxis=True, wireframe=False)
+	DrawBiped(gCon.body, drawAxis=True, wireframe=False)
+	DrawBiped(gCon.body0, drawAxis=True, wireframe=False)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -713,13 +731,17 @@ def FrameMove_ImpInt():
              double body[nBody][18], double extForce[nBody][6],
              double muscle[nMuscle][12], unsigned int musclePair[nMuscle][2])
 	"""
-	nBody = len(gCon.body)
+	nBody   = len(gCon.body)
 	nMuscle = len(gCon.fibers)
+	nd      = 3 + 4
+	nY      = 2*nd*nBody + nMuscle
 	
-	DBL_nBodyx18 = (ct.c_double * 18) * nBody
-	DBL_nBodyx6 = (ct.c_double * 6) * nBody
-	DBL_nMusclex12 = (ct.c_double * 12) * nMuscle
-	UINT_nMusclex2 = (ct.c_uint * 2) * nMuscle
+	DBL_nMuscle    = ct.c_double  *  nMuscle
+	DBL_nY         = ct.c_double  *  nY
+	DBL_nBodyx18   = (ct.c_double *  18) * nBody
+	DBL_nBodyx6    = (ct.c_double *   6) * nBody
+	DBL_nMusclex12 = (ct.c_double *  12) * nMuscle
+	UINT_nMusclex2 = (ct.c_uint   *   2) * nMuscle
 	
 	# Input parameters
 	C_h = ct.c_double(gCon.h)
@@ -815,9 +837,16 @@ def FrameMove_ImpInt():
 		print ' %10.4f' % vv,
 	print
 	'''
-	
+	# Run LCP
 	contactInfo = BLEM.FrameMove(footBodies, gCon.h, True)
 	
+	for b, fb in zip(gCon.body, footBodies):
+		b.q[0:3] = fb.q[0:3]
+		b.q[3:7] = VtoQuat(fb.q[3:6])
+		b.qd[0:3] = fb.qd[0:3]
+		b.qd[3:7] = QuatdFromV(fb.q[3:6], fb.qd[3:6])
+
+	'''
 	print 'A', footBodies[0].name,
 	for vv in footBodies[0].q:
 		print ' %10.4f' % vv,
@@ -830,7 +859,8 @@ def FrameMove_ImpInt():
 	for vv in footBodies[1].qd:
 		print ' %10.4f' % vv,
 	print
-
+	'''
+	
 	# Contact force visualization
 	for gBodyk in gCon.body:
 		if hasattr(gBodyk, 'contactPoints'):
@@ -843,7 +873,7 @@ def FrameMove_ImpInt():
 			gBodyk.contactPoints = bodyk.contactPoints[:]
 		if hasattr(bodyk, 'cf') and len(bodyk.cf) > 0:
 			gBodyk.cf = bodyk.cf[:]
-			
+	
 	if contactInfo is not None:
 		for (kp, cp) in contactInfo:
 			# kp: Body index
@@ -863,9 +893,58 @@ def FrameMove_ImpInt():
 			resTorque_bc = cross(r_bc, cf_bc)
 			# Resultant torque in 'body' coordinates
 			C_extForce[fbi][3:6] += resTorque_bc
+	
+	C_nd = ct.c_int(nd) # Degree-of-freedom for a rigid body
+	C_nY = ct.c_int(nY) # Dimension of the state vector Y
+	C_cost = ct.c_double(0)
+	C_ustar = DBL_nMuscle()
+	C_Ydesired = DBL_nY()
+	C_w_y = DBL_nY()
+	C_w_u = DBL_nY()
+	
+	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
+	C_w_u[nY-nMuscle + 0 ] = 1e30
+	C_w_u[nY-nMuscle + 1 ] = 1e-7
+	C_w_u[nY-nMuscle + 2 ] = 1e-7
+	C_w_u[nY-nMuscle + 3 ] = 1e-7
+	C_w_u[nY-nMuscle + 4 ] = 1e-7
+	'''
+	for i in range(nY):
+		if i < nY - nMuscle:
+			C_w_u[i] = 0.
+		else:
+			C_w_u[i] = 0.01 # Do not care about energy efficiency seriously...
+	'''
+	for i in range(nBody):
+		C_Ydesired[ 14*i     : 14*i + 7  ] = gCon.body0[i].q
+		C_Ydesired[ 14*i + 7 : 14*i + 14 ] = gCon.body0[i].qd
+		
+	i = gCon.findBodyIndex('calfL')
+	C_w_y[14*i    : 14*i +  3] = [200,]*3 # linear position weight
+	C_w_y[14*i+3  : 14*i +  7] = [200,]*4 # angular position weight
+	C_w_y[14*i+7  : 14*i + 10] = [5,]*3  # linar velocity weight
+	C_w_y[14*i+10 : 14*i + 14] = [5,]*4  # angular velocity weight
+	i = gCon.findBodyIndex('soleL')
+	C_w_y[14*i    : 14*i +  3] = [1e5,]*3 # linear position weight
+	C_w_y[14*i+3  : 14*i +  7] = [1e5,]*4 # angular position weight
+	C_w_y[14*i+7  : 14*i + 10] = [1e5,]*3  # linar velocity weight
+	C_w_y[14*i+10 : 14*i + 14] = [1e5,]*4  # angular velocity weight
+		
+	'''
+	idx = gCon.findBodyIndex('calfL')
+	C_Ydesired[14*idx + 0] += 0
+	C_Ydesired[14*idx + 1] += 0.05
+	C_Ydesired[14*idx + 2] += -0.05
+	C_Ydesired[14*idx + 4] += -0.4
+	C_Ydesired[14*idx + 3 : 14*idx + 7] = quat_normalize(C_Ydesired[14*idx + 3 : 14*idx + 7])
+	'''
 
 	# Pass all the variables to the simcore
-	C_SimCore(C_h, C_nBody, C_nMuscle, C_body, C_extForce, C_muscle, C_musclePair)
+	C_SimCore(C_h, C_nBody, C_nMuscle, C_nd, C_nY,
+	          C_body, C_extForce, C_muscle, C_musclePair,
+	          ct.byref(C_cost), C_ustar, C_Ydesired, C_w_y, C_w_u)
+	
+	print C_cost
 
 	# Retrieve the result from the simcore and update our states
 	for i in range(nBody):
@@ -1171,7 +1250,7 @@ if __name__ == '__main__':
 					    ]
 	
 	libsimcore = ct.CDLL(gWorkDir + 'bin/Release/libsimcore_release.so')
-	C_SimCore = libsimcore.SimCore
+	C_SimCore = libsimcore.SimCore_Python
 	
 	# Some api in the chain is translating the keystrokes to this octal string
 	# so instead of saying: ESCAPE = 27, we use the following.
@@ -1193,11 +1272,12 @@ if __name__ == '__main__':
 		gCon = GlobalContext(gWorkDir + 'traj_', 'QUAT_WFIRST')
 		gBipedParam = BipedParameter()
 		gCon.body = gBipedParam.buildBody()
+		gCon.body0 = gBipedParam.buildBody() # Guide body
 		gCon.fibers = gBipedParam.buildFiber([b.name for b in gCon.body])
 		gCon.bodyList = []
 		for b in gCon.body:
 			gCon.bodyList.append((b.name, None))
-			
+
 		# Write a configuration file containing body and muscle settings.
 		# This file can be read at the simcore side.
 		WriteSimcoreConfFile('box_lcp5.conf', gCon.body, gCon.fibers, gCon.h)

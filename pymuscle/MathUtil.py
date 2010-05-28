@@ -93,7 +93,13 @@ def QuatToV(q):
 		return 1/(0.5-qv_mag**2/48)*qv
 	else:
 		return 2*acos(qw)/qv_mag*qv
-	
+def VtoQuat(v):
+	th = linalg.norm(v)
+	if th < 0.001:
+		a = 0.5-th**2/48
+	else:
+		a = sin(th/2)/th
+	return array([cos(th/2), a*v[0], a*v[1], a*v[2]])
 def QuatdToVd(q, qd, v):
 	'''
 	Convert quaternion time derivative to Exp rotation time derivative
