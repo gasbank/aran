@@ -21,16 +21,24 @@ from glprim import *
 import sys
 import matplotlib.pyplot as pit
 import ExpBody
-from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
-from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
+from dRdv_real import QuatdFromV
+from ExpBodyMoEq_real import MassMatrixAndCqdVector
 from quat import quat_mult, quat_conj
 import lwp
 import ctypes as ct
 
 
-libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Debug/libsimcore_debug.so')
+libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Release/libsimcore_release.so')
 C_lemke = libsimcore.lemke_Python
-	
+C_MassMatrixAndCqdVector = libsimcore.MassMatrixAndCqdVector
+C_GeneralizedForce = libsimcore.GeneralizedForce
+
+C_DBL66  = (ct.c_double * 6) * 6
+C_DBL6   =  ct.c_double * 6
+C_DBL3   =  ct.c_double * 3
+C_DBL4   =  ct.c_double * 4
+C_DBL16  =  ct.c_double * (3+3+3+3+4)
+
 '''
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
@@ -312,6 +320,19 @@ def DoLemkeAndCheckSolution(LCP_M, LCP_q, z0):
 		raise Exception, 'Lemke\'s algorithm failed!!!!!!!!!!!!!!! Try again with rearranged one...'
 	return x_opt, err
 
+
+def GeneralizedForce(v, Fr, r):
+	'''
+	C wrapper function
+	'''
+	C_v  = C_DBL3(); C_v[:]  = v
+	C_Fr = C_DBL3(); C_Fr[:] = Fr
+	C_r  = C_DBL3(); C_r[:]  = r
+	C_Q  = C_DBL6();
+	
+	C_GeneralizedForce(C_Q, C_v, C_Fr, C_r)
+	return array(C_Q)
+	
 def FrameMove(bodies, h, contactForceInfoOnly = False):
 	nb = len(bodies)
 
@@ -357,6 +378,15 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 	Qd_i = zeros((6*nbi))
 	q_est = []
 	qd_est = []
+	
+	C_M = C_DBL66()
+	C_Cqd = C_DBL6()
+	C_P = C_DBL3()
+	C_V = C_DBL3()
+	C_PD = C_DBL3()
+	C_VD = C_DBL3()
+	C_I  = C_DBL4()
+		
 	for k in range(nb):
 		bodyk = bodies[k]
 		
@@ -366,8 +396,21 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		q_estk = q_est[k]
 		qd_estk = qd_est[k]
 		
+		'''
 		M, Cqd = MassMatrixAndCqdVector(q_estk[0:3], q_estk[3:6],
 	                                    qd_estk[0:3], qd_estk[3:6], bodyk.I)
+		'''
+		
+		
+		C_P[:] = q_estk[0:3]
+		C_V[:] = q_estk[3:6]
+		C_PD[:] = qd_estk[0:3]
+		C_VD[:] = qd_estk[3:6]
+		C_I[:] = bodyk.I
+		C_MassMatrixAndCqdVector(C_M, C_Cqd, C_P, C_V, C_PD, C_VD, C_I)
+		M = array(C_M)
+		Cqd = array(C_Cqd)
+		
 		Minv_k = linalg.inv(M)
 		Cqd_k  = Cqd
 		
