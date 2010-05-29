@@ -10,8 +10,17 @@
  */
 #include <math.h>
 #include "cholmod.h"
+#include "ToSparse.h"
 
 cholmod_sparse *ToSparseAndTranspose(int row, int col, double mat[row][col], cholmod_common *c)
+{
+    cholmod_sparse *Asp = ToSparse(row, col, mat, c);
+    cholmod_sparse *ATsp = cholmod_transpose(Asp, 1, c);
+    cholmod_free_sparse(&Asp, c);
+    return ATsp;
+}
+
+cholmod_sparse *ToSparse(int row, int col, double mat[row][col], cholmod_common *c)
 {
     const double eps = 1e-16;
     int i, j;
@@ -44,13 +53,7 @@ cholmod_sparse *ToSparseAndTranspose(int row, int col, double mat[row][col], cho
     }
 
     cholmod_sparse *Asp = cholmod_dense_to_sparse(A, 1, c);
-    cholmod_sparse *ATsp = cholmod_transpose(Asp, 1, c);
-
-//    cholmod_print_sparse(Asp, "Asp", c);
-//    cholmod_print_sparse(ATsp, "ATsp", c);
-
-    cholmod_free_sparse(&Asp, c);
-    return ATsp;
+    return Asp;
 
 
 //    const double eps = 1e-16;

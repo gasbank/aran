@@ -25,6 +25,12 @@ from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
 from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
 from quat import quat_mult, quat_conj
 import lwp
+import ctypes as ct
+
+
+libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Debug/libsimcore_debug.so')
+C_lemke = libsimcore.lemke_Python
+	
 '''
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
@@ -263,7 +269,23 @@ def NewDynamicReparam(v, vnext):
 	return v_r, vd_r
 
 def DoLemkeAndCheckSolution(LCP_M, LCP_q, z0):
-	x_opt, err = lemke(LCP_M, LCP_q, z0)
+	
+	n = LCP_q.shape[0]
+	DBL_M          = (ct.c_double * n) * n
+	DBL_q          =  ct.c_double * n
+	C_LCP_M = DBL_M()
+	C_LCP_q = DBL_q()
+	C_LCP_n = ct.c_int(n)
+	C_xopt  = DBL_q()
+	for i in xrange(n):
+		for j in xrange(n):
+			C_LCP_M[i][j] = LCP_M[i,j]
+		C_LCP_q[i] = LCP_q[i]
+	C_lemke(C_LCP_n, C_xopt, C_LCP_M, C_LCP_q)
+	err = 0
+	x_opt = C_xopt[:]
+	
+	#x_opt, err = lemke(LCP_M, LCP_q, z0)
 		
 	# Check the sanity of solution
 	checkW = dot(LCP_M, x_opt) + LCP_q
@@ -735,7 +757,7 @@ TESTSET = (  # Stationary box
              # free-fall of arbitrary rotated state with no angular velocity
              ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity
-             ( (0,0,5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
+             ( (0,0,1.5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
              # free-fall of arbitrary rotated state with some angular velocity (general box shape)
              ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
         )
@@ -762,8 +784,8 @@ def GoTest():
 
 
 if __name__ == '__main__':
-	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
-	gBodies = [ ExpBodyFromTestSet(7) ]
+	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
+	#gBodies = [ ExpBodyFromTestSet(7) ]
 	gNextTestSet = None
 	z0 = 0
 	print 'Initial position :', gBodies[0].q[0:3]

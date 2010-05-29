@@ -93,6 +93,14 @@ def lemke(M, q, z0):
 	# Main iterations begin here
 	for iterr in range(maxiter):
 		# Check if done; if not, get new entering variable
+		assert type(leaving) in [int64, int]
+		assert type(t) in [int64, int]
+		assert type(entering) in [int64, int]
+		'''
+		print 'ITERATION', iterr
+		print 'Python leaving', leaving
+		print 'bas vector', bas
+		'''
 		if leaving == t:
 			break
 		elif leaving < n:
@@ -112,19 +120,27 @@ def lemke(M, q, z0):
 			break
 		theta = min([ (xj + zer_tol)/dj for xj, dj in zip(x[j], d[j]) ])
 		j = j[ list(nonzero( [ xj/dj for xj, dj in zip(x[j], d[j]) ] <= theta )[0]) ]
+		assert len(j) > 0
 		lvindex = nonzero(bas[j] == t)[0]
+		assert len(lvindex) in [0,1]
 		if len(lvindex) != 0:
 			lvindex = j[lvindex]
 		else:
+			assert len(j) > 0
 			theta = max(d[j])
 			lvindex = list(d).index(max(d[j]))
 			lvindex = list(nonzero(d[j] == theta)[0])
 
-			lvindex = int(ceil((len(lvindex)-1)*random.random()))
+			lvindex = int(ceil((len(lvindex)-1)*0.5))
+			#lvindex = int(ceil((len(lvindex)-1)*random.random()))
 			#lvindex = 0
 
 			lvindex = j[lvindex]
+			aaaaaaaaaaaaaaaaaa=99
 		leaving = bas[lvindex]
+		if type(leaving) not in [int64, int]:
+			assert len(leaving) == 1
+			leaving = leaving[0]
 
 		if type(lvindex) is int64:
 			pass
@@ -138,6 +154,10 @@ def lemke(M, q, z0):
 		x[lvindex] = ratio
 		B[:,lvindex] = Be
 		bas[lvindex] = entering
+		aaaaaaaaaaaaa=100
+		'''
+		print 'Python ratio', ratio
+		'''
 		# end of iterations
 
 	if iterr >= maxiter and leaving[0] != t:

@@ -1,369 +1,461 @@
-
-#include <math.h>
-#include <string.h>
-#include <stdio.h>
+/*
+ * Optimization-based rigid body simulator
+ * 2010 Geoyeob Kim
+ *
+ * Lemke's algorithm for solving LCP
+ */
 #include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <math.h>
+#include "cholmod.h"
+#include "umfpack.h"
+#include "ToSparse.h"
+#include "Control.h"
 
-typedef struct _SolverOptions
+#define __FILE_AND_LINE__(file,line) file "(" #line ")"
+#define FILE_AND_LINE __FILE_AND_LINE__(__FILE__,__LINE__)
+#define __LINESTR__(line) "(" #line ")"
+#define LINESTR __LINESTR__(__LINE__)
+
+#define DECLARE_ZERO_VECTOR(type, valName, size) type valName[(size)]; memset(valName, 0, sizeof(type)*(size))
+#define DECLARE_ONE_VECTOR(valName, size) double valName[(size)]; { int i; for(i=0;i<(size);++i) valName[i]=1.0; }
+#define DECLARE_COPY_VECTOR(valName, size, srcVec) double valName[(size)]; memcpy(valName, srcVec, sizeof(double)*(size))
+#define DECLARE_IDENTITY_MATRIX(valName, size, factor) double valName[size][size]; memset(valName,0,sizeof(double)*(size)*(size)); {int i; for(i=0;i<(size);++i) valName[i][i] = 1.0*factor; }
+#define VECTOR_ADD(n, a, b, factor) {int i; for (i=0;i<n;++i) a[i]+=factor*b[i]; }
+#define SET_COLUMN(A, n, c, b) memcpy(A+n*c, b, sizeof(double)*n)
+
+#if defined(DEBUG)
+    #define PRINT_VECTOR(v, n) { printf(" : Vector " #v " : "); int i; for(i=0;i<n;++i) printf("%10.4lf", v[i]); printf("\n"); }
+    #define PRINT_VECTOR_INT(v, n) { printf(" : Vector " #v " : "); int i; for(i=0;i<n;++i) printf("%3d", v[i]); printf("\n"); }
+    #define PRINT_INT(v) printf(" : " #v " : %d\n", v)
+    #define PRINT_DBL(v) printf(" : " #v " : %lg\n", v)
+    #define PRINT_MATRIX(M,r,c) { printf(" : Matrix " #M " : \n"); int i,j; for(i=0;i<r;++i) { for(j=0;j<c;++j) printf("10.4lf", M[i][j]); printf("\n"); } }
+    #define PRINT_DENSE_MATRIX(M,r,c) \
+        { \
+            printf(" : DMatrix " #M " : \n"); \
+            int i,j; \
+            for(i=0;i<r;++i) { \
+                for(j=0;j<c;++j) \
+                    printf("%10.4lf", M[i + c*j]); \
+                printf("\n"); \
+            } \
+        }
+#else
+    #define PRINT_VECTOR(v,n)
+    #define PRINT_VECTOR_INT(v,n)
+    #define PRINT_INT(v)
+    #define PRINT_DBL(v)
+    #define PRINT_MATRIX(M, r, c)
+    #define PRINT_DENSE_MATRIX(M,r,c)
+#endif
+int allNonnegative(const unsigned int n, double v[n]) {
+    unsigned int i;
+    for (i = 0; i < n; ++i)
+        if (v[i] < 0)
+            return 0;
+    return 1;
+}
+
+/*
+ * Given v = [v0 v1 ... vn-1],
+ * Find max(-v), i.e. max([-v0 -v1 ... -vn-1]) and the index of max(-v).
+ */
+void SeekMaxNeg(const unsigned int n, double v[n], double *m, unsigned int *idx)
 {
-  int solverId;
-  int isSet;
-  char solverName[64] ;
-  int iSize;
-  int * iparam;
-  int dSize;
-  double * dparam;
-  int filterOn;
-  double * dWork;
-  int * iWork;
-  int numberOfInternalSolvers;
-  struct _SolverOptions * internalSolvers;
-} SolverOptions;
-
-typedef struct
-{
-  int size;
-  double * M;
-  double * q;
-} LinearComplementarityProblem;
-
-
-void lcp_lexicolemke(LinearComplementarityProblem* problem, double *zlem , double *wlem , int *info , SolverOptions* options)
-{
-  /* matrix M of the lcp */
-  double * M = problem->M;
-
-  /* size of the LCP */
-  int dim = problem->size;
-  int dim2 = 2*(dim+1);
-
-  int i,drive,block,Ifound;
-  int ic,jc;
-  int ITER;
-  int nobasis;
-  int itermax = options->iparam[0];
-
-
-  double z0,zb,dblock;
-  double pivot, tovip;
-  double tmp;
-  int *basis;
-  double** A;
-
-  /*output*/
-
-  options->iparam[1] = 0;
-
-  /* Allocation */
-
-  basis = (int *)malloc(dim*sizeof(int));
-  A = (double **)malloc(dim*sizeof(double*));
-
-  for (ic = 0 ; ic < dim; ++ic)
-    A[ic] = (double *)malloc(dim2*sizeof(double));
-
-  for (ic = 0 ; ic < dim; ++ic)
-    for (jc = 0 ; jc < dim2; ++jc)
-      A[ic][jc] = 0.0;
-
-  /* construction of A matrix such that
-   * A = [ q | Id | -d | -M ] with d = (1,...1)
-   */
-
-  for (ic = 0 ; ic < dim; ++ic)
-    for (jc = 0 ; jc < dim; ++jc)
-      A[ic][jc+dim+2] = -M[dim*jc+ic];
-
-  for (ic = 0 ; ic < dim; ++ic) A[ic][0] = problem->q[ic];
-
-  for (ic = 0 ; ic < dim; ++ic) A[ic][ic+1 ] =  1.0;
-  for (ic = 0 ; ic < dim; ++ic) A[ic][dim+1] = -1.0;
-
-  /* End of construction of A */
-
-  Ifound = 0;
-
-
-  for (ic = 0 ; ic < dim  ; ++ic) basis[ic]=ic+1;
-
-  drive = dim+1;
-  block = 0;
-  z0 = A[block][0];
-  ITER = 0;
-
-  /* Start research of argmin lexico */
-  /* With this first step the covering vector enter in the basis */
-
-  for (ic = 1 ; ic < dim ; ++ic)
-  {
-    zb = A[ic][0];
-    if (zb < z0)
-    {
-      z0    = zb;
-      block = ic;
+    *m = -v[0]; *idx = 0;
+    int i;
+    for (i=0;i<n;++i) {
+        if (*m < -v[i]) {
+            *m = -v[i];
+            *idx = i;
+        }
     }
-    else if (zb == z0)
-    {
-      for (jc = 0 ; jc < dim ; ++jc)
-      {
-        dblock = A[block][1+jc] - A[ic][1+jc];
-        if (dblock < 0)
-        {
-          break;
+}
+#define SEEK_MAX(n, v, m) { int i; m = v[0]; for (i=0;i<n;++i) if (v[i] > m) m = v[i]; }
+
+void SeekMaxSub(const unsigned int n, double v[n],
+                const unsigned int k, unsigned int subv[k],
+                double *m, unsigned int *idx)
+{
+    assert(k>=1);
+    *m = v[ subv[0] ]; *idx = subv[0];
+    int i;
+    for (i=0;i<k;++i) {
+        const unsigned int vidx = subv[i];
+        assert(vidx < n);
+        if (*m < v[ vidx ]) {
+            *m = v[ vidx ];
+            *idx = vidx;
         }
-        else if (dblock > 0)
-        {
-          block = ic;
-          break;
-        }
-      }
     }
-  }
-
-  /* Stop research of argmin lexico */
-
-  pivot = A[block][drive];
-  tovip = 1.0/pivot;
-
-  /* Pivot < block , drive > */
-
-  A[block][drive] = 1;
-  for (ic = 0       ; ic < drive ; ++ic) A[block][ic] = A[block][ic]*tovip;
-  for (ic = drive+1 ; ic < dim2  ; ++ic) A[block][ic] = A[block][ic]*tovip;
-
-  /* */
-
-  for (ic = 0 ; ic < block ; ++ic)
-  {
-    tmp = A[ic][drive];
-    for (jc = 0 ; jc < dim2 ; ++jc) A[ic][jc] -=  tmp*A[block][jc];
-  }
-  for (ic = block+1 ; ic < dim ; ++ic)
-  {
-    tmp = A[ic][drive];
-    for (jc = 0 ; jc < dim2 ; ++jc) A[ic][jc] -=  tmp*A[block][jc];
-  }
-
-  nobasis = basis[block];
-  basis[block] = drive;
-
-  while (ITER < itermax && !Ifound)
-  {
-
-    ++ITER;
-
-    if (nobasis < dim + 1)      drive = nobasis + (dim+1);
-    else if (nobasis > dim + 1) drive = nobasis - (dim+1);
-
-    /* Start research of argmin lexico for minimum ratio test */
-
-    pivot = 1e20;
-    block = -1;
-
-    for (ic = 0 ; ic < dim ; ++ic)
-    {
-      zb = A[ic][drive];
-      if (zb > 0.0)
-      {
-        z0 = A[ic][0]/zb;
-        if (z0 > pivot) continue;
-        if (z0 < pivot)
-        {
-          pivot = z0;
-          block = ic;
+}
+void SeekEqualSub(const unsigned int n, double v[n],
+                  const unsigned int k, unsigned int subv[k],
+                  const double vsame,
+                  unsigned int *r, unsigned int *lenR)
+{
+    int i;
+    *lenR = 0;
+    for (i=0;i<k;++i) {
+        const unsigned int vidx = subv[i];
+        assert(vidx < n);
+        if (vsame == v[ vidx ]) {
+            r[*lenR] = vidx;
+            ++(*lenR);
         }
-        else
+    }
+}
+/*
+ * Extend an array [a0, ..., an-1] with [b0 + C, ..., bm-1 + C].
+ * Returns the extended length of the array.
+ * Make sure that the array 'a' should have enough space to handle it.
+ */
+int ConcatenateWithAdding(const unsigned int n, unsigned int a[n], const unsigned int lenA,
+                          const unsigned int m, unsigned int b[m], const unsigned int lenB,
+                          const unsigned int C)
+{
+    int i;
+    for (i=lenA;i<lenA+lenB;++i) {
+        assert(i < n);
+        a[i] = b[i-lenA] + C;
+    }
+    return lenA+lenB;
+}
+
+double Dot(const unsigned int n, double a[n], double b[n])
+{
+    int i; double r = 0;
+    for (i=0;i<n;++i) r+=a[i]*b[i];
+    return r;
+}
+
+int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m, double x[m], cholmod_common *cc)
+{
+    double *null = (double *) NULL ;
+    void *Symbolic, *Numeric ;
+    double *b = (double *)(bd->x);
+    int *Ap = (int *)(A->p);
+    int *Ai = (int *)(A->i);
+    double *Ax = (double *)(A->x);
+    int status;
+    status = umfpack_di_symbolic (m, m, Ap, Ai, Ax, &Symbolic, null, null) ;
+    if (status)
+    {
+        V_UMF_STATUS(status);
+        //return (-10) ;
+    }
+    status = umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
+    if (status)
+    {
+        V_UMF_STATUS(status);
+        if (status == UMFPACK_WARNING_singular_matrix)
         {
-          for (jc = 1 ; jc < dim+1 ; ++jc)
-          {
-            dblock = A[block][jc]/pivot - A[ic][jc]/zb;
-            if (dblock < 0) break;
-            else if (dblock > 0)
-            {
-              block = ic;
-              break;
+            double Ctrl[UMFPACK_CONTROL];
+            Ctrl[UMFPACK_PRL] = 5;
+            umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
+            exit(-123);
+        }
+
+    }
+
+    /*** DEBUG ***/
+//    double Ctrl[UMFPACK_CONTROL];
+//    Ctrl[UMFPACK_PRL] = 5;
+//    umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
+    /***       ***/
+
+    umfpack_di_free_symbolic (&Symbolic) ;
+    status = umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, x, b, Numeric, null, null) ;
+    if (status)
+    {
+        V_UMF_STATUS(status);
+        //return (-30) ;
+    }
+    umfpack_di_free_numeric(&Numeric);
+    return 0;
+}
+
+int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], double z0[n], cholmod_common *cc) {
+    const double zer_tol = 1e-5;
+    const double piv_tol = 1e-8;
+    const unsigned int maxiter = (1000<50*n)?1000:50*n;
+    int err = 0;
+    int i;
+    /* Trivial solution exists */
+    if (allNonnegative(n, q)) {
+        memset(zret, 0, sizeof(double)*n);
+        return 0;
+    }
+
+    /*
+     * Initializations
+     * (Note: all variables are initialized to their appropriate sizes)
+     */
+    DECLARE_ZERO_VECTOR(double      , z, 2*n); unsigned int lenZ = 20;
+    DECLARE_ZERO_VECTOR(unsigned int, j,   n); unsigned int lenJ = 0;
+    double theta = 0;
+    double ratio = 0;
+    unsigned int leaving = 0;
+    cholmod_dense *Be_c = cholmod_ones(n, 1, CHOLMOD_REAL, cc);
+    double *Be = (double *)(Be_c->x);
+    DECLARE_COPY_VECTOR(x, n, q);
+    DECLARE_ZERO_VECTOR(unsigned int, bas,    n); unsigned int lenBas = 0;
+    DECLARE_ZERO_VECTOR(unsigned int, nonbas, n); unsigned int lenNonbas = 0;
+    const unsigned int t = 2*n; /* Artificial variable */
+    unsigned int entering = t; /* is the first entering variable */
+
+    PRINT_VECTOR(x, n);
+
+    /* Determine initial basis */
+    if (z0 == 0)
+    {
+        lenBas = 0;
+        for (i=0;i<n;++i) nonbas[i] = i;
+        lenNonbas = n;
+    }
+    else
+    {
+        assert(!FILE_AND_LINE " : z0 should be null for now..." );
+    }
+
+    /* allocate memory for B */
+    cholmod_dense *B_c = cholmod_allocate_dense(n, n, n, CHOLMOD_REAL, cc);
+    double *B = (double *)(B_c->x);
+    memset(B, 0, sizeof(double)*n*n);
+    for (i=0;i<n;++i) B[i + n*i] = -1.;
+
+    /* Determine initial values */
+    if (lenBas != 0)
+        assert(!FILE_AND_LINE " : lenBas should be 0..." );
+
+    /* Check if initial basis provides solution */
+    if (allNonnegative(n, x))
+    {
+        for (i=0;i<lenBas;++i) z[ bas[i] ] = x[ i ];
+        memcpy(zret, z, sizeof(double)*n);
+        return err;
+    }
+
+    /* Determine initial leaving variable */
+    double tval; unsigned int lvindex;
+    SeekMaxNeg(n, x, &tval, &lvindex);
+    lenBas = ConcatenateWithAdding(n, bas, lenBas, n, nonbas, lenNonbas, n);
+    assert(lenBas <= n);
+    assert(lvindex <= n);
+    leaving = bas[lvindex];
+
+    bas[lvindex] = t; /* pivot in the artificial variable */
+
+    double U[n]; for(i=0;i<n;++i) U[i]=(x[i]<0)?1.0:0.;
+    memcpy(Be, U, sizeof(double)*n); /* Because Be = -dot(B, U) = -dot(-I,U) = U */
+    PRINT_VECTOR(x, n);
+    VECTOR_ADD(n, x, U, tval);
+    PRINT_VECTOR(x, n);
+    x[lvindex] = tval;
+    SET_COLUMN(B, n, lvindex, Be);
+
+    PRINT_DENSE_MATRIX(B, n, n);
+
+    PRINT_VECTOR(x, n);
+    PRINT_VECTOR(U, n);
+    PRINT_DBL(tval);
+    PRINT_INT(lvindex);
+
+    /* Main iterations begin here */
+    int iterr = 0;
+    for (iterr=0;iterr<maxiter;++iterr) {
+        //printf("#######################################################\n");
+        PRINT_INT(iterr);
+
+        /* Check if done; if not, get new entering variable */
+        //printf("ITERATION %d ---- leaving %d\n", iterr, leaving);
+        PRINT_VECTOR_INT(bas, lenBas);
+        if (leaving == t) {
+            break;
+        } else if(leaving < n) {
+            entering = n + leaving;
+            memset(Be, 0, sizeof(double)*n);
+            Be[leaving] = -1.;
+        } else {
+            entering = leaving - n;
+            for (i=0;i<n;++i) {
+                Be[i] = M[i][entering];
             }
-          }
+            PRINT_INT(leaving);
+            PRINT_INT(n);
+            PRINT_VECTOR(Be, n);
         }
-      }
+
+        cholmod_sparse *Bsp_c = cholmod_dense_to_sparse(B_c, 1, cc);
+        double d[n];
+        SolveLinearSystem(Bsp_c, Be_c, n, d, cc);
+
+        PRINT_VECTOR(d, n);
+
+        /* Find new leaving variable */
+        lenJ = 0;
+        for (i=0;i<n;++i) {
+            if (d[i] > piv_tol) {
+                j[lenJ] = i;
+                ++lenJ;
+            }
+        }
+
+        PRINT_INT(lenJ);
+        PRINT_VECTOR_INT(j, lenJ);
+
+        if (lenJ == 0)
+            break;
+
+        theta = (x[ j[0] ]+zer_tol) / d[ j[0] ];
+        for (i=0;i<lenJ;++i) {
+            double theta2 = (x[ j[i] ] + zer_tol) / d[ j[i] ];
+            if (theta > theta2) theta = theta2;
+        }
+        PRINT_DBL(theta);
+
+        PRINT_INT(lenJ);
+        /* In this scope, j2 and lenJ2 are temporary variables. */
+        {
+            unsigned int j2[n]; unsigned int lenJ2 = 0;
+            for (i=0;i<lenJ;++i) {
+                if (x[ j[i] ] / d[ j[i] ] <= theta) {
+                    j2[lenJ2] = j[i];
+                    ++lenJ2;
+                }
+            }
+            memcpy(j, j2, sizeof(unsigned int)*lenJ2);
+            lenJ = lenJ2;
+        }
+        assert(lenJ > 0);
+
+        PRINT_INT(lenJ);
+        PRINT_VECTOR_INT(j, lenJ);
+
+
+        /* In this scope, lvindex2 and lenLvindex2 are temporary variables. */
+        {
+
+            unsigned int lvindex2[n]; unsigned int lenLvindex2 = 0;
+            for (i=0;i<lenJ;++i) {
+                if (bas[ j[i] ] == t) {
+                    lvindex2[lenLvindex2] = i;
+                    ++lenLvindex2;
+                }
+            }
+
+            PRINT_INT(lenLvindex2);
+            PRINT_VECTOR_INT(lvindex2, lenLvindex2);
+
+            assert(lenLvindex2 == 0 || lenLvindex2 == 1);
+            if (lenLvindex2 == 1) {
+                lvindex = j[ lvindex2[0] ];
+                //PRINT_VECTOR_INT(j, lenJ);
+                //PRINT_INT(lvindex2[0]);
+            } else {
+                SeekMaxSub(n, d, lenJ, j, &theta, &lvindex);
+                //printf("~~~~~~~~~!!!!!!!!!!!!!\n");
+                PRINT_INT(lenJ);
+                PRINT_VECTOR_INT(j, lenJ);
+                PRINT_VECTOR(d, n);
+                PRINT_INT(lvindex);
+                PRINT_DBL(theta);
+
+
+                SeekEqualSub(n, d, lenJ, j, theta, lvindex2, &lenLvindex2);
+                PRINT_INT(lenLvindex2);
+                PRINT_VECTOR_INT(lvindex2, lenLvindex2);
+
+                /*lvindex = (int)(ceil((lenLvindex2-1)*(double)rand()/RAND_MAX));*/
+                assert(lenLvindex2>=1);
+                lvindex = (int)(ceil((lenLvindex2-1)*0.5));
+                lvindex = j[lvindex];
+
+                //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+                PRINT_INT(lenLvindex2);
+                PRINT_VECTOR_INT(lvindex2, lenLvindex2);
+                //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
+            }
+        }
+        leaving = bas[lvindex];
+        PRINT_INT(leaving);
+        PRINT_VECTOR_INT(bas, lenBas);
+
+        /* Perform pivot */
+        ratio = x[lvindex] / d[lvindex];
+        VECTOR_ADD(n, x, d, -ratio);
+        x[lvindex] = ratio;
+        SET_COLUMN(B, n, lvindex, Be);
+        bas[lvindex] = entering;
+        /* end of iterations */
+
+        PRINT_DBL(ratio);
+        PRINT_VECTOR(x, n);
+        PRINT_DENSE_MATRIX(B, n, n);
+        PRINT_VECTOR_INT(bas, lenBas);
+
     }
-    if (block == -1) break;
+    if (iterr >= maxiter && leaving != t)
+        err = 1;
+    unsigned int maxBas;
+    SEEK_MAX(lenBas, bas, maxBas);
+    PRINT_INT(lenBas);
+    PRINT_VECTOR_INT(bas, lenBas);
+    PRINT_INT(maxBas);
+    PRINT_INT(lenZ);
+    if (maxBas >= 2*n) {
+        assert(!FILE_AND_LINE "Untested code");
+        for (i=lenZ; i<lenZ+(maxBas-lenZ+1); ++i) z[i] = 0;
+        lenZ += maxBas-lenZ+1;
 
-    if (basis[block] == dim+1) Ifound = 1;
-
-    /* Pivot < block , drive > */
-
-    pivot = A[block][drive];
-    tovip = 1.0/pivot;
-    A[block][drive] = 1;
-
-    for (ic = 0       ; ic < drive ; ++ic) A[block][ic] = A[block][ic]*tovip;
-    for (ic = drive+1 ; ic < dim2  ; ++ic) A[block][ic] = A[block][ic]*tovip;
-
-    /* */
-
-    for (ic = 0 ; ic < block ; ++ic)
-    {
-      tmp = A[ic][drive];
-      for (jc = 0 ; jc < dim2 ; ++jc) A[ic][jc] -=  tmp*A[block][jc];
     }
-    for (ic = block+1 ; ic < dim ; ++ic)
-    {
-      tmp = A[ic][drive];
-      for (jc = 0 ; jc < dim2 ; ++jc) A[ic][jc] -=  tmp*A[block][jc];
-    }
+    PRINT_INT(lenZ);
 
-    nobasis = basis[block];
-    basis[block] = drive;
+    for (i=0;i<lenBas;++i)
+        z[ bas[i] ] = x[ i ];
+    PRINT_VECTOR(z, lenZ);
+    memcpy(zret, z, sizeof(double)*n);
 
-  } /* end while*/
-
-  for (ic = 0 ; ic < dim; ++ic)
-  {
-    drive = basis[ic];
-    if (drive < dim + 1)
-    {
-      zlem[drive-1] = 0.0;
-      wlem[drive-1] = A[ic][0];
-    }
-    else if (drive > dim + 1)
-    {
-      zlem[drive-dim-2] = A[ic][0];
-      wlem[drive-dim-2] = 0.0;
-    }
-  }
-
-  options->iparam[1] = ITER;
-
-  if (Ifound) *info = 0;
-  else *info = 1;
-
-  free(basis);
-
-  for (i = 0 ; i < dim ; ++i) free(A[i]);
-  free(A);
+    cholmod_free_dense(&B_c, cc);
+    cholmod_free_dense(&Be_c, cc);
+    return err;
 }
 
-
-int setDefaultSolverOptions(SolverOptions* options)
+int lemke_Python(const unsigned int n, double zret[n], double M[n][n], double q[n])
 {
-  int i;
-    printf("Set the Default SolverOptions for the Lemke Solver\n");
-
-
-  strcpy(options->solverName,"Lemke");
-
-  options->numberOfInternalSolvers=0;
-  options->isSet=1;
-  options->filterOn=1;
-  options->iSize=10;
-  options->dSize =10;
-  options->iparam = (int *)malloc(options->iSize*sizeof(int));
-  options->dparam = (double *)malloc(options->dSize*sizeof(double));
-  options->dWork =NULL;
-  options->iWork =NULL;
-  for (i=0; i<10; i++)
-  {
-    options->iparam[i]=0;
-    options->dparam[i]=0.0;
-  }
-  options->dparam[0]=1e-6;
-  options->iparam[0]=10000;
-
-
-  return 0;
+    cholmod_common c ;
+    cholmod_start (&c) ;
+    int status = lemke(n, zret, M, q, 0, &c);
+    cholmod_finish(&c);
+    return status;
 }
 
-int main()
+int lemkeTester(cholmod_common *cc)
 {
-	SolverOptions so;
-	setDefaultSolverOptions(&so);
-	LinearComplementarityProblem lcp;
-	int info;
-	int dim = 10;
-	double *zlem, *wlem;
-	FILE *M, *q;
-	int i, j;
-	double *wlem_test;
-	double min_test;
-	
-	/* input data */
-	lcp.size = dim;
-	lcp.M = (double*)malloc(sizeof(double)*dim*dim);
-	lcp.q = (double*)malloc(sizeof(double)*dim);
-	
-	M = fopen("M.dat", "r");
-	if (!M)
-	{
-		printf("M.dat open fail.\n");
-		return -10;
-	}
-	q = fopen("q.dat", "r");
-	if (!q)
-	{
-		printf("q.dat open fail.\n");
-		return -20;
-	}
-	printf("M matrix ========================\n");
-	for (i = 0; i < dim*dim; ++i)
-	{
-		double mii;
-		
-		if (i%dim==0)
-			printf("\n");
-			
-		fscanf(M, "%lf", &mii);
-		lcp.M[i] = mii;
-		
-		printf("%10.4lf ", mii);
-	}
-	printf("\n\n");
-	printf("q vector ========================\n\n");
-	for (i = 0; i < dim; ++i)
-	{
-		double qi;
-		fscanf(q, "%lf", &qi);
-		lcp.q[i] = qi;
-		
-		printf("%10.4lf ", qi);
-	}
-	printf("\n");
-	
-	/* output data */
-	zlem = (double*)malloc(sizeof(double) * dim);
-	wlem = (double*)malloc(sizeof(double) * dim);
-	lcp_lexicolemke(&lcp, zlem, wlem, &info, &so);
-	
-	printf("\nSolution vector =============================\n\n");
-	printf("info = %d\n", info);
-	for (i = 0; i < dim; ++i)
-	{
-		printf("%d: %20lf %20lf\n", i, zlem[i], wlem[i]);
-	}
-	
-	printf("\nChecking solution...\n");
-	wlem_test = (double*)malloc(sizeof(double) * dim);
-	for (i = 0; i < dim; ++i)
-	{
-		wlem_test[i] = 0;
-		for (j = 0; j < dim; ++j)
-		{
-			wlem_test[i] += lcp.M[dim*i+j] * zlem[j];
-		}
-		wlem_test[i] += lcp.q[i];
-		printf("w diff %d: %20lf\n", i, wlem_test[i] - wlem[i]);
-	}
-	printf("\nValue of z' * ( M * z + q )\n");
-	min_test = 0;
-	for (i = 0; i < dim; ++i)
-		min_test += zlem[i] * wlem_test[i];
-	printf("%lf\n", min_test);
-	
-	
-	free(zlem);
-	free(wlem);
-	free(wlem_test);
-	free(lcp.M);
-	free(lcp.q);
-	return 0;
+    const unsigned int n = 2;
+    double M[2][2] = { {10, 0}, {7, 30} };
+    double q[2] = {100, -150};
+    double zret[2] = {1234,5678};
+    int status = lemke(n, zret, M, q, 0, cc);
+    int i,j;
+    printf("ZRET : ");
+    for (i=0;i<n;++i)
+        printf("%10.4lf", zret[i]);
+    printf("\n");
+
+    double score = 0;
+    printf("WRET : ");
+    for (i=0;i<n;++i) {
+        double col = 0;
+        for (j=0;j<n;++j) {
+            col += M[i][j]*zret[j];
+        }
+        col += q[i];
+        score += zret[i] * col;
+        printf("%10.4lf", zret[i] * col);
+    }
+    printf("\n");
+    printf("z^T * (Mz+q) : %10.4lf\n", score);
+    return status;
 }

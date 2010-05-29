@@ -846,12 +846,17 @@ def FrameMove_ImpInt():
 	# Run LCP
 	contactInfo = BLEM.FrameMove(footBodies, gCon.h, True)
 	
+	#
+	# IS THIS RIGHT?
+	#
+	'''
 	for b, fb in zip(gCon.body, footBodies):
 		b.q[0:3] = fb.q[0:3]
 		b.q[3:7] = VtoQuat(fb.q[3:6])
 		b.qd[0:3] = fb.qd[0:3]
 		b.qd[3:7] = QuatdFromV(fb.q[3:6], fb.qd[3:6])
-
+	'''
+	
 	'''
 	print 'A', footBodies[0].name,
 	for vv in footBodies[0].q:
@@ -936,7 +941,7 @@ def FrameMove_ImpInt():
 	C_w_y[14*i+7  : 14*i + 10] = [20000,]*3  # linar velocity weight
 	C_w_y[14*i+10 : 14*i + 14] = [20000,]*4  # angular velocity weight
 	
-	C_w_y[2*nd*nBody + 0] = 1e-10  # ligament tension value
+	C_w_y[2*nd*nBody + 0] = 0  # ligament tension value
 	C_w_y[2*nd*nBody + 1] = 0  # muscle fiber tension value
 	C_w_y[2*nd*nBody + 2] = 0  # muscle fiber tension value
 	C_w_y[2*nd*nBody + 3] = 0  # muscle fiber tension value

@@ -16,6 +16,7 @@
 #include "Control.h"
 #include "MathUtil.h"
 #include "SimCore.h"
+#include "lemke.h"
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
@@ -125,8 +126,17 @@ int main()
     return 0;
 }
 */
-
 int main(int argc, const char **argv)
+{
+    cholmod_common c ;
+    cholmod_start (&c) ;
+    int status = lemkeTester(&c);
+    printf("Status = %d\n", status);
+    cholmod_finish(&c);
+    return 0;
+}
+
+int main2(int argc, const char **argv)
 {
     printf("Rigid body and muscle fiber simulator\n");
     printf("  2010 Geoyeob Kim\n\n");

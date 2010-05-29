@@ -365,7 +365,7 @@ class BipedParameter:
 		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 1.),
 			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 1.),
 			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  1.),
-			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  100.),
+			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  1.),
 			  ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.) ]
 
 
