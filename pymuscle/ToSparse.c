@@ -38,7 +38,7 @@ cholmod_sparse *ToSparseAndTranspose(int row, int col, double mat[row][col], cho
                 ((double *)(A->x))[i + row*j] = mat[i][j];
             }
 
-            /* No truncation... */
+            /* NOTE:  No truncation... */
             ((double *)(A->x))[i + row*j] = mat[i][j];
         }
     }

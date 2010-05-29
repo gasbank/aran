@@ -156,6 +156,12 @@ def KeyPressed(*args):
 		idx = gCon.findBodyIndex('calfL')
 		gCon.body0[idx].q[4] -= 0.01
 		gCon.body0[idx].q[3:7] = quat_normalize(gCon.body0[idx].q[3:7])
+	elif key == 'j':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[2] += 0.01
+	elif key == 'n':
+		idx = gCon.findBodyIndex('calfL')
+		gCon.body0[idx].q[2] -= 0.01
 	#print 'Key pressed', key
 
 def SpecialKeyPressed(*args):
@@ -904,10 +910,10 @@ def FrameMove_ImpInt():
 	
 	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
 	C_w_u[nY-nMuscle + 0 ] = 1e30
-	C_w_u[nY-nMuscle + 1 ] = 1e-7
-	C_w_u[nY-nMuscle + 2 ] = 1e-7
-	C_w_u[nY-nMuscle + 3 ] = 1e-7
-	C_w_u[nY-nMuscle + 4 ] = 1e-7
+	C_w_u[nY-nMuscle + 1 ] = 1e-9
+	C_w_u[nY-nMuscle + 2 ] = 1e-9
+	C_w_u[nY-nMuscle + 3 ] = 1e-9
+	C_w_u[nY-nMuscle + 4 ] = 1e-9
 	'''
 	for i in range(nY):
 		if i < nY - nMuscle:
@@ -920,15 +926,21 @@ def FrameMove_ImpInt():
 		C_Ydesired[ 14*i + 7 : 14*i + 14 ] = gCon.body0[i].qd
 		
 	i = gCon.findBodyIndex('calfL')
-	C_w_y[14*i    : 14*i +  3] = [200,]*3 # linear position weight
-	C_w_y[14*i+3  : 14*i +  7] = [200,]*4 # angular position weight
-	C_w_y[14*i+7  : 14*i + 10] = [5,]*3  # linar velocity weight
-	C_w_y[14*i+10 : 14*i + 14] = [5,]*4  # angular velocity weight
+	C_w_y[14*i    : 14*i +  3] = [20000,0,0] # linear position weight
+	C_w_y[14*i+3  : 14*i +  7] = [20000,]*4 # angular position weight
+	C_w_y[14*i+7  : 14*i + 10] = [20000,2,2]  # linar velocity weight (suppress moving in x-direction)
+	C_w_y[14*i+10 : 14*i + 14] = [2,]*4  # angular velocity weight
 	i = gCon.findBodyIndex('soleL')
-	C_w_y[14*i    : 14*i +  3] = [1e5,]*3 # linear position weight
-	C_w_y[14*i+3  : 14*i +  7] = [1e5,]*4 # angular position weight
-	C_w_y[14*i+7  : 14*i + 10] = [1e5,]*3  # linar velocity weight
-	C_w_y[14*i+10 : 14*i + 14] = [1e5,]*4  # angular velocity weight
+	C_w_y[14*i    : 14*i +  3] = [20000,]*3 # linear position weight
+	C_w_y[14*i+3  : 14*i +  7] = [20000,]*4 # angular position weight
+	C_w_y[14*i+7  : 14*i + 10] = [20000,]*3  # linar velocity weight
+	C_w_y[14*i+10 : 14*i + 14] = [20000,]*4  # angular velocity weight
+	
+	C_w_y[2*nd*nBody + 0] = 1e-10  # ligament tension value
+	C_w_y[2*nd*nBody + 1] = 0  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 2] = 0  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 3] = 0  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 4] = 0  # muscle fiber tension value
 		
 	'''
 	idx = gCon.findBodyIndex('calfL')
@@ -949,8 +961,8 @@ def FrameMove_ImpInt():
 	# Retrieve the result from the simcore and update our states
 	for i in range(nBody):
 		body = gCon.body[i]
-		body.q = C_body[i][0:7]
-		body.qd = C_body[i][7:14]
+		body.q = array(C_body[i][0:7])
+		body.qd = array(C_body[i][7:14])
 	for i in range(nMuscle):
 		muscle = gCon.fibers[i]
 		muscle.T = C_muscle[i][4]
@@ -1277,6 +1289,9 @@ if __name__ == '__main__':
 		gCon.bodyList = []
 		for b in gCon.body:
 			gCon.bodyList.append((b.name, None))
+			
+			b.q  = array(b.q)
+			b.qd = array(b.qd)
 
 		# Write a configuration file containing body and muscle settings.
 		# This file can be read at the simcore side.

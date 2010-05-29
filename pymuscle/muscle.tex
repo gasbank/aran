@@ -742,7 +742,7 @@ The optimization problem for finding the solution vector $u^*$ can be stated as
 \begin{align}
 u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u} \notag\\
    = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
-   = {} & \arg\min_{u} \| (Y^{(l)} + \mathbf{C} + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + C + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
    = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u \|^2_{\mathbf{W}_u}
 \end{align}
 where
@@ -757,16 +757,14 @@ E = Y^{(l)} - Y_\text{desired} + C ,
 \end{equation}
 The weighting between different objective terms is
 usually determined by diagonal semipositive definite matrices $\mathbf{W}_Y$ and $\mathbf{W}_u$.
-Note that $\mathbf{D}$ can be a nonsquare matrix depending on the number of rigid bodies and
-muscles. In most case it is a nonsquare matrix because $n_d n$ is greater than $m$
-in most cases. $u^*$ can be found using a least squares method:
-
+Note that $\mathbf{D}$ can be a rectangular (nonsquare) matrix depending on the number of rigid bodies and
+muscles. The equations for finding $u^*$ is as follows:
 \begin{align}
-\frac{\partial}{\partial u} \left( \| \mathbf{D}u^* + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u^* \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
-2\mathbf{W}_Y(\mathbf{D}u^*+E) + 2\mathbf{W}_u \mathbf{F}u^* = {} & 0\notag\\
-(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})u^* = {} & -\mathbf{W}_Y E\notag\\
-(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})^T(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})u^* = {} & -(\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u\mathbf{F})^T\mathbf{W}_Y E
+\frac{\partial}{\partial u} \left( \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
+2\mathbf{D}^T\mathbf{W}_Y(\mathbf{D}u+E) + 2\mathbf{F}^T\mathbf{W}_u \mathbf{F}u = {} & 0\notag\\
+(\mathbf{D}^T\mathbf{W}_Y\mathbf{D}+\mathbf{F}^T\mathbf{W}_u\mathbf{F})u = {} & -\mathbf{D}^T\mathbf{W}_Y E
 \end{align}
+Here we define the gradient as a column vector.
 
 \section{Putting it all together}
 

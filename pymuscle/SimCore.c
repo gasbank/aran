@@ -218,23 +218,11 @@ int SimCore(const double h, const int nBody, const int nMuscle,
 
         double k_se = muscle[k][0 /* k_se */];
         double b    = muscle[k][2 /*   b  */];
-        g[2*nd*nBody + k] = k_se / b;
-        //g[2*nd*nBody + k] = 1;
+        //g[2*nd*nBody + k] = k_se / b;
+        g[2*nd*nBody + k] = 1;
         umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, DT[k], g, Numeric, null, null) ;
     }
-    #ifdef DEBUG
-    for (k = 0; k < nMuscle; ++k)
-    {
-        for (j = 0; j < matSize; ++j)
-        {
-            if (!isfinite(DT[k][j]) || isnan(DT[k][j]))
-            {
-                printf ("DT is not finite.\n");
-                exit(-100);
-            }
-        }
-    }
-    #endif
+
     cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, matSize, DT, c);
 
     double Dustar[nY];

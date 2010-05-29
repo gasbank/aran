@@ -61,7 +61,7 @@ class BipedParameter:
 		#    Generally, overlapped one gives stable equilibrium condition
 		self.p['trunkThighGap']     = -3.
 		self.p['thighCalfGap']      = -3.
-		self.p['calfSoleGap']       = -3.
+		self.p['calfSoleGap']       = 0.
 		self.p['soleToeGap']        = -3.
 
 		# 3. Other
@@ -245,6 +245,15 @@ class BipedParameter:
 		p1 = c + array([ 0, 0,  self['calfSoleGap']/2])
 		p2 = c + array([ 0, 0, -self['calfSoleGap']/2])
 		return [ ('ankleLiga1L', p1,p2, 'calfL', 'soleL') ]
+	def getAnkleLigaments22222(self):
+		# Single ligament
+		c = self.getAnkleJointCenter()
+		p1 = c + array([ +self['calfWidth']/2, 0,  self['calfSoleGap']/2])
+		p2 = c + array([ +self['calfWidth']/2, 0, -self['calfSoleGap']/2])
+		p3 = c + array([ -self['calfWidth']/2, 0,  self['calfSoleGap']/2])
+		p4 = c + array([ -self['calfWidth']/2, 0, -self['calfSoleGap']/2])
+		return [ ('ankleLiga1L', p1,p2, 'calfL', 'soleL'),
+		         ('ankleLiga2L', p3,p4, 'calfL', 'soleL') ]
 
 	def getToeLigaments(self):
 		c = self.getToeJointCenter()
@@ -307,14 +316,14 @@ class BipedParameter:
 		'''
 		
 		c = self.getAnkleJointCenter()
-		p1 = c + array([ self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
+		p1 = c + array([ self['calfWidth']/4,  self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2 ])
 		p2 = c + array([ self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
-		p3 = c + array([ self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2])
+		p3 = c + array([ self['calfWidth']/4, -self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p4 = c + array([ self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
 
-		p5 = c + array([-self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2])
+		p5 = c + array([-self['calfWidth']/4, -self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p6 = c + array([-self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
-		p7 = c + array([-self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2])
+		p7 = c + array([-self['calfWidth']/4,  self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p8 = c + array([-self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
 
 		return [ ('gastro1L', p1,p2, 'calfL', 'soleL'),
@@ -354,15 +363,15 @@ class BipedParameter:
 	def buildBody(self):
 		body = []
 		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 1.),
-			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 3.),
-			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3.),
-			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  3.),
-			  ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   3.) ]
+			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 1.),
+			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  1.),
+			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  100.),
+			  ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.) ]
 
 
 		# DEBUGGING START
 		l = l[2:4]
-		# DEBUGGING NED
+		# DEBUGGING END
 
 
 		for i, ll in zip(range(len(l)), l):
@@ -402,16 +411,16 @@ class BipedParameter:
 	
 	def buildFiber(self, availableBodyNames):
 		# Fiber constants for a ligament
-		KSE = 1e50
-		KPE = 0.
-		b   = 1e50
+		KSE = 1e5
+		KPE = 0
+		b   = 1e5
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
 		# Fiber constants for a muscle fiber
-		KSE = 1e4
-		KPE = 1e4
-		b   = 1e2
+		KSE = 1
+		KPE = 0.
+		b   = 0.01
 		T   = 0.
 		A   = 0.
 		fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)

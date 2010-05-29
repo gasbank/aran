@@ -24,24 +24,6 @@
  * n    :  the number of rigid bodies
  * nd   :  degree-of-freedom for a rigid body (6 or 7)
  *
- * Intermediate list
- * ---------------------------------------------------------
- * W_Y  := diag(w_y)           ...     nY x nY
- * W_U  := diag(w_u)           ...     nY x nY
- * WYD  := W_Y * D             ...     nY x nY
- * WUF  := W_U * F             ...     nY x  m
- * A    := WYD + WUF           ...     nY x  m
- * ATA  := A^T * A             ...      m x  m
- * WYE  := W_Y * E             ...     nY x  1
- * b    := - A^T * WYE         ...      m x  1
- *
- * Linear system to be solved
- * ---------------------------------------------------------
- * ATA * x = b
- *
- * Return values
- * ---------------------------------------------------------
- * x   ... m x 1 vector
  */
 #include <math.h>
 #include <string.h>
@@ -55,6 +37,7 @@ void PrintUmfStatus(int status, const char *file, int line)
         return;
 
     printf("%s(%d) : ", file, line);
+
     if (status == UMFPACK_WARNING_singular_matrix)
         printf("UMFPACK_WARNING_singular_matrix\n");
     else if (status == UMFPACK_ERROR_out_of_memory)
@@ -76,24 +59,24 @@ int control(const unsigned int nY, const unsigned int m,
             cholmod_sparse *Dsp, cholmod_sparse *Fsp,
             double E[nY], cholmod_common *c)
 {
-    double alpha[2] = { 1, 0 };
-    double alpha_neg[2] = { -1, 0 };
-    double beta[2] = { 1, 0 };
-    double beta0[2] = { 0, 0 };
-    int i;
-    cholmod_sparse *WYDsp    = cholmod_ssmult(W_Ysp, Dsp, 0, 1, 1, c);
-    cholmod_sparse *WuFsp    = cholmod_ssmult(W_usp, Fsp, 0, 1, 1, c);
-    cholmod_sparse *A        = cholmod_add(WYDsp, WuFsp, alpha, beta, 1, 1, c);
-    cholmod_sparse *AT       = cholmod_transpose(A, 1, c);
-    cholmod_sparse *ATA      = cholmod_ssmult(AT, A    , 0, 1, 1, c);
-    cholmod_sparse *ATWY     = cholmod_ssmult(AT, W_Ysp, 0, 1, 1, c);
+    double alpha[2]     = {  1,  0 };
+    double alpha_neg[2] = { -1,  0 };
+    double beta[2]      = {  1,  0 };
+    double beta0[2]     = {  0,  0 };
+
+    cholmod_sparse *DTsp     = cholmod_transpose(Dsp, 1, c);
+    cholmod_sparse *FTsp     = cholmod_transpose(Fsp, 1, c);
+    cholmod_sparse *DTWYsp   = cholmod_ssmult(DTsp, W_Ysp, 0, 1, 1, c);
+    cholmod_sparse *FTWusp   = cholmod_ssmult(FTsp, W_usp, 0, 1, 1, c);
+    cholmod_sparse *DTWYDsp  = cholmod_ssmult(DTWYsp, Dsp, 0, 1, 1, c);
+    cholmod_sparse *FTWuFsp  = cholmod_ssmult(FTWusp, Fsp, 0, 1, 1, c);
+    cholmod_sparse *A        = cholmod_add(DTWYDsp, FTWuFsp, alpha, beta, 1, 1, c);
     cholmod_dense  *Ed       = cholmod_allocate_dense(nY, 1, nY, CHOLMOD_REAL, c);
     cholmod_dense  *bd       = cholmod_allocate_dense(m , 1, m , CHOLMOD_REAL, c);
     cholmod_dense  *ustard   = cholmod_allocate_dense(m , 1, m , CHOLMOD_REAL, c);
     cholmod_dense  *Dustard  = cholmod_allocate_dense(nY, 1, nY, CHOLMOD_REAL, c);
-    for (i = 0; i < nY; ++i)
-        ((double *)(Ed->x))[i] = E[i];
-    cholmod_sdmult(ATWY, 0, alpha_neg, beta0, Ed, bd, c);
+    memcpy(Ed->x, E, sizeof(double)*nY);
+    cholmod_sdmult(DTWYsp, 0, alpha_neg, beta0, Ed, bd, c);
 
 //    cholmod_print_sparse(Dsp,   "D",         c);
 //    cholmod_print_sparse(W_Ysp, "W_Y",       c);
@@ -116,29 +99,37 @@ int control(const unsigned int nY, const unsigned int m,
     double *null = (double *) NULL ;
     void *Symbolic, *Numeric ;
     double *b = (double *)(bd->x);
-    int *Ap = (int *)(ATA->p);
-    int *Ai = (int *)(ATA->i);
-    double *Ax = (double *)(ATA->x);
+    int *Ap = (int *)(A->p);
+    int *Ai = (int *)(A->i);
+    double *Ax = (double *)(A->x);
     int status;
     status = umfpack_di_symbolic (m, m, Ap, Ai, Ax, &Symbolic, null, null) ;
     if (status)
     {
         V_UMF_STATUS(status);
-        return (-10) ;
+        //return (-10) ;
     }
     status = umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
     if (status)
     {
         V_UMF_STATUS(status);
-        return (-20) ;
+        if (status == UMFPACK_WARNING_singular_matrix)
+        {
+            double Ctrl[UMFPACK_CONTROL];
+            Ctrl[UMFPACK_PRL] = 5;
+            umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
+            exit(-123);
+        }
+
     }
     umfpack_di_free_symbolic (&Symbolic) ;
     status = umfpack_di_solve (UMFPACK_A, Ap, Ai, Ax, ustar, b, Numeric, null, null) ;
     if (status)
     {
         V_UMF_STATUS(status);
-        return (-30) ;
+        //return (-30) ;
     }
+    umfpack_di_free_numeric(&Numeric);
 
     /* Copy the data from 'ustar' to the cholmod_dense variable 'ustard' */
     memcpy(ustard->x, ustar, sizeof(double)*m);
@@ -147,12 +138,13 @@ int control(const unsigned int nY, const unsigned int m,
     /* Copy 'Dustard' to 'Dustar' */
     memcpy(Dustar, Dustard->x, sizeof(double)*nY);
 
-    cholmod_free_sparse(&WYDsp,   c);
-    cholmod_free_sparse(&WuFsp,   c);
+    cholmod_free_sparse(&DTsp,    c);
+    cholmod_free_sparse(&FTsp,    c);
+    cholmod_free_sparse(&DTWYsp,  c);
+    cholmod_free_sparse(&FTWusp,  c);
+    cholmod_free_sparse(&DTWYDsp, c);
+    cholmod_free_sparse(&FTWuFsp, c);
     cholmod_free_sparse(&A,       c);
-    cholmod_free_sparse(&AT,      c);
-    cholmod_free_sparse(&ATA,     c);
-    cholmod_free_sparse(&ATWY,    c);
     cholmod_free_dense (&Ed,      c);
     cholmod_free_dense (&bd,      c);
     cholmod_free_dense (&ustard,  c);

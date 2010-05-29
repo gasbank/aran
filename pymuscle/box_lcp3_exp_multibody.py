@@ -25,11 +25,11 @@ from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
 from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
 from quat import quat_mult, quat_conj
 import lwp
+'''
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
-
 RMatrix = importr('Matrix')
-
+'''
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
@@ -445,6 +445,7 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		Mfile.close()
 		'''
 		
+		'''
 		try:
 			#LCP_Msym = (LCP_M+LCP_M.T)/2
 			LCP_Msym = dot(LCP_M.T, LCP_M)
@@ -478,66 +479,52 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 			normF           = float(LCP_M_Condx_Robj[3][0])
 			print 'Frobenious norm', normF
 			LCP_M = array(LCP_M_Cond_Robj)
+		'''
 		
 		try:
 			x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
 		except:
+			# SHIFT ROW DOWN 1
+			LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
+		                    hstack([ M11   , M10 , E  ]),
+		                    hstack([ M10.T , M00 , Z0 ])])
+			LCP_q0 = zeros((p))
+			LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+			LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 			try:
-				LCP_M_Robj_data = robjects.FloatVector(LCP_M.flatten())
-				LCP_M_Robj      = robjects.r['matrix'](LCP_M_Robj_data, nrow = nY)
-				LCP_M_Condx_Robj= robjects.r['nearPD'](LCP_M_Robj, False, False, True, False, 1e-6, 1e-7, 0)
-				LCP_M_Cond_Robj = robjects.r['as.matrix'](LCP_M_Condx_Robj[0])
-				normF           = float(LCP_M_Condx_Robj[3][0])
-				print 'Frobenious norm', normF
-				LCP_M = array(LCP_M_Cond_Robj)
-				
 				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-				
+				rearranged = 1
+				print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
 			except:
-				print 'LCP solver failure.'
-				sys.exit(-100)
+				# Do again with rearranged matrix?
+				# SWAP ROW 1 and ROW 2
+				# SWAP COL 1 and COL 2
+				LCP_M = vstack([hstack([ M11   , M10 , E  ]),
+			                    hstack([ M10.T , M00 , Z0 ]),
+			                    hstack([ -E.T  , Mu  , Z0 ])])
+				LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
+				LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+				LCP_q2 = zeros((p))
 				
-				# SHIFT ROW DOWN 1
-				LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
-			                    hstack([ M11   , M10 , E  ]),
-			                    hstack([ M10.T , M00 , Z0 ])])
-				LCP_q0 = zeros((p))
-				LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-				LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 				try:
 					x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-					rearranged = 1
-					print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
+					rearranged = 2
+					print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
 				except:
-					# Do again with rearranged matrix?
-					# SWAP ROW 1 and ROW 2
-					# SWAP COL 1 and COL 2
-					LCP_M = vstack([hstack([ M11   , M10 , E  ]),
-				                    hstack([ M10.T , M00 , Z0 ]),
-				                    hstack([ -E.T  , Mu  , Z0 ])])
-					LCP_q0 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-					LCP_q1 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
-					LCP_q2 = zeros((p))
-					
+					# SHIFT ROW DOWN 1
+					LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
+				                    hstack([ -E.T  , Mu  , Z0 ]),
+				                    hstack([ M11   , M10 , E  ])])
+					LCP_q0 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
+					LCP_q1 = zeros((p))
+					LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
 					try:
 						x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-						rearranged = 2
-						print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
+						rearranged = 3
+						print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
 					except:
-						# SHIFT ROW DOWN 1
-						LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
-					                    hstack([ -E.T  , Mu  , Z0 ]),
-					                    hstack([ M11   , M10 , E  ])])
-						LCP_q0 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
-						LCP_q1 = zeros((p))
-						LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
-						try:
-							x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-							rearranged = 3
-							print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
-						except:
-							print 'Doriupda...'
-							sys.exit(-100)
+						print 'Doriupda...'
+						sys.exit(-100)
 					
 		z0 = x_opt
 		

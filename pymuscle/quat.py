@@ -31,6 +31,7 @@ def quat_mult(q1, q2):
 
 def quat_normalize(q):
 	assert len(q) == 4
+	q=[v+1-1 for v in q]
 	return q / linalg.norm(q)
 
 def quat_rot(q, v):
