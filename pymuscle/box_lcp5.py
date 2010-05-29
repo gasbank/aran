@@ -910,10 +910,10 @@ def FrameMove_ImpInt():
 	
 	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
 	C_w_u[nY-nMuscle + 0 ] = 1e30
-	C_w_u[nY-nMuscle + 1 ] = 1e-9
-	C_w_u[nY-nMuscle + 2 ] = 1e-9
-	C_w_u[nY-nMuscle + 3 ] = 1e-9
-	C_w_u[nY-nMuscle + 4 ] = 1e-9
+	C_w_u[nY-nMuscle + 1 ] = 1e-8
+	C_w_u[nY-nMuscle + 2 ] = 1e-8
+	C_w_u[nY-nMuscle + 3 ] = 1e-8
+	C_w_u[nY-nMuscle + 4 ] = 1e-8
 	'''
 	for i in range(nY):
 		if i < nY - nMuscle:
