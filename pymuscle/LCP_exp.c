@@ -874,7 +874,7 @@ int LCP_exp_test() {
         //PRINT_VECTOR(Ynext, nY);
         memcpy(Y, Ynext, sizeof(double)*nY);
 
-        printf("%5d Body0 : %lg %lg %lg , %lg %lg %lg\n", it, Y[0     ], Y[1     ], Y[2     ], Y[3     ], Y[4     ], Y[5     ]);
+        //printf("%5d Body0 : %lg %lg %lg , %lg %lg %lg\n", it, Y[0     ], Y[1     ], Y[2     ], Y[3     ], Y[4     ], Y[5     ]);
     }
     printf("== Frame %5d ==\n", iter);
     printf("Body0 : %lg %lg %lg , %lg %lg %lg\n", Y[0     ], Y[1     ], Y[2     ], Y[3     ], Y[4     ], Y[5     ]);

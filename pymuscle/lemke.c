@@ -274,7 +274,7 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
         cholmod_sparse *Bsp_c = cholmod_dense_to_sparse(B_c, 1, cc);
         double d[n];
         SolveLinearSystem(Bsp_c, Be_c, n, d, cc);
-
+        cholmod_free_sparse(&Bsp_c, cc);
         PRINT_VECTOR(d, n);
 
         /* Find new leaving variable */

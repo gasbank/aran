@@ -214,7 +214,7 @@ def Draw():
 	drawTime = time.time()
 	
 	timeGap = drawTime - lastDrawTime
-	print 'Frame', gFrame, 'FPS', 1/timeGap, '(time gap :', timeGap, ')' #'ang', gBodies[0].q
+	print 'Frame', gFrame, 'FPS', 1/timeGap, '(time gap :', timeGap, ')', 'ang', gBodies[0].q
 	lastDrawTime = drawTime
 	
 	if gNextTestSet is not None:
@@ -911,10 +911,11 @@ def GoTest():
 
 
 if __name__ == '__main__':
+	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(1), ExpBodyFromTestSet(2), ExpBodyFromTestSet(3) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
 	#gBodies = [ ExpBodyFromTestSet(2), ExpBodyFromTestSet(1) ]
 	#gBodies = [ ExpBodyFromTestSet(0) ]
-	gBodies = [ ExpBodyFromTestSet(8) ]
+	#gBodies = [ ExpBodyFromTestSet(8) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0) ]
 	gNextTestSet = None
 	z0 = 0
