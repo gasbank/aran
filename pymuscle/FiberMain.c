@@ -17,6 +17,8 @@
 #include "MathUtil.h"
 #include "SimCore.h"
 #include "lemke.h"
+#include "LCP_exp.h"
+
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
@@ -126,7 +128,15 @@ int main()
     return 0;
 }
 */
+
+
 int main(int argc, const char **argv)
+{
+    LCP_exp_test();
+    return 0;
+}
+
+int main3(int argc, const char **argv)
 {
     cholmod_common c ;
     cholmod_start (&c) ;

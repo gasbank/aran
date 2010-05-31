@@ -172,7 +172,7 @@ cholmod_sparse *constructMatrixF(int nd, int n, int m, cholmod_common *c)
 
 cholmod_sparse *constructSparseDiagonalMatrix(int n, double diag[n], cholmod_common *c)
 {
-    cholmod_triplet *Atr = cholmod_allocate_triplet(n, n, n, 0, CHOLMOD_REAL, c);
+    cholmod_triplet *Atr = cholmod_allocate_triplet(n, n, n, -1 /* symmetric lower part only */, CHOLMOD_REAL, c);
     int i, nnz;
     for (i = 0, nnz = 0; i < n; ++i)
     {

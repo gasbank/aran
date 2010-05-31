@@ -22,16 +22,16 @@ import sys
 import matplotlib.pyplot as pit
 import ExpBody
 from dRdv_real import QuatdFromV
-from ExpBodyMoEq_real import MassMatrixAndCqdVector
 from quat import quat_mult, quat_conj
 import lwp
 import ctypes as ct
-
+import time
 
 libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Release/libsimcore_release.so')
 C_lemke = libsimcore.lemke_Python
 C_MassMatrixAndCqdVector = libsimcore.MassMatrixAndCqdVector
 C_GeneralizedForce = libsimcore.GeneralizedForce
+LCP_exp_Python = libsimcore.LCP_exp_Python
 
 C_DBL66  = (ct.c_double * 6) * 6
 C_DBL6   =  ct.c_double * 6
@@ -201,17 +201,33 @@ def main():
 	# Start Event Processing Engine	
 	glutMainLoop()
 
+lastDrawTime = time.time()
+
 def Draw():
 	global gResetState
 	global gNextTestSet
 	global gFrame
 	global gBodies
+	global lastDrawTime
+	global C_Y
+	
+	drawTime = time.time()
+	
+	timeGap = drawTime - lastDrawTime
+	print 'Frame', gFrame, 'FPS', 1/timeGap, '(time gap :', timeGap, ')' #'ang', gBodies[0].q
+	lastDrawTime = drawTime
 	
 	if gNextTestSet is not None:
 		gBody = ExpBodyFromTestSet(gNextTestSet)
 		gNextTestSet = None
 	
-	FrameMove(gBodies, h)
+	
+	if gUseCversion:
+		FrameMove_CVersion(gBodies, h)
+	else:
+		FrameMove_PythonVersion(gBodies, h)
+	
+	
 	'''
 	if frame > 40000:
 		t = arange(0.,(frame-1)*h, h)
@@ -332,8 +348,92 @@ def GeneralizedForce(v, Fr, r):
 	
 	C_GeneralizedForce(C_Q, C_v, C_Fr, C_r)
 	return array(C_Q)
+
+
+C_M = C_DBL66()
+C_Cqd = C_DBL6()
+C_P = C_DBL3()
+C_V = C_DBL3()
+C_PD = C_DBL3()
+C_VD = C_DBL3()
+C_I  = C_DBL4()
+def MassMatrixAndCqdVector(p, v, pd, vd, I):
+	global C_P, C_V, C_PD, C_VD, C_I, C_M, C_Cqd
+	C_P[:] = p
+	C_V[:] = v
+	C_PD[:] = pd
+	C_VD[:] = vd
+	C_I[:] = I
+	C_MassMatrixAndCqdVector(C_M, C_Cqd, C_P, C_V, C_PD, C_VD, C_I)
+	return array(C_M), array(C_Cqd)
+
+def FrameMove_CVersion(bodies, h, contactForceInfoOnly = False):
+	global C_Y
 	
-def FrameMove(bodies, h, contactForceInfoOnly = False):
+	nb = len(bodies)
+
+	# This is needed for reparameterizing
+	qPrev = [b.q for b in bodies]
+	qdPrev = [b.qd for b in bodies]
+	
+	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext, C_penetration0, C_Y, C_I, C_mass, C_corners, C_NCONEBASIS, C_CONEBASIS, C_mu, C_h)
+	for i in xrange(n):
+		gBodies[i].q  = array(C_Ynext[2*nd*i +  0 : 2*nd*i +  6])
+		gBodies[i].qd = array(C_Ynext[2*nd*i +  6 : 2*nd*i + 12])
+	
+	'''
+	print gBodies[0].q
+	print gBodies[0].qd
+	aaa=1234
+	'''
+	
+	for k in range(nb):
+		# Angular velocity vector calculation (for visualization)
+		r = bodies[k].q[3:6]
+		th = linalg.norm(r)
+		v1,v2,v3 = r
+		if th < 1e-3: coeff = 0.5 - (th**2)/48.
+		else: coeff = sin(0.5*th)/th
+		quat = array([cos(0.5*th),
+			          coeff*v1,
+			          coeff*v2,
+			          coeff*v3])
+		quatd = QuatdFromV(bodies[k].q[3:6], bodies[k].qd[3:6])
+		omega_wc = 2*quat_mult(quatd, quat_conj(quat))[1:4]
+		bodies[k].omega_wc = omega_wc
+	'''
+		# Reparameterize rotation value if needed
+		th = linalg.norm(bodies[k].q[3:6])
+		if th > pi:
+			th = linalg.norm(bodies[k].q[3:6])
+			bodies[k].q[3:6] = (1.-2*pi/th)*bodies[k].q[3:6]
+			qprevmag = linalg.norm(qPrev[k][3:6])
+			qPrev[k][3:6] = (1.-2*pi/qprevmag)*qPrev[k][3:6]
+			bodies[k].qd[3:6] = (bodies[k].q[3:6] - qPrev[k][3:6])/h
+			#print 'Body', k, ' reparmed at frame', gFrame'''
+		
+	minZ = min([cps[2] for cps in bodies[0].getCorners_WC()])
+	cfTotal = 0
+	if hasattr(bodies[0], 'contactPoints'):
+		wc = bodies[0].getCorners_WC()
+		for cp, cf in zip(bodies[0].contactPoints, bodies[0].cf):
+			cfTotal += linalg.norm(cf)
+	
+	#print gFrame, 'minZ :', minZ, '/ posz :', bodies[0].q[2], '/ velz :', bodies[0].qd[2], '/ cfTotal :', cfTotal
+	#print linalg.norm(gBody.omega_wc)
+
+	# Plotting...
+	'''
+	for i in range(6):
+		plotvalues[i].append(gBody.q[i])
+	plotvalues[6].append(linalg.norm(gBody.q[3:6]))
+	'''
+	for i in xrange(n):
+		C_Y[2*nd*i +  0 : 2*nd*i +  6] = gBodies[i].q
+		C_Y[2*nd*i +  6 : 2*nd*i + 12] = gBodies[i].qd
+	return False
+
+def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 	nb = len(bodies)
 
 	qPrev = [b.q for b in bodies]
@@ -368,6 +468,7 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 	nbi = len(inactiveBodies)
 	Minv_a = zeros((6*nba, 6*nba))
 	Minv_i = zeros((6*nbi, 6*nbi))
+	M_i = zeros((6*nbi, 6*nbi)) # for debugging
 	Cqd_a = zeros((6*nba))
 	Cqd_i = zeros((6*nbi))
 	fg_a = zeros((6*nba))
@@ -378,38 +479,19 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 	Qd_i = zeros((6*nbi))
 	q_est = []
 	qd_est = []
-	
-	C_M = C_DBL66()
-	C_Cqd = C_DBL6()
-	C_P = C_DBL3()
-	C_V = C_DBL3()
-	C_PD = C_DBL3()
-	C_VD = C_DBL3()
-	C_I  = C_DBL4()
 		
 	for k in range(nb):
 		bodyk = bodies[k]
 		
-		q_est.append(bodyk.q + h*bodyk.qd)
+		#q_est.append(bodyk.q + h*bodyk.qd)
+		q_est.append(bodyk.q)
 		qd_est.append(bodyk.qd);
 		
 		q_estk = q_est[k]
 		qd_estk = qd_est[k]
 		
-		'''
 		M, Cqd = MassMatrixAndCqdVector(q_estk[0:3], q_estk[3:6],
 	                                    qd_estk[0:3], qd_estk[3:6], bodyk.I)
-		'''
-		
-		
-		C_P[:] = q_estk[0:3]
-		C_V[:] = q_estk[3:6]
-		C_PD[:] = qd_estk[0:3]
-		C_VD[:] = qd_estk[3:6]
-		C_I[:] = bodyk.I
-		C_MassMatrixAndCqdVector(C_M, C_Cqd, C_P, C_V, C_PD, C_VD, C_I)
-		M = array(C_M)
-		Cqd = array(C_Cqd)
 		
 		Minv_k = linalg.inv(M)
 		Cqd_k  = Cqd
@@ -430,6 +512,7 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 			Qd_a[6*kk:6*(kk+1)] = bodyk.qd
 		elif k in inactiveBodies:
 			kk = inactiveBodies.index(k)
+			M_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = M # For debugging
 			Minv_i[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
 			Cqd_i[6*kk:6*(kk+1)] = Cqd_k
 			fg_i[6*kk:6*(kk+1)] = fg
@@ -644,7 +727,7 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		r = bodies[k].q[3:6]
 		th = linalg.norm(r)
 		v1,v2,v3 = r
-		if th < 0.0001: coeff = 0.5 - (th**2)/48.
+		if th < 1e-3: coeff = 0.5 - (th**2)/48.
 		else: coeff = sin(0.5*th)/th
 		quat = array([cos(0.5*th),
 			          coeff*v1,
@@ -670,7 +753,8 @@ def FrameMove(bodies, h, contactForceInfoOnly = False):
 		wc = bodies[0].getCorners_WC()
 		for cp, cf in zip(bodies[0].contactPoints, bodies[0].cf):
 			cfTotal += linalg.norm(cf)
-	print 'minZ :', minZ, '/ posz :', bodies[0].q[2], '/ velz :', bodies[0].qd[2], '/ cfTotal :', cfTotal
+	
+	#print gFrame, 'minZ :', minZ, '/ posz :', bodies[0].q[2], '/ velz :', bodies[0].qd[2], '/ cfTotal :', cfTotal
 	#print linalg.norm(gBody.omega_wc)
 
 	# Plotting...
@@ -786,11 +870,11 @@ di = di.T
 # TEST SET      POS0               ROT0           VEL0        ANGVEL0        BOXSIZE      MASS
 #--------------------------------------------------------------------------------------------------------
 TESTSET = (  # Stationary box
-             ( (0,0,0.5)      , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
+             ( (0,0,500.5)      , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
              # Stationary box slightly rotated in z-axis
-             ( (0,0,0.5)      , (0,0,2)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
+             ( (5,5,10)      , (0.3,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,      2 ),
              # Straight free-fall
-             ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
+             ( (0,0,5)        , (0.1,0.2,0.3) ,  (0,0,0)    , (0,0,0)   ,    (1,2,3)  ,     1 ),
              # z-axis rotating free fall
              ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    ,  (0,0,40) ,   (3,1,1)   ,     1 ),
              # projectile test
@@ -819,7 +903,7 @@ def ExpBodyFromTestSet(i):
 def GetTestSetCount(): return len(TESTSET)
 
 def GoTest():
-	bodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
+	bodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(1), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
 	testFrame = 1000
 	for i in range(testFrame):
 		FrameMove(bodies)
@@ -827,8 +911,11 @@ def GoTest():
 
 
 if __name__ == '__main__':
-	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
-	#gBodies = [ ExpBodyFromTestSet(7) ]
+	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
+	#gBodies = [ ExpBodyFromTestSet(2), ExpBodyFromTestSet(1) ]
+	#gBodies = [ ExpBodyFromTestSet(0) ]
+	gBodies = [ ExpBodyFromTestSet(8) ]
+	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0) ]
 	gNextTestSet = None
 	z0 = 0
 	print 'Initial position :', gBodies[0].q[0:3]
@@ -836,5 +923,36 @@ if __name__ == '__main__':
 	gFrame = 0
 	gWireframe = False
 	gResetState = False
+	
+	gUseCversion = True
+	
+	if gUseCversion == True:
+		nd = 6
+		n = len(gBodies)
+		m = 0
+		nY = 2*nd*n+m
+		C_nd = ct.c_int(nd)
+		C_n = ct.c_int(n)
+		C_m = ct.c_int(m)
+		C_Ynext = (ct.c_double * nY)()
+		C_penetration0 = ct.c_double(alpha0)
+		C_Y = (ct.c_double * nY)()
+		C_I = ((ct.c_double * 4) * n)()
+		C_mass = (ct.c_double * n)()
+		C_corners = (((ct.c_double * 3) * 8) * n)()
+		C_NCONEBASIS = ct.c_int(8)
+		C_CONEBASIS = ((ct.c_double * 3) * 8)()
+		C_mu = ct.c_double(mu)
+		C_h = ct.c_double(h)
+		for i in xrange(n):
+			C_Y[2*nd*i +  0 : 2*nd*i +  6] = gBodies[i].q
+			C_Y[2*nd*i +  6 : 2*nd*i + 12] = gBodies[i].qd
+			C_I[i][0:4] = gBodies[i].I
+			C_mass[i] = gBodies[i].mass
+			for j in xrange(8):
+				C_corners[i][j][0:3] = gBodies[i].corners[j]
+		for i in xrange(8):
+			C_CONEBASIS[i][0:3] = di[:,i]
+	
 	# Let's go!
 	main()

@@ -12,43 +12,16 @@
 #include "umfpack.h"
 #include "ToSparse.h"
 #include "Control.h"
+//#define DEBUG
+#include "DebugPrintDef.h"
+#include "Config.h"
 
 #define __FILE_AND_LINE__(file,line) file "(" #line ")"
 #define FILE_AND_LINE __FILE_AND_LINE__(__FILE__,__LINE__)
 #define __LINESTR__(line) "(" #line ")"
 #define LINESTR __LINESTR__(__LINE__)
 
-#define DECLARE_ZERO_VECTOR(type, valName, size) type valName[(size)]; memset(valName, 0, sizeof(type)*(size))
-#define DECLARE_ONE_VECTOR(valName, size) double valName[(size)]; { int i; for(i=0;i<(size);++i) valName[i]=1.0; }
-#define DECLARE_COPY_VECTOR(valName, size, srcVec) double valName[(size)]; memcpy(valName, srcVec, sizeof(double)*(size))
-#define DECLARE_IDENTITY_MATRIX(valName, size, factor) double valName[size][size]; memset(valName,0,sizeof(double)*(size)*(size)); {int i; for(i=0;i<(size);++i) valName[i][i] = 1.0*factor; }
-#define VECTOR_ADD(n, a, b, factor) {int i; for (i=0;i<n;++i) a[i]+=factor*b[i]; }
-#define SET_COLUMN(A, n, c, b) memcpy(A+n*c, b, sizeof(double)*n)
 
-#if defined(DEBUG)
-    #define PRINT_VECTOR(v, n) { printf(" : Vector " #v " : "); int i; for(i=0;i<n;++i) printf("%10.4lf", v[i]); printf("\n"); }
-    #define PRINT_VECTOR_INT(v, n) { printf(" : Vector " #v " : "); int i; for(i=0;i<n;++i) printf("%3d", v[i]); printf("\n"); }
-    #define PRINT_INT(v) printf(" : " #v " : %d\n", v)
-    #define PRINT_DBL(v) printf(" : " #v " : %lg\n", v)
-    #define PRINT_MATRIX(M,r,c) { printf(" : Matrix " #M " : \n"); int i,j; for(i=0;i<r;++i) { for(j=0;j<c;++j) printf("10.4lf", M[i][j]); printf("\n"); } }
-    #define PRINT_DENSE_MATRIX(M,r,c) \
-        { \
-            printf(" : DMatrix " #M " : \n"); \
-            int i,j; \
-            for(i=0;i<r;++i) { \
-                for(j=0;j<c;++j) \
-                    printf("%10.4lf", M[i + c*j]); \
-                printf("\n"); \
-            } \
-        }
-#else
-    #define PRINT_VECTOR(v,n)
-    #define PRINT_VECTOR_INT(v,n)
-    #define PRINT_INT(v)
-    #define PRINT_DBL(v)
-    #define PRINT_MATRIX(M, r, c)
-    #define PRINT_DENSE_MATRIX(M,r,c)
-#endif
 int allNonnegative(const unsigned int n, double v[n]) {
     unsigned int i;
     for (i = 0; i < n; ++i)
@@ -132,6 +105,12 @@ double Dot(const unsigned int n, double a[n], double b[n])
 
 int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m, double x[m], cholmod_common *cc)
 {
+    /*
+     * compact form of symmetric matrix (storing lower or upper part of matrix only)
+     * must be converted to normal form before passing to this function.
+     */
+    assert(A->stype == 0);
+
     double *null = (double *) NULL ;
     void *Symbolic, *Numeric ;
     double *b = (double *)(bd->x);
@@ -176,7 +155,9 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
     return 0;
 }
 
-int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], double z0[n], cholmod_common *cc) {
+int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, double q[n], double z0[n], cholmod_common *cc) {
+    assert(Mdim == 1 || Mdim == 2);
+
     const double zer_tol = 1e-5;
     const double piv_tol = 1e-8;
     const unsigned int maxiter = (1000<50*n)?1000:50*n;
@@ -280,7 +261,10 @@ int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], dou
         } else {
             entering = leaving - n;
             for (i=0;i<n;++i) {
-                Be[i] = M[i][entering];
+                if (Mdim == 1)
+                    Be[i] = M[i + n*entering];
+                else
+                    Be[i] = M[n*i + entering];
             }
             PRINT_INT(leaving);
             PRINT_INT(n);
@@ -405,7 +389,7 @@ int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], dou
     PRINT_INT(maxBas);
     PRINT_INT(lenZ);
     if (maxBas >= 2*n) {
-        assert(!FILE_AND_LINE "Untested code");
+        //assert(!FILE_AND_LINE "Untested code");
         for (i=lenZ; i<lenZ+(maxBas-lenZ+1); ++i) z[i] = 0;
         lenZ += maxBas-lenZ+1;
 
@@ -420,6 +404,16 @@ int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], dou
     cholmod_free_dense(&B_c, cc);
     cholmod_free_dense(&Be_c, cc);
     return err;
+}
+
+int lemke(const unsigned int n, double zret[n], double M[n][n], double q[n], double z0[n], cholmod_common *cc) {
+    /* The matrix M's (i,j)-element is stored in M[i][j]. */
+    return lemke_internal(n, zret, (double *)M, 2, q, z0, cc);
+}
+
+int lemke_1darray(const unsigned int n, double zret[n], double M[n*n], double q[n], double z0[n], cholmod_common *cc) {
+    /* The matrix M's (i,j)-element is stored in M[i + n*j]. */
+    return lemke_internal(n, zret, M, 1, q, z0, cc);
 }
 
 int lemke_Python(const unsigned int n, double zret[n], double M[n][n], double q[n])
