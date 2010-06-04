@@ -6,7 +6,7 @@ from math import sin, cos
 from scipy import sparse
 from MathUtil import cot
 
-THETA = 0.001       # Threshold for theta
+THETA = 1e-3       # Threshold for theta
 
 def __dRdv(v, th):
     v1, v2, v3 = v

@@ -6,7 +6,7 @@ from math import sin, cos
 from scipy import sparse
 from MathUtil import cot
 
-THETA = 0.001       # Threshold for theta
+THETA = 1e-3       # Threshold for theta
 
 def __MassMatrixAndCqdVector(p, v, th, pd, vd, I):
     p1, p2, p3 = p

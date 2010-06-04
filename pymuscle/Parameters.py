@@ -36,7 +36,7 @@ class BipedParameter:
 		# NOTE: set this in the unit of centimeters.
 		# 1. Body dimension
 
-		self.p['soleLen']           = 50.
+		self.p['soleLen']           = 20.
 		self.p['soleHeight']        = 8.
 		self.p['soleWidth']         = 15.
 
@@ -61,7 +61,7 @@ class BipedParameter:
 		#    Generally, overlapped one gives stable equilibrium condition
 		self.p['trunkThighGap']     = -3.
 		self.p['thighCalfGap']      = -3.
-		self.p['calfSoleGap']       = 0.
+		self.p['calfSoleGap']       = -1.
 		self.p['soleToeGap']        = -3.
 
 		# 3. Other
@@ -302,10 +302,13 @@ class BipedParameter:
 		p7 = c1 + array([ -self['soleWidth']/2,  0, 0])
 		p8 = c2 + array([ -self['thighWidth']/2,  0, -self['thighLen']/2])
 		
+		'''
 		return [ ('hamstring1L', p1,p2, 'soleL', 'thighL'),
 		         ('hamstring2L', p3,p4, 'soleL', 'thighL'),
 		         ('hamstring3L', p5,p6, 'soleL', 'thighL'),
 		         ('hamstring4L', p7,p8, 'soleL', 'thighL') ]
+				 '''
+		return []
 	
 	def getGastro(self):
 		'''
@@ -390,7 +393,7 @@ class BipedParameter:
 			#DEBUGGING END
 			'''
 
-			#pos0[2] += 1.5 # Start from the sky
+			#pos0[2] += 0.5 # Start from the sky
 			
 			name = ll[0]
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
@@ -405,22 +408,23 @@ class BipedParameter:
 				newVel0 = copy(vel0) # Deep copy
 				b = PmBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, 'QUAT_WFIRST')
 				body.append(b)
-				'''
+			    '''
+
 
 		return body
 	
 	def buildFiber(self, availableBodyNames):
 		# Fiber constants for a ligament
-		KSE = 1e5
-		KPE = 0
-		b   = 1e5
+		KSE = 1.          # Should not be 0
+		KPE = 1.
+		b   = 1.          # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
 		# Fiber constants for a muscle fiber
-		KSE = 1
-		KPE = 0.
-		b   = 0.01
+		KSE = 1.            # Should not be 0
+		KPE = 1.
+		b   = 1.         # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)

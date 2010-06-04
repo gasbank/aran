@@ -2,6 +2,12 @@
  * OneRbImp.mac: One rigid body implicit integration equation builder
  * 2010 Geoyeob Kim
  * 
+ * Notes:
+ * 
+ *    - No generalized coordinate used
+ *      (just a plain form of the equations of motion)
+ * 
+ *    - Quaternion parameterization used
  */
 
 load("MyMathFunc.mac");

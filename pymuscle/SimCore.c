@@ -17,7 +17,8 @@
 #include "ToSparse.h"
 #include "Control.h"
 #include "SimCore.h"
-
+#define DEBUG
+#include "DebugPrintDef.h"
 int SimCore_Python(const double h, const int nBody, const int nMuscle,
             const int nd, const int nY,
             double body[nBody][2*nd + 4], double extForce[nBody][6],
@@ -39,8 +40,8 @@ int SimCore_Python(const double h, const int nBody, const int nMuscle,
     return status;
 }
 
-int SimCore(const double h, const int nBody, const int nMuscle,
-            const int nd, const int nY,
+int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle,
+            const unsigned int nd, const unsigned int nY,
             double body[nBody][2*nd + 4], double extForce[nBody][6],
             double muscle[nMuscle][1 + 11], unsigned int musclePair[nMuscle][2],
             double *cost, double ustar[nMuscle],
@@ -49,7 +50,6 @@ int SimCore(const double h, const int nBody, const int nMuscle,
             cholmod_sparse *Fsp,cholmod_common *c)
 {
     assert( nY == 2*nd*nBody + nMuscle );
-    const unsigned int matSize = nY;
 
     TripletMatrix *dfdY_R[nBody]; /* be allocated by the function 'ImpAll()' */
     TripletMatrix *dfdY_Q[nMuscle]; /* be allocated by the function 'ImpAll()' */
@@ -101,13 +101,13 @@ int SimCore(const double h, const int nBody, const int nMuscle,
                                         dfdY_merged->Tx,
                                         Ap, Ai, Ax, Map);
     assert(status == UMFPACK_OK);
-    /* Ap[n_col] or Ap[matSize] is the number of nonzeros in the sparse matrix. */
-    //printf("dfdY_merged nz = %d\n", Ap[matSize]);
+    /* Ap[n_col] or Ap[nY] is the number of nonzeros in the sparse matrix. */
+    //printf("dfdY_merged nz = %d\n", Ap[nY]);
 
     double Control [UMFPACK_CONTROL];
     Control[UMFPACK_PRL] = 5;
     /*
-    umfpack_di_report_matrix(matSize, matSize, Ap, Ai, Ax, 1, Control);
+    umfpack_di_report_matrix(nY, nY, Ap, Ai, Ax, 1, Control);
     */
 
 
@@ -119,24 +119,26 @@ int SimCore(const double h, const int nBody, const int nMuscle,
      *               (identity matrix)        d f
      * tripletA  =  -------------------  -  ------
      *                      h                 d Y
+     *
+     *  tripletA is the matrix P in the thesis.
      */
-    int tripletA_nzMax = matSize + Ap[matSize];
-    TripletMatrix *tripletA = tm_allocate(matSize, matSize, tripletA_nzMax);
-    for (j = 0; j < matSize; ++j)
+    int tripletA_nzMax = nY + Ap[nY];
+    TripletMatrix *tripletA = tm_allocate(nY, nY, tripletA_nzMax);
+    for (j = 0; j < nY; ++j)
     {
         tm_add_entry(tripletA, j, j, 1./h);
     }
-    int Tj[Ap[matSize]];
-    status = umfpack_di_col_to_triplet (matSize, Ap, Tj) ;
+    int Tj[Ap[nY]];
+    status = umfpack_di_col_to_triplet (nY, Ap, Tj) ;
     assert(status == UMFPACK_OK);
     /* We can access dfdY by using Ai (row indices), Tj (column indices) and Ax (numerical values). */
-    /* Number of nonzero values is Ap[matSize]. */
-    for (j = 0; j < Ap[matSize]; ++j)
+    /* Number of nonzero values is Ap[nY]. */
+    for (j = 0; j < Ap[nY]; ++j)
     {
         tm_add_entry(tripletA, Ai[j], Tj[j], - Ax[j]);
     }
     /* tripletA is constructed. Convert it to column-compressed format. */
-    int tripAp[matSize + 1];
+    int tripAp[nY + 1];
     int tripAi[tripletA_nzMax];
     int *tripMap = 0;
     double tripAx[tripletA_nzMax];
@@ -148,9 +150,9 @@ int SimCore(const double h, const int nBody, const int nMuscle,
                                         tripletA->Tx,
                                         tripAp, tripAi, tripAx, tripMap);
     assert(status == UMFPACK_OK);
-    //printf("tripletA nonzeros = %d\n", tripAp[matSize]);
+    //printf("tripletA nonzeros = %d\n", tripAp[nY]);
 
-    //umfpack_di_report_matrix(matSize, matSize, tripAp, tripAi, tripAx, 1, Control);
+    //umfpack_di_report_matrix(nY, nY, tripAp, tripAi, tripAx, 1, Control);
 
     tripletA = tm_free(tripletA);
     dfdY_merged = tm_free(dfdY_merged);
@@ -166,10 +168,10 @@ int SimCore(const double h, const int nBody, const int nMuscle,
      */
     double *null = (double *) NULL ;
     void *Symbolic, *Numeric ;
-    int n = matSize;
+    int n = nY;
     double *b = f;
-    double x[matSize];
-    double DT[nMuscle][matSize]; /* Transpose of D */
+    double x[nY];
+    double DT[nMuscle][nY]; /* Transpose of D */
 
     status = umfpack_di_symbolic (n, n, tripAp, tripAi, tripAx, &Symbolic, null, null) ;
     if (status)
@@ -181,7 +183,18 @@ int SimCore(const double h, const int nBody, const int nMuscle,
     if (status)
     {
         V_UMF_STATUS(status);
-        return -20;
+        if (status == UMFPACK_WARNING_singular_matrix)
+        {
+            /*
+            double Ctrl[UMFPACK_CONTROL];
+            Ctrl[UMFPACK_PRL] = 5;
+            printf("====== Matrix P =======\n");
+            umfpack_di_report_matrix(nY, nY, tripAp, tripAi, tripAx, 1, Ctrl);
+            printf("====== Matrix dfdY =======\n");
+            umfpack_di_report_matrix(nY, nY, Ap, Ai, Ax, 1, Ctrl);
+            */
+            exit(-123);
+        }
     }
     umfpack_di_free_symbolic (&Symbolic) ;
     /*
@@ -207,48 +220,60 @@ int SimCore(const double h, const int nBody, const int nMuscle,
             E[i] = Yl_i - Ydesired[i] + C_i;
         }
     }
+    assert(i == 2*nd*nBody); /* i start from 2*nd*nBody */
+    for (k = 0; k < nMuscle; ++k, ++i)
+    {
+        double C_i  = x[i];
+        E[i] = - Ydesired[i] + C_i;
+    }
+    assert(i == nY);
     /*
      * Calculate the sparse matrix D = P^-1 G
      * Result: Dsp
      */
-    double g[matSize];
+    double g[nY];
     for (k = 0; k < nMuscle; ++k)
     {
-        memset(g, 0, sizeof(double) * matSize);
-
-        double k_se = muscle[k][0 /* k_se */];
-        double b    = muscle[k][2 /*   b  */];
-        //g[2*nd*nBody + k] = k_se / b;
-        g[2*nd*nBody + k] = 1;
+        memset(g, 0, sizeof(double) * nY);
+        const double k_se = muscle[k][0 /* k_se */];
+        const double b    = muscle[k][2 /*   b  */];
+        g[2*nd*nBody + k] = k_se / b;
+        //g[2*nd*nBody + k] = 1;
         umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, DT[k], g, Numeric, null, null) ;
     }
 
-    cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, matSize, DT, c);
+    cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, nY, DT, c);
 
     double Dustar[nY];
     control(nY, nMuscle, ustar, Dustar, W_Ysp, W_usp, Dsp, Fsp, E, c);
 
-    printf("u* :");
-    for (k = 0; k < nMuscle; ++k)
-        printf("%12.4lf", ustar[k]);
-    printf("\n");
-
     /*
      * Evaluate the cost function
      */
+    const double alpha[2]     = {  1,  0 };
+    const double alpha_neg[2] = { -1,  0 };
+    const double beta[2]      = {  1,  0 };
+    const double beta0[2]     = {  0,  0 };
     double ustar_extended[nY];
     memset(ustar_extended, 0, sizeof(double) * 2*nd*nBody);
     memcpy(ustar_extended+2*nd*nBody, ustar, sizeof(double) * nMuscle);
+    cholmod_dense *Fustard = cholmod_allocate_dense(nY,       1,       nY, CHOLMOD_REAL, c);
+    cholmod_dense *ustard  = cholmod_allocate_dense(nMuscle,  1,  nMuscle, CHOLMOD_REAL, c);
+    memcpy(ustard->x, ustar, sizeof(double)*nMuscle);
+    cholmod_sdmult(Fsp, 0, alpha, beta0, ustard, Fustard, c);
     double _cost = 0;
     for (k = 0; k < nY; ++k)
     {
-        double duek = Dustar[k] + E[k];
+        const double duek = Dustar[k] + E[k];
         _cost += w_y[k] * duek * duek;
-        _cost += w_u[k] * ustar_extended[k] * ustar_extended[k];
+        const double Fustardk = ((double *)(Fustard->x))[k];
+        _cost += w_u[k] * Fustardk * Fustardk;
     }
     *cost = _cost;
 
-    cholmod_free_sparse(&Dsp, c);
+    cholmod_free_sparse(&Dsp,     c);
+    cholmod_free_dense (&Fustard, c);
+    cholmod_free_dense (&ustard,  c);
 
     umfpack_di_free_numeric (&Numeric) ;
     //for (j = 0 ; j < 3 ; j++) printf ("x [%d] = %g  ", j, x [j]) ;
@@ -257,16 +282,16 @@ int SimCore(const double h, const int nBody, const int nMuscle,
     for (k = 0; k < nBody; ++k)
     {
         /* Update p(3), q(4), pd(3), qd(4) for each body */
-        for (j = 0; j < 14; ++j)
+        for (j = 0; j < 2*nd; ++j)
         {
-            body[k][j] += x[k*14 + j];
-            body[k][j] += Dustar[k*14 + j];
+            body[k][j] += x[2*nd*k + j];
+            body[k][j] += Dustar[2*nd*k + j];
         }
     }
     for (k = 0; k < nMuscle; ++k)
     {
-        muscle[k][4 /* watch out! */] += x[nBody*14 + k];
-        muscle[k][4 /* watch out! */] += Dustar[nBody*14 + k];
+        muscle[k][4 /* T ... watch out! */] += x[2*nd*nBody + k];
+        muscle[k][4 /* T ... watch out! */] += Dustar[2*nd*nBody + k];
     }
     return 0; /* GOOD */
 }

@@ -29,6 +29,7 @@ const double       NORMAL3[3] = {0,0,1};
 /* For sparse-dense multiplication of cholmod package */
 const double alpha[2]  =  {  1,  0 };
 const double beta[2]    = {  1,  0 };
+const double beta0[2]    = {  0,  0 };
 
 void PrintEntireSparseMatrix(cholmod_sparse *M_sp) {
     double Ctrl[UMFPACK_CONTROL];
@@ -604,11 +605,14 @@ int ReparameterizeExpRot(const unsigned int nd, const unsigned int n, const unsi
 
 int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             double Ynext[2*nd*n + m],
+            double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
             const double Y [2*nd*n + m], const double I[n][4], const double mass[n],
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
             const double mu, const double h,
+            /* if 0 explicit integration occurs, otherwise only contact information is calculated */
+            const int contactForceInfoOnly,
             cholmod_common *cc) {
     assert(Y != Ynext);
     const double nY = 2*nd*n + m;
@@ -627,6 +631,12 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                         activeBodies, &lenActiveBodies,
                         inactiveBodies, &lenInactiveBodies,
                         Y, corners, penetration0);
+
+    memset(lenContactForces, 0, sizeof(double)*n);
+    if (lenActiveBodies == 0 && contactForceInfoOnly) {
+        /* No needed to proceed further */
+        return 0;
+    }
     int i, j;
     /*********************************
      *  1. Active
@@ -687,7 +697,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         if (fabs(wtz) > 1e-5) {
             PRINT_FLH;
             printf(" ************ LCP failed: wtz = %lg\n", wtz);
-            exit(-123);
+            //exit(-123);
         }
 
         PRINT_DENSE_VECTOR(x_opt_den);
@@ -738,7 +748,60 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         }
 
         PRINT_VECTOR(Ynext, nY);
+        /*
+        Python code:
 
+        # For contact force visualization
+		for b in bodies:
+			b.cf = [] # Clear contact force visualization data
+		for (kp, cp), k in zip(activeCorners, range(p)):
+			# kp: Body index
+			# cp: Corner index
+			kk = activeBodies.index(kp)
+			fric = dot(D[6*kk:6*(kk+1),8*k:8*(k+1)], beta[8*k:8*(k+1)])
+			nor  = dot(N[6*kk:6*(kk+1),k], cn[k])
+			cf   = (fric[0:3] + nor[0:3]) / h
+			bodies[kp].cf.append(cf)
+        */
+        /* Calculate contact forces in Cartesian coordinates */
+        for (i=0; i<lenActiveCorners; ++i) {
+            const unsigned int kp = activeCorners[i][0]; /* body index */
+            const unsigned int cp = activeCorners[i][1]; /* corner index */
+            const unsigned int kk = Index(lenActiveBodies, activeBodies, kp); /* body index among active bodies */
+
+            int rsetD[nd];         for (j=0; j<nd;         ++j) rsetD[j] = nd*kk        + j;
+            int csetD[NCONEBASIS]; for (j=0; j<NCONEBASIS; ++j) csetD[j] = NCONEBASIS*i + j;
+            cholmod_sparse *Dsub_sp     = cholmod_submatrix(lcpSm.D_sp, rsetD, nd, csetD, NCONEBASIS, 1, 1, cc);
+            cholmod_dense  *betasub_den = cholmod_allocate_dense(NCONEBASIS, 1, NCONEBASIS, CHOLMOD_REAL, cc);
+            cholmod_dense  *fric_den    = cholmod_allocate_dense(nd,         1, nd,         CHOLMOD_REAL, cc);
+            memcpy(betasub_den->x, beta + NCONEBASIS*i, sizeof(double)*NCONEBASIS);
+            cholmod_sdmult(Dsub_sp, 0, alpha, beta0, betasub_den, fric_den, cc);
+            cholmod_free_sparse(&Dsub_sp, cc);
+            cholmod_free_dense(&betasub_den, cc);
+
+            int rsetN[nd];         for (j=0; j<nd;         ++j) rsetN[j] = nd*kk        + j;
+            int csetN[1];          csetN[0] = i;
+            cholmod_sparse *Nsub_sp     = cholmod_submatrix(lcpSm.N_sp, rsetN, nd, csetN, 1, 1, 1, cc);
+            cholmod_dense  *cnsub_den   = cholmod_allocate_dense(1, 1, 1, CHOLMOD_REAL, cc);
+            ((double *)(cnsub_den->x))[0] = cn[i];
+            cholmod_scale(cnsub_den, CHOLMOD_SCALAR, Nsub_sp, cc);
+            cholmod_dense  *nor_den     = cholmod_sparse_to_dense(Nsub_sp, cc);
+            cholmod_free_sparse(&Nsub_sp, cc);
+            cholmod_free_dense(&cnsub_den, cc);
+
+            double *fric = (double *)(fric_den->x);
+            double *nor  = (double *)(nor_den->x);
+            double cf[3];
+            cf[0] = (fric[0]+nor[0])/h;
+            cf[1] = (fric[1]+nor[1])/h;
+            cf[2] = (fric[2]+nor[2])/h;
+            cholmod_free_dense(&fric_den, cc);
+            cholmod_free_dense(&nor_den, cc);
+
+            contactPoints[kp][ lenContactForces[kp] ] = cp;
+            memcpy(contactForces[kp][ lenContactForces[kp] ], cf, sizeof(double)*3);
+            ++lenContactForces[kp];
+        }
 
         cholmod_free_sparse(&LCP_M_sp,     cc);
         cholmod_free_dense(&LCP_q_den,     cc);
@@ -751,6 +814,11 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         cholmod_free_dense(&LCP_w, cc);
         cholmod_free_dense(&x_opt_den, cc);
         FreeLcpSubmatrices(&lcpSm, cc);
+    }
+
+    if (contactForceInfoOnly) {
+        /* No needed to proceed further */
+        return 0;
     }
 
     /*********************************
@@ -801,18 +869,19 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
     return 0;
 }
 
-
 int LCP_exp_Python(const unsigned int nd, const unsigned int n, const unsigned int m,
             double Ynext[2*nd*n + m],
+            double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
             const double Y [2*nd*n + m], const double I[n][4], const double mass[n],
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
-            const double mu, const double h) {
+            const double mu, const double h, const int contactForceInfoOnly) {
     cholmod_common c ;
     cholmod_start (&c) ;
-    return LCP_exp(nd, n, m, Ynext, penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, &c);
+    int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
     cholmod_finish(&c);
+    return status;
 }
 
 int LCP_exp_test() {
@@ -836,7 +905,7 @@ int LCP_exp_test() {
     memset(Y, 0, sizeof(double)*nY);
     memset(mass, 0, sizeof(double)*n);
 
-    Y[2] = 10; /* start from the sky */
+    Y[2] = 5; /* start from the sky */
     /* slightly rotated */
     Y[3] = 0.3;
     Y[4] = 0.2;
@@ -864,10 +933,16 @@ int LCP_exp_test() {
     cholmod_common c ;
     cholmod_start (&c) ;
     int status = 0;
-    const unsigned int iter = 1000000;
+
+    double contactForces[n][8][3];
+    unsigned int lenContactForces[n];
+    unsigned int contactPoints[n][8];
+
+    const unsigned int iter = 100000;
     int it;
     for (it = 0; it < iter; ++it) {
-        status = LCP_exp(nd, n, m, Ynext, penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, &c);
+        status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints,
+                         penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, 0, &c);
         if (it % 1000 == 0)
             printf("== Frame %5d ==\n", it);
         PRINT_VECTOR(Y, nY);

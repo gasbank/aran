@@ -56,10 +56,12 @@
 			<Add directory="/home/jonu/src/lib/atlas/lib" />
 			<Add directory="/home/johnu/src/blas" />
 		</Linker>
+		<Unit filename="Config.h" />
 		<Unit filename="Control.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="Control.h" />
+		<Unit filename="DebugPrintDef.h" />
 		<Unit filename="ExpBodyMoEq_real.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -88,6 +90,10 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="SimCore.h" />
+		<Unit filename="SymbolicTensor.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="SymbolicTensor.h" />
 		<Unit filename="ToSparse.c">
 			<Option compilerVar="CC" />
 		</Unit>
@@ -101,10 +107,14 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="dRdv_real.h" />
+		<Unit filename="fibDiffW.c">
+			<Option compilerVar="CC" />
+		</Unit>
 		<Unit filename="lemke.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="lemke.h" />
+		<Unit filename="macFiberInputVectorDef.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

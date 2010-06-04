@@ -29,8 +29,9 @@ cholmod_sparse *ToSparse(int row, int col, double mat[row][col], cholmod_common 
     {
         for (j = 0; j < col; ++j)
         {
-            if (!isfinite(mat[i][j]) || isinf(mat[i][j]))
+            if (isinf(mat[i][j]) || isnan(mat[i][j]))
             {
+                printf(" ??? NAN or INFINITE ???\n");
                 printf("mat[%d][%d] = %lf\n", i, j, mat[i][j]);
             }
 

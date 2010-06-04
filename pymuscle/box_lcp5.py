@@ -30,6 +30,7 @@ from Parameters import *
 import box_lcp3_exp_multibody as BLEM
 import ExpBody
 from dRdv_real import GeneralizedForce, QuatdFromV
+import copy
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
@@ -233,6 +234,13 @@ def Draw():
 	
 	FrameMove()
 	
+	#print gCon.body[0].q, gCon.body[0].qd
+	#print gCon.body[1].q, gCon.body[1].qd
+	'''
+	if gFrame == 375:
+		sys.exit(0)
+	'''
+	
 	Prerender()
 	RenderPerspectiveWindow()
 	if gRunMode == 'MOCAP':
@@ -346,7 +354,7 @@ def RenderFrontCameraWindow():
 	glPopAttrib()
 	
 	DrawBiped(gCon.body, drawAxis=True, wireframe=True)
-	DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
+	#DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -586,7 +594,7 @@ def RenderSideCameraWindow():
 	glPopAttrib()
 	
 	DrawBiped(gCon.body, drawAxis=True, wireframe=True)
-	DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
+	#DrawBiped(gCon.body0, drawAxis=True, wireframe=True)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -710,7 +718,7 @@ def RenderPerspectiveWindow():
 	#RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
 
 	DrawBiped(gCon.body, drawAxis=True, wireframe=False)
-	DrawBiped(gCon.body0, drawAxis=True, wireframe=False)
+	#DrawBiped(gCon.body0, drawAxis=True, wireframe=False)
 	DrawBipedFibers()
 	DrawBipedContactPoints()
 	DrawBipedContactForces()
@@ -797,8 +805,13 @@ def FrameMove_ImpInt():
 		C_muscle[i][6:9] = localorg
 		C_muscle[i][9:12] = localins
 	
+	#
+	# Convert 3+4(quat) state vector to 3+3(exp) state vector
+	# to pass the data to LCP code and get contact force information
+	#
 	footBodyNames = [b.name for b in gCon.body]
 	footBodies = [] # An array of 'ExpBody'
+	footBodies2 = []
 	for fb in footBodyNames:
 		fbi = gCon.findBodyIndex(fb)
 		fbb = gCon.body[fbi]
@@ -826,25 +839,33 @@ def FrameMove_ImpInt():
 			else:
 				continue
 			fiberVec = GetFiberVector_WC(fiber)
-			fiberVec /= linalg.norm(fiberVec)
-			q_estk = expBody.q + gCon.h*expBody.qd
-			muscleTension = GeneralizedForce(q_estk[3:6],
+			fiberVecLen = linalg.norm(fiberVec)
+			if fiberVecLen < 1e-8:
+				# Degenerate case: assume no force generated from this fiber
+				pass
+			else:
+				fiberVec /= fiberVecLen
+				q_estk = expBody.q + gCon.h*expBody.qd # Estimated next step state position
+				muscleTension = GeneralizedForce(q_estk[3:6],
 			                                 tensionSign * fiberVec * fiber.T,
 			                                 attachedLocalPos)
-			expBody.extForce += muscleTension
-		
+				expBody.extForce += muscleTension
+				
 		footBodies.append(expBody)
-	'''	
-	print gFrame
-	print 'B', footBodies[0].name,
-	for vv in footBodies[0].q:
-		print ' %10.4f' % vv,
-	for vv in footBodies[0].qd:
-		print ' %10.4f' % vv,
-	print
+		footBodies2.append(copy.deepcopy(expBody))
+	
+	# Run LCP (Python version)
+	BLEM.FrameMove_PythonVersion(footBodies, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
+	# Run LCP (C version)
+	BLEM.FrameMove_CVersion(footBodies2, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+
+	#print gFrame, footBodies[1].cf, footBodies[1].contactPoints
 	'''
-	# Run LCP
-	contactInfo = BLEM.FrameMove(footBodies, gCon.h, True)
+	print gFrame, footBodies[0].q[0:3]
+	wcc = footBodies[0].getCorners_WC()
+	for i in xrange(8):
+		print wcc[i]
+	'''
 	
 	#
 	# IS THIS RIGHT?
@@ -885,22 +906,24 @@ def FrameMove_ImpInt():
 		if hasattr(bodyk, 'cf') and len(bodyk.cf) > 0:
 			gBodyk.cf = bodyk.cf[:]
 	
-	if contactInfo is not None:
-		for (kp, cp) in contactInfo:
-			# kp: Body index
-			# cp: Corner index
-			cf_wc = footBodies[kp].cf.pop(0)
+	
+	for b in footBodies:
+		if not hasattr(b, 'contactPoints'):
+			continue
+		for c in xrange(len(b.contactPoints)):
+			cf_wc = b.cf[c]
 			assert len(cf_wc) == 3
-			fbi = gCon.findBodyIndex(footBodies[kp].name)
+			fbi = gCon.findBodyIndex(b.name)
 			#fbb = gCon.body[fbi]
+			cp = b.contactPoints[c]
 			
 			#print footBodyNames[kp], ':', cf
 			
 			# Resultant force in 'world' coordinates
 			C_extForce[fbi][0:3] += cf_wc
 			
-			r_bc = footBodies[kp].corners[cp]
-			cf_bc = footBodies[kp].localVec(cf_wc)
+			r_bc = b.corners[cp]
+			cf_bc = b.localVec(cf_wc)
 			resTorque_bc = cross(r_bc, cf_bc)
 			# Resultant torque in 'body' coordinates
 			C_extForce[fbi][3:6] += resTorque_bc
@@ -913,39 +936,48 @@ def FrameMove_ImpInt():
 	C_w_y = DBL_nY()
 	C_w_u = DBL_nY()
 	
-	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
-	C_w_u[nY-nMuscle + 0 ] = 1e30
-	C_w_u[nY-nMuscle + 1 ] = 1e-8
-	C_w_u[nY-nMuscle + 2 ] = 1e-8
-	C_w_u[nY-nMuscle + 3 ] = 1e-8
-	C_w_u[nY-nMuscle + 4 ] = 1e-8
-	'''
-	for i in range(nY):
-		if i < nY - nMuscle:
-			C_w_u[i] = 0.
-		else:
-			C_w_u[i] = 0.01 # Do not care about energy efficiency seriously...
-	'''
+	
+	#
+	# Setting Ydesired (C_Ydesired)
+	#
 	for i in range(nBody):
 		C_Ydesired[ 14*i     : 14*i + 7  ] = gCon.body0[i].q
 		C_Ydesired[ 14*i + 7 : 14*i + 14 ] = gCon.body0[i].qd
-		
+	#
+	# Setting W_Y (C_w_y)
+	#
+	'''
+	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
+	C_w_u[nY-nMuscle + 0 ] = 0
+	C_w_u[nY-nMuscle + 1 ] = 0
+	C_w_u[nY-nMuscle + 2 ] = 0
+	C_w_u[nY-nMuscle + 3 ] = 0
+	C_w_u[nY-nMuscle + 4 ] = 0
+	'''
+	#
+	# Setting W_u (C_w_u)
+	#
+	'''
 	i = gCon.findBodyIndex('calfL')
-	C_w_y[14*i    : 14*i +  3] = [20000,0,0] # linear position weight
-	C_w_y[14*i+3  : 14*i +  7] = [20000,]*4 # angular position weight
-	C_w_y[14*i+7  : 14*i + 10] = [20000,2,2]  # linar velocity weight (suppress moving in x-direction)
-	C_w_y[14*i+10 : 14*i + 14] = [2,]*4  # angular velocity weight
+	C_w_y[14*i    : 14*i +  3] = [20000,20000,20000] # linear position weight
+	C_w_y[14*i+3  : 14*i +  7] = [20000,20000,20000,20000] # angular position weight
+	C_w_y[14*i+7  : 14*i + 10] = [20000,20000,20000]  # linar velocity weight (suppress moving in x-direction)
+	C_w_y[14*i+10 : 14*i + 14] = [20000,20000,20000,20000]  # angular velocity weight
 	i = gCon.findBodyIndex('soleL')
 	C_w_y[14*i    : 14*i +  3] = [20000,]*3 # linear position weight
 	C_w_y[14*i+3  : 14*i +  7] = [20000,]*4 # angular position weight
 	C_w_y[14*i+7  : 14*i + 10] = [20000,]*3  # linar velocity weight
 	C_w_y[14*i+10 : 14*i + 14] = [20000,]*4  # angular velocity weight
 	
-	C_w_y[2*nd*nBody + 0] = 0  # ligament tension value
-	C_w_y[2*nd*nBody + 1] = 0  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 2] = 0  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 3] = 0  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 4] = 0  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 0] = 1e-5  # ligament tension value
+	C_w_y[2*nd*nBody + 1] = 1e-5  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 2] = 1e-5  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 3] = 1e-5  # muscle fiber tension value
+	C_w_y[2*nd*nBody + 4] = 1e-5  # muscle fiber tension value
+	'''
+	C_w_y[0            : 2*nd*nBody] = [1e6,]*(2*nd*nBody)
+	C_w_y[0+2*nd*nBody :           ] = [1e-6]*(nMuscle)
+	
 		
 	'''
 	idx = gCon.findBodyIndex('calfL')
@@ -960,8 +992,7 @@ def FrameMove_ImpInt():
 	C_SimCore(C_h, C_nBody, C_nMuscle, C_nd, C_nY,
 	          C_body, C_extForce, C_muscle, C_musclePair,
 	          ct.byref(C_cost), C_ustar, C_Ydesired, C_w_y, C_w_u)
-	
-	print C_cost
+	print gFrame, '/', C_cost.value, '/', C_ustar[:]
 
 	# Retrieve the result from the simcore and update our states
 	for i in range(nBody):
@@ -1257,6 +1288,8 @@ insertionPos = [%f, %f, %f];   # Insertion muscle attached pos (in insertion bod
 	f.write(');\n')
 	
 	f.close()
+	
+
 if __name__ == '__main__':
 	gFrame   = 0
 	gWorkDir = '/home/johnu/pymuscle/'
@@ -1310,6 +1343,8 @@ if __name__ == '__main__':
 		gCon.fibers = []
 		gCon.body[0].q = array([0,0,10,0,math.pi/2,0])
 		
-		
+	C_NCONEBASIS, C_CONEBASIS = BLEM.BuildConeBasisForC()
+	di = BLEM.BuildConeBasis()
+	
 	Main(gCon)
 	

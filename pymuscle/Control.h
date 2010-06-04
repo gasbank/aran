@@ -7,7 +7,7 @@ int control(const unsigned int nY, const unsigned int m,
             double ustar[m], double Dustar[nY],
             cholmod_sparse *W_Ysp, cholmod_sparse *W_usp,
             cholmod_sparse *Dsp, cholmod_sparse *Fsp,
-            double E[nY], cholmod_common *c);
+            const double E[nY], cholmod_common *c);
 
 void PrintUmfStatus(int status, const char *file, int line);
 #define V_UMF_STATUS(status) PrintUmfStatus(status, __FILE__, __LINE__)

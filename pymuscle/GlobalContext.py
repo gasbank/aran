@@ -15,11 +15,11 @@ class GlobalContext:
 		assert rotParam in ['EULER_XYZ', 'EULER_ZXZ', 'QUAT_WFIRST']
 		
 		# Friction coefficient
-		self.mu = 1.4
+		self.mu = 1.5
 		# Simulation Timestep
 		self.h = 0.0025
 		# Contact threshold
-		self.alpha0 = 0.02
+		self.alpha0 = 0.
 		# Eight basis of friction force
 		self.di = [ (1, 0, 0),
 		            (cos(pi/4), sin(pi/4), 0),

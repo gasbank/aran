@@ -30,7 +30,8 @@
 #include "umfpack.h"
 #include "cholmod.h"
 #include "Control.h"
-
+#define DEBUG
+#include "DebugPrintDef.h"
 void PrintUmfStatus(int status, const char *file, int line)
 {
     if (status == UMFPACK_OK)
@@ -57,7 +58,7 @@ int control(const unsigned int nY, const unsigned int m,
             double ustar[m], double Dustar[nY],
             cholmod_sparse *W_Ysp, cholmod_sparse *W_usp,
             cholmod_sparse *Dsp, cholmod_sparse *Fsp,
-            double E[nY], cholmod_common *c)
+            const double E[nY], cholmod_common *c)
 {
     double alpha[2]     = {  1,  0 };
     double alpha_neg[2] = { -1,  0 };
@@ -76,8 +77,12 @@ int control(const unsigned int nY, const unsigned int m,
     cholmod_dense  *ustard   = cholmod_allocate_dense(m , 1, m , CHOLMOD_REAL, c);
     cholmod_dense  *Dustard  = cholmod_allocate_dense(nY, 1, nY, CHOLMOD_REAL, c);
     memcpy(Ed->x, E, sizeof(double)*nY);
+    /* Set bd */
     cholmod_sdmult(DTWYsp, 0, alpha_neg, beta0, Ed, bd, c);
 
+    cholmod_sparse *ATsp  = 0;
+    cholmod_sparse *ATAsp = 0;
+    cholmod_dense  *ATbd  = 0;
 //    cholmod_print_sparse(Dsp,   "D",         c);
 //    cholmod_print_sparse(W_Ysp, "W_Y",       c);
 //    cholmod_print_sparse(WYDsp, "W_Y * D",   c);
@@ -89,6 +94,8 @@ int control(const unsigned int nY, const unsigned int m,
 //    cholmod_print_dense (Ed,    "E", c);
 //    cholmod_print_dense (bd,    "b", c);
 
+    double Ctrl[UMFPACK_CONTROL];
+    Ctrl[UMFPACK_PRL] = 5;
 
     /*
      * Solve the linear system...
@@ -115,10 +122,42 @@ int control(const unsigned int nY, const unsigned int m,
         V_UMF_STATUS(status);
         if (status == UMFPACK_WARNING_singular_matrix)
         {
-            double Ctrl[UMFPACK_CONTROL];
-            Ctrl[UMFPACK_PRL] = 5;
+            printf("Control - A in Ax=b is singular. Try least squares...\n");
             umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
-            exit(-123);
+            //exit(-123);
+
+
+
+
+            /* Transform AT*A*x = AT*b (least squares) */
+            umfpack_di_free_symbolic (&Symbolic) ;
+            umfpack_di_free_numeric(&Numeric);
+
+            ATsp  = cholmod_transpose(A, 1, c);
+            ATAsp = cholmod_aat(ATsp, 0, 0, 1, c);
+            ATbd  = cholmod_allocate_dense(m, 1, m, CHOLMOD_REAL, c);
+            /* Set ATb */
+            cholmod_sdmult(ATsp, 0, alpha, beta0, bd, ATbd, c);
+
+            b = (double *)(ATbd->x);
+            Ap = (int *)(ATAsp->p);
+            Ai = (int *)(ATAsp->i);
+            Ax = (double *)(ATAsp->x);
+
+            status = umfpack_di_symbolic (m, m, Ap, Ai, Ax, &Symbolic, null, null) ;
+            if (status)
+            {
+                V_UMF_STATUS(status);
+                printf("No way out.\n");
+                exit(-99);
+            }
+            status = umfpack_di_numeric (Ap, Ai, Ax, Symbolic, &Numeric, null, null) ;
+            if (status)
+            {
+                V_UMF_STATUS(status);
+                printf("No way out.\n");
+                exit(-88);
+            }
         }
 
     }
@@ -130,13 +169,36 @@ int control(const unsigned int nY, const unsigned int m,
         //return (-30) ;
     }
     umfpack_di_free_numeric(&Numeric);
+    //PRINT_VECTOR(b, m);
+    //PRINT_VECTOR(ustar, m);
+    SANITY_VECTOR(b, m);
+    SANITY_VECTOR(ustar, m);
 
     /* Copy the data from 'ustar' to the cholmod_dense variable 'ustard' */
     memcpy(ustard->x, ustar, sizeof(double)*m);
+    /* Calculate ||A*ustar - b||^2 to check the correctness */
+    int k;
+    cholmod_dense *Austard = cholmod_allocate_dense(m, 1, m, CHOLMOD_REAL, c);
+    cholmod_sdmult(A, 0, alpha, beta0, ustard, Austard, c);
+    double Austar_b[m]; for (k=0; k<m; ++k) Austar_b[k]=((double *)(Austard->x))[k]-b[k];
+    double Austar_b_norm_sq = 0; for (k=0; k<m; ++k) Austar_b_norm_sq += Austar_b[k]*Austar_b[k];
+    //printf("Austar_b_norm_sq = %14lg\n", Austar_b_norm_sq);
+
     /* Calculate D*ustar */
     cholmod_sdmult(Dsp, 0, alpha, beta0, ustard, Dustard, c);
     /* Copy 'Dustard' to 'Dustar' */
     memcpy(Dustar, Dustard->x, sizeof(double)*nY);
+
+    /* DEBUG */
+    //umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
+    //PRINT_VECTOR(b, m);
+
+    /*
+    printf("u* :");
+    for (k = 0; k < m; ++k)
+        printf("%14lg", ustar[k]);
+    printf("\n");
+    */
 
     cholmod_free_sparse(&DTsp,    c);
     cholmod_free_sparse(&FTsp,    c);
@@ -149,6 +211,10 @@ int control(const unsigned int nY, const unsigned int m,
     cholmod_free_dense (&bd,      c);
     cholmod_free_dense (&ustard,  c);
     cholmod_free_dense (&Dustard, c);
+
+    cholmod_free_sparse(&ATsp,    c);
+    cholmod_free_sparse(&ATAsp,   c);
+    cholmod_free_dense (&ATbd,    c);
     return 0;
 }
 

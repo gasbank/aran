@@ -10,7 +10,7 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{A biomechanical approach on biped dynamics}
+\title{A Biomechanical Approach to Biped Dynamics}
 
 \author{Geoyeob Kim\\
 Computer Graphics Lab., KAIST
@@ -44,120 +44,126 @@ Computer Graphics Lab., KAIST
 \setcounter{page}{1}
 
 \section{Introduction}
-A character animation technique related to bipedal characters is
-a interesting research topic since it is an essential component
-of every movie and video game. There has been a lot of approaches
-to synthesize the character motion with a physically-simulated manner.
-By designing and controlling the character
-with a consistent dynamics model, a realistic and physically correct
-motion can be synthesized automatically instead of key-framing the motion
-manually. The prevalent work use an articulated figures as its character model.
-In the articulated model the character's body segments are considered
-as a set of rigid bodies. Joints are connecting these rigid bodies.
-This kind of model is
-vastly used since it is appropriate to formulate the Lagrangian equations of motion
-using the generalized coordinates which helps to reduce the number
-of degree-of-freedom (DoF).
-The joints used in the model are considered as ideal rigid joints, which means
-each of them connects the two rigid bodies with a certain DoF. Typically
-translational DoF are not treated in joints because that implies
-a dislocation of bones.
-For example, a hinge joint which has 1-DoF is used at knees or elbows and a ball joint
-which has 3-DoF is used at hips. Actuation on the joints are occurred
-in their respective DoF. So it is natural to call these kind of joints
-\emph{actuated motor joints}. Every natural motion can be created by
-controlling these motor joints properly. In robotics this kind of
-approach is much more common. The main interest of creating motions
-with dynamics model is focused on how to design the motor joint controllers.
+Being an essential component for animations and video games,
+bipedal character animation techniques have drawn much attention from
+both academia and industry. Physically-simulated approaches have been
+adopted to synthesize realistic and physically correct motions
+automatically instead of relying on labor-intensitve key-frame animation
+techqniues. In these approaches, a character is designed and controlled
+as a consistent dynamic model, being represented as an articulated
+figure. This model consists of a set of body segments, each being
+considered as a rigid body, and joints connecting these segments.
+This kind of models is used widely due to their adquacy to formulating
+the Lagrangian equations of motion using the generalized coordinates
+which simplifies motion description.
+The joints used in the model are considered as ideal rigid joints,
+that is, each of them connects the two rigid bodies with a certain DOFs.
+Typically, translational DOFs are not treated in joints to disallow a dislocation of bones.
+For example, hinge joints with one DOF are used at knees or elbows and
+ball joints with three DOFs are used at hips. Actuation on the joints
+changes their respective DOFs. Thus it is natural to call this kind of joints
+\emph{actuated motor joints}. Motions can be created by
+controlling these motor joints properly. In robotics this approach is
+commonly adopted. The main interest of creating motions
+with a dynamics model is focused on how to design the motor joint controllers.
 
 The concept of actuated motor joints is unrealistic in the perspective of
 biomechanics. No human being has that kind of motors in their joints.
-They control their legs or arms by pulling bones using attached
-muscles. The whole mechanism is quite complicated.
-However the structure of human muscle fibers is well-known and there exist
-the biomechanical experiments concerning the most basic human actions
-such as walking and jumping.[REF NEEDED]
+Humans control their legs or arms by pulling bones using attached
+muscles. Although the whole mechanism is quite complicated,
+the structure of human muscle fibers is well-known, and biomechanical
+results are availble concerning the most basic human actions
+such as walking and jumping \cite{citeulike:2547705, citeulike:7093575}.
 
-This thesis presents a biomechanical approach on biped dynamics. Basically,
-we introduces muscle fibers as the only actuating elements
-of the biped and get rid of all rigid motor joints existed in the previous biped
-model. Therefore joints are not rigid anymore. We use ligaments in the place of joints
+This thesis presents a biomechanical approach to biped dynamics. We
+introduces muscle fibers as the only actuating elements
+of the biped and get rid of all rigid motor joints in the previous biped
+models. Consequently, joints are not rigid anymore in our approach.
+We use ligaments in the place of joints
 to hold the bodies firmly but not rigidly. This substitution
-simulates human cartilages. The cartilages provide a shock absorption
-system to sustain stability when external or internal disturbances exist. [REF NEEDED]
-We control the rigid bodies with muscle fibers which are modeled as
-spring-damper system. Every muscle fiber has a linear actuator and
+simulates human cartilages, which provide a shock absorption
+system to sustain stability when external or internal disturbances exist \cite{shock}.
+We control the rigid bodies with muscle fibers each of which are modeled as
+a spring-damper system. Every muscle fiber has a linear actuator and
 motions are created by controlling the actuator. Instead of controlling
 the bodies with motor joints, it is highly effective in energy consumption
-since torques are created more easily by pulling the bones with the muscle
-fiber on a distant place from an axis of rotation.
+since torques are created more easily by pulling the bones with a muscle
+fiber which lie at a distant place from an axis of rotation.
 
-Besides the muscle actuated character model we adapt the concept of
-human gait phases to control the biped. Human gait analysis is extensively
-studied area.[REF] It deals with the mechanisms of human locomotion
-by throughly experimenting and measuring
-the subjects. They classified human walking cycle in which a division
-has its own objectives and features.
-In computer animation, the most of work so far did not
-exploit this kind of research results. They rely on optimization-based
+Besides the muscle-actuated character model we adapt the concept of
+human gait phases to control biped locomotion. Human gait analysis is an extensively
+studied area, and deals with the mechanism of human locomotion
+by throughly experimenting and measuring subjects.
+A human walking cycle consists of a sequence of phases, each of which has
+its own objective and features.
+In computer animation, such biomechanical research results have not fully exploited yet.
+Previous approaches rely on optimization-based
 techniques such as a motion tracker with a linear quadratic regulator (LQR)
-or a quadratic programming optimizer. They concentrate on the high level
-objectives such as `minimize the actuation force' or `follow the reference
-trajectory with all your best' without considering how human being try
-to achieve in more specific way.  They blindly seek the natural human
-behavior of locomotion with these macroscopic objectives.
-Although it seemed to have succeeded for generating nice-looking motion,
-it can be enhanced by introducing biomechanical knowledge into both
+or a quadratic programming optimizer and concentrate on the high level
+objectives such as minimizing the actuation force or following the reference
+trajectory without considering how human being tries
+to achieve it biomechanically. For instance, in our model, a set of muscle fibers is
+actuated according to a certain gait phase and the other fibers remain
+unactuated to utilize its passive energy while prevalent approaches blindly seek 
+this kind of the natural human behavior with the macroscopic objectives.
+Although seemingly having succeeded for generating nice-looking motion,
+they can be enhanced by introducing biomechanical knowledge into both
 a dynamics model and an optimization scheme.
 
-Given motion capture data containing locomotion of human, we classify the motion
-sequence automatically into respective phases. For each phase,
-an optimization formulation is built to calculate muscle actuation forces
-of our biped model. The actuated and unactuated muscles are explicitly configured
-with respect to a corresponding phase.
 [CLEAR MENTION OF CONTRIBUTION IS NEEDED]
 
-\includegraphics[width=130mm]{algo}
+
 \pagebreak
 
 \section{Related work}
 Designing and controlling a physically simulated character is a long-standing
-challenge in robotics, biomechanics and computer graphics. A physically
+challenge in robotics and computer graphics. A physically
 synthesized motion that actively responds to the environment is quite
 promising because it is hard to keyframing a natural animation for every motion
-manually. The combination of motion capture sequence and manual keyframing
-shows a quality of motion. However it is not straightforward to make a character 
-interacts with its environment if a prerecorded motion is used.
+manually. Although the combination of motion capture data and manual keyframing
+shows a quality of motion, it is not straightforward to make a character 
+interacts with its environment if a pre-recorded motion clip is used.
 By adapting physical simulation into a character animation we can overcome
 this issue. The problem is that still there is no ultimate solution for controlling
 a simulated character motion.
 
-Muico and his colleagues presented a contact-aware controller. It is
-heavily based on the theory of optimal control described in [LEWIS]
-especially a linear quadratic regulator (LQR). They modified the LQR
-to consider ground reaction forces. This controller is basically
-a reference-tracking controller. This means that it is not applicable
-to the environment which has large variations since that kind of environments
-requires intentionally deviated reference trajectories.
+Some approaches proposed a controller which is based on the fact
+that the ground reaction forces or contact forces affect the global
+DOFs of the character significantly \cite{SCA07:249-258:2007, journals/tog/MuicoLPP09}.
+Muico and his colleagues
+presented a contact-aware controller \cite{journals/tog/MuicoLPP09}.
+The approach is
+heavily based on the theory of optimal control \cite{lewis}.
+They modified the LQR to consider the presence of the ground reaction forces.
+We also take the contact forces into account but in a different way.
+The estimated contact forces are calculated using a linear complementarity
+problem (LCP) before any actuation applied. The actuation force is then
+determined with the consideration of the estimated contact forces.
 
-KangKang Yin and her colleagues presented a simple proportional-derivative (PD) control framework.[SIMBICON]
-Compared to the complexity of dynamics model, the structure of controller
-is quite simple and robust to external disturbances. Since they do not
-consider energy efficiency or passive forces, the animation shows some
-stiff behavior.
+Using an optimization technique for biped control is relatively complicated method.
+There exists a simpler way to control. KangKang Yin and her colleagues
+presented a simple proportional-derivative (PD) control framework \cite{journals/tog/YinLP07}.
+They used a finite state machine (FSM) in which target poses are defined
+for each state. Compared to the complexity of dynamics model,
+the structure of controller is simple and robust to external disturbances.
+Since they do not consider energy efficiency or passive forces during
+simulation, the animation shows some stiff behavior.
+Even if we can get more elaborate animations by increasing
+the number of states in the FSM, it is not practically possible since the
+number of parameters is proportional to the number of states.
 
-An optimization-based approach shown to be a good way to address many challenges
-related to the physics-based character animation. Most of work advocate
-their goal to determine the joint torques to make a certain desired pose.
-A certain pose is determined by integrating these torques.
-Instead of finding torques, Jain and his colleagues formulated
-an objective function which finds joint angles directly. The joint torques
-are implicitly calculated in the optimization process. The advantage is
-that it is easy to design various types of objectives such as place an arm here
-or move a foot to this place since they used joint angles as optimization
-variables.
+Optimization-based approaches shown to be a good way to address many challenges
+in biped control such as high dimensionality, underactuated-ness and
+nonlinearity. Most of work set up their goal to determine the joint
+torques to make a desired pose or a sequence of desired poses.
+Instead of finding joint torques, Jain and his colleagues formulated
+an optimization problem which finds joint angles directly \cite{Jain:09:OIM}. The joint torques
+are implicitly calculated during the optimization process. The advantage of
+this approach is that it is easy to design various types of objectives such as
+moving a hand to nearby wall or placing a swing foot to some place while it
+is not intuitive to formulate with torque-based optimization techniques.
 
-
+%------%
 
 Our goal is not so different from these work. However these work mainly focused
 on the controller design and not the character model itself. Our work is
@@ -166,18 +172,21 @@ Some researchers in biomechanical engineering focus on the movement
 disorder and the biomedical applications such as artificial joints.
 There are abundant work exist which use a model similar to
 a real human body since it is important to study the mechanism of underlying
-structure of human body in that area. Thelen and his colleagues illustrated
+structure of human body in that area \cite{vr-305}. Thelen and his colleagues
+illustrated
 the algorithm to compute muscle excitation patterns that produce
-coordinated movements of muscle-actuated dynamic models. They simulated
+coordinated movements of muscle-actuated dynamic models \cite{Thelen2003321}.
+They simulated
 a pedaling motion while fixing the upper body to investigate the excitation
 pattern of 30 muscle fibers which significantly affecting leg movements.
 
 Liu and her colleagues tried to exploit the passive characteristics of
-muscle fiber by including a torsion spring in joints. However the actuation
+muscle fiber by including a torsion spring in joints \cite{Liu:2005:LPB}.
+However, the actuation
 is still occurred by joint motors and the muscle fibers are not explicitly used.
 
 The action for each muscle groups can be anticipated by adopting the
-fact regarding to gait phases [PERRY]. The gait phases are the essential component
+fact regarding to gait phases \cite{perry}. The gait phases are the essential component
 when analyzing a person's walking pattern. It directly identifies the
 functional significance of the different motions occurring at the
 individual joints. While controlling the character we
@@ -186,14 +195,14 @@ a set of muscle fibers from the entire muscles is selected to be actuated
 and the others will be unactuated. This approach will give us an explicit
 way to make full use of passive energy.
 
-The muscle fiber model we use is composed of two springs and a damper.
-This simple muscle model is explained in detail in the supplementary
-documents [SHADMEHR]. In the document they assume that spring stiffness constants
-and viscosity of the damper are constants. Some studies suggest that animals
-vary stiffness according to the specific locomotion task.[FARLEY]
-Since the model consists of springs we definitely need rest lengths for that
-springs. However rest lengths are not simply defined on real muscles.
-[...]
+%The muscle fiber model we use is composed of two springs and a damper.
+%This simple muscle model is explained in detail in the supplementary
+%documents [SHADMEHR]. In the document they assume that spring stiffness constants
+%and viscosity of the damper are constants. Some studies suggest that animals
+%vary stiffness according to the specific locomotion task.[FARLEY]
+%Since the model consists of springs we definitely need rest lengths for that
+%springs. However rest lengths are not simply defined on real muscles.
+%[...]
 
 \pagebreak
 
@@ -204,7 +213,7 @@ With this biomechanical model we design a reference trajectory tracker.
 Specifically we build the equations of motion which have the
 form of
 \begin{equation}\label{MoEq}
-\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi) + G(\chi ) = f_c + \tau (\chi, \dot\chi, u)
+\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi )\dot\chi + G(\chi ) = f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, u)
 \end{equation}
 where $\mathbf{M}$ is a generalized mass matrix and $\chi$ is a generalized
 linear and angular position
@@ -212,19 +221,55 @@ state vector and $\dot\chi$, $\ddot\chi$ are its first and second time derivativ
 respectively. $C$ represents Coriolis and centrifugal forces.
 $G$ and $f_c$ represents gravitational forces and contact forces.
 $\tau$ and $u$ denotes muscle tension and actuation forces.
-Generally $C$ and $\tau$ are highly nonlinear functions of the current state and the
-actuation forces, it is hard to figure out the actuation forces which attain
-the desired acceleration of the system.
 For the case of a freely moving single
-rigid body with 6-DoF, $\mathbf{M}$ will be $6\times 6$ matrix and $\chi$,
+rigid body with 6-DOF, $\mathbf{M}$ will be $6\times 6$ matrix and $\chi$,
 $f_c$, $\tau$, $C$ and $G$ will be a 6-dimensional vector. The dimension of $u$ is
 determined by the number of muscle fibers. We have control
 over none of the variables such as $\chi$, $\dot\chi$, $\ddot\chi$ and $f_c$.
 $f_c$ is uncontrollable because it is the ground reaction force. This means that
 $f_c$ is a reaction force arises by pushing the ground with the character's feet.
-The only way to change $\chi$ to a certain desired value is controlling $u$.
-Again, it is nontrivial to calculate such $\tau$ since \eqref{MoEq}
-is an underactuated high dimensional nonlinear system.
+The only way to change $\chi$ to a certain desired value is done by controlling $u$
+properly. If we denote a reference position and velocity from motion capture data
+as $\bar\chi$ and $\dot{\bar\chi}$, \eqref{MoEq} can be more elaborated
+to reveal its structure as a tracker:
+
+\begin{equation}\label{MoEq2}
+\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi )\dot\chi + G(\chi ) = f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, \bar\chi, \dot{\bar\chi}).
+\end{equation}
+Note that the muscle actuation force $u$ is calculated in $\tau$ internally. 
+
+Unfortunately, $C$, $f_c$ and $\tau$ are highly nonlinear functions of the current state and the
+actuation forces, it is hard to figure out the actuation forces which attain
+the desired acceleration of the system. To make matters worse, $f_c$ is the function
+of muscle forces $\tau$, it is extremely difficult or even impossible
+to solve \eqref{MoEq2} for the function of $\tau$ or $u$ in a closed-form
+equation.
+To make the problem tractable, we make a few assumption. 
+
+Because we represent times as discrete samples, all the functions of
+time-varying variables need to be represented in a discrete domain.
+We discretize the time into samples with small intervals $h$. We define
+the velocity $\dot\chi^{(l)}$ and the acceleration $\ddot\chi^{(l)}$, at current
+time sample $l$, by backward finite differences.
+
+\begin{align}
+\dot\chi^{(l)}  = {} & \frac{\chi^{(l)}-\chi^{(l-1)}}{h}\label{vel-dis}\\
+\ddot\chi^{(l)} = {} & \frac{\chi^{(l)}-2\chi^{(l-1)}+\chi^{(l-2)}}{h^2}\label{acc-dis}
+\end{align}
+
+
+\pagebreak
+
+\section{Algorithm overview}
+
+Given motion capture data for human locomotion, we classify the motion
+sequence automatically into respective phases. For each phase,
+an optimization formulation is built to calculate muscle actuation forces
+of our biped model. The actuated and unactuated muscles are explicitly configured
+with respect to a corresponding phase.
+
+
+\includegraphics[width=130mm]{algo}
 
 \pagebreak
 
@@ -293,7 +338,7 @@ simple. We do not need to impose implicit or explicit constraints for
 maintaining each body connected by joints stick together.
 We assume that rigid bodies are independent to each other and thus we just build the
 equations of motion which have $n$ rigid bodies floating around the
-space freely with 6-DoF.
+space freely with 6-DOF.
 
 The equations of motion for a single rigid body is as follows:
 
@@ -323,44 +368,16 @@ the physical system. It reveals the linear and angular quantities
 directly as well as the external forces and torques.
 
 
-\begin{tabular}{ c c l }
-Symbol       & Dimension           & Name \\
-$\bar{m}$    &                     & body mass \\
-$\mathbf{H}$ & $3 \times 3$        & moments of inertia \\
-$a$          & $3 \times 1$        & linear acceleration \\ 
-$\alpha$     & $3 \times 1$        & angular acceleration \\
-$\omega$     & $3 \times 1$        & angular velocity \\
-$f$          & $3 \times 1$        & external force\\
-$\tau$       & $3 \times 1$        & external torque force\\
-$n_d$        &                     & degree-of-freedom of a rigid body\\
-$n$          &                     & the number of rigid bodies\\
-$m$          &                     & the number of muscle fibers\\
-$\chi$       & $n_d n  \times 1$   & generalized position\\
-$\dot\chi$   & $n_d n  \times 1$   & generalized velocity\\
-$\ddot\chi$  & $n_d n  \times 1$   & generalized acceleration\\
-$\mathbf{M}$ & $n_d n  \times n_d$ & generalized mass matrix\\
-$Y$          & $2n_d n \times 1$   & generalized state vector\\
-$h$          &                     & simulation time step\\
-$C$          & $2n_d n \times 1$   & Coriolis and centrifugal force\\
-$k_{se}$     &                     & serial spring constant\\
-$k_{pe}$     &                     & parallel spring constant\\
-$x$          &                     & muscle fiber length\\
-$x_r$        &                     & muscle fiber rest length\\
-$b$          &                     & muscle fiber viscosity\\
-$T$          &                     & muscle fiber tension\\
-$A$          &                     & muscle fiber actutation force
-\end{tabular}
-
-
 
 
 \subsection{Muscle fiber dynamics}
 
 There are many variants of muscle model used in biomechanical area range
-from a simple spring model to a time-varying nonlinear model. Although
-a more sophisticated model gives us a more realistic behavior, unnecessarily
+from a simple spring model to a time-varying nonlinear model. \cite{25733}
+Although a more sophisticated model gives us a more realistic behavior, unnecessarily
 complicated models will make the biped hard to simulate and control. For a compromise,
-we use one of the simplest time-invariant spring-damper model described in [SHADMEHR].
+we use one of the simplest time-invariant spring-damper model commonly called
+a Hill type muscle model. \cite{hill}.
 Basically, the model consists of two springs and a viscous damper.
 The damper and the spring are connected in parallel and one spring is
 connected in serial way. The active component in which our controller
@@ -376,18 +393,30 @@ at the end of the fiber:
 \dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+A   \right)
 \end{equation}
 where $x$ is the length of the fiber and $A$ is applied force in the active
-component. Note that every quantities shown in the equation are scalar values.
-Since a muscle fiber always connects two bones (rigid bodies) and the
-tension applied to the both of them, we need a clear definition of signed-ness
-of the tension $T$. Researchers in biology defined the term $origin$ and $insertion$.
-Origin and insertion indicate where a muscle fiber originated from and inserted
-to, respectively. If we call the origin and insertion position of the fiber
-as $p_{org}$ and $p_{ins}$, the normalized direction of the fiber can be
-defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$. With these quantities, we can think that
+component. Note that all quantities shown in the equation are scalar values.
+Since a muscle fiber always connects two rigid bodies and the same amount of
+tension is applied to both of them with opposite directions,
+we need a clear definition of the sign of $T$. Researchers in biology
+use the term $origin$ and $insertion$ to indicate the attached position
+of various muscle fibers. An origin and an insertion refer where a muscle
+fiber is originated from and inserted to, respectively.
+If we denote the origin and insertion position of the fiber
+as $p_{org}$ and $p_{ins}$ in Cartesian coordinates, the normalized direction of the fiber can be
+defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$. Thus, we can conclude
 the tension $T\hat{d}$ and $-T\hat{d}$ are applied to the origin and insertion body
 of the fiber, respectively.
 
-THE INTERPRETATION OF THE EQUATION GOES HERE
+We use two types of muscle fibers: actuated and unactuated muscle fibers.
+Actuated muscle fibers represent the muscles we can actuate. Typically
+they are attached to a middle of bones. Unactuated muscle fibers represent
+ligaments around joints. We cannot deliberately actuate ligaments. Their
+purpose is to maintain its rest length to prevent rigid bodies from
+dislocations. For this reason, spring constants for ligaments are
+comparatively larger than the actuated muscle fibers'.
+In our system, the rest length of ligaments are configured to a small value.
+This implies that the fiber length $||p_{ins}-p_{org}||$ happen to be zero
+or near zero sometimes during simulation. In that case, we simply set
+$x$ and $\dot{x}$ to zero.
 
 \subsection{Contact model}
 
@@ -666,7 +695,7 @@ Although physically conforming contact forces are not strictly needed in
 the point of believable character animation, our controller uses the
 ground reaction forces as input to compute desired actuation forces.
 
-We choose a time-stepping method introduced in [STEWART, ANITESCU].
+We choose a time-stepping method introduced in \cite{StewartT00, oai:CiteSeerPSU:258685}.
 If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
 derived in a generalized coordinate as well as a state and its time derivatives
 the solution will give us contact forces at the instant.
@@ -717,15 +746,15 @@ Jacobian also can be calculated in a separated manner.
 
 
 
-\section{Control}
+\section{Muscle control algorithm}
 
 \subsection{Muscle fiber actuation force}
 
-\subsection{Gait phases}
+\subsection{Gait phase classifier}
 
 Locomotion such as walking or running is performed by a periodic way.
 A gait cycle or stride contains eight functional patterns(FIGURE xx).
-[PERRY] These patterns are called \emph{gait phases}. Each phase has its
+\cite{perry} These patterns are called \emph{gait phases}. Each phase has its
 own features and objectives. For example, during mid-swing and terminal swing
 phase, one of primary muscle called \emph{biceps femoris} and \emph{semimembranosis} is
 activated to extend our swing leg forward.
@@ -808,10 +837,50 @@ Here we define the gradient as a column vector.
 
 \subsection{Putting it all together}
 
-\section{Result}
+\section{Results}
 
 \section{Conclusion}
 
-\section{References}
+\pagebreak
 
+\section{Naming convention}
+\begin{table}[h!b!p!]
+\caption{Naming convention}
+\centering
+\begin{tabular}{ c c l }
+\hline
+Symbol       & Dimension           & Name \\
+\hline
+$\bar{m}$    &                     & body mass \\
+$\mathbf{H}$ & $3 \times 3$        & moments of inertia \\
+$a$          & $3 \times 1$        & linear acceleration \\ 
+$\alpha$     & $3 \times 1$        & angular acceleration \\
+$\omega$     & $3 \times 1$        & angular velocity \\
+$f$          & $3 \times 1$        & external force\\
+$\tau$       & $3 \times 1$        & external torque force\\
+$n_d$        &                     & degree-of-freedom of a rigid body\\
+$n$          &                     & the number of rigid bodies\\
+$m$          &                     & the number of muscle fibers\\
+$\chi$       & $n_d n  \times 1$   & generalized position\\
+$\dot\chi$   & $n_d n  \times 1$   & generalized velocity\\
+$\ddot\chi$  & $n_d n  \times 1$   & generalized acceleration\\
+$\mathbf{M}$ & $n_d n  \times n_d$ & generalized mass matrix\\
+$Y$          & $2n_d n \times 1$   & generalized state vector\\
+$h$          &                     & simulation time step\\
+$C$          & $2n_d n \times 1$   & Coriolis and centrifugal force\\
+$k_{se}$     &                     & serial spring constant\\
+$k_{pe}$     &                     & parallel spring constant\\
+$x$          &                     & muscle fiber length\\
+$x_r$        &                     & muscle fiber rest length\\
+$b$          &                     & muscle fiber viscosity\\
+$T$          &                     & muscle fiber tension\\
+$A$          &                     & muscle fiber actutation force\\
+\hline
+\end{tabular}
+\end{table}
+\pagebreak
+
+\bibliographystyle{plain}
+\bibliography{muscle}
+\addcontentsline{toc}{section}{References}
 \end{document}

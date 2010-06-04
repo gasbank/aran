@@ -133,7 +133,7 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
             double Ctrl[UMFPACK_CONTROL];
             Ctrl[UMFPACK_PRL] = 5;
             umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
-            exit(-123);
+            //exit(-123);
         }
 
     }
@@ -302,6 +302,7 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
         PRINT_INT(lenJ);
         /* In this scope, j2 and lenJ2 are temporary variables. */
         {
+            assert (lenJ <= n);
             unsigned int j2[n]; unsigned int lenJ2 = 0;
             for (i=0;i<lenJ;++i) {
                 if (x[ j[i] ] / d[ j[i] ] <= theta) {

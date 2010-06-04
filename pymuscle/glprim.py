@@ -66,8 +66,12 @@ def DrawMuscleFiber3(origin, insertion, thickness, dc):
 def DrawMuscleFiber2(quadric, origin, insertion, radius1, radius2, dc):
 	direction = insertion - origin
 	length = linalg.norm(direction)
-	direction = direction / length
-	DrawMuscleFiber(quadric, origin, direction, length, radius1, radius2, dc)
+	if length < 1e-8:
+		# Degenerate case
+		pass
+	else:
+		direction = direction / length
+		DrawMuscleFiber(quadric, origin, direction, length, radius1, radius2, dc)
 	
 def DrawMuscleFiber(quadric, origin, direction, length, radius1, radius2, dc):
 	"""

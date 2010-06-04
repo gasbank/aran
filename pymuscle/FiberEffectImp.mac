@@ -58,6 +58,13 @@ fibbdW_ins : pd_ins + rest(quat_mult(q_ins, quat_mult(append([0], cross(omega_in
  */
 fibDiffW : fibbW_ins - fibbW_org$
 fiblen : sqrt(fibDiffW . fibDiffW)$
+optimprefix:_x;
+OpenFileC("fibDiffW_autogen.c");
+WriteDirectToFile("#include \"macFiberInputVectorDef.h\"~%");
+WriteDirectToFile("void mac_FibDiffW(double fibDiffW[3], const double input[18+18+12]) {~%");
+WriteBlockToClikC("fibDiffW", optimize(fibDiffW), [1,1]);
+WriteDirectToFile("}~%");
+
 /* fiblen TEST
 length(fiblen);
 fiblen;
@@ -67,12 +74,47 @@ at(fiblen, [px_org = 1,   py_org = 0, pz_org = 3, qw_org = 1, qx_org = 0, qy_org
 fibDirW : fibDiffW / fiblen$ /* Normalized fiber direction */
 deltax : fiblen - xrest$
 /* Relative velocity projected to the normalized fiber direction */
-xd : fibDirW . (fibbdW_ins - fibbdW_org)$
-Td : KSE/b*(KPE*deltax + b*xd - (1+KPE/KSE)*T + A)$
+fibbdWdiff = fibbdW_ins - fibbdW_org$
+xd  : fibDirW . fibbdWdiff$ /* time rate of fiber length */
+/* 
+ * How to treat the singularity occurs on fiblen = 0 ? 
+ * For example, 'subst(0, fiblen, Td)' causes division by 0 error.
+ * 
+ * Two choices:
+ *   (1) Td0_a
+ * Simple truncation technique, i.e., just set deltax=0 and xd=0 when
+ * fiblen < eps.
+ *   (2) Td0_b
+ * Set xd = length(fibbdW_ins - fibbdW_org). Is this a good way?
+ */
+
+declare(KSE, constant);
+declare(KPE, constant);
+declare(xrest, constant);
+declare(b, constant);
+
+Td    : KSE/b*(KPE*deltax   + b*xd                     - (1+KPE/KSE)*T + A)$
+Td0_a : KSE/b*(KPE*(-xrest) + b*0                      - (1+KPE/KSE)*T + A)$
+Td0_b : KSE/b*(KPE*(-xrest) + b*fibbdWdiff*fibbdWdiff  - (1+KPE/KSE)*T + A)$
+
+/*************** SELECT SINGULARITY CASE ***************/
+Td    : Td0_a$
 
 Td_optimized : optimize(Td)$ /* To be written */
 
+Td;
+length(Td);
+listofvars(Td);
+quit();
 
+Td_optimized;
+scalarp(5);
+
+OpenFile("test_0.py");
+WriteBlockToClike("Td", Td_optimized, [1,1]);
+WriteBlockToClike("Tdd", optimize(a*a*a+b*a*a*a+c), [1,1]);
+
+quit();
 /*
  * Calculation of dTddy_org and dTddy_ins =
  * 
@@ -144,7 +186,7 @@ display("Optimized.");
 
 
 diff(yd_Q_orgins, A);
-quit();
+/*quit();*/
 
 /*
  * Calculation of dTddT =
@@ -220,7 +262,7 @@ display("Optimized.");
 /*
  * Writing phase
  */
-OpenFile("FiberEffectImp.py");
+OpenFile("FiberEffectImp_0.py");
 WriteDirectToFile("from numpy import *~%");
 WriteDirectToFile("from math import pow, sin, cos~%");
 WriteDirectToFile("from scipy import sparse~%");

@@ -28,6 +28,7 @@ import ctypes as ct
 import time
 
 libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Release/libsimcore_release.so')
+#libsimcore = ct.CDLL('/home/johnu/pymuscle/bin/Debug/libsimcore_debug.so')
 C_lemke = libsimcore.lemke_Python
 C_MassMatrixAndCqdVector = libsimcore.MassMatrixAndCqdVector
 C_GeneralizedForce = libsimcore.GeneralizedForce
@@ -209,50 +210,22 @@ def Draw():
 	global gFrame
 	global gBodies
 	global lastDrawTime
-	global C_Y
 	
 	drawTime = time.time()
 	
 	timeGap = drawTime - lastDrawTime
-	print 'Frame', gFrame, 'FPS', 1/timeGap, '(time gap :', timeGap, ')', 'ang', gBodies[0].q
+	#print 'Frame', gFrame, 'FPS', 1/timeGap, '(time gap :', timeGap, ')', 'ang', gBodies[0].q
 	lastDrawTime = drawTime
 	
 	if gNextTestSet is not None:
 		gBody = ExpBodyFromTestSet(gNextTestSet)
 		gNextTestSet = None
 	
-	
 	if gUseCversion:
-		FrameMove_CVersion(gBodies, h)
+		FrameMove_CVersion(gBodies, h, mu, alpha0, 0, C_NCONEBASIS, C_CONEBASIS)
 	else:
-		FrameMove_PythonVersion(gBodies, h)
+		FrameMove_PythonVersion(gBodies, h, mu, alpha0, 0, di)
 	
-	
-	'''
-	if frame > 40000:
-		t = arange(0.,(frame-1)*h, h)
-		for i in range(7):
-			plotvalues[i] = plotvalues[i][0:frame-10]
-		pit.figure(1)
-		pit.plot(plotvalues[0], 'r',
-	             plotvalues[1], 'g',
-	             plotvalues[2], 'b')
-		pit.ylabel('lin_pos')
-		
-		pit.figure(2)
-		pit.plot(plotvalues[3], 'r',
-	             plotvalues[4], 'g',
-	             plotvalues[5], 'b')
-		pit.ylabel('rot_pos')
-		
-		pit.figure(3)
-		pit.plot(plotvalues[6], 'r')
-		pit.ylabel('rot_mag')
-		
-		# Show the plot and pause the app
-		pit.show()
-		sys.exit(-100)
-	'''	
 	RenderBox()
 	
 	gFrame = gFrame + 1
@@ -292,24 +265,32 @@ def NewDynamicReparam(v, vnext):
 	vd_r = (vnext_r - v_r)/h
 	return v_r, vd_r
 
-def DoLemkeAndCheckSolution(LCP_M, LCP_q, z0):
-	
-	n = LCP_q.shape[0]
-	DBL_M          = (ct.c_double * n) * n
-	DBL_q          =  ct.c_double * n
-	C_LCP_M = DBL_M()
-	C_LCP_q = DBL_q()
-	C_LCP_n = ct.c_int(n)
-	C_xopt  = DBL_q()
-	for i in xrange(n):
-		for j in xrange(n):
-			C_LCP_M[i][j] = LCP_M[i,j]
-		C_LCP_q[i] = LCP_q[i]
-	C_lemke(C_LCP_n, C_xopt, C_LCP_M, C_LCP_q)
-	err = 0
-	x_opt = C_xopt[:]
-	
-	#x_opt, err = lemke(LCP_M, LCP_q, z0)
+class LemkeFailure:
+	# Raised when Lemke's algorithm failed to find the solution
+	def __init__(self, msg):
+		self.msg = msg
+
+def DoLemkeAndCheckSolution(LCP_M, LCP_q, z0, code):
+	assert code in ['C', 'Python']
+	if code == 'C':
+		# C version
+		n = LCP_q.shape[0]
+		DBL_M          = (ct.c_double * n) * n
+		DBL_q          =  ct.c_double * n
+		C_LCP_M = DBL_M()
+		C_LCP_q = DBL_q()
+		C_LCP_n = ct.c_int(n)
+		C_xopt  = DBL_q()
+		for i in xrange(n):
+			for j in xrange(n):
+				C_LCP_M[i][j] = LCP_M[i,j]
+			C_LCP_q[i] = LCP_q[i]
+		C_lemke(C_LCP_n, C_xopt, C_LCP_M, C_LCP_q)
+		err = 0
+		x_opt = C_xopt[:]
+	elif code == 'Python':
+		# Python version
+		x_opt, err = lemke(LCP_M, LCP_q, z0)
 		
 	# Check the sanity of solution
 	checkW = dot(LCP_M, x_opt) + LCP_q
@@ -333,7 +314,7 @@ def DoLemkeAndCheckSolution(LCP_M, LCP_q, z0):
 	if err != 0 or wTx > EPS2 or all_x_opt_positive == False or all_w_positive == False:
 	#if err != 0 or wTx > EPS2:
 	#if err != 0:
-		raise Exception, 'Lemke\'s algorithm failed!!!!!!!!!!!!!!! Try again with rearranged one...'
+		raise LemkeFailure, 'Lemke\'s algorithm failed!!!!!!!!!!!!!!! Try again with rearranged one...'
 	return x_opt, err
 
 
@@ -367,27 +348,59 @@ def MassMatrixAndCqdVector(p, v, pd, vd, I):
 	C_MassMatrixAndCqdVector(C_M, C_Cqd, C_P, C_V, C_PD, C_VD, C_I)
 	return array(C_M), array(C_Cqd)
 
-def FrameMove_CVersion(bodies, h, contactForceInfoOnly = False):
-	global C_Y
-	
-	nb = len(bodies)
-
-	# This is needed for reparameterizing
-	qPrev = [b.q for b in bodies]
-	qdPrev = [b.qd for b in bodies]
-	
-	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext, C_penetration0, C_Y, C_I, C_mass, C_corners, C_NCONEBASIS, C_CONEBASIS, C_mu, C_h)
+def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, contactForceInfoOnly = False):
+	nd = 6
+	n = len(bodies)
+	m = nMuscle # does not matter
+	nY = 2*nd*n + m
+	C_nd               = ct.c_int(nd)
+	C_n                = ct.c_int(n)
+	C_m                = ct.c_int(m)
+	C_Ynext            = (ct.c_double * nY)()
+	C_penetration0     = ct.c_double(alpha0)
+	C_Y                = (ct.c_double * nY)()
+	C_I                = ((ct.c_double * 4) * n)()
+	C_mass             = (ct.c_double * n)()
+	C_corners          = (((ct.c_double * 3) * 8) * n)()
+	C_mu               = ct.c_double(mu)
+	C_h                = ct.c_double(h)
+	C_contactForces    = (((ct.c_double * 3) * 8) * n)()
+	C_lenContactForces = (ct.c_int * n)()
+	C_contactPoints    = ((ct.c_int * 8) * n)()
 	for i in xrange(n):
-		gBodies[i].q  = array(C_Ynext[2*nd*i +  0 : 2*nd*i +  6])
-		gBodies[i].qd = array(C_Ynext[2*nd*i +  6 : 2*nd*i + 12])
+		C_Y[2*nd*i +  0 : 2*nd*i +  6] = bodies[i].q
+		C_Y[2*nd*i +  6 : 2*nd*i + 12] = bodies[i].qd
+		C_I[i][0:4] = bodies[i].I
+		C_mass[i] = bodies[i].mass
+		for j in xrange(8):
+			C_corners[i][j][0:3] = bodies[i].corners[j]
 	
-	'''
-	print gBodies[0].q
-	print gBodies[0].qd
-	aaa=1234
-	'''
+	C_contactForceInfoOnly = ct.c_int( 1 if contactForceInfoOnly else 0 )
+	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext,
+	               C_contactForces, C_lenContactForces, C_contactPoints,
+	               C_penetration0, C_Y, C_I, C_mass, C_corners,
+	               C_NCONEBASIS, C_CONEBASIS, C_mu, C_h, C_contactForceInfoOnly)
 	
-	for k in range(nb):
+	# For contact force visualization
+	for b in bodies:
+		b.cf = [] # Clear contact force visualization data
+	for i in xrange(n):
+		ncf = C_lenContactForces[i]
+		for j in xrange(ncf):
+			bodies[i].cf.append( array(C_contactForces[i][j]) )
+			#print array(C_contactForces[i][j])
+		bodies[i].contactPoints = array(C_contactPoints[i])[0:C_lenContactForces[i]]
+
+	if contactForceInfoOnly:
+		return any([v>0 for v in C_lenContactForces])
+
+	# Update body data with next step state
+	for i in xrange(n):
+		bodies[i].q  = array(C_Ynext[2*nd*i +  0 : 2*nd*i +  6])
+		bodies[i].qd = array(C_Ynext[2*nd*i +  6 : 2*nd*i + 12])
+	
+	
+	for k in range(n):
 		# Angular velocity vector calculation (for visualization)
 		r = bodies[k].q[3:6]
 		th = linalg.norm(r)
@@ -401,16 +414,6 @@ def FrameMove_CVersion(bodies, h, contactForceInfoOnly = False):
 		quatd = QuatdFromV(bodies[k].q[3:6], bodies[k].qd[3:6])
 		omega_wc = 2*quat_mult(quatd, quat_conj(quat))[1:4]
 		bodies[k].omega_wc = omega_wc
-	'''
-		# Reparameterize rotation value if needed
-		th = linalg.norm(bodies[k].q[3:6])
-		if th > pi:
-			th = linalg.norm(bodies[k].q[3:6])
-			bodies[k].q[3:6] = (1.-2*pi/th)*bodies[k].q[3:6]
-			qprevmag = linalg.norm(qPrev[k][3:6])
-			qPrev[k][3:6] = (1.-2*pi/qprevmag)*qPrev[k][3:6]
-			bodies[k].qd[3:6] = (bodies[k].q[3:6] - qPrev[k][3:6])/h
-			#print 'Body', k, ' reparmed at frame', gFrame'''
 		
 	minZ = min([cps[2] for cps in bodies[0].getCorners_WC()])
 	cfTotal = 0
@@ -422,18 +425,9 @@ def FrameMove_CVersion(bodies, h, contactForceInfoOnly = False):
 	#print gFrame, 'minZ :', minZ, '/ posz :', bodies[0].q[2], '/ velz :', bodies[0].qd[2], '/ cfTotal :', cfTotal
 	#print linalg.norm(gBody.omega_wc)
 
-	# Plotting...
-	'''
-	for i in range(6):
-		plotvalues[i].append(gBody.q[i])
-	plotvalues[6].append(linalg.norm(gBody.q[3:6]))
-	'''
-	for i in xrange(n):
-		C_Y[2*nd*i +  0 : 2*nd*i +  6] = gBodies[i].q
-		C_Y[2*nd*i +  6 : 2*nd*i + 12] = gBodies[i].qd
 	return False
 
-def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
+def FrameMove_PythonVersion(bodies, h, mu, alpha0, nMuscle, di, contactForceInfoOnly = False):
 	nb = len(bodies)
 
 	qPrev = [b.q for b in bodies]
@@ -583,55 +577,9 @@ def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 		rearranged = 0
 		nY = LCP_M.shape[0]
 		
-		'''
-		Mfile = open('LCP_M', 'w')
-		for aa in range(mmm):
-			for bb in range(mmm):
-				separator = ',' if bb < mmm-1 else ''
-				Mfile.write(str(LCP_M[aa,bb])+separator)
-			Mfile.write('\n')
-		Mfile.close()
-		'''
-		
-		'''
 		try:
-			#LCP_Msym = (LCP_M+LCP_M.T)/2
-			LCP_Msym = dot(LCP_M.T, LCP_M)
-			LCP_Msym_svd = linalg.svd(LCP_Msym)
-			LCP_Msymeig = linalg.eig(LCP_Msym)[0]
-			LCP_Msymeig2 = zeros(len(LCP_Msymeig), dtype=float64)
-			for i in range(len(LCP_Msymeig)):
-				if type(LCP_Msymeig[i]) == complex128:
-					if abs(LCP_Msymeig[i].imag) < 1e-7:
-						LCP_Msymeig2[i] = LCP_Msymeig[i].real
-					else:
-						raise Exception, 'Imaginary part is too large...' + str(LCP_Msymeig[i])
-				else:
-					LCP_Msymeig2[i] = LCP_Msymeig[i]
-				
-				if -1e-7 < LCP_Msymeig2[i] and LCP_Msymeig2[i] < 0:
-						LCP_Msymeig2[i] = 0
-			
-			LCP_Msymeigneg = [eig < 0 for eig in LCP_Msymeig2]
-			if any(LCP_Msymeigneg):
-				print 'LCP_M is not positive semidefinite matrix because of these eigenvalues:'
-				for eig, eigneg in zip(LCP_Msymeig2, LCP_Msymeigneg):
-					if eigneg == True:
-						print eig
-				raise Exception, 'LCP_M is not positive semidefinite matrix'
-		except:
-			LCP_M_Robj_data = robjects.FloatVector(LCP_M.flatten())
-			LCP_M_Robj      = robjects.r['matrix'](LCP_M_Robj_data, nrow = nY)
-			LCP_M_Condx_Robj= robjects.r['nearPD'](LCP_M_Robj, False, False, True, False, 1e-6, 1e-7, 0)
-			LCP_M_Cond_Robj = robjects.r['as.matrix'](LCP_M_Condx_Robj[0])
-			normF           = float(LCP_M_Condx_Robj[3][0])
-			print 'Frobenious norm', normF
-			LCP_M = array(LCP_M_Cond_Robj)
-		'''
-		
-		try:
-			x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
-		except:
+			x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0, 'Python')
+		except LemkeFailure:
 			# SHIFT ROW DOWN 1
 			LCP_M = vstack([hstack([ -E.T  , Mu  , Z0 ]),
 		                    hstack([ M11   , M10 , E  ]),
@@ -640,10 +588,10 @@ def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 			LCP_q1 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
 			LCP_q2 = dot(N.T, h * Minv_fg_Cqd + Qd_a)
 			try:
-				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+				x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0, 'Python')
 				rearranged = 1
 				print '******************* REARRANGING(1) SUCCEEDED ........ *******************'
-			except:
+			except LemkeFailure:
 				# Do again with rearranged matrix?
 				# SWAP ROW 1 and ROW 2
 				# SWAP COL 1 and COL 2
@@ -655,10 +603,10 @@ def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 				LCP_q2 = zeros((p))
 				
 				try:
-					x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+					x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0, 'Python')
 					rearranged = 2
 					print '******************* REARRANGING(2) SUCCEEDED ........ *******************'
-				except:
+				except LemkeFailure:
 					# SHIFT ROW DOWN 1
 					LCP_M = vstack([hstack([ M10.T , M00 , Z0 ]),
 				                    hstack([ -E.T  , Mu  , Z0 ]),
@@ -667,10 +615,10 @@ def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 					LCP_q1 = zeros((p))
 					LCP_q2 = dot(D.T, h * Minv_fg_Cqd + Qd_a)
 					try:
-						x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0)
+						x_opt, err = DoLemkeAndCheckSolution(LCP_M, LCP_q, z0, 'Python')
 						rearranged = 3
 						print '******************* REARRANGING(3) SUCCEEDED ........ *******************'
-					except:
+					except LemkeFailure:
 						print 'Doriupda...'
 						sys.exit(-100)
 					
@@ -706,7 +654,7 @@ def FrameMove_PythonVersion(bodies, h, contactForceInfoOnly = False):
 			# kp: Body index
 			# cp: Corner index
 			kk = activeBodies.index(kp)
-			fric = dot(D[:,8*k:8*(k+1)], beta[8*k:8*(k+1)])
+			fric = dot(D[6*kk:6*(kk+1),8*k:8*(k+1)], beta[8*k:8*(k+1)])
 			nor  = dot(N[6*kk:6*(kk+1),k], cn[k])
 			cf   = (fric[0:3] + nor[0:3]) / h
 			bodies[kp].cf.append(cf)
@@ -830,64 +778,6 @@ def RenderBox():
 	
 	glFlush ()
 	glutSwapBuffers()
-	
-
-plotvalue1 = []
-plotvalue2 = []
-plotvalue3 = []
-
-plotvalue4 = []
-plotvalue5 = []
-plotvalue6 = []
-	
-################################################################################
-# Friction coefficient
-mu = 1.5
-# Simulation Timestep
-h = 0.0025
-# contact level threshold
-alpha0 = 0
-
-# Always raise an exception when there is a numerically
-# incorrect value appeared in NumPy module.
-seterr(all='raise')
-
-plotvalues = [ [],[],[],[],[],[],[] ]
-
-
-# Eight basis of friction force
-di = array([ [        1.,         0., 0],
-             [ cos(pi/4),  sin(pi/4), 0],
-             [        0.,         1., 0],
-             [-cos(pi/4),  sin(pi/4), 0],
-             [       -1.,         0., 0],
-             [-cos(pi/4), -sin(pi/4), 0],
-             [         0,        -1., 0],
-             [ cos(pi/4), -sin(pi/4), 0] ])
-di = di.T
-
-#--------------------------------------------------------------------------------------------------------
-# TEST SET      POS0               ROT0           VEL0        ANGVEL0        BOXSIZE      MASS
-#--------------------------------------------------------------------------------------------------------
-TESTSET = (  # Stationary box
-             ( (0,0,500.5)      , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
-             # Stationary box slightly rotated in z-axis
-             ( (5,5,10)      , (0.3,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,      2 ),
-             # Straight free-fall
-             ( (0,0,5)        , (0.1,0.2,0.3) ,  (0,0,0)    , (0,0,0)   ,    (1,2,3)  ,     1 ),
-             # z-axis rotating free fall
-             ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    ,  (0,0,40) ,   (3,1,1)   ,     1 ),
-             # projectile test
-             ( (-3,0,3)       ,  (0,0,0)      ,  (10,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
-             # projectile test (faster)
-             ( (-5,0,3)       , (0,0,0)       ,  (20,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
-             # free-fall of arbitrary rotated state with no angular velocity
-             ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
-             # free-fall of arbitrary rotated state with some angular velocity
-             ( (0,0,1.5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
-             # free-fall of arbitrary rotated state with some angular velocity (general box shape)
-             ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
-        )
 
 def ExpBodyFromTestSet(i):
 	pos0_wc    = array(TESTSET[i][0], dtype=float64)
@@ -909,13 +799,81 @@ def GoTest():
 		FrameMove(bodies)
 		print i, '/', testFrame, '...'
 
-
+def BuildConeBasis():
+	di = array([ [        1.,         0., 0],
+		         [ cos(pi/4),  sin(pi/4), 0],
+		         [        0.,         1., 0],
+		         [-cos(pi/4),  sin(pi/4), 0],
+		         [       -1.,         0., 0],
+		         [-cos(pi/4), -sin(pi/4), 0],
+		         [         0,        -1., 0],
+		         [ cos(pi/4), -sin(pi/4), 0] ])
+	return di.T
+def BuildConeBasisForC():
+	di = BuildConeBasis()
+	C_NCONEBASIS       = ct.c_int(8)
+	C_CONEBASIS        = ((ct.c_double * 3) * 8)()
+	for i in xrange(8):
+		C_CONEBASIS[i][0:3] = di[:,i]
+	return C_NCONEBASIS, C_CONEBASIS
+################################################################################
+################################################################################
+################################################################################
+	
 if __name__ == '__main__':
+	plotvalue1 = []
+	plotvalue2 = []
+	plotvalue3 = []
+	
+	plotvalue4 = []
+	plotvalue5 = []
+	plotvalue6 = []
+	
+	# Friction coefficient
+	mu = 1.5
+	# Simulation Timestep
+	h = 0.0025
+	# contact level threshold
+	alpha0 = 0
+	
+	# Always raise an exception when there is a numerically
+	# incorrect value appeared in NumPy module.
+	seterr(all='raise')
+	
+	plotvalues = [ [],[],[],[],[],[],[] ]
+	
+	
+	# Eight basis of friction force
+	di = BuildConeBasis()
+	
+	#--------------------------------------------------------------------------------------------------------
+	# TEST SET      POS0               ROT0           VEL0        ANGVEL0        BOXSIZE      MASS
+	#--------------------------------------------------------------------------------------------------------
+	TESTSET = (  # Stationary box
+		         ( (0,-2,0.5)      , (0,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
+		         # Stationary box slightly rotated in z-axis
+		         ( (5,5,10)      , (0.3,0,0)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,      2 ),
+		         # Straight free-fall
+		         ( (0,0,5)        , (0.1,0.2,0.3) ,  (0,0,0)    , (0,0,0)   ,    (1,2,3)  ,     1 ),
+		         # z-axis rotating free fall
+		         ( (0,0,3)        , (0,0,0)       ,  (0,0,0)    ,  (0,0,40) ,   (3,1,1)   ,     1 ),
+		         # projectile test
+		         ( (-3,0,3)       ,  (0,0,0)      ,  (10,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
+		         # projectile test (faster)
+		         ( (-5,0,3)       , (0,0,0)       ,  (20,0,0)   , (0,0,0)   ,   (1,1,1)   ,     1 ),
+		         # free-fall of arbitrary rotated state with no angular velocity
+		         ( (0,0,3)        , (1,2,3)       ,  (0,0,0)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
+		         # free-fall of arbitrary rotated state with some angular velocity
+		         ( (0,0,1.5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
+		         # free-fall of arbitrary rotated state with some angular velocity (general box shape)
+		         ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
+		    )
+
 	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(1), ExpBodyFromTestSet(2), ExpBodyFromTestSet(3) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
 	#gBodies = [ ExpBodyFromTestSet(2), ExpBodyFromTestSet(1) ]
 	#gBodies = [ ExpBodyFromTestSet(0) ]
-	#gBodies = [ ExpBodyFromTestSet(8) ]
+	#gBodies = [ ExpBodyFromTestSet(3) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0) ]
 	gNextTestSet = None
 	z0 = 0
@@ -924,36 +882,14 @@ if __name__ == '__main__':
 	gFrame = 0
 	gWireframe = False
 	gResetState = False
+	gUseCversion = False
+	nd = 6
+	n = len(gBodies)
+	m = 0
+	nY = 2*nd*n+m
+	alpha0 = 0
 	
-	gUseCversion = True
-	
-	if gUseCversion == True:
-		nd = 6
-		n = len(gBodies)
-		m = 0
-		nY = 2*nd*n+m
-		C_nd = ct.c_int(nd)
-		C_n = ct.c_int(n)
-		C_m = ct.c_int(m)
-		C_Ynext = (ct.c_double * nY)()
-		C_penetration0 = ct.c_double(alpha0)
-		C_Y = (ct.c_double * nY)()
-		C_I = ((ct.c_double * 4) * n)()
-		C_mass = (ct.c_double * n)()
-		C_corners = (((ct.c_double * 3) * 8) * n)()
-		C_NCONEBASIS = ct.c_int(8)
-		C_CONEBASIS = ((ct.c_double * 3) * 8)()
-		C_mu = ct.c_double(mu)
-		C_h = ct.c_double(h)
-		for i in xrange(n):
-			C_Y[2*nd*i +  0 : 2*nd*i +  6] = gBodies[i].q
-			C_Y[2*nd*i +  6 : 2*nd*i + 12] = gBodies[i].qd
-			C_I[i][0:4] = gBodies[i].I
-			C_mass[i] = gBodies[i].mass
-			for j in xrange(8):
-				C_corners[i][j][0:3] = gBodies[i].corners[j]
-		for i in xrange(8):
-			C_CONEBASIS[i][0:3] = di[:,i]
-	
+	C_NCONEBASIS, C_CONEBASIS = BuildConeBasisForC()
+		
 	# Let's go!
 	main()

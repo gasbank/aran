@@ -20,6 +20,8 @@
 #define ORIGIN    (0)
 #define INSERTION (1)
 
+double mac_FibDiffW(double fibDiffW[3], const double input[18+18+12]);
+
 int ImpAll(
            const unsigned int nBody,
                        const unsigned int nMuscle,
@@ -32,11 +34,12 @@ int ImpAll(
                        unsigned int musclePair[nMuscle][2],
                        const double h)
 {
-	int matSize = nBody*14 + nMuscle;
-    memset(f, 0, sizeof(double)*matSize); /* f(Y0) */
+	const unsigned int nY = nBody*14 + nMuscle;
+    memset(f, 0, sizeof(double)*nY); /* f(Y0) */
 
-	int j, k;
+	int j;
 
+    #pragma omp parallel for schedule(dynamic) shared(dfdY_R, body, extForce) private(j)
 	for (j = 0; j < nBody; ++j)
 	{
         int bClearVariable = 1;
@@ -48,13 +51,13 @@ int ImpAll(
         int dyd_RdY_count = OneRbImp(body[j], extForce[j], bClearVariable,
                                      yd_R, dyd_RdY_keys, dyd_RdY_values);
         assert(dyd_RdY_count >= 0);
-
+        int k;
         for (k = 0; k < 14; ++k)
         {
             f[j*14 + k] = yd_R[k];
         }
 
-        dfdY_R[j] = tm_allocate(matSize, matSize, dyd_RdY_count);
+        dfdY_R[j] = tm_allocate(nY, nY, dyd_RdY_count);
         for (k = 0; k < dyd_RdY_count; ++k)
         {
             int r = j*14 + dyd_RdY_keys[k][0];
@@ -65,6 +68,7 @@ int ImpAll(
 	}
 
 
+    #pragma omp parallel for schedule(dynamic) shared(f, dfdY_Q, body, muscle, musclePair) private(j)
 	for (j = 0; j < nMuscle; ++j)
 	{
 		const double       *mj = muscle[j];
@@ -73,6 +77,15 @@ int ImpAll(
 		const double       *bo = body[ boIdx ];
 		const double       *bi = body[ biIdx ];
 
+		assert(muscle[j][5 /* A */] == 0) ;
+
+        /*
+         * The structure of the vector 'input'
+         *
+         *   - BODY_ORG RELATED VARIABLES (18 x 1 vector)
+         *   - BODY_INS RELATED VARIABLES (18 x 1 vector)
+         *   - FIBER RELATED VARIABLES (12 x 1 vector)
+         */
 		double       input[18+18+12];
 		int          bClearVariable = 1;
 		double       dTddy_orgins[2][14];
@@ -88,32 +101,70 @@ int ImpAll(
 		memcpy(input+18   , bi, sizeof(double)*18);
 		memcpy(input+18+18, mj, sizeof(double)*12);
 
+        double fibDiffW[3];
+        mac_FibDiffW(fibDiffW, input);
+        const double len = sqrt(fibDiffW[0]*fibDiffW[0]
+                                +fibDiffW[1]*fibDiffW[1]
+                                +fibDiffW[2]*fibDiffW[2]);
+        int bDegenerated = 0;
+        //printf("Muscle fiber #%d len = %lg.\n", j, len);
+		if (len < 1e-8)
+		{
+		    printf("   - Muscle fiber #%d degenerated due to its length = %lg.\n", j, len);
+		    bDegenerated = 1;
+		}
 
-		int dyd_Q_orginsdy_orgins_count = FiberEffectImp(
-                                 input,
-		                         bClearVariable,
-		                         /* Y_i part -----------------------------*/
-		                         yd_Q_orgins, /* 14 x 2 */
-		                         &Td, /* a scalar */
-		                         /* dfdY_i part ------------------------- */
-		                         dTddy_orgins, /* 14 x 2 */
-		                         dyd_Q_orginsdT, /* 14 x 2 */
-		                         &dTddT, /* a scalar */
-		                         /* nnz (maximum 14x14x4) */
-		                         dyd_Q_orginsdy_orgins_keys,
-		                         dyd_Q_orginsdy_orgins_values);
+		int dyd_Q_orginsdy_orgins_count = 0;
+		if (bDegenerated == 0) {
+		    dyd_Q_orginsdy_orgins_count = FiberEffectImp(input,
+		                                                 bClearVariable,
+		                                                 /* Y_i part -----------------------------*/
+		                                                 yd_Q_orgins, /* 14 x 2 */
+		                                                 &Td, /* a scalar */
+		                                                 /* dfdY_i part ------------------------- */
+		                                                 dTddy_orgins, /* 14 x 2 */
+		                                                 dyd_Q_orginsdT, /* 14 x 2 */
+		                                                 &dTddT, /* a scalar */
+		                                                 /* nnz (maximum 14x14x4) */
+		                                                 dyd_Q_orginsdy_orgins_keys,
+		                                                 dyd_Q_orginsdy_orgins_values);
+		} else {
+		    /* Degenerate case */
+		    memset(yd_Q_orgins, 0, sizeof(double)*14*2);
+
+		    /* Td := KSE/b*(KPE*(-xrest)-(1+KPE/KSE)*T) */
+		    const double KSE   = muscle[j][0];
+		    const double KPE   = muscle[j][1];
+		    const double b     = muscle[j][2];
+		    const double xrest = muscle[j][3];
+		    const double T     = muscle[j][4];
+		    const double A     = muscle[j][5];
+		    Td = KSE/b*(KPE*(-xrest)-(1+KPE/KSE)*T+A);
+		    memset(dTddy_orgins, 0, sizeof(double)*14*2);
+		    memset(dyd_Q_orginsdT, 0, sizeof(double)*14*2);
+		    dTddT = (KSE+KPE)/b;
+		    dyd_Q_orginsdy_orgins_count = 0;
+
+		    /* DEBUG */
+		    printf("Degenerate fiber.\n");
+		    exit(-1);
+		}
+
         assert(dyd_Q_orginsdy_orgins_count >= 0);
-
-        for (k = 0; k < 14; ++k)
+        int k;
+        #pragma omp critical
         {
-            f[boIdx*14 + k] += yd_Q_orgins[ORIGIN][k];
-            f[biIdx*14 + k] += yd_Q_orgins[INSERTION][k];
-            f[nBody*14 + j] = Td;
+            for (k = 0; k < 14; ++k)
+            {
+                f[boIdx*14 + k] += yd_Q_orgins[ORIGIN][k];
+                f[biIdx*14 + k] += yd_Q_orgins[INSERTION][k];
+                f[nBody*14 + j] = Td;
+            }
         }
 
 
-        const int dfdY_j_maxNnz = dyd_Q_orginsdy_orgins_count+14+14+14+14+1;
-        dfdY_Q[j] = tm_allocate(matSize, matSize, dfdY_j_maxNnz);
+        const unsigned int dfdY_j_maxNnz = dyd_Q_orginsdy_orgins_count+14+14+14+14+1;
+        dfdY_Q[j] = tm_allocate(nY, nY, dfdY_j_maxNnz);
 
         /*
         # (1) Starting from the easiest...
