@@ -855,17 +855,17 @@ def FrameMove_ImpInt():
 		footBodies_C.append(copy.deepcopy(expBody))
 	
 	# Run LCP (Python version)
-	BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
+	#BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
 	# Run LCP (C version)
 	BLEM.FrameMove_CVersion(footBodies_C, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
-	
+	'''
 	for i in xrange(nBody):
 		print i, 'q diff =', footBodies_Py[i].q - footBodies_C[i].q
 		print i, 'qd diff =', footBodies_Py[i].qd - footBodies_C[i].qd
 		print i, 'len(cf) diff =', len(footBodies_Py[i].cf) - len(footBodies_C[i].cf)
 		for j in xrange(len(footBodies_Py[i].cf)):
 			print i, j, 'Py=', footBodies_Py[i].cf[j], 'C=', footBodies_C[i].cf[j]
-		
+	'''
 	footBodies = footBodies_C
 
 	#print gFrame, footBodies[1].cf, footBodies[1].contactPoints

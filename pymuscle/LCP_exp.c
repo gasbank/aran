@@ -97,7 +97,8 @@ unsigned int Index(const unsigned int len, const unsigned array[len], unsigned i
 int BuildEquationsOfMotionCoefficients(cholmod_sparse **M_sp, cholmod_sparse **Minv_sp, cholmod_dense **_tau_den,
                         const unsigned int nd, const unsigned int n, const unsigned int m,
                         const unsigned int lenBodies, const unsigned int bodies[lenBodies],
-                        const double Y [2*nd*n + m], const double I[n][4], const double mass[n],
+                        const double Y [2*nd*n + m], const double extForces[n][nd],
+                        const double I[n][4], const double mass[n],
                         cholmod_common *cc) {
     assert (*M_sp    == 0);
     assert (*_tau_den == 0);
@@ -128,8 +129,16 @@ int BuildEquationsOfMotionCoefficients(cholmod_sparse **M_sp, cholmod_sparse **M
     //memset(tau_a_den->x, 0, sizeof(double)*lenBodies*nd);
     int i, j, k;
     for (i=0; i<lenBodies; ++i) {
+        /*
+         *
+         *     DO NOT USE 'i' as GLOBAL BODY INDEX ! ! !
+         *     USE 'bodyidx' instead ! ! !
+         *
+         *     USE 'i' at LOCAL BODY INDEX ! ! !
+         *
+         */
         double M[nd][nd], Cqd[nd];
-        const unsigned int bodyidx = bodies[i];
+        const unsigned int bodyidx = bodies[i]; /* THIS IS GLOBAL BODY INDEX */
         const double *pi  = &Y[ bodyidx*2*nd + 0 ];
         const double *vi  = &Y[ bodyidx*2*nd + 3 ];
         const double *pdi = &Y[ bodyidx*2*nd + 6 ];
@@ -141,15 +150,24 @@ int BuildEquationsOfMotionCoefficients(cholmod_sparse **M_sp, cholmod_sparse **M
         PRINT_VECTOR(vdi, 3);
         PRINT_VECTOR(Ii, 4);
         MassMatrixAndCqdVector(M, Cqd, pi, vi, pdi, vdi, Ii);
-        PRINT_MATRIX(M, 6, 6);
-        PRINT_VECTOR(Cqd, 6);
+        PRINT_MATRIX(M, nd, nd);
+        PRINT_VECTOR(Cqd, nd);
         double Minv[nd][nd];
         if (Minv_sp)
             Invert6x6MassMatrix(Minv, M);
 
-        const double gravForce[3] = { 0, 0, -9.81 * mass[bodyidx] };
         double *tau = (double *)(tau_den->x);
-        GeneralizedForce(&tau[i*nd], vi, gravForce, ZERO3);
+        /*
+         * We treat the gravitational forces as external forces.
+         * There are no separate term for the grav force.
+         *
+         * If you want the grav force is computed and added
+         * in C side then use the following code snippet.
+         *
+         * const double gravForce[3] = { 0, 0, -9.81 * mass[bodyidx] };
+         * GeneralizedForce(&tau[i*nd], vi, gravForce, ZERO3);
+         */
+        memcpy(tau + i*nd, extForces[bodyidx], sizeof(double)*nd);
 
         for (j=0; j<nd; ++j) {
             for (k=0; k<=j; ++k) { /* symmetric: lower part only */
@@ -165,6 +183,8 @@ int BuildEquationsOfMotionCoefficients(cholmod_sparse **M_sp, cholmod_sparse **M
                 tau[ i*nd + j ] += -Cqd[j];
             }
         }
+
+        PRINT_VECTOR(tau, nd);
     }
     assert(M_trip->nnz    <= M_trip_maxnz   );
     if (Minv_sp) {
@@ -607,7 +627,9 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             double Ynext[2*nd*n + m],
             double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
-            const double Y [2*nd*n + m], const double I[n][4], const double mass[n],
+            const double Y [2*nd*n + m],
+            const double extForces[n][nd],
+            const double I[n][4], const double mass[n],
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
             const double mu, const double h,
@@ -647,7 +669,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         cholmod_dense  *tau_a_den = 0;
         BuildEquationsOfMotionCoefficients(&M_a_sp, &Minv_a_sp, &tau_a_den,
                                            nd, n, m, lenActiveBodies, activeBodies,
-                                           Y, I, mass, cc);
+                                           Y, extForces, I, mass, cc);
         LcpSubmatrices lcpSm;
         memset(&lcpSm, 0, sizeof(LcpSubmatrices));
 
@@ -846,7 +868,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         cholmod_dense  *tau_i_den = 0;
         BuildEquationsOfMotionCoefficients(&M_i_sp, 0, &tau_i_den,
                                            nd, n, m, lenInactiveBodies, inactiveBodies,
-                                           Y, I, mass, cc);
+                                           Y, extForces, I, mass, cc);
         SPARSE_CHECK(M_i_sp);
         DENSE_CHECK(tau_i_den);
         //PrintEntireSparseMatrix(M_i_sp);
@@ -890,13 +912,14 @@ int LCP_exp_Python(const unsigned int nd, const unsigned int n, const unsigned i
             double Ynext[2*nd*n + m],
             double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
-            const double Y [2*nd*n + m], const double I[n][4], const double mass[n],
+            const double Y [2*nd*n + m], const double extForces[n][nd],
+            const double I[n][4], const double mass[n],
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
             const double mu, const double h, const int contactForceInfoOnly) {
     cholmod_common c ;
     cholmod_start (&c) ;
-    int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
+    int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
     cholmod_finish(&c);
     return status;
 }
@@ -907,6 +930,7 @@ int LCP_exp_test() {
     const unsigned int m = 0;
     const unsigned int nY = 2*nd*n+m;
     double Y[nY], I[n][4], corners[n][8][3], mass[n];
+    double extForces[n][nd];
     double Ynext[nY];
     const unsigned int NCONEBASIS = 8;
     const double pi = 4*atan(1.);
@@ -921,7 +945,7 @@ int LCP_exp_test() {
              { cos(pi/4), -sin(pi/4), 0} };
     memset(Y, 0, sizeof(double)*nY);
     memset(mass, 0, sizeof(double)*n);
-
+    memset(extForces, 0, sizeof(double)*n*nd);
     Y[2] = 5; /* start from the sky */
     /* slightly rotated */
     Y[3] = 0.3;
@@ -959,7 +983,7 @@ int LCP_exp_test() {
     int it;
     for (it = 0; it < iter; ++it) {
         status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints,
-                         penetration0, Y, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, 0, &c);
+                         penetration0, Y, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, 0, &c);
         if (it % 1000 == 0)
             printf("== Frame %5d ==\n", it);
         PRINT_VECTOR(Y, nY);

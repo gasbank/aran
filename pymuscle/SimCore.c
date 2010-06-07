@@ -256,8 +256,8 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
      * Evaluate the cost function
      */
     const double alpha[2]     = {  1,  0 };
-    const double alpha_neg[2] = { -1,  0 };
-    const double beta[2]      = {  1,  0 };
+    //const double alpha_neg[2] = { -1,  0 };
+    //const double beta[2]      = {  1,  0 };
     const double beta0[2]     = {  0,  0 };
     double ustar_extended[nY];
     memset(ustar_extended, 0, sizeof(double) * 2*nd*nBody);

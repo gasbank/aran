@@ -367,6 +367,7 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 	C_contactForces    = (((ct.c_double * 3) * 8) * n)()
 	C_lenContactForces = (ct.c_int * n)()
 	C_contactPoints    = ((ct.c_int * 8) * n)()
+	C_extForces        = ((ct.c_double * nd) * n)()
 	for i in xrange(n):
 		C_Y[2*nd*i +  0 : 2*nd*i +  6] = bodies[i].q
 		C_Y[2*nd*i +  6 : 2*nd*i + 12] = bodies[i].qd
@@ -374,11 +375,19 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 		C_mass[i] = bodies[i].mass
 		for j in xrange(8):
 			C_corners[i][j][0:3] = bodies[i].corners[j]
-	
+		fg = GeneralizedForce(bodies[i].q[3:6],
+	                          (0., 0., -9.81 * bodies[i].mass),
+	                          (0., 0., 0.))
+		C_extForces[i][0:6] = fg
+		if hasattr(bodies[i], 'extForce') and bodies[i].extForce is not 0:
+			assert len(bodies[i].extForce) == 6
+			C_extForces[i][0:6] += bodies[i].extForce
+		#print 'C extforce = ', C_extForces[i][0:6]
+		
 	C_contactForceInfoOnly = ct.c_int( 1 if contactForceInfoOnly else 0 )
 	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext,
 	               C_contactForces, C_lenContactForces, C_contactPoints,
-	               C_penetration0, C_Y, C_I, C_mass, C_corners,
+	               C_penetration0, C_Y, C_extForces, C_I, C_mass, C_corners,
 	               C_NCONEBASIS, C_CONEBASIS, C_mu, C_h, C_contactForceInfoOnly)
 	
 	# For contact force visualization
@@ -454,8 +463,11 @@ def FrameMove_PythonVersion(bodies, h, mu, alpha0, nMuscle, di, contactForceInfo
 	
 	# Total number of contact points
 	p = len(activeCorners)
+	# For debug
+	'''
 	if contactForceInfoOnly and p == 0:
 		return None
+	'''
 	
 	# Total number of active/inactive bodies
 	nba = len(activeBodies)
@@ -496,7 +508,8 @@ def FrameMove_PythonVersion(bodies, h, mu, alpha0, nMuscle, di, contactForceInfo
 		if hasattr(bodyk, 'extForce') and bodyk.extForce is not 0:
 			assert len(bodyk.extForce) == 6
 			fg += bodyk.extForce
-			
+		#print 'Py extforce = ', fg
+		
 		if k in activeBodies:
 			kk = activeBodies.index(k)
 			Minv_a[6*kk:6*(kk+1), 6*kk:6*(kk+1)] = Minv_k
