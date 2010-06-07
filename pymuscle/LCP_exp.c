@@ -647,7 +647,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
      * Active bodies are sent to the LCP routine to compute contact forces.
      * Both active and inactive bodies next step state is calculated.
      */
-    unsigned int activeCorners[8*n][2]; unsigned int lenActiveCorners  = 0;
+    unsigned int activeCorners[8*n][2]; unsigned int lenActiveCorners  = 0; /* 8n is the maximum number of active corners */
     unsigned int activeBodies[n];       unsigned int lenActiveBodies   = 0;
     unsigned int inactiveBodies[n];     unsigned int lenInactiveBodies = 0;
     DetermineActiveness(nd, n, m,
@@ -655,7 +655,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                         activeBodies, &lenActiveBodies,
                         inactiveBodies, &lenInactiveBodies,
                         Y, corners, penetration0);
-
+    assert (lenActiveCorners <= 8*n) ;
     memset(lenContactForces, 0, sizeof(unsigned int)*n);
     if (lenActiveBodies == 0 && contactForceInfoOnly) {
         /* No needed to proceed further */
