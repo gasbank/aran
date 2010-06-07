@@ -385,6 +385,7 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 		#print 'C extforce = ', C_extForces[i][0:6]
 		
 	C_contactForceInfoOnly = ct.c_int( 1 if contactForceInfoOnly else 0 )
+	
 	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext,
 	               C_contactForces, C_lenContactForces, C_contactPoints,
 	               C_penetration0, C_Y, C_extForces, C_I, C_mass, C_corners,
@@ -399,9 +400,12 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 			bodies[i].cf.append( array(C_contactForces[i][j]) )
 			#print array(C_contactForces[i][j])
 		bodies[i].contactPoints = array(C_contactPoints[i])[0:C_lenContactForces[i]]
-
+	
+	
+		
+	contactForcesNotEmpty = any([v>0 for v in C_lenContactForces])
 	if contactForceInfoOnly:
-		return any([v>0 for v in C_lenContactForces])
+		return contactForcesNotEmpty
 
 	# Update body data with next step state
 	for i in xrange(n):

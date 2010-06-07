@@ -24,7 +24,7 @@
     #define SPARSE_CHECK(x) cholmod_print_sparse(x, #x, cc)
     #define DENSE_CHECK(x)  cholmod_print_dense(x, #x, cc)
     #define TRIPLET_CHECK(x)  cholmod_print_triplet(x, #x, cc)
-
+    #define CHECK_SOURCE_LINE { PRINT_FLH;  printf("CHECK_SOURCE_LINE\n"); }
 
 #else
     #define PRINT_FLH
@@ -38,6 +38,7 @@
     #define SPARSE_CHECK(x)
     #define DENSE_CHECK(x)
     #define TRIPLET_CHECK(x)
+    #define CHECK_SOURCE_LINE
 #endif
 
 

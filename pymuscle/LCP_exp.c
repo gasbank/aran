@@ -636,10 +636,12 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             /* if 0 explicit integration occurs, otherwise only contact information is calculated */
             const int contactForceInfoOnly,
             cholmod_common *cc) {
+    //printf("LCP_exp () started.\n");
     assert(Y != Ynext);
     const double nY = 2*nd*n + m;
     assert ( nY > 0 );
     memset(Ynext, 0, sizeof(double)*nY);
+    CHECK_SOURCE_LINE;
     /*
      * Determine which bodies are active or not.
      * Active bodies are sent to the LCP routine to compute contact forces.
@@ -654,7 +656,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                         inactiveBodies, &lenInactiveBodies,
                         Y, corners, penetration0);
 
-    memset(lenContactForces, 0, sizeof(double)*n);
+    memset(lenContactForces, 0, sizeof(unsigned int)*n);
     if (lenActiveBodies == 0 && contactForceInfoOnly) {
         /* No needed to proceed further */
         return 0;
@@ -664,6 +666,35 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
      *  1. Active
      *********************************/
     if (lenActiveBodies) {
+        /*
+         * We can use one of two strategies to compute contact forces
+         * on multibody-muticontact cases.
+         *
+         * Strategy A.
+         *    Solve a single LCP by gathering all bodies to construct
+         *    the matrix M and the vector q.
+         *
+         * Strategy B.
+         *    Solve multiple LCPs (the same as the number of active bodies)
+         *    by constructing an individual matrices and vectors, i.e.
+         *    M1...Mn and q1...qn.
+         *
+         * We guess the second one (Strategy B) is more efficient than
+         * the other, but not sure.
+         * The matrix size M will be 10*p x 10*p where p is the number of
+         * contact forces.
+         *
+         * Example: three rigid bodies with the following contact states
+         *
+         *            Body 1 -- 0 contacts
+         *                 2 -- 3 contacts
+         *                 3 -- 4 contacts
+         *
+         * Using the strategy A requires to construct a 70x70 matrix and
+         * solve it. (single LCP)
+         * Using the strategy B requires to construct a 30x30 matrix and
+         * a 40x40 matrix and solve them. (two LCPs)
+         */
         cholmod_sparse *M_a_sp    = 0;
         cholmod_sparse *Minv_a_sp = 0;
         cholmod_dense  *tau_a_den = 0;
@@ -672,9 +703,6 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                                            Y, extForces, I, mass, cc);
         LcpSubmatrices lcpSm;
         memset(&lcpSm, 0, sizeof(LcpSubmatrices));
-
-
-
         BuildLCPSubmatrices(&lcpSm, nd, n, m, Y, I, mass,
                             corners,
                             NCONEBASIS, CONEBASIS, mu, h,
@@ -700,7 +728,6 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         //PrintEntireSparseMatrix(LCP_M_sp);
         double *LCP_q = (double *)(LCP_q_den->x);
         PRINT_VECTOR(LCP_q, qsize);
-
         int status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
         assert(status == 0);
         /*
@@ -737,6 +764,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         }
         if (lcpFailed) {
             PRINT_FLH; printf(" ************ LCP failed ************\n");
+            print_trace();
             exit(-12345);
         }
         PRINT_DENSE_VECTOR(x_opt_den);
@@ -804,6 +832,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         */
         /* Calculate contact forces in Cartesian coordinates */
         for (i=0; i<lenActiveCorners; ++i) {
+
             const unsigned int kp = activeCorners[i][0]; /* body index */
             const unsigned int cp = activeCorners[i][1]; /* corner index */
             const unsigned int kk = Index(lenActiveBodies, activeBodies, kp); /* body index among active bodies */
@@ -841,7 +870,6 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             memcpy(contactForces[kp][ lenContactForces[kp] ], cf, sizeof(double)*3);
             ++lenContactForces[kp];
         }
-
         cholmod_free_sparse(&LCP_M_sp,     cc);
         cholmod_free_dense(&LCP_q_den,     cc);
         cholmod_free_dense(&LCP_M_den,     cc);
@@ -854,9 +882,9 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         cholmod_free_dense(&x_opt_den, cc);
         FreeLcpSubmatrices(&lcpSm, cc);
     }
-
     if (contactForceInfoOnly) {
         /* No needed to proceed further */
+        CHECK_SOURCE_LINE;
         return 0;
     }
 
@@ -917,10 +945,15 @@ int LCP_exp_Python(const unsigned int nd, const unsigned int n, const unsigned i
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
             const double mu, const double h, const int contactForceInfoOnly) {
+    //printf("LCP_exp_Python() started.\n");
     cholmod_common c ;
     cholmod_start (&c) ;
+    CHECK_SOURCE_LINE;
     int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
+    CHECK_SOURCE_LINE;
     cholmod_finish(&c);
+    CHECK_SOURCE_LINE;
+    PRINT_VECTOR_INT(lenContactForces, n);
     return status;
 }
 

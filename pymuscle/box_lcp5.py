@@ -845,7 +845,8 @@ def FrameMove_ImpInt():
 				pass
 			else:
 				fiberVec /= fiberVecLen
-				q_estk = expBody.q + gCon.h*expBody.qd # Estimated next step state position
+				#q_estk = expBody.q + gCon.h*expBody.qd # Estimated next step state position
+				q_estk = expBody.q
 				muscleTension = GeneralizedForce(q_estk[3:6],
 			                                 tensionSign * fiberVec * fiber.T,
 			                                 attachedLocalPos)
@@ -858,6 +859,7 @@ def FrameMove_ImpInt():
 	#BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
 	# Run LCP (C version)
 	BLEM.FrameMove_CVersion(footBodies_C, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+	print '------------------------------------------'
 	'''
 	for i in xrange(nBody):
 		print i, 'q diff =', footBodies_Py[i].q - footBodies_C[i].q
@@ -866,8 +868,10 @@ def FrameMove_ImpInt():
 		for j in xrange(len(footBodies_Py[i].cf)):
 			print i, j, 'Py=', footBodies_Py[i].cf[j], 'C=', footBodies_C[i].cf[j]
 	'''
+	#print 'Here~'
 	footBodies = footBodies_C
-
+	#print 'and there~'
+	
 	#print gFrame, footBodies[1].cf, footBodies[1].contactPoints
 	'''
 	print gFrame, footBodies[0].q[0:3]
@@ -984,8 +988,8 @@ def FrameMove_ImpInt():
 	C_w_y[2*nd*nBody + 3] = 1e-5  # muscle fiber tension value
 	C_w_y[2*nd*nBody + 4] = 1e-5  # muscle fiber tension value
 	'''
-	C_w_y[0            : 2*nd*nBody] = [1e6,]*(2*nd*nBody)
-	C_w_y[0+2*nd*nBody :           ] = [1e-6]*(nMuscle)
+	C_w_y[0            : 2*nd*nBody] = [1e+6,]*(2*nd*nBody)
+	C_w_y[0+2*nd*nBody :           ] = [1e-6,]*(nMuscle)
 	
 		
 	'''
@@ -1002,7 +1006,7 @@ def FrameMove_ImpInt():
 	          C_body, C_extForce, C_muscle, C_musclePair,
 	          ct.byref(C_cost), C_ustar, C_Ydesired, C_w_y, C_w_u)
 	
-	#print gFrame, '/', C_cost.value, '/', C_ustar[:]
+	print gFrame, '/', C_cost.value, '/', C_ustar[:]
 
 	# Retrieve the result from the simcore and update our states
 	for i in range(nBody):
@@ -1255,7 +1259,7 @@ def WriteSimcoreConfFile(fileName, body, fibers, h):
 	f.write('# Application-wide configuration file\n')
 	f.write('version = \"0.1\";\n')
 	f.write('h = %f;   # Simulation timestep\n' % h)    
-	f.write('simFrame = 1000; # Simulation length\n')
+	f.write('simFrame = 50000; # Simulation length\n')
 	f.write('plotSamplingRate = 1;\n')
 	f.write('''output = "simresult.txt";\n''')
 	

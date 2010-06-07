@@ -21,7 +21,7 @@
 #include "DebugPrintDef.h"
 int SimCore_Python(const double h, const int nBody, const int nMuscle,
             const int nd, const int nY,
-            double body[nBody][2*nd + 4], double extForce[nBody][6],
+            double body[nBody][2*nd + 4], double extForce[nBody][nd],
             double muscle[nMuscle][1 + 11], unsigned int musclePair[nMuscle][2],
             double *cost, double ustar[nMuscle],
             double Ydesired[nY], double w_y[nY], double w_u[nY])
@@ -42,7 +42,7 @@ int SimCore_Python(const double h, const int nBody, const int nMuscle,
 
 int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle,
             const unsigned int nd, const unsigned int nY,
-            double body[nBody][2*nd + 4], double extForce[nBody][6],
+            double body[nBody][2*nd + 4], double extForce[nBody][nd],
             double muscle[nMuscle][1 + 11], unsigned int musclePair[nMuscle][2],
             double *cost, double ustar[nMuscle],
             double Ydesired[nY], double w_y[nY], double w_u[nY],

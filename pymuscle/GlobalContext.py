@@ -182,8 +182,8 @@ class GlobalContext:
 		self.curFrame = 0           # Current frame number
 		self.autoPlay = True
 		self.drawCoupon = 1
-		self.winWidth = 1000
-		self.winHeight = 900
+		self.winWidth = 900
+		self.winHeight = 750
 		self.drawOrtho = False
 		self.myChar = 0
 		

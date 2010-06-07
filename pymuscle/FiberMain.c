@@ -343,20 +343,20 @@ int main2(int argc, const char **argv)
     assert(i == (nY - nMuscle));
 
     /*
-     * Diagonal component of W_Y and W_u
+     * Diagonal component of the matrices W_Y and W_u
      */
     double w_y[nY], w_u[nY];
     for (j = 0; j < nY; ++j)
     {
         if (j < 2*nd*nBody)
         {
-            w_y[j] = 1;
+            w_y[j] = 1e+6;
             w_u[j] = 0;
         }
         else
         {
-            w_y[j] = 0;
-            w_u[j] = 1;
+            w_y[j] = 1e-6;
+            w_u[j] = 0;
         }
     }
     /*

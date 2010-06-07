@@ -373,7 +373,7 @@ class BipedParameter:
 
 
 		# DEBUGGING START
-		l = l[2:4]
+		l = l[1:5]
 		# DEBUGGING END
 
 
@@ -393,13 +393,13 @@ class BipedParameter:
 			#DEBUGGING END
 			'''
 
-			pos0[2] += 0.5 # Start from the sky
+			#pos0[2] += 0.5 # Start from the sky
 			
 			name = ll[0]
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
 			b = PmBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, 'QUAT_WFIRST')
 			body.append(b)
-			'''
+			
 			if name[-1] == 'L':
 				# If there are left body segments, we also need right counterparts
 				newName = name[:-1] + 'R'
@@ -408,7 +408,7 @@ class BipedParameter:
 				newVel0 = copy(vel0) # Deep copy
 				b = PmBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, 'QUAT_WFIRST')
 				body.append(b)
-			    '''
+			    
 
 
 		return body

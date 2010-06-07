@@ -8,6 +8,7 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <execinfo.h>
 #include "cholmod.h"
 #include "umfpack.h"
 #include "ToSparse.h"
@@ -21,6 +22,24 @@
 #define __LINESTR__(line) "(" #line ")"
 #define LINESTR __LINESTR__(__LINE__)
 
+/* Obtain a backtrace and print it to stdout. */
+void print_trace (void)
+{
+    void *array[10];
+    size_t size;
+    char **strings;
+    size_t i;
+
+    size = backtrace (array, 10);
+    strings = backtrace_symbols (array, size);
+
+    printf ("Obtained %zd stack frames.\n", size);
+
+    for (i = 0; i < size; i++)
+        printf ("%s\n", strings[i]);
+
+    free (strings);
+}
 
 int allNonnegative(const unsigned int n, double v[n]) {
     unsigned int i;
@@ -133,7 +152,10 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
             double Ctrl[UMFPACK_CONTROL];
             Ctrl[UMFPACK_PRL] = 5;
             umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
-            //exit(-123);
+            printf("   *** Singular matrix encountered in SolveLinearSystem().\n");
+            printf("       Exit abnormally...\n");
+            print_trace();
+            exit(-123);
         }
 
     }
