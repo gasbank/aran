@@ -867,13 +867,15 @@ if __name__ == '__main__':
 		         ( (0,0,1.5)        , (0.1,0.4,0.8)       ,  (0,0,0)    , (1,-3,30),    (1,1,1)  ,     1 ),
 		         # free-fall of arbitrary rotated state with some angular velocity (general box shape)
 		         ( (0,0,10)       ,(0.3,0.2,0.1)  ,  (0,0,0)    , (10,10,10),(0.5,0.9,3.5) ,    1 ),
+	             # Stationary box
+		         ( (0,0,0.5)      , (0,0,0)       ,  (0,0,5)    , (0,0,0)   ,    (1,1,1)  ,     1 ),
 		    )
 
-	gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(1), ExpBodyFromTestSet(2), ExpBodyFromTestSet(3) ]
+	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(1), ExpBodyFromTestSet(2), ExpBodyFromTestSet(3) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(5), ExpBodyFromTestSet(8), ExpBodyFromTestSet(7) ]
 	#gBodies = [ ExpBodyFromTestSet(2), ExpBodyFromTestSet(1) ]
-	#gBodies = [ ExpBodyFromTestSet(0) ]
-	#gBodies = [ ExpBodyFromTestSet(3) ]
+	#gBodies = [ ExpBodyFromTestSet(0),ExpBodyFromTestSet(9) ]
+	gBodies = [ ExpBodyFromTestSet(1) ]
 	#gBodies = [ ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0), ExpBodyFromTestSet(0) ]
 	gNextTestSet = None
 	z0 = 0
@@ -882,7 +884,7 @@ if __name__ == '__main__':
 	gFrame = 0
 	gWireframe = False
 	gResetState = False
-	gUseCversion = False
+	gUseCversion = True
 	nd = 6
 	n = len(gBodies)
 	m = 0

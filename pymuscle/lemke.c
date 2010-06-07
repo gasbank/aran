@@ -157,7 +157,6 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
 
 int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, double q[n], double z0[n], cholmod_common *cc) {
     assert(Mdim == 1 || Mdim == 2);
-
     const double zer_tol = 1e-5;
     const double piv_tol = 1e-8;
     const unsigned int maxiter = (1000<50*n)?1000:50*n;

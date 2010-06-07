@@ -39,6 +39,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
+			<Add option="-fopenmp" />
 			<Add directory="/home/johnu/src/include" />
 			<Add directory="/home/johnu/src/CHOLMOD/Include" />
 		</Compiler>
@@ -52,6 +53,7 @@
 			<Add library="ccolamd" />
 			<Add library="colamd" />
 			<Add library="fblas" />
+			<Add library="gomp" />
 			<Add directory="/home/johnu/src/lib" />
 			<Add directory="/home/jonu/src/lib/atlas/lib" />
 			<Add directory="/home/johnu/src/blas" />

@@ -681,25 +681,42 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
 
         int status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
         assert(status == 0);
-        /* Check the sanity of the solution */
+        /*
+         * Verify the sanity of the solution
+         * by checking these equations.
+         * (w is calculated from Mx+q)
+         *
+         *    x_i * w_i   == 0
+         *    x_i         >= 0
+         *    w_i         >= 0
+         */
         cholmod_dense *LCP_w = cholmod_copy_dense(LCP_q_den, cc);
         cholmod_sdmult(LCP_M_sp, 0, alpha, beta, x_opt_den, LCP_w, cc);
-        double wtz = 0;
+        int lcpFailed = 0;
         for (i=0; i<qsize; ++i) {
             const double xi = x_opt[i];
             const double wi = ((double *)(LCP_w->x))[i];
-            wtz += xi * wi;
-            if (xi < -1e-5 || wi < -1e-5) {
-                PRINT_FLH;
-                printf("WARN ... x[%d] = %lg  /  w[%d] = %lg\n", i, xi, i, wi);
+            const double xiwi = xi*wi;
+            if (xiwi != 0) {
+                //PRINT_FLH; printf("WARN ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
+                if (fabs(xiwi) > 1e-5)
+                    lcpFailed = 1;
+            }
+            if (xi < 0) {
+                //PRINT_FLH; printf("WARN ... x[%d] = %lg\n", i, xi);
+                if (xi < -1e-5)
+                    lcpFailed = 1;
+            }
+            if (wi < 0) {
+                //PRINT_FLH; printf("WARN ... w[%d] = %lg\n", i, wi);
+                if (wi < -1e-5)
+                    lcpFailed = 1;
             }
         }
-        if (fabs(wtz) > 1e-5) {
-            PRINT_FLH;
-            printf(" ************ LCP failed: wtz = %lg\n", wtz);
-            //exit(-123);
+        if (lcpFailed) {
+            PRINT_FLH; printf(" ************ LCP failed ************\n");
+            exit(-12345);
         }
-
         PRINT_DENSE_VECTOR(x_opt_den);
 
         cholmod_dense *cn_den   = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);

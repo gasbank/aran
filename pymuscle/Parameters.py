@@ -393,7 +393,7 @@ class BipedParameter:
 			#DEBUGGING END
 			'''
 
-			#pos0[2] += 0.5 # Start from the sky
+			pos0[2] += 0.5 # Start from the sky
 			
 			name = ll[0]
 			#name, pName, mass, boxsize, q, qd, dc, rotParam

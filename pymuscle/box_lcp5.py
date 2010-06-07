@@ -810,8 +810,8 @@ def FrameMove_ImpInt():
 	# to pass the data to LCP code and get contact force information
 	#
 	footBodyNames = [b.name for b in gCon.body]
-	footBodies = [] # An array of 'ExpBody'
-	footBodies2 = []
+	footBodies_Py = [] # An array of 'ExpBody'
+	footBodies_C  = []
 	for fb in footBodyNames:
 		fbi = gCon.findBodyIndex(fb)
 		fbb = gCon.body[fbi]
@@ -851,13 +851,22 @@ def FrameMove_ImpInt():
 			                                 attachedLocalPos)
 				expBody.extForce += muscleTension
 				
-		footBodies.append(expBody)
-		footBodies2.append(copy.deepcopy(expBody))
+		footBodies_Py.append(expBody)
+		footBodies_C.append(copy.deepcopy(expBody))
 	
 	# Run LCP (Python version)
-	BLEM.FrameMove_PythonVersion(footBodies, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
+	BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
 	# Run LCP (C version)
-	BLEM.FrameMove_CVersion(footBodies2, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+	BLEM.FrameMove_CVersion(footBodies_C, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+	
+	for i in xrange(nBody):
+		print i, 'q diff =', footBodies_Py[i].q - footBodies_C[i].q
+		print i, 'qd diff =', footBodies_Py[i].qd - footBodies_C[i].qd
+		print i, 'len(cf) diff =', len(footBodies_Py[i].cf) - len(footBodies_C[i].cf)
+		for j in xrange(len(footBodies_Py[i].cf)):
+			print i, j, 'Py=', footBodies_Py[i].cf[j], 'C=', footBodies_C[i].cf[j]
+		
+	footBodies = footBodies_C
 
 	#print gFrame, footBodies[1].cf, footBodies[1].contactPoints
 	'''
@@ -992,7 +1001,8 @@ def FrameMove_ImpInt():
 	C_SimCore(C_h, C_nBody, C_nMuscle, C_nd, C_nY,
 	          C_body, C_extForce, C_muscle, C_musclePair,
 	          ct.byref(C_cost), C_ustar, C_Ydesired, C_w_y, C_w_u)
-	print gFrame, '/', C_cost.value, '/', C_ustar[:]
+	
+	#print gFrame, '/', C_cost.value, '/', C_ustar[:]
 
 	# Retrieve the result from the simcore and update our states
 	for i in range(nBody):

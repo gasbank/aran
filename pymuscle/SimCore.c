@@ -50,9 +50,11 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
             cholmod_sparse *Fsp,cholmod_common *c)
 {
     assert( nY == 2*nd*nBody + nMuscle );
+    assert( nBody > 0 );
+    assert( nd == 6 || nd == 7 );
 
     TripletMatrix *dfdY_R[nBody]; /* be allocated by the function 'ImpAll()' */
-    TripletMatrix *dfdY_Q[nMuscle]; /* be allocated by the function 'ImpAll()' */
+    TripletMatrix *dfdY_Q[nMuscle + 1]; /* be allocated by the function 'ImpAll()'. +1 added just for preventing a zero-sized array */
     double f[nBody*14 + nMuscle];
 
     int i, j, k;
@@ -171,7 +173,6 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
     int n = nY;
     double *b = f;
     double x[nY];
-    double DT[nMuscle][nY]; /* Transpose of D */
 
     status = umfpack_di_symbolic (n, n, tripAp, tripAi, tripAx, &Symbolic, null, null) ;
     if (status)
@@ -232,6 +233,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
      * Result: Dsp
      */
     double g[nY];
+    double DT[nMuscle + 1][nY]; /* Transpose of D. +1 is added just for preventing a zero-sized array. */
     for (k = 0; k < nMuscle; ++k)
     {
         memset(g, 0, sizeof(double) * nY);
@@ -245,7 +247,10 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
     cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, nY, DT, c);
 
     double Dustar[nY];
-    control(nY, nMuscle, ustar, Dustar, W_Ysp, W_usp, Dsp, Fsp, E, c);
+    memset(Dustar, 0, sizeof(double)*nY);
+    if (nMuscle) {
+        control(nY, nMuscle, ustar, Dustar, W_Ysp, W_usp, Dsp, Fsp, E, c);
+    }
 
     /*
      * Evaluate the cost function
@@ -258,10 +263,19 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
     memset(ustar_extended, 0, sizeof(double) * 2*nd*nBody);
     memcpy(ustar_extended+2*nd*nBody, ustar, sizeof(double) * nMuscle);
     cholmod_dense *Fustard = cholmod_allocate_dense(nY,       1,       nY, CHOLMOD_REAL, c);
-    cholmod_dense *ustard  = cholmod_allocate_dense(nMuscle,  1,  nMuscle, CHOLMOD_REAL, c);
-    memcpy(ustard->x, ustar, sizeof(double)*nMuscle);
-    cholmod_sdmult(Fsp, 0, alpha, beta0, ustard, Fustard, c);
+    if (nMuscle) {
+        cholmod_dense *ustard  = cholmod_allocate_dense(nMuscle,  1,  nMuscle, CHOLMOD_REAL, c);
+        memcpy(ustard->x, ustar, sizeof(double)*nMuscle);
+        cholmod_sdmult(Fsp, 0, alpha, beta0, ustard, Fustard, c);
+        cholmod_free_dense (&ustard,  c);
+    } else {
+        memset(Fustard->x, 0, sizeof(double)*nY);
+    }
     double _cost = 0;
+    SANITY_VECTOR(Dustar, nY);
+    SANITY_VECTOR(E, nY);
+    SANITY_VECTOR(((double *)(Fustard->x)), nY);
+
     for (k = 0; k < nY; ++k)
     {
         const double duek = Dustar[k] + E[k];
@@ -273,7 +287,6 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
 
     cholmod_free_sparse(&Dsp,     c);
     cholmod_free_dense (&Fustard, c);
-    cholmod_free_dense (&ustard,  c);
 
     umfpack_di_free_numeric (&Numeric) ;
     //for (j = 0 ; j < 3 ; j++) printf ("x [%d] = %g  ", j, x [j]) ;
