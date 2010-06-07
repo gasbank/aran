@@ -675,14 +675,13 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
          *    the matrix M and the vector q.
          *
          * Strategy B.
-         *    Solve multiple LCPs (the same as the number of active bodies)
-         *    by constructing an individual matrices and vectors, i.e.
-         *    M1...Mn and q1...qn.
+         *    Solve n LCPs by constructing an individual matrices and vectors,
+         *    i.e. M1...Mn and q1...qn where n is the number of active bodies.
          *
          * We guess the second one (Strategy B) is more efficient than
          * the other, but not sure.
-         * The matrix size M will be 10*p x 10*p where p is the number of
-         * contact forces.
+         * The size of the matrix M and the vector q will be 10*p x 10*p
+         * respectively where p is the number of contact forces.
          *
          * Example: three rigid bodies with the following contact states
          *
