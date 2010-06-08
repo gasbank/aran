@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <math.h>
 #include <execinfo.h>
+#include <float.h>
 #include "cholmod.h"
 #include "umfpack.h"
 #include "ToSparse.h"
@@ -16,7 +17,6 @@
 //#define DEBUG
 #include "DebugPrintDef.h"
 #include "Config.h"
-
 #define __FILE_AND_LINE__(file,line) file "(" #line ")"
 #define FILE_AND_LINE __FILE_AND_LINE__(__FILE__,__LINE__)
 #define __LINESTR__(line) "(" #line ")"
@@ -153,9 +153,11 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
             Ctrl[UMFPACK_PRL] = 5;
             umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
             printf("   *** Singular matrix encountered in SolveLinearSystem().\n");
-            printf("       Exit abnormally...\n");
+            /*
+            printf("   *** Exit abnormally...\n");
             print_trace();
             exit(-123);
+            */
         }
 
     }
@@ -174,11 +176,15 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
         //return (-30) ;
     }
     umfpack_di_free_numeric(&Numeric);
+    SANITY_VECTOR(x, m);
     return 0;
 }
 
 int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, double q[n], double z0[n], cholmod_common *cc) {
     assert(Mdim == 1 || Mdim == 2);
+    SANITY_VECTOR(q, n);
+    SANITY_VECTOR(M, (n*n));
+    /*****************************************/
     const double zer_tol = 1e-5;
     const double piv_tol = 1e-8;
     const unsigned int maxiter = (1000<50*n)?1000:50*n;
@@ -300,22 +306,33 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
 
         /* Find new leaving variable */
         lenJ = 0;
-        for (i=0;i<n;++i) {
+        for (i=0;i<n;++i) { /* indices of d>0 */
             if (d[i] > piv_tol) {
                 j[lenJ] = i;
                 ++lenJ;
             }
         }
-
         PRINT_INT(lenJ);
         PRINT_VECTOR_INT(j, lenJ);
 
-        if (lenJ == 0)
+        if (lenJ == 0) {
+            err=2; /* no new pivots - ray termination    err=2; */
             break;
-
-        theta = (x[ j[0] ]+zer_tol) / d[ j[0] ];
-        for (i=0;i<lenJ;++i) {
+        }
+        /* find minimum theta */
+        theta = DBL_MAX; //(x[ j[0] ]+zer_tol) / d[ j[0] ]; /* First value */
+        for (i=0; i<lenJ; ++i) {
             double theta2 = (x[ j[i] ] + zer_tol) / d[ j[i] ];
+
+//            if (isnan(x[ j[i] ])) x[ j[i] ] = 0;
+//            if (isnan(d[ j[i] ])) d[ j[i] ] = 0;
+//            if (isnan(x[ j[i] ]) || isinf(x[ j[i] ]) || isnan(d[ j[i] ]) || isinf(d[ j[i] ])) {
+//                    printf("   WARN ... iterr=%d  ( x[%d]=%lg + zer_tol ) / d[%d]=%lg --> theta=%lg\n", iterr, j[i], x[ j[i] ], j[i], d[ j[i] ], theta2);
+//                    theta2 = 0;
+//            }
+//            if (isfinite(x[j[i]]) && isinf(d[j[i]]))
+//                    theta2 = 0;
+
             if (theta > theta2) theta = theta2;
         }
         PRINT_DBL(theta);
@@ -326,14 +343,29 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
             assert (lenJ <= n);
             unsigned int j2[n]; unsigned int lenJ2 = 0;
             for (i=0;i<lenJ;++i) {
-                if (x[ j[i] ] / d[ j[i] ] <= theta) {
+                double xjidji = x[ j[i] ] / d[ j[i] ];
+
+//                if (isnan(x[ j[i] ])) x[ j[i] ] = 0;
+//                if (isnan(d[ j[i] ])) d[ j[i] ] = 0;
+//                if (isnan(x[ j[i] ]) || isinf(x[ j[i] ]) || isnan(d[ j[i] ]) || isinf(d[ j[i] ])) {
+//                    printf("   WARN ... iterr=%d   x[%d]=%lg / d[%d]=%lg <=? theta=%lg\n", iterr, j[i], x[ j[i] ], j[i], d[ j[i] ], theta);
+//                    xjidji = 0;
+//                }
+//                if (isfinite(x[j[i]]) && isinf(d[j[i]]))
+//                    xjidji = 0;
+
+                if (xjidji <= theta) {
                     j2[lenJ2] = j[i];
                     ++lenJ2;
                 }
             }
+            assert (lenJ2 > 0) ;
             memcpy(j, j2, sizeof(unsigned int)*lenJ2);
             lenJ = lenJ2;
         }
+        /*
+         * TODO: It is not clear when the following assertion is violated.......
+         */
         assert(lenJ > 0);
 
         PRINT_INT(lenJ);
@@ -375,7 +407,7 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
 
                 /*lvindex = (int)(ceil((lenLvindex2-1)*(double)rand()/RAND_MAX));*/
                 assert(lenLvindex2>=1);
-                lvindex = (int)(ceil((lenLvindex2-1)*0.5));
+                lvindex = (int)(ceil((lenLvindex2-1)*0));
                 lvindex = j[lvindex];
 
                 //printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -390,6 +422,10 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
 
         /* Perform pivot */
         ratio = x[lvindex] / d[lvindex];
+        if (!isfinite(ratio)) {
+            printf(" WARN: ratio=%lg <-- x[%d]=%lg / d[%d]=%lg\n", ratio, lvindex, x[lvindex], lvindex, d[lvindex]);
+            getchar();
+        }
         VECTOR_ADD(n, x, d, -ratio);
         x[lvindex] = ratio;
         SET_COLUMN(B, n, lvindex, Be);

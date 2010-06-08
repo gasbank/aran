@@ -24,7 +24,7 @@ import ExpBody
 from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
 from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
 from quat import quat_mult, quat_conj
-import lwp
+#import lwp
 
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.

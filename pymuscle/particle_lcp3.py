@@ -14,7 +14,7 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 from lemke import *
 import sys
-import lwp
+#import lwp
 # Some api in the chain is translating the keystrokes to this octal string
 # so instead of saying: ESCAPE = 27, we use the following.
 ESCAPE = '\033'

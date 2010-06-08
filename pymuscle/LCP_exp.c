@@ -623,6 +623,224 @@ int ReparameterizeExpRot(const unsigned int nd, const unsigned int n, const unsi
 	return 0;
 }
 
+int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned int m,
+                   const unsigned int activeCorners[8*n][2], const unsigned int lenActiveCorners,
+                   const unsigned int activeBodies[n], const unsigned int lenActiveBodies,
+                   double Ynext[2*nd*n + m],
+                   double contactForces[n][8][3], unsigned int lenContactForces[n],
+                   unsigned int contactPoints[n][8],
+                   const double Y [2*nd*n + m],
+                   const double extForces[n][nd],
+                   const double I[n][4], const double mass[n],
+                   const double corners[n][8][3],
+                   const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
+                   const double mu, const double h, cholmod_common *cc) {
+    cholmod_sparse *M_a_sp    = 0;
+    cholmod_sparse *Minv_a_sp = 0;
+    cholmod_dense  *tau_a_den = 0;
+    BuildEquationsOfMotionCoefficients(&M_a_sp, &Minv_a_sp, &tau_a_den,
+                                       nd, n, m, lenActiveBodies, activeBodies,
+                                       Y, extForces, I, mass, cc);
+    LcpSubmatrices lcpSm;
+    memset(&lcpSm, 0, sizeof(LcpSubmatrices));
+    BuildLCPSubmatrices(&lcpSm, nd, n, m, Y, I, mass,
+                        corners,
+                        NCONEBASIS, CONEBASIS, mu, h,
+                        lenActiveCorners, activeCorners,
+                        lenActiveBodies, activeBodies,
+                        M_a_sp, Minv_a_sp, tau_a_den,
+                        cc);
+    /* Not needed anymore */
+    cholmod_free_sparse(&M_a_sp,    cc);
+    cholmod_free_sparse(&Minv_a_sp, cc);
+    cholmod_free_dense (&tau_a_den, cc);
+
+    cholmod_sparse *LCP_M_sp = AssembleLcpMatrix(&lcpSm, cc);
+    cholmod_dense  *LCP_q_den = AssembleLcpVector(&lcpSm, cc);
+    cholmod_dense  *LCP_M_den = cholmod_sparse_to_dense(LCP_M_sp, cc);
+    const unsigned int qsize = LCP_q_den->nrow;
+    cholmod_dense  *x_opt_den = cholmod_allocate_dense(qsize, 1, qsize, CHOLMOD_REAL, cc);
+    double *x_opt = (double *)(x_opt_den->x);
+    assert ( lenActiveBodies  == lcpSm.N_sp->nrow / nd );
+    assert ( lenActiveCorners == lcpSm.N_sp->ncol );
+
+    /* Check the matrix LCP_M_den */
+    //PrintEntireSparseMatrix(LCP_M_sp);
+    double *LCP_q = (double *)(LCP_q_den->x);
+    PRINT_VECTOR(LCP_q, qsize);
+    int status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
+    if (status == 0) {
+        /* GOOD */
+    } else if (status == 1) {
+        printf("   ERROR - LCP STATUS: MAXIMUM ITERATION EXCEEDS\n");
+        getchar();
+    } else if (status == 2) {
+        printf("   ERROR - LCP STATUS: RAY TERMINATION\n");
+        getchar();
+    } else {
+    }
+    SANITY_VECTOR(x_opt, qsize);
+    /*
+     * Verify the sanity of the solution
+     * by checking these equations.
+     * (w is calculated from Mx+q)
+     *
+     *    x_i * w_i   == 0
+     *    x_i         >= 0
+     *    w_i         >= 0
+     */
+    cholmod_dense *LCP_w = cholmod_copy_dense(LCP_q_den, cc);
+    cholmod_sdmult(LCP_M_sp, 0, alpha, beta, x_opt_den, LCP_w, cc);
+    int lcpFailed = 0;
+    int i;
+    for (i=0; i<qsize; ++i) {
+        const double xi = x_opt[i];
+        const double wi = ((double *)(LCP_w->x))[i];
+        const double xiwi = xi*wi;
+        if (xiwi != 0) {
+            //PRINT_FLH; printf("WARN ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
+            if (fabs(xiwi) > 1e-1) {
+                PRINT_FLH; printf("ERROR ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
+                lcpFailed = 1;
+            }
+        }
+        if (xi < 0) {
+            //PRINT_FLH; printf("WARN ... x[%d] = %lg\n", i, xi);
+            if (xi < -1e-1) {
+                PRINT_FLH; printf("ERROR ... x[%d] = %lg\n", i, xi);
+                lcpFailed = 1;
+            }
+        }
+        if (wi < 0) {
+            //PRINT_FLH; printf("WARN ... w[%d] = %lg\n", i, wi);
+            if (wi < -1e-1) {
+                PRINT_FLH; printf("ERROR ... w[%d] = %lg\n", i, wi);
+                lcpFailed = 1;
+            }
+        }
+    }
+    if (lcpFailed) {
+        PRINT_FLH; printf(" ************ LCP failed ************\n");
+//        print_trace();
+//        exit(-12345);
+    }
+    PRINT_DENSE_VECTOR(x_opt_den);
+
+    cholmod_dense *cn_den   = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);
+    cholmod_dense *beta_den = cholmod_allocate_dense(NCONEBASIS*lenActiveCorners, 1, NCONEBASIS*lenActiveCorners, CHOLMOD_REAL, cc);
+    cholmod_dense *lamb_den = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);
+    memcpy(cn_den->x  , x_opt + 0                                             , sizeof(double)*lenActiveCorners           );
+    memcpy(beta_den->x, x_opt + lenActiveCorners                              , sizeof(double)*NCONEBASIS*lenActiveCorners);
+    memcpy(lamb_den->x, x_opt + lenActiveCorners + NCONEBASIS*lenActiveCorners, sizeof(double)*lenActiveCorners           );
+
+    double *cn = (double*)(cn_den->x);
+    double *beta = (double*)(beta_den->x);
+    PRINT_VECTOR(cn, lenActiveCorners);
+    PRINT_VECTOR(beta, NCONEBASIS*lenActiveCorners);
+
+    cholmod_dense  *MinvNcn_den   = cholmod_allocate_dense(nd*lenActiveBodies, 1, nd*lenActiveBodies, CHOLMOD_REAL, cc);
+    cholmod_dense  *MinvDbeta_den = cholmod_allocate_dense(nd*lenActiveBodies, 1, nd*lenActiveBodies, CHOLMOD_REAL, cc);
+    memset(MinvNcn_den->x,   0, sizeof(double)*nd*lenActiveBodies);
+    memset(MinvDbeta_den->x, 0, sizeof(double)*nd*lenActiveBodies);
+    cholmod_sdmult(lcpSm.NTMinv_sp, 1 /* transpose */, alpha, beta, cn_den,   MinvNcn_den,   cc);
+    cholmod_sdmult(lcpSm.DTMinv_sp, 1 /* transpose */, alpha, beta, beta_den, MinvDbeta_den, cc);
+
+
+    double Qimp_cont[nd*lenActiveBodies];
+    double Qd_a_next[nd*lenActiveBodies];
+    double Q_a_next[nd*lenActiveBodies];
+
+    double *MinvNcn     = (double *)(MinvNcn_den->x);
+    double *MinvDbeta   = (double *)(MinvDbeta_den->x);
+    double *hMinvtau_Qd = (double *)(lcpSm.hMinvtau_Qd_den->x);
+
+    for (i=0; i<lenActiveBodies; ++i) {
+        const unsigned int bodyidx = activeBodies[i];
+        int j;
+        for (j=0; j<nd; ++j) {
+            const unsigned int idx = nd*i + j;
+            Qimp_cont[idx] = MinvNcn[idx]     + MinvDbeta[idx];
+            Qd_a_next[idx] = hMinvtau_Qd[idx] + Qimp_cont[idx];
+            Q_a_next[idx]  = h*Qd_a_next[idx] + Y[ bodyidx*2*nd + j];  /* Y[bodyindex*2*nd + j] == Qa[idx] */
+        }
+
+        PRINT_VECTOR(Qimp_cont, nd*lenActiveBodies);
+        PRINT_VECTOR(Qd_a_next, nd*lenActiveBodies);
+        PRINT_VECTOR(Q_a_next, nd*lenActiveBodies);
+
+        memcpy(&Ynext[bodyidx*2*nd +  0], &Q_a_next[nd*i],  sizeof(double)*nd);
+        memcpy(&Ynext[bodyidx*2*nd + nd], &Qd_a_next[nd*i], sizeof(double)*nd);
+    }
+
+    PRINT_VECTOR(Ynext, nY);
+    /*
+    Python code:
+
+    # For contact force visualization
+    for b in bodies:
+        b.cf = [] # Clear contact force visualization data
+    for (kp, cp), k in zip(activeCorners, range(p)):
+        # kp: Body index
+        # cp: Corner index
+        kk = activeBodies.index(kp)
+        fric = dot(D[6*kk:6*(kk+1),8*k:8*(k+1)], beta[8*k:8*(k+1)])
+        nor  = dot(N[6*kk:6*(kk+1),k], cn[k])
+        cf   = (fric[0:3] + nor[0:3]) / h
+        bodies[kp].cf.append(cf)
+    */
+    /* Calculate contact forces in Cartesian coordinates */
+    for (i=0; i<lenActiveCorners; ++i) {
+        const unsigned int kp = activeCorners[i][0]; /* body index */
+        const unsigned int cp = activeCorners[i][1]; /* corner index */
+        const unsigned int kk = Index(lenActiveBodies, activeBodies, kp); /* body index among active bodies */
+        int j;
+        int rsetD[nd];         for (j=0; j<nd;         ++j) rsetD[j] = nd*kk        + j;
+        int csetD[NCONEBASIS]; for (j=0; j<NCONEBASIS; ++j) csetD[j] = NCONEBASIS*i + j;
+        cholmod_sparse *Dsub_sp     = cholmod_submatrix(lcpSm.D_sp, rsetD, nd, csetD, NCONEBASIS, 1, 1, cc);
+        cholmod_dense  *betasub_den = cholmod_allocate_dense(NCONEBASIS, 1, NCONEBASIS, CHOLMOD_REAL, cc);
+        cholmod_dense  *fric_den    = cholmod_allocate_dense(nd,         1, nd,         CHOLMOD_REAL, cc);
+        memcpy(betasub_den->x, beta + NCONEBASIS*i, sizeof(double)*NCONEBASIS);
+        cholmod_sdmult(Dsub_sp, 0, alpha, beta0, betasub_den, fric_den, cc);
+        cholmod_free_sparse(&Dsub_sp, cc);
+        cholmod_free_dense(&betasub_den, cc);
+
+        int rsetN[nd];         for (j=0; j<nd;         ++j) rsetN[j] = nd*kk        + j;
+        int csetN[1];          csetN[0] = i;
+        cholmod_sparse *Nsub_sp     = cholmod_submatrix(lcpSm.N_sp, rsetN, nd, csetN, 1, 1, 1, cc);
+        cholmod_dense  *cnsub_den   = cholmod_allocate_dense(1, 1, 1, CHOLMOD_REAL, cc);
+        ((double *)(cnsub_den->x))[0] = cn[i];
+        cholmod_scale(cnsub_den, CHOLMOD_SCALAR, Nsub_sp, cc);
+        cholmod_dense  *nor_den     = cholmod_sparse_to_dense(Nsub_sp, cc);
+        cholmod_free_sparse(&Nsub_sp, cc);
+        cholmod_free_dense(&cnsub_den, cc);
+
+        double *fric = (double *)(fric_den->x);
+        double *nor  = (double *)(nor_den->x);
+        double cf[3];
+        cf[0] = (fric[0]+nor[0])/h;
+        cf[1] = (fric[1]+nor[1])/h;
+        cf[2] = (fric[2]+nor[2])/h;
+        cholmod_free_dense(&fric_den, cc);
+        cholmod_free_dense(&nor_den, cc);
+
+        contactPoints[kp][ lenContactForces[kp] ] = cp;
+        memcpy(contactForces[kp][ lenContactForces[kp] ], cf, sizeof(double)*3);
+        ++lenContactForces[kp];
+    }
+    cholmod_free_sparse(&LCP_M_sp,     cc);
+    cholmod_free_dense(&LCP_q_den,     cc);
+    cholmod_free_dense(&LCP_M_den,     cc);
+    cholmod_free_dense(&cn_den,        cc);
+    cholmod_free_dense(&beta_den,      cc);
+    cholmod_free_dense(&lamb_den,      cc);
+    cholmod_free_dense(&MinvNcn_den,   cc);
+    cholmod_free_dense(&MinvDbeta_den, cc);
+    cholmod_free_dense(&LCP_w, cc);
+    cholmod_free_dense(&x_opt_den, cc);
+    FreeLcpSubmatrices(&lcpSm, cc);
+    return 0;
+}
+
 int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             double Ynext[2*nd*n + m],
             double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
@@ -694,192 +912,40 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
          * Using the strategy B requires to construct a 30x30 matrix and
          * a 40x40 matrix and solve them. (two LCPs)
          */
-        cholmod_sparse *M_a_sp    = 0;
-        cholmod_sparse *Minv_a_sp = 0;
-        cholmod_dense  *tau_a_den = 0;
-        BuildEquationsOfMotionCoefficients(&M_a_sp, &Minv_a_sp, &tau_a_den,
-                                           nd, n, m, lenActiveBodies, activeBodies,
-                                           Y, extForces, I, mass, cc);
-        LcpSubmatrices lcpSm;
-        memset(&lcpSm, 0, sizeof(LcpSubmatrices));
-        BuildLCPSubmatrices(&lcpSm, nd, n, m, Y, I, mass,
-                            corners,
-                            NCONEBASIS, CONEBASIS, mu, h,
-                            lenActiveCorners, activeCorners,
-                            lenActiveBodies, activeBodies,
-                            M_a_sp, Minv_a_sp, tau_a_den,
-                            cc);
-        /* Not needed anymore */
-        cholmod_free_sparse(&M_a_sp,    cc);
-        cholmod_free_sparse(&Minv_a_sp, cc);
-        cholmod_free_dense (&tau_a_den, cc);
-
-        cholmod_sparse *LCP_M_sp = AssembleLcpMatrix(&lcpSm, cc);
-        cholmod_dense  *LCP_q_den = AssembleLcpVector(&lcpSm, cc);
-        cholmod_dense  *LCP_M_den = cholmod_sparse_to_dense(LCP_M_sp, cc);
-        const unsigned int qsize = LCP_q_den->nrow;
-        cholmod_dense  *x_opt_den = cholmod_allocate_dense(qsize, 1, qsize, CHOLMOD_REAL, cc);
-        double *x_opt = (double *)(x_opt_den->x);
-        assert ( lenActiveBodies  == lcpSm.N_sp->nrow / nd );
-        assert ( lenActiveCorners == lcpSm.N_sp->ncol );
-
-        /* Check the matrix LCP_M_den */
-        //PrintEntireSparseMatrix(LCP_M_sp);
-        double *LCP_q = (double *)(LCP_q_den->x);
-        PRINT_VECTOR(LCP_q, qsize);
-        int status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
-        assert(status == 0);
-        /*
-         * Verify the sanity of the solution
-         * by checking these equations.
-         * (w is calculated from Mx+q)
-         *
-         *    x_i * w_i   == 0
-         *    x_i         >= 0
-         *    w_i         >= 0
-         */
-        cholmod_dense *LCP_w = cholmod_copy_dense(LCP_q_den, cc);
-        cholmod_sdmult(LCP_M_sp, 0, alpha, beta, x_opt_den, LCP_w, cc);
-        int lcpFailed = 0;
-        for (i=0; i<qsize; ++i) {
-            const double xi = x_opt[i];
-            const double wi = ((double *)(LCP_w->x))[i];
-            const double xiwi = xi*wi;
-            if (xiwi != 0) {
-                //PRINT_FLH; printf("WARN ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
-                if (fabs(xiwi) > 1e-5)
-                    lcpFailed = 1;
-            }
-            if (xi < 0) {
-                //PRINT_FLH; printf("WARN ... x[%d] = %lg\n", i, xi);
-                if (xi < -1e-5)
-                    lcpFailed = 1;
-            }
-            if (wi < 0) {
-                //PRINT_FLH; printf("WARN ... w[%d] = %lg\n", i, wi);
-                if (wi < -1e-5)
-                    lcpFailed = 1;
-            }
-        }
-        if (lcpFailed) {
-            PRINT_FLH; printf(" ************ LCP failed ************\n");
-            print_trace();
-            exit(-12345);
-        }
-        PRINT_DENSE_VECTOR(x_opt_den);
-
-        cholmod_dense *cn_den   = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);
-        cholmod_dense *beta_den = cholmod_allocate_dense(NCONEBASIS*lenActiveCorners, 1, NCONEBASIS*lenActiveCorners, CHOLMOD_REAL, cc);
-        cholmod_dense *lamb_den = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);
-        memcpy(cn_den->x  , x_opt + 0                                             , sizeof(double)*lenActiveCorners           );
-        memcpy(beta_den->x, x_opt + lenActiveCorners                              , sizeof(double)*NCONEBASIS*lenActiveCorners);
-        memcpy(lamb_den->x, x_opt + lenActiveCorners + NCONEBASIS*lenActiveCorners, sizeof(double)*lenActiveCorners           );
-
-        double *cn = (double*)(cn_den->x);
-        double *beta = (double*)(beta_den->x);
-        PRINT_VECTOR(cn, lenActiveCorners);
-        PRINT_VECTOR(beta, NCONEBASIS*lenActiveCorners);
-
-        cholmod_dense  *MinvNcn_den   = cholmod_allocate_dense(nd*lenActiveBodies, 1, nd*lenActiveBodies, CHOLMOD_REAL, cc);
-        cholmod_dense  *MinvDbeta_den = cholmod_allocate_dense(nd*lenActiveBodies, 1, nd*lenActiveBodies, CHOLMOD_REAL, cc);
-        memset(MinvNcn_den->x,   0, sizeof(double)*nd*lenActiveBodies);
-        memset(MinvDbeta_den->x, 0, sizeof(double)*nd*lenActiveBodies);
-        cholmod_sdmult(lcpSm.NTMinv_sp, 1 /* transpose */, alpha, beta, cn_den,   MinvNcn_den,   cc);
-        cholmod_sdmult(lcpSm.DTMinv_sp, 1 /* transpose */, alpha, beta, beta_den, MinvDbeta_den, cc);
-
-
-        double Qimp_cont[nd*lenActiveBodies];
-        double Qd_a_next[nd*lenActiveBodies];
-        double Q_a_next[nd*lenActiveBodies];
-
-        double *MinvNcn     = (double *)(MinvNcn_den->x);
-        double *MinvDbeta   = (double *)(MinvDbeta_den->x);
-        double *hMinvtau_Qd = (double *)(lcpSm.hMinvtau_Qd_den->x);
-
+#if defined(LCP_STRATEGY_A)
+        LCP_exp_active(nd, n, m,
+                       activeCorners, lenActiveCorners,
+                       activeBodies, lenActiveBodies,
+                       Ynext,
+                       contactForces, lenContactForces, contactPoints,
+                       Y, extForces, I, mass, corners,
+                       NCONEBASIS, CONEBASIS, mu, h, cc);
+#else /* LCP_STRATEGY_A */
+        #pragma omp parallel for schedule(dynamic) shared(Ynext, contactForces, lenContactForces, contactPoints, Y, extForces, I)
         for (i=0; i<lenActiveBodies; ++i) {
-            const unsigned int bodyidx = activeBodies[i];
-            for (j=0; j<nd; ++j) {
-                const unsigned int idx = nd*i + j;
-                Qimp_cont[idx] = MinvNcn[idx]     + MinvDbeta[idx];
-                Qd_a_next[idx] = hMinvtau_Qd[idx] + Qimp_cont[idx];
-                Q_a_next[idx]  = h*Qd_a_next[idx] + Y[ bodyidx*2*nd + j];  /* Y[bodyindex*2*nd + j] == Qa[idx] */
+            unsigned int activeCorners1[8*1][2]; unsigned int lenActiveCorners1      = 0;
+            unsigned int activeBodies1[1];       const unsigned int lenActiveBodies1 = 1;
+            activeBodies1[0] = activeBodies[i];
+            for (j=0; j<lenActiveCorners; ++j) {
+                if (activeBodies1[0] == activeCorners[j][0]) {
+                    activeCorners1[ lenActiveCorners1 ][0] = activeCorners[j][0];
+                    activeCorners1[ lenActiveCorners1 ][1] = activeCorners[j][1];
+                    ++lenActiveCorners1;
+                }
             }
-
-            PRINT_VECTOR(Qimp_cont, nd*lenActiveBodies);
-            PRINT_VECTOR(Qd_a_next, nd*lenActiveBodies);
-            PRINT_VECTOR(Q_a_next, nd*lenActiveBodies);
-
-            memcpy(&Ynext[bodyidx*2*nd +  0], &Q_a_next[nd*i],  sizeof(double)*nd);
-            memcpy(&Ynext[bodyidx*2*nd + nd], &Qd_a_next[nd*i], sizeof(double)*nd);
+            assert (lenActiveCorners1 <= 8);
+            cholmod_common cc1;
+            cholmod_start(&cc1);
+            LCP_exp_active(nd, n, m,
+                       activeCorners1, lenActiveCorners1,
+                       activeBodies1, lenActiveBodies1,
+                       Ynext,
+                       contactForces, lenContactForces, contactPoints,
+                       Y, extForces, I, mass, corners,
+                       NCONEBASIS, CONEBASIS, mu, h, &cc1);
+            cholmod_finish(&cc1);
         }
-
-        PRINT_VECTOR(Ynext, nY);
-        /*
-        Python code:
-
-        # For contact force visualization
-		for b in bodies:
-			b.cf = [] # Clear contact force visualization data
-		for (kp, cp), k in zip(activeCorners, range(p)):
-			# kp: Body index
-			# cp: Corner index
-			kk = activeBodies.index(kp)
-			fric = dot(D[6*kk:6*(kk+1),8*k:8*(k+1)], beta[8*k:8*(k+1)])
-			nor  = dot(N[6*kk:6*(kk+1),k], cn[k])
-			cf   = (fric[0:3] + nor[0:3]) / h
-			bodies[kp].cf.append(cf)
-        */
-        /* Calculate contact forces in Cartesian coordinates */
-        for (i=0; i<lenActiveCorners; ++i) {
-
-            const unsigned int kp = activeCorners[i][0]; /* body index */
-            const unsigned int cp = activeCorners[i][1]; /* corner index */
-            const unsigned int kk = Index(lenActiveBodies, activeBodies, kp); /* body index among active bodies */
-
-            int rsetD[nd];         for (j=0; j<nd;         ++j) rsetD[j] = nd*kk        + j;
-            int csetD[NCONEBASIS]; for (j=0; j<NCONEBASIS; ++j) csetD[j] = NCONEBASIS*i + j;
-            cholmod_sparse *Dsub_sp     = cholmod_submatrix(lcpSm.D_sp, rsetD, nd, csetD, NCONEBASIS, 1, 1, cc);
-            cholmod_dense  *betasub_den = cholmod_allocate_dense(NCONEBASIS, 1, NCONEBASIS, CHOLMOD_REAL, cc);
-            cholmod_dense  *fric_den    = cholmod_allocate_dense(nd,         1, nd,         CHOLMOD_REAL, cc);
-            memcpy(betasub_den->x, beta + NCONEBASIS*i, sizeof(double)*NCONEBASIS);
-            cholmod_sdmult(Dsub_sp, 0, alpha, beta0, betasub_den, fric_den, cc);
-            cholmod_free_sparse(&Dsub_sp, cc);
-            cholmod_free_dense(&betasub_den, cc);
-
-            int rsetN[nd];         for (j=0; j<nd;         ++j) rsetN[j] = nd*kk        + j;
-            int csetN[1];          csetN[0] = i;
-            cholmod_sparse *Nsub_sp     = cholmod_submatrix(lcpSm.N_sp, rsetN, nd, csetN, 1, 1, 1, cc);
-            cholmod_dense  *cnsub_den   = cholmod_allocate_dense(1, 1, 1, CHOLMOD_REAL, cc);
-            ((double *)(cnsub_den->x))[0] = cn[i];
-            cholmod_scale(cnsub_den, CHOLMOD_SCALAR, Nsub_sp, cc);
-            cholmod_dense  *nor_den     = cholmod_sparse_to_dense(Nsub_sp, cc);
-            cholmod_free_sparse(&Nsub_sp, cc);
-            cholmod_free_dense(&cnsub_den, cc);
-
-            double *fric = (double *)(fric_den->x);
-            double *nor  = (double *)(nor_den->x);
-            double cf[3];
-            cf[0] = (fric[0]+nor[0])/h;
-            cf[1] = (fric[1]+nor[1])/h;
-            cf[2] = (fric[2]+nor[2])/h;
-            cholmod_free_dense(&fric_den, cc);
-            cholmod_free_dense(&nor_den, cc);
-
-            contactPoints[kp][ lenContactForces[kp] ] = cp;
-            memcpy(contactForces[kp][ lenContactForces[kp] ], cf, sizeof(double)*3);
-            ++lenContactForces[kp];
-        }
-        cholmod_free_sparse(&LCP_M_sp,     cc);
-        cholmod_free_dense(&LCP_q_den,     cc);
-        cholmod_free_dense(&LCP_M_den,     cc);
-        cholmod_free_dense(&cn_den,        cc);
-        cholmod_free_dense(&beta_den,      cc);
-        cholmod_free_dense(&lamb_den,      cc);
-        cholmod_free_dense(&MinvNcn_den,   cc);
-        cholmod_free_dense(&MinvDbeta_den, cc);
-        cholmod_free_dense(&LCP_w, cc);
-        cholmod_free_dense(&x_opt_den, cc);
-        FreeLcpSubmatrices(&lcpSm, cc);
+#endif /* LCP_STRATEGY_A */
     }
     if (contactForceInfoOnly) {
         /* No needed to proceed further */

@@ -23,7 +23,7 @@ import matplotlib.pyplot as pit
 import ExpBody
 from dRdv_real import QuatdFromV
 from quat import quat_mult, quat_conj
-import lwp
+#import lwp
 import ctypes as ct
 import time
 

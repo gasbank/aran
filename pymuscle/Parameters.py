@@ -302,13 +302,15 @@ class BipedParameter:
 		p7 = c1 + array([ -self['soleWidth']/2,  0, 0])
 		p8 = c2 + array([ -self['thighWidth']/2,  0, -self['thighLen']/2])
 		
-		'''
-		return [ ('hamstring1L', p1,p2, 'soleL', 'thighL'),
-		         ('hamstring2L', p3,p4, 'soleL', 'thighL'),
+		
+		return [
+		    ('hamstring1L', p1,p2, 'soleL', 'thighL'),
+		         #('hamstring2L', p3,p4, 'soleL', 'thighL'),
 		         ('hamstring3L', p5,p6, 'soleL', 'thighL'),
-		         ('hamstring4L', p7,p8, 'soleL', 'thighL') ]
-				 '''
-		return []
+		         #('hamstring4L', p7,p8, 'soleL', 'thighL')
+		         ]
+		
+		#return []
 	
 	def getGastro(self):
 		'''
@@ -329,10 +331,12 @@ class BipedParameter:
 		p7 = c + array([-self['calfWidth']/4,  self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p8 = c + array([-self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
 
-		return [ ('gastro1L', p1,p2, 'calfL', 'soleL'),
-				 ('gastro2L', p3,p4, 'calfL', 'soleL'),
+		return [
+		    ('gastro1L', p1,p2, 'calfL', 'soleL'),
+				 #('gastro2L', p3,p4, 'calfL', 'soleL'),
 				 ('gastro3L', p5,p6, 'calfL', 'soleL'),
-				 ('gastro4L', p7,p8, 'calfL', 'soleL') ]
+				 #('gastro4L', p7,p8, 'calfL', 'soleL')
+		]
 		
 	def getTibialis(self):
 		c1 = self.getToePos()
@@ -373,7 +377,7 @@ class BipedParameter:
 
 
 		# DEBUGGING START
-		l = l[1:5]
+		l = l[2:5]
 		# DEBUGGING END
 
 
@@ -399,7 +403,7 @@ class BipedParameter:
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
 			b = PmBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, 'QUAT_WFIRST')
 			body.append(b)
-			
+
 			if name[-1] == 'L':
 				# If there are left body segments, we also need right counterparts
 				newName = name[:-1] + 'R'
@@ -408,7 +412,7 @@ class BipedParameter:
 				newVel0 = copy(vel0) # Deep copy
 				b = PmBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, 'QUAT_WFIRST')
 				body.append(b)
-			    
+
 
 
 		return body
@@ -417,14 +421,14 @@ class BipedParameter:
 		# Fiber constants for a ligament
 		KSE = 1.          # Should not be 0
 		KPE = 1.
-		b   = 1.          # Should not be 0
+		b   = 10.          # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
 		# Fiber constants for a muscle fiber
 		KSE = 1.            # Should not be 0
 		KPE = 1.
-		b   = 1.         # Should not be 0
+		b   = 10.         # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)

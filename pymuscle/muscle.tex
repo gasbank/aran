@@ -7,6 +7,13 @@
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
 \renewcommand{\baselinestretch}{1.2}
+
+% User-defined macro for printing zero matrix in opaque color.
+% Should be used in math blocks.
+% Usage) \zm{2,3}
+%        \zm{}
+\newcommand{\zm}[1]{\ensuremath{ {\color{opaqueblue} 0_{#1} } }}
+
 \begin{document}
 
 %%%%%%%%% TITLE
@@ -420,6 +427,88 @@ $x$ and $\dot{x}$ to zero.
 
 \subsection{Contact model}
 
+\begin{equation}
+\left[ \begin{array}{c}
+0 \\
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+=
+\left[ \begin{array}{cccc}
+\mathbf{M} & -\mathbf{n}   & -\mathbf{D}   & 0 \\
+\mathbf{n}^T        & 0    & 0    & 0 \\
+\mathbf{D}^T        & 0    & 0    & \mathbf{E} \\
+0          & \boldsymbol{\mu}  & -\mathbf{E}^T & 0
+\end{array}  \right]
+\left[ \begin{array}{c}
+v^{(l+1)} \\
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
++
+\left[ \begin{array}{c}
+-Mv^{(l)}-hk \\
+0 \\
+0 \\
+0
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right] ^T
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+= 0,\quad\quad
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
+\geq 0,\quad\quad
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+\geq 0
+\end{equation}
+
+\begin{equation}
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+=
+\left[ \begin{array}{ccc}
+\mathbf{n}^T \mathbf{M}^{-1} \mathbf{n}  &   \mathbf{n}^T \mathbf{M}^{-1} \mathbf{D}  & 0          \\
+\mathbf{D}^T \mathbf{M}^{-1} \mathbf{n}  &   \mathbf{D}^T \mathbf{M}^{-1} \mathbf{D}  & \mathbf{E} \\
+\boldsymbol{\mu}                         &   -\mathbf{E}^T & 0
+\end{array}  \right]
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
++
+\left[ \begin{array}{c}
+\mathbf{n}^T ( v^{(l)} + \mathbf{M}^{-1} hk ) \\
+\mathbf{D}^T ( v^{(l)} + \mathbf{M}^{-1} hk ) \\
+0
+\end{array}  \right]
+\end{equation}
+
+
+
 %\subsection{Whole biped model}
 
 By modeling the bones as rigid bodies and the bunch of muscles as several muscle
@@ -589,11 +678,7 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 \dot{y}_{R,i} = [\dot{p}_i, \dot{q}_i, \ddot{\tilde{p}}_i, \ddot{\tilde{q}}_i]
 \end{equation}
 
-% User-defined macro for printing zero matrix in opaque color.
-% Should be used in math blocks.
-% Usage) \zm{2,3}
-%        \zm{}
-\newcommand{\zm}[1]{\ensuremath{ {\color{opaqueblue} 0_{#1} } }}
+
 
 \begin{equation}
 \frac{\partial\dot{Y}_{R,1}}{\partial Y}=

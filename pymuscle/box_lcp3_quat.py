@@ -23,7 +23,7 @@ import matplotlib.pyplot as pit
 import PmBody
 from quat import *
 import ctypes as ct
-import lwp
+#import lwp
 
 #from mlabwrap import mlab
 

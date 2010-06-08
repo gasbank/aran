@@ -186,6 +186,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         V_UMF_STATUS(status);
         if (status == UMFPACK_WARNING_singular_matrix)
         {
+            printf("    ERROR: Implicit integration matrix singular.\n");
             /*
             double Ctrl[UMFPACK_CONTROL];
             Ctrl[UMFPACK_PRL] = 5;
@@ -194,7 +195,8 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
             printf("====== Matrix dfdY =======\n");
             umfpack_di_report_matrix(nY, nY, Ap, Ai, Ax, 1, Ctrl);
             */
-            exit(-123);
+
+            //exit(-123);
         }
     }
     umfpack_di_free_symbolic (&Symbolic) ;
@@ -283,6 +285,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         const double Fustardk = ((double *)(Fustard->x))[k];
         _cost += w_u[k] * Fustardk * Fustardk;
     }
+    //printf("                     C COST   %llx\n", *((unsigned long long *)((double*)&_cost)));
     *cost = _cost;
 
     cholmod_free_sparse(&Dsp,     c);

@@ -115,8 +115,9 @@ def lemke(M, q, z0):
 		#d = d[0] # we only need the solution
 
 		# Find new leaving variable
-		j = nonzero(d>piv_tol)[0]
-		if len(j) == 0:
+		j = nonzero(d>piv_tol)[0] # indices of d>0
+		if len(j) == 0: # no new pivots - ray termination    err=2;
+			err=2
 			break
 		theta = min([ (xj + zer_tol)/dj for xj, dj in zip(x[j], d[j]) ])
 		j = j[ list(nonzero( [ xj/dj for xj, dj in zip(x[j], d[j]) ] <= theta )[0]) ]
