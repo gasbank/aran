@@ -13,5 +13,6 @@ typedef struct _LcpSubmatrices {
 } LcpSubmatrices;
 
 int LCP_exp_test();
+void PrintEntireSparseMatrix(cholmod_sparse *M_sp);
 
 #endif

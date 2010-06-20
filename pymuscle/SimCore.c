@@ -8,32 +8,33 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <umfpack.h>
+#include <cholmod.h>
 
 #include "TripletMatrix.h"
 #include "FiberEffectImpAll.h"
-#include "umfpack.h"
-#include "cholmod.h"
 #include "MathUtil.h"
 #include "ToSparse.h"
 #include "Control.h"
 #include "SimCore.h"
 #define DEBUG
 #include "DebugPrintDef.h"
+#include "LCP_exp.h"
 int SimCore_Python(const double h, const int nBody, const int nMuscle,
             const int nd, const int nY,
             double body[nBody][2*nd + 4], double extForce[nBody][nd],
             double muscle[nMuscle][1 + 11], unsigned int musclePair[nMuscle][2],
-            double *cost, double ustar[nMuscle],
-            double Ydesired[nY], double w_y[nY], double w_u[nY])
+            double *cost, double *cost2, double ustar[nMuscle],
+            double Ydesired[nY], double w_y[nY], double w_u[nMuscle])
 {
     //printf("Hello world %d\n", nY);
     cholmod_common c ;
     cholmod_start (&c) ;
-    cholmod_sparse *Fsp = constructMatrixF(nd, nBody, nMuscle, &c);
     cholmod_sparse *W_Ysp = constructSparseDiagonalMatrix(nY, w_y, &c);
-    cholmod_sparse *W_usp = constructSparseDiagonalMatrix(nY, w_u, &c);
-    int status = SimCore(h, nBody, nMuscle, nd, nY, body, extForce, muscle, musclePair, cost, ustar, Ydesired, w_y, w_u, W_Ysp, W_usp, Fsp, &c);
-    cholmod_free_sparse(&Fsp, &c);
+    cholmod_sparse *W_usp = constructSparseDiagonalMatrix(nMuscle, w_u, &c);
+    //PrintEntireSparseMatrix(W_Ysp);
+    //PrintEntireSparseMatrix(W_usp);
+    int status = SimCore(h, nBody, nMuscle, nd, nY, body, extForce, muscle, musclePair, cost, cost2, ustar, Ydesired, w_y, w_u, W_Ysp, W_usp, &c);
     cholmod_free_sparse(&W_Ysp, &c);
     cholmod_free_sparse(&W_usp, &c);
     cholmod_finish(&c);
@@ -44,10 +45,10 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
             const unsigned int nd, const unsigned int nY,
             double body[nBody][2*nd + 4], double extForce[nBody][nd],
             double muscle[nMuscle][1 + 11], unsigned int musclePair[nMuscle][2],
-            double *cost, double ustar[nMuscle],
-            double Ydesired[nY], double w_y[nY], double w_u[nY],
+            double *cost, double *cost2, double ustar[nMuscle],
+            double Ydesired[nY], double w_y[nY], double w_u[nMuscle],
             cholmod_sparse *W_Ysp, cholmod_sparse *W_usp,
-            cholmod_sparse *Fsp,cholmod_common *c)
+            cholmod_common *c)
 {
     assert( nY == 2*nd*nBody + nMuscle );
     assert( nBody > 0 );
@@ -187,6 +188,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         if (status == UMFPACK_WARNING_singular_matrix)
         {
             printf("    ERROR: Implicit integration matrix singular.\n");
+            printf("         : What happened?\n");
             /*
             double Ctrl[UMFPACK_CONTROL];
             Ctrl[UMFPACK_PRL] = 5;
@@ -195,8 +197,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
             printf("====== Matrix dfdY =======\n");
             umfpack_di_report_matrix(nY, nY, Ap, Ai, Ax, 1, Ctrl);
             */
-
-            //exit(-123);
+            exit(-123);
         }
     }
     umfpack_di_free_symbolic (&Symbolic) ;
@@ -210,6 +211,7 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         V_UMF_STATUS(status);
         return -30;
     }
+    SANITY_VECTOR(x, nY);
     /*
      * Calculate the vector E = Y^l - Ydesired + C
      */
@@ -229,67 +231,74 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         double C_i  = x[i];
         E[i] = - Ydesired[i] + C_i;
     }
+    SANITY_VECTOR(E, nY);
+    //__PRINT_VECTOR(E, nY);
     assert(i == nY);
     /*
      * Calculate the sparse matrix D = P^-1 G
+     * by solving the sequence of linear system
+     * P di = gi. (i=1..m)
+     *
      * Result: Dsp
+     *
+     * Dcol;
+     * Transpose of D, i.e. Dcol[i] is i-th 'column' of the matrix D.
+     * +1 is added just for preventing a zero-sized array.
      */
+    double Dcol[nMuscle + 1][nY];
     double g[nY];
-    double DT[nMuscle + 1][nY]; /* Transpose of D. +1 is added just for preventing a zero-sized array. */
     for (k = 0; k < nMuscle; ++k)
     {
         memset(g, 0, sizeof(double) * nY);
         const double k_se = muscle[k][0 /* k_se */];
         const double b    = muscle[k][2 /*   b  */];
         g[2*nd*nBody + k] = k_se / b;
-        //g[2*nd*nBody + k] = 1;
-        umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, DT[k], g, Numeric, null, null) ;
+        //printf("g[%d] = %lf\n", 2*nd*nBody + k, g[2*nd*nBody + k]);
+        umfpack_di_solve (UMFPACK_A, tripAp, tripAi, tripAx, Dcol[k], g, Numeric, null, null) ;
     }
-
-    cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, nY, DT, c);
+    SANITY_MATRIX(Dcol, nMuscle, nY);
+    cholmod_sparse *Dsp = ToSparseAndTranspose(nMuscle, nY, Dcol, c);
+    cholmod_print_sparse(Dsp, "Dsp", c);
+    //PrintEntireSparseMatrix(Dsp);
 
     double Dustar[nY];
     memset(Dustar, 0, sizeof(double)*nY);
     if (nMuscle) {
-        control(nY, nMuscle, ustar, Dustar, W_Ysp, W_usp, Dsp, Fsp, E, c);
+        control(nY, nMuscle, ustar, Dustar, W_Ysp, W_usp, Dsp, E, c);
     }
+    SANITY_VECTOR(Dustar, nY);
 
     /*
      * Evaluate the cost function
+     * 1) _cost  : normal cost
+     * 2) _cost2 : cost if there were no control (i.e. ustar=0)
      */
-    const double alpha[2]     = {  1,  0 };
-    //const double alpha_neg[2] = { -1,  0 };
-    //const double beta[2]      = {  1,  0 };
-    const double beta0[2]     = {  0,  0 };
-    double ustar_extended[nY];
-    memset(ustar_extended, 0, sizeof(double) * 2*nd*nBody);
-    memcpy(ustar_extended+2*nd*nBody, ustar, sizeof(double) * nMuscle);
-    cholmod_dense *Fustard = cholmod_allocate_dense(nY,       1,       nY, CHOLMOD_REAL, c);
-    if (nMuscle) {
-        cholmod_dense *ustard  = cholmod_allocate_dense(nMuscle,  1,  nMuscle, CHOLMOD_REAL, c);
-        memcpy(ustard->x, ustar, sizeof(double)*nMuscle);
-        cholmod_sdmult(Fsp, 0, alpha, beta0, ustard, Fustard, c);
-        cholmod_free_dense (&ustard,  c);
-    } else {
-        memset(Fustard->x, 0, sizeof(double)*nY);
-    }
-    double _cost = 0;
-    SANITY_VECTOR(Dustar, nY);
-    SANITY_VECTOR(E, nY);
-    SANITY_VECTOR(((double *)(Fustard->x)), nY);
-
-    for (k = 0; k < nY; ++k)
-    {
+    double _cost = 0, _cost2 = 0;
+    for (k = 0; k < nY; ++k) {
         const double duek = Dustar[k] + E[k];
         _cost += w_y[k] * duek * duek;
-        const double Fustardk = ((double *)(Fustard->x))[k];
-        _cost += w_u[k] * Fustardk * Fustardk;
+        _cost2 += w_y[k] * E[k] * E[k];
     }
+    for (k = 0; k < nMuscle; ++k) {
+        _cost += w_u[k] * ustar[k] * ustar[k];
+    }
+    printf("******************************************************\n");
+    printf("          Cost without control = %20lg\n", _cost2);
+    printf(" <minus>  Cost with control    = %20lg\n", _cost);
+    printf("                                 %20lg\n", _cost2-_cost);
+    printf("******************************************************\n");
+    if (_cost > _cost2) {
+        /* Something goes wrong definitely... */
+        printf("Exit...\n");
+        exit(-9);
+    }
+
     //printf("                     C COST   %llx\n", *((unsigned long long *)((double*)&_cost)));
-    *cost = _cost;
+    *cost  = _cost;
+    *cost2 = _cost2;
+
 
     cholmod_free_sparse(&Dsp,     c);
-    cholmod_free_dense (&Fustard, c);
 
     umfpack_di_free_numeric (&Numeric) ;
     //for (j = 0 ; j < 3 ; j++) printf ("x [%d] = %g  ", j, x [j]) ;
@@ -309,5 +318,6 @@ int SimCore(const double h, const unsigned int nBody, const unsigned int nMuscle
         muscle[k][4 /* T ... watch out! */] += x[2*nd*nBody + k];
         muscle[k][4 /* T ... watch out! */] += Dustar[2*nd*nBody + k];
     }
+
     return 0; /* GOOD */
 }

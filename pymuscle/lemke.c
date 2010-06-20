@@ -122,7 +122,7 @@ double Dot(const unsigned int n, double a[n], double b[n])
     return r;
 }
 
-int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m, double x[m], cholmod_common *cc)
+int SolveLinearSystem(int exitOnError, cholmod_sparse *A, cholmod_dense *bd, const unsigned int m, double x[m], cholmod_common *cc)
 {
     /*
      * compact form of symmetric matrix (storing lower or upper part of matrix only)
@@ -151,15 +151,16 @@ int SolveLinearSystem(cholmod_sparse *A, cholmod_dense *bd, const unsigned int m
         {
             double Ctrl[UMFPACK_CONTROL];
             Ctrl[UMFPACK_PRL] = 5;
-            umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
+            //umfpack_di_report_matrix(m, m, Ap, Ai, Ax, 1, Ctrl);
             printf("   *** Singular matrix encountered in SolveLinearSystem().\n");
-            /*
-            printf("   *** Exit abnormally...\n");
-            print_trace();
-            exit(-123);
-            */
+            if (exitOnError) {
+                printf("   *** Exit abnormally...\n");
+                print_trace();
+                exit(-123);
+            } else {
+                return -1;
+            }
         }
-
     }
 
     /*** DEBUG ***/
@@ -298,10 +299,29 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
             PRINT_VECTOR(Be, n);
         }
 
-        cholmod_sparse *Bsp_c = cholmod_dense_to_sparse(B_c, 1, cc);
+        cholmod_sparse *Bsp_c = 0;
         double d[n];
-        SolveLinearSystem(Bsp_c, Be_c, n, d, cc);
-        cholmod_free_sparse(&Bsp_c, cc);
+        int lemkeTry = 0;
+        while (1) {
+            Bsp_c = cholmod_dense_to_sparse(B_c, 1, cc);
+            int solverRet = SolveLinearSystem(0, Bsp_c, Be_c, n, d, cc);
+            cholmod_free_sparse(&Bsp_c, cc);
+            ++lemkeTry;
+            if (solverRet == 0)
+                break; /* success */
+            if (lemkeTry < 100) {
+                __PRINT_FLH; printf("Linear system built inside lemke routine is singular.\n");
+                __PRINT_FLH; printf("Try to add eps to diagonal elements... (%d try)\n", lemkeTry+1);
+                /* a little bit modification on the diagonal elements of B_c */
+                int i;
+                for (i = 0; i < n; ++i) {
+                    ((double *)(B_c->x))[i*n + i] += 1e-10;
+                }
+            } else {
+                __PRINT_FLH; printf("NO MORE TRY. FAILED. (%d try)\n", lemkeTry+1);
+                exit(-9);
+            }
+        }
         PRINT_VECTOR(d, n);
 
         /* Find new leaving variable */
@@ -450,7 +470,6 @@ int lemke_internal(const unsigned int n, double zret[n], double *M, int Mdim, do
         //assert(!FILE_AND_LINE "Untested code");
         for (i=lenZ; i<lenZ+(maxBas-lenZ+1); ++i) z[i] = 0;
         lenZ += maxBas-lenZ+1;
-
     }
     PRINT_INT(lenZ);
 

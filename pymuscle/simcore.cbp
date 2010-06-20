@@ -17,6 +17,10 @@
 					<Add option="-Wall" />
 					<Add option="-g" />
 				</Compiler>
+				<Linker>
+					<Add library="LCP_debug" />
+					<Add directory="/media/vm/devel/aran/pymuscle/LCP/bin/Debug" />
+				</Linker>
 			</Target>
 			<Target title="Release">
 				<Option output="bin/Release/libsimcore_release" prefix_auto="1" extension_auto="1" />
@@ -33,17 +37,19 @@
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="LCP_release" />
+					<Add directory="/media/vm/devel/aran/pymuscle/LCP/bin/Release" />
 				</Linker>
 			</Target>
 		</Build>
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fPIC" />
-			<Add option="-fopenmp" />
 			<Add directory="/home/johnu/src/include" />
 			<Add directory="/home/johnu/src/CHOLMOD/Include" />
 		</Compiler>
 		<Linker>
+			<Add option="-rdynamic" />
 			<Add library="umfpack" />
 			<Add library="cholmod" />
 			<Add library="amd" />
@@ -54,9 +60,11 @@
 			<Add library="colamd" />
 			<Add library="fblas" />
 			<Add library="gomp" />
+			<Add library="octinterp" />
 			<Add directory="/home/johnu/src/lib" />
 			<Add directory="/home/jonu/src/lib/atlas/lib" />
 			<Add directory="/home/johnu/src/blas" />
+			<Add directory="/usr/lib/octave-3.2.3/" />
 		</Linker>
 		<Unit filename="Config.h" />
 		<Unit filename="Control.c">

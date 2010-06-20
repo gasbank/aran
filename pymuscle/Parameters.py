@@ -59,10 +59,10 @@ class BipedParameter:
 
 		# 2. Body gap (positive) or overlap (negative)
 		#    Generally, overlapped one gives stable equilibrium condition
-		self.p['trunkThighGap']     = -3.
-		self.p['thighCalfGap']      = -3.
-		self.p['calfSoleGap']       = -1.
-		self.p['soleToeGap']        = -3.
+		self.p['trunkThighGap']     = 2.
+		self.p['thighCalfGap']      = 2.
+		self.p['calfSoleGap']       = 2.
+		self.p['soleToeGap']        = 2.
 
 		# 3. Other
 		self.p['legsDist']          = self.p['trunkWidth']/2.
@@ -302,12 +302,11 @@ class BipedParameter:
 		p7 = c1 + array([ -self['soleWidth']/2,  0, 0])
 		p8 = c2 + array([ -self['thighWidth']/2,  0, -self['thighLen']/2])
 		
-		
 		return [
 		    ('hamstring1L', p1,p2, 'soleL', 'thighL'),
-		         #('hamstring2L', p3,p4, 'soleL', 'thighL'),
+		         ('hamstring2L', p3,p4, 'soleL', 'thighL'),
 		         ('hamstring3L', p5,p6, 'soleL', 'thighL'),
-		         #('hamstring4L', p7,p8, 'soleL', 'thighL')
+		         ('hamstring4L', p7,p8, 'soleL', 'thighL')
 		         ]
 		
 		#return []
@@ -330,12 +329,73 @@ class BipedParameter:
 		p6 = c + array([-self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
 		p7 = c + array([-self['calfWidth']/4,  self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p8 = c + array([-self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
-
+	
 		return [
 		    ('gastro1L', p1,p2, 'calfL', 'soleL'),
-				 #('gastro2L', p3,p4, 'calfL', 'soleL'),
+				 ('gastro2L', p3,p4, 'calfL', 'soleL'),
 				 ('gastro3L', p5,p6, 'calfL', 'soleL'),
-				 #('gastro4L', p7,p8, 'calfL', 'soleL')
+				 ('gastro4L', p7,p8, 'calfL', 'soleL')
+		]
+	def getGastro(self):
+		c = self.getAnkleJointCenter()
+		
+		v1 = c + array([ self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2])
+		v2 = c + array([ self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2])
+		v3 = c + array([-self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2])
+		v4 = c + array([-self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2])
+		
+		r1 = c + array([ self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
+		r2 = c + array([ self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
+		r3 = c + array([-self['calfWidth']/2, -self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
+		r4 = c + array([-self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
+		
+		p1 = c + array([ self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
+		p2 = c + array([ self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
+		p3 = c + array([-self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
+		p4 = c + array([-self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
+		
+		return [
+		         ('gastro1L', v1,p1, 'calfL', 'soleL'),
+				 ('gastro2L', v1,p2, 'calfL', 'soleL'),
+				 ('gastro3L', v1,p3, 'calfL', 'soleL'),
+				 ('gastro4L', v1,p4, 'calfL', 'soleL'),
+		         
+		         ('gastro5L', v2,p1, 'calfL', 'soleL'),
+				 ('gastro6L', v2,p2, 'calfL', 'soleL'),
+				 ('gastro7L', v2,p3, 'calfL', 'soleL'),
+				 ('gastro8L', v2,p4, 'calfL', 'soleL'),
+		         
+		         ('gastro9L', v3,p1, 'calfL', 'soleL'),
+				 ('gastroaL', v3,p2, 'calfL', 'soleL'),
+				 ('gastrobL', v3,p3, 'calfL', 'soleL'),
+				 ('gastrocL', v3,p4, 'calfL', 'soleL'),
+		         
+		         ('gastrodL', v4,p1, 'calfL', 'soleL'),
+				 ('gastroeL', v4,p2, 'calfL', 'soleL'),
+				 ('gastrofL', v4,p3, 'calfL', 'soleL'),
+				 ('gastrogL', v4,p4, 'calfL', 'soleL'),
+		         
+		         ######################################
+		         
+		         ('gastro1L', r1,p1, 'calfL', 'soleL'),
+				 ('gastro2L', r1,p2, 'calfL', 'soleL'),
+				 ('gastro3L', r1,p3, 'calfL', 'soleL'),
+				 ('gastro4L', r1,p4, 'calfL', 'soleL'),
+		         
+		         ('gastro5L', r2,p1, 'calfL', 'soleL'),
+				 ('gastro6L', r2,p2, 'calfL', 'soleL'),
+				 ('gastro7L', r2,p3, 'calfL', 'soleL'),
+				 ('gastro8L', r2,p4, 'calfL', 'soleL'),
+		         
+		         ('gastro9L', r3,p1, 'calfL', 'soleL'),
+				 ('gastroaL', r3,p2, 'calfL', 'soleL'),
+				 ('gastrobL', r3,p3, 'calfL', 'soleL'),
+				 ('gastrocL', r3,p4, 'calfL', 'soleL'),
+		         
+		         ('gastrodL', r4,p1, 'calfL', 'soleL'),
+				 ('gastroeL', r4,p2, 'calfL', 'soleL'),
+				 ('gastrofL', r4,p3, 'calfL', 'soleL'),
+				 ('gastrogL', r4,p4, 'calfL', 'soleL')
 		]
 		
 	def getTibialis(self):
@@ -343,6 +403,7 @@ class BipedParameter:
 		c2 = self.getCalfPos()
 		p1 = c1 + array([0, -self['toeLen']/2, self['toeHeight']/2])
 		p2 = c2 + array([0, -self['calfLatWidth']/2, -self['calfLen']/4])
+		return []
 		return [ ('TibialisL', p1,p2, 'toeL', 'calfL') ]
 	def getBicepsFemoris(self):
 		c1 = self.getHipJointCenter()
@@ -362,22 +423,23 @@ class BipedParameter:
 	
 	def getAllLigaments(self):
 		return self.getKneeLigaments() + self.getAnkleLigaments() + self.getToeLigaments() + self.getHipLigaments()
-		#return []
+		
 	
 	def getAllMuscles(self):
+		#return []
 		return self.getHamstring() + self.getTibialis() + self.getBicepsFemoris() + self.getGastro()
 
 	def buildBody(self):
 		body = []
-		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 1.),
-			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 1.),
-			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  1.),
-			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  1.),
+		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 30.),
+			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 5.),
+			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3.),
+			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  5.),
 			  ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.) ]
 
 
 		# DEBUGGING START
-		l = l[2:5]
+		l = l[2:4]
 		# DEBUGGING END
 
 
@@ -387,15 +449,6 @@ class BipedParameter:
 			vel0 = zeros(7)
 			drawingColor = (0.2,0.1,0.2)
 
-			'''
-			#DEBUGGING START
-			identityQuaternion = [1,1,2,3]
-			identityQuaternion = quat_normalize(identityQuaternion)
-			pos0[3:7] = identityQuaternion
-			pos0[2] += 0.2 # Start from the sky
-			vel0[3:7] = [0.1,0.2,0.3,0.4]
-			#DEBUGGING END
-			'''
 
 			#pos0[2] += 0.5 # Start from the sky
 			
@@ -403,7 +456,7 @@ class BipedParameter:
 			#name, pName, mass, boxsize, q, qd, dc, rotParam
 			b = PmBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, 'QUAT_WFIRST')
 			body.append(b)
-
+			'''
 			if name[-1] == 'L':
 				# If there are left body segments, we also need right counterparts
 				newName = name[:-1] + 'R'
@@ -412,23 +465,23 @@ class BipedParameter:
 				newVel0 = copy(vel0) # Deep copy
 				b = PmBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, 'QUAT_WFIRST')
 				body.append(b)
-
+			    '''
 
 
 		return body
 	
 	def buildFiber(self, availableBodyNames):
 		# Fiber constants for a ligament
-		KSE = 1.          # Should not be 0
-		KPE = 1.
-		b   = 10.          # Should not be 0
+		KSE = 1000.          # Should not be 0
+		KPE = 1000.
+		b   = 100.         # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
 		# Fiber constants for a muscle fiber
 		KSE = 1.            # Should not be 0
 		KPE = 1.
-		b   = 10.         # Should not be 0
+		b   = 1.            # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)

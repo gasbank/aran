@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include "TypeDefs.h"
 
-/* BODY RELATED VARIABLES (18) */
+/* BODY RELATED VARIABLES (2*nd + 4 = 18) */
 #define px body[0]
 #define py body[1]
 #define pz body[2]

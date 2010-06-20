@@ -32,6 +32,7 @@ import ExpBody
 from dRdv_real import GeneralizedForce, QuatdFromV
 import copy
 import matplotlib.pyplot as pit
+import cPickle
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
@@ -164,6 +165,12 @@ def KeyPressed(*args):
     elif key == 'n':
         idx = gCon.findBodyIndex('calfL')
         gCon.body0[idx].q[2] -= 0.01
+    elif key == 's':
+        stateFile = open('box_lcp5_lastState.dat','w')
+        state = (gCon.body, gCon.fibers)
+        cPickle.dump(state, stateFile)
+        stateFile.close()
+        print 'State written.'
     #print 'Key pressed', key
 
 def SpecialKeyPressed(*args):
@@ -242,7 +249,7 @@ def Draw():
     if gFrame == 375:
     	sys.exit(0)
     '''
-    
+
 
     Prerender()
     RenderPerspectiveWindow()
@@ -251,9 +258,9 @@ def Draw():
         RenderLegMonitorWindow('LeftAnkle', 'FRONT')
         RenderLegMonitorWindow('RightAnkle', 'SIDE')
         RenderLegMonitorWindow('RightAnkle', 'FRONT')
-    elif gRunMode == 'IMPINT':
+    elif gRunMode in ['IMPINT', 'CONTROL']:
         RenderFrontCameraWindow()
-        RenderTopCameraWindow()
+        #RenderTopCameraWindow()
     RenderSideCameraWindow()
     RenderHud()
     Postrender()
@@ -693,7 +700,7 @@ def RenderPerspectiveWindow():
     poi = gCon.findBodyIndex2(poiList)
     poiPos = array(gCon.body[poi].q[0:3])
 
-    xeye, yeye, zeye = poiPos + array([3, -3, 0.2])
+    xeye, yeye, zeye = poiPos + array([2.5, -2.5, 0.3])
     xcenter, ycenter, zcenter = poiPos + array([0, 0, -0.5])
     xup, yup, zup = 0, 0, 1
     gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
@@ -728,6 +735,7 @@ def RenderPerspectiveWindow():
 def FrameMove():
     if gRunMode in ['IMPINT', 'CONTROL']:
         FrameMove_ImpInt()
+        #FrameMove_ImpInt_Revised()
     else:
         FrameMove_Mocap()
 
@@ -739,6 +747,244 @@ def GetFiberVector_WC(fiber):
     orgPos = orgBody.globalPos(fiber.orgPos)
     insPos = insBody.globalPos(fiber.insPos)
     return insPos - orgPos
+
+def FrameMove_ImpInt_Revised():
+    global gCon
+    nBody   = len(gCon.body)
+    nMuscle = len(gCon.fibers)
+    nd      = 3 + 4 # Quaternion version
+    nY      = 2*nd*nBody + nMuscle
+
+    #
+    # Python ctype type definitions
+    #
+    DBL_nMuscle    = ct.c_double  *  nMuscle
+    DBL_nY         = ct.c_double  *  nY
+    DBL_nBodyx18   = (ct.c_double *  18) * nBody
+    DBL_nBodyx6    = (ct.c_double *   6) * nBody
+    DBL_nMusclex12 = (ct.c_double *  12) * nMuscle
+    UINT_nMusclex2 = (ct.c_uint   *   2) * nMuscle
+
+    # Input parameters
+    C_h        = ct.c_double(gCon.h)
+    C_nBody    = ct.c_int(len(gCon.body))
+    C_nMuscle  = ct.c_int(len(gCon.fibers))
+    C_extForce = DBL_nBodyx6()
+
+    for i in range(nBody):
+        # Renormalize rotation quaternion
+        gCon.body[i].q[3:7] = quat_normalize(gCon.body[i].q[3:7])
+
+        # Set gravitational forces
+        C_extForce[i][2] = -gGravAcc * gCon.body[i].mass
+
+    C_musclePair = UINT_nMusclex2()
+    for i in range(nMuscle):
+        C_musclePair[i][0] = gCon.findBodyIndex(gCon.fibers[i].orgBody)
+        C_musclePair[i][1] = gCon.findBodyIndex(gCon.fibers[i].insBody)
+    # Input/output parameters
+    ## Body
+    C_body = DBL_nBodyx18()
+    for i in range(nBody):
+        body = gCon.body[i]
+        C_body[i][0:7] = body.q
+        C_body[i][7:14] = body.qd
+        C_body[i][14] = body.mass
+        inertiaMat = BoxInertia(body.boxsize, body.mass)
+        C_body[i][15:18] = inertiaMat.diagonal()
+    ## Muscle
+    C_muscle = DBL_nMusclex12()
+    for i in range(nMuscle):
+        muscle = gCon.fibers[i]
+
+        orgBodyIdx = gCon.findBodyIndex(muscle.orgBody)
+        insBodyIdx = gCon.findBodyIndex(muscle.insBody)
+        borg = gCon.body[orgBodyIdx]
+        bins = gCon.body[insBodyIdx]
+
+        if muscle.bAttachedPosNormalized:
+            localorg = array([b / 2. * p for b, p in zip(borg.boxsize, muscle.orgPos)])
+            localins = array([b / 2. * p for b, p in zip(bins.boxsize, muscle.insPos)])
+        else:
+            localorg = muscle.orgPos
+            localins = muscle.insPos
+
+        C_muscle[i][0:6] = [muscle.KSE, muscle.KPE, muscle.b, muscle.xrest, muscle.T, muscle.A]
+        C_muscle[i][6:9] = localorg
+        C_muscle[i][9:12] = localins
+
+    C_nd = ct.c_int(nd) # Degree-of-freedom for a rigid body
+    C_nY = ct.c_int(nY) # Dimension of the state vector Y
+    C_cost = ct.c_double(0)
+    C_cost2 = ct.c_double(0)
+    C_ustar = DBL_nMuscle()
+    C_Ydesired = DBL_nY()
+    C_w_y = DBL_nY()
+    C_w_u = DBL_nMuscle()
+
+    #
+    # Setting Ydesired (C_Ydesired)
+    #
+    for i in range(nBody):
+        C_Ydesired[ 14*i     : 14*i + 7  ] = gCon.body0[i].q
+        C_Ydesired[ 14*i + 7 : 14*i + 14 ] = gCon.body0[i].qd
+    #
+    # Setting W_Y (C_w_y)
+    #
+    C_w_u[:] = [0,]*nMuscle
+
+    #
+    # Setting W_u (C_w_u)
+    #
+    for i in xrange(nBody):
+        C_w_y[2*nd*i      : 2*nd*i +   nd] = [1,]*(nd)    # Position follow weight
+        C_w_y[2*nd*i + nd : 2*nd*i + 2*nd] = [1,]*(nd)       # Velocity follow weight
+    C_w_y[2*nd*nBody :           ] = [0,]*(nMuscle)          # Tension follow weight
+
+    # ############################################################
+    # Pass all the variables to simcore
+    # (Output: C_body)
+    # ############################################################
+    C_SimCore(C_h, C_nBody, C_nMuscle, C_nd, C_nY,
+              C_body, C_extForce, C_muscle, C_musclePair,
+              ct.byref(C_cost), ct.byref(C_cost2), C_ustar, C_Ydesired, C_w_y, C_w_u)
+
+    cost = C_cost.value
+    print '%4d / %-20s (%s)' % ( gFrame, cost, cost.hex() )
+    #print gFrame, '/', C_cost.value, '/', C_ustar[:]
+    print 'Tension :', [f.T for f in gCon.fibers]
+    print 'Actuation :', [a for a in C_ustar]
+    if gPlot:
+        global gCostHistory, gTensionHistory, gActuationHistory
+        gCostHistory.append(C_cost.value)
+        for i in xrange(nMuscle):
+            gTensionHistory[i].append(gCon.fibers[i].T)
+            #gActuationHistory[i].append(gCon.fibers[i].A)
+            gActuationHistory[i].append(C_ustar[i])
+
+        if gFrame == 4000:
+            pit.figure(1)
+            pit.plot(gCostHistory, 'r')
+            pit.ylabel('Cost')
+            pit.figure(2)
+            for i in xrange(nMuscle):
+                pit.plot(gTensionHistory[i])
+            pit.ylabel('N')
+            pit.figure(3)
+            for i in xrange(nMuscle):
+                pit.plot(gActuationHistory[i])
+            pit.ylabel('N')
+            # Show the plot and pause the app
+            pit.show()
+
+    # Estimated next velocity for every rigid bodies
+    estNextVel = []
+    for i in xrange(nBody):
+        #C_body[i][0:7] = body.q
+        #C_body[i][7:14] = body.qd
+        pos = array(C_body[i][0: 7]) # Generalized position in 3+4.
+        vel = array(C_body[i][7:14]) # Generalized velocity in 3+4.
+
+        pos[3:7] = quat_normalize(pos[3:7])
+
+        rot0_wc = QuatToV(pos[3:7])
+        angvel0_wc = QuatdToVd(pos[3:7], vel[3:7], rot0_wc)
+        vel33 = array([ vel        [0],
+                        vel        [1],
+                        vel        [2],
+                        angvel0_wc [0],
+                        angvel0_wc [1],
+                        angvel0_wc [2] ])
+        estNextVel.append( vel33 )
+
+    #
+    # Convert 3+4(quat) state vector to 3+3(exp) state vector
+    # to pass the data to LCP code and get contact force information
+    #
+    footBodyNames = [b.name for b in gCon.body]
+    footBodies_Py = [] # An array of 'ExpBody'
+    footBodies_C  = []
+    for fb in footBodyNames:
+        fbi = gCon.findBodyIndex(fb)
+        fbb = gCon.body[fbi]
+        assert fbb.rotParam == 'QUAT_WFIRST'
+        pos0_wc = fbb.q[0:3]
+        rot0_wc = QuatToV(fbb.q[3:7])
+        vel0_wc = fbb.qd[0:3]
+        angvel0_wc = QuatdToVd(fbb.q[3:7], fbb.qd[3:7], rot0_wc)
+
+        expBody = ExpBody.ExpBody(fbb.name, None, fbb.mass, fbb.boxsize,
+                                  hstack([ pos0_wc, rot0_wc ]),
+                                  vel0_wc, angvel0_wc,
+                                  [0.1,0.2,0.3])
+        expBody.extForce = 0
+        # NOTE: expBody already affected by the gravitational force.
+        #       We just need to add the fiber forces.
+        for fiber in gCon.fibers:
+            assert fiber.bAttachedPosNormalized == False
+            if fiber.orgBody == expBody.name:
+                tensionSign = 1
+                attachedLocalPos = fiber.orgPos
+            elif fiber.insBody == expBody.name:
+                tensionSign = -1
+                attachedLocalPos = fiber.insPos
+            else:
+                continue
+            fiberVec = GetFiberVector_WC(fiber)
+            fiberVecLen = linalg.norm(fiberVec)
+            if fiberVecLen < 1e-8:
+                # Degenerate case: assume no force generated from this fiber
+                assert False
+                pass
+            else:
+                fiberVec /= fiberVecLen
+                #q_estk = expBody.q + gCon.h*expBody.qd # Estimated next step state position
+                q_estk = expBody.q
+                muscleTension = GeneralizedForce(q_estk[3:6],
+                                                 tensionSign * fiberVec * fiber.T,
+                                                 attachedLocalPos)
+                #expBody.extForce += muscleTension
+
+        gravForce = GeneralizedForce(q_estk[3:6],
+                                     array([0,0,-gGravAcc*expBody.mass]),
+                                     array([0,0,0]))
+        expBody.extForce += gravForce
+        footBodies_Py.append(expBody)
+        footBodies_C.append(copy.deepcopy(expBody))
+
+    # Run LCP (Python version)
+    #BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
+    # Run LCP (C version)
+    contactForcesNotEmpty, C_Ynext = BLEM.FrameMove_CVersion(footBodies_C, estNextVel, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+    assert len(C_Ynext) == 2*(3+3)*nBody + nMuscle
+
+    for i, isContacted in zip(xrange(nBody), contactForcesNotEmpty):
+        if isContacted:
+            # Use simcore(ImpInt) + LCP combined result
+            linPos3 = C_Ynext[2*(3+3)*i            : 2*(3+3)*i +          3   ]
+            angPos3 = C_Ynext[2*(3+3)*i + 3        : 2*(3+3)*i + (3+3)        ]
+            linVel3 = C_Ynext[2*(3+3)*i + (3+3)    : 2*(3+3)*i + (3+3) +  3   ]
+            angVel3 = C_Ynext[2*(3+3)*i + (3+3) + 3: 2*(3+3)*i + (3+3) + (3+3)]
+
+            angPos4 = VtoQuat(angPos3)
+            angVel4 = QuatdFromV(angPos3, angVel3)
+
+            body = gCon.body[i] # alias
+            body.q[0:3]  = linPos3
+            body.q[3:7]  = angPos4
+            body.qd[0:3] = linVel3
+            body.qd[3:7] = angVel4
+        else:
+            # Use simcore(ImpInt) result
+            # Retrieve the result from the simcore and update our states
+            body = gCon.body[i] # alias
+            body.q = array(C_body[i][0:7])
+            body.qd = array(C_body[i][7:14])
+
+    # Use simcore(ImpInt) result to update muscle fiber tension
+    for i in range(nMuscle):
+        muscle = gCon.fibers[i] # alias
+        muscle.T = C_muscle[i][4]
 
 def FrameMove_ImpInt():
     global gCon
@@ -752,6 +998,9 @@ def FrameMove_ImpInt():
     nd      = 3 + 4
     nY      = 2*nd*nBody + nMuscle
 
+    #
+    # Python ctype type definitions
+    #
     DBL_nMuscle    = ct.c_double  *  nMuscle
     DBL_nY         = ct.c_double  *  nY
     DBL_nBodyx18   = (ct.c_double *  18) * nBody
@@ -770,8 +1019,8 @@ def FrameMove_ImpInt():
         gCon.body[i].q[3:7] = quat_normalize(gCon.body[i].q[3:7])
 
         # Set gravitational forces
-        C_extForce[i][2] = -9.81 * gCon.body[i].mass
-
+        C_extForce[i][2] = -gGravAcc * gCon.body[i].mass
+        
     C_musclePair = UINT_nMusclex2()
     for i in range(nMuscle):
         C_musclePair[i][0] = gCon.findBodyIndex(gCon.fibers[i].orgBody)
@@ -844,6 +1093,7 @@ def FrameMove_ImpInt():
             fiberVecLen = linalg.norm(fiberVec)
             if fiberVecLen < 1e-8:
                 # Degenerate case: assume no force generated from this fiber
+                assert False
                 pass
             else:
                 fiberVec /= fiberVecLen
@@ -853,60 +1103,22 @@ def FrameMove_ImpInt():
                                                  tensionSign * fiberVec * fiber.T,
                                                  attachedLocalPos)
                 expBody.extForce += muscleTension
+                
 
+        gravForce = GeneralizedForce(q_estk[3:6],
+                                     array([0,0,-gGravAcc*expBody.mass]),
+                                     array([0,0,0]))
+        expBody.extForce += gravForce
+        
         footBodies_Py.append(expBody)
         footBodies_C.append(copy.deepcopy(expBody))
 
     # Run LCP (Python version)
     #BLEM.FrameMove_PythonVersion(footBodies_Py, gCon.h, gCon.mu, gCon.alpha0, nMuscle, di, True)
     # Run LCP (C version)
-    BLEM.FrameMove_CVersion(footBodies_C, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
-    
-    '''
-	for i in xrange(nBody):
-		print i, 'q diff =', footBodies_Py[i].q - footBodies_C[i].q
-		print i, 'qd diff =', footBodies_Py[i].qd - footBodies_C[i].qd
-		print i, 'len(cf) diff =', len(footBodies_Py[i].cf) - len(footBodies_C[i].cf)
-		for j in xrange(len(footBodies_Py[i].cf)):
-			print i, j, 'Py=', footBodies_Py[i].cf[j], 'C=', footBodies_C[i].cf[j]
-	'''
-    #print 'Here~'
+    BLEM.FrameMove_CVersion(footBodies_C, None, gCon.h, gCon.mu, gCon.alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, True)
+
     footBodies = footBodies_C
-    #print 'and there~'
-
-    #print gFrame, footBodies[1].cf, footBodies[1].contactPoints
-    '''
-	print gFrame, footBodies[0].q[0:3]
-	wcc = footBodies[0].getCorners_WC()
-	for i in xrange(8):
-		print wcc[i]
-	'''
-
-    #
-    # IS THIS RIGHT?
-    #
-    '''
-	for b, fb in zip(gCon.body, footBodies):
-		b.q[0:3] = fb.q[0:3]
-		b.q[3:7] = VtoQuat(fb.q[3:6])
-		b.qd[0:3] = fb.qd[0:3]
-		b.qd[3:7] = QuatdFromV(fb.q[3:6], fb.qd[3:6])
-	'''
-
-    '''
-	print 'A', footBodies[0].name,
-	for vv in footBodies[0].q:
-		print ' %10.4f' % vv,
-	for vv in footBodies[0].qd:
-		print ' %10.4f' % vv,
-	print
-	print 'A', footBodies[1].name,
-	for vv in footBodies[1].q:
-		print ' %10.4f' % vv,
-	for vv in footBodies[1].qd:
-		print ' %10.4f' % vv,
-	print
-	'''
 
     # Contact force visualization
     for gBodyk in gCon.body:
@@ -944,14 +1156,14 @@ def FrameMove_ImpInt():
             # Resultant torque in 'body' coordinates
             C_extForce[fbi][3:6] += resTorque_bc
 
-    C_nd = ct.c_int(nd) # Degree-of-freedom for a rigid body
-    C_nY = ct.c_int(nY) # Dimension of the state vector Y
-    C_cost = ct.c_double(0)
-    C_ustar = DBL_nMuscle()
+    C_nd       = ct.c_int(nd) # Degree-of-freedom for a rigid body
+    C_nY       = ct.c_int(nY) # Dimension of the state vector Y
+    C_cost     = ct.c_double(0)
+    C_cost2    = ct.c_double(0)
+    C_ustar    = DBL_nMuscle()
     C_Ydesired = DBL_nY()
-    C_w_y = DBL_nY()
-    C_w_u = DBL_nY()
-
+    C_w_y      = DBL_nY()
+    C_w_u      = DBL_nMuscle()
 
     #
     # Setting Ydesired (C_Ydesired)
@@ -962,68 +1174,79 @@ def FrameMove_ImpInt():
     #
     # Setting W_Y (C_w_y)
     #
+    C_w_u[:] = [1e-10,]*nMuscle
+    #C_w_u[0] = 0
     '''
-	C_w_u[nY-nMuscle : nY] = [0,]*nMuscle
-	C_w_u[nY-nMuscle + 0 ] = 0
-	C_w_u[nY-nMuscle + 1 ] = 0
-	C_w_u[nY-nMuscle + 2 ] = 0
-	C_w_u[nY-nMuscle + 3 ] = 0
-	C_w_u[nY-nMuscle + 4 ] = 0
+    
+    C_w_u[1] = 1e-5
+    C_w_u[2] = 1e-5
+    C_w_u[3] = 1e-5
+    C_w_u[4] = 1e-5
 	'''
-    C_w_u[:] = [1,]*nY
     
     #
     # Setting W_u (C_w_u)
     #
-    '''
-	i = gCon.findBodyIndex('calfL')
-	C_w_y[14*i    : 14*i +  3] = [20000,20000,20000] # linear position weight
-	C_w_y[14*i+3  : 14*i +  7] = [20000,20000,20000,20000] # angular position weight
-	C_w_y[14*i+7  : 14*i + 10] = [20000,20000,20000]  # linar velocity weight (suppress moving in x-direction)
-	C_w_y[14*i+10 : 14*i + 14] = [20000,20000,20000,20000]  # angular velocity weight
-	i = gCon.findBodyIndex('soleL')
-	C_w_y[14*i    : 14*i +  3] = [20000,]*3 # linear position weight
-	C_w_y[14*i+3  : 14*i +  7] = [20000,]*4 # angular position weight
-	C_w_y[14*i+7  : 14*i + 10] = [20000,]*3  # linar velocity weight
-	C_w_y[14*i+10 : 14*i + 14] = [20000,]*4  # angular velocity weight
-
-	C_w_y[2*nd*nBody + 0] = 1e-5  # ligament tension value
-	C_w_y[2*nd*nBody + 1] = 1e-5  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 2] = 1e-5  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 3] = 1e-5  # muscle fiber tension value
-	C_w_y[2*nd*nBody + 4] = 1e-5  # muscle fiber tension value
-	'''
     for i in xrange(nBody):
-        C_w_y[2*nd*i      : 2*nd*i +   nd] = [10,]*(nd)
-        C_w_y[2*nd*i + nd : 2*nd*i + 2*nd] = [5,]*(nd)
+        C_w_y[2*nd*i      : 2*nd*i +   3] = [10,]*(3 )
+        C_w_y[2*nd*i +  3 : 2*nd*i +   7] = [10,]*(4 )
+        C_w_y[2*nd*i +  7 : 2*nd*i +  10] = [1e-2,]*(3 )
+        C_w_y[2*nd*i + 10 : 2*nd*i +  14] = [1e-2,]*(4 )
+
+    i = 0
+    C_w_y[2*nd*i      : 2*nd*i +   3] = [1,]*(3 )
+    C_w_y[2*nd*i +  3 : 2*nd*i +   7] = [1,]*(4 )
+    C_w_y[2*nd*i +  7 : 2*nd*i +  10] = [0.0001,]*(3 )
+    C_w_y[2*nd*i + 10 : 2*nd*i +  14] = [0.0001,]*(4 )
+    
+    i = 1
+    C_w_y[2*nd*i      : 2*nd*i +   3] = [10,]*(3 )
+    C_w_y[2*nd*i +  3 : 2*nd*i +   7] = [10,]*(4 )
+    C_w_y[2*nd*i +  7 : 2*nd*i +  10] = [0.1,]*(3 )
+    C_w_y[2*nd*i + 10 : 2*nd*i +  14] = [0.1,]*(4 )
+
     C_w_y[0+2*nd*nBody :           ] = [0,]*(nMuscle)
-
-
-    '''
-	idx = gCon.findBodyIndex('calfL')
-	C_Ydesired[14*idx + 0] += 0
-	C_Ydesired[14*idx + 1] += 0.05
-	C_Ydesired[14*idx + 2] += -0.05
-	C_Ydesired[14*idx + 4] += -0.4
-	C_Ydesired[14*idx + 3 : 14*idx + 7] = quat_normalize(C_Ydesired[14*idx + 3 : 14*idx + 7])
-	'''
-
+    
     # Pass all the variables to the simcore
     C_SimCore(C_h, C_nBody, C_nMuscle, C_nd, C_nY,
               C_body, C_extForce, C_muscle, C_musclePair,
-              ct.byref(C_cost), C_ustar, C_Ydesired, C_w_y, C_w_u)
+              ct.byref(C_cost), ct.byref(C_cost2), C_ustar, C_Ydesired, C_w_y, C_w_u)
     cost = C_cost.value
-    print '%4d / %-20s (%s)' % ( gFrame, cost, cost.hex() )
+    cost2 = C_cost2.value
+    print '%4d / %-20s (%s)   %-20s (%s)  ' % ( gFrame, cost, cost.hex(), cost2, cost2.hex() )
     #print gFrame, '/', C_cost.value, '/', C_ustar[:]
-    global gCostHistory
-    gCostHistory.append(C_cost.value)
+    print 'Tension :', [f.T for f in gCon.fibers]
+    print 'Actuation :', [a for a in C_ustar]
+    if gPlot:
+        global gCostHistory, gTensionHistory, gActuationHistory
+        gCostHistory.append(C_cost.value)
+        for i in xrange(nMuscle):
+            gTensionHistory[i].append(gCon.fibers[i].T)
+            #gActuationHistory[i].append(gCon.fibers[i].A)
+            gActuationHistory[i].append(C_ustar[i])
 
-    if gFrame == 4000:
-        pit.figure(1)
-        pit.plot(costHistory, 'r^', costHistory, 'r')
-        pit.ylabel('Cost')
-        # Show the plot and pause the app
-        pit.show()
+        if gFrame == 4000:
+            pit.figure(1)
+            pit.plot(gCostHistory, 'r')
+            pit.ylabel('Cost')
+            pit.figure(2)
+            for i in xrange(nMuscle):
+                pit.plot(gTensionHistory[i])
+            pit.ylabel('N')
+            pit.figure(3)
+            for i in xrange(nMuscle):
+                pit.plot(gActuationHistory[i])
+            pit.ylabel('N')
+            # Show the plot and pause the app
+            pit.show()
+
+    '''
+    cfTotal = 0
+    if hasattr(gCon.body[1], 'contactPoints'):
+        for cf in gCon.body[1].cf:
+            cfTotal += linalg.norm(cf)
+    print 'cfTotal =', cfTotal
+    '''
 
     # Retrieve the result from the simcore and update our states
     for i in range(nBody):
@@ -1270,10 +1493,10 @@ def FrameMove_Mocap():
 
 def MainNoGl(gCon):
     global gFrame
-    while gFrame < 100:
+    while gFrame < 2:
         FrameMove()
         gFrame += 1
-        
+
 def WriteSimcoreConfFile(fileName, body, fibers, h):
     f = open(fileName, 'w')
     f.write('# Pymuscle: rigid body and muscle fiber simulation\n')
@@ -1328,19 +1551,22 @@ insertionPos = [%f, %f, %f];   # Insertion muscle attached pos (in insertion bod
 ################################################################################
 
 if __name__ == '__main__':
-    gCostHistory = []
     gFrame   = 0
     gWorkDir = '/home/johnu/pymuscle/'
     gRunMode = 'CONTROL'
-    assert gRunMode in ['MOCAP',         # Motion capture data player with contact force calc
-                        'IMPINT',        # Implicit integration tester
-                        'CONTROL',       # Stay-still controller
-                        'SINGLE'         # Single rigid body tester
+    assert gRunMode in ['MOCAP',            # Motion capture data player with contact force calc
+                        'IMPINT',           # Implicit integration tester
+                        'CONTROL',          # Stay-still controller
+                        'SINGLE'            # Single rigid body tester
                         ]
 
     libsimcore = ct.CDLL(gWorkDir + 'bin/Release/libsimcore_release.so')
     C_SimCore = libsimcore.SimCore_Python
-
+    libLCP = ct.CDLL(gWorkDir + 'LCP/bin/Release/libLCP_release.so')
+    C_StartOctaveEngine = libLCP.StartOctaveEngine
+    C_TestOctaveEngine  = libLCP.TestOctaveEngine
+    C_StartOctaveEngine()
+    C_TestOctaveEngine()
     # Some api in the chain is translating the keystrokes to this octal string
     # so instead of saying: ESCAPE = 27, we use the following.
     ESCAPE = '\033'
@@ -1389,7 +1615,7 @@ if __name__ == '__main__':
             assert all(b.q == b0.q)
         for f, f0 in zip(gCon.fibers, gCon.fibers0):
             assert all(f.T == f0.T)
-        
+
         # Write a configuration file containing body and muscle settings.
         # This file can be read at the simcore side.
         WriteSimcoreConfFile('box_lcp5.conf', gCon.body, gCon.fibers, gCon.h)
@@ -1408,6 +1634,9 @@ if __name__ == '__main__':
     gUseC      = True
     gUsePy     = False
     gReprod    = False
+    gPlot      = False
+    gLoad      = False
+    gGravAcc   = 9.81    # Magnitude only
 
     if len(sys.argv) >= 2 and (sys.argv[1] == '--help' or sys.argv[1] == '-h'):
         print sys.argv[0], ': Muscle fiber simulator'
@@ -1418,8 +1647,10 @@ if __name__ == '__main__':
         print '      -gl        Use OpenGL window                     (default)'
         print '      -c  | -py  C/Python compiled binary used as core (default: C)'
         print '      -reprod    Reproducibility test'
+        print '      -plot'
         print
         sys.exit(0)
+
     if '-gl' in sys.argv[1:]:
         gUseOpenGl = True
     if '-c' in sys.argv[1:]:
@@ -1428,10 +1659,35 @@ if __name__ == '__main__':
         gUsePy     = False
     if '-reprod' in sys.argv[1:]:
         gReprod    = True
+    if '-plot' in sys.argv[1:]:
+        gPlot      = True
+    if '-load' in sys.argv[1:]:
+        idx = sys.argv.index('-load')
+        fileName = sys.argv[idx+1]
+        try:
+            lastStateFile = open(fileName,'r')
+            lastState = cPickle.load(lastStateFile)
+            gCon.body, gCon.fibers = lastState
+            lastStateFile.close()
+            print 'Last state loaded successfully.'
+        except:
+            print 'WARN: No last state file found or exceptional file format.'
+
+
+    # Plotting
+    if gPlot:
+        gCostHistory      = []
+        gTensionHistory   = []
+        gActuationHistory = []
+        for i in xrange(len(gCon.fibers)):
+            gTensionHistory.append( [] )
+            gActuationHistory.append( [] )
+
     if gUseOpenGl:
         Main(gCon)
     else:
         if gReprod:
+            assert gPlot
             gCostHistoryReprod = []
             for i in xrange(3):
                 print '    *************    Reproducibility test iter', i, '    *************'
@@ -1444,18 +1700,22 @@ if __name__ == '__main__':
                     assert all(f.T == f0.T)
                 MainNoGl(gCon)
                 gCostHistoryReprod.append ( copy.deepcopy(gCostHistory) )
-                gCostHistory = []
+                gCostHistory      = []
+                gTensionHistory   = []
+                gActuationHistory = []
+                for i in xrange(len(gCon.fibers)):
+                    gTensionHistory.append( [] )
+                    gActuationHistory.append( [] )
             for i in xrange(len(gCostHistoryReprod[0])):
                 historySet = set([])
                 for j in xrange(len(gCostHistoryReprod)):
                     historySet.add( gCostHistoryReprod[j][i] )
-                    
+
                     if len(historySet) != 1:
                         print '   *****************************************'
                         print '      FAILED : Results not reproducible.'
                         print '   *****************************************'
                         sys.exit(-5)
-                
+
         else:
             MainNoGl(gCon)
-        

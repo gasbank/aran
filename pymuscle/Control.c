@@ -57,7 +57,7 @@ void PrintUmfStatus(int status, const char *file, int line)
 int control(const unsigned int nY, const unsigned int m,
             double ustar[m], double Dustar[nY],
             cholmod_sparse *W_Ysp, cholmod_sparse *W_usp,
-            cholmod_sparse *Dsp, cholmod_sparse *Fsp,
+            cholmod_sparse *Dsp,
             const double E[nY], cholmod_common *c)
 {
     double alpha[2]     = {  1,  0 };
@@ -66,19 +66,18 @@ int control(const unsigned int nY, const unsigned int m,
     double beta0[2]     = {  0,  0 };
 
     cholmod_sparse *DTsp     = cholmod_transpose(Dsp, 1, c);
-    cholmod_sparse *FTsp     = cholmod_transpose(Fsp, 1, c);
     cholmod_sparse *DTWYsp   = cholmod_ssmult(DTsp, W_Ysp, 0, 1, 1, c);
-    cholmod_sparse *FTWusp   = cholmod_ssmult(FTsp, W_usp, 0, 1, 1, c);
     cholmod_sparse *DTWYDsp  = cholmod_ssmult(DTWYsp, Dsp, 0, 1, 1, c);
-    cholmod_sparse *FTWuFsp  = cholmod_ssmult(FTWusp, Fsp, 0, 1, 1, c);
-    cholmod_sparse *A        = cholmod_add(DTWYDsp, FTWuFsp, alpha, beta, 1, 1, c);
+    cholmod_sparse *A        = cholmod_add(DTWYDsp, W_usp, alpha, beta, 1, 1, c);
     cholmod_dense  *Ed       = cholmod_allocate_dense(nY, 1, nY, CHOLMOD_REAL, c);
     cholmod_dense  *bd       = cholmod_allocate_dense(m , 1, m , CHOLMOD_REAL, c);
     cholmod_dense  *ustard   = cholmod_allocate_dense(m , 1, m , CHOLMOD_REAL, c);
     cholmod_dense  *Dustard  = cholmod_allocate_dense(nY, 1, nY, CHOLMOD_REAL, c);
     memcpy(Ed->x, E, sizeof(double)*nY);
     /* Set bd */
+    memset(bd->x, 0, sizeof(double)*m);
     cholmod_sdmult(DTWYsp, 0, alpha_neg, beta0, Ed, bd, c);
+    __PRINT_VECTOR(((double *)(bd->x)), m);
 
     cholmod_sparse *ATsp  = 0;
     cholmod_sparse *ATAsp = 0;
@@ -201,11 +200,8 @@ int control(const unsigned int nY, const unsigned int m,
     */
 
     cholmod_free_sparse(&DTsp,    c);
-    cholmod_free_sparse(&FTsp,    c);
     cholmod_free_sparse(&DTWYsp,  c);
-    cholmod_free_sparse(&FTWusp,  c);
     cholmod_free_sparse(&DTWYDsp, c);
-    cholmod_free_sparse(&FTWuFsp, c);
     cholmod_free_sparse(&A,       c);
     cholmod_free_dense (&Ed,      c);
     cholmod_free_dense (&bd,      c);

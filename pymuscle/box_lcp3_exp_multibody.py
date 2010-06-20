@@ -348,8 +348,8 @@ def MassMatrixAndCqdVector(p, v, pd, vd, I):
 	C_MassMatrixAndCqdVector(C_M, C_Cqd, C_P, C_V, C_PD, C_VD, C_I)
 	return array(C_M), array(C_Cqd)
 
-def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, contactForceInfoOnly = False):
-	nd = 6
+def FrameMove_CVersion(bodies, estNextVel, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS, contactForceInfoOnly = False):
+	nd = 3 + 3 # Exp map
 	n = len(bodies)
 	m = nMuscle # does not matter
 	nY = 2*nd*n + m
@@ -375,20 +375,28 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 		C_mass[i] = bodies[i].mass
 		for j in xrange(8):
 			C_corners[i][j][0:3] = bodies[i].corners[j]
+
+		# Grav force should be given in 'body.extForce'.
+		'''
 		fg = GeneralizedForce(bodies[i].q[3:6],
 	                          (0., 0., -9.81 * bodies[i].mass),
 	                          (0., 0., 0.))
 		C_extForces[i][0:6] = fg
-		if hasattr(bodies[i], 'extForce') and bodies[i].extForce is not 0:
-			assert len(bodies[i].extForce) == 6
-			C_extForces[i][0:6] += bodies[i].extForce
+		'''
+		assert hasattr(bodies[i], 'extForce') and len(bodies[i].extForce) == 6
+		C_extForces[i][0:6] += bodies[i].extForce
 		#print 'C extforce = ', C_extForces[i][0:6]
+	C_estNextVel = 0
+	if estNextVel is not None:
+		C_estNextVel       = ((ct.c_double * nd) * n)()
+		for i in xrange(n):
+			C_estNextVel[i][:] = estNextVel[i]
 		
 	C_contactForceInfoOnly = ct.c_int( 1 if contactForceInfoOnly else 0 )
 	
 	LCP_exp_Python(C_nd, C_n, C_m, C_Ynext,
 	               C_contactForces, C_lenContactForces, C_contactPoints,
-	               C_penetration0, C_Y, C_extForces, C_I, C_mass, C_corners,
+	               C_penetration0, C_Y, C_estNextVel, C_extForces, C_I, C_mass, C_corners,
 	               C_NCONEBASIS, C_CONEBASIS, C_mu, C_h, C_contactForceInfoOnly)
 	
 	# For contact force visualization
@@ -400,19 +408,17 @@ def FrameMove_CVersion(bodies, h, mu, alpha0, nMuscle, C_NCONEBASIS, C_CONEBASIS
 			bodies[i].cf.append( array(C_contactForces[i][j]) )
 			#print array(C_contactForces[i][j])
 		bodies[i].contactPoints = array(C_contactPoints[i])[0:C_lenContactForces[i]]
-	
-	
 		
-	contactForcesNotEmpty = any([v>0 for v in C_lenContactForces])
+	# Do not need go any further if 'contactForceInfoOnly' is True.
+	contactForcesNotEmpty = [v>0 for v in C_lenContactForces]
 	if contactForceInfoOnly:
-		return contactForcesNotEmpty
+		return contactForcesNotEmpty, C_Ynext
 
 	# Update body data with next step state
 	for i in xrange(n):
 		bodies[i].q  = array(C_Ynext[2*nd*i +  0 : 2*nd*i +  6])
 		bodies[i].qd = array(C_Ynext[2*nd*i +  6 : 2*nd*i + 12])
-	
-	
+
 	for k in range(n):
 		# Angular velocity vector calculation (for visualization)
 		r = bodies[k].q[3:6]

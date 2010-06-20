@@ -92,6 +92,7 @@ def QuatToV(q):
 	if qv_mag < 0.01:
 		return 1/(0.5-qv_mag**2/48)*qv
 	else:
+		#print 'qw=',qw
 		return 2*acos(qw)/qv_mag*qv
 def VtoQuat(v):
 	th = linalg.norm(v)

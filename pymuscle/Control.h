@@ -6,7 +6,7 @@ cholmod_sparse *constructSparseDiagonalMatrix(int n, double diag[n], cholmod_com
 int control(const unsigned int nY, const unsigned int m,
             double ustar[m], double Dustar[nY],
             cholmod_sparse *W_Ysp, cholmod_sparse *W_usp,
-            cholmod_sparse *Dsp, cholmod_sparse *Fsp,
+            cholmod_sparse *Dsp,
             const double E[nY], cholmod_common *c);
 
 void PrintUmfStatus(int status, const char *file, int line);

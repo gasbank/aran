@@ -11,7 +11,6 @@ from OpenGL.GLUT import *
 from OpenGL.GLU import *
 import sys
 from optimization import *
-from ArcBall import *
 from glprim import *
 
 # Some api in the chain is translating the keystrokes to this octal string
@@ -163,6 +162,11 @@ def ProcessFD(pos, posd, ang, angd):
 	
 	static_contacts, dynamic_contacts = DetermineContactPoints(cornersX, cornersXd)
 	
+	#############
+	### DEBUG ###
+	#############
+	#static_contacts = static_contacts[0:min(3, len(static_contacts))]
+	
 	n_cs = len(static_contacts)
 	n_cd = len(dynamic_contacts)
 	n_u = 0
@@ -171,22 +175,27 @@ def ProcessFD(pos, posd, ang, angd):
 	A_a_com, b_a_com = LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contacts, V, mu_k)
 	A_com_next, b_com_next = NextPointPositionMatrix(A_a_com, b_a_com, pos, posd, dt)
 	A_alpha, VAI = AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu_k, H_com)
-
-	assert A_a_com is 0 or A_a_com.shape == (3, 1+4*n_cs+n_cd)
+	n_vbasis = V.shape[1]
+	assert A_a_com is 0 or A_a_com.shape == (3, 1+n_vbasis*n_cs+n_cd)
 	assert b_a_com.shape in [(3, 1), (3,)]
-	assert A_com_next is 0 or A_com_next.shape == (3, 1+4*n_cs+n_cd)
+	assert A_com_next is 0 or A_com_next.shape == (3, 1+n_vbasis*n_cs+n_cd)
 	assert b_com_next.shape in [(3, 1), (3,)]
-	assert A_alpha is 0 or A_alpha.shape == (3, 1+4*n_cs+n_cd)
+	assert A_alpha is 0 or A_alpha.shape == (3, 1+n_vbasis*n_cs+n_cd)
 
+	
+	
+	
 	
 	# For contact points
 	friction_constraints = []
 	for i in static_contacts + dynamic_contacts:
+		
 		A_a_q, b_a_q = LinearAccelerationMatrix(A_a_com, b_a_com, cornersX[0:3,i] - pos, A_alpha, angd)
-		A_q_next, b_q_next = NextPointPositionMatrix(A_a_q, b_a_q, cornersX[0:3,i], cornersXd[0:3,i], dt)
-		assert A_a_q.shape == (3, 1+4*n_cs+n_cd)
+		#A_q_next, b_q_next = NextPointPositionMatrix(A_a_q, b_a_q, cornersX[0:3,i], cornersXd[0:3,i], dt)
+		A_q_next, b_q_next = NextPointVelocityMatrix(A_a_q, b_a_q, cornersX[0:3,i], cornersXd[0:3,i], dt)
+		assert A_a_q.shape == (3, 1+n_vbasis*n_cs+n_cd)
 		assert b_a_q.shape in [(3, 1), (3,)]
-		assert A_q_next.shape == (3, 1+4*n_cs+n_cd)
+		assert A_q_next.shape == (3, 1+n_vbasis*n_cs+n_cd)
 		assert b_q_next.shape in [(3, 1), (3,)]
 		friction_constraints.append((A_q_next, b_q_next))
 
@@ -195,12 +204,14 @@ def ProcessFD(pos, posd, ang, angd):
 	angacc = 0
 
 	# only if there are one or more contacts occurred
+	contacted = False
 	if len(static_contacts + dynamic_contacts):
 		# solve SOCP
 		try:
 			global env
 			P2 = BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts)
-			x_opt = SolveSocp(env, friction_constraints, n_cs, n_cd, n_u)
+			x_opt = SolveSocp(env, friction_constraints, n_cs, n_cd, n_u, V.shape[1])
+			contacted = True
 		except mosek.Exception, e:
 			print "ERROR: %s" % str(e.errno)
 			if e.msg is not None:
@@ -239,7 +250,7 @@ def ProcessFD(pos, posd, ang, angd):
 		fc_list = [list(fc[3*i:3*i+3]) for i in range(size(fc)/3)]
 		rc_list = scp+dcp
 
-	return linacc, angacc, fc_list, rc_list
+	return linacc, angacc, fc_list, rc_list, contacted
 
 
 def Draw ():
@@ -351,13 +362,15 @@ def Draw ():
 frame=0
 
 def RungeKuttaFD(pos, posd, ang, angd):
-	rk = 1
+	rk = 0
 	global dt
-	a_linacc, a_angacc, fc_list, rc_list = ProcessFD(pos, posd, ang, angd)
+	a_linacc, a_angacc, fc_list, rc_list, contacted = ProcessFD(pos, posd, ang, angd)
 	newPosd = [posd[i] + dt*a_linacc[i] for i in range(3)]	
-	newPos = [pos[i] + dt*newPosd[i] for i in range(3)]
+	newPos = [pos[i] + dt*posd[i] + 0.5*dt*dt*a_linacc[i] for i in range(3)]
 	newAngd = [angd[i] + dt*a_angacc[i] for i in range(3)]	
 	newAng = [ang[i] + dt*newAngd[i] for i in range(3)]
+	if contacted:
+		aaaaaa=1234
 
 	if rk is not 0:
 		pos_b  = map(add2,pos,posd)
@@ -405,15 +418,16 @@ mu_k = 1.5 # dynamic(kinematic) friction coefficient
 V = BuildFrictionConeBasis(mu_s)
 
 # initial Box position(pos) and velocity(posd)
-pos = [0, 0, 1+box_size[2]/2.0]
-posd = [0, 0, 0]
+pos = [0, 0, 5+box_size[2]/2.0]
+posd = [0, 0, 5]
 # Box angle(ang) and angular velocity(angd) in radian
-ang = [pi/4+0.1, 0, 0]
+#ang = [pi/4+0.1, 0, 0]
+ang = [0, 1, 0]
 angd = [0, 0, 0]
 
 # Make a MOSEK environment
 env = mosek.Env ()
 mosek.iparam.intpnt_num_threads = 4
-
+mosek.iparam.data_check = mosek.onoffkey.on
 main()
 

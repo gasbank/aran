@@ -23,6 +23,9 @@
 //#define DEBUG
 #include "DebugPrintDef.h"
 
+int TestOctaveEngine();
+int LCPWrapper(cholmod_dense *x_opt_den, cholmod_dense *LCP_M_den, cholmod_dense *LCP_q_den);
+
 
 const double       ZERO3[3]   = {0,0,0};
 const double       NORMAL3[3] = {0,0,1};
@@ -253,6 +256,7 @@ int BuildLCPSubmatrices(LcpSubmatrices *lcpSm,
                         const double corners[n][8][3],
                         const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
                         const double mu, const double h,
+                        const double estNextVel[n][nd],
                         unsigned int lenActiveCorners,  unsigned int activeCorners [lenActiveCorners][2],
                         unsigned int lenActiveBodies,   unsigned int activeBodies  [lenActiveBodies],
                         cholmod_sparse *M_a_sp,
@@ -353,20 +357,31 @@ int BuildLCPSubmatrices(LcpSubmatrices *lcpSm,
         mus[i] = mu;
 
     /*
-     * The vector 'hMinvtau_Qd_den' represents h * Minv * tau + Qd
-     * or  h * Minv * (fg - Cqd) + Qd.
-     * This time we just set this value to Qd.
+     * Case 1: (when estNextVel is NULL)
+     *
+     *    The vector 'hMinvtau_Qd_den' represents h * Minv * tau + Qd
+     *    or h * Minv * (fg - Cqd) + Qd.
+     *    This time we just set this value to Qd.
+     *    Next time, we will add h*Minv*(fg-Cqd) by using
+     *    cholmod_sdmult().
+     *
+     * Case 2: (when estNextVel is not NULL)
+     *
+     *    The meaning of 'hMinvtau_Qd_den' is the same as Case 1.
+     *    The only difference is we just need to copy a 6-dim vector
+     *    value of estNextVel[<body index>] to fill 'hMinvtau_Qd_den'.
      */
     cholmod_dense *hMinvtau_Qd_den = cholmod_allocate_dense(lenActiveBodies*nd, 1, lenActiveBodies*nd, CHOLMOD_REAL, cc);
     for (i=0; i<lenActiveBodies; ++i) {
         const unsigned int bodyidx = activeBodies[i];
-        const double *qdi = &Y[ bodyidx*2*nd + nd ]; /* qdi = [pdi] + [vdi] */
         double *x         = (double *)(hMinvtau_Qd_den->x) + nd*i;
-        memcpy(x, qdi, sizeof(double)*nd);
+        if (estNextVel) {
+            memcpy(x, estNextVel[bodyidx], sizeof(double)*nd);
+        } else {
+            const double *qdi = &Y[ bodyidx*2*nd + nd ]; /* qdi = [pdi] + [vdi] */
+            memcpy(x, qdi, sizeof(double)*nd);
+        }
     }
-
-
-
 
     cholmod_sparse *N_sp         = cholmod_triplet_to_sparse(N_trip,      N_trip->nnz,      cc);
     cholmod_sparse *D_sp         = cholmod_triplet_to_sparse(D_trip,      D_trip->nnz,      cc);
@@ -401,10 +416,13 @@ int BuildLCPSubmatrices(LcpSubmatrices *lcpSm,
     ((double *)(Minus1_den->x))[0] = -1;
     cholmod_scale(Minus1_den, CHOLMOD_SCALAR, NegET_sp, cc);
 
-    /* Calculate 'hMinvtau_Qd_den' */
-    const double alphah[2]  = {  h,  0 };
-    cholmod_sdmult(Minv_a_sp, 0, alphah, beta, tau_a_den, hMinvtau_Qd_den, cc);
-
+    /*
+     * (Only for Case 1) Add h*Minv*(fg-Cqd) to 'hMinvtau_Qd_den'.
+     */
+    if (!estNextVel) {
+        const double alphah[2]  = {  h,  0 };
+        cholmod_sdmult(Minv_a_sp, 0, alphah, beta, tau_a_den, hMinvtau_Qd_den, cc);
+    }
     PRINT_DENSE_VECTOR(hMinvtau_Qd_den);
 
     /* RETURN THIS */
@@ -623,6 +641,93 @@ int ReparameterizeExpRot(const unsigned int nd, const unsigned int n, const unsi
 	return 0;
 }
 
+int VerifyLemkeSolution(cholmod_sparse *LCP_M_sp,
+                        cholmod_dense *LCP_q_den,
+                        cholmod_dense *x_opt_den,
+                        cholmod_common *cc) {
+    assert (LCP_M_sp && LCP_q_den && x_opt_den);
+    assert (LCP_M_sp->nrow == LCP_M_sp->ncol
+            && LCP_M_sp->ncol == LCP_q_den->nrow
+            && LCP_q_den->nrow == x_opt_den->nrow);
+    assert (LCP_q_den->ncol == x_opt_den->ncol
+            && x_opt_den->ncol == 1);
+    /*
+     * Verify the sanity of the solution
+     * by checking these equations.
+     * (w is calculated from Mx+q)
+     *
+     *    x_i * w_i   == 0
+     *    x_i         >= 0
+     *    w_i         >= 0
+     */
+    cholmod_dense *LCP_w = cholmod_copy_dense(LCP_q_den, cc);
+    cholmod_sdmult(LCP_M_sp, 0, alpha, beta, x_opt_den, LCP_w, cc);
+    const unsigned int qsize = LCP_q_den->nrow;
+    const double *x_opt = (const double *)(x_opt_den->x);
+    int lcpFailed = 0;
+    int i;
+    const double LcpSolutionTolerance = 1e-4; /* Smaller value means more strict checking */
+    for (i=0; i<qsize; ++i) {
+        const double xi = x_opt[i];
+        const double wi = ((double *)(LCP_w->x))[i];
+        const double xiwi = xi*wi;
+        if (xiwi != 0) {
+            //PRINT_FLH; printf("WARN ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
+            if (fabs(xiwi) > LcpSolutionTolerance) {
+                PRINT_FLH; printf("ERROR ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
+                lcpFailed = 1;
+            }
+        }
+        if (xi < 0) {
+            //PRINT_FLH; printf("WARN ... x[%d] = %lg\n", i, xi);
+            if (xi < -LcpSolutionTolerance) {
+                PRINT_FLH; printf("ERROR ... x[%d] = %lg\n", i, xi);
+                lcpFailed = 1;
+            }
+        }
+        if (wi < 0) {
+            //PRINT_FLH; printf("WARN ... w[%d] = %lg\n", i, wi);
+            if (wi < -LcpSolutionTolerance) {
+                PRINT_FLH; printf("ERROR ... w[%d] = %lg\n", i, wi);
+                lcpFailed = 1;
+            }
+        }
+    }
+    cholmod_free_dense(&LCP_w, cc);
+    if (lcpFailed) {
+        PRINT_FLH; printf(" ************ LCP solution verification result: FAILED ************\n");
+        print_trace();
+        /*
+         * Write Matlab code for constructing M and q to test this
+         * configuration with other LCP solvers.
+         */
+        cholmod_dense *LCP_M_den = cholmod_sparse_to_dense(LCP_M_sp, cc);
+        FILE *f = fopen("/home/johnu/pymuscle/GetMq.m", "w"); assert(f);
+        fprintf(f, "function [LCP_M, LCP_q] = GetMq()\n");
+        fprintf(f, "LCP_M = [");
+        for (i=0; i<qsize; ++i) {
+            int j;
+            for (j=0; j<qsize; ++j) {
+                const double LCP_M_den_ij = *((double *)(LCP_M_den->x) + qsize*j + i);
+                fprintf(f, " %.12lf ", LCP_M_den_ij);
+            }
+            if (i != qsize-1) fprintf(f, ";\n");
+        }
+        fprintf(f, "];\n");
+        fprintf(f, "LCP_q = [");
+        for (i=0; i<qsize; ++i) {
+            const double LCP_q_den_i = *((double *)(LCP_q_den->x) + i);
+            fprintf(f, " %.12lf ", LCP_q_den_i);
+            if (i != qsize-1) fprintf(f, ";\n");
+        }
+        fprintf(f, "];\n");
+        //fprintf(f, "end\n");
+        fclose(f);
+        exit(-12345);
+    }
+    return 0;
+}
+
 int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned int m,
                    const unsigned int activeCorners[8*n][2], const unsigned int lenActiveCorners,
                    const unsigned int activeBodies[n], const unsigned int lenActiveBodies,
@@ -630,11 +735,13 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
                    double contactForces[n][8][3], unsigned int lenContactForces[n],
                    unsigned int contactPoints[n][8],
                    const double Y [2*nd*n + m],
+                   const double estNextVel[n][nd],
                    const double extForces[n][nd],
                    const double I[n][4], const double mass[n],
                    const double corners[n][8][3],
                    const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
                    const double mu, const double h, cholmod_common *cc) {
+    //const unsigned int nY = 2*nd*n + m;
     cholmod_sparse *M_a_sp    = 0;
     cholmod_sparse *Minv_a_sp = 0;
     cholmod_dense  *tau_a_den = 0;
@@ -646,6 +753,7 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
     BuildLCPSubmatrices(&lcpSm, nd, n, m, Y, I, mass,
                         corners,
                         NCONEBASIS, CONEBASIS, mu, h,
+                        estNextVel,
                         lenActiveCorners, activeCorners,
                         lenActiveBodies, activeBodies,
                         M_a_sp, Minv_a_sp, tau_a_den,
@@ -658,72 +766,65 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
     cholmod_sparse *LCP_M_sp = AssembleLcpMatrix(&lcpSm, cc);
     cholmod_dense  *LCP_q_den = AssembleLcpVector(&lcpSm, cc);
     cholmod_dense  *LCP_M_den = cholmod_sparse_to_dense(LCP_M_sp, cc);
+    cholmod_free_sparse(&LCP_M_sp,     cc);
     const unsigned int qsize = LCP_q_den->nrow;
     cholmod_dense  *x_opt_den = cholmod_allocate_dense(qsize, 1, qsize, CHOLMOD_REAL, cc);
     double *x_opt = (double *)(x_opt_den->x);
     assert ( lenActiveBodies  == lcpSm.N_sp->nrow / nd );
     assert ( lenActiveCorners == lcpSm.N_sp->ncol );
 
-    /* Check the matrix LCP_M_den */
-    //PrintEntireSparseMatrix(LCP_M_sp);
-    double *LCP_q = (double *)(LCP_q_den->x);
-    PRINT_VECTOR(LCP_q, qsize);
-    int status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
-    if (status == 0) {
-        /* GOOD */
-    } else if (status == 1) {
-        printf("   ERROR - LCP STATUS: MAXIMUM ITERATION EXCEEDS\n");
-        getchar();
-    } else if (status == 2) {
-        printf("   ERROR - LCP STATUS: RAY TERMINATION\n");
-        getchar();
-    } else {
-    }
-    SANITY_VECTOR(x_opt, qsize);
-    /*
-     * Verify the sanity of the solution
-     * by checking these equations.
-     * (w is calculated from Mx+q)
-     *
-     *    x_i * w_i   == 0
-     *    x_i         >= 0
-     *    w_i         >= 0
-     */
-    cholmod_dense *LCP_w = cholmod_copy_dense(LCP_q_den, cc);
-    cholmod_sdmult(LCP_M_sp, 0, alpha, beta, x_opt_den, LCP_w, cc);
-    int lcpFailed = 0;
-    int i;
-    for (i=0; i<qsize; ++i) {
-        const double xi = x_opt[i];
-        const double wi = ((double *)(LCP_w->x))[i];
-        const double xiwi = xi*wi;
-        if (xiwi != 0) {
-            //PRINT_FLH; printf("WARN ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
-            if (fabs(xiwi) > 1e-1) {
-                PRINT_FLH; printf("ERROR ... x[%d]*w[%d] = %lg\n", i, i, xiwi);
-                lcpFailed = 1;
-            }
+    int status;
+    int lemkeTry = 0;
+    while (1) {
+        /************************/
+        //status = lemke_1darray(qsize, x_opt, (double *)(LCP_M_den->x), (double *)(LCP_q_den->x), 0, cc);
+
+        /*
+        int i;
+        for (i=0; i<qsize; ++i) {
+            ((double *)(LCP_M_den->x))[i*qsize + i] += 1e-3;
         }
-        if (xi < 0) {
-            //PRINT_FLH; printf("WARN ... x[%d] = %lg\n", i, xi);
-            if (xi < -1e-1) {
-                PRINT_FLH; printf("ERROR ... x[%d] = %lg\n", i, xi);
-                lcpFailed = 1;
+        */
+        status = LCPWrapper(x_opt_den, LCP_M_den, LCP_q_den);
+        /************************/
+        if (status == 0) {
+            break;
+        } else if (status == 1) {
+            printf("   ERROR - LCP STATUS: MAXIMUM ITERATION EXCEEDS.\n");
+            printf("                     : Try again by adding eps to diagonal elements...\n");
+            int i;
+            for (i=0; i<qsize; ++i) {
+                ((double *)(LCP_M_den->x))[i*qsize + i] += 1e-14;
             }
-        }
-        if (wi < 0) {
-            //PRINT_FLH; printf("WARN ... w[%d] = %lg\n", i, wi);
-            if (wi < -1e-1) {
-                PRINT_FLH; printf("ERROR ... w[%d] = %lg\n", i, wi);
-                lcpFailed = 1;
+            ++lemkeTry;
+            if (lemkeTry > 100) {
+                printf("                     : Still failed...\n");
+                getchar();
+                break;
             }
+        } else if (status == 2) {
+            printf("   ERROR - LCP STATUS: RAY TERMINATION\n");
+            printf("                     : Try again by adding eps to diagonal elements...\n");
+            int i;
+            for (i=0; i<qsize; ++i) {
+                ((double *)(LCP_M_den->x))[i*qsize + i] += 1e-14;
+            }
+            ++lemkeTry;
+            if (lemkeTry > 100) {
+                printf("                     : Still failed...\n");
+                getchar();
+                break;
+            }
+        } else {
+            assert(!"Unreachable code.");
         }
     }
-    if (lcpFailed) {
-        PRINT_FLH; printf(" ************ LCP failed ************\n");
-//        print_trace();
-//        exit(-12345);
-    }
+
+
+    LCP_M_sp = cholmod_dense_to_sparse(LCP_M_den, 1, cc);
+    //VerifyLemkeSolution(LCP_M_sp, LCP_q_den, x_opt_den, cc);
+    cholmod_free_sparse(&LCP_M_sp, cc);
+
     PRINT_DENSE_VECTOR(x_opt_den);
 
     cholmod_dense *cn_den   = cholmod_allocate_dense(           lenActiveCorners, 1,            lenActiveCorners, CHOLMOD_REAL, cc);
@@ -753,7 +854,7 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
     double *MinvNcn     = (double *)(MinvNcn_den->x);
     double *MinvDbeta   = (double *)(MinvDbeta_den->x);
     double *hMinvtau_Qd = (double *)(lcpSm.hMinvtau_Qd_den->x);
-
+    int i;
     for (i=0; i<lenActiveBodies; ++i) {
         const unsigned int bodyidx = activeBodies[i];
         int j;
@@ -827,7 +928,7 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
         memcpy(contactForces[kp][ lenContactForces[kp] ], cf, sizeof(double)*3);
         ++lenContactForces[kp];
     }
-    cholmod_free_sparse(&LCP_M_sp,     cc);
+
     cholmod_free_dense(&LCP_q_den,     cc);
     cholmod_free_dense(&LCP_M_den,     cc);
     cholmod_free_dense(&cn_den,        cc);
@@ -835,7 +936,6 @@ int LCP_exp_active(const unsigned int nd, const unsigned int n, const unsigned i
     cholmod_free_dense(&lamb_den,      cc);
     cholmod_free_dense(&MinvNcn_den,   cc);
     cholmod_free_dense(&MinvDbeta_den, cc);
-    cholmod_free_dense(&LCP_w, cc);
     cholmod_free_dense(&x_opt_den, cc);
     FreeLcpSubmatrices(&lcpSm, cc);
     return 0;
@@ -846,6 +946,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
             double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
             const double Y [2*nd*n + m],
+            const double estNextVel[n][nd],
             const double extForces[n][nd],
             const double I[n][4], const double mass[n],
             const double corners[n][8][3],
@@ -918,7 +1019,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                        activeBodies, lenActiveBodies,
                        Ynext,
                        contactForces, lenContactForces, contactPoints,
-                       Y, extForces, I, mass, corners,
+                       Y, estNextVel, extForces, I, mass, corners,
                        NCONEBASIS, CONEBASIS, mu, h, cc);
 #else /* LCP_STRATEGY_A */
         #pragma omp parallel for schedule(dynamic) shared(Ynext, contactForces, lenContactForces, contactPoints, Y, extForces, I)
@@ -941,7 +1042,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
                        activeBodies1, lenActiveBodies1,
                        Ynext,
                        contactForces, lenContactForces, contactPoints,
-                       Y, extForces, I, mass, corners,
+                       Y, estNextVel, extForces, I, mass, corners,
                        NCONEBASIS, CONEBASIS, mu, h, &cc1);
             cholmod_finish(&cc1);
         }
@@ -974,7 +1075,7 @@ int LCP_exp(const unsigned int nd, const unsigned int n, const unsigned int m,
         double Q_i_next[nd*lenInactiveBodies];
         /* hard copy the symmetric part of M_i_sp since SolveLinearSystem does not recognize compact form */
         cholmod_sparse *noCompact_M_i_sp = cholmod_copy(M_i_sp, 0, 1, cc);
-        SolveLinearSystem(noCompact_M_i_sp, tau_i_den, nd*lenInactiveBodies, Qdd, cc);
+        SolveLinearSystem(1, noCompact_M_i_sp, tau_i_den, nd*lenInactiveBodies, Qdd, cc);
         //PRINT_VECTOR(Qdd, nd*lenInactiveBodies);
         for (i=0; i<lenInactiveBodies; ++i) {
             const unsigned int bodyidx = inactiveBodies[i];
@@ -1005,7 +1106,7 @@ int LCP_exp_Python(const unsigned int nd, const unsigned int n, const unsigned i
             double Ynext[2*nd*n + m],
             double contactForces[n][8][3], unsigned int lenContactForces[n], unsigned int contactPoints[n][8],
             const double penetration0,
-            const double Y [2*nd*n + m], const double extForces[n][nd],
+            const double Y [2*nd*n + m], const double estNextVel[n][nd], const double extForces[n][nd],
             const double I[n][4], const double mass[n],
             const double corners[n][8][3],
             const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
@@ -1014,7 +1115,7 @@ int LCP_exp_Python(const unsigned int nd, const unsigned int n, const unsigned i
     cholmod_common c ;
     cholmod_start (&c) ;
     CHECK_SOURCE_LINE;
-    int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
+    int status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints, penetration0, Y, estNextVel, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, contactForceInfoOnly, &c);
     CHECK_SOURCE_LINE;
     cholmod_finish(&c);
     CHECK_SOURCE_LINE;
@@ -1029,6 +1130,7 @@ int LCP_exp_test() {
     const unsigned int nY = 2*nd*n+m;
     double Y[nY], I[n][4], corners[n][8][3], mass[n];
     double extForces[n][nd];
+    double estNextVel[n][nd];
     double Ynext[nY];
     const unsigned int NCONEBASIS = 8;
     const double pi = 4*atan(1.);
@@ -1044,6 +1146,7 @@ int LCP_exp_test() {
     memset(Y, 0, sizeof(double)*nY);
     memset(mass, 0, sizeof(double)*n);
     memset(extForces, 0, sizeof(double)*n*nd);
+    memset(estNextVel, 0, sizeof(double)*n*nd);
     Y[2] = 5; /* start from the sky */
     /* slightly rotated */
     Y[3] = 0.3;
@@ -1081,7 +1184,7 @@ int LCP_exp_test() {
     int it;
     for (it = 0; it < iter; ++it) {
         status = LCP_exp(nd, n, m, Ynext, contactForces, lenContactForces, contactPoints,
-                         penetration0, Y, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, 0, &c);
+                         penetration0, Y, estNextVel, extForces, I, mass, corners, NCONEBASIS, CONEBASIS, mu, h, 0, &c);
         if (it % 1000 == 0)
             printf("== Frame %5d ==\n", it);
         PRINT_VECTOR(Y, nY);

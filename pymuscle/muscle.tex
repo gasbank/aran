@@ -3,7 +3,7 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{graphicx}
-\usepackage[margin=3.5cm]{geometry}
+\usepackage[margin=0.5cm]{geometry}
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
 \renewcommand{\baselinestretch}{1.2}
@@ -220,7 +220,7 @@ With this biomechanical model we design a reference trajectory tracker.
 Specifically we build the equations of motion which have the
 form of
 \begin{equation}\label{MoEq}
-\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi )\dot\chi + G(\chi ) = f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, u)
+\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi ) = f_g(\chi) + f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, u)
 \end{equation}
 where $\mathbf{M}$ is a generalized mass matrix and $\chi$ is a generalized
 linear and angular position
@@ -241,7 +241,7 @@ as $\bar\chi$ and $\dot{\bar\chi}$, \eqref{MoEq} can be more elaborated
 to reveal its structure as a tracker:
 
 \begin{equation}\label{MoEq2}
-\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi )\dot\chi + G(\chi ) = f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, \bar\chi, \dot{\bar\chi}).
+\mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi ) = f_g(\chi) + f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, \bar\chi, \dot{\bar\chi}).
 \end{equation}
 Note that the muscle actuation force $u$ is calculated in $\tau$ internally. 
 
@@ -257,11 +257,11 @@ Because we represent times as discrete samples, all the functions of
 time-varying variables need to be represented in a discrete domain.
 We discretize the time into samples with small intervals $h$. We define
 the velocity $\dot\chi^{(l)}$ and the acceleration $\ddot\chi^{(l)}$, at current
-time sample $l$, by backward finite differences.
+time sample $l$, by backward and central finite differences, respectively.
 
 \begin{align}
-\dot\chi^{(l)}  = {} & \frac{\chi^{(l)}-\chi^{(l-1)}}{h}\label{vel-dis}\\
-\ddot\chi^{(l)} = {} & \frac{\chi^{(l)}-2\chi^{(l-1)}+\chi^{(l-2)}}{h^2}\label{acc-dis}
+\dot\chi^{(l)}  \equiv {} & \frac{\chi^{(l)}-\chi^{(l-1)}}{h}\label{vel-dis}\\
+\ddot\chi^{(l)} \equiv {} & \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}}{h^2}\label{acc-dis}
 \end{align}
 
 
@@ -397,7 +397,7 @@ as a first-order ordinary differential equation of a tension $T$ exerted
 at the end of the fiber:
 
 \begin{equation}\label{Tension}
-\dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+A   \right)
+\dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+u   \right)
 \end{equation}
 where $x$ is the length of the fiber and $A$ is applied force in the active
 component. Note that all quantities shown in the equation are scalar values.
@@ -829,8 +829,6 @@ Jacobian also can be calculated in a separated manner.
 \includegraphics[width=120mm]{testplot}
 
 
-
-
 \section{Muscle control algorithm}
 
 \subsection{Muscle fiber actuation force}
@@ -894,29 +892,24 @@ as close as possible while using minimal efforts to achieve that goal.
 The optimization problem for finding the solution vector $u^*$ can be stated as
 
 \begin{align}
-u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u} \notag\\
-   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
-   = {} & \arg\min_{u} \| (Y^{(l)} + C + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| \mathbf{F}u \|^2_{\mathbf{W}_u}\notag\\
-   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u \|^2_{\mathbf{W}_u}
+u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u} \notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + C + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u}
 \end{align}
 where
 \begin{equation}
-E = Y^{(l)} - Y_\text{desired} + C ,
+E = Y^{(l)} - Y_\text{desired} + C .\notag
 \end{equation}
-\begin{equation}
-\mathbf{F} = \left[ \begin{array}{c}
-\zm{2n_d n,m}\\
-\mathbf{1}_m
-\end{array}  \right].
-\end{equation}
+
 The weighting between different objective terms is
 usually determined by diagonal semipositive definite matrices $\mathbf{W}_Y$ and $\mathbf{W}_u$.
 Note that $\mathbf{D}$ can be a rectangular (nonsquare) matrix depending on the number of rigid bodies and
 muscles. The equations for finding $u^*$ is as follows:
 \begin{align}
-\frac{\partial}{\partial u} \left( \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| \mathbf{F}u \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
-2\mathbf{D}^T\mathbf{W}_Y(\mathbf{D}u+E) + 2\mathbf{F}^T\mathbf{W}_u \mathbf{F}u = {} & 0\notag\\
-(\mathbf{D}^T\mathbf{W}_Y\mathbf{D}+\mathbf{F}^T\mathbf{W}_u\mathbf{F})u = {} & -\mathbf{D}^T\mathbf{W}_Y E
+\frac{\partial}{\partial u} \left( \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
+2\mathbf{D}^T\mathbf{W}_Y(\mathbf{D}u+E) + 2 \mathbf{W}_u u = {} & 0\notag\\
+(\mathbf{D}^T\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u = {} & -\mathbf{D}^T\mathbf{W}_Y E
 \end{align}
 Here we define the gradient as a column vector.
 
@@ -934,36 +927,785 @@ Here we define the gradient as a column vector.
 \centering
 \begin{tabular}{ c c l }
 \hline
-Symbol       & Dimension           & Name \\
+Symbol           & Dimension                                & Name \\
 \hline
-$\bar{m}$    &                     & body mass \\
-$\mathbf{H}$ & $3 \times 3$        & moments of inertia \\
-$a$          & $3 \times 1$        & linear acceleration \\ 
-$\alpha$     & $3 \times 1$        & angular acceleration \\
-$\omega$     & $3 \times 1$        & angular velocity \\
-$f$          & $3 \times 1$        & external force\\
-$\tau$       & $3 \times 1$        & external torque force\\
-$n_d$        &                     & degree-of-freedom of a rigid body\\
-$n$          &                     & the number of rigid bodies\\
-$m$          &                     & the number of muscle fibers\\
-$\chi$       & $n_d n  \times 1$   & generalized position\\
-$\dot\chi$   & $n_d n  \times 1$   & generalized velocity\\
-$\ddot\chi$  & $n_d n  \times 1$   & generalized acceleration\\
-$\mathbf{M}$ & $n_d n  \times n_d$ & generalized mass matrix\\
-$Y$          & $2n_d n \times 1$   & generalized state vector\\
-$h$          &                     & simulation time step\\
-$C$          & $2n_d n \times 1$   & Coriolis and centrifugal force\\
-$k_{se}$     &                     & serial spring constant\\
-$k_{pe}$     &                     & parallel spring constant\\
-$x$          &                     & muscle fiber length\\
-$x_r$        &                     & muscle fiber rest length\\
-$b$          &                     & muscle fiber viscosity\\
-$T$          &                     & muscle fiber tension\\
-$A$          &                     & muscle fiber actutation force\\
+$\bar{m}$        &                                          & body mass \\
+$\mathbf{H}$     & $3 \times 3$                             & moments of inertia \\
+$a$              & $3 \times 1$                             & linear acceleration \\ 
+$\alpha$         & $3 \times 1$                             & angular acceleration \\
+$\omega$         & $3 \times 1$                             & angular velocity \\
+$f$              & $3 \times 1$                             & external force\\
+$\tau$           & $3 \times 1$                             & external torque force\\
+$n_d$            &                                          & degree-of-freedom of a rigid body\\
+$n$              &                                          & the number of rigid bodies\\
+$m$              &                                          & the number of muscle fibers\\
+$\chi$           & $n_d n     \times 1$                     & generalized position\\
+$\dot\chi$       & $n_d n     \times 1$                     & generalized velocity\\
+$\ddot\chi$      & $n_d n     \times 1$                     & generalized acceleration\\
+$\mathbf{M}$     & $n_d n     \times n_d$                   & generalized mass matrix\\
+$n_Y$            &                                          & dimension of the state vector $Y$\\
+$Y$              & $2n_d n + m\times 1$                     & generalized state vector\\
+$h$              &                                          & simulation time step\\
+$C$              & $2n_d n    \times 1$                     & Coriolis and centrifugal force\\
+$k_{se}$         &                                          & serial spring constant\\
+$k_{pe}$         &                                          & parallel spring constant\\
+$x$              &                                          & muscle fiber length\\
+$x_r$            &                                          & muscle fiber rest length\\
+$b$              &                                          & muscle fiber viscosity\\
+$T$              &                                          & muscle fiber tension\\
+$A$              &                                          & muscle fiber actutation force\\
+$\mathbf{W}_Y$   &     $n_Y \times n_Y$ (diagonal)   & weight for tracking\\
+$\mathbf{W}_u$   &     $ m  \times  m $ (diagonal)   & weight for actuation force\\
 \hline
 \end{tabular}
 \end{table}
 \pagebreak
+
+
+
+\section{Implementation details}
+
+\subsection{Linearization of constraints}
+
+\subsubsection{Equations of motion}
+The discretized version of \eqref{MoEq2} is the following:
+\begin{equation}\label{Moeq_discretized}
+\mathbf{M}(\chi^{(l)})\ddot\chi^{(l)} + C(\chi^{(l)}, \dot\chi^{(l)})
+     = f_g(\chi^{(l)}) + f_c(\chi^{(l)}, \lambda^{(l)}) + f_m(\chi^{(l)}, T^{(l)})
+\end{equation}
+By substituting the definitions \eqref{vel-dis} and \eqref{acc-dis} into \eqref{Moeq_discretized}
+we can rearrange this constraint equation into the linear function of
+the optimization variable $\chi^{(l+1)}$.
+\begin{equation}\label{Moeq_discretized2}
+\mathbf{M}(\chi^{(l)}) \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi{(l-1)}}{h^2} + C(\chi^{(l)}, \frac{\chi^{(l)} - \chi^{(l-1)}}{h})
+= f_g(\chi^{(l)}) + f_c(\chi^{(l)}, \lambda^{(l)}) + f_m(\chi^{(l)}, T^{(l)})
+\end{equation}
+$\mathbf{M}$, $C$ and $f_g$ can be completely determined at current time step $l$.
+We need to linearize $f_c$ and $f_m$ subsequently.
+Before we proceed, let us define some vector quantities used frequently
+afterwards.
+\begin{equation}
+\chi =
+\left[ \begin{array}{c}
+\chi_{1}\\
+\vdots\\
+\chi_{n}
+\end{array}  \right]
+,\quad
+\chi_i = \left [
+\begin{array}{c}
+p_i \\
+v_i
+\end{array}
+\right ]
+,\quad
+\lambda =
+\left[ \begin{array}{c}
+c_{t,1}\\
+c_{n,1}\\
+\vdots\\
+c_{t,|\mathcal{P}|}\\
+c_{n,|\mathcal{P}|}\\
+\end{array}  \right]
+,\quad
+T =
+\left[ \begin{array}{c}
+T_{1}\\
+\vdots\\
+T_{m}
+\end{array}  \right]
+,\quad
+u =
+\left[ \begin{array}{c}
+u_1\\
+\vdots\\
+u_{m}
+\end{array}  \right]
+\end{equation}
+Here $\mathcal{P}$ is a set of indices of contact points.
+\subsubsection{Gravitational forces}
+The gravitational force $f_g$ is a function of $\chi$ and other
+physical constants such as mass, a center of mass and the gravitational
+acceleration.
+\begin{equation}
+f_g(\chi) = \left [
+\begin{array}{c}
+f_{g,1}(\chi_1 )\\
+\vdots\\
+f_{g,n}(\chi_n )
+\end{array}
+\right ]
+,\quad\quad
+f_{g,i}(\chi_i) = \left [
+\begin{array}{c}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}}c_i \right) \cdot m_i g\\
+\vdots\\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}}c_i \right) \cdot m_i g
+\end{array}
+\right ]
+\end{equation}
+
+\subsubsection{Contact forces}
+$f_c$ can be represented as $\mathbf{Q}\mathbf{S}_\mathcal{P}\lambda$ by using the following derivation.
+\begin{equation}\label{f_c_lin}
+f_c(\chi,\lambda) = \left [
+\begin{array}{c}
+f_{c,1}(\chi_1, \lambda )\\
+\vdots\\
+f_{c,n}(\chi_n, \lambda )
+\end{array}
+\right ]
+=
+\left [
+\begin{array}{ccc}
+\mathbf{Q}_1    &            &              \\
+                &  \ddots    &              \\
+                &            & \mathbf{Q}_n
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+\mathbf{S}_{\mathcal{P}(1)}\\
+\vdots\\
+\mathbf{S}_{\mathcal{P}(n)}
+\end{array}
+\right ]
+\lambda
+=
+\mathbf{Q} \mathbf{S}_\mathcal{P} \lambda
+\end{equation}
+
+\begin{align}
+f_{c,i}(\chi_i,\lambda)
+      & = \sum_{j \in \mathcal{P}(i)}\left [
+\begin{array}{c}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}}p_j \right) \cdot (c_{t,j} + n_j c_{n,j})\\
+\vdots\\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}}p_j \right) \cdot (c_{t,j} + n_j c_{n,j})
+\end{array}
+\right ]\notag\\
+      & = \sum_{j \in \mathcal{P}(i)}\left [
+\begin{array}{c}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}}p_j \right)^T \\
+\vdots\\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}}p_j \right)^T
+\end{array}
+\right ]
+\left [
+\begin{array}{cc}
+\mathbf{1}_4 \quad n_j
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+c_{t,j}\\
+c_{n,j}
+\end{array}
+\right ]\notag\\
+       & = \sum_{j \in \mathcal{P}(i)} \mathbf{Q}_{i,j}
+\left [
+\begin{array}{c}
+c_{t,j}\\
+c_{n,j}
+\end{array}
+\right ]\notag\\
+       & =
+\left [
+\begin{array}{ccc}
+\mathbf{Q}_{i,\mathcal{P}(i)_1} &  \cdots  &  \mathbf{Q}_{i,\mathcal{P}(i)_{|\mathcal{P}(i)|}}
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+c_{t,\mathcal{P}(i)_1}\\
+c_{n,\mathcal{P}(i)_1}\\
+\vdots \\
+c_{t,\mathcal{P}(i)_{|\mathcal{P}(i)|}}\\
+c_{n,\mathcal{P}(i)_{|\mathcal{P}(i)|}}
+\end{array}
+\right ]\notag \\
+       & =
+\mathbf{Q}_i \mathbf{S}_{\mathcal{P}(i)} \lambda
+\end{align}
+
+\begin{equation}
+\mathbf{Q}_{i,j} =
+\left [
+\begin{array}{ccc}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}}p_j \right)^T &  &  \left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}}p_j \right) \cdot n_j \\
+& \vdots & \\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}}p_j \right)^T &  &  \left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}}p_j \right) \cdot n_j
+\end{array}
+\right ] \quad\quad (6 \times 5)
+\end{equation}
+The contact normal force coefficient $c_{n,j}$ should be nonnegative since the force
+should not pull the contact point along the normal direction.
+Also the friction force vector $c_{t,j}$ need to be perpendicular to
+the contact normal direction. Lastly, we need to ensure that the sum of
+the normal and the friction force vector should reside in the Coulomb friction cone.
+To satisfy these conditions we need the following constraints:
+\begin{equation}\label{Contact_force_constraints}
+c_{n,j}           \geq  0,               \quad\quad
+n_j \cdot c_{t,j}   =   0,               \quad\quad
+\| c_{t,j} \|_2   \leq  \mu _j c_{n,j}   \quad\quad  \forall j \in \mathcal{P}
+\end{equation}
+
+
+
+\subsubsection{Muscle forces}
+$f_m$ can be represented as $\mathbf{R}\mathbf{S}_\mathcal{M} T$ by using the following derivation.
+\begin{equation}\label{f_m_lin}
+f_m(\chi, T) = \left [
+\begin{array}{c}
+f_{m,1}(\chi, T )\\
+\vdots\\
+f_{m,n}(\chi, T )
+\end{array}
+\right ]
+=
+\left [
+\begin{array}{ccc}
+\mathbf{R}_1                      &            &                               \\
+                                  &  \ddots    &                               \\
+                                  &            & \mathbf{R}_n 
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+\mathbf{S}_{\mathcal{M}(1)}  \\
+\vdots  \\
+\mathbf{S}_{\mathcal{M}(n)}
+\end{array}
+\right ]
+T
+=
+\mathbf{R} \mathbf{S}_\mathcal{M} T
+\end{equation}
+
+\begin{align}
+f_{m,i}(\chi ,T)
+      & = \sum_{j \in \mathcal{M}(i)}\left [
+\begin{array}{c}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}} a_{i,j} \right) \cdot T_j d(i,j)\\
+\vdots\\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}} a_{i,j} \right) \cdot T_j d(i,j)
+\end{array}
+\right ]\notag\\
+      & = \sum_{j \in \mathcal{M}(i)}\left [
+\begin{array}{c}
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,1}} a_{i,j} \right) \cdot d(i,j) \\
+\vdots\\
+\left( \frac{\partial\mathbf{W}_i(\chi_{i})}{\partial\chi_{i,n_d}} a_{i,j} \right) \cdot d(i,j)
+\end{array}
+\right ]
+T_j\notag\\
+       & = \sum_{j \in \mathcal{M}(i)} \mathbf{R}_{i,j}
+T_j\notag\\
+       & =
+\left [
+\begin{array}{ccc}
+\mathbf{R}_{i,\mathcal{M}(i)_1} &  \cdots  &  \mathbf{R}_{i,\mathcal{M}(i)_{|\mathcal{M}(i)|}}
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+T_{\mathcal{M}(i)_1}\\
+\vdots \\
+T_{\mathcal{M}(i)_{|\mathcal{M}(i)|}}
+\end{array}
+\right ]\\
+       & =
+\mathbf{R}_i \mathbf{S}_{\mathcal{M}(i)} T
+\end{align}
+
+\subsubsection{Muscle fiber dynamics}
+The discretized version of \eqref{Tension} is the following:
+\begin{equation}
+\frac{T^{(l)}-T^{(l-1)}}{h} 
+           = \frac{k_{se}}{b} \left( k_{pe}(x^{(l)}-x_{r})+b\frac{x^{(l)}-x^{(l-1)}}{h}-\left(1+\frac{k_{pe}}{k_{se}}\right) T^{(l)} + u^{(l)}   \right)
+\end{equation}
+
+\begin{equation}
+k_{se} b (T^{(l)}-T^{(l-1)})
+            = k_{se}^2 h k_{pe}(x^{(l)}-x_{r})
+               + k_{se}^2 b (x^{(l)}-x^{(l-1)})
+               -( k_{se}^2 h +k_{se} h k_{pe} ) T^{(l)}
+               + k_{se}^2 h u^{(l)}
+\end{equation}
+\begin{equation}
+k_{se} b  (T^{(l)}-T^{(l-1)}) + ( k_{se}^2 h +k_{se} h k_{pe} ) T^{(l)}
+- k_{se}^2 h u^{(l)}
+            = k_{se}^2 h k_{pe}(x^{(l)}-x_{r})
+               + k_{se}^2 b (x^{(l)}-x^{(l-1)})
+\end{equation}
+\begin{equation}
+(k_{se} b  + k_{se}^2 h +k_{se} h k_{pe} ) T^{(l)}
+- k_{se}^2 h u^{(l)} =
+k_{se} b T^{(l-1)}
+            + k_{se}^2 h k_{pe}(x^{(l)}-x_{r})
+               + k_{se}^2 b (x^{(l)}-x^{(l-1)})
+\end{equation}
+\begin{equation}
+(k_{se} b  + k_{se}^2 h +k_{se} h k_{pe} ) T^{(l)}
+- k_{se}^2 h u^{(l)} + k_{se}^2 h k_{pe} x^{(l)}_{r} =
+k_{se} b T^{(l-1)}
+            + k_{se}^2 h k_{pe} x^{(l)}
+               + k_{se}^2 b (x^{(l)}-x^{(l-1)})
+\end{equation}
+
+\begin{equation}
+\mathbf{K}_i
+\left [
+\begin{array}{c}
+T^{(l)}_i \\ u^{(l)}_i \\ x_{r,i}^{(l)}
+\end{array}
+\right ] = s_i
+\end{equation}
+
+\begin{align}
+\mathbf{K}_i & =
+\left [
+\begin{array}{ccc}
+k_{se, i} b_i  + k_{se,i}^2 h +k_{se,i} h k_{pe,i}  &     - k_{se,i}^2 h  &  k_{se,i}^2 h k_{pe,i}
+\end{array}
+\right ]\\
+s_i & = k_{se,i} b_i T^{(l-1)}_i
+            + k_{se,i}^2 h k_{pe,i} x^{(l)}_i
+               + k_{se,i}^2 b_i (x^{(l)}_i-x^{(l-1)}_i)
+\end{align}
+
+\begin{align}
+\left [
+\begin{array}{ccc}
+\mathbf{K}_1 &        &                  \\
+             & \ddots &                  \\
+             &        & \mathbf{K}_{n_m}
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+T_1^{(l)} \\ u_1^{(l)} \\ x_{r,1}^{(l)} \\
+\vdots\\
+T_{n_m}^{(l)} \\ u_{n_m}^{(l)} \\ x_{r,n_m}^{(l)}
+\end{array}
+\right ]  & = 
+\left [
+\begin{array}{c}
+s_1 \\
+\vdots \\
+s_{n_m}
+\end{array}
+\right ]\notag\\
+\mathbf{K}\mathbf{S}_{T,u,x} \left [
+\begin{array}{c}
+T^{(l)} \\ u^{(l)} \\ x_{r}^{(l)}
+\end{array}
+\right ] &= s\label{Muscle_fiber_constraint}
+\end{align}
+This equation couples $T$, $u$ and $x_r$ with current state linearly
+since $x$ is the function of $\chi$.
+
+\subsection{Constraints for nonpenetration}
+For each contact $j$ on the body $i$, we need a nonpenetrating inequality constraint which
+takes a form of $C_{np}^j (\chi^{(l+1)}_i) \geq 0$.
+If we assume a flat ground of $z=0$, $C_{np}^j$ is the same as
+the $z$-axis coordinate of the contact point.
+\begin{align}
+C_{np}^j & = \left [ \begin{array}{cccc} 0 & 0 & 1 & 0 \end{array} \right ] p^{W(l+1)} \notag\\
+         & = \left [ \begin{array}{cccc} 0 & 0 & 1 & 0 \end{array} \right ] ( \mathbf{Z}(i,p) \chi^{(l+1)}_i + V(i,p) ) \geq 0
+\end{align}
+where $p$ and $p^W$ are a contact point defined in body and world coordinates, respectively.
+
+\subsection{Constraints for joints}
+Assume that a joint $j$ exists between the body $a$ and $b$. Also assume that
+$p_a$ and $p_b$ are body coordinate positions where a ligament fiber is attached
+to each body. We want to make a constraint in order to confine a value $\|p_a^W-p_b^W\|$ within
+a certain limit $\epsilon_j$.
+\begin{align}
+C_{joint}^j  & = \| p_a^W - p_b^W \| \notag\\
+             & = \| ( \mathbf{Z}(a,p_a) \chi^{(l+1)}_a + V(a,p_a) ) - ( \mathbf{Z}(b,p_b) \chi^{(l+1)}_b + V(b,p_b) ) \| \leq \epsilon_j
+\end{align}
+
+\subsection{A complete constraints formulation}
+If we substitute \eqref{f_c_lin} and \eqref{f_m_lin} into \eqref{Moeq_discretized2}
+then the whole equations of motion becomes the linear function of the
+optimization variables.
+\begin{equation}\label{Moeq_discretized3}
+\mathbf{M}(\chi^{(l)}) \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}}{h^2} + C(\chi^{(l)}, \frac{\chi^{(l)} - \chi^{(l-1)}}{h})
+= f_g(\chi^{(l)}) + \mathbf{Q} \mathbf{S}_\mathcal{P} \lambda^{(l)} + \mathbf{R} \mathbf{S}_\mathcal{M} T^{(l)}\notag
+\end{equation}
+By gathering the optimization variables to the left-hand side of the equation and
+denoting it by matrix-vector notation we get the following equation:
+\begin{align}\label{Moeq_constraint}
+\frac{\mathbf{M}(\chi^{(l)})}{h^2}\chi^{(l+1)} - \mathbf{Q} \mathbf{S}_\mathcal{P} \lambda^{(l)} - \mathbf{R} \mathbf{S}_\mathcal{M} T^{(l)}
+& = z \notag\\
+\left [
+\begin{array}{ccc}
+\mathbf{M}(\chi^{(l)}) / h^2 & - \mathbf{Q} \mathbf{S}_\mathcal{P}  &  - \mathbf{R} \mathbf{S}_\mathcal{M}
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+\chi^{(l+1)} \\
+\lambda^{(l)} \\
+T^{(l)}
+\end{array}
+\right ]
+& = z
+\end{align}
+where
+\begin{equation}
+z \equiv f_g(\chi^{(l)}) - \mathbf{M}(\chi^{(l)})\frac{2\chi^{(l)}-\chi^{(l-1)}}{h^2} - C(\chi^{(l)}, \frac{\chi^{(l)} - \chi^{(l-1)}}{h}).\notag
+\end{equation}
+We can combine both of \eqref{Moeq_constraint} and \eqref{Muscle_fiber_constraint}
+which are the equality constraints. To do this, let $\tau$ be the vector of aggregate
+optimization variables and $\mathbf{X}_{\star}$ be the selection matrix,
+\emph{i.e.} $\chi^{(l+1)} = \mathbf{X}_{\chi} \tau$.
+The final form of the equality constraints is below:
+\begin{equation}
+\left [ \begin{array}{c}
+\left [
+\begin{array}{ccc}
+\mathbf{M}(\chi^{(l)}) / h^2 & - \mathbf{Q} \mathbf{S}_\mathcal{P}  &  - \mathbf{R} \mathbf{S}_\mathcal{M}
+\end{array}
+\right ]
+\left [
+\begin{array}{c}
+\mathbf{X}_\chi \\
+\mathbf{X}_\lambda \\
+\mathbf{X}_T
+\end{array}
+\right ]\\
+\mathbf{K}\mathbf{S}_{T,u,x} \left [
+\begin{array}{c}
+\mathbf{X}_T \\ \mathbf{X}_u \\ \mathbf{X}_{x_r}
+\end{array}
+\right ]
+\end{array}
+\right ]
+\tau
+=
+\left [
+\begin{array}{c}
+z\\
+s
+\end{array}
+\right ]
+\quad\quad
+\text{where}
+\quad\quad
+\tau \equiv
+\left [
+\begin{array}{c}
+\chi^{(l+1)} \\
+\lambda^{(l)} \\
+T^{(l)} \\
+u^{(l)} \\
+x_r^{(l)}
+\end{array}
+\right ].
+\end{equation}
+Moreover, contact force constraints \eqref{Contact_force_constraints}
+need to be considered.
+
+\subsection{Cost function}
+
+\subsection{Linearization of next step states}
+A point $p$ attached to a certain rigid body can be transformed into
+world coordinates by a multiplying a homogeneous transformation matrix $\mathbf{W}$
+of the rigid body.
+We can represent the next time position of $p$ in world coodinates
+as the linear function of the next time state $\chi^{(l+1)}$
+by using the following formula:
+\begin{align}
+\mathbf{W}^{(l+1)}p
+        & \approx \mathbf{W}^{(l)}p + h\dot{\mathbf{W}}^{(l+1)}p\notag\\
+        &    =    \mathbf{W}^{(l)}p + h\frac{\partial\mathbf{W}^{(l+1)}}{\partial\chi^{(l+1)}}\dot\chi^{(l+1)} p\notag\\
+        & \approx \mathbf{W}^{(l)}p + h\frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}}\dot\chi^{(l+1)} p\notag\\
+        &    =    \mathbf{W}^{(l)}p + h\sum^{n_d}_{j=1}{ \frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}_j}\dot\chi^{(l+1)}_j} p\notag\\
+        &    =    \mathbf{W}^{(l)}p + h\sum^{n_d}_{j=1}{ \frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}_j}\frac{\chi^{(l+1)}_j-\chi^{(l)}_j}{h}} p\notag\\
+        &    =    \mathbf{W}^{(l)}p +  \sum^{n_d}_{j=1}{ \frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}_j} p (\chi^{(l+1)}_j-\chi^{(l)}_j})\notag\\
+        &    =    \mathbf{W}^{(l)}p + \mathbf{Z}\chi^{(l+1)} - \mathbf{Z}\chi^{(l)}\notag\\
+        &    =    \mathbf{Z}\chi^{(l+1)} + V
+\end{align}
+where
+\begin{equation}
+\mathbf{Z} = \left[ \begin{array}{ccc}
+                    \frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}_1} p & \cdots & \frac{\partial\mathbf{W}^{(l  )}}{\partial\chi^{(l  )}_{n_d}} p
+              \end{array} \right], \quad\quad
+V = \mathbf{W}^{(l)}p - \mathbf{Z}\chi^{(l)}\notag
+\end{equation}
+
+\pagebreak
+
+\subsection{A particle with flat ground}
+\begin{align}
+\text{given}      & \quad \chi^{(l-1)}, \chi^{(l)}, f_g, m, h, \mu\notag\\
+\text{minimize}   & \quad \epsilon + 100\chi^{(l)}_z f_{c,z} + \epsilon_{fric} \notag\\
+\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}
+\left[\begin{array}{ccccccc}
+0 & m/h^2\mathbf{1}     & -\mathbf{1}  & \mathbf{0} & 0 & 0 & 0 \\
+0 &    \mathbf{1}       & \mathbf{0}   & \mathbf{1} & 0 & 0 & 0 \\
+0 & [ 0, 0, \sqrt{m}/h] & \mathbf{0}   & \mathbf{0} & -1 & 0 & 0 \\
+0 & \mathbf{0}          & [ 0, 0, \mu] & \mathbf{0} & 0 & 0 & -1
+\end{array}\right]
+\left[\begin{array}{c}
+\epsilon \\ \chi^{(l+1)} \\ f_c \\ \Delta\chi \\ \tilde{c}_{lcp} \\ \epsilon_{fric} \\ \mu f_{c,z}
+\end{array}\right]
+=
+\left[\begin{array}{c}
+m/h^2(2\chi^{(l)}-\chi^{(l-1)}) + f_g \\
+\chi^{(l)} \\
+-hq/2\sqrt{m} \\
+0
+\end{array}\right]
+\end{equation}
+\begin{equation}
+q \equiv -m/h^2(2\chi^{(l)}_z-\chi^{(l-1)}_z)-f_{g,z}
+\end{equation}
+\begin{equation}
+\chi^{(l+1)}_z \geq 0       , \quad\quad
+f_{c,z} \geq 0              , \quad\quad
+\tilde{c}_{lcp} \geq 0          , \quad\quad
+\epsilon_{fric} \geq 0          , \quad\quad
+\mu f_{c,z} \geq 0
+\end{equation}
+\begin{equation}
+\epsilon            \geq \| \tilde{c}_{lcp} \| , \quad\quad
+\mu f_{c,z}  \geq \| f_{c,t}         \| , \quad\quad
+\epsilon_{fric}    \geq \| \Delta\chi      \| 
+\end{equation}
+
+
+\subsection{Multiple particles with flat ground}
+\begin{align}
+\text{given}      & \quad \chi^{(l-1)}_1, \chi^{(l)}_1, f_{g,1}, m_1,\dots
+                          \chi^{(l-1)}_n, \chi^{(l)}_n, f_{g,n}, m_n,
+                          h, \mu \notag\\
+\text{minimize}   & \quad \sum_{i=1}^n \epsilon_i + 100\chi^{(l)}_{i,z} f_{c,i,z} + \epsilon_{fric,i} \notag\\
+\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}
+\left[\begin{array}{ccc}
+\mathbf{A}_1 &         &  \\
+             & \ddots  &  \\
+             &         & \mathbf{A}_n
+\end{array}\right]
+\left[\begin{array}{c}
+\tau_1  \\
+ \vdots \\
+\tau_n
+\end{array}\right]
+=
+\left[\begin{array}{c}
+\eta_1  \\
+ \vdots \\
+\eta_n
+\end{array}\right]
+\end{equation}
+\begin{equation}
+\mathbf{A}_i \equiv
+\left[\begin{array}{ccccccc}
+0 & m_i/h^2\mathbf{1}     & -\mathbf{1}   & \mathbf{0} & 0 & 0 & 0 \\
+0 &    \mathbf{1}         & \mathbf{0}    & \mathbf{1} & 0 & 0 & 0 \\
+0 & [ 0, 0, \sqrt{m_i}/h] & \mathbf{0}    & \mathbf{0} & -1 & 0 & 0 \\
+0 & \mathbf{0}            & [ 0, 0, \mu ] & \mathbf{0} & 0 & 0 & -1
+\end{array}\right]
+\end{equation}
+\begin{equation}
+\tau_i \equiv
+\left[\begin{array}{c}
+\epsilon_i \\ \chi^{(l+1)}_i \\ f_{c,i} \\ \Delta\chi_i \\ \tilde{c}_{lcp,i} \\ \epsilon_{fric,i} \\ \mu f_{c,i,z}
+\end{array}\right], \quad
+\eta_i \equiv
+\left[\begin{array}{c}
+m_i/h^2(2\chi^{(l)}_i-\chi^{(l-1)}_i) + f_{g,i} \\
+\chi^{(l)}_i \\
+-hq_i/2\sqrt{m_i} \\
+0
+\end{array}\right]
+\end{equation}
+\begin{equation}
+q_i \equiv -m_i/h^2(2\chi^{(l)}_{i,z}-\chi^{(l-1)}_{i,z})-f_{g,i,z}
+\end{equation}
+\begin{equation}
+\chi^{(l+1)}_{i,z} \geq 0       , \quad\quad
+f_{c,i,z} \geq 0              , \quad\quad
+\tilde{c}_{lcp,i} \geq 0          , \quad\quad
+\epsilon_{fric,i} \geq 0          , \quad\quad
+\mu f_{c,i,z} \geq 0
+\end{equation}
+\begin{equation}
+\epsilon_i            \geq \| \tilde{c}_{lcp,i} \| , \quad\quad
+\mu f_{c,i,z}  \geq \| f_{c,i,t}         \| , \quad\quad
+\epsilon_{fric,i}    \geq \| \Delta\chi_i      \| 
+\end{equation}
+
+
+
+\subsection{Two particles connected by a fiber with flat ground}
+\begin{align}
+\text{given}      & \quad \chi^{(l-1)}_1, \chi^{(l)}_1, f_{g,1}, m_1,
+                          \chi^{(l-1)}_2, \chi^{(l)}_2, f_{g,n}, m_2,
+                          h, \mu \notag\\
+\text{minimize}   & \quad \epsilon_T + \epsilon_u + \sum_{i=1}^2 \epsilon_i + 100\chi^{(l)}_{i,z} f_{c,i,z} + \epsilon_{fric,i} \notag\\
+\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}
+\left[\begin{array}{ccccccc}
+\mathbf{A}_1                    &                                  &                                  &        &        &  0 & 0 \\
+                                & \mathbf{A}_2                     &                                  &        &        &  0 & 0 \\
+\space[ \mathbf{0},\mathbf{1} ] &                                  &  -(\chi^{(l)}_2 - \chi^{(l)}_1)  &        &        &  0 & 0 \\
+                                & \space[ \mathbf{0},\mathbf{1} ]  &  -(\chi^{(l)}_1 - \chi^{(l)}_2)  &        &        &  0 & 0 \\
+                                &                                  &                   K_{11}         & K_{12} & K_{13} &  0 & 0
+\end{array}\right]
+\left[\begin{array}{c}
+\tau_1  \\
+\tau_2  \\
+T \\
+u \\
+x_r \\ 
+\epsilon_T \\
+\epsilon_u
+\end{array}\right]
+=
+\left[\begin{array}{c}
+\eta_1  \\
+\eta_2  \\
+\vec{0} \\
+\vec{0} \\
+s
+\end{array}\right]
+\end{equation}
+\begin{equation}
+x_{rl} \leq x_r \leq x_{ru}, \quad \epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|
+\end{equation}
+\begin{align}
+\text{where } \forall i & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}
+\mathbf{A}_i \equiv
+\left[\begin{array}{cccccccc}
+0 & m_i/h^2\mathbf{1}     & -\mathbf{1}   & \mathbf{0} & 0   & 0  & 0  & -\mathbf{1}           \\
+0 &    \mathbf{1}         & \mathbf{0}    & \mathbf{1} & 0   & 0  & 0  & \mathbf{0}            \\
+0 & [ 0, 0, \sqrt{m_i}/h] & \mathbf{0}    & \mathbf{0} & -1  & 0  & 0  & [0,0,-h/2\sqrt{m}_i]  \\
+0 & \mathbf{0}            & [ 0, 0, \mu ] & \mathbf{0} & 0   & 0  & -1 & \mathbf{0}
+\end{array}\right]
+\end{equation}
+\begin{equation}
+\tau_i \equiv
+\left[\begin{array}{c}
+\epsilon_i \\ \chi^{(l+1)}_i \\ f_{c,i} \\ \Delta\chi_i \\ \tilde{c}_{lcp,i} \\ \epsilon_{fric,i} \\ \mu f_{c,i,z} \\ f_{T,i}
+\end{array}\right], \quad
+\eta_i \equiv
+\left[\begin{array}{c}
+m_i/h^2(2\chi^{(l)}_i-\chi^{(l-1)}_i) + f_{g,i} \\
+\chi^{(l)}_i \\
+-hq_i/2\sqrt{m_i} \\
+0
+\end{array}\right]
+\end{equation}
+\begin{equation}
+q_i \equiv -m_i/h^2(2\chi^{(l)}_{i,z}-\chi^{(l-1)}_{i,z})-f_{g,i,z}
+\end{equation}
+\begin{equation}
+\chi^{(l+1)}_{i,z} \geq 0       , \quad\quad
+f_{c,i,z} \geq 0              , \quad\quad
+\tilde{c}_{lcp,i} \geq 0          , \quad\quad
+\epsilon_{fric,i} \geq 0          , \quad\quad
+\mu f_{c,i,z} \geq 0
+\end{equation}
+\begin{equation}
+\epsilon_i            \geq \| \tilde{c}_{lcp,i} \| , \quad\quad
+\mu f_{c,i,z}  \geq \| f_{c,i,t}         \| , \quad\quad
+\epsilon_{fric,i}    \geq \| \Delta\chi_i      \| 
+\end{equation}
+
+\pagebreak
+
+\subsection{A rigid body with flat ground}
+\begin{align}
+\text{given}      & \quad \chi^{(l-1)}, \chi^{(l)}, f_g, \mathbf{M}(\chi), \mathbf{C}(\chi,\dot\chi), h, \mu\notag\\
+\text{minimize}   & \quad \epsilon + 100\chi^{(l)}_z f_{c,z} + \epsilon_{fric} \notag\\
+\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}\notag
+\left[\begin{array}{ccccccccccccccccccccc}
+0 & \mathbf{M}/h^2                 & -\mathbf{1}                & \cdots   &  -\mathbf{1}                              &                           &            &                                          &               &        &                &                     &        &                                 &    &         &    & \mathbf{0} & 0  & 0 & 0  \\
+0 &                                & -\mathbf{1}                & \cdots   &  -\mathbf{1}                              & \mathbf{Q}_1              & \cdots     &  \mathbf{Q}_{|\mathcal{P}|}              &               &        &                &                     &        &                                 &    &         &    & \mathbf{0} & 0  & 0 & 0  \\
+0 &    \mathbf{1}                  &                            &          &                                           &\mathbf{0}                 &            &                                          &               &        &                &                     &        &                                 &    &         &    & \mathbf{1} & 0  & 0 & 0  \\
+0 & \mathbf{c}_1                   &                            &          &                                           &\mathbf{0}                 &            &                                          &               &        &                &                     &        &                                 &    &         &    & \mathbf{0} & -1 & 0 & 0  \\
+0 & \mathbf{0}                     &                            &          &                                           & \mathbf{c}_2              &            &                                          &               &        &                &                     &        &                                 &    &         &    & \mathbf{0} & 0  & 0 & -1 \\
+0 &   \mathbf{Z}_1                 &                            &          &                                           &                           &            &                                          &  -\mathbf{1}  &        &                &                     &        &                                 &    &         &    &            & 0  & 0 &    \\
+0 &      \vdots                    &                            &          &                                           &                           &            &                                          &               &\ddots  &                &                     &        &                                 &    &         &    &            & 0  & 0 &   \\
+0 &   \mathbf{Z}_{|\mathcal{P}|}   &                            &          &                                           &                           &            &                                          &               &        & -\mathbf{1}    &                     &        &                                 &    &         &    &            & 0  & 0 &   \\
+0 &                                & -\mathbf{c}_{4,1}          &          &                                           &                           &            &                                          & \mathbf{c}_3  &        &                & -1                  &        &                                 &    &         &    &            & 0  & 0 &   \\
+0 &                                &                            & \ddots   &                                           &                           &            &                                          &               & \ddots &                &                     & \ddots &                                 &    &         &    &            & 0  & 0 &   \\
+0 &                                &                            &          & -\mathbf{c}_{4,|\mathcal{P}|}             &                           &            &                                          &               &        & \mathbf{c}_3   &                     &        & -1                              &    &         &    &            & 0  & 0 &   \\
+0 &                                &  \sqrt{\mathbf{c}_{4,1}}   &          &                                           &                           &            &                                          &               &        &                & 1/2\sqrt{c_{fcz,1}} &        &                                 & -1 &         &    &            & 0  & 0 &   \\
+0 &                                &                            & \ddots   &                                           &                           &            &                                          &               &        &                &                     & \ddots &                                 &    &  \ddots &    &            & 0  & 0 &   \\
+0 &                                &                            &          & \sqrt{\mathbf{c}_{4,|\mathcal{P}|}}       &                           &            &                                          &               &        &                &                     &        & 1/2\sqrt{c_{fcz,|\mathcal{P}|}} &    &         & -1 &            & 0  & 0 &   
+\end{array}\right]
+\left[\begin{array}{c}
+\epsilon \\ \chi^{(l+1)} \\
+f_{c,1} \\ \vdots \\ f_{c,|\mathcal{P}|} \\
+c_{c,1} \\ \vdots \\ c_{c,|\mathcal{P}|} \\
+\tilde{p}^{(l+1)}_{c,1} \\ \vdots \\ \tilde{p}^{(l+1)}_{c,|\mathcal{P}|} \\
+\tilde{q}_{1} \\ \vdots \\ \tilde{q}_{|\mathcal{P}|} \\
+\tilde{c}_{lcp,1} \\ \vdots \\ \tilde{c}_{lcp,|\mathcal{P}|} \\
+\Delta\chi \\
+\epsilon_{fric} \\ \mu f_{c,z}
+\end{array}\right]
+\end{equation}
+\begin{equation}
+=
+\left[\begin{array}{c}
+m/h^2(2\chi^{(l)}-\chi^{(l-1)}) + f_g \\
+\chi^{(l)} \\
+-hq/2\sqrt{m} \\
+0 \\
+-V_1 \\
+\vdots \\
+-V_{|\mathcal{P}|}
+\end{array}\right]
+\end{equation}
+
+\begin{align*}
+\mathbf{c}_1      & \equiv [ 0, 0, \sqrt{m}/h] \\
+\mathbf{c}_2      & \equiv [ 0, 0, \mu ]  \\
+\mathbf{c}_3      & \equiv [0,0,1,0] \\
+\mathbf{c}_{4,j}  & \equiv [0,0,c_{fcz,j},0,0,0] \quad \forall j \in \mathcal{P}\\
+c_{fcz,j}         & \equiv (h^2\mathbf{Z}_j\mathbf{M}^{-1})_{33} > 0\quad \forall j \in \mathcal{P}
+\end{align*}
+
+
+\begin{equation}
+\chi^{(l+1)}_z \geq 0       , \quad\quad
+f_{c,z} \geq 0              , \quad\quad
+\tilde{c}_{lcp} \geq 0          , \quad\quad
+\epsilon_{fric} \geq 0          , \quad\quad
+\mu f_{c,z} \geq 0
+\end{equation}
+\begin{equation}
+\epsilon            \geq \| \tilde{c}_{lcp} \| , \quad\quad
+\mu f_{c,z}  \geq \| f_{c,t}         \| , \quad\quad
+\epsilon_{fric}    \geq \| \Delta\chi      \| 
+\end{equation}
+
+\pagebreak
+
 
 \bibliographystyle{plain}
 \bibliography{muscle}

@@ -58,7 +58,7 @@
     #define SANITY_VECTOR(v, n) {\
         int i; for (i=0;i<n;++i) {\
             if (isinf(v[i]) || isnan(v[i])) {\
-                PRINT_FLH;\
+                __PRINT_FLH;\
                 printf(" ??? NAN or INFINITE ??? ...: ");\
                 __PRINT_VECTOR(v, n);\
                 exit(-1985);\
@@ -69,7 +69,7 @@
         int i,j; for (i=0;i<r;++i) {\
         for(j=0; j<c; ++j) {\
             if (isinf(m[i][j]) || isnan(m[i][j])) {\
-                PRINT_FLH;\
+                __PRINT_FLH;\
                 printf(" ??? NAN or INFINITE ??? ...: ");\
                 __PRINT_MATRIX(m, r, c);\
                 exit(-56);\

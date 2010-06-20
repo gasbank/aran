@@ -51,13 +51,6 @@ def BuildFrictionConeBasis(mu_s):
 	"""
 	return V
 
-def ibits(i,pos,len):
-	return (i >> pos) & ~(-1 << len)
-
-def sign(x):
-	if x is 0: return -1
-	else: return 1
-
 #
 # Calcualte box corner position and velocity for given state
 #
@@ -145,13 +138,13 @@ def DetermineContactPoints(cornersX, cornersXd):
 		z = cornersX[2,i]
 		# criterion for contact point registration
 		
-		if z < -0.01:
+		if z < -0.1:
 			print 'WARN: contact point severely penetrated !!! (z=%.16e)' % z
 			raise Exception, 'penetration'
 		
-		if z < 0.005:
+		if z <= 0 and cornersXd[2,i] <= 0:
 			# tangential velocity of the contact point
-			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 1:
+			if sqrt(dot(cornersXd[0:2,i],cornersXd[0:2,i])) < 1e-5:
 				static_contacts.append(i)
 			else:
 				dynamic_contacts.append(i)
@@ -171,8 +164,8 @@ def BuildP1Matrix(V, n_cs):
 	"""
 	P1 = 0
 	if n_cs is not 0:
-		P1 = dot(V, concatenate((identity(4),)*n_cs,axis=1))
-		assert P1.shape == (3, n_cs*4)
+		P1 = dot(V, concatenate((identity(V.shape[1]),)*n_cs,axis=1))
+		assert P1.shape == (3, n_cs*V.shape[1])
 	return P1
 
 def BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts):
@@ -210,8 +203,8 @@ def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contac
 
 	P1 = BuildP1Matrix(V, n_cs)
 	P2 = BuildP2Matrix(mu_k, n_cd, cornersXd, dynamic_contacts)
-	
-	S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
+	n_vbasis = V.shape[1]
+	S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda', n_vbasis)
 
 	A_a_com = 0
 	if P1 is not 0 and P2 is not 0:
@@ -225,9 +218,22 @@ def LinearAccelerationComMatrix(mass, cornersXd, static_contacts, dynamic_contac
 		A_a_com = dot(A_a_com, S_lambda)
 		A_a_com /= mass
 
-	b_a_com = array([ [0], [0], [-9.81/mass] ])
+	b_a_com = array([ [0], [0], [-9.81] ])
 
 	return A_a_com, b_a_com
+
+def NextPointVelocityMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
+	"""
+	다음 스텝에서의 어떤 점 q의 선속도를 x_opt에 대한 1차 식으로
+	나타내는 행렬 A_qd_next와 b_qd_next를 구한다.
+	
+	p_qd_next = A_qd_next * x_opt + b_qd_next
+	"""
+	A_qd_next = 0
+	if A_a_q is not 0:
+		A_qd_next = dt * A_a_q
+	b_qd_next = dt*b_a_q + pd_q
+	return A_qd_next, b_qd_next
 
 def NextPointPositionMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
 	"""
@@ -238,8 +244,8 @@ def NextPointPositionMatrix(A_a_q, b_a_q, p_q, pd_q, dt):
 	"""
 	A_q_next = 0
 	if A_a_q is not 0:
-		A_q_next = (dt/2.0)**2*A_a_q
-	b_q_next = ((dt/2.0)**2*b_a_q).flatten() + p_q + [pd_q[i]*dt for i in range(3)]
+		A_q_next = (dt**2)/2 * A_a_q
+	b_q_next = ((dt**2)/2*b_a_q).flatten() + p_q + [pd_q[i]*dt for i in range(3)]
 	return A_q_next, b_q_next
 
 def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_contacts, V, pos, mu_k, H_com):
@@ -297,16 +303,16 @@ def AngularAccelerationComMatrix(cornersX, cornersXd, static_contacts, dynamic_c
 		VAI = V_2
 	elif A_fcd is not 0:
 		VAI = A_fcd
-
+	n_vbasis = V.shape[1]
 	A_alpha = 0
 	if R is not 0 and VAI is not 0:
 		A_alpha = dot( dot( linalg.inv(H_com), R ), VAI )
-		S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda')
+		S_lambda = BuildSelectionMatrix(n_cs, n_cd, n_u, 'lambda', n_vbasis)
 		A_alpha = dot(A_alpha, S_lambda)
 
 	return A_alpha, VAI
 
-def BuildSelectionMatrix(n_cs, n_cd, n_u, sel):
+def BuildSelectionMatrix(n_cs, n_cd, n_u, sel, n_vbasis):
 	"""
 	최적화 벡터 변수 (x_opt)는 여러 변수가 모여 있다.
 	여기서 필요한 변수만 뽑아서 새로운 벡터를 만들어주는
@@ -341,14 +347,14 @@ def BuildSelectionMatrix(n_cs, n_cd, n_u, sel):
 	S = 0
 	if sel == 'lambda':
 		S = concatenate( (
-		    zeros((4*n_cs+n_cd+n_u, 1)),
-		    identity(4*n_cs+n_cd),
-		    zeros((4*n_cs+n_cd+n_u, n_u))
+		    zeros((n_vbasis*n_cs+n_cd+n_u, 1)),
+		    identity(n_vbasis*n_cs+n_cd),
+		    zeros((n_vbasis*n_cs+n_cd+n_u, n_u))
 		    ), axis=1 )
 	elif sel == 'lambda_fu':
 		S = concatenate( (
-		    zeros((4*n_cs+n_cd+n_u, 1)),
-		    identity(4*n_cs+n_cd+n_u)
+		    zeros((n_vbasis*n_cs+n_cd+n_u, 1)),
+		    identity(n_vbasis*n_cs+n_cd+n_u)
 		    ), axis=1 )
 	
 	return S
@@ -569,35 +575,40 @@ void OrthonormalizeOrientation( matrix_3x3 &Orientation )
 	
 # We might write everything directly as a script, but it looks nicer
 # to create a function.
-def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
+def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u, n_vbasis):
 	# total number of optimization variable is n_x
-	n_x = 1 + (4*n_cs) + n_cd + n_u
+	n_x = 1 + (n_vbasis*n_cs) + n_cd + n_u
 	assert n_cs+n_cd is not 0
 	
 	# Attach a printer to the environment
-	#env.set_Stream (mosek.streamtype.log, streamprinter)
+	env.set_Stream (mosek.streamtype.log, streamprinter)
 
 	# Create a task
 	task = env.Task(0,0)
 
 	# Attach a printer to the task
-	#task.set_Stream (mosek.streamtype.log, streamprinter)
+	task.set_Stream (mosek.streamtype.log, streamprinter)
 
 	for fc in friction_constraints:
 		assert fc[0].shape == (3, n_x)
 		assert len(fc[1]) is 3
+	'''
 	bkc = [ mosek.boundkey.lo ] * len(friction_constraints)
 	blc = [-friction_constraints[i][1][2] for i in range(len(friction_constraints))]
 	buc = [ +inf ] * len(friction_constraints)
+	'''
+	bkc = [ mosek.boundkey.fx ] * len(friction_constraints)
+	blc = [-friction_constraints[i][1][2] for i in range(len(friction_constraints))]
+	buc = [-friction_constraints[i][1][2] for i in range(len(friction_constraints))]
 	
 	c   = [1.0] + [0.0]*(n_x-1)
+	#c   = [0.0] + [1.0]*(n_x-1)
 	bkx = [ mosek.boundkey.fr ] + [mosek.boundkey.lo]*(n_x-1)
-	blx = [       -inf        ] + [0.0]*(n_x-1)
+	blx = [       -inf        ] + [1.0]*(n_x-1)
 	bux = [       +inf        ] + [inf]*(n_x-1)
 
 
 	A = array([ fc[0][2,:] for fc in friction_constraints ])
-		
 	assert A.shape[1] == n_x
 	asub = [ array(range(A.shape[0])) ] * n_x
 	aval = [ array(A[:,j]) for j in range(A.shape[1]) ]
@@ -654,7 +665,6 @@ def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
 	prosta = []
 	solsta = []
 	[prosta,solsta] = task.getsolutionstatus(mosek.soltype.itr)
-
 	# Output a solution
 	xx = zeros(NUMVAR, float)
 	task.getsolutionslice(mosek.soltype.itr,
@@ -662,7 +672,8 @@ def SolveSocp(env, friction_constraints, n_cs, n_cd, n_u):
 		                  0,NUMVAR,          
 		                  xx)
 
-	if not (solsta == mosek.solsta.optimal):
+	if solsta not in [mosek.solsta.optimal, mosek.solsta.near_optimal]:
+		task.writedata('mosek_investigate.opf')
 		print("ERROR: MOSEK solver failed due to the following possible reasons:")
 		print(" - Primal or dual infeasibility")
 		print(" - Unknown solution status")
@@ -738,7 +749,6 @@ def Upon_Click (button, button_state, cursor_x, cursor_y):
 		g_ArcBall.click (mouse_pt);								# // Update Start Vector And Prepare For Dragging
 
 	return
-
 
 
 def Torus(MinorRadius, MajorRadius):		
