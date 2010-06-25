@@ -239,7 +239,7 @@ def __dRdv0(v, th):
     dRdv3_s0[  2,  2] = _x1*(_x5+(_x15+_x3+15)*v3)/360-(_x5+(_x15+_x3)*v3)/24
     return dRdv1_s0, dRdv2_s0, dRdv3_s0
 
-def dRdv(v, omega):
+def dRdv(v):
     assert len(v) == 3
     th = linalg.norm(v)
     if th < THETA: return __dRdv0(v, th)

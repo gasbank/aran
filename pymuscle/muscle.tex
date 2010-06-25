@@ -3,7 +3,8 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{graphicx}
-\usepackage[margin=0.5cm]{geometry}
+\usepackage[margin=3.0cm]{geometry}
+\usepackage{pdflscape}
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
 \renewcommand{\baselinestretch}{1.2}
@@ -977,10 +978,15 @@ By substituting the definitions \eqref{vel-dis} and \eqref{acc-dis} into \eqref{
 we can rearrange this constraint equation into the linear function of
 the optimization variable $\chi^{(l+1)}$.
 \begin{equation}\label{Moeq_discretized2}
-\mathbf{M}(\chi^{(l)}) \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi{(l-1)}}{h^2} + C(\chi^{(l)}, \frac{\chi^{(l)} - \chi^{(l-1)}}{h})
+\mathbf{M}(\chi^{(l)}) \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}}{h^2} + C(\chi^{(l)}, \frac{\chi^{(l)} - \chi^{(l-1)}}{h})
 = f_g(\chi^{(l)}) + f_c(\chi^{(l)}, \lambda^{(l)}) + f_m(\chi^{(l)}, T^{(l)})
 \end{equation}
 $\mathbf{M}$, $C$ and $f_g$ can be completely determined at current time step $l$.
+\begin{align*}\label{Moeq_nextstate}
+\mathbf{M} \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}}{h^2}  - f_c - f_m &= f_g - C \\
+\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}  - \mathbf{M}^{-1}h^2(f_c + f_m) &= \mathbf{M}^{-1}h^2(f_g - C)\\
+\chi^{(l+1)}  - \mathbf{M}^{-1}h^2(f_c + f_m) &= 2\chi^{(l)}-\chi^{(l-1)} + \mathbf{M}^{-1}h^2(f_g - C)
+\end{align*}
 We need to linearize $f_c$ and $f_m$ subsequently.
 Before we proceed, let us define some vector quantities used frequently
 afterwards.
@@ -1412,7 +1418,7 @@ need to be considered.
 
 \subsection{Linearization of next step states}
 A point $p$ attached to a certain rigid body can be transformed into
-world coordinates by a multiplying a homogeneous transformation matrix $\mathbf{W}$
+world coordinates by multiplying a homogeneous transformation matrix $\mathbf{W}$
 of the rigid body.
 We can represent the next time position of $p$ in world coodinates
 as the linear function of the next time state $\chi^{(l+1)}$
@@ -1589,7 +1595,7 @@ s
 x_{rl} \leq x_r \leq x_{ru}, \quad \epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|
 \end{equation}
 \begin{align}
-\text{where } \forall i & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\text{where } \forall i \in \mathcal{B} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
 \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
 \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
 \end{align}
@@ -1635,12 +1641,65 @@ f_{c,i,z} \geq 0              , \quad\quad
 
 \subsection{A rigid body with flat ground}
 \begin{align}
-\text{given}      & \quad \chi^{(l-1)}, \chi^{(l)}, f_g, \mathbf{M}(\chi), \mathbf{C}(\chi,\dot\chi), h, \mu\notag\\
-\text{minimize}   & \quad \epsilon + 100\chi^{(l)}_z f_{c,z} + \epsilon_{fric} \notag\\
+\text{given}      & \quad \chi^{(l-1)}, \chi^{(l)}, f_g, \mathbf{M}, C, h, \mu, p_{cfix}^{(l)}, \mathbf{Z}, V, \mathbf{Q}\notag\\
+\text{minimize}   & \quad \sum_{j\in\mathcal{P}} (\tilde{p}_{c}^{(l+1)})_{jz} + (\epsilon_{c})_j \notag\\
 \text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
 \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
 \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
 \end{align}
+\begin{equation}\notag
+\bordermatrix{
+                                    &    \scriptstyle{(0) n_d}                      &              \scriptstyle{(1) n_d |\mathcal{P}|}          &        \scriptstyle{(2) 5 |\mathcal{P}|}       &  \scriptstyle{(3) 4 |\mathcal{P}|}   & \scriptstyle{(4) 4|\mathcal{P}|}    &   \scriptstyle{(5) |\mathcal{P}| }  & \scriptstyle{(6) |\mathcal{P}| }  & \scriptstyle{(7) n_d}  &   \scriptstyle{(8) 1 } \cr
+\scriptstyle{(0) n_d}               &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                &                                      &                                     &                                     &                                   &                        &                        \cr
+\scriptstyle{(1) n_d |\mathcal{P}|} &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        \cr
+\scriptstyle{(2) 4 |\mathcal{P}|}   &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        \cr
+\scriptstyle{(3)   |\mathcal{P}|}   &                                               & (\mathbf{c}_1)_{j \in \mathcal{P}}^\text{de}              &                                                &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        \cr
+\scriptstyle{(4) 4 |\mathcal{P}|}   &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        \cr
+\scriptstyle{(5) n_d}               &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            & 
+}
+\begin{pmatrix}
+\chi^{(l+1)} \\
+f_{c} \\
+c_{c} \\
+\tilde{p}^{(l+1)}_{c} \\
+\Delta \tilde{p}_{c} \\
+\epsilon_{c} \\ \mu f_{c,z} \\
+\Delta\chi \\
+\epsilon_{\Delta}
+\end{pmatrix}
+=
+\begin{pmatrix}
+c_2 \\
+0 \\
+p_{cfix}^{(l)} \\
+0 \\
+(-V_{j})_{j \in \mathcal{P}}^\text{re} \\
+\chi^{(l)}
+\end{pmatrix}
+\end{equation}
+\begin{equation}\notag
+(\tilde{p}^{(l+1)}_{c})_z \succeq 0       , \quad\quad
+(f_c)_z \succeq 0              , \quad\quad
+\epsilon_{c} \succeq 0          , \quad\quad
+\mu f_{c,z} \succeq 0
+\end{equation}
+\begin{equation}\notag
+(\tilde{p}_c^{(l+1)})_{j4} = 1 , \quad\quad
+%(\Delta \tilde{p}_c)_{j4} = 1 , \quad\quad
+(c_c)_{j4} = 0  \quad\quad \forall j \in \mathcal{P}
+\end{equation}
+\begin{equation}\notag
+(\mu f_{c,z})_j  \geq \| (f_{c,t})_j         \| , \quad\quad
+(\epsilon_{c})_j    \geq \| (\Delta \tilde{p}_{c})_j      \| \quad\quad \forall j \in \mathcal{P}
+\end{equation}
+\begin{align*}
+\mathbf{c}_1      & \equiv [ 0, 0, \mu, 0, 0, 0 ]\\
+c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
+\end{align*}
+
+
+
+\begin{landscape}
 \begin{equation}\notag
 \left[\begin{array}{ccccccccccccccccccccc}
 0 & \mathbf{M}/h^2                 & -\mathbf{1}                & \cdots   &  -\mathbf{1}                              &                           &            &                                          &               &        &                &                     &        &                                 &    &         &    & \mathbf{0} & 0  & 0 & 0  \\
@@ -1669,40 +1728,9 @@ c_{c,1} \\ \vdots \\ c_{c,|\mathcal{P}|} \\
 \epsilon_{fric} \\ \mu f_{c,z}
 \end{array}\right]
 \end{equation}
-\begin{equation}
-=
-\left[\begin{array}{c}
-m/h^2(2\chi^{(l)}-\chi^{(l-1)}) + f_g \\
-\chi^{(l)} \\
--hq/2\sqrt{m} \\
-0 \\
--V_1 \\
-\vdots \\
--V_{|\mathcal{P}|}
-\end{array}\right]
-\end{equation}
 
-\begin{align*}
-\mathbf{c}_1      & \equiv [ 0, 0, \sqrt{m}/h] \\
-\mathbf{c}_2      & \equiv [ 0, 0, \mu ]  \\
-\mathbf{c}_3      & \equiv [0,0,1,0] \\
-\mathbf{c}_{4,j}  & \equiv [0,0,c_{fcz,j},0,0,0] \quad \forall j \in \mathcal{P}\\
-c_{fcz,j}         & \equiv (h^2\mathbf{Z}_j\mathbf{M}^{-1})_{33} > 0\quad \forall j \in \mathcal{P}
-\end{align*}
+\end{landscape}
 
-
-\begin{equation}
-\chi^{(l+1)}_z \geq 0       , \quad\quad
-f_{c,z} \geq 0              , \quad\quad
-\tilde{c}_{lcp} \geq 0          , \quad\quad
-\epsilon_{fric} \geq 0          , \quad\quad
-\mu f_{c,z} \geq 0
-\end{equation}
-\begin{equation}
-\epsilon            \geq \| \tilde{c}_{lcp} \| , \quad\quad
-\mu f_{c,z}  \geq \| f_{c,t}         \| , \quad\quad
-\epsilon_{fric}    \geq \| \Delta\chi      \| 
-\end{equation}
 
 \pagebreak
 
