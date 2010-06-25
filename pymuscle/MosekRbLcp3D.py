@@ -218,7 +218,7 @@ def Main ():
     set_printoptions(threshold=nan, linewidth=378, precision=8)
     
     print 'Initialize a rigid body with initial conditions...'
-    p1 = RigidBody(array([0,0,5,0.1,0.2,0.3]), array([0.1,0.2,5,0.1,0.2,0.3]), 2, array([1.,1.,1.]))
+    p1 = RigidBody(array([0,0,5,0.1,0.2,0.3]), array([0.1,-0.2,5,0.1,0.2,0.3]), 2, array([1.,1.,1.]))
     
     # Make a MOSEK environment
     env = mosek.Env ()
