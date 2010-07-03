@@ -1558,7 +1558,7 @@ f_{c,i,z} \geq 0              , \quad\quad
 \subsection{Two particles connected by a fiber with flat ground}
 \begin{align}
 \text{given}      & \quad \chi^{(l-1)}_1, \chi^{(l)}_1, f_{g,1}, m_1,
-                          \chi^{(l-1)}_2, \chi^{(l)}_2, f_{g,n}, m_2,
+                          \chi^{(l-1)}_2, \chi^{(l)}_2, f_{g,2}, m_2,
                           h, \mu \notag\\
 \text{minimize}   & \quad \epsilon_T + \epsilon_u + \sum_{i=1}^2 \epsilon_i + 100\chi^{(l)}_{i,z} f_{c,i,z} + \epsilon_{fric,i} \notag\\
 \text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
@@ -1697,7 +1697,110 @@ p_{cfix}^{(l)} \\
 c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
 \end{align*}
 
+\pagebreak
 
+\subsection{Two rigid bodies connected by a fiber with flat ground}
+
+\begin{align}
+\text{given}      & \quad \chi^{(l-1)}_1, \chi^{(l)}_1, f_{g,1}, m_1,
+                          \chi^{(l-1)}_2, \chi^{(l)}_2, f_{g,2}, m_2,
+                          h, \mu \notag\\
+\text{minimize}   & \quad \epsilon_T + \epsilon_u + \sum_{i=1}^2 \epsilon_i + 100\chi^{(l)}_{i,z} f_{c,i,z} + \epsilon_{fric,i} \notag\\
+\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+
+\newcommand{\eyemuscle}{\ensuremath{
+\begin{bmatrix}
+\mathbf{0} & -\mathbf{1}
+\end{bmatrix}
+}}
+
+\begin{equation}\notag
+\left[\begin{array}{ccccccc}
+\mathbf{A}_1  &                 &                                                &                                            &                                            &  0 & 0 \\
+              & \mathbf{A}_2    &                                                &                                            &                                            &  0 & 0 \\
+\eyemuscle    &                 &  \mathbf{R}_{1}                                &                                            &                                            &  0 & 0 \\
+              & \eyemuscle      &  \mathbf{R}_{2}                                &                                            &                                            &  0 & 0 \\
+              &                 &    (K_{11,j})^{\text{de}}_{j \in \mathcal{M}}  & (K_{12,j})^{\text{de}}_{j \in \mathcal{M}} & (K_{13,j})^{\text{de}}_{j \in \mathcal{M}} &  0 & 0
+\end{array}\right]
+\left[\begin{array}{c}
+\tau_1  \\
+\tau_2  \\
+T \\
+u \\
+x_r \\ 
+\epsilon_T \\
+\epsilon_u
+\end{array}\right]
+=
+\left[\begin{array}{c}
+\eta_1  \\
+\eta_2  \\
+\vec{0} \\
+\vec{0} \\
+(s_j)^{\text{re}}_{j \in \mathcal{M}}
+\end{array}\right]
+\end{equation}
+\begin{equation}\notag
+x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
+\end{equation}
+\begin{equation}\notag
+\epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|
+\end{equation}
+\begin{align}
+\text{where } \forall i \in \mathcal{B} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
+\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
+\end{align}
+\begin{equation}\notag
+\mathbf{A}_i \equiv
+\bordermatrix{
+                                    &    \scriptstyle{(0) n_d}                      &              \scriptstyle{(1) n_d |\mathcal{P}|}          &        \scriptstyle{(2) 5 |\mathcal{P}|}       &  \scriptstyle{(3) 4 |\mathcal{P}|}   & \scriptstyle{(4) 4|\mathcal{P}|}    &   \scriptstyle{(5) |\mathcal{P}| }  & \scriptstyle{(6) |\mathcal{P}| }  & \scriptstyle{(7) n_d}  &   \scriptstyle{(8) 1 } & \scriptstyle{(9) n_d |\mathcal{M}(i)| }          \cr
+\scriptstyle{(0) n_d}               &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                &                                      &                                     &                                     &                                   &                        &                        & (-\mathbf{1})_{j \in \mathcal{M}(i)}^\text{ce}   \cr
+\scriptstyle{(1) n_d |\mathcal{P}|} &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  \cr
+\scriptstyle{(2) 4 |\mathcal{P}|}   &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        &                                                  \cr
+\scriptstyle{(3)   |\mathcal{P}|}   &                                               & (\mathbf{c}_1)_{j \in \mathcal{P}}^\text{de}              &                                                &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        &                                                  \cr
+\scriptstyle{(4) 4 |\mathcal{P}|}   &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        &                                                  \cr
+\scriptstyle{(5) n_d}               &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &                        &
+}
+\end{equation}
+
+\begin{equation}\notag
+\tau_i \equiv
+\begin{pmatrix}
+\chi^{(l+1)}_i \\
+f_{c,i} \\
+c_{c,i} \\
+\tilde{p}^{(l+1)}_{c,i} \\
+\Delta \tilde{p}_{c,i} \\
+\epsilon_{c,i} \\ \mu f_{c,i,z} \\
+\Delta\chi_i \\
+\epsilon_{\Delta,i} \\
+f_{T,i}
+\end{pmatrix}
+, \quad
+\eta_i \equiv
+\begin{pmatrix}
+c_{2,i} \\
+0 \\
+p_{cfix, i}^{(l)} \\
+0 \\
+(-V_{i,j})_{j \in \mathcal{P}}^\text{re} \\
+\chi^{(l)}_i
+\end{pmatrix}
+\end{equation}
+
+\pagebreak
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{landscape}
 \begin{equation}\notag

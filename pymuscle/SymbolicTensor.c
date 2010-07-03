@@ -12,8 +12,8 @@ void SymbolicTensor(double I[4],
 void BoxCorners(double corners[8][3], const double sx, const double sy, const double sz) {
     int i;
     for (i=0; i<8; ++i) {
-        corners[i][0] = (2*(  i&1      )-1) * sx/2;
-        corners[i][1] = (2*( (i&2)>>1  )-1) * sy/2;
-        corners[i][2] = (2*( (i&4)>>2  )-1) * sz/2;
+        corners[i][0] = (1 - 2*( (i&4)>>2  )) * sx/2;
+        corners[i][1] = (1 - 2*( (i&2)>>1  )) * sy/2;
+        corners[i][2] = (1 - 2*(  i&1      )) * sz/2;
     }
 }

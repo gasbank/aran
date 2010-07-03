@@ -66,6 +66,7 @@
 			<Add directory="/home/johnu/src/blas" />
 			<Add directory="/usr/lib/octave-3.2.3/" />
 		</Linker>
+		<Unit filename="CholmodMacro.h" />
 		<Unit filename="Config.h" />
 		<Unit filename="Control.c">
 			<Option compilerVar="CC" />
@@ -92,14 +93,30 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="MathUtil.h" />
+		<Unit filename="MuscleFiber.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="MuscleFiber.h" />
 		<Unit filename="OneRbImp.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="OneRbImp.h" />
+		<Unit filename="PymuscleConfig.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="PymuscleConfig.h" />
+		<Unit filename="RigidBody.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="RigidBody.h" />
 		<Unit filename="SimCore.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="SimCore.h" />
+		<Unit filename="StateDependents.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="StateDependents.h" />
 		<Unit filename="SymbolicTensor.c">
 			<Option compilerVar="CC" />
 		</Unit>

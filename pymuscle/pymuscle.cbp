@@ -12,7 +12,7 @@
 				<Option external_deps="/media/vm/devel/aran/pymuscle/bin/Debug/libsimcore_debug.so;/media/vm/devel/aran/pymuscle/bin/Release/libsimcore_release.so;" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="box_lcp5.conf" />
+				<Option parameters="MosekMultiRbMultiFibers3D.conf" />
 				<Compiler>
 					<Add option="-Wall" />
 					<Add option="-g" />

@@ -11,4 +11,6 @@
 #define SET_COLUMN(A, n, c, b) memcpy(A+n*c, b, sizeof(double)*n)
 
 
+#define FOR_0(i,imax) for(i=0;i<(imax);++i)
+
 #endif // CONFIG_H_INCLUDED

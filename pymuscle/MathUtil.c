@@ -1,7 +1,17 @@
+#include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <assert.h>
 #include "Config.h"
+#include "MathUtil.h"
+#include "dRdv_real.h"
 
+double Dot33(const double a[3], const double b[3])
+{
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+}
+
+/* Normalize vector in-place */
 double NormalizeVector(int dim, double v[dim])
 {
     double len = 0;
@@ -60,3 +70,109 @@ void quat_rot(double v1[3], const double q[4], const double v0[3]) {
     memcpy(v1, q_v0x_qconj+1, sizeof(double)*3);
 }
 
+void BoxInertiaTensorFromMassAndSize(double Ixyz[3], double m, double sx, double sy, double sz)
+{
+    Ixyz[0] = m*(sy*sy + sz*sz)/12.;
+    Ixyz[1] = m*(sx*sx + sz*sz)/12.;
+    Ixyz[2] = m*(sx*sx + sy*sy)/12.;
+}
+
+void QuatToEuler(double eul[3], double q[4])
+{
+    eul[0] = atan2(2*(q[0]*q[1]+q[2]*q[3]), 1.-2*(q[1]*q[1]+q[2]*q[2]));
+    /* asin(x) need x in range of [-1.,1.] */
+    double clamped;
+    clamped = PYM_MIN(1., 2*(q[0]*q[2]-q[3]*q[1]));
+    clamped = PYM_MAX(-1., clamped);
+    eul[1] = asin(clamped);
+    eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
+}
+
+void Invert6x6MassMatrix(double Minv[6][6], const double M[6][6])
+{
+    /*
+     *        M                     M^-1 (Minv)
+     *
+     *   /         \          /              \
+     *   |  mI   0 |          |  I/m    0    |
+     *   |         |    ===>  |              |
+     *   |  0    H |          |   0     H^-1 |
+     *   \         /          \              /
+     *
+     */
+    memset(Minv, 0, sizeof(double)*6*6);
+    assert(M[0][0] == M[1][1]);
+    assert(M[1][1] == M[2][2]);
+    Minv[0][0] = 1./M[0][0];
+    Minv[1][1] = 1./M[1][1];
+    Minv[2][2] = 1./M[2][2];
+    double determinant =+M[3][3]*(M[4][4]*M[5][5]-M[5][4]*M[4][5])
+                        -M[3][4]*(M[4][3]*M[5][5]-M[4][5]*M[5][3])
+                        +M[3][5]*(M[4][3]*M[5][4]-M[4][4]*M[5][3]);
+    double invdet = 1./determinant;
+    Minv[3][3] =  (M[4][4]*M[5][5]-M[5][4]*M[4][5])*invdet;
+    Minv[4][3] = -(M[3][4]*M[5][5]-M[3][5]*M[5][4])*invdet;
+    Minv[5][3] =  (M[3][4]*M[4][5]-M[3][5]*M[4][4])*invdet;
+    Minv[3][4] = -(M[4][3]*M[5][5]-M[4][5]*M[5][3])*invdet;
+    Minv[4][4] =  (M[3][3]*M[5][5]-M[3][5]*M[5][3])*invdet;
+    Minv[5][4] = -(M[3][3]*M[4][5]-M[4][3]*M[3][5])*invdet;
+    Minv[3][5] =  (M[4][3]*M[5][4]-M[5][3]*M[4][4])*invdet;
+    Minv[4][5] = -(M[3][3]*M[5][4]-M[5][3]*M[3][4])*invdet;
+    Minv[5][5] =  (M[3][3]*M[4][4]-M[4][3]*M[3][4])*invdet;
+}
+
+void GetWFrom6Dof(double W[4][4], double chiexp[6]) {
+    double R[3][3];
+    RotationMatrixFromV(R, &chiexp[3]);
+    int i,j;
+    for (i=0;i<3;++i) {
+        for(j=0;j<3;++j) W[i][j] = R[i][j];
+        W[i][3] = chiexp[i];
+        W[3][i] = 0;
+    }
+    W[3][3] = 1.0;
+}
+void _TransformPoint(double pt[3], const double W[4][4], const double p[3], int affineAssert) {
+    /*
+     *    /                   \ /      \     /       \
+     *    |  W00 W01 W02 W03  | |  p0  |     |  pt0  |
+     *    |  W10 W11 W12 W13  | |  p1  |  =  |  pt1  |
+     *    |  W20 W21 W22 W23  | |  p2  |     |  pt2  |
+     *    |  W30 W31 W32 W33  | | 1.0  |     |  1.0  |
+     *    \                   / \      /     \       /
+     */
+    int i, j;
+    //i=3;
+    //FOR_0(j, 4) printf("W[%d][%d] = %lf\n", i, j, W[i][j]);
+    if (affineAssert)
+        assert(W[3][0] == 0 && W[3][1] == 0 && W[3][2] == 0 && W[3][3] == 1.0);
+
+    FOR_0(i, 3) {
+        double val = 0;
+        FOR_0(j, 3) {
+            //printf("p[%d]=%lf\n", j, p[j]);
+            //printf("W[%d][%d]=%lf\n", i, j, W[i][j]);
+            val += W[i][j]*p[j];
+        }
+        val += W[i][3]*1.0; /* Assume p[3] is 1.0 */
+        pt[i] = val;
+    }
+}
+void AffineTransformPoint(double pt[3], const double W[4][4], const double p[3]) {
+    _TransformPoint(pt, W, p, 1);
+}
+void TransformPoint(double pt[3], const double W[4][4], const double p[3]) {
+    _TransformPoint(pt, W, p, 0);
+}
+
+
+void QuatToV(double v[3], const double q[4]) {
+	v[0] = q[1];
+	v[1] = q[2];
+	v[2] = q[3];
+	const double qv_mag = sqrt(q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
+	double scaleFactor;
+	if (qv_mag < THETA) scaleFactor = 1/(0.5-qv_mag*qv_mag/48);
+	else scaleFactor = 2*acos(q[0])/qv_mag;
+	int i; for (i=0;i<3;++i) v[i] *= scaleFactor;
+}

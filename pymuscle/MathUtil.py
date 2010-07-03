@@ -89,7 +89,7 @@ def QuatToV(q):
 	qw, qx, qy, qz = q
 	qv = array([qx,qy,qz])
 	qv_mag = linalg.norm(qv)
-	if qv_mag < 0.01:
+	if qv_mag < THETA:
 		return 1/(0.5-qv_mag**2/48)*qv
 	else:
 		#print 'qw=',qw

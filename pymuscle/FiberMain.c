@@ -11,6 +11,8 @@
 #include <string.h>
 #include <math.h>
 #include <libconfig.h>
+#include <mosek.h>
+#include "PymStruct.h"
 #include "umfpack.h"
 #include "cholmod.h"
 #include "Control.h"
@@ -18,9 +20,14 @@
 #include "SimCore.h"
 #include "lemke.h"
 #include "LCP_exp.h"
-
-#define PYM_MIN(a,b) (a)>(b)?(b):(a)
-#define PYM_MAX(a,b) (b)>(a)?(b):(a)
+#include "Biped.h"
+#include "RigidBody.h"
+#include "MuscleFiber.h"
+#include "PymuscleConfig.h"
+#include "StateDependents.h"
+#include "Config.h"
+#include "DebugPrintDef.h"
+#include "Optimize.h"
 
 void LoadDoublesFromFile(const unsigned int len, double body[len], const char *fileName)
 {
@@ -33,34 +40,6 @@ void LoadDoublesFromFile(const unsigned int len, double body[len], const char *f
 		assert(ret == 1);
 	}
 	fclose(f);
-}
-
-void QuatToEuler(double eul[3], double q[4])
-{
-    eul[0] = atan2(2*(q[0]*q[1]+q[2]*q[3]), 1.-2*(q[1]*q[1]+q[2]*q[2]));
-    /* asin(x) need x in range of [-1.,1.] */
-    double clamped;
-    clamped = PYM_MIN(1., 2*(q[0]*q[2]-q[3]*q[1]));
-    clamped = PYM_MAX(-1., clamped);
-    eul[1] = asin(clamped);
-    eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
-}
-void BoxInertiaTensorFromMassAndSize(double Ixyz[3], double m, double sx, double sy, double sz)
-{
-    Ixyz[0] = m*(sy*sy + sz*sz)/12.;
-    Ixyz[1] = m*(sx*sx + sz*sz)/12.;
-    Ixyz[2] = m*(sx*sx + sy*sy)/12.;
-}
-
-int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn)
-{
-    int i;
-    for (i = 0; i < nBody; ++i)
-    {
-        if (strncmp(bodyName[i], bn, 128) == 0)
-            return i;
-    }
-    return -1;
 }
 
 int WriteState(FILE *sr, int curFrame, int nBody, int nMuscle, double body[nBody][18], double muscle[nMuscle][12], double cost, double ustar[nMuscle])
@@ -130,7 +109,7 @@ int main()
 */
 
 
-int main(int argc, const char **argv)
+int main4(int argc, const char **argv)
 {
     LCP_exp_test();
     return 0;
@@ -146,7 +125,42 @@ int main3(int argc, const char **argv)
     return 0;
 }
 
-int main2(int argc, const char **argv)
+
+int main(int argc, const char **argv) {
+    cholmod_common cc ;
+    cholmod_start (&cc) ;
+
+    PymuscleConfig pymCfg; AllocConfig(argv[1], &pymCfg);
+    ConvertRotParamInPlace(&pymCfg, RP_EXP);
+    const int nb = pymCfg.nBody;
+    SetPymCfgChiRefToCurrentState(&pymCfg);
+
+    StateDependents sd[nb];
+    int i;
+    FOR_0(i, nb) {
+        UpdateCurrentStateDependentValues(sd + i, pymCfg.body + i, &pymCfg, &cc);
+    }
+    BipedOptimizationData bod;
+    GetBipedMatrixVector(&bod, sd, &pymCfg, &cc);
+    cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
+
+    MSKenv_t    env;
+    InitializeMosek(&env);
+    cholmod_drop(1e-16, bod.bipMat, &cc);
+    //PrintEntireSparseMatrix(bod.bipMat);
+    //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
+
+    PymOptimize(&bod, sd, &pymCfg, &env, &cc);
+
+    ReleaseBipedMatrixVector(&bod, &cc);
+
+    DeallocConfig(&pymCfg);
+
+    cholmod_finish(&cc);
+    return 0;
+}
+
+int mainxx(int argc, const char **argv)
 {
     printf("Rigid body and muscle fiber simulator\n");
     printf("  2010 Geoyeob Kim\n\n");
@@ -247,7 +261,7 @@ int main2(int argc, const char **argv)
         const char *mName;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
-        printf("    Muscle %3d : %s\n", j, mName);
+        printf("    Fiber %3d : %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         muscle[j][0] = config_setting_get_float(KSE);
         config_setting_t *KPE = config_setting_get_member(mConf, "KPE"); assert(KPE);
@@ -378,7 +392,7 @@ int main2(int argc, const char **argv)
     memcpy(fix, body[1], sizeof(double)*14);
     Ydesired[2] += 0.5;
     /*********** START SIMULATION ************/
-    double cost = 0;
+    double cost = 0, cost2 = 0;
     double ustar[nMuscle];
     memset(ustar, 0, sizeof(double) * nMuscle);
     for (curFrame = 0; curFrame < simFrame; ++curFrame)
@@ -392,7 +406,25 @@ int main2(int argc, const char **argv)
         if (bWriteSample)
             WriteState(sr, curFrame, nBody, nMuscle, body, muscle, cost, ustar);
 
-        SimCore(h, nBody, nMuscle, nd, nY, body, extForce, muscle, musclePair, &cost, ustar, Ydesired, w_y, w_u, W_Ysp, W_usp, Fsp, &c);
+        SimCore(h,          /*   1  */
+                nBody,      /*   2  */
+                nMuscle,    /*   3  */
+                nd,         /*   4  */
+                nY,         /*   5  */
+                body,       /*   6  */
+                extForce,   /*   7  */
+                muscle,     /*   8  */
+                musclePair, /*   9  */
+                &cost,      /*  10  */
+                &cost2,     /*  11  */
+                ustar,      /*  12  */
+                Ydesired,   /*  13  */
+                w_y,        /*  14  */
+                w_u,        /*  15  */
+                W_Ysp,      /*  16  */
+                W_usp,      /*  17  */
+                &c          /*  19  */
+                );
 
         /******* DEBUG **********/
         memcpy(body[1],fix,sizeof(double)*14);

@@ -22,6 +22,7 @@
 #include "SymbolicTensor.h"
 //#define DEBUG
 #include "DebugPrintDef.h"
+#include "CholmodMacro.h"
 
 int TestOctaveEngine();
 int LCPWrapper(cholmod_dense *x_opt_den, cholmod_dense *LCP_M_den, cholmod_dense *LCP_q_den);
@@ -40,38 +41,7 @@ void PrintEntireSparseMatrix(cholmod_sparse *M_sp) {
     umfpack_di_report_matrix(M_sp->nrow, M_sp->ncol, M_sp->p, M_sp->i, M_sp->x, 1, Ctrl);
 }
 
-void Invert6x6MassMatrix(double Minv[6][6], const double M[6][6])
-{
-    /*
-     *        M                     M^-1 (Minv)
-     *
-     *   /         \          /              \
-     *   |  mI   0 |          |  I/m    0    |
-     *   |         |    ===>  |              |
-     *   |  0    H |          |   0     H^-1 |
-     *   \         /          \              /
-     *
-     */
-    memset(Minv, 0, sizeof(double)*6*6);
-    assert(M[0][0] == M[1][1]);
-    assert(M[1][1] == M[2][2]);
-    Minv[0][0] = 1./M[0][0];
-    Minv[1][1] = 1./M[1][1];
-    Minv[2][2] = 1./M[2][2];
-    double determinant =+M[3][3]*(M[4][4]*M[5][5]-M[5][4]*M[4][5])
-                        -M[3][4]*(M[4][3]*M[5][5]-M[4][5]*M[5][3])
-                        +M[3][5]*(M[4][3]*M[5][4]-M[4][4]*M[5][3]);
-    double invdet = 1./determinant;
-    Minv[3][3] =  (M[4][4]*M[5][5]-M[5][4]*M[4][5])*invdet;
-    Minv[4][3] = -(M[3][4]*M[5][5]-M[3][5]*M[5][4])*invdet;
-    Minv[5][3] =  (M[3][4]*M[4][5]-M[3][5]*M[4][4])*invdet;
-    Minv[3][4] = -(M[4][3]*M[5][5]-M[4][5]*M[5][3])*invdet;
-    Minv[4][4] =  (M[3][3]*M[5][5]-M[3][5]*M[5][3])*invdet;
-    Minv[5][4] = -(M[3][3]*M[4][5]-M[4][3]*M[3][5])*invdet;
-    Minv[3][5] =  (M[4][3]*M[5][4]-M[5][3]*M[4][4])*invdet;
-    Minv[4][5] = -(M[3][3]*M[5][4]-M[5][3]*M[3][4])*invdet;
-    Minv[5][5] =  (M[3][3]*M[4][4]-M[4][3]*M[3][4])*invdet;
-}
+
 
 unsigned int Index(const unsigned int len, const unsigned array[len], unsigned int v)
 {
@@ -83,16 +53,7 @@ unsigned int Index(const unsigned int len, const unsigned array[len], unsigned i
     return -1;
 }
 
-#define SET_TRIPLET_RCV(choltrip, _r, _c, _v) \
-{\
-    unsigned int *r = (unsigned int *)(choltrip->i) + choltrip->nnz; \
-    unsigned int *c = (unsigned int *)(choltrip->j) + choltrip->nnz; \
-    double       *v = (double       *)(choltrip->x) + choltrip->nnz; \
-    *r = (_r); \
-    *c = (_c); \
-    *v = (_v); \
-    ++choltrip->nnz; \
-}
+
 
 /*
  * Build the equations of motion coefficients considering no contact and no external force
@@ -257,8 +218,8 @@ int BuildLCPSubmatrices(LcpSubmatrices *lcpSm,
                         const unsigned int NCONEBASIS, const double CONEBASIS[NCONEBASIS][3],
                         const double mu, const double h,
                         const double estNextVel[n][nd],
-                        unsigned int lenActiveCorners,  unsigned int activeCorners [lenActiveCorners][2],
-                        unsigned int lenActiveBodies,   unsigned int activeBodies  [lenActiveBodies],
+                        unsigned int lenActiveCorners,  const unsigned int activeCorners [lenActiveCorners][2],
+                        unsigned int lenActiveBodies,   const unsigned int activeBodies  [lenActiveBodies],
                         cholmod_sparse *M_a_sp,
                         cholmod_sparse *Minv_a_sp,
                         cholmod_dense  *tau_a_den,

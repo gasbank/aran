@@ -23,8 +23,9 @@ import sys
 import PIL.Image as pil
 import pygame
 from pygame.font import *
-from PmBody import *
-from PmMuscle import *
+#from PmBody import *
+#from PmMuscle import *
+import RigidBody, MuscleFiber
 from GlobalContext import *
 import ctypes as ct
 
@@ -429,7 +430,7 @@ class BipedParameter:
 		#return []
 		return self.getHamstring() + self.getTibialis() + self.getBicepsFemoris() + self.getGastro()
 
-	def buildBody(self):
+	def buildBody(self, rotParam = 'QUAT_WFIRST'):
 		body = []
 		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 30.),
 			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 5.),
@@ -439,42 +440,42 @@ class BipedParameter:
 
 
 		# DEBUGGING START
-		l = l[2:4]
+		#l = l[0:2]
 		# DEBUGGING END
 
 
 		for i, ll in zip(range(len(l)), l):
-			identityQuaternion = [1.,0,0,0]
-			pos0 = hstack([ ll[2], identityQuaternion ])
-			vel0 = zeros(7)
+			if rotParam == 'QUAT_WFIRST':
+				identityQuaternion = [1.,0,0,0]
+				pos0 = hstack([ ll[2], identityQuaternion ])
+				vel0 = zeros(7)
+			else:
+				pos0 = hstack([ ll[2], [0,0,0] ])
+				vel0 = zeros(6)
 			drawingColor = (0.2,0.1,0.2)
-
 
 			#pos0[2] += 0.5 # Start from the sky
 			
 			name = ll[0]
-			#name, pName, mass, boxsize, q, qd, dc, rotParam
-			b = PmBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, 'QUAT_WFIRST')
+			b = RigidBody.RigidBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
 			body.append(b)
-			'''
+
 			if name[-1] == 'L':
 				# If there are left body segments, we also need right counterparts
 				newName = name[:-1] + 'R'
-				newPos0 = copy(pos0) # Deep copy
+				newPos0 = pos0.copy() # Deep copy
 				newPos0[0] *= -1
-				newVel0 = copy(vel0) # Deep copy
-				b = PmBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, 'QUAT_WFIRST')
+				newVel0 = vel0.copy() # Deep copy
+				b = RigidBody.RigidBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, rotParam)
 				body.append(b)
-			    '''
-
 
 		return body
 	
 	def buildFiber(self, availableBodyNames):
 		# Fiber constants for a ligament
-		KSE = 1000.          # Should not be 0
-		KPE = 1000.
-		b   = 100.         # Should not be 0
+		KSE = 1.          # Should not be 0
+		KPE = 1.
+		b   = 1.         # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
@@ -495,7 +496,9 @@ class BipedParameter:
 			insPosLocal = self.changeToLocal(insBody, insPosGlobal)
 			xrest = linalg.norm(orgPosGlobal - insPosGlobal)
 			cfg = (orgBody, orgPosLocal, insBody, insPosLocal, KSE, KPE, b, xrest, T, A)
-			m = PmMuscle(name, cfg, 'LIGAMENT', False)
+			#name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
+			m = MuscleFiber.MuscleFiber(name, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
+			                            orgBody, insBody, None, None, orgPosLocal, insPosLocal)
 			if orgBody in availableBodyNames and insBody in availableBodyNames:
 				fiber.append(m)
 
@@ -520,7 +523,9 @@ class BipedParameter:
 				insPosLocal = self.changeToLocal(newInsBody, newInsPosGlobal)
 				xrest = linalg.norm(orgPosGlobal - insPosGlobal)
 				cfg = (newOrgBody, orgPosLocal, newInsBody, insPosLocal, KSE, KPE, b, xrest, T, A)
-				m = PmMuscle(newName, cfg, 'LIGAMENT', False)
+				#name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
+				m = MuscleFiber.MuscleFiber(newName, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
+			                                newOrgBody, newInsBody, None, None, orgPosLocal, insPosLocal)
 				if newOrgBody in availableBodyNames and newInsBody in availableBodyNames:
 					fiber.append(m)
 		return fiber

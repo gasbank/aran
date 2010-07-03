@@ -210,6 +210,13 @@ class GlobalContext:
 				if inst[0] == 'Wrong body name!':
 					pass
 		raise Exception('Wrong body name!')
+
+def GetSimTimeStep():
+	return 0.01
+def GetGravitationalAcceleration():
+	return 9.81
+def GetFrictionCoefficient():
+	return 1.0
 	
 def WriteConfigurationFile(gCon):
 	assert gCon.rotParam == 'QUAT_WFIRST'

@@ -22,39 +22,40 @@ from MathUtil import *
 import sys
 import pygame
 from pygame.font import *
-from PmBody import *
+import RigidBody
 from PmMuscle import *
 from GlobalContext import *
 import ctypes as ct
 from Parameters import *
 import box_lcp3_exp_multibody as BLEM
-import ExpBody
+
 from dRdv_real import GeneralizedForce, QuatdFromV
 import copy
 import matplotlib.pyplot as pit
 import cPickle
+from WriteSimcoreConfFile import *
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
-def InitializeGl (gCon):				# We call this right after our OpenGL window is created.
+def InitializeGl (gCon):                # We call this right after our OpenGL window is created.
     glClearColor(gCon.clearColor[0],
                  gCon.clearColor[1],
                  gCon.clearColor[2],
                  1.0)
-    glClearDepth(1.0)									# Enables Clearing Of The Depth Buffer
-    glDepthFunc(GL_LEQUAL)								# The Type Of Depth Test To Do
-    glEnable(GL_DEPTH_TEST)								# Enables Depth Testing
-    glShadeModel (GL_FLAT);								# Select Flat Shading (Nice Definition Of Objects)
-    glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST) 	# Really Nice Perspective Calculations
+    glClearDepth(1.0)                                   # Enables Clearing Of The Depth Buffer
+    glDepthFunc(GL_LEQUAL)                              # The Type Of Depth Test To Do
+    glEnable(GL_DEPTH_TEST)                             # Enables Depth Testing
+    glShadeModel (GL_FLAT);                             # Select Flat Shading (Nice Definition Of Objects)
+    glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST)  # Really Nice Perspective Calculations
     glEnable (GL_LIGHT0)
     glEnable (GL_LIGHTING)
 
     noAmbient = [0.0, 0.0, 0.0, 1.0]
     whiteDiffuse = [1.0, 1.0, 1.0, 1.0]
     """
-	Directional light source (w = 0)
-	The light source is at an infinite distance,
-	all the ray are parallel and have the direction (x, y, z).
-	"""
+    Directional light source (w = 0)
+    The light source is at an infinite distance,
+    all the ray are parallel and have the direction (x, y, z).
+    """
     position = [0.2, -1.0, 1.0, 0.0]
 
     glLightfv(GL_LIGHT0, GL_AMBIENT, noAmbient);
@@ -62,7 +63,7 @@ def InitializeGl (gCon):				# We call this right after our OpenGL window is crea
     glLightfv(GL_LIGHT0, GL_POSITION, position);
 
     #glEnable (GL_COLOR_MATERIAL)
-    #glShadeModel(GL_SMOOTH)				# Enables Smooth Color Shading
+    #glShadeModel(GL_SMOOTH)                # Enables Smooth Color Shading
     glEnable(GL_TEXTURE_2D)
     glEnable(GL_NORMALIZE)
     # Turn on wireframe mode
@@ -132,7 +133,7 @@ def Print(gCon, s, x, y):
 
 # Reshape The Window When It's Moved Or Resized
 def ResizeGlScene(winWidth, winHeight):
-    if winHeight == 0:						# Prevent A Divide By Zero If The Window Is Too Small 
+    if winHeight == 0:                      # Prevent A Divide By Zero If The Window Is Too Small 
         winHeight = 1
 
     global gCon
@@ -210,7 +211,7 @@ def Main(gCon):
 
     # Register the drawing function with glut, BUT in Python land, at least using PyOpenGL, we need to
     # set the function pointer and invoke a function to actually register the callback, otherwise it
-    # would be very much like the C version of the code.	
+    # would be very much like the C version of the code.    
     glutDisplayFunc(Draw)
 
     # Uncomment this line to get full screen.
@@ -234,7 +235,7 @@ def Main(gCon):
     # Call to perform inital GL setup (the clear colors, enabling modes
     InitializeGl (gCon)
 
-    # Start Event Processing Engine	
+    # Start Event Processing Engine 
     glutMainLoop()
 
 def Draw():
@@ -247,7 +248,7 @@ def Draw():
     #print gCon.body[1].q, gCon.body[1].qd
     '''
     if gFrame == 375:
-    	sys.exit(0)
+        sys.exit(0)
     '''
 
 
@@ -269,7 +270,7 @@ def Draw():
     return
 
 def Prerender():
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)				# // Clear Screen And Depth Buffer
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)              # // Clear Screen And Depth Buffer
     #print frame, 'err', err, 'p', p, 'Act', activeBodies, 'Inact', inactiveBodies, 'Corners', activeCorners
 
 def Postrender():
@@ -278,15 +279,15 @@ def Postrender():
 
     # Take a shot of this frame
     """
-	glPixelStorei(GL_PACK_ALIGNMENT, 4)
-	glPixelStorei(GL_PACK_ROW_LENGTH, 0)
-	glPixelStorei(GL_PACK_SKIP_ROWS, 0)
-	glPixelStorei(GL_PACK_SKIP_PIXELS, 0)
+    glPixelStorei(GL_PACK_ALIGNMENT, 4)
+    glPixelStorei(GL_PACK_ROW_LENGTH, 0)
+    glPixelStorei(GL_PACK_SKIP_ROWS, 0)
+    glPixelStorei(GL_PACK_SKIP_PIXELS, 0)
 
-	pixels = glReadPixels(0, 0, glWidth, glHeight, GL_RGBA, GL_UNSIGNED_BYTE)
-	surface = pygame.image.fromstring(pixels, (glWidth,glHeight), 'RGBA', 1)
-	pygame.image.save(surface,'/home/johnu/ss/%04d.jpg'%curFrame)
-	"""
+    pixels = glReadPixels(0, 0, glWidth, glHeight, GL_RGBA, GL_UNSIGNED_BYTE)
+    surface = pygame.image.fromstring(pixels, (glWidth,glHeight), 'RGBA', 1)
+    pygame.image.save(surface,'/home/johnu/ss/%04d.jpg'%curFrame)
+    """
 
 def RenderHud():
     global gCon
@@ -323,14 +324,14 @@ def RenderFrontCameraWindow():
     quadric = gCon.quadric
 
     vpX, vpY = int(glWidth * perpW), 0
-    glViewport(vpX, vpY, frontW, frontH)		# Reset The Current Viewport And Perspective Transformation
+    glViewport(vpX, vpY, frontW, frontH)        # Reset The Current Viewport And Perspective Transformation
 
-    glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-    glLoadIdentity()					# // Reset The Projection Matrix
+    glMatrixMode(GL_PROJECTION)         # // Select The Projection Matrix
+    glLoadIdentity()                    # // Reset The Projection Matrix
     glOrtho(-aspectRatio, aspectRatio, -1, 1, 1, 1000)
 
-    glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-    glLoadIdentity ();					# // Reset The Modelview Matrix
+    glMatrixMode (GL_MODELVIEW);        # // Select The Modelview Matrix
+    glLoadIdentity ();                  # // Reset The Modelview Matrix
 
     # Point Of Interest
     poi = gCon.findBodyIndex2(poiList)
@@ -393,12 +394,12 @@ def RenderLegMonitorWindow(legName, viewDir):
         vpX = vpX + legW
     glViewport(vpX, vpY, legW, legH)
 
-    glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-    glLoadIdentity()					# // Reset The Projection Matrix
+    glMatrixMode(GL_PROJECTION)         # // Select The Projection Matrix
+    glLoadIdentity()                    # // Reset The Projection Matrix
     glOrtho(-aspectRatio / 2., aspectRatio / 2., -1. / 2, 1. / 2, 1, 1000)
 
-    glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-    glLoadIdentity ();					# // Reset The Modelview Matrix
+    glMatrixMode (GL_MODELVIEW);        # // Select The Modelview Matrix
+    glLoadIdentity ();                  # // Reset The Modelview Matrix
 
     if viewDir == 'SIDE':
         xeye, yeye, zeye = 5, ankleGlobalPos[1], 0.35
@@ -487,7 +488,7 @@ def DrawBiped(drawBody, drawAxis, wireframe):
             gluDisk(gCon.quadric, 0, 0.5, 6, 1)
         glPopMatrix()
 
-def RenderTopCameraWindow():		
+def RenderTopCameraWindow():        
     global gCon
     glWidth, glHeight = gCon.winWidth, gCon.winHeight
     perpW, perpH = gCon.perpW, gCon.perpH
@@ -497,16 +498,16 @@ def RenderTopCameraWindow():
     aspectRatio = float(sideW) / sideH
     quadric = gCon.quadric
 
-    glViewport(int(sideW), int(glHeight * perpH), int(sideW), int(sideH))		# Reset The Current Viewport And Perspective Transformation
+    glViewport(int(sideW), int(glHeight * perpH), int(sideW), int(sideH))       # Reset The Current Viewport And Perspective Transformation
 
-    glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-    glLoadIdentity()					# // Reset The Projection Matrix
+    glMatrixMode(GL_PROJECTION)         # // Select The Projection Matrix
+    glLoadIdentity()                    # // Reset The Projection Matrix
     zoomLevel = 3.0
     glOrtho(-aspectRatio/zoomLevel, aspectRatio/zoomLevel, -1./zoomLevel, 1./zoomLevel, 1, 1000)
     #glOrtho(-15.5, 15.5, -15.5, 15.5, 1, 1000)
 
-    glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-    glLoadIdentity ();					# // Reset The Modelview Matrix
+    glMatrixMode (GL_MODELVIEW);        # // Select The Modelview Matrix
+    glLoadIdentity ();                  # // Reset The Modelview Matrix
 
     # Point Of Interest
     poi = gCon.findBodyIndex2(poiList)
@@ -518,11 +519,11 @@ def RenderTopCameraWindow():
     gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 
     '''
-	xeye, yeye, zeye = 10, -3, 0.8
-	xcenter, ycenter, zcenter = 0, -5, 0.8
-	xup, yup, zup = 0, 0, 1
-	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
-	'''
+    xeye, yeye, zeye = 10, -3, 0.8
+    xcenter, ycenter, zcenter = 0, -5, 0.8
+    xup, yup, zup = 0, 0, 1
+    gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+    '''
 
     # Draw ground in cross section
     glPushAttrib(GL_LIGHTING_BIT)
@@ -556,16 +557,16 @@ def RenderSideCameraWindow():
     aspectRatio = float(sideW) / sideH
     quadric = gCon.quadric
 
-    glViewport(0, int(glHeight * perpH), int(sideW), int(sideH))		# Reset The Current Viewport And Perspective Transformation
+    glViewport(0, int(glHeight * perpH), int(sideW), int(sideH))        # Reset The Current Viewport And Perspective Transformation
 
     zoomLevel = 2.0
-    glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-    glLoadIdentity()					# // Reset The Projection Matrix
+    glMatrixMode(GL_PROJECTION)         # // Select The Projection Matrix
+    glLoadIdentity()                    # // Reset The Projection Matrix
     glOrtho(-aspectRatio/zoomLevel, aspectRatio/zoomLevel, -1/zoomLevel, 1/zoomLevel, 1, 1000)
     #glOrtho(-15.5, 15.5, -15.5, 15.5, 1, 1000)
 
-    glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-    glLoadIdentity ();					# // Reset The Modelview Matrix
+    glMatrixMode (GL_MODELVIEW);        # // Select The Modelview Matrix
+    glLoadIdentity ();                  # // Reset The Modelview Matrix
 
     # Point Of Interest
     poi = gCon.findBodyIndex2(poiList)
@@ -577,11 +578,11 @@ def RenderSideCameraWindow():
     gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
 
     '''
-	xeye, yeye, zeye = 10, -3, 0.8
-	xcenter, ycenter, zcenter = 0, -5, 0.8
-	xup, yup, zup = 0, 0, 1
-	gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
-	'''
+    xeye, yeye, zeye = 10, -3, 0.8
+    xcenter, ycenter, zcenter = 0, -5, 0.8
+    xup, yup, zup = 0, 0, 1
+    gluLookAt(xeye, yeye, zeye, xcenter, ycenter, zcenter, xup, yup, zup);
+    '''
 
     # Render the fancy global(inertial) coordinates
     #RenderFancyGlobalAxis(quadric, 0.7 / 2, 0.3 / 2, 0.025)
@@ -687,14 +688,14 @@ def RenderPerspectiveWindow():
     perpW, perpH = gCon.perpW, gCon.perpH
     quadric = gCon.quadric
 
-    glViewport(0, 0, int(glWidth * perpW), int(glHeight * perpH))		# Reset The Current Viewport And Perspective Transformation
+    glViewport(0, 0, int(glWidth * perpW), int(glHeight * perpH))       # Reset The Current Viewport And Perspective Transformation
 
-    glMatrixMode(GL_PROJECTION)			# // Select The Projection Matrix
-    glLoadIdentity()					# // Reset The Projection Matrix
+    glMatrixMode(GL_PROJECTION)         # // Select The Projection Matrix
+    glLoadIdentity()                    # // Reset The Projection Matrix
     gluPerspective(45.0, float(glWidth * perpW) / float(glHeight * perpH), 1, 1000.0)
 
-    glMatrixMode (GL_MODELVIEW);		# // Select The Modelview Matrix
-    glLoadIdentity ();					# // Reset The Modelview Matrix
+    glMatrixMode (GL_MODELVIEW);        # // Select The Modelview Matrix
+    glLoadIdentity ();                  # // Reset The Modelview Matrix
 
     # Point Of Interest
     poi = gCon.findBodyIndex2(poiList)
@@ -989,10 +990,10 @@ def FrameMove_ImpInt_Revised():
 def FrameMove_ImpInt():
     global gCon
     """
-	void SimCore(const double h, const int nBody, const int nMuscle,
+    void SimCore(const double h, const int nBody, const int nMuscle,
              double body[nBody][18], double extForce[nBody][6],
              double muscle[nMuscle][12], unsigned int musclePair[nMuscle][2])
-	"""
+    """
     nBody   = len(gCon.body)
     nMuscle = len(gCon.fibers)
     nd      = 3 + 4
@@ -1020,6 +1021,8 @@ def FrameMove_ImpInt():
 
         # Set gravitational forces
         C_extForce[i][2] = -gGravAcc * gCon.body[i].mass
+        
+        gCon.body[i].updateCurrentStateDependentValues()
         
     C_musclePair = UINT_nMusclex2()
     for i in range(nMuscle):
@@ -1072,10 +1075,11 @@ def FrameMove_ImpInt():
         vel0_wc = fbb.qd[0:3]
         angvel0_wc = QuatdToVd(fbb.q[3:7], fbb.qd[3:7], rot0_wc)
 
-        expBody = ExpBody.ExpBody(fbb.name, None, fbb.mass, fbb.boxsize,
+        expBody = RigidBody.RigidBody(fbb.name, None, fbb.mass, fbb.boxsize,
                                   hstack([ pos0_wc, rot0_wc ]),
-                                  vel0_wc, angvel0_wc,
-                                  [0.1,0.2,0.3])
+                                  hstack([vel0_wc, angvel0_wc]),
+                                  [0.1,0.2,0.3], 'EXP')
+        expBody.updateCurrentStateDependentValues()
         expBody.extForce = 0
         # NOTE: expBody already affected by the gravitational force.
         #       We just need to add the fiber forces.
@@ -1182,7 +1186,7 @@ def FrameMove_ImpInt():
     C_w_u[2] = 1e-5
     C_w_u[3] = 1e-5
     C_w_u[4] = 1e-5
-	'''
+    '''
     
     #
     # Setting W_u (C_w_u)
@@ -1280,7 +1284,7 @@ def DetermineActiveness(body, alpha0):
 
     # Indices for active/inactive bodies
     inactiveBodies = list(set(range(nb)) - activeBodies)
-    activeBodies = list(activeBodies)			
+    activeBodies = list(activeBodies)           
     return activeCorners, activeCornerPoints, activeBodies, inactiveBodies
 
 
@@ -1414,8 +1418,8 @@ def FrameMove_Mocap():
 
 
     '''
-	Process for 'active' bodies
-	'''
+    Process for 'active' bodies
+    '''
     # Total number of contact points
     if len(activeBodies) > 0:
         Minv_a, Cqd_a, Q_a, Qd_a = BuildEquationsOfMotion(gCon.body, activeBodies, h)
@@ -1427,15 +1431,15 @@ def FrameMove_Mocap():
         Q_a_next = h * Qd_a_next + Q_a
 
         '''
-		Update the state of active bodies
-		'''
+        Update the state of active bodies
+        '''
         for k in activeBodies:
             kk = activeBodies.index(k)
             gCon.body[k].q = Q_a_next[6 * kk:6 * (kk + 1)]
             gCon.body[k].qd = Qd_a_next[6 * kk:6 * (kk + 1)]
         '''
-		Prepare the data for contact force visualization
-		'''
+        Prepare the data for contact force visualization
+        '''
         p = len(activeCorners)
         beta_reshaped = beta.reshape(p, 8)
         gCon.contactForces = []
@@ -1457,15 +1461,15 @@ def FrameMove_Mocap():
 
 
     '''
-	Process for 'inactive' bodies
-	(no effect of external forces)
-	'''
+    Process for 'inactive' bodies
+    (no effect of external forces)
+    '''
     Minv_i, Cqd_i, Q_i, Qd_i = BuildEquationsOfMotion(gCon.body, inactiveBodies, h)
     Qd_i_next = dot(Minv_i, h * Cqd_i) + Qd_i
     Q_i_next = h * Qd_i_next + Q_i
     '''
-	Update the state of inactive bodies
-	'''
+    Update the state of inactive bodies
+    '''
     for k in inactiveBodies:
         kk = inactiveBodies.index(k)
         gCon.body[k].q = Q_i_next[6 * kk:6 * (kk + 1)]
@@ -1473,9 +1477,9 @@ def FrameMove_Mocap():
         z0 = 0
 
     '''
-	if gRunMode == 'SINGLE':
-		print gCon.body[0].q
-	'''
+    if gRunMode == 'SINGLE':
+        print gCon.body[0].q
+    '''
 
 
 
@@ -1497,55 +1501,6 @@ def MainNoGl(gCon):
         FrameMove()
         gFrame += 1
 
-def WriteSimcoreConfFile(fileName, body, fibers, h):
-    f = open(fileName, 'w')
-    f.write('# Pymuscle: rigid body and muscle fiber simulation\n')
-    f.write('# Application-wide configuration file\n')
-    f.write('version = \"0.1\";\n')
-    f.write('h = %f;   # Simulation timestep\n' % h)    
-    f.write('simFrame = 50000; # Simulation length\n')
-    f.write('plotSamplingRate = 1;\n')
-    f.write('''output = "simresult.txt";\n''')
-
-    f.write('body = (\n')
-    for b in body:
-        assert b.rotParam == 'QUAT_WFIRST'
-        f.write('{\n')
-        f.write(
-'''
-name = "%s";
-p    =    [%f, %f, %f];
-q    = [%f, %f, %f, %f];
-pd   =    [%f, %f, %f];
-qd   = [%f, %f, %f, %f];
-mass = %f;
-size = [%f, %f, %f];
-grav = true;
-''' % tuple([b.name] + list(b.q) + list(b.qd) + [b.mass] + list(b.boxsize)) )
-        f.write('}%s\n' % (',' if b != body[-1] else ''))
-    f.write(');\n')
-
-    f.write('muscle = (\n')
-    for fib in fibers:
-        f.write('{\n')
-        f.write(
-'''
-name         = "%s";
-origin       = "%s";     # Origin body name
-insertion    = "%s";     # Insertion body name
-KSE          = %f;        # Serial spring constant
-KPE          = %f;        # Parallel spring constant
-b            = %f;         # Viscosity
-xrest        = %f;        # resting length
-T            = %f;           # initial tension
-A            = %f;           # initial actuation force
-originPos    = [%f, %f, %f];   # Origin muscle attached pos (in origin body coord)
-insertionPos = [%f, %f, %f];   # Insertion muscle attached pos (in insertion body coord)
-''' % tuple([fib.name, fib.orgBody, fib.insBody, fib.KSE, fib.KPE, fib.b, fib.xrest, fib.T, fib.A] + list(fib.orgPos) + list(fib.insPos)))
-        f.write('}%s\n' % (',' if fib != fibers[-1] else ''))
-    f.write(');\n')
-
-    f.close()
 
 ################################################################################
 ################################################################################
@@ -1582,7 +1537,7 @@ if __name__ == '__main__':
     poiList = ['lowerback', 'trunk', 'soleL', 'thighL', 'calfL']
 
     if gRunMode == 'MOCAP':
-        gCon = GlobalContext(gWorkDir + 'traj_', 'EULER_XYZ')	
+        gCon = GlobalContext(gWorkDir + 'traj_', 'EULER_XYZ')   
     elif gRunMode == 'IMPINT':
         gCon = GlobalContext(gWorkDir + 'traj_', 'QUAT_WFIRST')
         gBipedParam = BipedParameter()
@@ -1621,7 +1576,11 @@ if __name__ == '__main__':
         WriteSimcoreConfFile('box_lcp5.conf', gCon.body, gCon.fibers, gCon.h)
     elif gRunMode == 'SINGLE':
         gCon = GlobalContext(None, 'EULER_ZXZ')
+        '''
         pb = PmBody('lowerback', None, 1, array([0.1,0.2,0.3]),
+                    zeros(6), zeros(6), array([0.5,0.2,0.7]), 'EULER_ZXZ')
+        '''
+        pb = RigidBody('lowerback', None, 1, array([0.1,0.2,0.3]),
                     zeros(6), zeros(6), array([0.5,0.2,0.7]), 'EULER_ZXZ')
         gCon.body = [ pb ]
         gCon.bodyList = [ ('lowerback', None) ]
