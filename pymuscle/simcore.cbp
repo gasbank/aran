@@ -66,6 +66,10 @@
 			<Add directory="/home/johnu/src/blas" />
 			<Add directory="/usr/lib/octave-3.2.3/" />
 		</Linker>
+		<Unit filename="Biped.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="Biped.h" />
 		<Unit filename="CholmodMacro.h" />
 		<Unit filename="Config.h" />
 		<Unit filename="Control.c">
@@ -101,6 +105,7 @@
 			<Option compilerVar="CC" />
 		</Unit>
 		<Unit filename="OneRbImp.h" />
+		<Unit filename="PymStruct.h" />
 		<Unit filename="PymuscleConfig.c">
 			<Option compilerVar="CC" />
 		</Unit>

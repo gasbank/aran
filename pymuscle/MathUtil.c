@@ -6,12 +6,10 @@
 #include "MathUtil.h"
 #include "dRdv_real.h"
 
-double Dot33(const double a[3], const double b[3])
-{
+double Dot33(const double a[3], const double b[3]) {
     return Dot(3, a, b);
 }
-double Dot(const unsigned int n, double a[n], double b[n])
-{
+double Dot(const unsigned int n, const double a[n], const double b[n]) {
     int i; double r = 0;
     for (i=0;i<n;++i) r+=a[i]*b[i];
     return r;

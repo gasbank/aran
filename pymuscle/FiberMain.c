@@ -127,6 +127,12 @@ int main3(int argc, const char **argv)
 
 
 int main(int argc, const char **argv) {
+    if (argc != 2) {
+        printf("Rigid body and muscle fiber simulator                2010 Geoyeob Kim\n\n");
+        printf("  Usage\n");
+        printf("    %s [config file]\n\n", strrchr(argv[0], '/') + 1);
+        exit(-123);
+    }
     cholmod_common cc ;
     cholmod_start (&cc) ;
 

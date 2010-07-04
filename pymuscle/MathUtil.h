@@ -15,5 +15,5 @@ void AffineTransformPoint(double pt[3], const double W[4][4], const double p[3])
 void TransformPoint(double pt[3], const double W[4][4], const double p[3]);
 void QuatToV(double v[3], const double q[4]);
 double Dot33(const double a[3], const double b[3]);
-double Dot(const unsigned int n, double a[n], double b[n]);
+double Dot(const unsigned int n, const double a[n], const double b[n]);
 #endif // MATHUTIL_H_INCLUDED
