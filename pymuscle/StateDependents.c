@@ -128,8 +128,8 @@ int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, 
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/
             ++sd->nContacts_2;
-            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
-                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
+//            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
+//                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
         }
     }
     const int nd = NUM_DOF;
@@ -165,6 +165,15 @@ int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, 
     return 0;
 }
 
+void ReleaseStateDependents(const StateDependents *sd, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
+    int i, j;
+    FOR_0(i, pymCfg->nBody) {
+        FOR_0(j, sd[i].nContacts_2) {
+            cholmod_free_sparse(&sd[i].Z[j], cc);
+            cholmod_free_sparse(&sd[i].Q[j], cc);
+        }
+    }
+}
 
 void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
     const RigidBodyNamed *rbn = &rb->b;
@@ -186,11 +195,11 @@ void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const Rigi
     nzmax += 4*np;      /* Subblock 11 :-1 */
     nzmax += nd;        /* Subblock 12 :1 */
     nzmax += nd;        /* Subblock 13 :1 */
-    printf("    A matrix body name           : %s\n", rbn->name);
-    printf("    A matrix constants (np)      : %d\n", np);
-    printf("    A matrix constants (nmi)     : %d\n", nmi);
-    printf("    A matrix subblock dimension  : %d x %d\n", sd->Asubrows, sd->Asubcols);
-    printf("    A matrix size                : %d x %d\n", sd->Ari[sd->Asubrows], sd->Aci[sd->Asubcols]);
+//    printf("    A matrix body name           : %s\n", rbn->name);
+//    printf("    A matrix constants (np)      : %d\n", np);
+//    printf("    A matrix constants (nmi)     : %d\n", nmi);
+//    printf("    A matrix subblock dimension  : %d x %d\n", sd->Asubrows, sd->Asubcols);
+//    printf("    A matrix size                : %d x %d\n", sd->Ari[sd->Asubrows], sd->Aci[sd->Asubcols]);
     cholmod_triplet *AMatrix_trip = cholmod_allocate_triplet(sd->Ari[sd->Asubrows], sd->Aci[sd->Asubcols], nzmax, 0, CHOLMOD_REAL, cc);
     assert(AMatrix_trip->nnz == 0);
     int i, j;
@@ -263,7 +272,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const Rigi
     for (i=0;i<nd;++i) SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 5, 7, i, i, -1);
 
     *AMatrix = AMatrix_trip;
-    cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
+//    cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
 }
 
 void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
@@ -272,7 +281,7 @@ void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const
     const int nd = 6;
     const int np = sd->nContacts_2;
     size_t etaDim = sd->Ari[sd->Asubrows];
-    printf("RB %s etaDim = %d\n", rbn->name, etaDim);
+    //printf("RB %s etaDim = %d\n", rbn->name, etaDim);
     double *eta = (double *)malloc(sizeof(double) * etaDim);
     memset(eta, 0, sizeof(double) * etaDim);
 
@@ -281,8 +290,7 @@ void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const
     chi_1[3] = rbn->q[0]; chi_1[4] = rbn->q[1]; chi_1[5] = rbn->q[2];
     chi_0[0] = rbn->p0[0]; chi_0[1] = rbn->p0[1]; chi_0[2] = rbn->p0[2];
     chi_0[3] = rbn->q0[0]; chi_0[4] = rbn->q0[1]; chi_0[5] = rbn->q0[2];
-    __PRINT_VECTOR(chi_1, 6);
-    __PRINT_VECTOR(chi_0, 6);
+
     const double h = pymCfg->h;
     int i,j;
     FOR_0(i, nd) {

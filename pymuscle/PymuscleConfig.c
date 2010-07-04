@@ -149,10 +149,12 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
 	char muscleName[nMuscle][128];
     for (j = 0; j < nMuscle; ++j)
     {
+        MuscleFiberNamed  *mfn = &fiber[j].b;
         config_setting_t *mConf = config_setting_get_elem(muscleConf, j);
         const char *mName;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
+        strncpy(mfn->name, mName, 128);
         printf("    Fiber %3d : %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         FIBER(j,0) = config_setting_get_float(KSE);
@@ -185,11 +187,11 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
         assert(boIdx >= 0 && biIdx >= 0);
         musclePair[j][0] = boIdx;
         musclePair[j][1] = biIdx;
-        fiber[j].b.org = boIdx;
-        fiber[j].b.ins = biIdx;
+        mfn->org = boIdx;
+        mfn->ins = biIdx;
         /* TODO: xrest upper and lower bounds */
-        fiber[j].b.xrest_lower = fiber[j].b.xrest*0.5;
-        fiber[j].b.xrest_upper = fiber[j].b.xrest*1.5;
+        mfn->xrest_lower = mfn->xrest*0.5;
+        mfn->xrest_upper = mfn->xrest*1.5;
 
         RigidBodyNamed *bjbOrg = &body[ boIdx ].b;
         RigidBodyNamed *bjbIns = &body[ biIdx ].b;
@@ -202,6 +204,7 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
     int simFrame; /* simulation length */
     confret = config_lookup_int(&conf, "simFrame", &simFrame);
     assert(confret == CONFIG_TRUE);
+    pymCfg->nSimFrame = simFrame;
     int plotSamplingRate; /* Write 1 sample per 'plotSamplingRate' */
     confret = config_lookup_int(&conf, "plotSamplingRate", &plotSamplingRate);
     assert(confret == CONFIG_TRUE);
@@ -310,7 +313,7 @@ void GetBipedMatrixVector(BipedOptimizationData *bod, LPStateDependents sd, cons
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
 
-    cholmod_triplet *A_trip[nb];
+    cholmod_triplet *A_trip[nb]; /* should be deallocated here */
     const int nd = 6;
     const int Asubrows = nb + nb + 1;
     const int Asubcols = nb + 5;
@@ -348,10 +351,10 @@ void GetBipedMatrixVector(BipedOptimizationData *bod, LPStateDependents sd, cons
     }
     nzmax += 3*pymCfg->nFiber; /* Subblock K */
 
-    printf("    BipA matrix constants (nb)      : %d\n", nb);
-    printf("    BipA matrix constants (nf)      : %d\n", nf);
-    printf("    BipA matrix subblock dimension  : %d x %d\n", Asubrows, Asubcols);
-    printf("    BipA matrix size                : %d x %d\n", Ari[Asubrows], Aci[Asubcols]);
+//    printf("    BipA matrix constants (nb)      : %d\n", nb);
+//    printf("    BipA matrix constants (nf)      : %d\n", nf);
+//    printf("    BipA matrix subblock dimension  : %d x %d\n", Asubrows, Asubcols);
+//    printf("    BipA matrix size                : %d x %d\n", Ari[Asubrows], Aci[Asubcols]);
     cholmod_triplet *AMatrix_trip = cholmod_allocate_triplet(Ari[Asubrows], Aci[Asubcols], nzmax, 0, CHOLMOD_REAL, cc);
     assert(AMatrix_trip->nnz == 0);
 
@@ -396,18 +399,22 @@ void GetBipedMatrixVector(BipedOptimizationData *bod, LPStateDependents sd, cons
     }
 
     bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
+    cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */
     assert(bod->bipMat);
     double *bipEta = (double *)malloc(sizeof(double)*Ari[Asubrows]);
     memset(bipEta, 0, sizeof(double)*Ari[Asubrows]);
     FOR_0(i, nb) {
         double *etai;
-        GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc);
+        GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc); /* etai is allocated at GetEta() */
         memcpy(bipEta + Ari[i], etai, sizeof(double)*A_trip[i]->nrow);
+        free(etai); /* so free here */
     }
     FOR_0(i, nf) {
         bipEta[ Ari[2*nb] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
     bod->bipEta = bipEta;
+
+    FOR_0(i, nb) cholmod_free_triplet(&A_trip[i], cc);
 }
 
 void SetPymCfgChiRefToCurrentState(LPPymuscleConfig pymCfg) {

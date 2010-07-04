@@ -6,6 +6,7 @@ typedef struct _PymuscleConfig {
     MuscleFiber *fiber; unsigned int nFiber;
     double h;
     double mu;
+    int nSimFrame;
 } PymuscleConfig;
 
 void PrintRigidBody(const RigidBody *rb);

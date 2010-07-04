@@ -8,9 +8,14 @@
 
 double Dot33(const double a[3], const double b[3])
 {
-    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2];
+    return Dot(3, a, b);
 }
-
+double Dot(const unsigned int n, double a[n], double b[n])
+{
+    int i; double r = 0;
+    for (i=0;i<n;++i) r+=a[i]*b[i];
+    return r;
+}
 /* Normalize vector in-place */
 double NormalizeVector(int dim, double v[dim])
 {

@@ -133,26 +133,70 @@ int main(int argc, const char **argv) {
     PymuscleConfig pymCfg; AllocConfig(argv[1], &pymCfg);
     ConvertRotParamInPlace(&pymCfg, RP_EXP);
     const int nb = pymCfg.nBody;
+    const int nf = pymCfg.nFiber;
     SetPymCfgChiRefToCurrentState(&pymCfg);
-
-    StateDependents sd[nb];
-    int i;
-    FOR_0(i, nb) {
-        UpdateCurrentStateDependentValues(sd + i, pymCfg.body + i, &pymCfg, &cc);
-    }
-    BipedOptimizationData bod;
-    GetBipedMatrixVector(&bod, sd, &pymCfg, &cc);
-    cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
-
     MSKenv_t    env;
     InitializeMosek(&env);
-    cholmod_drop(1e-16, bod.bipMat, &cc);
-    //PrintEntireSparseMatrix(bod.bipMat);
-    //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
+    int i, j;
+    FOR_0(i, pymCfg.nSimFrame) {
+        StateDependents sd[nb];
 
-    PymOptimize(&bod, sd, &pymCfg, &env, &cc);
+        FOR_0(j, nb) {
+            UpdateCurrentStateDependentValues(sd + j, pymCfg.body + j, &pymCfg, &cc);
+        }
 
-    ReleaseBipedMatrixVector(&bod, &cc);
+        BipedOptimizationData bod;
+        GetBipedMatrixVector(&bod, sd, &pymCfg, &cc);
+        //cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
+
+        //cholmod_drop(1e-16, bod.bipMat, &cc);
+
+        //PrintEntireSparseMatrix(bod.bipMat);
+        //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
+        double xx[bod.bipMat->ncol];
+        MSKsolstae solsta;
+        double cost = PymOptimize(xx, &solsta, &bod, sd, &pymCfg, &env, &cc);
+        const char *solstaStr;
+        if (solsta == MSK_SOL_STA_UNKNOWN) solstaStr = "***UNKNOWN***";
+        else if (solsta == MSK_SOL_STA_OPTIMAL) solstaStr = "optimal";
+        else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
+        else assert(0);
+
+        //if (i%10 == 0)
+            printf("Optimization iteration %5d finished. %15s (cost=%lf)\n", i, solstaStr, cost);
+
+
+        printf("Results:\n");
+        FOR_0(j, nb) {
+            const double *chi_j_1 = xx + bod.Aci[j];
+            SetRigidBodyChi_1(pymCfg.body + j, chi_j_1 );
+
+            const RigidBodyNamed *rbn = &pymCfg.body[j].b;
+            double chi_1[6], chi_0[6];
+            chi_1[0] = rbn->p[0]; chi_1[1] = rbn->p[1]; chi_1[2] = rbn->p[2];
+            chi_1[3] = rbn->q[0]; chi_1[4] = rbn->q[1]; chi_1[5] = rbn->q[2];
+            chi_0[0] = rbn->p0[0]; chi_0[1] = rbn->p0[1]; chi_0[2] = rbn->p0[2];
+            chi_0[3] = rbn->q0[0]; chi_0[4] = rbn->q0[1]; chi_0[5] = rbn->q0[2];
+            //printf("%8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
+            //PRINT_VECTOR(chi_0, 6);
+        }
+        FOR_0(j, nf) {
+            MuscleFiberNamed *mfn = &pymCfg.fiber[j].b;
+            const double T_0        = xx[ bod.Aci[nb + 0] + j ];
+            const double u_0        = xx[ bod.Aci[nb + 1] + j ];
+            const double xrest_0    = xx[ bod.Aci[nb + 2] + j ];
+            mfn->T     = T_0;
+            mfn->xrest = xrest_0;
+            //printf("%16s -   T = %12lf   u = %12lf   xrest = %12lf\n", mfn->name, T_0, u_0, xrest_0);
+
+        }
+
+        ReleaseBipedMatrixVector(&bod, &cc);
+        ReleaseStateDependents(sd, &pymCfg, &cc);
+    }
+
+
+    CleanupMosek(&env);
 
     DeallocConfig(&pymCfg);
 

@@ -4,6 +4,7 @@
  * As a part of the thesis implementation
  */
 #include <string.h>
+#include <float.h>
 #include <assert.h>
 #include <cholmod.h>
 #include <mosek.h> /* Include the MOSEK definition file. */
@@ -15,11 +16,13 @@
 #include "StateDependents.h"
 #include "PymuscleConfig.h"
 #include "DebugPrintDef.h"
+#include "MathUtil.h"
 #include "Optimize.h"
+
 static void MSKAPI printstr(void *handle,
                             char str[])
 {
-    printf("%s",str);
+    //printf("%s",str);
 } /* printstr */
 
 void InitializeMosek(MSKenv_t *env) {
@@ -53,7 +56,9 @@ void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
 	assert(r == MSK_RES_OK);
 }
 
-void PymOptimize(const BipedOptimizationData *bod,
+double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod->bipMat->ncol) */
+                   MSKsolstae *_solsta, /* MOSEK solution status */
+                 const BipedOptimizationData *bod,
                  const LPStateDependents sd,
                  const LPPymuscleConfig pymCfg,
                  MSKenv_t *pEnv, cholmod_common *cc) {
@@ -88,9 +93,9 @@ void PymOptimize(const BipedOptimizationData *bod,
     FOR_0(i, nb) {
         nplist[i] = sd[i].nContacts_2;
     }
-    __PRINT_VECTOR_INT(nplist, nb);
+    PRINT_VECTOR_INT(nplist, nb);
 
-    int *Ari = bod->Ari;
+    //int *Ari = bod->Ari;
     int *Aci = bod->Aci;
 
     double       c[NUMVAR];
@@ -151,9 +156,6 @@ void PymOptimize(const BipedOptimizationData *bod,
         }
     }
 
-
-    double      xx[NUMVAR];
-
     MSKtask_t   task;
 
     /* Create the optimization task. */
@@ -207,17 +209,21 @@ void PymOptimize(const BipedOptimizationData *bod,
                       (double *)(bod->bipMat->x) + colstart);    /* Pointer to Values of column j.*/
         }
     }
-    printf("__annz = %d\n", __annz);
+    assert(__annz == cholmod_nnz(bod->bipMat, cc));
+    //printf("__annz = %d\n", __annz);
 
     /* Set the bounds on constraints.
     for i=1, ...,NUMCON : blc[i] <= constraint i <= buc[i] */
-    for(i=0; i<NUMCON && r==MSK_RES_OK; ++i)
+    for(i=0; i<NUMCON && r==MSK_RES_OK; ++i) {
         r = MSK_putbound(task,
-                        MSK_ACC_CON, /* Put bounds on constraints.*/
-                        i,           /* Index of constraint.*/
-                        bkc[i],      /* Bound key.*/
-                        blc[i],      /* Numerical value of lower bound.*/
-                        buc[i]);     /* Numerical value of upper bound.*/
+                    MSK_ACC_CON, /* Put bounds on constraints.*/
+                    i,           /* Index of constraint.*/
+                    bkc[i],      /* Bound key.*/
+                    blc[i],      /* Numerical value of lower bound.*/
+                    buc[i]);     /* Numerical value of upper bound.*/
+        assert(r == MSK_RES_OK );
+    }
+
 
 
     /*
@@ -251,7 +257,7 @@ void PymOptimize(const BipedOptimizationData *bod,
     //# Minimal actuation force constraints
     AppendConeRange(task, Aci[nb+4], Aci[nb+1], Aci[nb+2]);
 
-
+    double cost = FLT_MAX;
     if ( r==MSK_RES_OK )
     {
         MSKrescodee trmcode;
@@ -266,48 +272,46 @@ void PymOptimize(const BipedOptimizationData *bod,
 
         if ( r==MSK_RES_OK )
         {
-              MSKsolstae solsta;
-              MSKidxt    j;
+            MSKsolstae solsta;
 
-              MSK_getsolutionstatus (task,
-                                     MSK_SOL_ITR,
-                                     NULL,
-                                     &solsta);
+            MSK_getsolutionstatus (task,
+                                 MSK_SOL_ITR,
+                                 NULL,
+                                 &solsta);
+            *_solsta = solsta;
 
-              switch(solsta)
-              {
-                case MSK_SOL_STA_OPTIMAL:
-                case MSK_SOL_STA_NEAR_OPTIMAL:
-                  MSK_getsolutionslice(task,
+            switch(solsta)
+            {
+            case MSK_SOL_STA_UNKNOWN:
+                //printf("   ***   The status of the solution could not be determined.   ***\n");
+            case MSK_SOL_STA_OPTIMAL:
+            case MSK_SOL_STA_NEAR_OPTIMAL:
+                MSK_getsolutionslice(task,
                                        MSK_SOL_ITR,    /* Request the interior solution. */
                                        MSK_SOL_ITEM_XX,/* Which part of solution.     */
                                        0,              /* Index of first variable.    */
                                        NUMVAR,         /* Index of last variable+1.   */
                                        xx);
+                cost = Dot(NUMVAR, xx, c);
 
-//                  printf("Optimal primal solution\n");
-//                  for(j=0; j<NUMVAR; ++j)
-//                    printf("x[%d]: %e\n",j,xx[j]);
+                break;
+            case MSK_SOL_STA_DUAL_INFEAS_CER:
+            case MSK_SOL_STA_PRIM_INFEAS_CER:
+            case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
+            case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
+                printf("Primal or dual infeasibility certificate found.\n");
+                assert(0);
+                break;
 
-                  break;
-                case MSK_SOL_STA_DUAL_INFEAS_CER:
-                case MSK_SOL_STA_PRIM_INFEAS_CER:
-                case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
-                case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
-                  printf("Primal or dual infeasibility certificate found.\n");
-                  break;
-
-                case MSK_SOL_STA_UNKNOWN:
-                  printf("The status of the solution could not be determined.\n");
-                  break;
-                default:
-                  printf("Other solution status.");
-                  break;
-              }
+            default:
+                printf("Other solution status.");
+                assert(0);
+                break;
+            }
         }
         else
         {
-          printf("Error while optimizing.\n");
+            printf("Error while optimizing.\n");
         }
     }
 
@@ -322,9 +326,11 @@ void PymOptimize(const BipedOptimizationData *bod,
                          symname,
                          desc);
         printf("Error %s - '%s'\n",symname,desc);
+        assert(0);
     }
 
     /* Delete the task and the associated data. */
     MSK_deletetask(&task);
+    return cost;
 }
 

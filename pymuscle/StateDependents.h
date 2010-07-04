@@ -39,5 +39,6 @@ typedef struct _StateDependents {
 int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
 void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
 void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
+void ReleaseStateDependents(const StateDependents *sd, const LPPymuscleConfig pymCfg, cholmod_common *cc);
 
 #endif

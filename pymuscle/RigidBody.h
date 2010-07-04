@@ -44,4 +44,6 @@ typedef union _RigidBody
     RigidBodyNamed b;
 } RigidBody;
 
+void SetRigidBodyChi_1(RigidBody *rb, const double Chi_1[3+4]);
+
 #endif

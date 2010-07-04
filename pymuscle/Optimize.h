@@ -5,8 +5,11 @@
  */
 
 void InitializeMosek(MSKenv_t *env);
+void CleanupMosek(MSKenv_t *env);
 
-void PymOptimize(const BipedOptimizationData *bod,
+double PymOptimize(double *xx,
+                   MSKsolstae *_solsta, /* MOSEK solution status */
+                 const BipedOptimizationData *bod,
                  const LPStateDependents sd,
                  const LPPymuscleConfig pymCfg,
                  MSKenv_t *pEnv, cholmod_common *cc);

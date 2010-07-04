@@ -115,13 +115,6 @@ int ConcatenateWithAdding(const unsigned int n, unsigned int a[n], const unsigne
     return lenA+lenB;
 }
 
-double Dot(const unsigned int n, double a[n], double b[n])
-{
-    int i; double r = 0;
-    for (i=0;i<n;++i) r+=a[i]*b[i];
-    return r;
-}
-
 int SolveLinearSystem(int exitOnError, cholmod_sparse *A, cholmod_dense *bd, const unsigned int m, double x[m], cholmod_common *cc)
 {
     /*

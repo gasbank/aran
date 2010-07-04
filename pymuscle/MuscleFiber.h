@@ -8,6 +8,7 @@ typedef struct _MuscleFiberNamed {
     int org;
     int ins;
     double xrest_lower, xrest_upper;
+    char name[128];
 } MuscleFiberNamed;
 
 typedef union _MuscleFiber
