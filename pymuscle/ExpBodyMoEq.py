@@ -5,8 +5,8 @@ from numpy import array, linalg, zeros
 from math import sin, cos
 from scipy import sparse
 from MathUtil import cot
+import PymConstants
 
-THETA = 1e-3       # Threshold for theta
 
 def __MassMatrixAndCqdVector(p, v, th, pd, vd, I):
     p1, p2, p3 = p
@@ -965,5 +965,5 @@ def MassMatrixAndCqdVector(p, v, pd, vd, I):
     assert len(vd) == 3
     assert len(I)  == 4
     th = linalg.norm(v)
-    if th < THETA: return __MassMatrixAndCqdVector0(p, v, th, pd, vd, I)
+    if th < PymConstants.THETA(): return __MassMatrixAndCqdVector0(p, v, th, pd, vd, I)
     else         : return __MassMatrixAndCqdVector(p, v, th, pd, vd, I)

@@ -4,7 +4,7 @@
 #define MAX_CONTACTS   (8)
 
 
-typedef struct _StateDependents {
+struct _pym_rb_statedep_t {
     double W_0[4][4];   /* previous homogeneous transform matrix */
     double W_1[4][4];   /* current homogeneous transform matrix */
     double M[6][6];     /* mass matrix */
@@ -32,13 +32,13 @@ typedef struct _StateDependents {
     double          V [MAX_CONTACTS][4];
     cholmod_sparse *Q [MAX_CONTACTS]; /* A list of sparse 6x5 matrices */
 
-} StateDependents;
+};
 
 
 
-int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
-void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
-void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc);
-void ReleaseStateDependents(const StateDependents *sd, const LPPymuscleConfig pymCfg, cholmod_common *cc);
+int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
+void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
+void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
+void PymDestroyRbStatedep(pym_rb_statedep_t *sd, cholmod_common *cc);
 
 #endif

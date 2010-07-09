@@ -436,8 +436,25 @@ class RigidBody:
             qdLin = self.qd[0:3]
             
         return hstack([ qdLin, QuatToAngularVel_WC( self.q[3:7], self.qd[3:7] ) ])
-
-
+    def getAxisVector(self, axis):
+        assert axis in ['X', 'Y', 'Z']
+        assert self.xAxis and self.yAxis
+        axisNameToVec = {'+X':array([+1, 0, 0]),
+                         '-X':array([-1, 0, 0]),
+                         '+Y':array([ 0,+1, 0]),
+                         '-Y':array([ 0,-1, 0]),
+                         '+Z':array([ 0, 0,+1]),
+                         '-Z':array([ 0, 0,-1])}
+        if axis == 'X':
+            return axisNameToVec[ self.xAxis ]
+        elif axis == 'Y':
+            return axisNameToVec[ self.yAxis ]
+        elif axis == 'Z':
+            return cross(axisNameToVec[ self.xAxis ], axisNameToVec[self.yAxis ] )
+        else:
+            assert False
+            
+        
 if __name__ == '__main__':
     rb = RigidBody('Test rigid body',
                    'Test parent rigid body',

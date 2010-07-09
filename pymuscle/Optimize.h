@@ -4,12 +4,12 @@
  * As a part of the thesis implementation
  */
 
-void InitializeMosek(MSKenv_t *env);
-void CleanupMosek(MSKenv_t *env);
+void PymInitializeMosek(MSKenv_t *env);
+void PymCleanupMosek(MSKenv_t *env);
 
 double PymOptimize(double *xx,
                    MSKsolstae *_solsta, /* MOSEK solution status */
-                 const BipedOptimizationData *bod,
-                 const LPStateDependents sd,
-                 const LPPymuscleConfig pymCfg,
+                 const pym_biped_eqconst_t *bod,
+                 const pym_rb_statedep_t *sd,
+                 const pym_config_t *pymCfg,
                  MSKenv_t *pEnv, cholmod_common *cc);

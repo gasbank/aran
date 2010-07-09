@@ -17,7 +17,7 @@
 #include "dRdv_real.h"
 #include "PymuscleConfig.h"
 
-void PrintRigidBody(const RigidBody *rb) {
+void PrintRigidBody(const pym_rb_t *rb) {
     int i; for (i=0; i<18; ++i) printf("%2d : %20lf\n", i, rb->a[i]);
 }
 
@@ -31,7 +31,7 @@ int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn) {
     return -1;
 }
 
-int DeallocConfig(PymuscleConfig *pymCfg) {
+int PymDestoryConfig(pym_config_t *pymCfg) {
     free(pymCfg->body) ;
     free(pymCfg->fiber) ;
     pymCfg->body = 0 ;
@@ -41,7 +41,7 @@ int DeallocConfig(PymuscleConfig *pymCfg) {
     return 0;
 }
 
-int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
+int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     #define csgfe(a,b) config_setting_get_float_elem(a,b)
     #define BODY(j,ai) body[j].a[ai]
     #define FIBER(j,ai) fiber[j].a[ai]
@@ -76,22 +76,22 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
     config_setting_t *bodyConf = config_lookup(&conf, "body");
     assert(bodyConf);
     const unsigned int nBody = config_setting_length(bodyConf);
-    RigidBody body[nBody];
+    pym_rb_t body[nBody];
 	double extForce[nBody][6];
 	char bodyName[nBody][128];
 	memset(extForce, 0, sizeof(double)*nBody*6); /* NOTE: No external force for now. */
     for (j = 0; j < nBody; ++j)
     {
-        RigidBodyNamed *bjb = &body[j].b;
+        pym_rb_named_t *bjb = &body[j].b;
         config_setting_t *bConf = config_setting_get_elem(bodyConf, j);
         const char *bName;
         config_setting_lookup_string(bConf, "name", &bName);
         strncpy(bodyName[j], bName, 128);
         strncpy(bjb->name, bName, 128);
-        printf("    Body %3d : %s\n", j, bName);
+        //printf("    Body %3d : %s\n", j, bName);
         const char *rotParamStr;
         config_setting_lookup_string(bConf, "rotParam", &rotParamStr);
-        RotationParameterization rp;
+        pym_rot_param_t rp;
         int nrp = 0; /* Numer of Rotation Parameters */
         if (strcmp(rotParamStr, "QUAT_WFIRST") == 0)    { rp = RP_QUAT_WFIRST; nrp = 4; }
         else if (strcmp(rotParamStr, "EXP") == 0)       { rp = RP_EXP;         nrp = 3; }
@@ -135,8 +135,14 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
         }
 
         bjb->nFiber = 0; /* will be set after loading muscle fiber sections of configuration file */
-        FOR_0(k, 3) bjb->p0[k] = bjb->p[k] - h*bjb->pd[k];
-        FOR_0(k, 4) bjb->q0[k] = bjb->q[k] - h*bjb->qd[k];
+        FOR_0(k, 3) {
+            bjb->p0[k] = bjb->p[k] - h*bjb->pd[k];
+            assert(bjb->p[k] == bjb->p0[k]);
+        }
+        FOR_0(k, 4) {
+            bjb->q0[k] = bjb->q[k] - h*bjb->qd[k];
+            assert(bjb->q[k] == bjb->q0[k]);
+        }
     }
     /*
      * Parse muscle fiber configurations
@@ -144,18 +150,18 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
     config_setting_t *muscleConf = config_lookup(&conf, "muscle");
     assert(muscleConf);
 	const unsigned int nMuscle = config_setting_length(muscleConf);
-	MuscleFiber fiber[nMuscle];
+	pym_mf_t fiber[nMuscle];
 	unsigned int musclePair[nMuscle][2];
 	char muscleName[nMuscle][128];
     for (j = 0; j < nMuscle; ++j)
     {
-        MuscleFiberNamed  *mfn = &fiber[j].b;
+        pym_mf_named_t  *mfn = &fiber[j].b;
         config_setting_t *mConf = config_setting_get_elem(muscleConf, j);
         const char *mName;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
         strncpy(mfn->name, mName, 128);
-        printf("    Fiber %3d : %s\n", j, mName);
+        //printf("    Fiber %3d : %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         FIBER(j,0) = config_setting_get_float(KSE);
         config_setting_t *KPE = config_setting_get_member(mConf, "KPE"); assert(KPE);
@@ -191,10 +197,10 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
         mfn->ins = biIdx;
         /* TODO: xrest upper and lower bounds */
         mfn->xrest_lower = mfn->xrest*0.5;
-        mfn->xrest_upper = mfn->xrest*1.5;
+        mfn->xrest_upper = mfn->xrest*2.0;
 
-        RigidBodyNamed *bjbOrg = &body[ boIdx ].b;
-        RigidBodyNamed *bjbIns = &body[ biIdx ].b;
+        pym_rb_named_t *bjbOrg = &body[ boIdx ].b;
+        pym_rb_named_t *bjbIns = &body[ biIdx ].b;
         bjbOrg->fiber[ bjbOrg->nFiber ] = j; ++bjbOrg->nFiber;
         bjbIns->fiber[ bjbIns->nFiber ] = j; ++bjbIns->nFiber;
 
@@ -222,7 +228,8 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
          * Normalize the quaternions for each body
          * to ensure they represent rotations.
          */
-        NormalizeVector(4, &BODY(j,3));
+        NormalizeVector(4, body[j].b.q);
+        NormalizeVector(4, body[j].b.q0);
     }
     /***************************************************************/
 
@@ -231,17 +238,17 @@ int AllocConfig(const char *fnConf, PymuscleConfig *pymCfg) {
      */
     pymCfg->nBody  = nBody ;
     pymCfg->nFiber = nMuscle ;
-    pymCfg->body   = (RigidBody *)malloc(sizeof(RigidBody)*nBody  ) ;
-    pymCfg->fiber  = (MuscleFiber   *)malloc(sizeof(MuscleFiber  )*nMuscle) ;
-    memcpy(pymCfg->body , body , sizeof(RigidBody)*nBody  );
-    memcpy(pymCfg->fiber, fiber, sizeof(MuscleFiber  )*nMuscle);
+    pymCfg->body   = (pym_rb_t *)malloc(sizeof(pym_rb_t)*nBody  ) ;
+    pymCfg->fiber  = (pym_mf_t   *)malloc(sizeof(pym_mf_t  )*nMuscle) ;
+    memcpy(pymCfg->body , body , sizeof(pym_rb_t)*nBody  );
+    memcpy(pymCfg->fiber, fiber, sizeof(pym_mf_t  )*nMuscle);
     return 0;
     #undef csgfe
     #undef BODY
     #undef FIBER
 }
 
-void ConvertRotParamInPlace(PymuscleConfig *pymCfg, RotationParameterization targetRotParam) {
+void PymConvertRotParamInPlace(pym_config_t *pymCfg, pym_rot_param_t targetRotParam) {
     assert(targetRotParam == RP_EXP);
     int i;
     for (i = 0; i < pymCfg->nBody; ++i) {
@@ -260,14 +267,14 @@ void ConvertRotParamInPlace(PymuscleConfig *pymCfg, RotationParameterization tar
     }
 }
 
-void GetR_i(cholmod_triplet **_R_i, const LPStateDependents sd, const int i /* RB index */, const PymuscleConfig *pymCfg, cholmod_common *cc) {
+void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* RB index */, const pym_config_t *pymCfg, cholmod_common *cc) {
     int j, k;
     /*
      * PARAMETER   i   global RB index
      * LOCAL       j   local MF index of RB i
      * LOCAL       k   <generic iterate variable>
      */
-    const RigidBodyNamed *rbn = &pymCfg->body[i].b;
+    const pym_rb_named_t *rbn = &pymCfg->body[i].b;
     const int nf = pymCfg->nFiber;
     const int nd = 6;
     cholmod_triplet *R_i = cholmod_allocate_triplet(nd*rbn->nFiber, nf, nd*rbn->nFiber, 0, CHOLMOD_REAL, cc);
@@ -276,7 +283,7 @@ void GetR_i(cholmod_triplet **_R_i, const LPStateDependents sd, const int i /* R
         assert(fidx < nf);
         const double *attPos1, *attPos2;
         int oppositeBidx = -1;
-        const MuscleFiberNamed *mf = &pymCfg->fiber[ fidx ].b;
+        const pym_mf_named_t *mf = &pymCfg->fiber[ fidx ].b;
         if (i == mf->org) {
             attPos1 = mf->fibb_org;
             attPos2 = mf->fibb_ins;
@@ -308,7 +315,7 @@ void GetR_i(cholmod_triplet **_R_i, const LPStateDependents sd, const int i /* R
     *_R_i = R_i;
 }
 
-void GetBipedMatrixVector(BipedOptimizationData *bod, LPStateDependents sd, const LPPymuscleConfig pymCfg, cholmod_common *cc)
+void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, const pym_config_t *pymCfg, cholmod_common *cc)
 {
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
@@ -417,7 +424,7 @@ void GetBipedMatrixVector(BipedOptimizationData *bod, LPStateDependents sd, cons
     FOR_0(i, nb) cholmod_free_triplet(&A_trip[i], cc);
 }
 
-void SetPymCfgChiRefToCurrentState(LPPymuscleConfig pymCfg) {
+void PymSetPymCfgChiRefToCurrentState(pym_config_t *pymCfg) {
     int i;
     FOR_0(i, pymCfg->nBody) {
         memcpy(pymCfg->body[i].b.chi_ref  , pymCfg->body[i].b.p, sizeof(double)*3);

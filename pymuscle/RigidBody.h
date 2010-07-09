@@ -1,17 +1,17 @@
 #ifndef __RIGIDBODY_H_
 #define __RIGIDBODY_H_
 
-typedef enum _RotationParameterization {
+enum _pym_rot_param_t {
     RP_UNKNOWN,
     RP_EULER_XYZ,
     RP_EULER_ZXZ,
     RP_QUAT_WFIRST,
     RP_EXP
-} RotationParameterization;
+};
 
 #define MAX_FIBER_PER_RB (128)
 
-typedef struct _RigidBodyNamed {
+struct _pym_rb_named_t {
         /*
          * q,qd indices  0    1    2    3
          * ---------------------------------
@@ -25,7 +25,10 @@ typedef struct _RigidBodyNamed {
         double qd[4];
         double m;
         double I[3];
-        RotationParameterization rotParam;
+        /******************************************************************/
+        /* Data declared so far should not be modified for compatibility  */
+        /******************************************************************/
+        pym_rot_param_t rotParam;
         double boxSize[3];
         char name[128];
         char pName[128];
@@ -36,14 +39,14 @@ typedef struct _RigidBodyNamed {
         int nFiber; /* Number of muscle fibers attached to this body */
         int fiber[MAX_FIBER_PER_RB];
         double chi_ref[3+4];
-} RigidBodyNamed;
+};
 
-typedef union _RigidBody
+union _pym_rb_t
 {
     double a[3+4+3+4+1+3]; /* Old way to access RigidBody */
-    RigidBodyNamed b;
-} RigidBody;
+    pym_rb_named_t b;
+};
 
-void SetRigidBodyChi_1(RigidBody *rb, const double Chi_1[3+4]);
+void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+4]);
 
 #endif

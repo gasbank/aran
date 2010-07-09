@@ -4,7 +4,7 @@
 /* Debug print routines */
 #define __PRINT_FLH printf("%s (%d) : ", strrchr(__FILE__, '/')+1, __LINE__)
 #define __PRINT_DENSE_VECTOR(vd) { PRINT_FLH;  double* v = (double *)(vd->x); int n = vd->nrow; printf("DenseVector " #vd); int i; for(i=0;i<n;++i) printf("%10.4lf", v[i]); printf("\n"); }
-#define __PRINT_VECTOR(v, n)     { PRINT_FLH;  printf("Vector " #v " : ");  int i; for(i=0;i<n;++i) printf("%14lg", v[i]); printf("\n"); }
+#define __PRINT_VECTOR(v, n)     { PRINT_FLH;  printf("Vector " #v " : ");  int i; for(i=0;i<n;++i) printf("%18.8e", v[i]); printf("\n"); }
 #define __PRINT_VECTOR_VERT(v, n){ PRINT_FLH;  printf("Vector " #v " ;\n"); int i; for(i=0;i<n;++i) printf("(%5d) %14lg\n", i, v[i]); }
 #define __PRINT_VECTOR_INT(v, n) { PRINT_FLH;  printf("Vector " #v " : ");  int i; for(i=0;i<n;++i) printf("%6d", v[i]); printf("\n"); }
 #define __PRINT_INT(v)             PRINT_FLH;  printf(#v " : %d\n", v)

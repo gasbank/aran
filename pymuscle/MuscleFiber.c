@@ -11,19 +11,19 @@
 #include "MathUtil.h"
 #include "MuscleFiber.h"
 
-void GetMuscleFiberK(double k[3], const MuscleFiber *mfx, const LPPymuscleConfig pymCfg) {
+void GetMuscleFiberK(double k[3], const pym_mf_t *mfx, const pym_config_t *pymCfg) {
     const double h = pymCfg->h;
-    const MuscleFiberNamed *mf = &mfx->b;
+    const pym_mf_named_t *mf = &mfx->b;
     const double kse_sq = mf->kse*mf->kse;
     k[0] = mf->kse * mf->b + kse_sq * h + mf->kse * h * mf->kpe;
     k[1] = -kse_sq * h;
     k[2] = kse_sq * h * mf->kpe;
 }
 
-void GetMuscleFiberEndpointPositions(double orgpos[3], double inspos[3], const int timeframe, const int mfidx, const LPStateDependents sd, const LPPymuscleConfig pymCfg) {
-    const MuscleFiberNamed *mf = &pymCfg->fiber[mfidx].b;
-    const StateDependents *orgSd = sd + mf->org;
-    const StateDependents *insSd = sd + mf->ins;
+void GetMuscleFiberEndpointPositions(double orgpos[3], double inspos[3], const int timeframe, const int mfidx, const pym_rb_statedep_t *sd, const pym_config_t *pymCfg) {
+    const pym_mf_named_t *mf = &pymCfg->fiber[mfidx].b;
+    const pym_rb_statedep_t *orgSd = sd + mf->org;
+    const pym_rb_statedep_t *insSd = sd + mf->ins;
     const double (*orgW)[4], (*insW)[4];
 
     if (timeframe == 0) {
@@ -40,7 +40,7 @@ void GetMuscleFiberEndpointPositions(double orgpos[3], double inspos[3], const i
     AffineTransformPoint(inspos, insW, mf->fibb_ins);
 }
 
-double GetMuscleFiberS(const int mfidx, const LPStateDependents sd, const LPPymuscleConfig pymCfg) {
+double GetMuscleFiberS(const int mfidx, const pym_rb_statedep_t *sd, const pym_config_t *pymCfg) {
     double orgpos0[3], inspos0[3], diff0[3], x0 = 0;
     double orgpos1[3], inspos1[3], diff1[3], x1 = 0;
     GetMuscleFiberEndpointPositions(orgpos0, inspos0, 0, mfidx, sd, pymCfg);
@@ -55,10 +55,10 @@ double GetMuscleFiberS(const int mfidx, const LPStateDependents sd, const LPPymu
     x0 = sqrtf(x0);
     x1 = sqrtf(x1);
     const double h = pymCfg->h;
-    const MuscleFiberNamed *mf = &pymCfg->fiber[mfidx].b;
+    const pym_mf_named_t *mf = &pymCfg->fiber[mfidx].b;
     const double kse_sq = mf->kse * mf->kse;
     const double s = mf->kse * mf->b * mf->T + kse_sq * h * mf->kpe * x1 + kse_sq * mf->b * (x1 - x0);
 
-    //printf("s[%d] = %lf    x0 = %lf      x1 = %lf\n", mfidx, s, x0, x1);
+    //printf("s[%3d] %20s = %-15.8e    x0 = %-15.8e    x1 = %-15.8e    T0 = %-15.8e\n", mfidx, mf->name, s, x0, x1, mf->T);
     return s;
 }

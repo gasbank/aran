@@ -12,9 +12,9 @@
 #include <math.h>
 #include <libconfig.h>
 #include <mosek.h>
+#include <umfpack.h>
+#include <cholmod.h>
 #include "PymStruct.h"
-#include "umfpack.h"
-#include "cholmod.h"
 #include "Control.h"
 #include "MathUtil.h"
 #include "SimCore.h"
@@ -93,21 +93,6 @@ void CreateOutputTableHeader(char tableHeader[4096], int nBody, int nMuscle,
     }
     strncat(tableHeader, "\n", 4095);
 }
-/*
-int main()
-{
-
-    double a[5][5] = { {1, 0, 0, 4, 5},
-                       {0, 0, 8, 9, 0},
-                       {0, 7, 0,-0, 1e-4},
-                       {1e-15,0, 8, 9, 0},
-                       {0, 7,-8, 9, 0} };
-    ToSparse(5,5,a);
-
-    return 0;
-}
-*/
-
 
 int main4(int argc, const char **argv)
 {
@@ -125,43 +110,315 @@ int main3(int argc, const char **argv)
     return 0;
 }
 
+int PymParseTrajectoryFile(char corresMap[20][2][128],
+                           int *_nCorresMap,
+                           double **_trajData,
+                           int *_nBody,
+                           int *_nFrame,
+                           const char *fnRbCfg,
+                           const char *fnTraj) {
+    FILE *rbCfg = fopen(fnRbCfg, "r");
+    FILE *traj  = fopen(fnTraj, "r");
+    if (rbCfg == 0) {
+        printf("Rigid body configuration file %s parse failed.\n", fnRbCfg);
+        return -1;
+    } else if (traj == 0) {
+        printf("Trajectory file %s parse failed.\n", fnTraj);
+        return -2;
+    }
+    int i, j, k;
+
+    int nCorresMap = 0;
+    const char delimiters[] = " \n";
+    while (1) {
+        char *aLine = 0;
+        size_t aLineLen = 0;
+        ssize_t ret = getline(&aLine, &aLineLen, rbCfg);
+        if (ret < 0 || aLineLen <= 1)
+            break;
+        //printf("%s", aLine);
+        char *cp = strdup(aLine);
+        char *bodyName = strtok(cp, delimiters);
+        char *unusedToken;
+        FOR_0(i, 6) unusedToken = strtok (0, delimiters);
+        char *anotherName = strtok (0, delimiters);
+
+        //printf("%s ... %s\n", bodyName, anotherName);
+        strcpy(corresMap[nCorresMap][0], bodyName);
+        strcpy(corresMap[nCorresMap][1], anotherName);
+        ++nCorresMap;
+        assert(nCorresMap <= 20);
+        free(cp);
+        free(aLine);
+    }
+    printf("nCorresMap = %d\n", nCorresMap);
+
+    /* Parse the trajectory file */
+    char *trajHeader = 0;
+    size_t trajHeaderLen = 0;
+    getline(&trajHeader, &trajHeaderLen, traj);
+    int nFrame = atoi(trajHeader);
+    int nBody  = atoi(strrchr(trajHeader, ' '));
+    printf("nFrame = %d   nBody = %d\n", nFrame, nBody);
+    assert(nFrame > 0 && nBody > 0);
+    assert(nBody == nCorresMap);
+    double *trajData = (double *)malloc(nFrame*nBody*sizeof(double)*6);
+    FOR_0(i, nFrame) {
+        FOR_0(j, nBody) {
+            char *aLine = 0;
+            size_t aLineLen = 0;
+            ssize_t ret = getline(&aLine, &aLineLen, traj);
+            assert(ret >= 0);
+
+            char *cp = strdup(aLine);
+            char *qexp[6];
+            qexp[0] = strtok(cp, delimiters);
+            qexp[1] = strtok(0, delimiters);
+            qexp[2] = strtok(0, delimiters);
+            qexp[3] = strtok(0, delimiters);
+            qexp[4] = strtok(0, delimiters);
+            qexp[5] = strtok(0, delimiters);
+
+            FOR_0(k, 6) {
+                const double parsed = strtod(qexp[k], 0);
+                trajData[ i*nBody*6 + j*6 + k ] = parsed;
+                //printf("  %e", parsed);
+            }
+            //printf("\n");
+
+            free(cp);
+            free(aLine);
+        }
+    }
+
+    free(trajHeader);
+    fclose(rbCfg);
+    fclose(traj);
+    *_trajData = trajData;
+    *_nBody = nBody;
+    *_nFrame = nFrame;
+    *_nCorresMap = nCorresMap;
+    return 0;
+}
+
+typedef struct _deviation_stat_entry {
+    double chi_d_norm;
+    int bodyIdx;
+} deviation_stat_entry;
+
+int DevStatCompare(const void * a, const void * b) {
+    deviation_stat_entry *at = (deviation_stat_entry *)a;
+    deviation_stat_entry *bt = (deviation_stat_entry *)b;
+    double diff = bt->chi_d_norm - at->chi_d_norm;
+    if (diff > 0) return 1;
+    else if (diff < 0) return -1;
+    else return 0;
+}
+
+typedef struct _pym_cmdline_options_t {
+    const char *simconf;
+    int frame;
+    const char *trajconf;
+    const char *trajdata;
+    const char *output;
+} pym_cmdline_options_t;
+
+int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
+    /* initialize default options first */
+    cmdopt->simconf = 0;
+    cmdopt->frame = 100;
+    cmdopt->trajconf = 0;
+    cmdopt->trajdata = 0;
+    cmdopt->output = "outputFile.txt";
+
+    assert(argc >= 2);
+    cmdopt->simconf = argv[1];
+    int i;
+    int _trajconf = 0, _trajdata = 0;
+    for (i = 2; i < argc; ++i) {
+        if (strncmp(argv[i], "--frame=", strlen("--frame=")) == 0) {
+            cmdopt->frame = atoi( strchr(argv[i], '=') + 1 );
+        } else if (strncmp(argv[i], "--trajconf=", strlen("--trajconf=")) == 0) {
+            cmdopt->trajconf = strchr(argv[i], '=') + 1;
+            _trajconf = 1;
+        } else if (strncmp(argv[i], "--trajdata=", strlen("--trajdata=")) == 0) {
+            cmdopt->trajdata = strchr(argv[i], '=') + 1;
+            _trajdata = 1;
+        } else if (strncmp(argv[i], "--output=", strlen("--output=")) == 0) {
+            cmdopt->output = strchr(argv[i], '=') + 1;
+        } else {
+            printf("Error: unknown argument provided - %s\n", argv[i]);
+            return -2;
+        }
+    }
+    if (_trajconf ^ _trajdata) {
+        printf("Error: --trajconf should be specified with --trajdata and vice versa.\n\n");
+        return -1;
+    }
+    return 0;
+}
 
 int main(int argc, const char **argv) {
-    if (argc != 2) {
-        printf("Rigid body and muscle fiber simulator                2010 Geoyeob Kim\n\n");
-        printf("  Usage\n");
-        printf("    %s [config file]\n\n", strrchr(argv[0], '/') + 1);
-        exit(-123);
+    if (argc < 2) {
+        printf("Rigid body and muscle fiber simulator - 2010 Geoyeob Kim\n\n");
+        printf("  USAGE\n");
+        printf("    %s config_file <simulation config file> [<options>]\n", strrchr(argv[0], '/') + 1);
+        printf("\n");
+        printf("  OPTIONS\n");
+        printf("      --frame=<frame number to simulate>\n");
+        printf("      --trajconf=<trajectory config file>\n");
+        printf("      --trajdata=<trajectory data file>");
+        printf("\n\n");
+        printf("  --trajconf should be specified with --trajdata and vice versa.\n\n");
+        return -1;
     }
+    int ret = 0;
+    pym_cmdline_options_t cmdopt;
+    ret = ParseCmdlineOptions(&cmdopt, argc, argv);
+    if (ret < 0) {
+        printf("Failed.\n");
+        return -2;
+    }
+
     cholmod_common cc ;
     cholmod_start (&cc) ;
 
-    PymuscleConfig pymCfg; AllocConfig(argv[1], &pymCfg);
-    ConvertRotParamInPlace(&pymCfg, RP_EXP);
+    pym_config_t pymCfg;
+    ret = PymConstructConfig(cmdopt.simconf, &pymCfg);
+    if (ret < 0) {
+        printf("Failed.\n");
+        return -1;
+    }
     const int nb = pymCfg.nBody;
     const int nf = pymCfg.nFiber;
-    SetPymCfgChiRefToCurrentState(&pymCfg);
-    MSKenv_t    env;
-    InitializeMosek(&env);
-    int i, j;
-    FOR_0(i, pymCfg.nSimFrame) {
-        StateDependents sd[nb];
 
-        FOR_0(j, nb) {
-            UpdateCurrentStateDependentValues(sd + j, pymCfg.body + j, &pymCfg, &cc);
+    int i, j, k;
+
+    PymConvertRotParamInPlace(&pymCfg, RP_EXP);
+
+    MSKenv_t    env;
+    PymInitializeMosek(&env);
+
+
+    char corresMap[20][2][128];
+    int corresMapIndex[pymCfg.nBody]; FOR_0(i, pymCfg.nBody) corresMapIndex[i] = -1;
+    int nCorresMap = 0;
+    int nBlenderBody = 0;
+    int nBlenderFrame = 0;
+    double *trajData = 0;
+    if (cmdopt.trajconf) {
+        PymParseTrajectoryFile(corresMap,
+                               &nCorresMap,
+                               &trajData,
+                               &nBlenderBody,
+                               &nBlenderFrame,
+                               cmdopt.trajconf,
+                               cmdopt.trajdata);
+        assert(nCorresMap > 0);
+        assert(nBlenderFrame >= 2);
+        FOR_0(i, pymCfg.nBody) {
+            FOR_0(j, nBlenderBody) {
+                if (strcmp(pymCfg.body[i].b.name, corresMap[j][1]) == 0) {
+                    corresMapIndex[i] = j;
+                    break;
+                }
+            }
+            assert(corresMapIndex[i] >= 0);
+        }
+        j = 0;
+        FOR_0(i, nCorresMap) {
+            printf("%20s <----> %-20s", corresMap[i][0], corresMap[i][1]);
+            if (corresMap[i][1][0] != '*') {
+                printf(" (index=%d)\n", corresMapIndex[j]);
+                ++j;
+            } else {
+                printf("\n");
+            }
         }
 
-        BipedOptimizationData bod;
-        GetBipedMatrixVector(&bod, sd, &pymCfg, &cc);
+        /*
+         *  Set current and previous state according
+         *  to the initial frame of trajectory data.
+         */
+        FOR_0(i, pymCfg.nBody) {
+            pym_rb_named_t *rbn = &pymCfg.body[i].b;
+            assert(rbn->rotParam == RP_EXP);
+            double p2[3], q2[3];
+            memcpy(rbn->p, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
+            memcpy(rbn->q, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
+            memcpy(p2,     trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
+            memcpy(q2,     trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
+            FOR_0(j, 3) {
+                rbn->pd[j] = (p2[j] - rbn->p[j]) / pymCfg.h;
+                rbn->qd[j] = (q2[j] - rbn->q[j]) / pymCfg.h;
+                rbn->p0[j] = rbn->p[j] - pymCfg.h*rbn->pd[j];
+                rbn->q0[j] = rbn->q[j] - pymCfg.h*rbn->qd[j];
+            }
+        }
+    } else {
+        PymSetPymCfgChiRefToCurrentState(&pymCfg);
+    }
+
+
+    pymCfg.nSimFrame = cmdopt.frame;
+
+    FILE *outputFile = fopen(cmdopt.output, "w");
+    if (!outputFile) {
+        printf("Error: Opening the output file %s failed.\n", cmdopt.output);
+        return -3;
+    }
+    fprintf(outputFile, "%d %d\n", pymCfg.nSimFrame, nb);
+    /* Let's start the simulation happily :) */
+    FOR_0(i, pymCfg.nSimFrame) {
+
+        /* Reparameterize the rotation if needed */
+//        FOR_0(j, nb) {
+//            pym_rb_named_t *rbn = &pymCfg.body[j].b;
+//            double th_0 = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
+//            double th_1 = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
+//
+//            while (th_0 > 2*M_PI) {
+//                FOR_0(k, 3) rbn->q0[k] = rbn->q0[k]/th_0 * (th_0-2*M_PI);
+//                th_0 -= 2*M_PI;
+//            }
+//            while (th_1 > 2*M_PI) {
+//                FOR_0(k, 3) rbn->q[k] = rbn->q[k]/th_1 * (th_1-2*M_PI);
+//                th_1 -= 2*M_PI;
+//            }
+//
+//            if (th_0 > M_PI && th_1 > M_PI) {
+//                FOR_0(k, 3) rbn->q0[k] = (1-2*M_PI/th_0)*rbn->q0[k];
+//                FOR_0(k, 3) rbn->q[k]  = (1-2*M_PI/th_1)*rbn->q [k];
+//                FOR_0(k, 3) rbn->qd[k] = (rbn->q[k] - rbn->q0[k]) / pymCfg.h;
+//                const double th_0new = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
+//                const double th_1new = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
+//                printf("    NOTE: %s reparameterized. (th_0=%lf --> %lf, th_1=%lf --> %lf)\n", rbn->name, th_0, th_0new, th_1, th_1new);
+//            }
+//        }
+
+        if (argc == 4 || argc == 5) {
+            FOR_0(j, pymCfg.nBody) {
+                memcpy(pymCfg.body[j].b.chi_ref  , trajData + (i+1)*nBlenderBody*6 + corresMapIndex[j]*6, sizeof(double)*6);
+            }
+        }
+
+        pym_rb_statedep_t sd[nb];
+
+        FOR_0(j, nb) {
+            PymConstructRbStatedep(sd + j, pymCfg.body + j, &pymCfg, &cc);
+        }
+
+        pym_biped_eqconst_t bipEq;
+        PymConstructBipedEqConst(&bipEq, sd, &pymCfg, &cc);
         //cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
 
         //cholmod_drop(1e-16, bod.bipMat, &cc);
 
         //PrintEntireSparseMatrix(bod.bipMat);
         //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
-        double xx[bod.bipMat->ncol];
+        double xx[bipEq.bipMat->ncol];
         MSKsolstae solsta;
-        double cost = PymOptimize(xx, &solsta, &bod, sd, &pymCfg, &env, &cc);
+        double cost = PymOptimize(xx, &solsta, &bipEq, sd, &pymCfg, &env, &cc);
         const char *solstaStr;
         if (solsta == MSK_SOL_STA_UNKNOWN) solstaStr = "***UNKNOWN***";
         else if (solsta == MSK_SOL_STA_OPTIMAL) solstaStr = "optimal";
@@ -169,44 +426,77 @@ int main(int argc, const char **argv) {
         else assert(0);
 
         //if (i%10 == 0)
-            printf("Optimization iteration %5d finished. %15s (cost=%lf)\n", i, solstaStr, cost);
+            printf("Frame %5d finished.\n", i);
 
-
-        printf("Results:\n");
+        deviation_stat_entry dev_stat[nb];
+        memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
+        printf("Results:  %15s (cost=%.10e)\n", solstaStr, cost);
         FOR_0(j, nb) {
-            const double *chi_j_1 = xx + bod.Aci[j];
-            SetRigidBodyChi_1(pymCfg.body + j, chi_j_1 );
+            const double *chi_2 = xx + bipEq.Aci[j];
+            const pym_rb_named_t *rbn = &pymCfg.body[j].b;
 
-            const RigidBodyNamed *rbn = &pymCfg.body[j].b;
-            double chi_1[6], chi_0[6];
-            chi_1[0] = rbn->p[0]; chi_1[1] = rbn->p[1]; chi_1[2] = rbn->p[2];
-            chi_1[3] = rbn->q[0]; chi_1[4] = rbn->q[1]; chi_1[5] = rbn->q[2];
-            chi_0[0] = rbn->p0[0]; chi_0[1] = rbn->p0[1]; chi_0[2] = rbn->p0[2];
-            chi_0[3] = rbn->q0[0]; chi_0[4] = rbn->q0[1]; chi_0[5] = rbn->q0[2];
-            //printf("%8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
-            //PRINT_VECTOR(chi_0, 6);
+            double chi_1[6], chi_0[6], chi_r[6];
+            memcpy(chi_1    , rbn->p,       sizeof(double)*3);
+            memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
+            memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
+            memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
+            memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
+            double chi_d[6];
+            FOR_0(k, 6) {
+                chi_d[k] = chi_2[k] - chi_r[k];
+                dev_stat[j].chi_d_norm += chi_d[k] * chi_d[k];
+            }
+            dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
+            dev_stat[j].bodyIdx = j;
+
+//            printf("  chi_0  %8s - ", rbn->name); __PRINT_VECTOR(chi_0, 6);
+//            printf("     _1  %8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
+//            printf("     _2  %8s - ", rbn->name); __PRINT_VECTOR(chi_2, 6);
+//            printf("  <ref>  %8s - ", rbn->name); __PRINT_VECTOR(chi_r, 6);
+//            printf("  <dev>  %8s - ", rbn->name); __PRINT_VECTOR(chi_d, 6);
+//            printf("\n");
+
+            FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
+            fprintf(outputFile, "\n");
+
+
+            /* Update the current state */
+            SetRigidBodyChi_1(pymCfg.body + j, chi_2 );
         }
+
+        printf("  Reference trajectory deviation report\n");
+        qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
+        FOR_0(j, nb) {
+            const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
+            printf("  %12s", rbn->name);
+        }
+        printf("\n");
+        FOR_0(j, nb) {
+            printf("  %12.5e", dev_stat[j].chi_d_norm);
+        }
+        printf("\n");
+
         FOR_0(j, nf) {
-            MuscleFiberNamed *mfn = &pymCfg.fiber[j].b;
-            const double T_0        = xx[ bod.Aci[nb + 0] + j ];
-            const double u_0        = xx[ bod.Aci[nb + 1] + j ];
-            const double xrest_0    = xx[ bod.Aci[nb + 2] + j ];
+            pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
+            const double T_0        = xx[ bipEq.Aci[nb + 0] + j ];
+            const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
+            const double xrest_0    = xx[ bipEq.Aci[nb + 2] + j ];
             mfn->T     = T_0;
             mfn->xrest = xrest_0;
-            //printf("%16s -   T = %12lf   u = %12lf   xrest = %12lf\n", mfn->name, T_0, u_0, xrest_0);
-
+//            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
         }
 
-        ReleaseBipedMatrixVector(&bod, &cc);
-        ReleaseStateDependents(sd, &pymCfg, &cc);
+        PymDestroyBipedEqconst(&bipEq, &cc);
+        FOR_0(j, pymCfg.nBody) {
+            PymDestroyRbStatedep(sd + j, &cc);
+        }
     }
+    fclose(outputFile);
 
-
-    CleanupMosek(&env);
-
-    DeallocConfig(&pymCfg);
-
+    PymCleanupMosek(&env);
+    PymDestoryConfig(&pymCfg);
     cholmod_finish(&cc);
+    free(trajData);
     return 0;
 }
 

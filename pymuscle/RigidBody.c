@@ -1,9 +1,10 @@
+#include "PymStruct.h"
 #include "Config.h"
 #include "RigidBody.h"
 
 
-void SetRigidBodyChi_1(RigidBody *rb, const double Chi_1[3+4]) {
-    RigidBodyNamed *rbn = &rb->b;
+void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+4]) {
+    pym_rb_named_t *rbn = &rb->b;
     int i;
     FOR_0(i, 3) {
         rbn->p0[i] = rbn->p[i];

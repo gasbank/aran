@@ -9,6 +9,7 @@ Common math routines
 from math import cos, sin, atan2, asin, sqrt, tan, acos
 from numpy import array, dot, linalg, cross
 from quat import QuatToAngularVel_WC
+import PymConstants
 
 def cot(x): return 1./tan(x)
 
@@ -89,7 +90,7 @@ def QuatToV(q):
 	qw, qx, qy, qz = q
 	qv = array([qx,qy,qz])
 	qv_mag = linalg.norm(qv)
-	if qv_mag < THETA:
+	if qv_mag < PymConstants.THETA():
 		return 1/(0.5-qv_mag**2/48)*qv
 	else:
 		#print 'qw=',qw
@@ -115,7 +116,39 @@ def QuatdToVd(q, qd, v):
 		gamma = th/tan(0.5*th)
 		eta = dot(omega_wc, v)/th*(1/tan(0.5*th)-2/th)
 	return 0.5*(gamma*omega_wc + p - eta*v)
-	
+
+def MatrixToQuaternion(M):
+	m00 = M[0,0]; m01 = M[0,1]; m02 = M[0,2]
+	m10 = M[1,0]; m11 = M[1,1]; m12 = M[1,2]
+	m20 = M[2,0]; m21 = M[2,1]; m22 = M[2,2]
+	tr = m00 + m11 + m22
+	if tr > 0:
+		S = sqrt(tr+1.0) * 2; # S=4*qw 
+		qw = 0.25 * S;
+		qx = (m21 - m12) / S;
+		qy = (m02 - m20) / S; 
+		qz = (m10 - m01) / S; 
+	elif (m00 > m11) and (m00 > m22):
+		S = sqrt(1.0 + m00 - m11 - m22) * 2; # S=4*qx 
+		qw = (m21 - m12) / S;
+		qx = 0.25 * S;
+		qy = (m01 + m10) / S; 
+		qz = (m02 + m20) / S; 
+	elif m11 > m22:
+		S = sqrt(1.0 + m11 - m00 - m22) * 2; # S=4*qy
+		qw = (m02 - m20) / S;
+		qx = (m01 + m10) / S; 
+		qy = 0.25 * S;
+		qz = (m12 + m21) / S; 
+	else:
+		S = sqrt(1.0 + m22 - m00 - m11) * 2; # S=4*qz
+		qw = (m10 - m01) / S;
+		qx = (m02 + m20) / S;
+		qy = (m12 + m21) / S;
+		qz = 0.25 * S;
+	return array([qw,qx,qy,qz])
+
+
 if __name__ == '__main__':
 	q = array([sqrt(2.)/2, 0, sqrt(2.)/2, 0])
 	q /= linalg.norm(q)

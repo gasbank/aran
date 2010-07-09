@@ -86,8 +86,8 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
     cholmod_free_sparse(&Q_T, cc);
 }
 
-int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
-    const RigidBodyNamed* rbn = &rb->b;
+int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc) {
+    const pym_rb_named_t* rbn = &rb->b;
     assert(rbn->rotParam == RP_EXP);
     MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
     Invert6x6MassMatrix(sd->Minv, sd->M);
@@ -165,18 +165,16 @@ int UpdateCurrentStateDependentValues(StateDependents *sd, const RigidBody *rb, 
     return 0;
 }
 
-void ReleaseStateDependents(const StateDependents *sd, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
-    int i, j;
-    FOR_0(i, pymCfg->nBody) {
-        FOR_0(j, sd[i].nContacts_2) {
-            cholmod_free_sparse(&sd[i].Z[j], cc);
-            cholmod_free_sparse(&sd[i].Q[j], cc);
-        }
+void PymDestroyRbStatedep(pym_rb_statedep_t *sd, cholmod_common *cc) {
+    int j;
+    FOR_0(j, sd->nContacts_2) {
+        cholmod_free_sparse(&sd->Z[j], cc);
+        cholmod_free_sparse(&sd->Q[j], cc);
     }
 }
 
-void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
-    const RigidBodyNamed *rbn = &rb->b;
+void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc) {
+    const pym_rb_named_t *rbn = &rb->b;
     /* We can calculate optimal estimate for the number of nonzero elements */
     size_t nzmax = 0;
     const int nd = 6;
@@ -275,8 +273,8 @@ void GetAMatrix(cholmod_triplet **AMatrix, const StateDependents *sd, const Rigi
 //    cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
 }
 
-void GetEta(double **_eta, const StateDependents *sd, const RigidBody *rb, const LPPymuscleConfig pymCfg, cholmod_common *cc) {
-    const RigidBodyNamed *rbn = &rb->b;
+void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc) {
+    const pym_rb_named_t *rbn = &rb->b;
     /* We can calculate optimal estimate for the number of nonzero elements */
     const int nd = 6;
     const int np = sd->nContacts_2;

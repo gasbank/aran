@@ -25,7 +25,7 @@ static void MSKAPI printstr(void *handle,
     //printf("%s",str);
 } /* printstr */
 
-void InitializeMosek(MSKenv_t *env) {
+void PymInitializeMosek(MSKenv_t *env) {
     MSKrescodee  r;
     /* Create the mosek environment. */
     r = MSK_makeenv(env,NULL,NULL,NULL,NULL);
@@ -41,7 +41,7 @@ void InitializeMosek(MSKenv_t *env) {
         r = MSK_initenv(*env);
 }
 
-void CleanupMosek(MSKenv_t *env) {
+void PymCleanupMosek(MSKenv_t *env) {
     /* Delete the environment and the associated data. */
     MSK_deleteenv(env);
 }
@@ -58,10 +58,10 @@ void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
 
 double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod->bipMat->ncol) */
                    MSKsolstae *_solsta, /* MOSEK solution status */
-                 const BipedOptimizationData *bod,
-                 const LPStateDependents sd,
-                 const LPPymuscleConfig pymCfg,
-                 MSKenv_t *pEnv, cholmod_common *cc) {
+                   const pym_biped_eqconst_t *bod,
+                   const pym_rb_statedep_t *sd,
+                   const pym_config_t *pymCfg,
+                   MSKenv_t *pEnv, cholmod_common *cc) {
     const int NUMCON = bod->bipMat->nrow;   /* Number of constraints.             */
     const int NUMVAR = bod->bipMat->ncol;   /* Number of variables.               */
     const int NUMANZ = cholmod_nnz(bod->bipMat, cc);   /* Number of non-zeros in A.          */
@@ -100,17 +100,38 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
     double       c[NUMVAR];
     memset(c, 0, sizeof(double)*NUMVAR);
+
+//    double bodyRefWeight[] = {
+//            /* trunk  */ 1,
+//            /* thighL */ 1,
+//            /* thighR */ 1,
+//            /* calfL  */ 1,
+//            /* calfR  */ 1,
+//            /* soleL  */ 1,
+//            /* soleR  */ 1,
+//            /* toeL   */ 1,
+//            /* toeR   */ 1,
+//    };
+//    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
+
     FOR_0(i, nb) {
+        FOR_0(j, nplist[i])
+            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-7; /* minimize the contact normal force */
         FOR_0(j, nplist[i]) {
-            c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
+            c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 1e-7; /* Estimated position of z-coordinate of contact point */
         }
         for (j= bod->Aci[i] + sd[i].Aci[5]; j < bod->Aci[i]+sd[i].Aci[6]; ++j)
             c[j] = 0; /* minimize the movement of candidate contact points */
-        c[ bod->Aci[i] + sd[i].Aci[8] ] = 20; /* minimize the movement of COMs */
+
+
+        /** DEBUG **/
+        //c[ bod->Aci[i] + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
+        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1;
+
         for (j= bod->Aci[nb+3]; j < bod->Aci[nb+4]; ++j)
-            c[j] = 0; /* minimize aggregate tension */
+            c[j] = 1e-7; /* minimize aggregate tension */
         for (j= bod->Aci[nb+4]; j < bod->Aci[nb+5]; ++j)
-            c[j] = 1e-6; /* minimize aggregate actuation force */
+            c[j] = 1e-7; /* minimize aggregate actuation force */
     }
     const int nd = 6;
     #define SET_NONNEGATIVE(j) { bkx[j] = MSK_BK_LO; blx[j] = 0; bux[j] = MSK_INFINITY; }
@@ -123,7 +144,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z */
-        FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
+        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
         FOR_0(j, nplist[i]) SET_FIXED_ONE  ( Aci[i] + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
         for(j=Aci[i] + sd[i].Aci[5]; j<Aci[i] + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
         for(j=Aci[i] + sd[i].Aci[6]; j<Aci[i] + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
@@ -131,12 +152,22 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
 
     FOR_0(j, nf) {
+        /* Tension range constraint */
+        i = Aci[nb+0]+j;
+//        bkx[i] = MSK_BK_RA;
+//        blx[i] = -10*9.81;
+//        bux[i] = +10*9.81;
+        /* Actuation force range constraint */
+        i = Aci[nb+1]+j;
+        bkx[i] = MSK_BK_RA;
+        blx[i] = -30*9.81;
+        bux[i] =  30*9.81;
+        /* Rest length range constraint */
         i = Aci[nb+2]+j;
         bkx[i] = MSK_BK_RA;
         blx[i] = pymCfg->fiber[j].b.xrest_lower;
         bux[i] = pymCfg->fiber[j].b.xrest_upper;
-        i = Aci[nb+1]+j;
-        //#bkx[i], blx[i], bux[i] = mosek.boundkey.lo, 0, inf                           # Actuation force
+
     }
 
 

@@ -5,9 +5,7 @@ from numpy import array, linalg, zeros
 from math import sin, cos
 from scipy import sparse
 from MathUtil import cot
-
-
-THETA = 1e-3       # Threshold for theta
+import PymConstants
 
 def __dRdv(v, th):
     v1, v2, v3 = v
@@ -242,7 +240,7 @@ def __dRdv0(v, th):
 def dRdv(v):
     assert len(v) == 3
     th = linalg.norm(v)
-    if th < THETA: return __dRdv0(v, th)
+    if th < PymConstants.THETA(): return __dRdv0(v, th)
     else         : return __dRdv(v, th)
 
 def __dfxdX(p, v, th, pc):
@@ -313,7 +311,7 @@ def __dfxdX0(p, v, th, pc):
 def dfxdX(p, v, pc):
     assert len(v) == 3
     th = linalg.norm(v)
-    if th < THETA: return __dfxdX0(p, v, th, pc)
+    if th < PymConstants.THETA(): return __dfxdX0(p, v, th, pc)
     else         : return __dfxdX(p, v, th, pc)
 
 def __RotationMatrixFromV(v, th):
@@ -383,7 +381,7 @@ def __RotationMatrixFromV0(v, th):
 def RotationMatrixFromV(v):
     assert len(v) == 3
     th = linalg.norm(v)
-    if th < THETA: return __RotationMatrixFromV0(v, th)
+    if th < PymConstants.THETA(): return __RotationMatrixFromV0(v, th)
     else         : return __RotationMatrixFromV(v, th)
 
 def __VdotFromOmega(v, th, omega):
@@ -424,7 +422,7 @@ def __VdotFromOmega0(v, th, omega):
 def VdotFromOmega(v, omega):
     assert len(v) == 3
     th = linalg.norm(v)
-    if th < THETA: return __VdotFromOmega0(v, th, omega)
+    if th < PymConstants.THETA(): return __VdotFromOmega0(v, th, omega)
     else         : return __VdotFromOmega(v, th, omega)
 
 def __GeneralizedForce(v, th, Fr, r):
@@ -605,7 +603,7 @@ def GeneralizedForce(v, Fr, r):
     assert len(Fr) == 3
     assert len(r)  == 3
     th = linalg.norm(v)
-    if th < THETA: return __GeneralizedForce0(v, th, Fr, r)
+    if th < PymConstants.THETA(): return __GeneralizedForce0(v, th, Fr, r)
     else         : return __GeneralizedForce(v, th, Fr, r)
 
 def __QuatdFromV(v, th, vd):
@@ -656,5 +654,5 @@ def QuatdFromV(v, vd):
     assert len(v)  == 3
     assert len(vd) == 3
     th = linalg.norm(v)
-    if th < THETA: return __QuatdFromV0(v, th, vd)
+    if th < PymConstants.THETA(): return __QuatdFromV0(v, th, vd)
     else         : return __QuatdFromV(v, th, vd)

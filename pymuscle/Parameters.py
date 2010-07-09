@@ -23,54 +23,149 @@ import sys
 import PIL.Image as pil
 import pygame
 from pygame.font import *
-#from PmBody import *
-#from PmMuscle import *
 import RigidBody, MuscleFiber
 from GlobalContext import *
 import ctypes as ct
+from WriteSimcoreConfFile import *
 
 ESCAPE = '\033'
 
+def RigidBodyFromRbConf(fields):
+	name       = fields[0]
+	dimX       = float(fields[1])
+	dimY       = float(fields[2])
+	dimZ       = float(fields[3])
+	xAxis      = fields[4]
+	yAxis      = fields[5]
+	boneLength = float(fields[6])
+	mass       = 1.0
+	boxsize    = (dimX,dimY,dimZ)
+	q          = array([0,0,0,0,0,0])
+	qd         = array([0,0,0,0,0,0])
+	dc         = array([0.1,0.2,0.3])
+	rotParam   = 'EXP'
+	
+	rb         = RigidBody.RigidBody(name, None, mass, boxsize, q, qd, dc, rotParam)
+	# Two additional attributes added
+	rb.xAxis   = xAxis
+	rb.yAxis   = yAxis
+	return rb
+
 class BipedParameter:
-	def __init__(self):
+	def __init__(self, fnRbConf = None):
 		self.p = {}
-		# NOTE: set this in the unit of centimeters.
-		# 1. Body dimension
+		self.direction = {}
+		if fnRbConf:
+			rbConf = {}
+			rbConf_file = open(fnRbConf, 'r')
+			for line in rbConf_file:
+				fields = line.split()
+				print fields
+				rb = RigidBodyFromRbConf(fields)
+				rbConf[rb.name] = rb
+				
+			# Body name correspondance
+			bnCorres = {}
+			bnCorres['trunk'] = 'lowerback'
+			bnCorres['thigh'] = 'LeftHip'
+			bnCorres['calf' ] = 'LeftKnee'
+			bnCorres['sole' ] = 'LeftAnkle'
+			bnCorres['toe'  ] = 'LeftToe'
+			
+			self.direction['soleLen']        = 1
+			self.direction['soleHeight']     = 2
+			self.direction['soleWidth']      = 0
+			self.direction['toeLen']         = 1
+			self.direction['toeHeight']      = 2
+			self.direction['toeWidth']       = 0
+			self.direction['calfLen']        = 1
+			self.direction['calfWidth']      = 0
+			self.direction['calfLatWidth']   = 2
+			self.direction['thighLen']       = 1
+			self.direction['thighWidth']     = 0
+			self.direction['thighLatWidth']  = 2
+			self.direction['trunkLen']       = 1
+			self.direction['trunkWidth']     = 0
+			self.direction['trunkLatWidth']  = 2
+			
+			
+			self.p[ 'soleLen']       = rbConf[ bnCorres['sole'] ].boxsize[ self.direction['soleLen']    ]
+			self.p[ 'soleHeight']    = rbConf[ bnCorres['sole'] ].boxsize[ self.direction['soleHeight'] ]
+			self.p[ 'soleWidth']     = rbConf[ bnCorres['sole'] ].boxsize[ self.direction['soleWidth']  ]
+			
+			self.p[ 'toeLen']       = rbConf[ bnCorres['toe'] ].boxsize[ self.direction['toeLen']    ]
+			self.p[ 'toeHeight']    = rbConf[ bnCorres['toe'] ].boxsize[ self.direction['toeHeight'] ]
+			self.p[ 'toeWidth']     = rbConf[ bnCorres['toe'] ].boxsize[ self.direction['toeWidth']  ]
+			
+			self.p[ 'calfLen']       = rbConf[ bnCorres['calf'] ].boxsize[ self.direction['calfLen']      ]
+			self.p[ 'calfWidth']     = rbConf[ bnCorres['calf'] ].boxsize[ self.direction['calfWidth']    ]
+			self.p[ 'calfLatWidth']  = rbConf[ bnCorres['calf'] ].boxsize[ self.direction['calfLatWidth'] ]
+			
+			self.p[ 'thighLen']       = rbConf[ bnCorres['thigh'] ].boxsize[ self.direction['thighLen']      ]
+			self.p[ 'thighWidth']     = rbConf[ bnCorres['thigh'] ].boxsize[ self.direction['thighWidth']    ]
+			self.p[ 'thighLatWidth']  = rbConf[ bnCorres['thigh'] ].boxsize[ self.direction['thighLatWidth'] ]
+			
+			self.p[ 'trunkLen']       = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkLen']      ]
+			self.p[ 'trunkWidth']     = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkWidth']    ]
+			self.p[ 'trunkLatWidth']  = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkLatWidth'] ]
+			
+			self.rbConf   = rbConf
+			self.bnCorres = bnCorres
 
-		self.p['soleLen']           = 20.
-		self.p['soleHeight']        = 8.
-		self.p['soleWidth']         = 15.
+		else:
+			self.direction['soleLen']        = 1
+			self.direction['soleHeight']     = 2
+			self.direction['soleWidth']      = 0
+			self.direction['toeLen']         = 1
+			self.direction['toeHeight']      = 2
+			self.direction['toeWidth']       = 0
+			self.direction['calfLen']        = 2
+			self.direction['calfWidth']      = 0
+			self.direction['calfLatWidth']   = 1
+			self.direction['thighLen']       = 2
+			self.direction['thighWidth']     = 0
+			self.direction['thighLatWidth']  = 1
+			self.direction['trunkLen']       = 2
+			self.direction['trunkWidth']     = 0
+			self.direction['trunkLatWidth']  = 1
+			
+			# NOTE: set this in the unit of centimeters.
+			# 1. Body dimension
 
-		self.p['toeLen']            = 15.
-		self.p['toeHeight']         = 5.
-		self.p['toeWidth']          = 12.
+			self.p['soleLen']           = 20.
+			self.p['soleHeight']        = 8.
+			self.p['soleWidth']         = 15.
 
-		self.p['calfLen']           = 50.
-		self.p['calfWidth']         = 8.
-		self.p['calfLatWidth']      = 8.
+			self.p['toeLen']            = 15.
+			self.p['toeHeight']         = 5.
+			self.p['toeWidth']          = 12.
 
-		self.p['thighLen']          = 55.
-		self.p['thighWidth']        = 12.
-		self.p['thighLatWidth']     = 12.
+			self.p['calfLen']           = 50.
+			self.p['calfWidth']         = 8.
+			self.p['calfLatWidth']      = 8.
 
-		self.p['trunkLen']          = 70.
-		self.p['trunkWidth']        = 45.
-		self.p['trunkLatWidth']     = 25.
+			self.p['thighLen']          = 55.
+			self.p['thighWidth']        = 12.
+			self.p['thighLatWidth']     = 12.
+
+			self.p['trunkLen']          = 70.
+			self.p['trunkWidth']        = 45.
+			self.p['trunkLatWidth']     = 25.
 
 
 		# 2. Body gap (positive) or overlap (negative)
 		#    Generally, overlapped one gives stable equilibrium condition
-		self.p['trunkThighGap']     = 2.
-		self.p['thighCalfGap']      = 2.
-		self.p['calfSoleGap']       = 2.
-		self.p['soleToeGap']        = 2.
+		self.p['trunkThighGap']     = self.p['thighLen']/5
+		self.p['thighCalfGap']      = self.p['calfLen']/5
+		self.p['calfSoleGap']       = self.p['soleHeight']/5
+		self.p['soleToeGap']        = self.p['soleLen']/5
 
 		# 3. Other
 		self.p['legsDist']          = self.p['trunkWidth']/2.
 
 
 		# 4. Muscle Attachment Parameters
-		self.p['hipMuscleDist']       = 20.
+		self.p['hipMuscleDist']       = self.p['trunkWidth']/2
 		self.p['hipMuscleLatDist']    = 14.
 		self.p['hipMuscleDist2']      = self.p['thighWidth']
 		self.p['hipMuscleLatDist2']   = self.p['thighLatWidth']
@@ -83,8 +178,9 @@ class BipedParameter:
 		self.p['ankleMuscleInsLen']   = 0
 
 		# Convert the unit from centimeters to meters
-		for (k, v) in self.p.iteritems():
-			self.p[k] = v/100.
+		if fnRbConf is None:
+			for (k, v) in self.p.iteritems():
+				self.p[k] = v/100.
 
 	def __getitem__(self, i):
 		return self.p[i]
@@ -294,25 +390,32 @@ class BipedParameter:
 		c1 = self.getSolePos()
 		c2 = self.getThighPos()
 		p1 = c1 + array([ 0,  self['soleLen']/2, 0])
-		p2 = c2 + array([ 0,  self['thighLatWidth']/2, -self['thighLen']/2])
+		p2 = c2 + array([ 0,  self['thighLatWidth']/2, -self['thighLen']/4])
 		p3 = c1 + array([ 0,  -self['soleLen']/2, 0])
-		p4 = c2 + array([ 0,  -self['thighLatWidth']/2, -self['thighLen']/2])
+		p4 = c2 + array([ 0,  -self['thighLatWidth']/2, -self['thighLen']/4])
 		
 		p5 = c1 + array([ self['soleWidth']/2,  0, 0])
-		p6 = c2 + array([ self['thighWidth']/2,  0, -self['thighLen']/2])
+		p6 = c2 + array([ self['thighWidth']/2,  0, -self['thighLen']/4])
 		p7 = c1 + array([ -self['soleWidth']/2,  0, 0])
-		p8 = c2 + array([ -self['thighWidth']/2,  0, -self['thighLen']/2])
-		
-		return [
-		    ('hamstring1L', p1,p2, 'soleL', 'thighL'),
+		p8 = c2 + array([ -self['thighWidth']/2,  0, -self['thighLen']/4])
+		return [ ('hamstring1L', p1,p2, 'soleL', 'thighL'),
+		         ('hamstring2L', p1,p4, 'soleL', 'thighL'),
+		         ('hamstring3L', p1,p6, 'soleL', 'thighL'),
+		         ('hamstring4L', p1,p8, 'soleL', 'thighL'),
+		         ('hamstring1L', p3,p2, 'soleL', 'thighL'),
 		         ('hamstring2L', p3,p4, 'soleL', 'thighL'),
+		         ('hamstring3L', p3,p6, 'soleL', 'thighL'),
+		         ('hamstring4L', p3,p8, 'soleL', 'thighL'),
+		         ('hamstring1L', p5,p2, 'soleL', 'thighL'),
+		         ('hamstring2L', p5,p4, 'soleL', 'thighL'),
 		         ('hamstring3L', p5,p6, 'soleL', 'thighL'),
-		         ('hamstring4L', p7,p8, 'soleL', 'thighL')
-		         ]
+		         ('hamstring4L', p5,p8, 'soleL', 'thighL'),
+		         ('hamstring1L', p7,p2, 'soleL', 'thighL'),
+		         ('hamstring2L', p7,p4, 'soleL', 'thighL'),
+		         ('hamstring3L', p7,p6, 'soleL', 'thighL'),
+		         ('hamstring4L', p7,p8, 'soleL', 'thighL') ]
 		
-		#return []
-	
-	def getGastro(self):
+	def getGastro_1(self):
 		'''
 		c = self.getAnkleJointCenter()
 		p1 = c + array([ 0, self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/4])
@@ -330,7 +433,6 @@ class BipedParameter:
 		p6 = c + array([-self['soleWidth']/2, -self['soleLen']/2, -self['calfSoleGap']/2])
 		p7 = c + array([-self['calfWidth']/4,  self['calfLatWidth']/4,  self['calfSoleGap']/2 + self['calfLen']/2])
 		p8 = c + array([-self['soleWidth']/2,  self['soleLen']/2, -self['calfSoleGap']/2])
-	
 		return [
 		    ('gastro1L', p1,p2, 'calfL', 'soleL'),
 				 ('gastro2L', p3,p4, 'calfL', 'soleL'),
@@ -402,24 +504,47 @@ class BipedParameter:
 	def getTibialis(self):
 		c1 = self.getToePos()
 		c2 = self.getCalfPos()
-		p1 = c1 + array([0, -self['toeLen']/2, self['toeHeight']/2])
-		p2 = c2 + array([0, -self['calfLatWidth']/2, -self['calfLen']/4])
-		return []
-		return [ ('TibialisL', p1,p2, 'toeL', 'calfL') ]
+		p1 = c1 + array([0,                    -self['toeLen']/2,        self['toeHeight']/2])
+		p2 = c2 + array([0,                    -self['calfLatWidth']/2, -self['calfLen']/4])
+		p3 = c1 + array([self['soleWidth']/2,  0,                        self['toeHeight']/2])
+		p4 = c2 + array([self['soleWidth']/2,  -self['calfLatWidth']/2, -self['calfLen']/4])
+		p5 = c1 + array([-self['soleWidth']/2, 0,                        self['toeHeight']/2])
+		p6 = c2 + array([-self['soleWidth']/2, -self['calfLatWidth']/2, -self['calfLen']/4])
+		return [ ('TibialisL', p1,p2, 'toeL', 'calfL'),
+		         ('TibialisL', p1,p4, 'toeL', 'calfL'),
+		         ('TibialisL', p1,p6, 'toeL', 'calfL'),
+		         ('TibialisL', p3,p2, 'toeL', 'calfL'),
+		         ('TibialisL', p3,p4, 'toeL', 'calfL'),
+		         ('TibialisL', p3,p6, 'toeL', 'calfL'),
+		         ('TibialisL', p5,p2, 'toeL', 'calfL'),
+		         ('TibialisL', p5,p4, 'toeL', 'calfL'),
+		         ('TibialisL', p5,p6, 'toeL', 'calfL') ]
 	def getBicepsFemoris(self):
 		c1 = self.getHipJointCenter()
 		c2 = self.getThighPos()
-		p1 = c1 + array([0, -self['trunkLatWidth']/2, 0])
+		p1 = c1 + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2])
 		p2 = c2 + array([0, -self['thighLatWidth']/2, 0])
-		p3 = c1 + array([0, +self['trunkLatWidth']/2, 0])
+		p3 = c1 + array([0, +self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2])
 		p4 = c2 + array([0, +self['thighLatWidth']/2, 0])
-		p5 = c1 + array([-self['legsDist']/2, 0, 0])
+		p5 = c1 + array([-self['legsDist']/2, 0, self['trunkThighGap']/2 + self['trunkLen']/4])
 		p6 = c2 + array([-self['thighWidth']/2, 0, 0])
-		p7 = c1 + array([+self['legsDist']/2, 0, 0])
+		p7 = c1 + array([+self['legsDist']/2, 0, self['trunkThighGap']/2 + self['trunkLen']/4])
 		p8 = c2 + array([+self['thighWidth']/2, 0, 0])
 		return [ ('BicepsFemoris1L', p1,p2, 'trunk', 'thighL'),
+		         ('BicepsFemoris2L', p1,p4, 'trunk', 'thighL'),
+		         ('BicepsFemoris3L', p1,p6, 'trunk', 'thighL'),
+		         ('BicepsFemoris4L', p1,p8, 'trunk', 'thighL'),
+		         ('BicepsFemoris1L', p3,p2, 'trunk', 'thighL'),
 		         ('BicepsFemoris2L', p3,p4, 'trunk', 'thighL'),
+		         ('BicepsFemoris3L', p3,p6, 'trunk', 'thighL'),
+		         ('BicepsFemoris4L', p3,p8, 'trunk', 'thighL'),
+		         ('BicepsFemoris1L', p5,p2, 'trunk', 'thighL'),
+		         ('BicepsFemoris2L', p5,p4, 'trunk', 'thighL'),
 		         ('BicepsFemoris3L', p5,p6, 'trunk', 'thighL'),
+		         ('BicepsFemoris4L', p5,p8, 'trunk', 'thighL'),
+		         ('BicepsFemoris1L', p7,p2, 'trunk', 'thighL'),
+		         ('BicepsFemoris2L', p7,p4, 'trunk', 'thighL'),
+		         ('BicepsFemoris3L', p7,p6, 'trunk', 'thighL'),
 		         ('BicepsFemoris4L', p7,p8, 'trunk', 'thighL')  ]
 	
 	def getAllLigaments(self):
@@ -432,57 +557,89 @@ class BipedParameter:
 
 	def buildBody(self, rotParam = 'QUAT_WFIRST'):
 		body = []
-		l = [ ('trunk',  [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 30.),
-			  ('thighL', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 5.),
-			  ('calfL',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3.),
-			  ('soleL',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  5.),
-			  ('toeL',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.) ]
-
+		
+		l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 10. ],
+			  ['thigh', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 10. ],
+			  ['calf',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  10. ],
+			  ['sole',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  2.  ],
+			  ['toe',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.  ] ]
+		
+		for i in xrange(len(l)):
+			for (k, v) in self.direction.iteritems():
+				if   k[ 0:len(l[i][0]) ] == l[i][0] and v == 0: xAxisKey = k
+				elif k[ 0:len(l[i][0]) ] == l[i][0] and v == 1: yAxisKey = k
+				elif k[ 0:len(l[i][0]) ] == l[i][0] and v == 2: zAxisKey = k
+			l[i][1] = [ self[xAxisKey], self[yAxisKey], self[zAxisKey] ]
+			del xAxisKey, yAxisKey, zAxisKey
 
 		# DEBUGGING START
-		#l = l[0:2]
+		#l = l[3:5]
 		# DEBUGGING END
 
 
 		for i, ll in zip(range(len(l)), l):
-			if rotParam == 'QUAT_WFIRST':
-				identityQuaternion = [1.,0,0,0]
-				pos0 = hstack([ ll[2], identityQuaternion ])
-				vel0 = zeros(7)
-			else:
-				pos0 = hstack([ ll[2], [0,0,0] ])
-				vel0 = zeros(6)
-			drawingColor = (0.2,0.1,0.2)
-
 			#pos0[2] += 0.5 # Start from the sky
 			
 			name = ll[0]
+			if name != 'trunk':
+				name += 'L'
+			
+			xMat = self.getColumnMajorTransformMatrix(name)
+			xMat = array(xMat).reshape(4,4).T
+			linPos = xMat[0:3,3]
+			print xMat, linalg.det(xMat[0:3,0:3])
+			rotQuat = MatrixToQuaternion(xMat)
+			print 'rotQuat:', rotQuat
+			if rotParam == 'QUAT_WFIRST':
+				pos0 = hstack([ linPos, rotQuat ])
+				vel0 = zeros(7)
+			else:
+				v = QuatToV(rotQuat)
+				pos0 = hstack([ linPos, v ])
+				vel0 = zeros(6)
+			drawingColor = (0.2,0.1,0.2)
+			
 			b = RigidBody.RigidBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
 			body.append(b)
-
+			
+			print name, pos0, vel0
+			
 			if name[-1] == 'L':
 				# If there are left body segments, we also need right counterparts
 				newName = name[:-1] + 'R'
-				newPos0 = pos0.copy() # Deep copy
-				newPos0[0] *= -1
-				newVel0 = vel0.copy() # Deep copy
-				b = RigidBody.RigidBody(newName, None, ll[3], ll[1], newPos0, newVel0, drawingColor, rotParam)
+				
+				xMat = self.getColumnMajorTransformMatrix(newName)
+				xMat = array(xMat).reshape(4,4).T
+				linPos = xMat[0:3,3]
+				rotQuat = MatrixToQuaternion(xMat)
+				if rotParam == 'QUAT_WFIRST':
+					pos0 = hstack([ linPos, rotQuat ])
+					vel0 = zeros(7)
+				else:
+					v = QuatToV(rotQuat)
+					pos0 = hstack([ linPos, v ])
+					vel0 = zeros(6)
+				drawingColor = (0.2,0.1,0.2)
+
+				b = RigidBody.RigidBody(newName, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
 				body.append(b)
+				
+				
 
 		return body
 	
 	def buildFiber(self, availableBodyNames):
 		# Fiber constants for a ligament
-		KSE = 1.          # Should not be 0
-		KPE = 1.
-		b   = 1.         # Should not be 0
+		KSE = 1000          # Should not be 0
+		KPE = 1000
+		b   = 1         # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
 		# Fiber constants for a muscle fiber
-		KSE = 1.            # Should not be 0
-		KPE = 1.
-		b   = 1.            # Should not be 0
+		KSE = 1            # Should not be 0
+		KPE = 1
+		b   = 1            # Should not be 0
 		T   = 0.
 		A   = 0.
 		fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)
@@ -531,17 +688,12 @@ class BipedParameter:
 		return fiber
 
 	def changeToLocal(self, bodyName, globalPos):
-		flipX = (bodyName[-1] == 'R')
-		bodyOrigin = 0
-		if bodyName == 'trunk': bodyOrigin = self.getTrunkPos()
-		elif bodyName[:-1] == 'thigh': bodyOrigin = self.getThighPos()
-		elif bodyName[:-1] == 'calf': bodyOrigin = self.getCalfPos()
-		elif bodyName[:-1] == 'sole': bodyOrigin = self.getSolePos()
-		elif bodyName[:-1] == 'toe' : bodyOrigin = self.getToePos()
-		else: raise Exception('What the...')
-		if flipX:
-			bodyOrigin[0] *= -1
-		return globalPos - bodyOrigin
+		assert len(globalPos) == 3
+		xMat = self.getColumnMajorTransformMatrix(bodyName)
+		xMat = array(xMat).reshape(4,4).T
+		xMatInv = linalg.inv(xMat)
+		localPos = dot(xMatInv, array( list(globalPos) + [1.0] ))
+		return localPos[0:3]
 
 	def getBipedBB(self):
 		"""
@@ -564,7 +716,36 @@ class BipedParameter:
 		minZ = 0.
 
 		return (minX, minY, minZ, maxX, maxY, maxZ)
-
+	def getColumnMajorTransformMatrix(self, name):
+		pos = {'trunk': self.getTrunkPos(),
+		       'thigh': self.getThighPos(),
+		       'calf':  self.getCalfPos(),
+		       'sole':  self.getSolePos(),
+		       'toe':   self.getToePos()}
+		lr = 'L'
+		if name != 'trunk' and name[-1] in ['L', 'R']:
+			lr = name[-1]
+			name = name[:-1]
+		comPos = pos[name]
+		if lr == 'R':
+			comPos[0] *= -1
+		
+		
+		
+		if hasattr(self, 'rbConf'):
+			xAxis = self.rbConf[ self.bnCorres[ name ] ].getAxisVector('X')
+			yAxis = self.rbConf[ self.bnCorres[ name ] ].getAxisVector('Y')
+			zAxis = self.rbConf[ self.bnCorres[ name ] ].getAxisVector('Z')
+			M = identity(4)
+			M[0:3,0] = xAxis
+			M[0:3,1] = yAxis
+			M[0:3,2] = zAxis
+			M[0:3,3] = comPos
+			return list(M.T.flatten())
+		else:
+			M = identity(4)
+			M[0:3,3] = comPos
+			return list(M.T.flatten())
 
 def InitializeGl():				# We call this right after our OpenGL window is created.
 	glClearColor(0,0,0,1.0)
@@ -665,12 +846,19 @@ def SetViewport(x, y, w, h, zoomLevel):
 def DrawBiped():
 	trunkPos = gBiped.getTrunkPos()
 	glPushMatrix()
-	glTranslate(trunkPos[0],trunkPos[1],trunkPos[2])
-	glScale(gBiped['trunkWidth'], gBiped['trunkLatWidth'], gBiped['trunkLen'])
+	matMultCol = gBiped.getColumnMajorTransformMatrix('trunk')
+	glMultMatrixf(matMultCol)
+	DrawAxisIndicator('trunk')
+	for (k, v) in gBiped.direction.iteritems():
+		if k[0:5] == 'trunk' and v == 0: xAxisKey = k
+		elif k[0:5] == 'trunk' and v == 1: yAxisKey = k
+		elif k[0:5] == 'trunk' and v == 2: zAxisKey = k
+	glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
 	glColor(1,0,1)
 	if gWireframe: glutWireCube(1)
 	else: glutSolidCube(1)
 	glPopMatrix()
+	del xAxisKey, yAxisKey, zAxisKey
 
 	glLineWidth(1)
 	# Left leg drawn
@@ -678,7 +866,8 @@ def DrawBiped():
 
 	# Right leg drawn
 	glPushMatrix()
-	glScale(-1,1,1)
+	#glScale(-1,1,1)
+	glTranslate(-gBiped['legsDist'], 0, 0)
 	DrawLeg()
 	glPopMatrix()
 
@@ -695,42 +884,80 @@ def DrawBiped():
 		glVertex(insPos[0], insPos[1], insPos[2])
 	glEnd()
 
+def DrawAxisIndicator(name):
+	lineLen = gBiped[name +'Width']/3
+	glLineWidth(5)
+	glBegin(GL_LINES)
+	glColor(1,0,0); glVertex(0,0,0); glVertex(lineLen,0,0)
+	glColor(0,1,0); glVertex(0,0,0); glVertex(0,lineLen,0)
+	glColor(0,0,1); glVertex(0,0,0); glVertex(0,0,lineLen)
+	glEnd()
+	glLineWidth(1)
+
 def DrawLeg():
 	thighPos = gBiped.getThighPos()
 	glPushMatrix()
-	glTranslate(thighPos[0],thighPos[1],thighPos[2])
-	glScale(gBiped['thighWidth'], gBiped['thighLatWidth'], gBiped['thighLen'])
+	matMultCol = gBiped.getColumnMajorTransformMatrix('thigh')
+	glMultMatrixf(matMultCol)
+	DrawAxisIndicator('thigh')
+	for (k, v) in gBiped.direction.iteritems():
+		if k[0:5] == 'thigh' and v == 0: xAxisKey = k
+		elif k[0:5] == 'thigh' and v == 1: yAxisKey = k
+		elif k[0:5] == 'thigh' and v == 2: zAxisKey = k
+	glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
 	glColor(1,1,0)
 	if gWireframe: glutWireCube(1)
 	else: glutSolidCube(1)
 	glPopMatrix()
+	del xAxisKey, yAxisKey, zAxisKey
 
 	calfPos = gBiped.getCalfPos()
 	glPushMatrix()
-	glTranslate(calfPos[0],calfPos[1],calfPos[2])
-	glScale(gBiped['calfWidth'], gBiped['calfLatWidth'], gBiped['calfLen'])
+	matMultCol = gBiped.getColumnMajorTransformMatrix('calf')
+	glMultMatrixf(matMultCol)
+	DrawAxisIndicator('calf')
+	for (k, v) in gBiped.direction.iteritems():
+		if k[0:4] == 'calf' and v == 0: xAxisKey = k
+		elif k[0:4] == 'calf' and v == 1: yAxisKey = k
+		elif k[0:4] == 'calf' and v == 2: zAxisKey = k
+	glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
 	glColor(1,0,0)
 	if gWireframe: glutWireCube(1)
 	else: glutSolidCube(1)
 	glPopMatrix()
+	del xAxisKey, yAxisKey, zAxisKey
 
 	solePos = gBiped.getSolePos()
 	glPushMatrix()
-	glTranslate(solePos[0],solePos[1],solePos[2])
-	glScale(gBiped['soleWidth'], gBiped['soleLen'], gBiped['soleHeight'])
+	matMultCol = gBiped.getColumnMajorTransformMatrix('sole')
+	glMultMatrixf(matMultCol)
+	DrawAxisIndicator('sole')
+	for (k, v) in gBiped.direction.iteritems():
+		if k[0:4] == 'sole' and v == 0: xAxisKey = k
+		elif k[0:4] == 'sole' and v == 1: yAxisKey = k
+		elif k[0:4] == 'sole' and v == 2: zAxisKey = k
+	glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
 	glColor(1,1,1)
 	if gWireframe: glutWireCube(1)
 	else: glutSolidCube(1)
 	glPopMatrix()
+	del xAxisKey, yAxisKey, zAxisKey
 
 	toePos = gBiped.getToePos()
 	glPushMatrix()
-	glTranslate(toePos[0],toePos[1],toePos[2])
-	glScale(gBiped['toeWidth'], gBiped['toeLen'], gBiped['toeHeight'])
+	matMultCol = gBiped.getColumnMajorTransformMatrix('toe')
+	glMultMatrixf(matMultCol)
+	DrawAxisIndicator('toe')
+	for (k, v) in gBiped.direction.iteritems():
+		if k[0:3] == 'toe' and v == 0: xAxisKey = k
+		elif k[0:3] == 'toe' and v == 1: yAxisKey = k
+		elif k[0:3] == 'toe' and v == 2: zAxisKey = k
+	glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
 	glColor(0,1,0)
 	if gWireframe: glutWireCube(1)
 	else: glutSolidCube(1)
 	glPopMatrix()
+	del xAxisKey, yAxisKey, zAxisKey
 
 def Main():
 	glutInit(sys.argv)
@@ -750,13 +977,29 @@ gQuadric = None
 gWinWidth = 700
 gWinHeight = 700
 gWireframe = False
-gPoiList = ( ('Biped', 1.),
-             ('Hip', 5.),
-             ('Knee', 5.),
-             ('Ankle', 5.),
-             ('Toe', 5.) )
+
 gPoi = 0 # Point of interest
 if __name__ == '__main__':
-	gBiped = BipedParameter()
-	print 'Biped Height =', gBiped.getBipedHeight()
+	if len(sys.argv) == 2:
+		fnRbConf = sys.argv[1]
+	else:
+		fnRbConf = None
+	gBiped = BipedParameter(fnRbConf)
+	bipHeight = gBiped.getBipedHeight()
+	print 'Biped Height =', bipHeight
+	
+	gPoiList = ( ('Biped', 1.5/bipHeight),
+             ('Hip', 5./bipHeight),
+             ('Knee', 5./bipHeight),
+             ('Ankle', 5./bipHeight),
+             ('Toe', 5./bipHeight) )
+
+	print 'Initialize a rigid body with initial conditions...'
+	bipedParam = gBiped
+	plist = bipedParam.buildBody('EXP')
+	flist = bipedParam.buildFiber([b.name for b in plist])
+	print 'number of rigid bodies =', len(plist), ' '*20, 'number of muscle fibers =', len(flist)
+	h = GetSimTimeStep()
+	WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h)
+                
 	Main()

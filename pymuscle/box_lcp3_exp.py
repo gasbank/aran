@@ -22,7 +22,7 @@ import sys
 import matplotlib.pyplot as pit
 import ExpBody
 from dRdv_real import GeneralizedForce, dfxdX, QuatdFromV
-from ExpBodyMoEq_real import MassMatrixAndCqdVector, Minv
+from ExpBodyMoEq_real import MassMatrixAndCqdVector
 from quat import quat_mult, quat_conj
 #import lwp
 
