@@ -174,22 +174,21 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         bkx[i] = MSK_BK_RA;
         blx[i] = pymCfg->fiber[j].b.xrest_lower;
         bux[i] = pymCfg->fiber[j].b.xrest_upper;
-
     }
 
-    /* trunk next x position */
+    /* TODO trunk next x position */
     i = Aci[0]+sd[0].Aci[0]+0;
-    bkx[i] = MSK_BK_RA;
-    blx[i] = 2.8;
-    bux[i] = 3.0;
-    /* trunk next z position */
+//    bkx[i] = MSK_BK_RA;
+//    blx[i] = 2.8;
+//    bux[i] = 3.0;
+    /* TODO trunk next z position */
     i = Aci[0]+sd[0].Aci[0]+2;
-    bkx[i] = MSK_BK_RA;
-    blx[i] = 1.8;
-    bux[i] = 2.0;
+//    bkx[i] = MSK_BK_RA;
+//    blx[i] = 1.8;
+//    bux[i] = 2.0;
 
 
-    /* ### DEBUG PURPOSE (REMOVE IT!) ### */
+    /* TODO: ### DEBUG PURPOSE (REMOVE IT!) ### */
     FOR_0(k, nb) {
         /* Useful when 'stay still' mode.
 //        FOR_0(j, 3) {

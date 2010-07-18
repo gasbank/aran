@@ -54,9 +54,11 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     if (confret != CONFIG_TRUE)
     {
         const char *errText = config_error_text(&conf);
-        const char *errFile = config_error_file(&conf);
         const int errLine = config_error_line(&conf);
-        printf("Configuration file %s (line %d) %s!\n", errFile, errLine, errText);
+        /* TODO: libconfig version mismatch */
+        //const char *errFile = config_error_file(&conf);
+        //printf("Configuration file %s (line %d) %s!\n", errFile, errLine, errText);
+        printf("Configuration file ?? (line %d) %s!\n", errLine, errText);
         config_destroy(&conf);
         return (-10);
     }

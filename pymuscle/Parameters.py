@@ -12,7 +12,6 @@ from math import *
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
-from lemke import *
 from SymbolicMC import *
 from SymbolicForce import *
 from SymbolicPenetration import *
@@ -1015,4 +1014,4 @@ if __name__ == '__main__':
     h = GetSimTimeStep()
     WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h)
     
-    #Main()
+    Main()
