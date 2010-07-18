@@ -47,6 +47,6 @@ union _pym_rb_t
     pym_rb_named_t b;
 };
 
-void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+4]);
+void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+3], const pym_config_t *const pymCfg);
 
 #endif

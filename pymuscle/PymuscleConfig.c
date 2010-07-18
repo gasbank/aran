@@ -78,7 +78,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     const unsigned int nBody = config_setting_length(bodyConf);
     pym_rb_t body[nBody];
 	double extForce[nBody][6];
-	char bodyName[nBody][128];
+	char bodyNames[nBody][128];
 	memset(extForce, 0, sizeof(double)*nBody*6); /* NOTE: No external force for now. */
     for (j = 0; j < nBody; ++j)
     {
@@ -86,7 +86,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
         config_setting_t *bConf = config_setting_get_elem(bodyConf, j);
         const char *bName;
         config_setting_lookup_string(bConf, "name", &bName);
-        strncpy(bodyName[j], bName, 128);
+        strncpy(bodyNames[j], bName, 128);
         strncpy(bjb->name, bName, 128);
         //printf("    Body %3d : %s\n", j, bName);
         const char *rotParamStr;
@@ -188,9 +188,10 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
         const char *orgBodyName, *insBodyName;
         config_setting_lookup_string(mConf, "origin", &orgBodyName);
         config_setting_lookup_string(mConf, "insertion", &insBodyName);
-        int boIdx = FindBodyIndex(nBody, bodyName, orgBodyName);
-        int biIdx = FindBodyIndex(nBody, bodyName, insBodyName);
+        int boIdx = FindBodyIndex(nBody, bodyNames, orgBodyName);
+        int biIdx = FindBodyIndex(nBody, bodyNames, insBodyName);
         assert(boIdx >= 0 && biIdx >= 0);
+        assert(boIdx != biIdx);
         musclePair[j][0] = boIdx;
         musclePair[j][1] = biIdx;
         mfn->org = boIdx;
@@ -198,14 +199,14 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
         /* TODO: xrest upper and lower bounds */
         mfn->xrest_lower = mfn->xrest*0.5;
         mfn->xrest_upper = mfn->xrest*2.0;
-
+//        mfn->xrest_lower = -100;
+//        mfn->xrest_upper = +100;
         pym_rb_named_t *bjbOrg = &body[ boIdx ].b;
         pym_rb_named_t *bjbIns = &body[ biIdx ].b;
         bjbOrg->fiber[ bjbOrg->nFiber ] = j; ++bjbOrg->nFiber;
         bjbIns->fiber[ bjbIns->nFiber ] = j; ++bjbIns->nFiber;
 
     }
-
 
     int simFrame; /* simulation length */
     confret = config_lookup_int(&conf, "simFrame", &simFrame);
@@ -242,6 +243,10 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     pymCfg->fiber  = (pym_mf_t   *)malloc(sizeof(pym_mf_t  )*nMuscle) ;
     memcpy(pymCfg->body , body , sizeof(pym_rb_t)*nBody  );
     memcpy(pymCfg->fiber, fiber, sizeof(pym_mf_t  )*nMuscle);
+
+    FOR_0(j, pymCfg->nBody) {
+        printf("   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
+    }
     return 0;
     #undef csgfe
     #undef BODY
@@ -299,7 +304,8 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* 
         AffineTransformPoint(pt1, sd[i].W_1, attPos1);
         AffineTransformPoint(pt2, sd[oppositeBidx].W_1, attPos2);
         FOR_0(k, 3) direction[k] = pt2[k] - pt1[k];
-        NormalizeVector(3, direction);
+        double dirLen = NormalizeVector(3, direction);
+        assert(dirLen > 1e-3);
         double gf[6];
         GeneralizedForce(gf, rbn->q, direction, attPos1);
 

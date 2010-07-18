@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <libconfig.h>
 #include <mosek.h>
 #include <umfpack.h>
@@ -226,7 +227,7 @@ typedef struct _pym_cmdline_options_t {
 int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
     /* initialize default options first */
     cmdopt->simconf = 0;
-    cmdopt->frame = 100;
+    cmdopt->frame = -1;   /* not specified for now */
     cmdopt->trajconf = 0;
     cmdopt->trajdata = 0;
     cmdopt->output = "outputFile.txt";
@@ -315,7 +316,16 @@ int main(int argc, const char **argv) {
                                cmdopt.trajconf,
                                cmdopt.trajdata);
         assert(nCorresMap > 0);
-        assert(nBlenderFrame >= 2);
+        /*
+         * We need at least three frames of trajectory data since
+         * the first (frame 0) is used as previous step and
+         * the second (frame 1) is used as current step and
+         * the third (frame 2) is used as 'reference trajectory' for next step
+         *
+         * We need (nBlenderFrame-2) simulation iteration to complete
+         * following the trajectory entirely.
+         */
+        assert(nBlenderFrame >= 3);
         FOR_0(i, pymCfg.nBody) {
             FOR_0(j, nBlenderBody) {
                 if (strcmp(pymCfg.body[i].b.name, corresMap[j][1]) == 0) {
@@ -343,24 +353,28 @@ int main(int argc, const char **argv) {
         FOR_0(i, pymCfg.nBody) {
             pym_rb_named_t *rbn = &pymCfg.body[i].b;
             assert(rbn->rotParam == RP_EXP);
-            double p2[3], q2[3];
-            memcpy(rbn->p, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
-            memcpy(rbn->q, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
-            memcpy(p2,     trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
-            memcpy(q2,     trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
+            /* previous step */
+            memcpy(rbn->p0, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
+            memcpy(rbn->q0, trajData + 0*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
+            /* current step */
+            memcpy(rbn->p,  trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 0, sizeof(double)*3);
+            memcpy(rbn->q,  trajData + 1*nBlenderBody*6 + corresMapIndex[i]*6 + 3, sizeof(double)*3);
+            /* update discrete velocity based on current and previous step */
             FOR_0(j, 3) {
-                rbn->pd[j] = (p2[j] - rbn->p[j]) / pymCfg.h;
-                rbn->qd[j] = (q2[j] - rbn->q[j]) / pymCfg.h;
-                rbn->p0[j] = rbn->p[j] - pymCfg.h*rbn->pd[j];
-                rbn->q0[j] = rbn->q[j] - pymCfg.h*rbn->qd[j];
+                rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg.h;
+                rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg.h;
             }
         }
     } else {
         PymSetPymCfgChiRefToCurrentState(&pymCfg);
     }
 
-
-    pymCfg.nSimFrame = cmdopt.frame;
+    if (cmdopt.frame >= 0)
+        pymCfg.nSimFrame = cmdopt.frame;
+    else if (cmdopt.trajconf)
+        pymCfg.nSimFrame = nBlenderFrame - 2;
+    else
+        pymCfg.nSimFrame = 100;
 
     FILE *outputFile = fopen(cmdopt.output, "w");
     if (!outputFile) {
@@ -368,37 +382,53 @@ int main(int argc, const char **argv) {
         return -3;
     }
     fprintf(outputFile, "%d %d\n", pymCfg.nSimFrame, nb);
+
+    int firstTime = 1;
     /* Let's start the simulation happily :) */
     FOR_0(i, pymCfg.nSimFrame) {
 
-        /* Reparameterize the rotation if needed */
-//        FOR_0(j, nb) {
-//            pym_rb_named_t *rbn = &pymCfg.body[j].b;
-//            double th_0 = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
-//            double th_1 = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
-//
+        FOR_0(j, nb) {
+            pym_rb_named_t *rbn = &pymCfg.body[j].b;
+            double th_0 = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
+            double th_1 = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
+
+            /* we do not have any tumbling bodies */
+            if (th_0 > 2*M_PI || th_1 > 2*M_PI) {
+                printf("Error - %s rotation parameterization failure:\n", rbn->name);
+                printf("        th_0 = %e (%e, %e, %e)\n", th_0, rbn->q0[0], rbn->q0[1], rbn->q0[2]);
+                printf("        th_1 = %e (%e, %e, %e)\n", th_1, rbn->q[0], rbn->q[1], rbn->q[2]);
+                abort();
+            }
+
+            /* Re-parameterize the rotation if needed */
 //            while (th_0 > 2*M_PI) {
+//                printf("th_0 = %lf\n", th_0);
 //                FOR_0(k, 3) rbn->q0[k] = rbn->q0[k]/th_0 * (th_0-2*M_PI);
 //                th_0 -= 2*M_PI;
 //            }
 //            while (th_1 > 2*M_PI) {
+//                printf("th_1 = %lf\n", th_1);
 //                FOR_0(k, 3) rbn->q[k] = rbn->q[k]/th_1 * (th_1-2*M_PI);
 //                th_1 -= 2*M_PI;
 //            }
 //
 //            if (th_0 > M_PI && th_1 > M_PI) {
-//                FOR_0(k, 3) rbn->q0[k] = (1-2*M_PI/th_0)*rbn->q0[k];
-//                FOR_0(k, 3) rbn->q[k]  = (1-2*M_PI/th_1)*rbn->q [k];
-//                FOR_0(k, 3) rbn->qd[k] = (rbn->q[k] - rbn->q0[k]) / pymCfg.h;
+//                FOR_0(k, 3) {
+//                    rbn->q0[k] = (1-2*M_PI/th_0)*rbn->q0[k];
+//                    rbn->q[k]  = (1-2*M_PI/th_1)*rbn->q [k];
+//                    rbn->qd[k] = (rbn->q[k] - rbn->q0[k]) / pymCfg.h;
+//                }
 //                const double th_0new = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
 //                const double th_1new = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
-//                printf("    NOTE: %s reparameterized. (th_0=%lf --> %lf, th_1=%lf --> %lf)\n", rbn->name, th_0, th_0new, th_1, th_1new);
+//                printf("    NOTE: %s re-parameterized. (th_0=%lf --> %lf, th_1=%lf --> %lf)\n", rbn->name, th_0, th_0new, th_1, th_1new);
 //            }
-//        }
+        }
 
-        if (argc == 4 || argc == 5) {
+        if (cmdopt.trajconf) {
             FOR_0(j, pymCfg.nBody) {
-                memcpy(pymCfg.body[j].b.chi_ref  , trajData + (i+1)*nBlenderBody*6 + corresMapIndex[j]*6, sizeof(double)*6);
+                memcpy(pymCfg.body[j].b.chi_ref,
+                       trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6,
+                       sizeof(double)*6);
             }
         }
 
@@ -412,18 +442,23 @@ int main(int argc, const char **argv) {
         PymConstructBipedEqConst(&bipEq, sd, &pymCfg, &cc);
         //cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
 
-        //cholmod_drop(1e-16, bod.bipMat, &cc);
+        // TODO: drop small elements...
+        //cholmod_drop(1e-8, bipEq.bipMat, &cc);
 
         //PrintEntireSparseMatrix(bod.bipMat);
         //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
         double xx[bipEq.bipMat->ncol];
+        memset(xx, 0, sizeof(xx));
         MSKsolstae solsta;
         double cost = PymOptimize(xx, &solsta, &bipEq, sd, &pymCfg, &env, &cc);
+        if (cost == FLT_MAX) {
+            printf("Something goes wrong while optimizing.\n");
+        }
         const char *solstaStr;
-        if (solsta == MSK_SOL_STA_UNKNOWN) solstaStr = "***UNKNOWN***";
+        if (solsta == MSK_SOL_STA_UNKNOWN) solstaStr = "UNKNOWN";
         else if (solsta == MSK_SOL_STA_OPTIMAL) solstaStr = "optimal";
         else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
-        else assert(0);
+        else solstaStr = "ERROR!";
 
         //if (i%10 == 0)
             printf("Frame %5d finished.\n", i);
@@ -435,12 +470,15 @@ int main(int argc, const char **argv) {
             const double *chi_2 = xx + bipEq.Aci[j];
             const pym_rb_named_t *rbn = &pymCfg.body[j].b;
 
-            double chi_1[6], chi_0[6], chi_r[6];
+            double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
             memcpy(chi_1    , rbn->p,       sizeof(double)*3);
             memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
             memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
             memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
             memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
+            memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
+            memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
+
             double chi_d[6];
             FOR_0(k, 6) {
                 chi_d[k] = chi_2[k] - chi_r[k];
@@ -454,14 +492,16 @@ int main(int argc, const char **argv) {
 //            printf("     _2  %8s - ", rbn->name); __PRINT_VECTOR(chi_2, 6);
 //            printf("  <ref>  %8s - ", rbn->name); __PRINT_VECTOR(chi_r, 6);
 //            printf("  <dev>  %8s - ", rbn->name); __PRINT_VECTOR(chi_d, 6);
+//            printf("  <vel>  %8s - ", rbn->name); __PRINT_VECTOR(chi_v, 6);
 //            printf("\n");
 
             FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
             fprintf(outputFile, "\n");
 
 
-            /* Update the current state */
-            SetRigidBodyChi_1(pymCfg.body + j, chi_2 );
+            /* Update the current state of rigid bodies */
+            //if (!firstTime)
+                SetRigidBodyChi_1(pymCfg.body + j, chi_2, &pymCfg);
         }
 
         printf("  Reference trajectory deviation report\n");
@@ -481,6 +521,7 @@ int main(int argc, const char **argv) {
             const double T_0        = xx[ bipEq.Aci[nb + 0] + j ];
             const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
             const double xrest_0    = xx[ bipEq.Aci[nb + 2] + j ];
+            /* Update the current state of muscle fibers */
             mfn->T     = T_0;
             mfn->xrest = xrest_0;
 //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
@@ -490,6 +531,14 @@ int main(int argc, const char **argv) {
         FOR_0(j, pymCfg.nBody) {
             PymDestroyRbStatedep(sd + j, &cc);
         }
+
+        if (cost == FLT_MAX) /* no meaning to process further */
+            break;
+
+//        if (firstTime) {
+//            i--;
+//            firstTime = 0;
+//        }
     }
     fclose(outputFile);
 

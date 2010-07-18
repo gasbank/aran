@@ -22,7 +22,8 @@
 static void MSKAPI printstr(void *handle,
                             char str[])
 {
-    //printf("%s",str);
+    FILE *out = (FILE *)handle;
+    fprintf(out, "%s", str);
 } /* printstr */
 
 void PymInitializeMosek(MSKenv_t *env) {
@@ -47,6 +48,10 @@ void PymCleanupMosek(MSKenv_t *env) {
 }
 
 void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
+    /*
+     * Append a second-order cone constraint which has
+     * the form of x >= norm([ r1, r1+1, ... , r2-1 ])
+     */
 	assert(r1>=0 && r2>=0 && r2>=r1 && x>=0);
 	int csub[1 + r2 - r1];
 	csub[0] = x;
@@ -101,32 +106,34 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     double       c[NUMVAR];
     memset(c, 0, sizeof(double)*NUMVAR);
 
-//    double bodyRefWeight[] = {
-//            /* trunk  */ 1,
-//            /* thighL */ 1,
-//            /* thighR */ 1,
-//            /* calfL  */ 1,
-//            /* calfR  */ 1,
-//            /* soleL  */ 1,
-//            /* soleR  */ 1,
-//            /* toeL   */ 1,
-//            /* toeR   */ 1,
-//    };
-//    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
+    double bodyRefWeight[] = {
+            /* trunk  */ 1e4,
+            /* thighL */ 1e3,
+            /* thighR */ 1e3,
+            /* calfL  */ 1e3,
+            /* calfR  */ 1e3,
+            /* soleL  */ 1e3,
+            /* soleR  */ 1e3,
+            /* toeL   */ 1e3,
+            /* toeR   */ 1e3,
+    };
+    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
 
     FOR_0(i, nb) {
-        FOR_0(j, nplist[i])
-            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-7; /* minimize the contact normal force */
         FOR_0(j, nplist[i]) {
-            c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 1e-7; /* Estimated position of z-coordinate of contact point */
+            /* 0.01 ~ 0.02 */
+            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-2; /* minimize the contact normal force */
+        }
+        FOR_0(j, nplist[i]) {
+            c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
         }
         for (j= bod->Aci[i] + sd[i].Aci[5]; j < bod->Aci[i]+sd[i].Aci[6]; ++j)
-            c[j] = 0; /* minimize the movement of candidate contact points */
+            c[j] = 1e3; /* minimize the movement of candidate contact points */
 
 
         /** DEBUG **/
         //c[ bod->Aci[i] + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
-        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1;
+        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1e4;
 
         for (j= bod->Aci[nb+3]; j < bod->Aci[nb+4]; ++j)
             c[j] = 1e-7; /* minimize aggregate tension */
@@ -155,13 +162,13 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         /* Tension range constraint */
         i = Aci[nb+0]+j;
 //        bkx[i] = MSK_BK_RA;
-//        blx[i] = -10*9.81;
-//        bux[i] = +10*9.81;
+//        blx[i] = -1000;
+//        bux[i] = +1000;
         /* Actuation force range constraint */
         i = Aci[nb+1]+j;
         bkx[i] = MSK_BK_RA;
-        blx[i] = -30*9.81;
-        bux[i] =  30*9.81;
+        blx[i] = -400*9.81;
+        bux[i] =  400*9.81;
         /* Rest length range constraint */
         i = Aci[nb+2]+j;
         bkx[i] = MSK_BK_RA;
@@ -170,28 +177,53 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
     }
 
+    /* trunk next x position */
+    i = Aci[0]+sd[0].Aci[0]+0;
+    bkx[i] = MSK_BK_RA;
+    blx[i] = 2.8;
+    bux[i] = 3.0;
+    /* trunk next z position */
+    i = Aci[0]+sd[0].Aci[0]+2;
+    bkx[i] = MSK_BK_RA;
+    blx[i] = 1.8;
+    bux[i] = 2.0;
+
 
     /* ### DEBUG PURPOSE (REMOVE IT!) ### */
     FOR_0(k, nb) {
-        FOR_0(j, 3) {
-            i = Aci[k]+3+j; /* angular rx,ry,rz-axis position of body i */
-            SET_FIXED_ZERO(i);
-        }
-        if (strncmp(pymCfg->body[k].b.name, "toe", 3) != 0) {
-            i = Aci[k]+1;   /* linear y-axis */
-            SET_FIXED_ZERO(i);
-        }
-        if (strcmp(pymCfg->body[k].b.name, "trunk") == 0) {
-            i = Aci[k]+0;   /* linear x-axis */
-            SET_FIXED_ZERO(i);
-        }
+        /* Useful when 'stay still' mode.
+//        FOR_0(j, 3) {
+//            i = Aci[k]+3+j; /* angular rx,ry,rz-axis position of body i */
+//            SET_FIXED_ZERO(i);
+//        }
+//        if (strncmp(pymCfg->body[k].b.name, "toe", 3) != 0) {
+//            i = Aci[k]+1;   /* linear y-axis */
+//            SET_FIXED_ZERO(i);
+//        }
+//        if (strcmp(pymCfg->body[k].b.name, "trunk") == 0) {
+//            i = Aci[k]+0;   /* linear x-axis */
+//            SET_FIXED_ZERO(i);
+//        }
+
+        /* Linear position reference as constraint (?) */
+//        FOR_0(j, 3) {
+//            i = Aci[k] + j;
+//            bkx[i] = MSK_BK_FX;
+//            blx[i] = pymCfg->body[k].b.chi_ref[j];
+//            bux[i] = blx[i];
+//        }
     }
 
     MSKtask_t   task;
 
     /* Create the optimization task. */
     r = MSK_maketask(*pEnv,NUMCON,NUMVAR,&task); assert(r == MSK_RES_OK);
-    MSK_linkfunctotaskstream(task,MSK_STREAM_LOG,NULL,printstr);
+    FILE *mosekLogFile = fopen("/tmp/pymoptimize_log", "w");
+    if (!mosekLogFile) {
+        printf("Opening MOSEK output log file failed.\n");
+        return FLT_MAX;
+    }
+    MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
 
     /* Give MOSEK an estimate of the size of the input data.
     This is done to increase the speed of inputting data.
@@ -263,7 +295,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     #
     */
     FOR_0(i, nb) {
-        //# epsilon_Delta >= || Delta_chi_i || (6-DOF)
+        //# epsilon_Delta >= || Delta_chi_{i,ref} || (6-DOF)
         AppendConeRange(task,
                         Aci[i] + sd[i].Aci[8],
                         Aci[i] + sd[i].Aci[7],
@@ -287,67 +319,60 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     AppendConeRange(task, Aci[nb+3], Aci[nb+0], Aci[nb+1]);
     //# Minimal actuation force constraints
     AppendConeRange(task, Aci[nb+4], Aci[nb+1], Aci[nb+2]);
+    assert(r==MSK_RES_OK);
 
     double cost = FLT_MAX;
+    MSKrescodee trmcode;
+    MSK_writedata(task,"pymuscle_c.opf");
+    /* Run optimizer */
+    r = MSK_optimizetrm(task,&trmcode);
+
+    /* Print a summary containing information
+       about the solution for debugging purposes*/
+    MSK_solutionsummary (task, MSK_STREAM_LOG);
+
     if ( r==MSK_RES_OK )
     {
-        MSKrescodee trmcode;
+        MSKsolstae solsta;
 
-        MSK_writedata(task,"pymuscle_c.opf");
-        /* Run optimizer */
-        r = MSK_optimizetrm(task,&trmcode);
+        MSK_getsolutionstatus (task,
+                             MSK_SOL_ITR,
+                             NULL,
+                             &solsta);
+        *_solsta = solsta;
 
-        /* Print a summary containing information
-           about the solution for debugging purposes*/
-        MSK_solutionsummary (task,MSK_STREAM_LOG);
-
-        if ( r==MSK_RES_OK )
+        switch(solsta)
         {
-            MSKsolstae solsta;
+        case MSK_SOL_STA_UNKNOWN:
+            //printf("   ***   The status of the solution could not be determined.   ***\n");
+        case MSK_SOL_STA_OPTIMAL:
+        case MSK_SOL_STA_NEAR_OPTIMAL:
+            MSK_getsolutionslice(task,
+                                   MSK_SOL_ITR,    /* Request the interior solution. */
+                                   MSK_SOL_ITEM_XX,/* Which part of solution.     */
+                                   0,              /* Index of first variable.    */
+                                   NUMVAR,         /* Index of last variable+1.   */
+                                   xx);
+            cost = Dot(NUMVAR, xx, c);
+            break;
+        case MSK_SOL_STA_DUAL_INFEAS_CER:
+        case MSK_SOL_STA_PRIM_INFEAS_CER:
+        case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
+        case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
+            printf("Primal or dual infeasibility certificate found.\n");
+            cost = FLT_MAX;
+            break;
 
-            MSK_getsolutionstatus (task,
-                                 MSK_SOL_ITR,
-                                 NULL,
-                                 &solsta);
-            *_solsta = solsta;
-
-            switch(solsta)
-            {
-            case MSK_SOL_STA_UNKNOWN:
-                //printf("   ***   The status of the solution could not be determined.   ***\n");
-            case MSK_SOL_STA_OPTIMAL:
-            case MSK_SOL_STA_NEAR_OPTIMAL:
-                MSK_getsolutionslice(task,
-                                       MSK_SOL_ITR,    /* Request the interior solution. */
-                                       MSK_SOL_ITEM_XX,/* Which part of solution.     */
-                                       0,              /* Index of first variable.    */
-                                       NUMVAR,         /* Index of last variable+1.   */
-                                       xx);
-                cost = Dot(NUMVAR, xx, c);
-
-                break;
-            case MSK_SOL_STA_DUAL_INFEAS_CER:
-            case MSK_SOL_STA_PRIM_INFEAS_CER:
-            case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
-            case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
-                printf("Primal or dual infeasibility certificate found.\n");
-                assert(0);
-                break;
-
-            default:
-                printf("Other solution status.");
-                assert(0);
-                break;
-            }
-        }
-        else
-        {
-            printf("Error while optimizing.\n");
+        default:
+            printf("Other solution status.");
+            cost = FLT_MAX;
+            break;
         }
     }
-
-    if (r != MSK_RES_OK)
+    else
     {
+        printf("Error while optimizing.\n");
+
         /* In case of an error print error code and description. */
         char symname[MSK_MAX_STR_LEN];
         char desc[MSK_MAX_STR_LEN];
@@ -357,9 +382,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                          symname,
                          desc);
         printf("Error %s - '%s'\n",symname,desc);
-        assert(0);
+        cost = FLT_MAX;
     }
 
+    fclose(mosekLogFile);
     /* Delete the task and the associated data. */
     MSK_deletetask(&task);
     return cost;

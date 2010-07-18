@@ -121,15 +121,15 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         double pcj_2_nocf_W[3], pcj_1_W[3];
         AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
         AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
-        if (pcj_2_nocf_W[2] <= 0) {
+        if (pcj_2_nocf_W[2] <= 0.010) { /* 0.030 optimal */
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/
             ++sd->nContacts_2;
-//            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
-//                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
+            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
+                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
         }
     }
     const int nd = NUM_DOF;
@@ -180,6 +180,9 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const py
     const int nd = 6;
     const int np = sd->nContacts_2;
     const int nmi = rbn->nFiber;
+
+    //printf("   %s has %d fibers.\n", rbn->name, nmi);
+
     nzmax += 3+9;       /* Subblock 01 : M/h^2 */
     nzmax += nd*np;     /* Subblock 02 : (-1)^ce_{j in P} */
     nzmax += nd*nmi;    /* Subblock 03 : (-1)^ce_{j in M(i)} */
