@@ -24,9 +24,10 @@ struct _pym_rb_statedep_t {
     unsigned int nContacts_2;
     unsigned int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of corner points in next time step */
     double contactsFix_2[MAX_CONTACTS][4];       /* Estimated contact point fixing position in world coordinate frame in next time step */
+    double contactsNormal_1[MAX_CONTACTS][4];
     int Asubrows;
     int Asubcols;
-    int Ari[1+6];
+    int Ari[1+7];
     int Aci[1+10];
     cholmod_sparse *Z [MAX_CONTACTS]; /* A list of sparse 4x6 matrices */
     double          V [MAX_CONTACTS][4];

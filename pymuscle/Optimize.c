@@ -122,32 +122,33 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     FOR_0(i, nb) {
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
-            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-2; /* minimize the contact normal force */
+            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-10; /* minimize the contact normal force */
         }
         FOR_0(j, nplist[i]) {
             c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
         }
         for (j= bod->Aci[i] + sd[i].Aci[5]; j < bod->Aci[i]+sd[i].Aci[6]; ++j)
-            c[j] = 1e3; /* minimize the movement of candidate contact points */
+            c[j] = 0; /* minimize the movement of candidate contact points */
 
 
         /** DEBUG **/
         //c[ bod->Aci[i] + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
-        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1e4;
+        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1;
 
         for (j= bod->Aci[nb+3]; j < bod->Aci[nb+4]; ++j)
-            c[j] = 1e-7; /* minimize aggregate tension */
+            c[j] = 0; /* minimize aggregate tension */
         for (j= bod->Aci[nb+4]; j < bod->Aci[nb+5]; ++j)
-            c[j] = 1e-7; /* minimize aggregate actuation force */
+            c[j] = 0; /* minimize aggregate actuation force */
     }
     const int nd = 6;
     #define SET_NONNEGATIVE(j) { bkx[j] = MSK_BK_LO; blx[j] = 0; bux[j] = MSK_INFINITY; }
     #define SET_FIXED_ZERO(j)  { bkx[j] = MSK_BK_FX; blx[j] = 0; bux[j] = 0; }
     #define SET_FIXED_ONE(j)   { bkx[j] = MSK_BK_FX; blx[j] = 1; bux[j] = 1; }
+    #define SET_LOWER_BOUND(j,lb)   { bkx[j] = MSK_BK_LO; blx[j] = lb; bux[j] = MSK_INFINITY; }
     FOR_0(i, nb) {
         SET_NONNEGATIVE( Aci[i] + sd[i].Aci[0] + 2 ); /* chi_2_z */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
-        FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
+        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z */
@@ -309,9 +310,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
             //# Friction cone constraints
             AppendConeRange(task,
-                            Aci[i] + sd[i].Aci[6]+j,
-                            Aci[i] + sd[i].Aci[1]+6*j+0,
-                            Aci[i] + sd[i].Aci[1]+6*j+2);
+                            Aci[i] + sd[i].Aci[6]+j,            // mu*c_n
+                            Aci[i] + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
+                            Aci[i] + sd[i].Aci[2]+5*j+3);
         }
     }
     //# Minimal tension force constraints

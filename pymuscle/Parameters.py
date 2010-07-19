@@ -166,7 +166,7 @@ class BipedParameter:
         self.p['soleToeGap']        = self.p['soleLen']/5
 
         # 3. Other
-        self.p['legsDist']          = self.p['trunkWidth']/2.
+        self.p['legsDist']          = self.p['trunkWidth']/1.5
 
 
         # 4. Muscle Attachment Parameters
@@ -556,11 +556,11 @@ class BipedParameter:
     def buildBody(self, rotParam = 'QUAT_WFIRST'):
         body = []
         
-        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 70. ],
+        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 50. ],
               ['thigh', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 4. ],
               ['calf',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3. ],
-              ['sole',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  1  ],
-              ['toe',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1  ] ]
+              ['sole',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  1.5  ],
+              ['toe',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.5  ] ]
         
         for i in xrange(len(l)):
             for (k, v) in self.direction.iteritems():
@@ -600,7 +600,7 @@ class BipedParameter:
             b = RigidBody.RigidBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
             body.append(b)
             
-            print '%10s'%name, pos0, vel0
+            #print '%10s'%name, pos0, vel0
             
             if name[-1] == 'L':
                 # If there are left body segments, we also need right counterparts
@@ -622,7 +622,7 @@ class BipedParameter:
                 b = RigidBody.RigidBody(newName, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
                 body.append(b)
                 
-                print '%10s'%newName, pos0, vel0
+                #print '%10s'%newName, pos0, vel0
                 
                 
 
@@ -655,41 +655,44 @@ class BipedParameter:
             orgPosLocal = self.changeToLocal(orgBody, orgPosGlobal)
             insPosLocal = self.changeToLocal(insBody, insPosGlobal)
             xrest = linalg.norm(orgPosGlobal - insPosGlobal)
-            cfg = (orgBody, orgPosLocal, insBody, insPosLocal, KSE, KPE, b, xrest, T, A)
             #name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
             m = MuscleFiber.MuscleFiber(name, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
                                         orgBody, insBody, None, None, orgPosLocal, insPosLocal)
             if orgBody in availableBodyNames and insBody in availableBodyNames:
                 fiber.append(m)
-
-            if name[-1] == 'L':
-                # If there are left-side fibers, we also need right counterparts
-                newName = name[:-1] + 'R'
-                #orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
-                if orgBody[-1] == 'L':
-                    newOrgBody = orgBody[:-1] + 'R'
-                else:
-                    newOrgBody = orgBody
-                if insBody[-1] == 'L':
-                    newInsBody = insBody[:-1] + 'R'
-                else:
-                    newInsBody = insBody
-
-                newOrgPosGlobal = copy(orgPosGlobal)
-                newOrgPosGlobal[0] *= -1
-                newInsPosGlobal = copy(insPosGlobal)
-                newInsPosGlobal[0] *= -1
-                orgPosLocal = self.changeToLocal(newOrgBody, newOrgPosGlobal)
-                insPosLocal = self.changeToLocal(newInsBody, newInsPosGlobal)
-                xrest = linalg.norm(orgPosGlobal - insPosGlobal)
-                cfg = (newOrgBody, orgPosLocal, newInsBody, insPosLocal, KSE, KPE, b, xrest, T, A)
-                #name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
-                m = MuscleFiber.MuscleFiber(newName, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
-                                            newOrgBody, newInsBody, None, None, orgPosLocal, insPosLocal)
-                if newOrgBody in availableBodyNames and newInsBody in availableBodyNames:
-                    fiber.append(m)
+                
+            assert name[-1] == 'L' # Muscle fiber's name should be ended with 'L'
+            
+            # If there are left-side fibers, we also need right counterparts
+            newName = name[:-1] + 'R'
+            #orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
+            if orgBody[-1] == 'L':
+                newOrgBody = orgBody[:-1] + 'R'
+            elif orgBody == 'trunk':
+                newOrgBody = orgBody
             else:
-            	assert False
+                assert False
+                
+            if insBody[-1] == 'L':
+                newInsBody = insBody[:-1] + 'R'
+            elif insBody == 'trunk':
+                newInsBody = insBody
+            else:
+                assert False
+
+            newOrgPosGlobal = copy(orgPosGlobal)
+            newOrgPosGlobal[0] *= -1
+            newInsPosGlobal = copy(insPosGlobal)
+            newInsPosGlobal[0] *= -1
+            orgPosLocal = self.changeToLocal(newOrgBody, newOrgPosGlobal)
+            insPosLocal = self.changeToLocal(newInsBody, newInsPosGlobal)
+            xrest = linalg.norm(newOrgPosGlobal - newInsPosGlobal)
+            #name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
+            m = MuscleFiber.MuscleFiber(newName, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
+                                        newOrgBody, newInsBody, None, None, orgPosLocal, insPosLocal)
+            if newOrgBody in availableBodyNames and newInsBody in availableBodyNames:
+                fiber.append(m)
+
         return fiber
 
     def changeToLocal(self, bodyName, globalPos):
@@ -729,9 +732,14 @@ class BipedParameter:
                'toe':   self.getToePos()}
         lr = 'L'
         print name,
-        if name != 'trunk' and name[-1] in ['L', 'R']:
-            lr = name[-1]
-            name = name[:-1]
+        if name != 'trunk':
+            if name[-1] in ['L', 'R']:
+                lr = name[-1]
+                name = name[:-1]
+            else:
+                print 'Error - Body parts other than trunk should have postfix L or R.'
+                assert False
+                
         comPos = pos[name]
         if lr == 'R':
             comPos[0] *= -1
@@ -907,7 +915,7 @@ def DrawAxisIndicator(name):
 def DrawLeg():
     thighPos = gBiped.getThighPos()
     glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('thigh')
+    matMultCol = gBiped.getColumnMajorTransformMatrix('thighL')
     glMultMatrixf(matMultCol)
     DrawAxisIndicator('thigh')
     for (k, v) in gBiped.direction.iteritems():
@@ -923,7 +931,7 @@ def DrawLeg():
 
     calfPos = gBiped.getCalfPos()
     glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('calf')
+    matMultCol = gBiped.getColumnMajorTransformMatrix('calfL')
     glMultMatrixf(matMultCol)
     DrawAxisIndicator('calf')
     for (k, v) in gBiped.direction.iteritems():
@@ -939,7 +947,7 @@ def DrawLeg():
 
     solePos = gBiped.getSolePos()
     glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('sole')
+    matMultCol = gBiped.getColumnMajorTransformMatrix('soleL')
     glMultMatrixf(matMultCol)
     DrawAxisIndicator('sole')
     for (k, v) in gBiped.direction.iteritems():
@@ -955,7 +963,7 @@ def DrawLeg():
 
     toePos = gBiped.getToePos()
     glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('toe')
+    matMultCol = gBiped.getColumnMajorTransformMatrix('toeL')
     glMultMatrixf(matMultCol)
     DrawAxisIndicator('toe')
     for (k, v) in gBiped.direction.iteritems():
@@ -1014,4 +1022,4 @@ if __name__ == '__main__':
     h = GetSimTimeStep()
     WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h)
     
-    Main()
+    #Main()

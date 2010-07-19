@@ -121,7 +121,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         double pcj_2_nocf_W[3], pcj_1_W[3];
         AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
         AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
-        if (pcj_2_nocf_W[2] <= 0.010) { /* 0.030 optimal */
+        if (pcj_2_nocf_W[2] <= 10.05) { /* 0.030 optimal */
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
@@ -135,7 +135,14 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     const int nd = NUM_DOF;
     const int np = sd->nContacts_2;
     const int nm = rbn->nFiber;
-    const int Asubrowsizes[] = {nd, nd*np, 4*np, np, 4*np, nd};
+    const int Asubrowsizes[] = {nd,         // inertial constraints
+                                nd*np,      // generalized contact forces <--> contact forces relationship
+                                4*np,       // compose contact point non-moving variable
+                                np,         // compose friction cone constraints variable (mu*normal_force)
+                                4*np,       // next state <--> next CP position relationship
+                                nd,         // next state <--> trajectory relationship
+                                np };       // tangential/normal contact force constraint (tan dot nor == 0)
+
     const int Asubcolsizes[] = {nd,          // chi^{(l+1)}
                               nd*np,       // f_c
                               5*np,        // c_c
@@ -158,7 +165,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
 
     for (i = 0; i < np; ++i) {
         const double *pcj = rbn->corners[ sd->contactIndices_2[i] ];
-        const double normal[3] = {0,0,1};
+        const double normal[4] = {0,0,1,0};
+        memcpy(sd->contactsNormal_1[i], normal, sizeof(double)*4);
         ZVQ(&sd->Z[i], sd->V[i], &sd->Q[i], chi_1, pcj, normal, sd->W_1, sd->dWdchi_tensor, cc);
     }
 
@@ -190,12 +198,13 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const py
     nzmax += (nd*5)*np; /* Subblock 05 : (Q_j)^de_{j in P} */
     nzmax += 4*np;      /* Subblock 06 : 1 */
     nzmax += 4*np;      /* Subblock 07 : 1 */
-    nzmax += np;        /* Subblock 08 :(c_1)^de_{j in P} */
+    nzmax += np;        /* Subblock 08 : (c_1)^de_{j in P} */
     nzmax += np;        /* Subblock 09 :-1 */
-    nzmax += (4*nd)*np; /* Subblock 10 :(Z_j)^re_{j in P} */
+    nzmax += (4*nd)*np; /* Subblock 10 : (Z_j)^re_{j in P} */
     nzmax += 4*np;      /* Subblock 11 :-1 */
-    nzmax += nd;        /* Subblock 12 :1 */
-    nzmax += nd;        /* Subblock 13 :1 */
+    nzmax += nd;        /* Subblock 12 : 1 */
+    nzmax += nd;        /* Subblock 13 : 1 */
+    nzmax += 3*np;      /* Subblock 14 : (C_n)^de_{j in P} */
 //    printf("    A matrix body name           : %s\n", rbn->name);
 //    printf("    A matrix constants (np)      : %d\n", np);
 //    printf("    A matrix constants (nmi)     : %d\n", nmi);
@@ -239,16 +248,17 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const py
     for (i=0;i<4*np;++i) SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 2, 4, i, i, -1);
     /* Subblock 08 */
     /*
-     * [0, 0, mu, 0, 0, 0]
+     *  ctx  cty  ctz ctw  cn
+     * [ 0,   0,   0,  0,  mu ]
      *                     .
      *                        .
      *                           .
-     *                            [0, 0, mu, 0, 0, 0]
+     *                            [ 0,   0,   0,  0,  mu ]
      */
     FOR_0(j, np) {
-        SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 3, 1,
-                                 1*j   + 0,
-                                 nd*j  + 2,
+        SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 3, 2,
+                                 1*j  + 0,
+                                 5*j  + 4,
                                  mu );
     }
     /* Subblock 09 */
@@ -271,6 +281,17 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const py
     for (i=0;i<nd;++i) SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 5, 0, i, i, 1);
     /* Subblock 13 */
     for (i=0;i<nd;++i) SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 5, 7, i, i, -1);
+    /* Subblock 14 */
+    for (i=0;i<np;++i) {
+        const double nx = sd->contactsNormal_1[i][0];
+        const double ny = sd->contactsNormal_1[i][1];
+        const double nz = sd->contactsNormal_1[i][2];
+        const double nw = sd->contactsNormal_1[i][3];
+        assert (nw == 0);
+        SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 6, 2, i, 5*i + 0, nx);
+        SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 6, 2, i, 5*i + 1, ny);
+        SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 6, 2, i, 5*i + 2, nz);
+    }
 
     *AMatrix = AMatrix_trip;
 //    cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
