@@ -122,7 +122,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     FOR_0(i, nb) {
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
-            c[ bod->Aci[i] + sd[i].Aci[1] + 6*j + 2 ] = 1e-10; /* minimize the contact normal force */
+            c[ bod->Aci[i] + sd[i].Aci[2] + 5*j + 4 ] = 0; /* minimize the contact normal force */
         }
         FOR_0(j, nplist[i]) {
             c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
@@ -151,7 +151,15 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
-        FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z */
+        FOR_0(j, nplist[i]) {
+            //SET_NONNEGATIVE( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
+
+            /* DEBUG */
+            const double ctY = sd[i].contactsFix_2[j][1];
+            const double theta = pymCfg->slant;
+            const double z = -ctY*tan(theta);
+            SET_LOWER_BOUND( Aci[i] + sd[i].Aci[3] + 4*j + 2, z ); /* p_c_2_z : next step CP z-pos */
+        }
         //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
         FOR_0(j, nplist[i]) SET_FIXED_ONE  ( Aci[i] + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
         for(j=Aci[i] + sd[i].Aci[5]; j<Aci[i] + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */

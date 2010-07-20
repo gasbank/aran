@@ -121,7 +121,11 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         double pcj_2_nocf_W[3], pcj_1_W[3];
         AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
         AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
-        if (pcj_2_nocf_W[2] <= 10.05) { /* 0.030 optimal */
+
+        const double ctY = pcj_2_nocf_W[1];
+        const double theta = pymCfg->slant;
+        const double z = -ctY*tan(theta); /* ground level */
+        if (pcj_2_nocf_W[2] <= z+50.0) { /* 0.030 optimal */
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
@@ -165,7 +169,14 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
 
     for (i = 0; i < np; ++i) {
         const double *pcj = rbn->corners[ sd->contactIndices_2[i] ];
-        const double normal[4] = {0,0,1,0};
+        double normal[4] = {0,0,1,0};
+        const double theta = pymCfg->slant;
+        const double cth = cos(-theta);
+        const double sth = sin(-theta);
+        const double ny = cth*normal[1] - sth*normal[2];
+        const double nz = sth*normal[1] + cth*normal[2];
+        normal[1] = ny;
+        normal[2] = nz;
         memcpy(sd->contactsNormal_1[i], normal, sizeof(double)*4);
         ZVQ(&sd->Z[i], sd->V[i], &sd->Q[i], chi_1, pcj, normal, sd->W_1, sd->dWdchi_tensor, cc);
     }
@@ -330,7 +341,19 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
         }
     }
 
-    FOR_0(i, nd) eta[sd->Ari[5] + i] = rbn->chi_ref[i];
+    FOR_0(i, nd) {
+        eta[sd->Ari[5] + i] = rbn->chi_ref[i];
+
+        if (i==2) {
+            /* DEBUG */
+            const double ctY = rb->b.p[1];
+            const double theta = pymCfg->slant;
+            const double z = -ctY*tan(theta);
+            eta[sd->Ari[5] + i] += -ctY * tan(theta);
+        }
+    }
+
+
 
     *_eta = eta;
     //__PRINT_VECTOR(eta, etaDim);

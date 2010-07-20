@@ -1699,75 +1699,100 @@ c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
 
 \pagebreak
 
-\subsection{Two rigid bodies connected by a fiber with flat ground}
-
-\begin{align}
-\text{given}      & \quad \chi^{(l-1)}_1, \chi^{(l)}_1, f_{g,1}, m_1,
-                          \chi^{(l-1)}_2, \chi^{(l)}_2, f_{g,2}, m_2,
-                          h, \mu \notag\\
-\text{minimize}   & \quad \epsilon_T + \epsilon_u + \sum_{i=1}^2 \epsilon_i + 100\chi^{(l)}_{i,z} f_{c,i,z} + \epsilon_{fric,i} \notag\\
-\text{subject to} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
-\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
-\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
-\end{align}
-
 \newcommand{\eyemuscle}{\ensuremath{
 \begin{bmatrix}
 \mathbf{0} & -\mathbf{1}
 \end{bmatrix}
 }}
 
+
+\subsection{Multiple rigid bodies connected with multiple fibers}
+The matrix-vector notation for equility constraints:
 \begin{equation}\notag
-\left[\begin{array}{ccccccc}
-\mathbf{A}_1  &                 &                                                &                                            &                                            &  0 & 0 \\
-              & \mathbf{A}_2    &                                                &                                            &                                            &  0 & 0 \\
-\eyemuscle    &                 &  \mathbf{R}_{1}                                &                                            &                                            &  0 & 0 \\
-              & \eyemuscle      &  \mathbf{R}_{2}                                &                                            &                                            &  0 & 0 \\
-              &                 &    (K_{11,j})^{\text{de}}_{j \in \mathcal{M}}  & (K_{12,j})^{\text{de}}_{j \in \mathcal{M}} & (K_{13,j})^{\text{de}}_{j \in \mathcal{M}} &  0 & 0
-\end{array}\right]
-\left[\begin{array}{c}
-\tau_1  \\
-\tau_2  \\
+\bordermatrix{
+                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}        \cr
+\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                           \cr
+\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                           \cr
+\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                           \cr
+\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                           \cr
+\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}
+}
+\left(\begin{array}{c}
+\tau  \\
 T \\
 u \\
 x_r \\ 
 \epsilon_T \\
-\epsilon_u
-\end{array}\right]
+\epsilon_u \\
+d_A \\ 
+\epsilon_d
+\end{array}\right)
 =
-\left[\begin{array}{c}
-\eta_1  \\
-\eta_2  \\
-\vec{0} \\
-\vec{0} \\
-(s_j)^{\text{re}}_{j \in \mathcal{M}}
-\end{array}\right]
+\left(\begin{array}{c}
+\eta       \\
+\vec{0}    \\
+s          \\
+\vec{0}    \\
+d_\text{disloc}
+\end{array}\right)
 \end{equation}
+\begin{equation}\notag
+\tau \equiv (\tau_i)^\text{re}_{i \in \mathcal{B}}, \quad 
+T          \equiv (T_i)^\text{re}_{i \in \mathcal{M}}, \quad 
+u          \equiv (u_i)^\text{re}_{i \in \mathcal{M}}, \quad 
+x_r        \equiv (x_{r,i})^\text{re}_{i \in \mathcal{M}}, \quad
+d_A        \equiv (d_{A,i})^\text{re}_{i \in \mathcal{J}}, \quad 
+\epsilon_d \equiv (\epsilon_{d,i})^\text{re}_{i \in \mathcal{J}}
+\end{equation}
+\begin{equation}\notag
+\mathbf{A} \equiv (\mathbf{A}_i)^\text{de}_{i \in \mathcal{B}}, \quad
+\mathbf{R} \equiv (\mathbf{R}_i)^\text{re}_{i \in \mathcal{B}}, \quad
+\mathbf{E} \equiv (\tilde{\mathbf{E}}_i)^\text{de}_{i \in \mathcal{B}}
+\end{equation}
+\begin{equation}\notag
+\mathbf{K}_{11} \equiv (K_{11,j})^{\text{de}}_{j \in \mathcal{M}}, \quad
+\mathbf{K}_{12} \equiv (K_{12,j})^{\text{de}}_{j \in \mathcal{M}}, \quad
+\mathbf{K}_{13} \equiv (K_{13,j})^{\text{de}}_{j \in \mathcal{M}}
+\end{equation}
+\begin{equation}\notag
+\eta             \equiv (\eta_i)^\text{re}_{i \in \mathcal{B}}, \quad
+s                \equiv (s_j)^{\text{re}}_{j \in \mathcal{M}}, \quad
+d_\text{disloc}  \equiv (d_{\text{disloc},i})^{\text{re}}_{i \in \mathcal{J}}
+\end{equation}
+\begin{equation}\notag
+\mathbf{R}_i : n_d | \mathcal{M}(i) | \times |\mathcal{M}|, \quad
+\tilde{\mathbf{E}}_i = [\mathbf{0},-\mathbf{1},\mathbf{0}_{n_d | \mathcal{M}(i) | \times 4|\mathcal{A}(i)|}] \quad : n_d | \mathcal{M}(i) | \times \text{colsize}(\mathbf{A}_i)
+\end{equation}
+
+\noindent Inequality constraints:
 \begin{equation}\notag
 x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
 \end{equation}
+
+\noindent Second-order cone constraints:
 \begin{equation}\notag
-\epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|
+\epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|, \quad
+\epsilon_{d,i} \geq \| d_{A,i} \| \quad \forall i \in \mathcal{J}
 \end{equation}
-\begin{align}
-\text{where } \forall i \in \mathcal{B} & \quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
-\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad
-\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad\quad \notag
-\end{align}
+
+\noindent The equility constraints $\mathbf{A}_i \tau_i = \eta_i \quad \forall i \in \mathcal{B}$ :
+
+Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
+\emph{i.e.} $\mathcal{P}(i)$, $\mathcal{M}(i)$ and $\mathcal{A}(i)$, respectively.
 \begin{equation}\notag
 \mathbf{A}_i \equiv
 \bordermatrix{
-                                    &    \scriptstyle{0 : n_d}                      &              \scriptstyle{1 : n_d |\mathcal{P}|}          &        \scriptstyle{2 : 5 |\mathcal{P}|}       &  \scriptstyle{3 : 4 |\mathcal{P}|}   & \scriptstyle{4 : 4|\mathcal{P}|}    &   \scriptstyle{5 : |\mathcal{P}| }  & \scriptstyle{6 : |\mathcal{P}| }  & \scriptstyle{7 : n_d}  &   \scriptstyle{8 : 1 } & \scriptstyle{9 : n_d |\mathcal{M}(i)| }          \cr
-\scriptstyle{0:n_d}                 &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                &                                      &                                     &                                     &                                   &                        &                        & (-\mathbf{1})_{j \in \mathcal{M}(i)}^\text{ce}   \cr
-\scriptstyle{1:n_d |\mathcal{P}|}   &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  \cr
-\scriptstyle{2:4 |\mathcal{P}|}     &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        &                                                  \cr
-\scriptstyle{3:  |\mathcal{P}|}     &                                               &                                                           &(\mathbf{C}_\mu)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        &                                                  \cr
-\scriptstyle{4: 4 |\mathcal{P}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        &                                                  \cr
-\scriptstyle{5: n_d}                &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &                        &                                                  \cr
-\scriptstyle{6: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_n)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &
+                                    &    \scriptstyle{0 : n_d}                      &              \scriptstyle{1 : n_d |\mathcal{P}|}          &        \scriptstyle{2 : 5 |\mathcal{P}|}       &  \scriptstyle{3 : 4 |\mathcal{P}|}   & \scriptstyle{4 : 4|\mathcal{P}|}    &   \scriptstyle{5 : |\mathcal{P}| }  & \scriptstyle{6 : |\mathcal{P}| }  & \scriptstyle{7 : n_d}  &   \scriptstyle{8 : 1 } & \scriptstyle{9 : n_d |\mathcal{M}| }             & \scriptstyle{10: 4 |\mathcal{A}| }               \cr
+\scriptstyle{0:n_d}                 &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                &                                      &                                     &                                     &                                   &                        &                        & (-\mathbf{1})_{j \in \mathcal{M}}^\text{ce}      &                                                  \cr
+\scriptstyle{1:n_d |\mathcal{P}|}   &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  &                                                  \cr
+\scriptstyle{2:4 |\mathcal{P}|}     &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        &                                                  &                                                  \cr
+\scriptstyle{3:  |\mathcal{P}|}     &                                               &                                                           &(\mathbf{C}_\mu)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        &                                                  &                                                  \cr
+\scriptstyle{4: 4 |\mathcal{P}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        &                                                  &                                                  \cr
+\scriptstyle{5: n_d}                &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &                        &                                                  &                                                  \cr
+\scriptstyle{6: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_n)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  &                                                  \cr
+\scriptstyle{7: 4 |\mathcal{A}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{A}}^\text{re} &                                                           &                                                &                                      &                                     &                                     &                                   &                        &                        &                                                  &  -\mathbf{1}                                                 
 }
 \end{equation}
-
 \begin{equation}\notag
 \tau_i \equiv
 \bordermatrix {
@@ -1781,7 +1806,8 @@ x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
 \scriptstyle{6} &   \\ \mu c_{n,i}                    \cr
 \scriptstyle{7} &   \Delta\chi_{i,ref}                \cr
 \scriptstyle{8} &   \epsilon_{\Delta,i,ref}           \cr
-\scriptstyle{9} &   f_{T,i}
+\scriptstyle{9} &   f_{T,i}                           \cr
+\scriptstyle{10}&   \tilde{p}^{(l+1)}_{A,i}
 }
 , \quad
 \eta_i \equiv
@@ -1793,10 +1819,10 @@ x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
 \scriptstyle{3} &   0                                          \cr
 \scriptstyle{4} &   (-V_{i,j})_{j \in \mathcal{P}}^\text{re}   \cr
 \scriptstyle{5} &   \chi^{(l)}_{i,ref}                         \cr
-\scriptstyle{6} &   0
+\scriptstyle{6} &   0                                          \cr
+\scriptstyle{7} &   (-V_{i,j})_{j \in \mathcal{A}}^\text{re}   
 }
 \end{equation}
-
 \pagebreak
 
 

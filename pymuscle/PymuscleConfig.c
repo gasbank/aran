@@ -71,6 +71,10 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     assert(confret == CONFIG_TRUE);
     const double h = pymCfg->h;
     confret = config_lookup_float(&conf, "mu", &pymCfg->mu);
+
+    /* TODO: Slant */
+    pymCfg->slant = 0.0;
+
     assert(confret == CONFIG_TRUE);
     /*
      * Parse body configurations
@@ -249,6 +253,9 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     FOR_0(j, pymCfg->nBody) {
         printf("   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
     }
+
+
+
     return 0;
     #undef csgfe
     #undef BODY

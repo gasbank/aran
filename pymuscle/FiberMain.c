@@ -216,6 +216,7 @@ typedef struct _pym_cmdline_options_t {
     const char *trajconf;
     const char *trajdata;
     const char *output;
+    double slant;
 } pym_cmdline_options_t;
 
 int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
@@ -232,7 +233,12 @@ int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **ar
     int _trajconf = 0, _trajdata = 0;
     for (i = 2; i < argc; ++i) {
         if (strncmp(argv[i], "--frame=", strlen("--frame=")) == 0) {
-            cmdopt->frame = atoi( strchr(argv[i], '=') + 1 );
+            char *endp;
+            cmdopt->frame = strtol( strchr(argv[i], '=') + 1, &endp, 10 );
+            if (!(endp && *endp == '\0') || cmdopt->frame <= 0) {
+                printf("Error: --frame should be provided as a positive integer.\n");
+                return -4;
+            }
         } else if (strncmp(argv[i], "--trajconf=", strlen("--trajconf=")) == 0) {
             cmdopt->trajconf = strchr(argv[i], '=') + 1;
             _trajconf = 1;
@@ -241,6 +247,13 @@ int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **ar
             _trajdata = 1;
         } else if (strncmp(argv[i], "--output=", strlen("--output=")) == 0) {
             cmdopt->output = strchr(argv[i], '=') + 1;
+        } else if (strncmp(argv[i], "--slant=", strlen("--slant=")) == 0) {
+            char *endp;
+            cmdopt->slant = strtod(strchr(argv[i], '=') + 1, &endp);
+            if (!(endp && *endp == '\0')) {
+                printf("Error: --slant should be provided as a real number.\n");
+                return -3;
+            }
         } else {
             printf("Error: unknown argument provided - %s\n", argv[i]);
             return -2;
@@ -263,6 +276,7 @@ int main(int argc, const char **argv) {
         printf("      --frame=<frame number to simulate>\n");
         printf("      --trajconf=<trajectory config file>\n");
         printf("      --trajdata=<trajectory data file>");
+        printf("      --slant=<ground slant in radian>");
         printf("\n\n");
         printf("  --trajconf should be specified with --trajdata and vice versa.\n\n");
         return -1;
@@ -377,7 +391,6 @@ int main(int argc, const char **argv) {
     }
     fprintf(outputFile, "%d %d\n", pymCfg.nSimFrame, nb);
 
-    int firstTime = 1;
     /* Let's start the simulation happily :) */
     FOR_0(i, pymCfg.nSimFrame) {
 
@@ -513,7 +526,7 @@ int main(int argc, const char **argv) {
         FOR_0(j, nf) {
             pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
             const double T_0        = xx[ bipEq.Aci[nb + 0] + j ];
-            const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
+            //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
             const double xrest_0    = xx[ bipEq.Aci[nb + 2] + j ];
             /* Update the current state of muscle fibers */
             mfn->T     = T_0;

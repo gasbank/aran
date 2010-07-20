@@ -7,6 +7,7 @@ struct _pym_config_t {
     double h;
     double mu;
     int nSimFrame;
+    double slant;
 };
 
 void PrintRigidBody(const pym_rb_t *rb);
