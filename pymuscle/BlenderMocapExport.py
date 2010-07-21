@@ -17,6 +17,8 @@ from Blender.Mathutils import *
 from xml.dom.minidom import *
 import struct
 from numpy import *
+import MathUtil
+
 
 def XformFromIpoCurves(ipo, frame):
 	loc = [0, 0, 0]
@@ -166,7 +168,7 @@ if __name__ == '__main__':
 	# If it is the same as 'mocapFps', the mocap trajectoriy
 	# is exactly copied. Otherwise, it is upsampled or downsampled
 	# as needed.
-	exportFps = 1000
+	exportFps = 100
 	exportFrameTime = 1./exportFps
 	# The clock-time length of the export sequence
 	# can be calculated by the following equation.
@@ -182,18 +184,32 @@ if __name__ == '__main__':
 	# for each ribid body at each instant
 	# and 'QUAT_WFIRST' gives you 7 dimensional vector
 	# likewise.
-	rotParam = 'EULER_XYZ'
+	rotParam = 'EXP'
 	# ==============================================================
 	#
 	
 	interestedArmature = 'Armature.005'
-	interestedBodyNames = [ 'Hips',                       # Bone names
-	                        'lowerback',                  #
-	                        'LHipJoint', 'RHipJoint',     # (should be
-	                        'LeftHip', 'RightHip',        #  stored in
-	                        'LeftKnee', 'RightKnee',      #  breadth-first
-	                        'LeftAnkle', 'RightAnkle',    #  order)
-	                        'LeftToe', 'RightToe']
+
+    # Bone(body) names should be stored in breadth-first order	
+	#               name          local (xAxis and yAxis)    another name
+	#                                 in world coord         in simulator
+	bodyTable = [ ('Hips',            '+X',     '+Z',         '*'    ),
+                  ('lowerback',       '+X',     '+Z',         '*'    ),
+	              ('Chest',           '+X',     '+Z',         'trunk'),
+	              ('LHipJoint',       '-Y',     '-Z',         '*'    ),
+				  ('RHipJoint',       '-Y',     '-Z',         '*'    ),
+	              ('LeftHip',         '-X',     '-Z',         'thighL'),
+	              ('RightHip',        '-X',     '-Z',         'thighR'),
+	              ('LeftKnee',        '-X',     '-Z',         'calfL'),
+	              ('RightKnee',       '-X',     '-Z',         'calfR'),
+	              ('LeftAnkle',       '+X',     '-Y',         'soleL'),
+	              ('RightAnkle',      '+X',     '-Y',         'soleR'),
+	              ('LeftToe',         '+X',     '-Y',         'toeL'),
+	              ('RightToe',        '+X',     '-Y',         'toeR') ]
+
+	interestedBodyNames = [ a for a, b, c, d in bodyTable ]
+	             
+
 	nb = len(interestedBodyNames) # Number of interested bodies
 	
 	interested = [ interestedBodyNames,
@@ -210,6 +226,7 @@ if __name__ == '__main__':
 	body_dim = []
 	for i in range(exportFrameCount):
 		frame = i+1
+		print 'Frame', frame, 'processed.'
 		# Blender thinks Frame 1 as time=0 point.
 		# So we need to substract 1 from frame
 		# to calculate the exact current time in seconds.
@@ -274,7 +291,10 @@ if __name__ == '__main__':
 				cor = Quaternion(Vector(0,1,0),-30)
 				m = cor.toMatrix().resize4x4() * m
 					
-			rb.setMatrix(m)
+			# rb.setMatrix(m) -- do not use this one.
+			rb.setLocation(m[3][0], m[3][1], m[3][2])
+			mteul = m.toEuler()
+			rb.setEuler(mteul.x/180*pi, mteul.y/180*pi, mteul.z/180*pi)
 			
 			# Position(q) for a single body
 			trans = m.translationPart()
@@ -296,6 +316,30 @@ if __name__ == '__main__':
 				                      rot.x,
 				                      rot.y,
 				                      rot.z]))
+			elif rotParam == 'EXP':
+				rotQuat = m.toQuat()
+				rotQuat = rotQuat.normalize()
+				rot1 = MathUtil.QuatToV([rotQuat.w, rotQuat.x, rotQuat.y, rotQuat.z])
+				if len(traj_q) > 0:
+					th1 = linalg.norm(rot1)
+					rot2 = (1-2*pi/th1)*rot1
+					prevRot = traj_q[-1][j][3:6]
+					rot1Devi = linalg.norm(prevRot - rot1)
+					rot2Devi = linalg.norm(prevRot - rot2)
+					if rot1Devi > rot2Devi:
+						rot = rot2
+						print 'alter selected'
+					else:
+						rot = rot1
+				else:
+					rot = rot1
+				traj_qi.append(array([trans.x,
+				                      trans.y,
+				                      trans.z,
+				                      rot[0],
+				                      rot[1],
+				                      rot[2]]))
+				
 			else:
 				raise Exception('unknown rotation parameterization.')
 			bb = rb.getBoundBox(0)
@@ -328,21 +372,25 @@ if __name__ == '__main__':
 	
 	metastr = '%d %d\n' % (len(traj_q), len(traj_q[0]))
 	
-	assert rotParam in ['EULER_XYZ', 'QUAT_WFIRST']
-	if rotParam == 'EULER_XYZ':
+	assert rotParam in ['EULER_XYZ', 'QUAT_WFIRST', 'EXP']
+	if rotParam in ['EULER_XYZ', 'EXP']:
 		vecLen = 6
 	elif rotParam == 'QUAT_WFIRST':
 		vecLen = 7
 	else:
 		raise Exception, 'unknown rotation parameterization'
-	fnPrefix = '/media/vm/devel/aran/pymuscle/traj_' + rotParam + '_'
+	
+	fnBasePrefix = '/media/vm/devel/aran/pymuscle/trajectories/'
+	fnPrefix = fnBasePrefix + 'traj_' + rotParam + '_'
+	fnRigidBodyConfig = fnBasePrefix + 'rb.conf'
 	
 	traj_q_file = open(fnPrefix + 'q.txt', 'w')
 	traj_q_file.write(metastr)
-	for i in traj_q:
-		for j in i:
+	for i,iidx in zip(traj_q, xrange(len(traj_q))):
+		for j,jidx in zip(i, xrange(len(i))):
 			traj_q_file.write('%15e'*vecLen % tuple(j))
 			#traj_q_file.write('%15e'*4 % tuple(Euler(j[3:6]).toQuat()))
+			traj_q_file.write(' # [' + str(iidx) + '] ' + bodyTable[jidx][0] + ' ' + str(linalg.norm(j[3:6])))
 			traj_q_file.write('\n')
 	traj_q_file.close()
 	
@@ -359,4 +407,18 @@ if __name__ == '__main__':
 		for j in i:
 			traj_qdd_file.write(('%15e'*vecLen % tuple(j)) + '\n')
 	traj_qdd_file.close()
+	
+	rbconf_file = open(fnRigidBodyConfig, 'w')
+	for (name, xAxis, yAxis, corresName), bone in zip(bodyTable, interested[2]):
+		rb = bpy.data.objects['RB.' + name]
+		bb = rb.getBoundBox(0)[0]
+		boundbox = [ abs(bbi)*2 for bbi in bb ]
+		rbconf_file.write('%-16s'%name + ' ')
+		rbconf_file.write('%15e'*3 % tuple(boundbox) + '   ')
+		rbconf_file.write(xAxis + '   ' + yAxis + '   ')
+		rbconf_file.write('%15e'%bone.length + '    ')
+		rbconf_file.write(corresName)
+		rbconf_file.write('\n')
+	rbconf_file.close()
+	
 	
