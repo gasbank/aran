@@ -215,6 +215,10 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
 
     }
 
+    printf("Info - # of RB parsed = %d\n", nBody);
+    printf("Info - # of MF parsed = %d\n", nMuscle);
+
+    pymCfg->nJoint = 0;
     int simFrame; /* simulation length */
     confret = config_lookup_int(&conf, "simFrame", &simFrame);
     assert(confret == CONFIG_TRUE);
@@ -251,9 +255,12 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     memcpy(pymCfg->body , body , sizeof(pym_rb_t)*nBody  );
     memcpy(pymCfg->fiber, fiber, sizeof(pym_mf_t  )*nMuscle);
 
+    int totFiber = 0;
     FOR_0(j, pymCfg->nBody) {
         printf("   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
+        totFiber += pymCfg->body[j].b.nFiber;
     }
+    assert(totFiber == 2*nMuscle);
 
 
 
@@ -335,29 +342,31 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
 {
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
-
+    const int nj = pymCfg->nJoint;
     cholmod_triplet *A_trip[nb]; /* should be deallocated here */
     const int nd = 6;
-    const int Asubrows = nb + nb + 1;
-    const int Asubcols = nb + 5;
-    int Asubrowsizes[ Asubrows ];
-    int Asubcolsizes[ Asubcols ];
+
+    int Asubrowsizes[          ] = { 0, /* be calculated later */
+                                     2*nd*nf,
+                                     nf,
+                                     4*nj,
+                                     nj };
+    int Asubcolsizes[          ] = { 0, /* be calculated later */
+                                     nf,
+                                     nf,
+                                     nf,
+                                     1,
+                                     1,
+                                     4*nj,
+                                     nj };
     int i, j;
     FOR_0(i, nb) {
-        GetAMatrix(&A_trip[i], sd + i, pymCfg->body + i, pymCfg, cc);
-        Asubrowsizes[i] = A_trip[i]->nrow;
-        Asubrowsizes[nb+i] = nd*pymCfg->body[i].b.nFiber;
+        GetAMatrix(A_trip + i, sd + i, pymCfg->body + i, pymCfg, cc);
+        Asubrowsizes[0] += A_trip[i]->nrow;
+        Asubcolsizes[0] += A_trip[i]->ncol;
     }
-    Asubrowsizes[nb+nb] = pymCfg->nFiber;
-    FOR_0(i, nb) {
-        Asubcolsizes[i] = A_trip[i]->ncol;
-    }
-    Asubcolsizes[nb+0] = pymCfg->nFiber;
-    Asubcolsizes[nb+1] = pymCfg->nFiber;
-    Asubcolsizes[nb+2] = pymCfg->nFiber;
-    Asubcolsizes[nb+3] = 1;
-    Asubcolsizes[nb+4] = 1;
-
+    const int Asubrows = sizeof(Asubrowsizes)/sizeof(int);
+    const int Asubcols = sizeof(Asubcolsizes)/sizeof(int);
     int *Ari = (int *)malloc( sizeof(int)*(1+Asubrows) );
     int *Aci = (int *)malloc( sizeof(int)*(1+Asubcols) );
     bod->Ari = Ari;
@@ -368,12 +377,19 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
     FOR_0(i, Asubcols) Aci[i+1] = Aci[i] + Asubcolsizes[i];
 
     size_t nzmax = 0;
+    size_t totFiberCon = 0;
     FOR_0(i, nb) {
         nzmax += A_trip[i]->nnz;                /* Sub-block 01 - A_i */
         nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 02 - [0 -1] */
         nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 03 - R_i */
+
+        totFiberCon += pymCfg->body[i].b.nFiber;
     }
-    nzmax += 3*pymCfg->nFiber; /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
+    assert(totFiberCon == 2*nf); /* Since a fiber always connected to two different RB */
+    nzmax += 3*nf;     /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
+    nzmax += 2*4*nj;   /* sub-block 07 - D */
+    nzmax += 4*nj;     /* sub-block 08 - (-1) */
+    nzmax += nj;       /* sub-block 09 - (1) */
 
 //    printf("    BipA matrix constants (nb)      : %d\n", nb);
 //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -383,59 +399,81 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
     assert(AMatrix_trip->nnz == 0);
 
     /* Sub-block 01 - A */
+    int AoffsetRow = 0, AoffsetCol = 0;
     FOR_0(i, nb) {
         FOR_0(j, A_trip[i]->nnz) {
-            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, i, i,
-                                      ((int    *)(A_trip[i]->i))[j],
-                                      ((int    *)(A_trip[i]->j))[j],
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 0, 0,
+                                      AoffsetRow + ((int    *)(A_trip[i]->i))[j],
+                                      AoffsetCol + ((int    *)(A_trip[i]->j))[j],
                                       ((double *)(A_trip[i]->x))[j]);
         }
+        AoffsetRow += A_trip[i]->nrow;
+        AoffsetCol += A_trip[i]->ncol;
     }
+    assert(AoffsetRow == Ari[1] && AoffsetCol == Aci[1]);
+    int EoffsetRow = 0, EoffsetCol = 0;
     /* Sub-block 02 - E := [0 -1 0] */
     FOR_0(i, nb) {
         const int nfi = pymCfg->body[i].b.nFiber;
         const int nai = pymCfg->body[i].b.nAnchor;
         FOR_0(j, nd*nfi) {
-            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, nb+i, i,
-                                      j,
-                                      A_trip[i]->ncol - nd*nfi + j - 4*nai,
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 0,
+                                      EoffsetRow + j,
+                                      EoffsetCol + A_trip[i]->ncol - nd*nfi + j - 4*nai,
                                       -1);
         }
+        EoffsetRow += nd*pymCfg->body[i].b.nFiber;
+        EoffsetCol += A_trip[i]->ncol;
     }
+    assert(Ari[1]+EoffsetRow == Ari[2] && Aci[0]+EoffsetCol == Aci[1]);
     /* Sub-block 03 - R */
+    int RoffsetRow = 0;
     FOR_0(i, nb) {
         cholmod_triplet *R_i;
         GetR_i(&R_i, sd, i, pymCfg, cc);
         FOR_0(j, R_i->nnz) {
-            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, nb+i, nb,
-                                      ((int    *)(R_i->i))[j],
-                                      ((int    *)(R_i->j))[j],
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 1,
+                                      RoffsetRow + ((int    *)(R_i->i))[j],
+                                      0          + ((int    *)(R_i->j))[j],
                                       ((double *)(R_i->x))[j]);
         }
+        RoffsetRow += nd*pymCfg->body[i].b.nFiber;
         cholmod_free_triplet(&R_i, cc);
     }
+    assert(Ari[1]+RoffsetRow == Ari[2]);
     /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
     FOR_0(i, nf) {
         double k[3];
         GetMuscleFiberK(k, pymCfg->fiber + i, pymCfg);
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2*nb, nb + 0, i, i, k[0]);
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2*nb, nb + 1, i, i, k[1]);
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2*nb, nb + 2, i, i, k[2]);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 1, i, i, k[0]);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 2, i, i, k[1]);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 3, i, i, k[2]);
     }
-
+    /* TODO Sub-block 07 - D */
+    /* Sub-block 08 - (-1) */
+    FOR_0(i, 4*nj)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 6, i, i, -1);
+    /* Sub-block 09 - (1) */
+    FOR_0(i, nj)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 4, 7, i, i, -1);
     bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
     cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */
     assert(bod->bipMat);
-    double *bipEta = (double *)malloc(sizeof(double)*Ari[Asubrows]);
-    memset(bipEta, 0, sizeof(double)*Ari[Asubrows]);
+    double *bipEta = calloc(Ari[Asubrows], sizeof(double));
+    //memset(bipEta, 0, sizeof(double)*Ari[Asubrows]);
+    int etaOffset = 0;
     FOR_0(i, nb) {
         double *etai;
-        GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc); /* etai is allocated at GetEta() */
-        memcpy(bipEta + Ari[i], etai, sizeof(double)*A_trip[i]->nrow);
+        GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc); /* Space for 'etai' is allocated at GetEta() */
+        memcpy(bipEta + etaOffset, etai, sizeof(double)*A_trip[i]->nrow);
         free(etai); /* so free here */
+        etaOffset += A_trip[i]->nrow;
     }
     FOR_0(i, nf) {
-        bipEta[ Ari[2*nb] + i ] = GetMuscleFiberS(i, sd, pymCfg);
+        bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
+    }
+    FOR_0(i, nj) {
+        bipEta[ Ari[4] + i ] = 1e-1; /* joint dislocation threshold */
     }
     bod->bipEta = bipEta;
 

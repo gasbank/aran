@@ -4,6 +4,7 @@
 struct _pym_config_t {
     pym_rb_t *body; unsigned int nBody;
     pym_mf_t *fiber; unsigned int nFiber;
+    unsigned int nJoint;
     double h;
     double mu;
     int nSimFrame;

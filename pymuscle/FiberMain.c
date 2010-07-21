@@ -494,8 +494,9 @@ int main(int argc, const char **argv) {
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
         printf("Results:  %15s (cost=%.10e)\n", solstaStr, cost);
-        FOR_0(j, nb) {
-            const double *chi_2 = xx + bipEq.Aci[j];
+        int tauOffset;
+        for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+            const double *chi_2 = xx + tauOffset;
             const pym_rb_named_t *rbn = &pymCfg.body[j].b;
 
             double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
@@ -546,9 +547,9 @@ int main(int argc, const char **argv) {
 
         FOR_0(j, nf) {
             pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
-            const double T_0        = xx[ bipEq.Aci[nb + 0] + j ];
+            const double T_0        = xx[ bipEq.Aci[1] + j ];
             //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
-            const double xrest_0    = xx[ bipEq.Aci[nb + 2] + j ];
+            const double xrest_0    = xx[ bipEq.Aci[3] + j ];
             /* Update the current state of muscle fibers */
             mfn->T     = T_0;
             mfn->xrest = xrest_0;

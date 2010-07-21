@@ -6,6 +6,7 @@
 #include <string.h>
 #include <float.h>
 #include <assert.h>
+#include <math.h>
 #include <cholmod.h>
 #include <mosek.h> /* Include the MOSEK definition file. */
 #include "PymStruct.h"
@@ -81,6 +82,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     memcpy(buc, bod->bipEta, sizeof(double)*NUMCON);
     //FOR_0(i, NUMCON) printf("%lf  ", bod->bipEta[i]);
 
+    /* Initialize all optimization variables as free variables. */
     MSKboundkeye bkx[NUMVAR];
     double       blx[NUMVAR];
     double       bux[NUMVAR];
@@ -90,11 +92,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         bux[i] = +MSK_INFINITY;
     }
 
-
-
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
-    int nplist[nb];
+    int nplist[nb]; /* Stores # of CPs for each RB */
     FOR_0(i, nb) {
         nplist[i] = sd[i].nContacts_2;
     }
@@ -119,83 +119,76 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     };
     assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
 
-    FOR_0(i, nb) {
+    /***********************/
+    /* Cost function setup */
+    /***********************/
+    int tauOffset;
+    for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
-            c[ bod->Aci[i] + sd[i].Aci[2] + 5*j + 4 ] = 0; /* minimize the contact normal force */
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0; /* minimize the contact normal force */
+            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
         }
-        FOR_0(j, nplist[i]) {
-            c[ bod->Aci[i] + sd[i].Aci[3] + 4*j + 2 ] = 0; /* Estimated position of z-coordinate of contact point */
-        }
-        for (j= bod->Aci[i] + sd[i].Aci[5]; j < bod->Aci[i]+sd[i].Aci[6]; ++j)
+        for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
             c[j] = 0; /* minimize the movement of candidate contact points */
 
-
         /** DEBUG **/
-        //c[ bod->Aci[i] + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
-        c[ bod->Aci[i] + sd[i].Aci[8] ] = 1;
-
-        for (j= bod->Aci[nb+3]; j < bod->Aci[nb+4]; ++j)
-            c[j] = 0; /* minimize aggregate tension */
-        for (j= bod->Aci[nb+4]; j < bod->Aci[nb+5]; ++j)
-            c[j] = 0; /* minimize aggregate actuation force */
+        //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
+        c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
+    /* minimize aggregate tension */
+    for (j = Aci[1]; j < Aci[2]; ++j)
+        c[j] = 0;
+    /* minimize aggregate actuation force */
+    for (j = Aci[2]; j < Aci[3]; ++j)
+        c[j] = 0;
+    /***********************/
+    /***********************/
     const int nd = 6;
     #define SET_NONNEGATIVE(j) { bkx[j] = MSK_BK_LO; blx[j] = 0; bux[j] = MSK_INFINITY; }
     #define SET_FIXED_ZERO(j)  { bkx[j] = MSK_BK_FX; blx[j] = 0; bux[j] = 0; }
     #define SET_FIXED_ONE(j)   { bkx[j] = MSK_BK_FX; blx[j] = 1; bux[j] = 1; }
     #define SET_LOWER_BOUND(j,lb)   { bkx[j] = MSK_BK_LO; blx[j] = lb; bux[j] = MSK_INFINITY; }
-    FOR_0(i, nb) {
-        SET_NONNEGATIVE( Aci[i] + sd[i].Aci[0] + 2 ); /* chi_2_z */
-        FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
-        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
-        FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
-        FOR_0(j, nplist[i]) SET_NONNEGATIVE( Aci[i] + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
+
+    for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
+        SET_NONNEGATIVE( tauOffset + sd[i].Aci[0] + 2 ); /* chi_2_z */
+        FOR_0(j, nplist[i]) SET_NONNEGATIVE( tauOffset + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
+        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
+        FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
+        FOR_0(j, nplist[i]) SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
         FOR_0(j, nplist[i]) {
-            //SET_NONNEGATIVE( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
+            //SET_NONNEGATIVE( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
 
             /* DEBUG */
             const double ctY = sd[i].contactsFix_2[j][1];
             const double theta = pymCfg->slant;
             const double z = -ctY*tan(theta);
-            SET_LOWER_BOUND( Aci[i] + sd[i].Aci[3] + 4*j + 2, z ); /* p_c_2_z : next step CP z-pos */
+            SET_LOWER_BOUND( tauOffset + sd[i].Aci[3] + 4*j + 2, z ); /* p_c_2_z : next step CP z-pos */
         }
-        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( Aci[i] + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
-        FOR_0(j, nplist[i]) SET_FIXED_ONE  ( Aci[i] + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
-        for(j=Aci[i] + sd[i].Aci[5]; j<Aci[i] + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
-        for(j=Aci[i] + sd[i].Aci[6]; j<Aci[i] + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
-        for(j=Aci[i] + sd[i].Aci[8]; j<Aci[i] + sd[i].Aci[9]; ++j) SET_NONNEGATIVE( j ); /* eps_delta */
+        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
+        FOR_0(j, nplist[i]) SET_FIXED_ONE  ( tauOffset + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
+        for(j=tauOffset + sd[i].Aci[5]; j<tauOffset + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
+        for(j=tauOffset + sd[i].Aci[6]; j<tauOffset + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
+        for(j=tauOffset + sd[i].Aci[8]; j<tauOffset + sd[i].Aci[9]; ++j) SET_NONNEGATIVE( j ); /* eps_delta */
     }
 
     FOR_0(j, nf) {
         /* Tension range constraint */
-        i = Aci[nb+0]+j;
+        i = Aci[1]+j;
 //        bkx[i] = MSK_BK_RA;
 //        blx[i] = -1000;
 //        bux[i] = +1000;
         /* Actuation force range constraint */
-        i = Aci[nb+1]+j;
+        i = Aci[2]+j;
         bkx[i] = MSK_BK_RA;
         blx[i] = -400*9.81;
         bux[i] =  400*9.81;
         /* Rest length range constraint */
-        i = Aci[nb+2]+j;
+        i = Aci[3]+j;
         bkx[i] = MSK_BK_RA;
         blx[i] = pymCfg->fiber[j].b.xrest_lower;
         bux[i] = pymCfg->fiber[j].b.xrest_upper;
     }
-
-    /* TODO trunk next x position */
-    i = Aci[0]+sd[0].Aci[0]+0;
-//    bkx[i] = MSK_BK_RA;
-//    blx[i] = 2.8;
-//    bux[i] = 3.0;
-    /* TODO trunk next z position */
-    i = Aci[0]+sd[0].Aci[0]+2;
-//    bkx[i] = MSK_BK_RA;
-//    blx[i] = 1.8;
-//    bux[i] = 2.0;
-
 
     /* TODO: ### DEBUG PURPOSE (REMOVE IT!) ### */
     FOR_0(k, nb) {
@@ -302,31 +295,31 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     # Input the cones
     #
     */
-    FOR_0(i, nb) {
+    for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         //# epsilon_Delta >= || Delta_chi_{i,ref} || (6-DOF)
         AppendConeRange(task,
-                        Aci[i] + sd[i].Aci[8],
-                        Aci[i] + sd[i].Aci[7],
-                        Aci[i] + sd[i].Aci[8]);
+                        tauOffset + sd[i].Aci[8],
+                        tauOffset + sd[i].Aci[7],
+                        tauOffset + sd[i].Aci[8]);
 
         FOR_0(j, nplist[i]) {
             //# CP movement minimization
             AppendConeRange(task,
-                            Aci[i] + sd[i].Aci[5] + j,
-                            Aci[i] + sd[i].Aci[4]+4*j+0,
-                            Aci[i] + sd[i].Aci[4]+4*j+3);
+                            tauOffset + sd[i].Aci[5] + j,
+                            tauOffset + sd[i].Aci[4]+4*j+0,
+                            tauOffset + sd[i].Aci[4]+4*j+3);
 
             //# Friction cone constraints
             AppendConeRange(task,
-                            Aci[i] + sd[i].Aci[6]+j,            // mu*c_n
-                            Aci[i] + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
-                            Aci[i] + sd[i].Aci[2]+5*j+3);
+                            tauOffset + sd[i].Aci[6]+j,            // mu*c_n
+                            tauOffset + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
+                            tauOffset + sd[i].Aci[2]+5*j+3);
         }
     }
     //# Minimal tension force constraints
-    AppendConeRange(task, Aci[nb+3], Aci[nb+0], Aci[nb+1]);
+    AppendConeRange(task, Aci[4], Aci[1], Aci[2]);
     //# Minimal actuation force constraints
-    AppendConeRange(task, Aci[nb+4], Aci[nb+1], Aci[nb+2]);
+    AppendConeRange(task, Aci[5], Aci[2], Aci[3]);
     assert(r==MSK_RES_OK);
 
     double cost = FLT_MAX;
