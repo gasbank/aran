@@ -1,6 +1,4 @@
-#include <string.h>
-#include <assert.h>
-#include <cholmod.h>
+#include "PymPch.h"
 #include "PymStruct.h"
 #include "MathUtil.h"
 #include "ExpBodyMoEq_real.h"
@@ -123,6 +121,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         chi_2_nocf[i] = 2*chi_1[i] - chi_0[i] + Minv_h2_C_fg;
     }
     double W_2_nocf[4][4]; GetWFrom6Dof(W_2_nocf, chi_2_nocf);
+    sd->nContacts_1 = 0;
     sd->nContacts_2 = 0;
     for (j=0; j<8; ++j) {
         double pcj_2_nocf_W[3], pcj_1_W[3];
@@ -139,8 +138,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/
             ++sd->nContacts_2;
-            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
-                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
+//            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
+//                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
         }
     }
     const int nd = NUM_DOF;
@@ -383,7 +382,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
             const double ctY = rb->b.p[1];
             const double theta = pymCfg->slant;
             const double z = -ctY*tan(theta);
-            eta[sd->Ari[5] + i] += -ctY * tan(theta);
+            eta[sd->Ari[5] + i] += z;
         }
     }
     /* (-V_ij)re_{j \in A} */

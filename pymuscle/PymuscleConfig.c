@@ -1,10 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <float.h>
-#include <libconfig.h>
-#include <cholmod.h>
+#include "PymPch.h"
 #include "PymStruct.h"
 #include "MathUtil.h"
 #include "Biped.h"
@@ -338,7 +332,7 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* 
     *_R_i = R_i;
 }
 
-void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, const pym_config_t *pymCfg, cholmod_common *cc)
+void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t *sd, const pym_config_t *pymCfg, cholmod_common *cc)
 {
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
@@ -450,6 +444,12 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 3, i, i, k[2]);
     }
     /* TODO Sub-block 07 - D */
+    FOR_0(i, nj) {
+//        FOR_0(j, nb) {
+//            pymCfg->body[j].b.
+//        }
+
+    }
     /* Sub-block 08 - (-1) */
     FOR_0(i, 4*nj)
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 6, i, i, -1);

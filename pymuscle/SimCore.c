@@ -5,12 +5,7 @@
  *
  * Implicit integration core routine
  */
-#include <string.h>
-#include <assert.h>
-#include <math.h>
-#include <umfpack.h>
-#include <cholmod.h>
-
+#include "PymPch.h"
 #include "TripletMatrix.h"
 #include "FiberEffectImpAll.h"
 #include "MathUtil.h"

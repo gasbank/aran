@@ -8,9 +8,7 @@
  * Make a dense matrix to a sparse form
  *
  */
-#include <math.h>
-#include <string.h>
-#include "cholmod.h"
+#include "PymPch.h"
 #include "ToSparse.h"
 #include "DebugPrintDef.h"
 

@@ -25,10 +25,7 @@
  * nd   :  degree-of-freedom for a rigid body (6 or 7)
  *
  */
-#include <math.h>
-#include <string.h>
-#include "umfpack.h"
-#include "cholmod.h"
+#include "PymPch.h"
 #include "Control.h"
 #define DEBUG
 #include "DebugPrintDef.h"

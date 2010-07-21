@@ -4,14 +4,7 @@
  *
  * Lemke's algorithm for solving LCP
  */
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <math.h>
-#include <execinfo.h>
-#include <float.h>
-#include "cholmod.h"
-#include "umfpack.h"
+#include "PymPch.h"
 #include "ToSparse.h"
 #include "Control.h"
 //#define DEBUG

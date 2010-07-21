@@ -5,11 +5,7 @@
  *
  * Rigid body equations (single)
  */
-
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "PymPch.h"
 #include "TypeDefs.h"
 
 /* BODY RELATED VARIABLES (2*nd + 4 = 18) */

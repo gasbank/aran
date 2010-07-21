@@ -1,8 +1,5 @@
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
+#include "PymPch.h"
 #include "TripletMatrix.h"
-
 
 TripletMatrix *tm_allocate(int row, int col, int maxNz)
 {

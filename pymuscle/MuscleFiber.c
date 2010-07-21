@@ -1,6 +1,4 @@
-#include <math.h>
-#include <assert.h>
-#include <cholmod.h>
+#include "PymPch.h"
 #include "PymStruct.h"
 #include "Config.h"
 #include "Biped.h"

@@ -5,13 +5,7 @@
  *
  * Fiber effect equations (all fiber)
  */
-#include <stdlib.h>
-#include <limits.h>
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-
+#include "PymPch.h"
 #include "TypeDefs.h"
 #include "OneRbImp.h"
 #include "FiberEffectImp.h"

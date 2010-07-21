@@ -5,16 +5,7 @@
  *
  * Entry point
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
-#include <string.h>
-#include <math.h>
-#include <float.h>
-#include <libconfig.h>
-#include <mosek.h>
-#include <umfpack.h>
-#include <cholmod.h>
+#include "PymPch.h"
 #include "PymStruct.h"
 #include "Control.h"
 #include "MathUtil.h"
@@ -316,8 +307,6 @@ int main(int argc, const char **argv) {
     int nBlenderBody = 0;
     int nBlenderFrame = 0;
     double *trajData = 0;
-    pym_joint_anchor_t pymJa[100];
-    int na = 0;
     if (cmdopt.trajconf) {
         PymParseTrajectoryFile(corresMap,
                                &nCorresMap,
@@ -360,8 +349,8 @@ int main(int argc, const char **argv) {
         char fnJaCfg[128];
         strncat(fnJaCfg, cmdopt.trajconf, 128);
         strncat(fnJaCfg, ".ja", 128);
-        na = PymParseJointAnchorFile(pymJa, sizeof(pymJa)/sizeof(pym_joint_anchor_t), fnJaCfg);
-        printf("Info - # of joint anchors parsed = %d\n", na);
+        pymCfg.na = PymParseJointAnchorFile(pymCfg.pymJa, sizeof(pymCfg.pymJa)/sizeof(pym_joint_anchor_t), fnJaCfg);
+        printf("Info - # of joint anchors parsed = %d\n", pymCfg.na);
 
         FOR_0(i, pymCfg.nBody) {
             /*
@@ -385,15 +374,19 @@ int main(int argc, const char **argv) {
             /*
              * Set joint anchors for each body
              */
-            FOR_0(j, na) {
-                if (strcmp(pymJa[j].bodyName, rbn->name) == 0) {
-                    memcpy(rbn->jointAnchors + rbn->nAnchor, pymJa[j].localPos, sizeof(double)*3);
+            FOR_0(j, pymCfg.na) {
+                if (strcmp(pymCfg.pymJa[j].bodyName, rbn->name) == 0) {
+                    strncpy(rbn->jointAnchorNames[rbn->nAnchor], pymCfg.pymJa[j].name, 128);
+                    memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg.pymJa[j].localPos, sizeof(double)*3);
                     rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
                     ++rbn->nAnchor;
                     assert(rbn->nAnchor <= 10);
                 }
             }
         }
+        assert(pymCfg.na%2 == 0);
+        printf("Info - # of (anchored) joints automatically computed = %d\n", pymCfg.na/2);
+        pymCfg.nJoint = pymCfg.na/2;
     } else {
         PymSetPymCfgChiRefToCurrentState(&pymCfg);
     }

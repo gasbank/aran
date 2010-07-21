@@ -1,3 +1,5 @@
+#include "PymPch.h"
+
 void SymbolicTensor(double I[4],
                     const double sx,
                     const double sy,

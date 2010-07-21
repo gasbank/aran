@@ -3,12 +3,7 @@
  * 2010 Geoyeob Kim
  * As a part of the thesis implementation
  */
-#include <string.h>
-#include <float.h>
-#include <assert.h>
-#include <math.h>
-#include <cholmod.h>
-#include <mosek.h> /* Include the MOSEK definition file. */
+#include "PymPch.h"
 #include "PymStruct.h"
 #include "Config.h"
 #include "Biped.h"

@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <math.h>
-#include <string.h>
-#include <assert.h>
+#include "PymPch.h"
 #include "Config.h"
 #include "MathUtil.h"
 #include "dRdv_real.h"

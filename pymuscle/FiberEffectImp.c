@@ -5,11 +5,7 @@
  *
  * Fiber effect equations (single fiber)
  */
-
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include "PymPch.h"
 #include "TypeDefs.h"
 #include "FiberEffectImp.h"
 #include "macFiberInputVectorDef.h"

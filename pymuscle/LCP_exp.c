@@ -8,11 +8,7 @@
  *
  * Rotation is parameterized by an exponential map technique
  */
-#include <string.h>
-#include <assert.h>
-#include <math.h>
-#include <umfpack.h>
-#include <cholmod.h>
+#include "PymPch.h"
 #include "ExpBodyMoEq_real.h"
 #include "dRdv_real.h"
 #include "Control.h"
