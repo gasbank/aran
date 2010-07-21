@@ -60,30 +60,37 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
     //printf("V\n");
     //__PRINT_VECTOR(V, 4);
 
-    /*
-     *          [                                        Z                                             ]^T
-     *          [                                                                                      ]
-     *   Q  =   [ [  d   W                                       d   W                             ]   ]
-     *          [ [ --------- . corner <dot> normal     . . .   --------- . corner <dot> normal    ]   ]
-     *          [ [  d chi_0                                     d chi_0                           ]   ]
-     */
-    cholmod_dense *qij_2nd_col_T_den = cholmod_allocate_dense(1, 6, 1, CHOLMOD_REAL, cc);
-    ((double *)(qij_2nd_col_T_den->x))[0] = normal[0];
-    ((double *)(qij_2nd_col_T_den->x))[1] = normal[1];
-    ((double *)(qij_2nd_col_T_den->x))[2] = normal[2];
-    ((double *)(qij_2nd_col_T_den->x))[3] = Dot33(r[0], normal);
-    ((double *)(qij_2nd_col_T_den->x))[4] = Dot33(r[1], normal);
-    ((double *)(qij_2nd_col_T_den->x))[5] = Dot33(r[2], normal);
-    cholmod_sparse *qij_2nd_col_T = cholmod_dense_to_sparse(qij_2nd_col_T_den, 1, cc);
-    cholmod_sparse *Q_T = cholmod_vertcat(*Z, qij_2nd_col_T, 1, cc);
-    *Q = cholmod_transpose(Q_T, 1, cc);
+    if (Q && normal) {
+        /*
+         *          [                                        Z                                             ]^T
+         *          [                                                                                      ]
+         *   Q  =   [ [  d   W                                       d   W                             ]   ]
+         *          [ [ --------- . corner <dot> normal     . . .   --------- . corner <dot> normal    ]   ]
+         *          [ [  d chi_0                                     d chi_0                           ]   ]
+         */
+        cholmod_dense *qij_2nd_col_T_den = cholmod_allocate_dense(1, 6, 1, CHOLMOD_REAL, cc);
+        ((double *)(qij_2nd_col_T_den->x))[0] = normal[0];
+        ((double *)(qij_2nd_col_T_den->x))[1] = normal[1];
+        ((double *)(qij_2nd_col_T_den->x))[2] = normal[2];
+        ((double *)(qij_2nd_col_T_den->x))[3] = Dot33(r[0], normal);
+        ((double *)(qij_2nd_col_T_den->x))[4] = Dot33(r[1], normal);
+        ((double *)(qij_2nd_col_T_den->x))[5] = Dot33(r[2], normal);
+        cholmod_sparse *qij_2nd_col_T = cholmod_dense_to_sparse(qij_2nd_col_T_den, 1, cc);
+        cholmod_sparse *Q_T = cholmod_vertcat(*Z, qij_2nd_col_T, 1, cc);
+        *Q = cholmod_transpose(Q_T, 1, cc);
+        cholmod_free_dense(&qij_2nd_col_T_den, cc);
+        cholmod_free_sparse(&qij_2nd_col_T, cc);
+        cholmod_free_sparse(&Q_T, cc);
+    } else if (Q == 0 && normal == 0) {
+
+    } else {
+        assert(!"Invalid usage");
+    }
 
     cholmod_free_triplet(&Ztrip, cc);
     cholmod_free_dense(&chi_den, cc);
     cholmod_free_dense(&Z_chi_1, cc);
-    cholmod_free_dense(&qij_2nd_col_T_den, cc);
-    cholmod_free_sparse(&qij_2nd_col_T, cc);
-    cholmod_free_sparse(&Q_T, cc);
+
 }
 
 int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc) {
@@ -170,7 +177,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     for (i=0; i<sd->Asubrows; ++i) sd->Ari[i+1] = sd->Ari[i] + Asubrowsizes[i];
     for (i=0; i<sd->Asubcols; ++i) sd->Aci[i+1] = sd->Aci[i] + Asubcolsizes[i];
 
-    for (i = 0; i < np; ++i) {
+    FOR_0(i, np) {
         const double *pcj = rbn->corners[ sd->contactIndices_2[i] ];
         double normal[4] = {0,0,1,0};
         const double theta = pymCfg->slant;
@@ -182,6 +189,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         normal[2] = nz;
         memcpy(sd->contactsNormal_1[i], normal, sizeof(double)*4);
         ZVQ(&sd->Z[i], sd->V[i], &sd->Q[i], chi_1, pcj, normal, sd->W_1, sd->dWdchi_tensor, cc);
+    }
+    FOR_0(i, na) {
+        const double *pcj = rbn->jointAnchors[i];
+        ZVQ(&sd->Za[i], sd->Va[i], 0, chi_1, pcj, 0, sd->W_1, sd->dWdchi_tensor, cc);
     }
 
     return 0;
@@ -333,6 +344,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
     /* We can calculate optimal estimate for the number of nonzero elements */
     const int nd = 6;
     const int np = sd->nContacts_2;
+    const int na = rbn->nAnchor;
     size_t etaDim = sd->Ari[sd->Asubrows];
     //printf("RB %s etaDim = %d\n", rbn->name, etaDim);
     double *eta = (double *)malloc(sizeof(double) * etaDim);
@@ -345,7 +357,9 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
     chi_0[3] = rbn->q0[0]; chi_0[4] = rbn->q0[1]; chi_0[5] = rbn->q0[2];
 
     const double h = pymCfg->h;
-    int i,j;
+    int i, j;
+
+    /* c_{2,i} */
     FOR_0(i, nd) {
         double M_q_q0 = 0;
         FOR_0(j, nd) {
@@ -353,28 +367,31 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
         }
         eta[sd->Ari[0] + i] = M_q_q0 + (-sd->Cqd[i] + sd->f_g[i]);
     }
-
+    /* p^(l)_{cfix,i}   and   (-V_ij)re_{j \in P} */
     FOR_0(i, np) {
         FOR_0(j, 4) {
             eta[sd->Ari[2] + 4*i + j] = sd->contactsFix_2[i][j];
             eta[sd->Ari[4] + 4*i + j] = -sd->V[i][j];
         }
     }
-
+    /* chi^(l)_{i, ref} */
     FOR_0(i, nd) {
         eta[sd->Ari[5] + i] = rbn->chi_ref[i];
 
         if (i==2) {
-            /* DEBUG */
+            /* TODO : slant DEBUG */
             const double ctY = rb->b.p[1];
             const double theta = pymCfg->slant;
             const double z = -ctY*tan(theta);
             eta[sd->Ari[5] + i] += -ctY * tan(theta);
         }
     }
-
-
-
+    /* (-V_ij)re_{j \in A} */
+    FOR_0(i, na) {
+        FOR_0(j, 4) {
+            eta[sd->Ari[7] + 4*i + j] = -sd->Va[i][j];
+        }
+    }
     *_eta = eta;
     //__PRINT_VECTOR(eta, etaDim);
 }

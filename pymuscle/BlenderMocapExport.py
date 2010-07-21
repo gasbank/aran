@@ -1,5 +1,5 @@
 #!BPY
-
+# Rigid body and muscle fiber model exporter
 # 2010 Geoyeob Kim
 
 import zlib
@@ -11,13 +11,13 @@ from Blender import Material, Constraint, Mesh, Object
 from Blender.Armature import NLA
 import bpy
 import BPyMessages
-import array
+#import array
 import Blender.Mathutils
 from Blender.Mathutils import *
-from xml.dom.minidom import *
-import struct
-from numpy import *
+#from xml.dom.minidom import *
+#import struct
 import MathUtil
+import numpy
 
 
 def XformFromIpoCurves(ipo, frame):
@@ -294,7 +294,7 @@ if __name__ == '__main__':
 			# rb.setMatrix(m) -- do not use this one.
 			rb.setLocation(m[3][0], m[3][1], m[3][2])
 			mteul = m.toEuler()
-			rb.setEuler(mteul.x/180*pi, mteul.y/180*pi, mteul.z/180*pi)
+			rb.setEuler(mteul.x/180*math.pi, mteul.y/180*math.pi, mteul.z/180*math.pi)
 			
 			# Position(q) for a single body
 			trans = m.translationPart()
@@ -321,11 +321,11 @@ if __name__ == '__main__':
 				rotQuat = rotQuat.normalize()
 				rot1 = MathUtil.QuatToV([rotQuat.w, rotQuat.x, rotQuat.y, rotQuat.z])
 				if len(traj_q) > 0:
-					th1 = linalg.norm(rot1)
-					rot2 = (1-2*pi/th1)*rot1
+					th1 = numpy.linalg.norm(rot1)
+					rot2 = (1-2*math.pi/th1)*rot1
 					prevRot = traj_q[-1][j][3:6]
-					rot1Devi = linalg.norm(prevRot - rot1)
-					rot2Devi = linalg.norm(prevRot - rot2)
+					rot1Devi = numpy.linalg.norm(prevRot - rot1)
+					rot2Devi = numpy.linalg.norm(prevRot - rot2)
 					if rot1Devi > rot2Devi:
 						rot = rot2
 						print 'alter selected'
@@ -333,12 +333,12 @@ if __name__ == '__main__':
 						rot = rot1
 				else:
 					rot = rot1
-				traj_qi.append(array([trans.x,
-				                      trans.y,
-				                      trans.z,
-				                      rot[0],
-				                      rot[1],
-				                      rot[2]]))
+				traj_qi.append(numpy.array([trans.x,
+				                            trans.y,
+				                            trans.z,
+				                            rot[0],
+				                            rot[1],
+				                            rot[2]]))
 				
 			else:
 				raise Exception('unknown rotation parameterization.')
@@ -383,6 +383,7 @@ if __name__ == '__main__':
 	fnBasePrefix = '/media/vm/devel/aran/pymuscle/trajectories/'
 	fnPrefix = fnBasePrefix + 'traj_' + rotParam + '_'
 	fnRigidBodyConfig = fnBasePrefix + 'rb.conf'
+	fnJointAnchorConfig = fnBasePrefix + 'rb.conf' + '.ja'
 	
 	traj_q_file = open(fnPrefix + 'q.txt', 'w')
 	traj_q_file.write(metastr)
@@ -390,7 +391,7 @@ if __name__ == '__main__':
 		for j,jidx in zip(i, xrange(len(i))):
 			traj_q_file.write('%15e'*vecLen % tuple(j))
 			#traj_q_file.write('%15e'*4 % tuple(Euler(j[3:6]).toQuat()))
-			traj_q_file.write(' # [' + str(iidx) + '] ' + bodyTable[jidx][0] + ' ' + str(linalg.norm(j[3:6])))
+			traj_q_file.write(' # [' + str(iidx) + '] ' + bodyTable[jidx][0] + ' ' + str(numpy.linalg.norm(j[3:6])))
 			traj_q_file.write('\n')
 	traj_q_file.close()
 	
@@ -422,3 +423,20 @@ if __name__ == '__main__':
 	rbconf_file.close()
 	
 	
+	jaconf_file = open(fnJointAnchorConfig, 'w')
+	for (name, xAxis, yAxis, corresName), bone in zip(bodyTable, interested[2]):
+		rb = bpy.data.objects['RB.' + name]
+		jaList = []
+		for obj in bpy.data.objects:
+			if obj.getParent() == rb:
+				jaList.append(obj)
+		#print name,
+		for ja in jaList:
+			jaLocalPos = ja.getMatrix('localspace')[3]
+			#print ja, jaLocalPos,
+			jaconf_file.write('%15s ' % ja.name)
+			jaconf_file.write('%15s ' % corresName)
+			jaconf_file.write('%15e '*3 % (jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
+			jaconf_file.write('\n')
+		#print
+	jaconf_file.close()

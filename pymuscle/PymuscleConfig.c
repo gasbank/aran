@@ -342,7 +342,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
     const int Asubcols = nb + 5;
     int Asubrowsizes[ Asubrows ];
     int Asubcolsizes[ Asubcols ];
-    int i,j;
+    int i, j;
     FOR_0(i, nb) {
         GetAMatrix(&A_trip[i], sd + i, pymCfg->body + i, pymCfg, cc);
         Asubrowsizes[i] = A_trip[i]->nrow;
@@ -357,6 +357,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
     Asubcolsizes[nb+2] = pymCfg->nFiber;
     Asubcolsizes[nb+3] = 1;
     Asubcolsizes[nb+4] = 1;
+
     int *Ari = (int *)malloc( sizeof(int)*(1+Asubrows) );
     int *Aci = (int *)malloc( sizeof(int)*(1+Asubcols) );
     bod->Ari = Ari;
@@ -368,11 +369,11 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
 
     size_t nzmax = 0;
     FOR_0(i, nb) {
-        nzmax += A_trip[i]->nnz;                /* Subblock A_i */
-        nzmax += nd*pymCfg->body[i].b.nFiber;   /* Subblock [0 -1] */
-        nzmax += nd*pymCfg->body[i].b.nFiber;   /* Subblock R_i */
+        nzmax += A_trip[i]->nnz;                /* Sub-block 01 - A_i */
+        nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 02 - [0 -1] */
+        nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 03 - R_i */
     }
-    nzmax += 3*pymCfg->nFiber; /* Subblock K */
+    nzmax += 3*pymCfg->nFiber; /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
 
 //    printf("    BipA matrix constants (nb)      : %d\n", nb);
 //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -381,7 +382,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
     cholmod_triplet *AMatrix_trip = cholmod_allocate_triplet(Ari[Asubrows], Aci[Asubcols], nzmax, 0, CHOLMOD_REAL, cc);
     assert(AMatrix_trip->nnz == 0);
 
-    /* Subblock A_i */
+    /* Sub-block 01 - A */
     FOR_0(i, nb) {
         FOR_0(j, A_trip[i]->nnz) {
             SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, i, i,
@@ -390,17 +391,18 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
                                       ((double *)(A_trip[i]->x))[j]);
         }
     }
-    /* Subblock [0 -1] */
+    /* Sub-block 02 - E := [0 -1 0] */
     FOR_0(i, nb) {
-        int nfi = pymCfg->body[i].b.nFiber;
+        const int nfi = pymCfg->body[i].b.nFiber;
+        const int nai = pymCfg->body[i].b.nAnchor;
         FOR_0(j, nd*nfi) {
             SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, nb+i, i,
                                       j,
-                                      A_trip[i]->ncol - nd*nfi + j,
+                                      A_trip[i]->ncol - nd*nfi + j - 4*nai,
                                       -1);
         }
     }
-    /* Subblock R_i */
+    /* Sub-block 03 - R */
     FOR_0(i, nb) {
         cholmod_triplet *R_i;
         GetR_i(&R_i, sd, i, pymCfg, cc);
@@ -412,7 +414,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, pym_rb_statedep_t *sd, c
         }
         cholmod_free_triplet(&R_i, cc);
     }
-    /* Subblock K */
+    /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
     FOR_0(i, nf) {
         double k[3];
         GetMuscleFiberK(k, pymCfg->fiber + i, pymCfg);

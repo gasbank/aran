@@ -29,6 +29,7 @@
 #include "Config.h"
 #include "DebugPrintDef.h"
 #include "Optimize.h"
+#include "PymJointAnchor.h"
 
 void LoadDoublesFromFile(const unsigned int len, double body[len], const char *fileName)
 {
@@ -315,6 +316,8 @@ int main(int argc, const char **argv) {
     int nBlenderBody = 0;
     int nBlenderFrame = 0;
     double *trajData = 0;
+    pym_joint_anchor_t pymJa[100];
+    int na = 0;
     if (cmdopt.trajconf) {
         PymParseTrajectoryFile(corresMap,
                                &nCorresMap,
@@ -354,11 +357,17 @@ int main(int argc, const char **argv) {
             }
         }
 
-        /*
-         *  Set current and previous state according
-         *  to the initial frame of trajectory data.
-         */
+        char fnJaCfg[128];
+        strncat(fnJaCfg, cmdopt.trajconf, 128);
+        strncat(fnJaCfg, ".ja", 128);
+        na = PymParseJointAnchorFile(pymJa, sizeof(pymJa)/sizeof(pym_joint_anchor_t), fnJaCfg);
+        printf("Info - # of joint anchors parsed = %d\n", na);
+
         FOR_0(i, pymCfg.nBody) {
+            /*
+             *  Set current and previous state according
+             *  to the initial frame of trajectory data.
+             */
             pym_rb_named_t *rbn = &pymCfg.body[i].b;
             assert(rbn->rotParam == RP_EXP);
             /* previous step */
@@ -371,6 +380,18 @@ int main(int argc, const char **argv) {
             FOR_0(j, 3) {
                 rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg.h;
                 rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg.h;
+            }
+
+            /*
+             * Set joint anchors for each body
+             */
+            FOR_0(j, na) {
+                if (strcmp(pymJa[j].bodyName, rbn->name) == 0) {
+                    memcpy(rbn->jointAnchors + rbn->nAnchor, pymJa[j].localPos, sizeof(double)*3);
+                    rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
+                    ++rbn->nAnchor;
+                    assert(rbn->nAnchor <= 10);
+                }
             }
         }
     } else {

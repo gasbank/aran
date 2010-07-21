@@ -10,6 +10,7 @@ struct _pym_config_t {
     double slant;
 };
 
+
 void PrintRigidBody(const pym_rb_t *rb);
 int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn);
 int PymDestoryConfig(pym_config_t *pymCfg);
