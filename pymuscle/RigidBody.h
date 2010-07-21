@@ -1,6 +1,10 @@
 #ifndef __RIGIDBODY_H_
 #define __RIGIDBODY_H_
 
+#define NUM_DOF          (3 + 3)
+#define MAX_CONTACTS     (8)
+#define MAX_JOINTANCHORS (10)
+
 enum _pym_rot_param_t {
     RP_UNKNOWN,
     RP_EULER_XYZ,
@@ -39,6 +43,8 @@ struct _pym_rb_named_t {
         int nFiber; /* Number of muscle fibers attached to this body */
         int fiber[MAX_FIBER_PER_RB];
         double chi_ref[3+4];
+        int nAnchor;
+        double jointAnchors[MAX_JOINTANCHORS][4];
 };
 
 union _pym_rb_t

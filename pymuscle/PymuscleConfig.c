@@ -89,6 +89,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     for (j = 0; j < nBody; ++j)
     {
         pym_rb_named_t *bjb = &body[j].b;
+        bjb->nAnchor = 0;
         config_setting_t *bConf = config_setting_get_elem(bodyConf, j);
         const char *bName;
         config_setting_lookup_string(bConf, "name", &bName);

@@ -1,7 +1,5 @@
 #ifndef __STATEDEPENDENTS_H_
 #define __STATEDEPENDENTS_H_
-#define NUM_DOF        (3 + 3)
-#define MAX_CONTACTS   (8)
 
 
 struct _pym_rb_statedep_t {
@@ -27,12 +25,19 @@ struct _pym_rb_statedep_t {
     double contactsNormal_1[MAX_CONTACTS][4];
     int Asubrows;
     int Asubcols;
-    int Ari[1+7];
-    int Aci[1+10];
-    cholmod_sparse *Z [MAX_CONTACTS]; /* A list of sparse 4x6 matrices */
-    double          V [MAX_CONTACTS][4];
-    cholmod_sparse *Q [MAX_CONTACTS]; /* A list of sparse 6x5 matrices */
+    int Ari[ 1 +  8 ]; /* 1 + # of sub row */
+    int Aci[ 1 + 11 ]; /* 1 + # of sub col */
 
+    /*
+     * Z and V : Coefficients for calculating next state based on current state
+     * chi^(l+1) = Z chi^(l) + V
+     */
+    cholmod_sparse *Z  [MAX_CONTACTS];     /* A list of sparse 4x6 matrices (for contact points) */
+    double          V  [MAX_CONTACTS][4];  /* for contact points */
+    cholmod_sparse *Q [MAX_CONTACTS];      /* A list of sparse 6x5 matrices */
+
+    cholmod_sparse *Za [MAX_JOINTANCHORS];     /* A list of sparse 4x6 matrices (for joint anchors) */
+    double          Va [MAX_JOINTANCHORS][4];  /* for joint anchors */
 };
 
 
