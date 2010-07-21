@@ -221,7 +221,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd, const py
     nzmax += nd;        /* Subblock 13 : 1 */
     nzmax += 3*np;      /* Subblock 14 : (C_n)^de_{j in P} */
     nzmax += (4*nd)*na; /* Subblock 15 : (Z_j)^re_{j in A} */
-    nzmax += 3*na;      /* Subblock 16 :-1 */
+    nzmax += 4*na;      /* Subblock 16 :-1 */
 //    printf("    A matrix body name           : %s\n", rbn->name);
 //    printf("    A matrix constants (np)      : %d\n", np);
 //    printf("    A matrix constants (nmi)     : %d\n", nmi);
