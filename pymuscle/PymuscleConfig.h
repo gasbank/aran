@@ -14,11 +14,12 @@ struct _pym_config_t {
 
     pym_joint_anchor_t pymJa[100];
     int na;
+    pym_anchored_joint_t anchoredJoints[50];
+    //int ja : not needed. use nJoint instead.
 };
 
 
 void PrintRigidBody(const pym_rb_t *rb);
-int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn);
 int PymDestoryConfig(pym_config_t *pymCfg);
 int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg);
 void PymConvertRotParamInPlace(pym_config_t *pymCfg, pym_rot_param_t targetRotParam);

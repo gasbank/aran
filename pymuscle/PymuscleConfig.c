@@ -10,19 +10,10 @@
 #include "CholmodMacro.h"
 #include "dRdv_real.h"
 #include "PymuscleConfig.h"
+#include "PymPodUtil.h"
 
 void PrintRigidBody(const pym_rb_t *rb) {
     int i; for (i=0; i<18; ++i) printf("%2d : %20lf\n", i, rb->a[i]);
-}
-
-int FindBodyIndex(int nBody, char bodyName[nBody][128], const char *bn) {
-    int i;
-    for (i = 0; i < nBody; ++i)
-    {
-        if (strncmp(bodyName[i], bn, 128) == 0)
-            return i;
-    }
-    return -1;
 }
 
 int PymDestoryConfig(pym_config_t *pymCfg) {
@@ -353,7 +344,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
                                      1,
                                      4*nj,
                                      nj };
-    int i, j;
+    int i, j, l;
     FOR_0(i, nb) {
         GetAMatrix(A_trip + i, sd + i, pymCfg->body + i, pymCfg, cc);
         Asubrowsizes[0] += A_trip[i]->nrow;
@@ -369,6 +360,15 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     Aci[0] = 0;
     FOR_0(i, Asubrows) Ari[i+1] = Ari[i] + Asubrowsizes[i];
     FOR_0(i, Asubcols) Aci[i+1] = Aci[i] + Asubcolsizes[i];
+
+    int *Airi = (int *)malloc( sizeof(int)*(1+nb) );
+    int *Aici = (int *)malloc( sizeof(int)*(1+nb) );
+    bod->Airi = Airi;
+    bod->Aici = Aici;
+    Airi[0] = 0;
+    Aici[0] = 0;
+    FOR_0(i, nb) Airi[i+1] = Airi[i] + A_trip[i]->nrow;
+    FOR_0(i, nb) Aici[i+1] = Aici[i] + A_trip[i]->ncol;
 
     size_t nzmax = 0;
     size_t totFiberCon = 0;
@@ -445,20 +445,31 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     }
     /* TODO Sub-block 07 - D */
     FOR_0(i, nj) {
-//        FOR_0(j, nb) {
-//            pymCfg->body[j].b.
-//        }
-
+        FOR_0(l, 4) {
+            const pym_anchored_joint_t *aJoint = pymCfg->anchoredJoints + i;
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 0,
+                                      4*i + l,
+                                      bod->Aici[ aJoint->aIdx ] + sd[ aJoint->aIdx ].Aci[10] + 4*aJoint->aAnchorIdx + l,
+                                      1);
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 0,
+                                      4*i + l,
+                                      bod->Aici[ aJoint->bIdx ] + sd[ aJoint->bIdx ].Aci[10] + 4*aJoint->bAnchorIdx + l,
+                                      -1);
+        }
     }
     /* Sub-block 08 - (-1) */
     FOR_0(i, 4*nj)
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 6, i, i, -1);
     /* Sub-block 09 - (1) */
     FOR_0(i, nj)
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 4, 7, i, i, -1);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 4, 7, i, i, 1);
     bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
     cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */
     assert(bod->bipMat);
+
+    /*********************
+     * Eta vector setup  *
+     *********************/
     double *bipEta = calloc(Ari[Asubrows], sizeof(double));
     //memset(bipEta, 0, sizeof(double)*Ari[Asubrows]);
     int etaOffset = 0;
@@ -473,7 +484,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
     FOR_0(i, nj) {
-        bipEta[ Ari[4] + i ] = 1e-1; /* joint dislocation threshold */
+        bipEta[ Ari[4] + i ] = 0.05; /* TODO joint dislocation threshold */
     }
     bod->bipEta = bipEta;
 

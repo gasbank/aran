@@ -165,6 +165,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         for(j=tauOffset + sd[i].Aci[5]; j<tauOffset + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
         for(j=tauOffset + sd[i].Aci[6]; j<tauOffset + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
         for(j=tauOffset + sd[i].Aci[8]; j<tauOffset + sd[i].Aci[9]; ++j) SET_NONNEGATIVE( j ); /* eps_delta */
+
+        for(j=Aci[6]; j<Aci[7]; j+=4) SET_FIXED_ZERO( j+3 ); /* d_A homogeneous part to 0 (vector) */
     }
 
     FOR_0(j, nf) {
@@ -310,6 +312,13 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                             tauOffset + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
                             tauOffset + sd[i].Aci[2]+5*j+3);
         }
+    }
+    FOR_0(j, pymCfg->nJoint) {
+        // Anchored joint dislocation constraints
+        AppendConeRange(task,
+                        Aci[7] + j,                      // epsilon_d
+                        Aci[6] + 4*j,                    // dAx ~ dAz
+                        Aci[6] + 4*j + 3);
     }
     //# Minimal tension force constraints
     AppendConeRange(task, Aci[4], Aci[1], Aci[2]);

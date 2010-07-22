@@ -11,16 +11,22 @@ double Dot(const unsigned int n, const double a[n], const double b[n]) {
     for (i=0;i<n;++i) r+=a[i]*b[i];
     return r;
 }
-/* Normalize vector in-place */
-double NormalizeVector(int dim, double v[dim])
+
+double PymNorm(int dim, const double v[dim])
 {
     double len = 0;
     int i;
     for (i = 0; i < dim; ++i)
         len += v[i]*v[i];
     len = sqrt(len);
-    for (i = 0; i < dim; ++i)
-        v[i] /= len;
+    return len;
+}
+
+/* Normalize vector in-place */
+double NormalizeVector(int dim, double v[dim])
+{
+    double len = PymNorm(dim, v);
+    int i; FOR_0(i, dim) v[i] /= len;
     return len;
 }
 
