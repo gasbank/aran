@@ -635,19 +635,19 @@ class BipedParameter:
         b   = 1         # Should not be 0
         T   = 0.
         A   = 0.
-        fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A)
+        fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A, 'LIGAMENT')
         # Fiber constants for a muscle fiber
         KSE = 10            # Should not be 0
         KPE = 10
         b   = 0.01            # Should not be 0
         T   = 0.
         A   = 0.
-        fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A)
+        fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A, 'MUSCLE')
         ### DEBUG ###
         #return fiber_liga
         #return []
         return fiber_liga + fiber_muscle
-    def _buildFiber(self, availableBodyNames, fiberList, KSE, KPE, b, T, A):
+    def _buildFiber(self, availableBodyNames, fiberList, KSE, KPE, b, T, A, typeStr):
         fiber = []
 
         for (name, orgPosGlobal, insPosGlobal, orgBody, insBody) in fiberList:
@@ -656,7 +656,7 @@ class BipedParameter:
             insPosLocal = self.changeToLocal(insBody, insPosGlobal)
             xrest = linalg.norm(orgPosGlobal - insPosGlobal)
             #name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
-            m = MuscleFiber.MuscleFiber(name, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
+            m = MuscleFiber.MuscleFiber(name, typeStr, False, T, A, KSE, KPE, b, xrest, None, None,
                                         orgBody, insBody, None, None, orgPosLocal, insPosLocal)
             if orgBody in availableBodyNames and insBody in availableBodyNames:
                 fiber.append(m)
@@ -688,7 +688,7 @@ class BipedParameter:
             insPosLocal = self.changeToLocal(newInsBody, newInsPosGlobal)
             xrest = linalg.norm(newOrgPosGlobal - newInsPosGlobal)
             #name, mType, bAttachedPosNormalized, T_0, A, kse, kpe, b, x_r0, x_rl, x_ru, p1Name, p2Name, p1, p2, p1AttPos, p2AttPos)
-            m = MuscleFiber.MuscleFiber(newName, 'LIGAMENT', False, T, A, KSE, KPE, b, xrest, None, None,
+            m = MuscleFiber.MuscleFiber(newName, typeStr, False, T, A, KSE, KPE, b, xrest, None, None,
                                         newOrgBody, newInsBody, None, None, orgPosLocal, insPosLocal)
             if newOrgBody in availableBodyNames and newInsBody in availableBodyNames:
                 fiber.append(m)
@@ -731,7 +731,7 @@ class BipedParameter:
                'sole':  self.getSolePos(),
                'toe':   self.getToePos()}
         lr = 'L'
-        print name,
+        #print name,
         if name != 'trunk':
             if name[-1] in ['L', 'R']:
                 lr = name[-1]
@@ -744,7 +744,7 @@ class BipedParameter:
         if lr == 'R':
             comPos[0] *= -1
         
-        print comPos
+        #print comPos
         
         if hasattr(self, 'rbConf'):
             xAxis = self.rbConf[ self.bnCorres[ name ] ].getAxisVector('X')
@@ -1006,19 +1006,22 @@ if __name__ == '__main__':
         fnRbConf = None
     gBiped = BipedParameter(fnRbConf)
     bipHeight = gBiped.getBipedHeight()
-    print 'Biped Height =', bipHeight
     
     gPoiList = ( ('Biped', 1.5/bipHeight),
-             ('Hip', 5./bipHeight),
-             ('Knee', 5./bipHeight),
-             ('Ankle', 5./bipHeight),
-             ('Toe', 5./bipHeight) )
+                 ('Hip', 5./bipHeight),
+                 ('Knee', 5./bipHeight),
+                 ('Ankle', 5./bipHeight),
+                 ('Toe', 5./bipHeight) )
 
     print 'Initialize a rigid body with initial conditions...'
+    if fnRbConf:
+        print '    using', fnRbConf
+    print 'Biped Height =', bipHeight, 'm'
     bipedParam = gBiped
     plist = bipedParam.buildBody('EXP')
     flist = bipedParam.buildFiber([b.name for b in plist])
-    print 'number of rigid bodies =', len(plist), ' '*20, 'number of muscle fibers =', len(flist)
+    print '# of rigid bodies  :', len(plist)
+    print '# of muscle fibers :', len(flist)
     h = GetSimTimeStep()
     WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h, 100.0)
     

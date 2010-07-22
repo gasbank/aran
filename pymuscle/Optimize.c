@@ -102,15 +102,15 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     memset(c, 0, sizeof(double)*NUMVAR);
 
     double bodyRefWeight[] = {
-            /* trunk  */ 1e4,
-            /* thighL */ 1e3,
-            /* thighR */ 1e3,
-            /* calfL  */ 1e3,
-            /* calfR  */ 1e3,
-            /* soleL  */ 1e3,
-            /* soleR  */ 1e3,
-            /* toeL   */ 1e3,
-            /* toeR   */ 1e3,
+            /* trunk  */ 1,
+            /* thighL */ 1,
+            /* thighR */ 1,
+            /* calfL  */ 1,
+            /* calfR  */ 1,
+            /* soleL  */ 1,
+            /* soleR  */ 1,
+            /* toeL   */ 1,
+            /* toeR   */ 1,
     };
     assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
 
