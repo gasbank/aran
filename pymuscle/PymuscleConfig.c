@@ -149,10 +149,17 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     {
         pym_mf_named_t  *mfn = &fiber[j].b;
         config_setting_t *mConf = config_setting_get_elem(muscleConf, j);
-        const char *mName;
+        const char *mName, *mType;
         config_setting_lookup_string(mConf, "name", &mName);
         strncpy(muscleName[j], mName, 128);
         strncpy(mfn->name, mName, 128);
+        config_setting_lookup_string(mConf, "mType", &mType);
+        if (strcmp(mType, "MUSCLE") == 0)
+            mfn->mType = PMT_ACTUATED_MUSCLE;
+        else if (strcmp(mType, "LIGAMENT") == 0)
+            mfn->mType = PMT_LIGAMENT;
+        else
+            assert(0);
         //printf("    Fiber %3d : %s\n", j, mName);
         config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
         FIBER(j,0) = config_setting_get_float(KSE);

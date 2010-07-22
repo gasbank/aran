@@ -131,12 +131,23 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
         c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
+
     /* minimize aggregate tension */
-    for (j = Aci[1]; j < Aci[2]; ++j)
+    assert(Aci[2] - Aci[1] == pymCfg->nFiber);
+    for (j = Aci[1]; j < Aci[2]; ++j) {
         c[j] = 0;
+    }
     /* minimize aggregate actuation force */
-    for (j = Aci[2]; j < Aci[3]; ++j)
-        c[j] = 1e-12;
+    assert(Aci[3] - Aci[2] == pymCfg->nFiber);
+    for (j = Aci[2]; j < Aci[3]; ++j) {
+        const pym_muscle_type_e mt = pymCfg->fiber[j - Aci[2]].b.mType;
+        if (mt == PMT_ACTUATED_MUSCLE)
+            c[j] = 1e-12;
+        else if (mt == PMT_LIGAMENT)
+            c[j] = 0;
+        else
+            abort();
+    }
     /***********************/
     /***********************/
     const int nd = 6;
