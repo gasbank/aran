@@ -126,6 +126,7 @@ int PymParseTrajectoryFile(char corresMap[20][2][128],
 
 typedef struct _deviation_stat_entry {
     double chi_d_norm;
+    int nContact;
     int bodyIdx;
 } deviation_stat_entry;
 
@@ -446,6 +447,7 @@ int main(int argc, const char **argv) {
             }
             dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
             dev_stat[j].bodyIdx = j;
+            dev_stat[j].nContact = sd[j].nContacts_2;
 
 //            printf("  chi_0  %8s - ", rbn->name); __PRINT_VECTOR(chi_0, 6);
 //            printf("     _1  %8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
@@ -476,7 +478,7 @@ int main(int argc, const char **argv) {
         }
         printf("\n");
         FOR_0(j, nb) {
-            printf("  %9d", sd[j].nContacts_2);
+            printf("  %9d", dev_stat[j].nContact);
         }
         printf("\n");
 

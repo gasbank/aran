@@ -121,7 +121,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1e-6; /* minimize the contact normal force */
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1.5e-6; /* minimize the contact normal force */
             c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1e-6; /* Estimated position of z-coordinate of contact point */
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
@@ -142,7 +142,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     for (j = Aci[2]; j < Aci[3]; ++j) {
         const pym_muscle_type_e mt = pymCfg->fiber[j - Aci[2]].b.mType;
         if (mt == PMT_ACTUATED_MUSCLE)
-            c[j] = 1e-12;
+            c[j] = 1e-10;
         else if (mt == PMT_LIGAMENT)
             c[j] = 0;
         else
