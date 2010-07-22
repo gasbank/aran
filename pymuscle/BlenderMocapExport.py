@@ -380,7 +380,8 @@ if __name__ == '__main__':
 	else:
 		raise Exception, 'unknown rotation parameterization'
 	
-	fnBasePrefix = '/media/vm/devel/aran/pymuscle/trajectories/'
+	homeDir = os.getenv("HOME")
+	fnBasePrefix = homeDir + '/pymuscle/trajectories/'
 	fnPrefix = fnBasePrefix + 'traj_' + rotParam + '_'
 	fnRigidBodyConfig = fnBasePrefix + 'rb.conf'
 	fnJointAnchorConfig = fnBasePrefix + 'rb.conf' + '.ja'

@@ -204,9 +204,9 @@ int main(int argc, const char **argv) {
         printf("  OPTIONS\n");
         printf("      --frame=<frame number to simulate>\n");
         printf("      --trajconf=<trajectory config file>\n");
-        printf("      --trajdata=<trajectory data file>");
-        printf("      --slant=<ground slant in radian>");
-        printf("\n\n");
+        printf("      --trajdata=<trajectory data file>\n");
+        printf("      --slant=<ground slant in radian>\n");
+        printf("\n");
         printf("  --trajconf should be specified with --trajdata and vice versa.\n\n");
         return -1;
     }
@@ -281,10 +281,11 @@ int main(int argc, const char **argv) {
             }
         }
 
-        char fnJaCfg[128];
+        char fnJaCfg[128] = {0};
         strncat(fnJaCfg, cmdopt.trajconf, 128);
         strncat(fnJaCfg, ".ja", 128);
         pymCfg.na = PymParseJointAnchorFile(pymCfg.pymJa, sizeof(pymCfg.pymJa)/sizeof(pym_joint_anchor_t), fnJaCfg);
+        assert(pymCfg.na >= 0);
         printf("Info - # of joint anchors parsed = %d\n", pymCfg.na);
         FOR_0(i, pymCfg.nBody) {
             /*
