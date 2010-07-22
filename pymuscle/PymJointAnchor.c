@@ -63,7 +63,7 @@ void ExtractAnchorIdentifier(char *iden, const char *aName) {
     int substrLen = (int)(strrchr(aName, '.') - strchr(aName, '.')) - 1;
     strncpy(iden, strchr(aName, '.')+1, substrLen);
     iden[substrLen] = 0;
-    assert(iden[substrLen-1] == 'L');
+    assert(iden[substrLen-1] == 'L' || iden[substrLen-1] == 'R');
 }
 
 int PymConstructAnchoredJointList(pym_config_t *pymCfg) {

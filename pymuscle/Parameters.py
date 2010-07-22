@@ -1020,6 +1020,6 @@ if __name__ == '__main__':
     flist = bipedParam.buildFiber([b.name for b in plist])
     print 'number of rigid bodies =', len(plist), ' '*20, 'number of muscle fibers =', len(flist)
     h = GetSimTimeStep()
-    WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h)
+    WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h, 100.0)
     
     #Main()

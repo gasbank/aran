@@ -307,7 +307,7 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* 
         AffineTransformPoint(pt2, sd[oppositeBidx].W_1, attPos2);
         FOR_0(k, 3) direction[k] = pt2[k] - pt1[k];
         double dirLen = NormalizeVector(3, direction);
-        assert(dirLen > 1e-3);
+        assert(dirLen > 1e-4);
         double gf[6];
         GeneralizedForce(gf, rbn->q, direction, attPos1);
 

@@ -434,9 +434,19 @@ if __name__ == '__main__':
 		for ja in jaList:
 			jaLocalPos = ja.getMatrix('localspace')[3]
 			#print ja, jaLocalPos,
+			
+			# Left-side anchors
 			jaconf_file.write('%15s ' % ja.name)
 			jaconf_file.write('%15s ' % corresName)
 			jaconf_file.write('%15e '*3 % (jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
+			jaconf_file.write('\n')
+			# Right-side anchors
+			jaconf_file.write('%15s ' % ja.name.replace('L.', 'R.'))
+			if corresName != 'trunk':
+				jaconf_file.write('%15s ' % (corresName[:-1] + 'R'))
+			else:
+				jaconf_file.write('%15s ' % corresName)
+			jaconf_file.write('%15e '*3 % (-jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
 			jaconf_file.write('\n')
 		#print
 	jaconf_file.close()
