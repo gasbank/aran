@@ -135,7 +135,26 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
     c[ Aci[4] ] = 1e-6; /* tension */
-    c[ Aci[5] ] = 1e-2; /* actuation */
+
+    /*
+     * Since actuation forces on actuated muscle fibers are
+     * non-negative values we can either minimize the second-order
+     * cone constraint variable c[Aci[5]] OR
+     * the optimization variables c[Aci[2]+j] separately where
+     * 'j' is the index of an actuated muscle fiber.
+     */
+    //c[ Aci[5] ] = 1e-2; /* actuation */
+    FOR_0(j, nf) {
+        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+        if (mt == PMT_ACTUATED_MUSCLE) {
+            c[ Aci[2] + j ] = 1e-5;
+        }
+        else if (mt == PMT_LIGAMENT) {
+        }
+        else
+            abort();
+    }
+
     /***********************/
     /***********************/
     const int nd = 6;
