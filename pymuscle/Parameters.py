@@ -630,9 +630,9 @@ class BipedParameter:
     
     def buildFiber(self, availableBodyNames):
         # Fiber constants for a ligament
-        KSE = 1000      # Should not be 0
-        KPE = 1000
-        b   = 10         # Should not be 0
+        KSE = 10      # Should not be 0
+        KPE = 10
+        b   = 0         # Should not be 0
         T   = 0.
         A   = 0.
         fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A, 'LIGAMENT')
@@ -646,7 +646,9 @@ class BipedParameter:
         ### DEBUG ###
         #return fiber_liga
         #return []
-        return fiber_liga + fiber_muscle
+        #return fiber_liga + fiber_muscle
+        #return fiber_muscle
+        return fiber_liga
     def _buildFiber(self, availableBodyNames, fiberList, KSE, KPE, b, T, A, typeStr):
         fiber = []
 
