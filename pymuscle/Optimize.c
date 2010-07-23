@@ -180,8 +180,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         i = Aci[2]+j;
         if (mt == PMT_ACTUATED_MUSCLE) {
             bkx[i] = MSK_BK_RA;
-            blx[i] = -300*9.81;
-            bux[i] =  300*9.81;
+            blx[i] = 0;
+            bux[i] =  200*9.81;
         }
         else if (mt == PMT_LIGAMENT) {
             bkx[i] = MSK_BK_RA;
