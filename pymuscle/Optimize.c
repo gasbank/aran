@@ -181,6 +181,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
 
     FOR_0(j, nf) {
+        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+
         /* Tension range constraint */
         i = Aci[1]+j;
 //        bkx[i] = MSK_BK_RA;
@@ -188,9 +190,17 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 //        bux[i] = +1000;
         /* Actuation force range constraint */
         i = Aci[2]+j;
-        bkx[i] = MSK_BK_RA;
-        blx[i] = -400*9.81;
-        bux[i] =  400*9.81;
+        if (mt == PMT_ACTUATED_MUSCLE) {
+            bkx[i] = MSK_BK_RA;
+            blx[i] = -40*9.81;
+            bux[i] =  40*9.81;
+        }
+        else if (mt == PMT_LIGAMENT) {
+            bkx[i] = MSK_BK_FR;
+        }
+        else
+            abort();
+
         /* Rest length range constraint */
         i = Aci[3]+j;
         bkx[i] = MSK_BK_RA;

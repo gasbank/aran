@@ -328,7 +328,7 @@ if __name__ == '__main__':
 					rot2Devi = numpy.linalg.norm(prevRot - rot2)
 					if rot1Devi > rot2Devi:
 						rot = rot2
-						print 'alter selected'
+						#print 'alter selected'
 					else:
 						rot = rot1
 				else:
