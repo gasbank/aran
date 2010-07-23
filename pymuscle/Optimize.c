@@ -121,7 +121,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1.5e-6; /* minimize the contact normal force */
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1e-6; /* minimize the contact normal force */
             c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1e-6; /* Estimated position of z-coordinate of contact point */
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
@@ -131,23 +131,11 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
         c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
-
-    /* minimize aggregate tension */
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
-    for (j = Aci[1]; j < Aci[2]; ++j) {
-        c[j] = 0;
-    }
-    /* minimize aggregate actuation force */
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
-    for (j = Aci[2]; j < Aci[3]; ++j) {
-        const pym_muscle_type_e mt = pymCfg->fiber[j - Aci[2]].b.mType;
-        if (mt == PMT_ACTUATED_MUSCLE)
-            c[j] = 1e-10;
-        else if (mt == PMT_LIGAMENT)
-            c[j] = 0;
-        else
-            abort();
-    }
+    /* minimize aggregate tension of actuated muscle fiber */
+    c[ Aci[4] ] = 1e-6; /* tension */
+    c[ Aci[5] ] = 1e-2; /* actuation */
     /***********************/
     /***********************/
     const int nd = 6;
@@ -192,11 +180,13 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         i = Aci[2]+j;
         if (mt == PMT_ACTUATED_MUSCLE) {
             bkx[i] = MSK_BK_RA;
-            blx[i] = -40*9.81;
-            bux[i] =  40*9.81;
+            blx[i] = -300*9.81;
+            bux[i] =  300*9.81;
         }
         else if (mt == PMT_LIGAMENT) {
-            bkx[i] = MSK_BK_FR;
+            bkx[i] = MSK_BK_RA;
+            blx[i] = -4000*9.81;
+            bux[i] =  4000*9.81;
         }
         else
             abort();
@@ -341,11 +331,29 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                         Aci[6] + 4*j,                    // dAx ~ dAz
                         Aci[6] + 4*j + 3);
     }
-    //# Minimal tension force constraints
-    AppendConeRange(task, Aci[4], Aci[1], Aci[2]);
-    //# Minimal actuation force constraints
-    AppendConeRange(task, Aci[5], Aci[2], Aci[3]);
-    assert(r==MSK_RES_OK);
+
+    //# Minimal tension/actuation force constraints
+    int csubTension[1+nf];
+    int csubActuation[1+nf];
+    csubTension[0] = Aci[4];
+    csubActuation[0] = Aci[5];
+    int nCsub = 1;
+    FOR_0(j, nf) {
+        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+        if (mt == PMT_ACTUATED_MUSCLE) {
+            csubTension[nCsub] = Aci[1] + j;
+            csubActuation[nCsub] = Aci[2] + j;
+            ++nCsub;
+        }
+        else if (mt == PMT_LIGAMENT) {
+        }
+        else
+            abort();
+    }
+    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsub, csubTension);
+    assert(r == MSK_RES_OK);
+    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsub, csubActuation);
+    assert(r == MSK_RES_OK);
 
     double cost = FLT_MAX;
     MSKrescodee trmcode;

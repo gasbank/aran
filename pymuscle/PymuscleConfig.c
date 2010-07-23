@@ -491,7 +491,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
     FOR_0(i, nj) {
-        bipEta[ Ari[4] + i ] = 0.05; /* TODO joint dislocation threshold */
+        bipEta[ Ari[4] + i ] = 0.13; /* TODO joint dislocation threshold */
     }
     bod->bipEta = bipEta;
 
