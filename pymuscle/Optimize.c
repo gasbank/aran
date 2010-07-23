@@ -134,7 +134,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 1e-6; /* tension */
+    c[ Aci[4] ] = 0; /* TODO ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -143,17 +143,18 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
      * the optimization variables c[Aci[2]+j] separately where
      * 'j' is the index of an actuated muscle fiber.
      */
-    //c[ Aci[5] ] = 1e-2; /* actuation */
-    FOR_0(j, nf) {
-        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
-        if (mt == PMT_ACTUATED_MUSCLE) {
-            c[ Aci[2] + j ] = 1e-5;
-        }
-        else if (mt == PMT_LIGAMENT) {
-        }
-        else
-            abort();
-    }
+    c[ Aci[5] ] = 0; /* TODO actuated muscle fiber actuation */
+//    FOR_0(j, nf) {
+//        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+//        if (mt == PMT_ACTUATED_MUSCLE) {
+//            c[ Aci[2] + j ] = 1e-8;
+//        }
+//        else if (mt == PMT_LIGAMENT) {
+//            // DO NOT SET COST FUNCTION HERE!
+//        }
+//        else
+//            abort();
+//    }
 
     /***********************/
     /***********************/
@@ -352,27 +353,30 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
 
     //# Minimal tension/actuation force constraints
-    int csubTension[1+nf];
-    int csubActuation[1+nf];
-    csubTension[0] = Aci[4];
-    csubActuation[0] = Aci[5];
-    int nCsub = 1;
+    int csubLigaAct[1+nf];
+    int nCsubLigaAct = 1;
+    csubLigaAct[0] = Aci[4];
+    int csubActAct[1+nf];
+    int nCsubActAct = 1;
+    csubActAct[0] = Aci[5];
     FOR_0(j, nf) {
         const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
         if (mt == PMT_ACTUATED_MUSCLE) {
-            csubTension[nCsub] = Aci[1] + j;
-            csubActuation[nCsub] = Aci[2] + j;
-            ++nCsub;
+            csubActAct[nCsubActAct] = Aci[1] + j;
+            ++nCsubActAct;
         }
         else if (mt == PMT_LIGAMENT) {
+            csubLigaAct[nCsubLigaAct] = Aci[1] + j;
+            ++nCsubLigaAct;
         }
         else
             abort();
     }
-    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsub, csubTension);
+    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubLigaAct, csubLigaAct);
     assert(r == MSK_RES_OK);
-    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsub, csubActuation);
+    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubActAct, csubActAct);
     assert(r == MSK_RES_OK);
+
 
     double cost = FLT_MAX;
     MSKrescodee trmcode;

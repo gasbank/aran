@@ -1025,4 +1025,4 @@ if __name__ == '__main__':
     h = GetSimTimeStep()
     WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h, 100.0)
     
-    #Main()
+    Main()
