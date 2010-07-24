@@ -22,6 +22,10 @@
 #include "Optimize.h"
 #include "PymJointAnchor.h"
 
+int PymMin(int a, int b) {
+    if (a<b) return a;
+    else return b;
+}
 
 int main3(int argc, const char **argv)
 {
@@ -421,8 +425,7 @@ int main(int argc, const char **argv) {
         else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
         else solstaStr = "ERROR!";
 
-        //if (i%10 == 0)
-            printf("Frame %5d finished.\n", i);
+        printf("Frame %5d finished.\n", i);
 
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
@@ -463,25 +466,31 @@ int main(int argc, const char **argv) {
 
 
             /* Update the current state of rigid bodies */
-            //if (!firstTime)
-                SetRigidBodyChi_1(pymCfg.body + j, chi_2, &pymCfg);
+            SetRigidBodyChi_1(pymCfg.body + j, chi_2, &pymCfg);
         }
 
-        printf("Reference trajectory deviation report\n");
+
         qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
-        FOR_0(j, nb) {
-            const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
-            printf("  %9s", rbn->name);
+        printf("Reference trajectory deviation report\n");
+        const int itemsPerLine = PymMin(nb, 6);
+        int j0 = 0, j1 = itemsPerLine;
+        while (j0 < nb && j1 <= nb) {
+            for (j = j0; j < j1; ++j) {
+                const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
+                printf("  %9s", rbn->name);
+            }
+            printf("\n");
+            for (j = j0; j < j1; ++j) {
+                printf("  %9.3e", dev_stat[j].chi_d_norm);
+            }
+            printf("\n");
+            for (j = j0; j < j1; ++j) {
+                printf("  %9d", dev_stat[j].nContact);
+            }
+            printf("\n");
+            j0 = PymMin(nb, j0 + itemsPerLine);
+            j1 = PymMin(nb, j1 + itemsPerLine);
         }
-        printf("\n");
-        FOR_0(j, nb) {
-            printf("  %9.3e", dev_stat[j].chi_d_norm);
-        }
-        printf("\n");
-        FOR_0(j, nb) {
-            printf("  %9d", dev_stat[j].nContact);
-        }
-        printf("\n");
 
         FOR_0(j, nf) {
             pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
@@ -518,11 +527,6 @@ int main(int argc, const char **argv) {
             printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
             break;
         }
-
-//        if (firstTime) {
-//            i--;
-//            firstTime = 0;
-//        }
     }
     fclose(outputFile);
 

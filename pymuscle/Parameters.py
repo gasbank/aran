@@ -257,14 +257,14 @@ class BipedParameter:
         c8 = c + array([-1.01, -1.01, -self['trunkThighGap']/2])
         
         
-        p3 = c + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']*2])
-        p4 = c + array([0, -self['thighLatWidth']/2, -self['trunkThighGap']/2])
-        p5 = c + array([0, self['trunkLatWidth']/2, self['trunkThighGap']*2])
-        p6 = c + array([0, self['thighLatWidth']/2, -self['trunkThighGap']/2])
-        p7 = c + array([self['hipMuscleDist']/2, 0, self['trunkThighGap']/2])
-        p8 = c + array([self['hipMuscleDist2']/2, 0, -self['trunkThighGap']/2])
-        p9 = c + array([-self['hipMuscleDist']/2, 0, self['trunkThighGap']/2])
-        p10 = c + array([-self['hipMuscleDist2']/2, 0, -self['trunkThighGap']/2])
+        p3  = c + array([0,                          -self['trunkLatWidth']/2,  self['trunkThighGap']/2])
+        p4  = c + array([0,                          -self['thighLatWidth']/2, -self['trunkThighGap']/2])
+        p5  = c + array([0,                           self['trunkLatWidth']/2,  self['trunkThighGap']/2])
+        p6  = c + array([0,                           self['thighLatWidth']/2, -self['trunkThighGap']/2])
+        p7  = c + array([self['hipMuscleDist']/4,                           0,  self['trunkThighGap']/2])
+        p8  = c + array([self['hipMuscleDist2']/2,                          0, -self['trunkThighGap']/2])
+        p9  = c + array([-self['hipMuscleDist']/4,                          0,  self['trunkThighGap']/2])
+        p10 = c + array([-self['hipMuscleDist2']/2,                         0, -self['trunkThighGap']/2])
         return [ ('hipLiga1L', p1,p2, 'trunk', 'thighL'),
 			     #('hipLiga1L', c1,c2, 'trunk', 'thighL'),
 			     #('hipLiga1L', c3,c4, 'trunk', 'thighL'),
