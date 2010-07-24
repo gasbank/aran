@@ -74,11 +74,14 @@ class BipedParameter:
         self.direction['trunkLen']       = 2
         self.direction['trunkWidth']     = 0
         self.direction['trunkLatWidth']  = 1
-        self.direction['uarmLen']        = 0 # uarm : Upper arm
-        self.direction['uarmWidth']      = 2
+        self.direction['headLen']        = 2
+        self.direction['headWidth']      = 0
+        self.direction['headLatWidth']   = 1
+        self.direction['uarmLen']        = 2 # uarm : Upper arm
+        self.direction['uarmWidth']      = 0
         self.direction['uarmLatWidth']   = 1
-        self.direction['larmLen']        = 0 # larm : Lower arm
-        self.direction['larmWidth']      = 2
+        self.direction['larmLen']        = 2 # larm : Lower arm
+        self.direction['larmWidth']      = 0
         self.direction['larmLatWidth']   = 1
                     
         # NOTE: set this in the unit of centimeters.
@@ -103,6 +106,10 @@ class BipedParameter:
         self.p['trunkLen']          = 70.
         self.p['trunkWidth']        = 45.
         self.p['trunkLatWidth']     = 25.
+        
+        self.p['headLen']           = 19.
+        self.p['headWidth']         = 22.
+        self.p['headLatWidth']      = 18.
         
         self.p['uarmLen']           = 45.
         self.p['uarmWidth']         = 8.
@@ -129,12 +136,13 @@ class BipedParameter:
             # Body name correspondence
             bnCorres = {}
             bnCorres['trunk'] = 'Chest'
+            bnCorres['head' ] = 'Head'
+            bnCorres['uarm' ] = 'LeftShoulder'
+            bnCorres['larm' ] = 'LeftElbow'
             bnCorres['thigh'] = 'LeftHip'
             bnCorres['calf' ] = 'LeftKnee'
             bnCorres['sole' ] = 'LeftAnkle'
             bnCorres['toe'  ] = 'LeftToe'
-            bnCorres['uarm' ] = 'LeftShoulder'
-            bnCorres['larm' ] = 'LeftElbow'
             
             self.direction['soleLen']        = 1
             self.direction['soleHeight']     = 2
@@ -151,6 +159,9 @@ class BipedParameter:
             self.direction['trunkLen']       = 1
             self.direction['trunkWidth']     = 0
             self.direction['trunkLatWidth']  = 2
+            self.direction['headLen']        = 1
+            self.direction['headWidth']      = 0
+            self.direction['headLatWidth']   = 2
             self.direction['uarmLen']        = 1 # uarm : Upper arm
             self.direction['uarmWidth']      = 2
             self.direction['uarmLatWidth']   = 0
@@ -179,6 +190,10 @@ class BipedParameter:
             self.p[ 'trunkWidth']     = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkWidth']    ]
             self.p[ 'trunkLatWidth']  = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkLatWidth'] ]
             
+            self.p[ 'headLen']       = rbConf[ bnCorres['head'] ].boxsize[ self.direction['headLen']      ]
+            self.p[ 'headWidth']     = rbConf[ bnCorres['head'] ].boxsize[ self.direction['headWidth']    ]
+            self.p[ 'headLatWidth']  = rbConf[ bnCorres['head'] ].boxsize[ self.direction['headLatWidth'] ]
+            
             self.p[ 'uarmLen']       = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmLen']      ]
             self.p[ 'uarmWidth']     = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmWidth']    ]
             self.p[ 'uarmLatWidth']  = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmLatWidth'] ]
@@ -195,6 +210,7 @@ class BipedParameter:
         # 2. Body gap (positive) or overlap (negative)
         #    Generally, overlapped one gives stable equilibrium condition
         self.p['trunkThighGap']     = self.p['thighLen']/5
+        self.p['trunkHeadGap']      = self.p['headLen']/2
         self.p['thighCalfGap']      = self.p['calfLen']/5
         self.p['calfSoleGap']       = self.p['soleHeight']/5
         self.p['soleToeGap']        = self.p['soleLen']/5
@@ -229,18 +245,24 @@ class BipedParameter:
         return self.p[i]
 
     def getBipedHeight(self):
-        return (self.p['trunkLen']
-                + self.p['trunkThighGap']
-                + self.p['thighLen']
-                + self.p['thighCalfGap']
-                + self.p['calfLen']
-                + self.p['calfSoleGap']
-                + self.p['soleHeight'])
+        return   self.p['headLen']       \
+               + self.p['trunkHeadGap']  \
+               + self.p['trunkLen']      \
+               + self.p['trunkThighGap'] \
+               + self.p['thighLen']      \
+               + self.p['thighCalfGap']  \
+               + self.p['calfLen']       \
+               + self.p['calfSoleGap']   \
+               + self.p['soleHeight']    \
 
     def getTrunkPos(self):
         return array([0,
                       0,
-                      self.getBipedHeight() - self.p['trunkLen']/2])
+                      self.getBipedHeight() - self.p['headLen'] - self.p['trunkHeadGap'] - self.p['trunkLen']/2])
+    def getHeadPos(self):
+        return array([0,
+                      0,
+                      self.getBipedHeight() - self.p['headLen']/2])
     def getUarmPos(self):
         trunkPos = self.getTrunkPos()
         return array([trunkPos[0] + self.p['trunkWidth']/2 + self.p['trunkUarmGap'] + self.p['uarmWidth']/2,
@@ -275,6 +297,8 @@ class BipedParameter:
                       self.p['toeHeight']/2])
     def getBipedCenter(self):
         return array([0,0,self.getBipedHeight()/2])
+    def getNeckJointCenter(self):
+        return self.getTrunkPos() + array([0,0,self['trunkLen']/2 + self['trunkHeadGap']/2])
     def getHipJointCenter(self):
         return self.getThighPos() + array([0,0,self['thighLen']/2+self['trunkThighGap']/2])
     def getShoulderJointCenter(self):
@@ -295,6 +319,30 @@ class BipedParameter:
     #
     # LIGAMENTS
     #
+    def getNeckLigaments(self):
+        c = self.getNeckJointCenter()
+        p1 = c + array([0, 0, -self['trunkHeadGap']/2])
+        p2 = c + array([0, 0,  self['trunkHeadGap']/2])
+        
+        p = [ c + array([  self['trunkWidth']/2,  self['trunkLatWidth']/2, -self['trunkHeadGap']/2]),
+              c + array([  self['trunkWidth']/2, -self['trunkLatWidth']/2, -self['trunkHeadGap']/2]),
+              c + array([ -self['trunkWidth']/2, -self['trunkLatWidth']/2, -self['trunkHeadGap']/2]),
+              c + array([ -self['trunkWidth']/2,  self['trunkLatWidth']/2, -self['trunkHeadGap']/2]), ]
+              
+        v = [ c + array([  self['headWidth']/2,  self['headLatWidth']/2,  self['trunkHeadGap']/2]),
+              c + array([  self['headWidth']/2, -self['headLatWidth']/2,  self['trunkHeadGap']/2]),
+              c + array([ -self['headWidth']/2, -self['headLatWidth']/2,  self['trunkHeadGap']/2]),
+              c + array([ -self['headWidth']/2,  self['headLatWidth']/2,  self['trunkHeadGap']/2]), ]
+        
+        ret = []
+        ret.append( ('neckLiga1L', p1, p2, 'trunk', 'head') )
+        idx = 2
+        for pi in p:
+            for vi in v:
+                ret.append( ('neckLiga'+str(idx)+'L', pi, vi, 'trunk', 'head') )
+                idx += 1
+        return ret
+        
     def getShoulderLigaments(self):
         c = self.getShoulderJointCenter()
         p1 = c + array([-self['trunkUarmGap']/2, 0, 0])
@@ -650,9 +698,10 @@ class BipedParameter:
     
     
     def getAllLigaments(self):
-        return self.getHipLigaments() + self.getKneeLigaments() + \
-               self.getAnkleLigaments() + self.getToeLigaments() + \
-               self.getShoulderLigaments() + self.getElbowLigaments()
+        return   self.getHipLigaments() + self.getKneeLigaments() \
+               + self.getAnkleLigaments() + self.getToeLigaments() \
+               + self.getShoulderLigaments() + self.getElbowLigaments() \
+               + self.getNeckLigaments()
     
     def getAllMuscles(self):
         return self.getBicepsFemoris() + self.getQuadricepsFemoris() + \
@@ -663,6 +712,7 @@ class BipedParameter:
         body = []
         
         l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']],   self.getTrunkPos(), 50.   ],
+              ['head',  [self['headWidth'],  self['headLatWidth'],  self['headLen']],    self.getHeadPos(),   5.   ],
               ['uarm',  [self['uarmWidth'],  self['uarmLatWidth'],  self['uarmLen']],    self.getUarmPos(),   4.   ],
               ['larm',  [self['larmWidth'],  self['larmLatWidth'],  self['larmLen']],    self.getLarmPos(),   3.   ],
               ['thigh', [self['thighWidth'], self['thighLatWidth'], self['thighLen']],   self.getThighPos(),  4.   ],
@@ -688,7 +738,7 @@ class BipedParameter:
             #pos0[2] += 0.5 # Start from the sky
             
             name = ll[0]
-            if name != 'trunk':
+            if name not in ['trunk', 'head']:
                 name += 'L'
             
             xMat = self.getColumnMajorTransformMatrix(name)
@@ -779,14 +829,14 @@ class BipedParameter:
             #orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
             if orgBody[-1] == 'L':
                 newOrgBody = orgBody[:-1] + 'R'
-            elif orgBody == 'trunk':
+            elif orgBody in ['trunk', 'head']:
                 newOrgBody = orgBody
             else:
                 assert False
                 
             if insBody[-1] == 'L':
                 newInsBody = insBody[:-1] + 'R'
-            elif insBody == 'trunk':
+            elif insBody in ['trunk', 'head']:
                 newInsBody = insBody
             else:
                 assert False
@@ -842,15 +892,16 @@ class BipedParameter:
                 'sole'  : self.getSolePos(),
                 'toe'   : self.getToePos(),
                 'uarm'  : self.getUarmPos(),
-                'larm'  : self.getLarmPos()    }
+                'larm'  : self.getLarmPos(),
+                'head'  : self.getHeadPos()  }
         lr = 'L'
         #print name,
-        if name != 'trunk':
+        if name not in ['trunk', 'head']:
             if name[-1] in ['L', 'R']:
                 lr = name[-1]
                 name = name[:-1]
             else:
-                print 'Error - Body parts other than trunk should have postfix L or R.'
+                print 'Error - Body parts other than trunk/head should have postfix L or R.'
                 assert False
                 
         comPos = pos[name]
@@ -988,6 +1039,24 @@ def DrawBiped():
     else: glutSolidCube(1)
     glPopMatrix()
     del xAxisKey, yAxisKey, zAxisKey
+    
+    headPos = gBiped.getHeadPos()
+    glPushMatrix()
+    matMultCol = gBiped.getColumnMajorTransformMatrix('head')
+    glMultMatrixf(matMultCol)
+    DrawAxisIndicator('head')
+    for (k, v) in gBiped.direction.iteritems():
+        if k[0:4] == 'head' and v == 0: xAxisKey = k
+        elif k[0:4] == 'head' and v == 1: yAxisKey = k
+        elif k[0:4] == 'head' and v == 2: zAxisKey = k
+    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
+    glColor(1,0,1)
+    if gWireframe: glutWireCube(1)
+    else: glutSolidCube(1)
+    glPopMatrix()
+    del xAxisKey, yAxisKey, zAxisKey
+    
+    
 
     glLineWidth(1)
     # Left leg drawn
@@ -1002,6 +1071,13 @@ def DrawBiped():
     
     # Left arm drawn
     DrawArm()
+    
+    # Right arm drawn
+    glPushMatrix()
+    #glScale(-1,1,1)
+    glTranslate(-2*gBiped.getUarmPos()[0], 0, 0)
+    DrawArm()
+    glPopMatrix()
 
     
     glLineWidth(2)

@@ -199,7 +199,7 @@ if __name__ == '__main__':
 	              ('Chest2',          '+X',     '+Z',         '*'),
 	              ('lowerneck',       '+X',     '+Z',         '*'),
 	              ('Neck',            '+X',     '+Z',         '*'),
-	              ('Head',            '+X',     '+Z',         '*'),
+	              ('Head',            '+X',     '+Z',         'head'),
 	              ('LeftCollar',      '+X',     '+Z',         '*'),
 	              ('RightCollar',     '+X',     '+Z',         '*'),
 	              ('LeftShoulder',    '-X',     '-Z',         'uarmL'),
@@ -299,6 +299,11 @@ if __name__ == '__main__':
 				m = cor.toMatrix().resize4x4() * m
 			elif bone.name == 'RightAnkle':
 				cor = Quaternion(Vector(0,1,0),-30)
+				m = cor.toMatrix().resize4x4() * m
+			elif bone.name == 'Head':
+				cor = Quaternion(Vector(0,0,1),-8)
+				m = cor.toMatrix().resize4x4() * m
+				cor = Quaternion(Vector(0,1,0),5)
 				m = cor.toMatrix().resize4x4() * m
 					
 			# rb.setMatrix(m) -- do not use this one.
@@ -452,12 +457,14 @@ if __name__ == '__main__':
 			jaconf_file.write('%15e '*3 % (jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
 			jaconf_file.write('\n')
 			# Right-side anchors
-			jaconf_file.write('%15s ' % ja.name.replace('L.', 'R.'))
-			if corresName != 'trunk':
-				jaconf_file.write('%15s ' % (corresName[:-1] + 'R'))
-			else:
-				jaconf_file.write('%15s ' % corresName)
-			jaconf_file.write('%15e '*3 % (-jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
-			jaconf_file.write('\n')
+			rightJaName = ja.name.replace('L.', 'R.')
+			if ja.name != rightJaName:
+				jaconf_file.write('%15s ' % rightJaName)
+				if corresName != 'trunk':
+					jaconf_file.write('%15s ' % (corresName[:-1] + 'R'))
+				else:
+					jaconf_file.write('%15s ' % corresName)
+				jaconf_file.write('%15e '*3 % (-jaLocalPos[0],jaLocalPos[1],jaLocalPos[2]))
+				jaconf_file.write('\n')
 		#print
 	jaconf_file.close()

@@ -513,12 +513,12 @@ int main(int argc, const char **argv) {
             char iden[128];
             ExtractAnchorIdentifier(iden, aAnchorName);
             printf("%12s disloc = %e", iden, disloc);
-            if (j%2)
-                printf("\n");
+            if (j%2) printf("\n");
 
             if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
                 pymCfg.anchoredJoints[j].maxDisloc = disloc;
         }
+        if (nj%2) printf("\n");
 
         PymDestroyBipedEqconst(&bipEq, &cc);
         FOR_0(j, pymCfg.nBody) {
