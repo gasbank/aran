@@ -160,6 +160,8 @@ def Draw():
             A_homo[0:3, 0:3] = A
             glMultMatrixd(A_homo.T.flatten())
             
+            #print 'SIM'
+            #print gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey]
             glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey])
             del xAxisKey, yAxisKey, zAxisKey
             
@@ -194,6 +196,8 @@ def Draw():
             A_homo[0:3, 0:3] = A
             glMultMatrixd(A_homo.T.flatten())
             
+            #print 'TRAJ'
+            #print gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey]
             glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey])
             del xAxisKey, yAxisKey, zAxisKey
             
@@ -207,7 +211,11 @@ def Draw():
             gCurFrame = 0
     
     glutSwapBuffers()
-
+    
+    # DEBUG
+    #sys.exit ()
+    ##
+    
     time.sleep(0.01*gSlowVideo)
 
 def Main():
@@ -282,7 +290,8 @@ if __name__ == '__main__':
     bipedParam = gBiped
     plist = bipedParam.buildBody('EXP')
     flist = bipedParam.buildFiber([b.name for b in plist])
-    print 'number of rigid bodies =', len(plist), ' '*20, 'number of muscle fibers =', len(flist)
+    print '# of rigid bodies  =', len(plist)
+    print '# of muscle fibers =', len(flist)
     h = GetSimTimeStep()
     
     try:

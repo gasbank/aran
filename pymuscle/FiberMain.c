@@ -240,7 +240,7 @@ int main(int argc, const char **argv) {
     PymInitializeMosek(&env);
 
 
-    char corresMap[20][2][128];
+    char corresMap[50][2][128];
     int corresMapIndex[pymCfg.nBody]; FOR_0(i, pymCfg.nBody) corresMapIndex[i] = -1;
     int nCorresMap = 0;
     int nBlenderBody = 0;
@@ -268,6 +268,7 @@ int main(int argc, const char **argv) {
         FOR_0(i, pymCfg.nBody) {
             FOR_0(j, nBlenderBody) {
                 if (strcmp(pymCfg.body[i].b.name, corresMap[j][1]) == 0) {
+                    printf("%d, %s, %s, %d\n", i, pymCfg.body[i].b.name, corresMap[j][1], j);
                     corresMapIndex[i] = j;
                     break;
                 }
@@ -277,7 +278,7 @@ int main(int argc, const char **argv) {
         j = 0;
         FOR_0(i, nCorresMap) {
             printf("%20s <----> %-20s", corresMap[i][0], corresMap[i][1]);
-            if (corresMap[i][1][0] != '*') {
+            if (strcmp(corresMap[i][1], "*") != 0) {
                 printf(" (index=%d)\n", corresMapIndex[j]);
                 ++j;
             } else {
@@ -509,7 +510,9 @@ int main(int argc, const char **argv) {
             const char *aAnchorName = pymCfg.body[ pymCfg.anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg.anchoredJoints[j].aAnchorIdx ];
             char iden[128];
             ExtractAnchorIdentifier(iden, aAnchorName);
-            printf("%8s disloc = %e\n", iden, disloc);
+            printf("%12s disloc = %e", iden, disloc);
+            if (j%2)
+                printf("\n");
 
             if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
                 pymCfg.anchoredJoints[j].maxDisloc = disloc;

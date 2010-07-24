@@ -9,6 +9,8 @@ Rigid box LCP-based simulator
 """
 from numpy import *
 from math import *
+import OpenGL
+OpenGL.ERROR_CHECKING = False
 from OpenGL.GL import *
 from OpenGL.GLUT import *
 from OpenGL.GLU import *
@@ -28,6 +30,7 @@ import ctypes as ct
 from WriteSimcoreConfFile import *
 
 ESCAPE = '\033'
+
 
 def RigidBodyFromRbConf(fields):
     name       = fields[0]
@@ -55,6 +58,60 @@ class BipedParameter:
     def __init__(self, fnRbConf = None):
         self.p = {}
         self.direction = {}
+        
+        self.direction['soleLen']        = 1
+        self.direction['soleHeight']     = 2
+        self.direction['soleWidth']      = 0
+        self.direction['toeLen']         = 1
+        self.direction['toeHeight']      = 2
+        self.direction['toeWidth']       = 0
+        self.direction['calfLen']        = 2
+        self.direction['calfWidth']      = 0
+        self.direction['calfLatWidth']   = 1
+        self.direction['thighLen']       = 2
+        self.direction['thighWidth']     = 0
+        self.direction['thighLatWidth']  = 1
+        self.direction['trunkLen']       = 2
+        self.direction['trunkWidth']     = 0
+        self.direction['trunkLatWidth']  = 1
+        self.direction['uarmLen']        = 0 # uarm : Upper arm
+        self.direction['uarmWidth']      = 2
+        self.direction['uarmLatWidth']   = 1
+        self.direction['larmLen']        = 0 # larm : Lower arm
+        self.direction['larmWidth']      = 2
+        self.direction['larmLatWidth']   = 1
+                    
+        # NOTE: set this in the unit of centimeters.
+        # 1. Body dimension
+
+        self.p['soleLen']           = 20.
+        self.p['soleHeight']        = 8.
+        self.p['soleWidth']         = 15.
+
+        self.p['toeLen']            = 15.
+        self.p['toeHeight']         = 5.
+        self.p['toeWidth']          = 12.
+
+        self.p['calfLen']           = 50.
+        self.p['calfWidth']         = 8.
+        self.p['calfLatWidth']      = 8.
+
+        self.p['thighLen']          = 55.
+        self.p['thighWidth']        = 12.
+        self.p['thighLatWidth']     = 12.
+
+        self.p['trunkLen']          = 70.
+        self.p['trunkWidth']        = 45.
+        self.p['trunkLatWidth']     = 25.
+        
+        self.p['uarmLen']           = 45.
+        self.p['uarmWidth']         = 8.
+        self.p['uarmLatWidth']      = 8.
+        
+        self.p['larmLen']           = 43.
+        self.p['larmWidth']         = 7.
+        self.p['larmLatWidth']      = 7.
+        
         if fnRbConf:
             rbConf = {}
             rbConf_file = open(fnRbConf, 'r')
@@ -76,6 +133,8 @@ class BipedParameter:
             bnCorres['calf' ] = 'LeftKnee'
             bnCorres['sole' ] = 'LeftAnkle'
             bnCorres['toe'  ] = 'LeftToe'
+            bnCorres['uarm' ] = 'LeftShoulder'
+            bnCorres['larm' ] = 'LeftElbow'
             
             self.direction['soleLen']        = 1
             self.direction['soleHeight']     = 2
@@ -92,6 +151,12 @@ class BipedParameter:
             self.direction['trunkLen']       = 1
             self.direction['trunkWidth']     = 0
             self.direction['trunkLatWidth']  = 2
+            self.direction['uarmLen']        = 1 # uarm : Upper arm
+            self.direction['uarmWidth']      = 2
+            self.direction['uarmLatWidth']   = 0
+            self.direction['larmLen']        = 1 # larm : Lower arm
+            self.direction['larmWidth']      = 2
+            self.direction['larmLatWidth']   = 0
             
             
             self.p[ 'soleLen']       = rbConf[ bnCorres['sole'] ].boxsize[ self.direction['soleLen']    ]
@@ -114,48 +179,17 @@ class BipedParameter:
             self.p[ 'trunkWidth']     = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkWidth']    ]
             self.p[ 'trunkLatWidth']  = rbConf[ bnCorres['trunk'] ].boxsize[ self.direction['trunkLatWidth'] ]
             
+            self.p[ 'uarmLen']       = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmLen']      ]
+            self.p[ 'uarmWidth']     = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmWidth']    ]
+            self.p[ 'uarmLatWidth']  = rbConf[ bnCorres['uarm'] ].boxsize[ self.direction['uarmLatWidth'] ]
+            
+            self.p[ 'larmLen']       = rbConf[ bnCorres['larm'] ].boxsize[ self.direction['larmLen']      ]
+            self.p[ 'larmWidth']     = rbConf[ bnCorres['larm'] ].boxsize[ self.direction['larmWidth']    ]
+            self.p[ 'larmLatWidth']  = rbConf[ bnCorres['larm'] ].boxsize[ self.direction['larmLatWidth'] ]
+            
             self.rbConf   = rbConf
             self.bnCorres = bnCorres
 
-        else:
-            self.direction['soleLen']        = 1
-            self.direction['soleHeight']     = 2
-            self.direction['soleWidth']      = 0
-            self.direction['toeLen']         = 1
-            self.direction['toeHeight']      = 2
-            self.direction['toeWidth']       = 0
-            self.direction['calfLen']        = 2
-            self.direction['calfWidth']      = 0
-            self.direction['calfLatWidth']   = 1
-            self.direction['thighLen']       = 2
-            self.direction['thighWidth']     = 0
-            self.direction['thighLatWidth']  = 1
-            self.direction['trunkLen']       = 2
-            self.direction['trunkWidth']     = 0
-            self.direction['trunkLatWidth']  = 1
-            
-            # NOTE: set this in the unit of centimeters.
-            # 1. Body dimension
-
-            self.p['soleLen']           = 20.
-            self.p['soleHeight']        = 8.
-            self.p['soleWidth']         = 15.
-
-            self.p['toeLen']            = 15.
-            self.p['toeHeight']         = 5.
-            self.p['toeWidth']          = 12.
-
-            self.p['calfLen']           = 50.
-            self.p['calfWidth']         = 8.
-            self.p['calfLatWidth']      = 8.
-
-            self.p['thighLen']          = 55.
-            self.p['thighWidth']        = 12.
-            self.p['thighLatWidth']     = 12.
-
-            self.p['trunkLen']          = 70.
-            self.p['trunkWidth']        = 45.
-            self.p['trunkLatWidth']     = 25.
 
 
         # 2. Body gap (positive) or overlap (negative)
@@ -164,9 +198,13 @@ class BipedParameter:
         self.p['thighCalfGap']      = self.p['calfLen']/5
         self.p['calfSoleGap']       = self.p['soleHeight']/5
         self.p['soleToeGap']        = self.p['soleLen']/5
+        self.p['trunkUarmGap']      = self.p['trunkWidth']/10
+        self.p['uarmLarmGap']       = self.p['uarmLen']/10
+        
 
         # 3. Other
         self.p['legsDist']          = self.p['trunkWidth']/1.5
+        self.p['armDist']           = self.p['trunkLen']/2 * 0.8
 
 
         # 4. Muscle Attachment Parameters
@@ -203,6 +241,16 @@ class BipedParameter:
         return array([0,
                       0,
                       self.getBipedHeight() - self.p['trunkLen']/2])
+    def getUarmPos(self):
+        trunkPos = self.getTrunkPos()
+        return array([trunkPos[0] + self.p['trunkWidth']/2 + self.p['trunkUarmGap'] + self.p['uarmWidth']/2,
+                      trunkPos[1] + 0,
+                      trunkPos[2] + self.p['armDist'] - self.p['uarmLen']/2])
+    def getLarmPos(self):
+        pPos = self.getUarmPos()
+        return array([pPos[0] + 0,
+                      pPos[1] + 0,
+                      pPos[2] - self.p['uarmLen']/2 - self.p['uarmLarmGap'] - self.p['larmLen']/2 ])    
     def getThighPos(self):
         return array([self.p['legsDist']/2,
                       0,
@@ -229,6 +277,14 @@ class BipedParameter:
         return array([0,0,self.getBipedHeight()/2])
     def getHipJointCenter(self):
         return self.getThighPos() + array([0,0,self['thighLen']/2+self['trunkThighGap']/2])
+    def getShoulderJointCenter(self):
+        return self.getTrunkPos() + array([self['trunkWidth']/2 + self['trunkUarmGap']/2,
+                                           0,
+                                           self['armDist'] ])
+    def getElbowJointCenter(self):
+        return self.getUarmPos() + array([0,
+                                          0,
+                                          -self['uarmLen']/2 - self['uarmLarmGap']/2 ])
     def getKneeJointCenter(self):
         return self.getCalfPos() + array([0,0,self['calfLen']/2+self['thighCalfGap']/2])
     def getAnkleJointCenter(self):
@@ -239,6 +295,51 @@ class BipedParameter:
     #
     # LIGAMENTS
     #
+    def getShoulderLigaments(self):
+        c = self.getShoulderJointCenter()
+        p1 = c + array([-self['trunkUarmGap']/2, 0, 0])
+        p2 = c + array([ self['trunkUarmGap']/2, 0, 0])
+        
+        p = [ c + array([-self['trunkUarmGap']/2,  self['uarmLatWidth'],  self['uarmWidth']]),
+              c + array([-self['trunkUarmGap']/2,  self['uarmLatWidth'], -self['uarmWidth']]),
+              c + array([-self['trunkUarmGap']/2, -self['uarmLatWidth'], -self['uarmWidth']]),
+              c + array([-self['trunkUarmGap']/2, -self['uarmLatWidth'],  self['uarmWidth']])  ]
+        v = [ c + array([ self['trunkUarmGap']/2,  self['uarmLatWidth']/2,  self['uarmWidth']/2]),
+              c + array([ self['trunkUarmGap']/2,  self['uarmLatWidth']/2, -self['uarmWidth']/2]),
+              c + array([ self['trunkUarmGap']/2, -self['uarmLatWidth']/2, -self['uarmWidth']/2]),
+              c + array([ self['trunkUarmGap']/2, -self['uarmLatWidth']/2,  self['uarmWidth']/2])  ]
+        
+        ret = []
+        ret.append( ('shoLiga1L', p1, p2, 'trunk', 'uarmL') )
+        idx = 2
+        for pi in p:
+            for vi in v:
+                ret.append( ('shoLiga'+str(idx)+'L', pi, vi, 'trunk', 'uarmL') )
+                idx += 1
+        return ret
+        
+    def getElbowLigaments(self):
+        c = self.getElbowJointCenter()
+        p1 = c + array([0, 0,  self['uarmLarmGap']/2])
+        p2 = c + array([0, 0, -self['uarmLarmGap']/2])
+        
+        p = [ c + array([ self['uarmWidth']/2,  self['uarmLatWidth']/2,  self['uarmLarmGap']/2]),
+              c + array([ self['uarmWidth']/2, -self['uarmLatWidth']/2,  self['uarmLarmGap']/2]),
+              c + array([-self['uarmWidth']/2, -self['uarmLatWidth']/2,  self['uarmLarmGap']/2]),
+              c + array([-self['uarmWidth']/2,  self['uarmLatWidth']/2,  self['uarmLarmGap']/2])  ]
+        v = [ c + array([ self['larmWidth']/2,  self['larmLatWidth']/2, -self['uarmLarmGap']/2]),
+              c + array([ self['larmWidth']/2, -self['larmLatWidth']/2, -self['uarmLarmGap']/2]),
+              c + array([-self['larmWidth']/2, -self['larmLatWidth']/2, -self['uarmLarmGap']/2]),
+              c + array([-self['larmWidth']/2,  self['larmLatWidth']/2, -self['uarmLarmGap']/2])  ]
+        ret = []
+        ret.append( ('elbLiga1L', p1, p2, 'uarmL', 'larmL') )
+        idx = 2
+        for pi in p:
+            for vi in v:
+                ret.append( ('elbLiga'+str(idx)+'L', pi, vi, 'uarmL', 'larmL') )
+                idx += 1
+        return ret
+        
     def getHipLigaments(self):
         c = self.getHipJointCenter()
         p1 = c + array([0, 0, self['trunkThighGap']/2])
@@ -427,6 +528,7 @@ class BipedParameter:
         for pi in p:
         	for vi in v:
         		ret.append( ('QuadricepsFemoris'+str(idx)+'L', pi, vi, 'trunk', 'calfL') )
+                idx += 1
         return ret
     #
     # Muscle fibers between thigh and sole
@@ -548,19 +650,26 @@ class BipedParameter:
     
     
     def getAllLigaments(self):
-        return self.getHipLigaments() + self.getKneeLigaments() + self.getAnkleLigaments() + self.getToeLigaments() 
+        return self.getHipLigaments() + self.getKneeLigaments() + \
+               self.getAnkleLigaments() + self.getToeLigaments() + \
+               self.getShoulderLigaments() + self.getElbowLigaments()
     
     def getAllMuscles(self):
-        return self.getBicepsFemoris() + self.getQuadricepsFemoris() + self.getHamstring() + self.getGastro() + self.getTibialis()
+        return self.getBicepsFemoris() + self.getQuadricepsFemoris() + \
+               self.getHamstring() + self.getGastro() + \
+               self.getTibialis()
 
     def buildBody(self, rotParam = 'QUAT_WFIRST'):
         body = []
         
-        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']], self.getTrunkPos(), 50. ],
-              ['thigh', [self['thighWidth'], self['thighLatWidth'], self['thighLen']], self.getThighPos(), 4. ],
-              ['calf',  [self['calfWidth'], self['calfLatWidth'], self['calfLen']],    self.getCalfPos(),  3. ],
-              ['sole',  [self['soleWidth'], self['soleLen'], self['soleHeight']],      self.getSolePos(),  1.5  ],
-              ['toe',   [self['toeWidth'], self['toeLen'], self['toeHeight']],         self.getToePos(),   1.5  ] ]
+        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']],   self.getTrunkPos(), 50.   ],
+              ['uarm',  [self['uarmWidth'],  self['uarmLatWidth'],  self['uarmLen']],    self.getUarmPos(),   4.   ],
+              ['larm',  [self['larmWidth'],  self['larmLatWidth'],  self['larmLen']],    self.getLarmPos(),   3.   ],
+              ['thigh', [self['thighWidth'], self['thighLatWidth'], self['thighLen']],   self.getThighPos(),  4.   ],
+              ['calf',  [self['calfWidth'],  self['calfLatWidth'],  self['calfLen']],    self.getCalfPos(),   3.   ],
+              ['sole',  [self['soleWidth'],  self['soleLen'],       self['soleHeight']], self.getSolePos(),   1.5  ],
+              ['toe',   [self['toeWidth'],   self['toeLen'],        self['toeHeight']],  self.getToePos(),    1.5  ],
+               ]
         
         for i in xrange(len(l)):
             for (k, v) in self.direction.iteritems():
@@ -727,11 +836,13 @@ class BipedParameter:
 
         return (minX, minY, minZ, maxX, maxY, maxZ)
     def getColumnMajorTransformMatrix(self, name):
-        pos = {'trunk': self.getTrunkPos(),
-               'thigh': self.getThighPos(),
-               'calf':  self.getCalfPos(),
-               'sole':  self.getSolePos(),
-               'toe':   self.getToePos()}
+        pos = { 'trunk' : self.getTrunkPos(),
+                'thigh' : self.getThighPos(),
+                'calf'  : self.getCalfPos(),
+                'sole'  : self.getSolePos(),
+                'toe'   : self.getToePos(),
+                'uarm'  : self.getUarmPos(),
+                'larm'  : self.getLarmPos()    }
         lr = 'L'
         #print name,
         if name != 'trunk':
@@ -888,6 +999,9 @@ def DrawBiped():
     glTranslate(-gBiped['legsDist'], 0, 0)
     DrawLeg()
     glPopMatrix()
+    
+    # Left arm drawn
+    DrawArm()
 
     
     glLineWidth(2)
@@ -905,7 +1019,7 @@ def DrawBiped():
     glEnd()
 
 def DrawAxisIndicator(name):
-    lineLen = gBiped[name +'Width']/3
+    lineLen = gBiped[name +'Width']/2
     glLineWidth(5)
     glBegin(GL_LINES)
     glColor(1,0,0); glVertex(0,0,0); glVertex(lineLen,0,0)
@@ -979,6 +1093,39 @@ def DrawLeg():
     glPopMatrix()
     del xAxisKey, yAxisKey, zAxisKey
 
+def DrawArm():
+    uarmPos = gBiped.getUarmPos()
+    glPushMatrix()
+    matMultCol = gBiped.getColumnMajorTransformMatrix('uarmL')
+    glMultMatrixf(matMultCol)
+    DrawAxisIndicator('uarm')
+    for (k, v) in gBiped.direction.iteritems():
+        if k[0:4] == 'uarm' and v == 0: xAxisKey = k
+        elif k[0:4] == 'uarm' and v == 1: yAxisKey = k
+        elif k[0:4] == 'uarm' and v == 2: zAxisKey = k
+    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
+    glColor(1,1,0)
+    if gWireframe: glutWireCube(1)
+    else: glutSolidCube(1)
+    glPopMatrix()
+    del xAxisKey, yAxisKey, zAxisKey
+
+    larmPos = gBiped.getLarmPos()
+    glPushMatrix()
+    matMultCol = gBiped.getColumnMajorTransformMatrix('larmL')
+    glMultMatrixf(matMultCol)
+    DrawAxisIndicator('larm')
+    for (k, v) in gBiped.direction.iteritems():
+        if k[0:4] == 'larm' and v == 0: xAxisKey = k
+        elif k[0:4] == 'larm' and v == 1: yAxisKey = k
+        elif k[0:4] == 'larm' and v == 2: zAxisKey = k
+    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
+    glColor(1,0,0)
+    if gWireframe: glutWireCube(1)
+    else: glutSolidCube(1)
+    glPopMatrix()
+    del xAxisKey, yAxisKey, zAxisKey    
+
 def Main():
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
@@ -1027,4 +1174,7 @@ if __name__ == '__main__':
     h = GetSimTimeStep()
     WriteSimcoreConfFile('MosekMultiRbMultiFibers3D.conf', plist, flist, h, 100.0)
     
-    Main()
+    try:
+        Main()
+    except:
+        pass

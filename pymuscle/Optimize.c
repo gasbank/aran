@@ -101,18 +101,18 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     double       c[NUMVAR];
     memset(c, 0, sizeof(double)*NUMVAR);
 
-    double bodyRefWeight[] = {
-            /* trunk  */ 1,
-            /* thighL */ 1,
-            /* thighR */ 1,
-            /* calfL  */ 1,
-            /* calfR  */ 1,
-            /* soleL  */ 1,
-            /* soleR  */ 1,
-            /* toeL   */ 1,
-            /* toeR   */ 1,
-    };
-    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
+//    double bodyRefWeight[] = {
+//            /* trunk  */ 1,
+//            /* thighL */ 1,
+//            /* thighR */ 1,
+//            /* calfL  */ 1,
+//            /* calfR  */ 1,
+//            /* soleL  */ 1,
+//            /* soleR  */ 1,
+//            /* toeL   */ 1,
+//            /* toeR   */ 1,
+//    };
+//    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
 
     /***********************/
     /* Cost function setup */
@@ -122,10 +122,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         FOR_0(j, nplist[i]) {
             /* 0.01 ~ 0.02 */
             c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0; /* minimize the contact normal force */
-            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 5e-1; /* Estimated position of z-coordinate of contact point */
+            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 2e-1; /* Estimated position of z-coordinate of contact point */
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
-            c[j] = 5e-1; /* minimize the movement of candidate contact points */
+            c[j] = 2e-1; /* minimize the movement of candidate contact points */
 
         /** DEBUG **/
         //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */

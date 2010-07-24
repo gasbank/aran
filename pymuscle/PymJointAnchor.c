@@ -49,7 +49,6 @@ int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char 
         strcpy(ja[na].name, name);
         strcpy(ja[na].bodyName, bodyName);
         ++na;
-        assert(na <= 20);
         free(cp);
         free(aLine);
     }
@@ -100,7 +99,11 @@ int PymConstructAnchoredJointList(pym_config_t *pymCfg) {
                         akBodyIdx = l;
                     }
                 }
-                assert(ajBody && akBody && ajBodyIdx != akBodyIdx);
+                if (!(ajBody && akBody && ajBodyIdx != akBodyIdx)) {
+                    printf("Warn - a body indicated by an anchor does not exist:\n");
+                    printf("       %s(%s) or %s(%s)\n", ajName, ajbn, akName, akbn);
+                    break;
+                }
 
                 int ajIdx = -1, akIdx = -1;
                 FOR_0(l, ajBody->nAnchor) {
@@ -135,10 +138,11 @@ int PymConstructAnchoredJointList(pym_config_t *pymCfg) {
                 marked[j] = 1;
                 marked[k] = 1;
                 ++njProcessed;
+                break;
             }
         }
     }
     pymCfg->nJoint = njProcessed;
-    assert(njProcessed*2 == pymCfg->na);
+    assert(njProcessed*2 <= pymCfg->na);
     return njProcessed;
 }
