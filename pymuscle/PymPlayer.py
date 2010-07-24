@@ -39,9 +39,10 @@ def InitializeGl():             # We call this right after our OpenGL window is 
     #glEnable (GL_LIGHTING)
     glEnable (GL_COLOR_MATERIAL)
     #glEnable(GL_TEXTURE_2D)
-    #glLineWidth(2)
+    #glLineWidth(0.1)
     #gQuadric = gluNewQuadric(1)
     #glDisable(GL_CULL_FACE);
+    glEnable(GL_LINE_SMOOTH);
 
 def ResizeGlScene(winWidth, winHeight):
     if winHeight == 0:
@@ -164,7 +165,6 @@ def Draw():
             #print gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey]
             glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey])
             del xAxisKey, yAxisKey, zAxisKey
-            
             glutWireCube(1)
             glPopMatrix()
 

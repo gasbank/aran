@@ -241,6 +241,14 @@ class BipedParameter:
             for (k, v) in self.p.iteritems():
                 self.p[k] = v/100.
 
+        self._pos = { 'trunk' : self.getTrunkPos,
+                'thigh' : self.getThighPos,
+                'calf'  : self.getCalfPos,
+                'sole'  : self.getSolePos,
+                'toe'   : self.getToePos,
+                'uarm'  : self.getUarmPos,
+                'larm'  : self.getLarmPos,
+                'head'  : self.getHeadPos  }
     def __getitem__(self, i):
         return self.p[i]
 
@@ -885,15 +893,11 @@ class BipedParameter:
         minZ = 0.
 
         return (minX, minY, minZ, maxX, maxY, maxZ)
+    
+    def getPos(self, name):
+        return self._pos[name]()
+    
     def getColumnMajorTransformMatrix(self, name):
-        pos = { 'trunk' : self.getTrunkPos(),
-                'thigh' : self.getThighPos(),
-                'calf'  : self.getCalfPos(),
-                'sole'  : self.getSolePos(),
-                'toe'   : self.getToePos(),
-                'uarm'  : self.getUarmPos(),
-                'larm'  : self.getLarmPos(),
-                'head'  : self.getHeadPos()  }
         lr = 'L'
         #print name,
         if name not in ['trunk', 'head']:
@@ -904,7 +908,7 @@ class BipedParameter:
                 print 'Error - Body parts other than trunk/head should have postfix L or R.'
                 assert False
                 
-        comPos = pos[name]
+        comPos = self.getPos(name)
         if lr == 'R':
             comPos[0] *= -1
         
@@ -939,6 +943,7 @@ def InitializeGl():                # We call this right after our OpenGL window 
     #glLineWidth(2)
     #gQuadric = gluNewQuadric(1)
     #glDisable(GL_CULL_FACE);
+    glEnable(GL_LINE_SMOOTH);
 
 def ResizeGlScene(winWidth, winHeight):
     if winHeight == 0:
@@ -957,9 +962,7 @@ def KeyPressed(*args):
     elif key == 'l': gDrawLiga = not gDrawLiga
 
 def Draw():
-
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
 
     # Point Of Interest
     global gPoi
@@ -995,8 +998,6 @@ def Draw():
               0, 0, 1);
     DrawBiped()
 
-
-
     SetViewport(0,0, gWinWidth,gWinHeight, 0)
     glDisable(GL_DEPTH_TEST)
     glColor(0.8,0.8,0.8)
@@ -1023,64 +1024,43 @@ def SetViewport(x, y, w, h, zoomLevel):
     glMatrixMode(GL_MODELVIEW)        # // Select The Modelview Matrix
     glLoadIdentity()                    # // Reset The Modelview Matrix
 
+def DrawRigidBody(rbName, side = None):
+    assert side in [None, 'L', 'R']
+    rbPos = gBiped.getPos(rbName)
+    glPushMatrix()
+    if side is not None:
+        rbSidedName = rbName + side
+    else:
+        rbSidedName = rbName
+    matMultCol = gBiped.getColumnMajorTransformMatrix(rbSidedName)
+    glMultMatrixf(matMultCol)
+    DrawAxisIndicator(rbName)
+    rbNameLen = len(rbName)
+    for (k, v) in gBiped.direction.iteritems():
+        if   k[0:rbNameLen] == rbName and v == 0: xAxisKey = k
+        elif k[0:rbNameLen] == rbName and v == 1: yAxisKey = k
+        elif k[0:rbNameLen] == rbName and v == 2: zAxisKey = k
+    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
+    if side is None:
+        glColor(1,0,1)
+    elif side == 'L':
+        glColor(0,1,1)
+    elif side == 'R':
+        glColor(1,0,0)
+    if gWireframe: glutWireCube(1)
+    else: glutSolidCube(1)
+    glPopMatrix()
+    del xAxisKey, yAxisKey, zAxisKey
+
 def DrawBiped():
-    trunkPos = gBiped.getTrunkPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('trunk')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('trunk')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:5] == 'trunk' and v == 0: xAxisKey = k
-        elif k[0:5] == 'trunk' and v == 1: yAxisKey = k
-        elif k[0:5] == 'trunk' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,0,1)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
+    DrawRigidBody('trunk')
+    DrawRigidBody('head')
+    DrawLeg('L')
+    DrawLeg('R')
+    DrawArm('L')
+    DrawArm('R')
     
-    headPos = gBiped.getHeadPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('head')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('head')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:4] == 'head' and v == 0: xAxisKey = k
-        elif k[0:4] == 'head' and v == 1: yAxisKey = k
-        elif k[0:4] == 'head' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,0,1)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
-    
-    
-
     glLineWidth(1)
-    # Left leg drawn
-    DrawLeg()
-
-    # Right leg drawn
-    glPushMatrix()
-    #glScale(-1,1,1)
-    glTranslate(-gBiped['legsDist'], 0, 0)
-    DrawLeg()
-    glPopMatrix()
-    
-    # Left arm drawn
-    DrawArm()
-    
-    # Right arm drawn
-    glPushMatrix()
-    #glScale(-1,1,1)
-    glTranslate(-2*gBiped.getUarmPos()[0], 0, 0)
-    DrawArm()
-    glPopMatrix()
-
-    
-    glLineWidth(2)
     glBegin(GL_LINES)
     if gDrawLiga:
         glColor(1,1,1) # Ligament is white
@@ -1104,104 +1084,16 @@ def DrawAxisIndicator(name):
     glEnd()
     glLineWidth(1)
 
-def DrawLeg():
-    thighPos = gBiped.getThighPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('thighL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('thigh')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:5] == 'thigh' and v == 0: xAxisKey = k
-        elif k[0:5] == 'thigh' and v == 1: yAxisKey = k
-        elif k[0:5] == 'thigh' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,1,0)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
+def DrawLeg(side):
+    DrawRigidBody('thigh', side)
+    DrawRigidBody('calf', side)
+    DrawRigidBody('sole', side)
+    DrawRigidBody('toe', side)
 
-    calfPos = gBiped.getCalfPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('calfL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('calf')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:4] == 'calf' and v == 0: xAxisKey = k
-        elif k[0:4] == 'calf' and v == 1: yAxisKey = k
-        elif k[0:4] == 'calf' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,0,0)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
-
-    solePos = gBiped.getSolePos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('soleL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('sole')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:4] == 'sole' and v == 0: xAxisKey = k
-        elif k[0:4] == 'sole' and v == 1: yAxisKey = k
-        elif k[0:4] == 'sole' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,1,1)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
-
-    toePos = gBiped.getToePos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('toeL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('toe')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:3] == 'toe' and v == 0: xAxisKey = k
-        elif k[0:3] == 'toe' and v == 1: yAxisKey = k
-        elif k[0:3] == 'toe' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(0,1,0)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
-
-def DrawArm():
-    uarmPos = gBiped.getUarmPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('uarmL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('uarm')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:4] == 'uarm' and v == 0: xAxisKey = k
-        elif k[0:4] == 'uarm' and v == 1: yAxisKey = k
-        elif k[0:4] == 'uarm' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,1,0)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey
-
-    larmPos = gBiped.getLarmPos()
-    glPushMatrix()
-    matMultCol = gBiped.getColumnMajorTransformMatrix('larmL')
-    glMultMatrixf(matMultCol)
-    DrawAxisIndicator('larm')
-    for (k, v) in gBiped.direction.iteritems():
-        if k[0:4] == 'larm' and v == 0: xAxisKey = k
-        elif k[0:4] == 'larm' and v == 1: yAxisKey = k
-        elif k[0:4] == 'larm' and v == 2: zAxisKey = k
-    glScale(gBiped[xAxisKey], gBiped[yAxisKey], gBiped[zAxisKey] )
-    glColor(1,0,0)
-    if gWireframe: glutWireCube(1)
-    else: glutSolidCube(1)
-    glPopMatrix()
-    del xAxisKey, yAxisKey, zAxisKey    
-
+def DrawArm(side):
+    DrawRigidBody('uarm', side)
+    DrawRigidBody('larm', side)
+    
 def Main():
     glutInit(sys.argv)
     glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
