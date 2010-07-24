@@ -22,6 +22,8 @@
 #include "Optimize.h"
 #include "PymJointAnchor.h"
 
+static const int MAX_CORRESMAP = 50;
+
 int PymMin(int a, int b) {
     if (a<b) return a;
     else return b;
@@ -37,7 +39,7 @@ int main3(int argc, const char **argv)
     return 0;
 }
 
-int PymParseTrajectoryFile(char corresMap[20][2][128],
+int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
                            int *_nCorresMap,
                            double **_trajData,
                            int *_nBody,
@@ -74,7 +76,7 @@ int PymParseTrajectoryFile(char corresMap[20][2][128],
         strcpy(corresMap[nCorresMap][0], bodyName);
         strcpy(corresMap[nCorresMap][1], anotherName);
         ++nCorresMap;
-        assert(nCorresMap <= 20);
+        assert(nCorresMap <= MAX_CORRESMAP);
         free(cp);
         free(aLine);
     }
@@ -240,7 +242,7 @@ int main(int argc, const char **argv) {
     PymInitializeMosek(&env);
 
 
-    char corresMap[50][2][128];
+    char corresMap[MAX_CORRESMAP][2][128];
     int corresMapIndex[pymCfg.nBody]; FOR_0(i, pymCfg.nBody) corresMapIndex[i] = -1;
     int nCorresMap = 0;
     int nBlenderBody = 0;
