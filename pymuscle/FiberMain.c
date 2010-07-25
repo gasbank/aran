@@ -47,14 +47,12 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
                            const char *fnRbCfg,
                            const char *fnTraj) {
     FILE *rbCfg = fopen(fnRbCfg, "r");
-    FILE *traj  = fopen(fnTraj, "r");
+    printf("Opening trajconf %s...\n", fnRbCfg);
     if (rbCfg == 0) {
-        printf("Rigid body configuration file %s parse failed.\n", fnRbCfg);
+        printf("Error - %s opening failure.\n", fnRbCfg);
         return -1;
-    } else if (traj == 0) {
-        printf("Trajectory file %s parse failed.\n", fnTraj);
-        return -2;
     }
+
     int i, j, k;
 
     int nCorresMap = 0;
@@ -83,12 +81,20 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
     printf("nCorresMap = %d\n", nCorresMap);
 
     /* Parse the trajectory file */
+    FILE *traj  = fopen(fnTraj, "r");
+    printf("Opening trajdata %s...\n", fnTraj);
+    if (traj == 0) {
+        printf("Error - Trajectory file %s opening failure.\n", fnTraj);
+        return -2;
+    }
     char *trajHeader = 0;
     size_t trajHeaderLen = 0;
     getline(&trajHeader, &trajHeaderLen, traj);
     int nFrame = atoi(trajHeader);
     int nBody  = atoi(strrchr(trajHeader, ' '));
-    printf("nFrame = %d   nBody = %d\n", nFrame, nBody);
+    printf("From Blender\n");
+    printf("  # of frames exported       : %d\n", nFrame);
+    printf("  # of rigid bodies exported : %d\n", nBody);
     assert(nFrame > 0 && nBody > 0);
     assert(nBody == nCorresMap);
     double *trajData = (double *)malloc(nFrame*nBody*sizeof(double)*6);
@@ -148,19 +154,25 @@ int DevStatCompare(const void * a, const void * b) {
 typedef struct _pym_cmdline_options_t {
     const char *simconf;
     int frame;
-    const char *trajconf;
-    const char *trajdata;
-    const char *output;
+    char *trajconf;
+    char *trajdata;
+    char *output;
     double slant;
+    int notrack;
+    int freeTrajStrings;
+    int freeOutputStrings;
 } pym_cmdline_options_t;
 
 int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
     /* initialize default options first */
-    cmdopt->simconf = 0;
-    cmdopt->frame = -1;   /* not specified for now */
-    cmdopt->trajconf = 0;
-    cmdopt->trajdata = 0;
-    cmdopt->output = "outputFile.txt";
+    cmdopt->simconf           =  0;
+    cmdopt->frame             = -1;   /* not specified for now */
+    cmdopt->trajconf          =  0;
+    cmdopt->trajdata          =  0;
+    cmdopt->output            =  0;
+    cmdopt->notrack           =  0;
+    cmdopt->freeTrajStrings   =  0;
+    cmdopt->freeOutputStrings =  0;
 
     assert(argc >= 2);
     cmdopt->simconf = argv[1];
@@ -182,6 +194,8 @@ int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **ar
             _trajdata = 1;
         } else if (strncmp(argv[i], "--output=", strlen("--output=")) == 0) {
             cmdopt->output = strchr(argv[i], '=') + 1;
+        } else if (strncmp(argv[i], "--notrack", strlen("--notrack")) == 0) {
+                    cmdopt->notrack = 1;
         } else if (strncmp(argv[i], "--slant=", strlen("--slant=")) == 0) {
             char *endp;
             cmdopt->slant = strtod(strchr(argv[i], '=') + 1, &endp);
@@ -198,22 +212,56 @@ int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **ar
         printf("Error: --trajconf should be specified with --trajdata and vice versa.\n\n");
         return -1;
     }
+    if (cmdopt->notrack == 0 && cmdopt->trajconf == 0 && cmdopt->trajdata == 0) {
+        /* trajconf and trajdata path implicitly decided
+         *  from sim conf file name. In this case
+         *  we assume the user provided conventional
+         *  file name for sim conf. */
+        assert( strcmp(strchr(cmdopt->simconf, '.'), ".sim.conf") == 0 );
+        cmdopt->freeTrajStrings = 1;
+        int prefixLen = (int)(strchr(cmdopt->simconf, '.') - cmdopt->simconf);
+
+        cmdopt->trajconf = malloc(prefixLen + strlen(".traj.conf") + 1);
+        strncpy(cmdopt->trajconf, cmdopt->simconf, prefixLen);
+        cmdopt->trajconf[prefixLen] = '\0';
+        strcat(cmdopt->trajconf, ".traj.conf");
+
+        cmdopt->trajdata = malloc(prefixLen + strlen(".traj_EXP_q.txt") + 1);
+        strncpy(cmdopt->trajdata, cmdopt->simconf, prefixLen);
+        cmdopt->trajdata[prefixLen] = '\0';
+        strcat(cmdopt->trajdata, ".traj_EXP_q.txt");
+
+        /* set output file name accordingly if needed */
+        if (cmdopt->output == 0) {
+            cmdopt->freeOutputStrings = 1;
+            cmdopt->output = malloc(prefixLen + strlen(".sim_EXP_q.txt") + 1);
+            strncpy(cmdopt->output, cmdopt->simconf, prefixLen);
+            cmdopt->output[prefixLen] = '\0';
+            strcat(cmdopt->output, ".sim_EXP_q.txt");
+        }
+    }
+    if (cmdopt->output == 0) {
+        /* use default output file name if not set so far */
+        cmdopt->output = "sample.sim_EXP_q.txt";
+    }
     return 0;
 }
 
 int main(int argc, const char **argv) {
+    printf("Optimization-based tracker      -- 2010 Geoyeob Kim\n");
     if (argc < 2) {
-        printf("Rigid body and muscle fiber simulator - 2010 Geoyeob Kim\n\n");
-        printf("  USAGE\n");
-        printf("    %s config_file <simulation config file> [<options>]\n", strrchr(argv[0], '/') + 1);
+        printf("  Usage:\n");
+        printf("    %s config_file <simulation conf file> [Options]\n", strrchr(argv[0], '/') + 1);
         printf("\n");
-        printf("  OPTIONS\n");
-        printf("      --frame=<frame number to simulate>\n");
-        printf("      --trajconf=<trajectory config file>\n");
-        printf("      --trajdata=<trajectory data file>\n");
-        printf("      --slant=<ground slant in radian>\n");
+        printf("  Options:\n");
+        printf("    --frame=<integer>     : frame number to simulate>\n");
+        printf("    --trajconf=<path>     : input trajectory conf\n");
+        printf("    --trajdata=<path>     : input trajectory data(reference)>\n");
+        printf("    --output=<path>       : optimization output\n");
+        printf("    --slant=<real number> : ground slant degree in radians\n");
+        printf("    --notrack             : ignore reference trajectories\n");
         printf("\n");
-        printf("  --trajconf should be specified with --trajdata and vice versa.\n\n");
+        printf("    --trajconf should be specified with --trajdata and vice versa.\n\n");
         return -1;
     }
     int ret = 0;
@@ -267,10 +315,11 @@ int main(int argc, const char **argv) {
          * following the trajectory entirely.
          */
         assert(nBlenderFrame >= 3);
+        printf("Simulated body and trajectory body correspondance\n");
         FOR_0(i, pymCfg.nBody) {
             FOR_0(j, nBlenderBody) {
                 if (strcmp(pymCfg.body[i].b.name, corresMap[j][1]) == 0) {
-                    printf("%d, %s, %s, %d\n", i, pymCfg.body[i].b.name, corresMap[j][1], j);
+                    printf("%3d %15s -- %d\n", i, pymCfg.body[i].b.name, j);
                     corresMapIndex[i] = j;
                     break;
                 }
@@ -289,8 +338,11 @@ int main(int argc, const char **argv) {
         }
 
         char fnJaCfg[128] = {0};
-        strncat(fnJaCfg, cmdopt.trajconf, 128);
-        strncat(fnJaCfg, ".ja", 128);
+        int trajNameLen = (int)(strchr(cmdopt.trajconf, '.') - cmdopt.trajconf);
+        assert(trajNameLen > 0);
+        strncpy(fnJaCfg, cmdopt.trajconf, trajNameLen);
+        fnJaCfg[ trajNameLen ] = '\0';
+        strcat(fnJaCfg, ".jointanchor.conf");
         pymCfg.na = PymParseJointAnchorFile(pymCfg.pymJa, sizeof(pymCfg.pymJa)/sizeof(pym_joint_anchor_t), fnJaCfg);
         assert(pymCfg.na >= 0);
         printf("Info - # of joint anchors parsed = %d\n", pymCfg.na);
@@ -322,14 +374,14 @@ int main(int argc, const char **argv) {
                     memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg.pymJa[j].localPos, sizeof(double)*3);
                     rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
                     ++rbn->nAnchor;
-                    printf("Joint anchors added: %s on %s. (so far %d)\n", pymCfg.pymJa[j].name, rbn->name, rbn->nAnchor);
+                    printf("Joint anchor %15s attached to %8s. (so far %2d)\n", pymCfg.pymJa[j].name, rbn->name, rbn->nAnchor);
                     assert(rbn->nAnchor <= 10);
                 }
             }
         }
         assert(pymCfg.na%2 == 0);
         PymConstructAnchoredJointList(&pymCfg);
-        printf("Info - # of anchored joints constructed = %d\n", pymCfg.nJoint);
+        printf("# of anchored joints constructed : %d\n", pymCfg.nJoint);
     } else {
         PymSetPymCfgChiRefToCurrentState(&pymCfg);
     }
@@ -354,6 +406,7 @@ int main(int argc, const char **argv) {
     const int nj = pymCfg.nJoint;
 
     /* Let's start the simulation happily :) */
+    printf("Starting the tracking simulation...\n");
     FOR_0(i, pymCfg.nSimFrame) {
 
         FOR_0(j, nb) {
@@ -429,7 +482,7 @@ int main(int argc, const char **argv) {
         else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
         else solstaStr = "ERROR!";
 
-        printf("Frame %5d finished.\n", i);
+        printf("Frame %5d / %5d  (%6.2lf %%) finished.\n", i, pymCfg.nSimFrame-1, (double)i/(pymCfg.nSimFrame-1)*100);
 
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
@@ -535,6 +588,7 @@ int main(int argc, const char **argv) {
         }
     }
     fclose(outputFile);
+    printf("Output written to %s\n", cmdopt.output);
 
     FILE *dislocFile = fopen("disloc.conf", "w");
     FOR_0(j, nj) {
@@ -549,6 +603,14 @@ int main(int argc, const char **argv) {
     PymDestoryConfig(&pymCfg);
     cholmod_finish(&cc);
     free(trajData);
+
+    if (cmdopt.freeTrajStrings) {
+        free(cmdopt.trajconf);
+        free(cmdopt.trajdata);
+    }
+    if (cmdopt.freeOutputStrings) {
+        free(cmdopt.output);
+    }
     return 0;
 }
 

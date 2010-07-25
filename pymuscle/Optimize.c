@@ -125,7 +125,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 2e-1; /* Estimated position of z-coordinate of contact point */
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
-            c[j] = 2e-1; /* minimize the movement of candidate contact points */
+            c[j] = 5e-1; /* minimize the movement of candidate contact points */
 
         /** DEBUG **/
         //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */

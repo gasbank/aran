@@ -149,8 +149,19 @@ def BuildInitialTransform(interestedArmature, interested):
 # MAIN ENTRY START
 ###########################################################################
 if __name__ == '__main__':
+	class TestSet:
+		def __init__(self, trajName, nFrame):
+			self.trajName = trajName
+			self.nFrame   = nFrame
+	
+	TEST_SET = [ TestSet( 'Walk0',  300  ),
+	             TestSet( 'Nav0',  2000  ), ]
 	#
 	# ==================== USER PARAMETERS ========================
+	# Select test set first.
+	ts = 1
+	assert ts < len(TEST_SET)
+	#
 	#
 	# Frame per second determined by the motion capture sequence.
 	# Do not change this value unless you are using another
@@ -163,7 +174,7 @@ if __name__ == '__main__':
 	# the 'current frame' indicator in Blender.
 	# This frame index starts from 1.
 	# This is not the same as the number of exported frame.
-	mocapFrameCount = 300
+	mocapFrameCount = TEST_SET[ts].nFrame
 	# Export frame per second which we are targeting of.
 	# If it is the same as 'mocapFps', the mocap trajectoriy
 	# is exactly copied. Otherwise, it is upsampled or downsampled
@@ -185,10 +196,11 @@ if __name__ == '__main__':
 	# and 'QUAT_WFIRST' gives you 7 dimensional vector
 	# likewise.
 	rotParam = 'EXP'
+	# Trajectory data taken from this armature
+	interestedArmature = 'Armature.' + TEST_SET[ts].trajName
 	# ==============================================================
 	#
 	
-	interestedArmature = 'Armature.005'
 
     # Bone(body) names should be stored in breadth-first order	
 	#               name          local (xAxis and yAxis)    another name
@@ -216,9 +228,15 @@ if __name__ == '__main__':
 	              ('RightAnkle',      '+X',     '-Y',         'soleR'),
 	              ('LeftToe',         '+X',     '-Y',         'toeL'),
 	              ('RightToe',        '+X',     '-Y',         'toeR') ]
-
+	arma = bpy.data.objects[interestedArmature]
+	assert arma
+	boneNameList = [v.name for v in arma.getData().bones.values()]
+	for bt in bodyTable:
+		assert bt[0] in boneNameList
+		assert bpy.data.objects['RB.' + bt[0]] is not None
+		
 	interestedBodyNames = [ a for a, b, c, d in bodyTable ]
-	             
+
 
 	nb = len(interestedBodyNames) # Number of interested bodies
 	
@@ -396,10 +414,10 @@ if __name__ == '__main__':
 		raise Exception, 'unknown rotation parameterization'
 	
 	homeDir = os.getenv("HOME")
-	fnBasePrefix = homeDir + '/pymuscle/trajectories/'
-	fnPrefix = fnBasePrefix + 'traj_' + rotParam + '_'
-	fnRigidBodyConfig = fnBasePrefix + 'rb.conf'
-	fnJointAnchorConfig = fnBasePrefix + 'rb.conf' + '.ja'
+	fnBasePrefix        = homeDir + '/pymuscle/trajectories/' + TEST_SET[ts].trajName
+	fnPrefix            = fnBasePrefix + '.traj_' + rotParam + '_'
+	fnRigidBodyConfig   = fnBasePrefix + '.traj.conf'
+	fnJointAnchorConfig = fnBasePrefix + '.jointanchor.conf'
 	
 	traj_q_file = open(fnPrefix + 'q.txt', 'w')
 	traj_q_file.write(metastr)

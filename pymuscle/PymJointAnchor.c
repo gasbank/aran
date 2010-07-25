@@ -52,8 +52,6 @@ int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char 
         free(cp);
         free(aLine);
     }
-    printf("nCorresMap = %d\n", na);
-
     fclose(jaCfg);
     return na;
 }

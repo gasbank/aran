@@ -265,15 +265,25 @@ def loadTrajData(fnTraj):
     return trajHeader, trajData
 
 if __name__ == '__main__':
-    if len(sys.argv) != 4:
-        print 'PymPlayer: Simulation result player   - 2010 Geoyeob Kim'
-        print '  Usage: python PymPlayer.py <traj config> <traj data> <sim data>'
+    print 'PymPlayer: Simulation result player      -- 2010 Geoyeob Kim'
+    if len(sys.argv) not in [2, 4]:
+        print '  Usage: python PymPlayer.py <traj conf> [traj data] [sim data]'
         print
         sys.exit(-1)
     
     fnRbConf = sys.argv[1]
-    fnTraj   = sys.argv[2]
-    fnSim    = sys.argv[3]
+    if len(sys.argv) == 4:
+        fnTraj   = sys.argv[2]
+        fnSim    = sys.argv[3]
+    elif len(sys.argv) == 2:
+        # fnTraj and fnSim decided implicitly
+        assert fnRbConf[fnRbConf.find('.'):] == '.traj.conf'
+        fnTraj   = fnRbConf[:fnRbConf.find('.')] + '.traj_EXP_q.txt'
+        fnSim    = fnRbConf[:fnRbConf.find('.')] + '.sim_EXP_q.txt'
+    
+    print 'trajconf :', fnRbConf
+    print 'trajdata :', fnTraj
+    print 'simdata  :', fnSim
     
     gBiped = BipedParameter(fnRbConf)
     bipHeight = gBiped.getBipedHeight()
