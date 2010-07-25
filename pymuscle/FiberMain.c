@@ -322,6 +322,7 @@ int main(int argc, const char **argv) {
                     memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg.pymJa[j].localPos, sizeof(double)*3);
                     rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
                     ++rbn->nAnchor;
+                    printf("Joint anchors added: %s on %s. (so far %d)\n", pymCfg.pymJa[j].name, rbn->name, rbn->nAnchor);
                     assert(rbn->nAnchor <= 10);
                 }
             }

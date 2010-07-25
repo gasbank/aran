@@ -13,7 +13,7 @@ enum _pym_rot_param_t {
     RP_EXP
 };
 
-#define MAX_FIBER_PER_RB (128)
+#define MAX_FIBER_PER_RB (256)
 
 struct _pym_rb_named_t {
         /*

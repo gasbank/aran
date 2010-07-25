@@ -250,6 +250,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     int totFiber = 0;
     FOR_0(j, pymCfg->nBody) {
         printf("   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
+        assert(pymCfg->body[j].b.nFiber <= MAX_FIBER_PER_RB);
         totFiber += pymCfg->body[j].b.nFiber;
     }
     assert(totFiber == 2*nMuscle);
@@ -491,7 +492,14 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
     FOR_0(i, nj) {
-        bipEta[ Ari[4] + i ] = 0.15; /* TODO joint dislocation threshold */
+        const char *anchorName = pymCfg->pymJa[ pymCfg->anchoredJoints[i].aAnchorIdxGbl ].name;
+        char iden[128];
+        ExtractAnchorIdentifier(iden, anchorName);
+        //printf("Name: %s (%s)\n", anchorName, iden);
+        if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0)
+            bipEta[ Ari[4] + i ] = 0.05; /* TODO joint dislocation threshold */
+        else
+            bipEta[ Ari[4] + i ] = 0.03; /* TODO joint dislocation threshold */
     }
     bod->bipEta = bipEta;
 

@@ -15,10 +15,12 @@ struct _pym_joint_anchor_t {
 };
 
 struct _pym_anchored_joint_t {
-    int aIdx; /* body a index */
-    int aAnchorIdx; /* joint anchor index of body a */
-    int bIdx; /* body b index */
-    int bAnchorIdx; /* joint anchor index of body b */
+    int aIdx;             /* body 'a' index */
+    int aAnchorIdx;       /* joint anchor index of body 'a' */
+    int aAnchorIdxGbl;    /* joint anchor index in global list */
+    int bIdx;             /* body 'b' index */
+    int bAnchorIdx;       /* joint anchor index of body 'b' */
+    int bAnchorIdxGbl;    /* joint anchor index in global list */
     double maxDisloc;
 };
 

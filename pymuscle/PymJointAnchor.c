@@ -121,11 +121,13 @@ int PymConstructAnchoredJointList(pym_config_t *pymCfg) {
                 assert(ajIdx >= 0 && akIdx >= 0);
 
                 pym_anchored_joint_t *aJoint = pymCfg->anchoredJoints + njProcessed;
-                aJoint->aIdx        = ajBodyIdx;
-                aJoint->aAnchorIdx  = ajIdx;
-                aJoint->bIdx        = akBodyIdx;
-                aJoint->bAnchorIdx  = akIdx;
-                aJoint->maxDisloc   = 0;
+                aJoint->aIdx          = ajBodyIdx;
+                aJoint->aAnchorIdx    = ajIdx;
+                aJoint->aAnchorIdxGbl = j;
+                aJoint->bIdx          = akBodyIdx;
+                aJoint->bAnchorIdx    = akIdx;
+                aJoint->bAnchorIdxGbl = k;
+                aJoint->maxDisloc     = 0;
 
 //                FOR_0(l, 4) {
 //                    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 0,

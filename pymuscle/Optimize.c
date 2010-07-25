@@ -134,7 +134,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 0; /* TODO ligament actuation */
+    c[ Aci[4] ] = 1e-8; /* TODO ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -143,7 +143,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
      * the optimization variables c[Aci[2]+j] separately where
      * 'j' is the index of an actuated muscle fiber.
      */
-    c[ Aci[5] ] = 0; /* TODO actuated muscle fiber actuation */
+    c[ Aci[5] ] = 1e-6; /* TODO actuated muscle fiber actuation */
 //    FOR_0(j, nf) {
 //        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
 //        if (mt == PMT_ACTUATED_MUSCLE) {
@@ -205,8 +205,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         }
         else if (mt == PMT_LIGAMENT) {
             bkx[i] = MSK_BK_RA;
-            blx[i] = -4000*9.81;
-            bux[i] =  4000*9.81;
+            blx[i] = -500*9.81;
+            bux[i] =  200*9.81;
         }
         else
             abort();
