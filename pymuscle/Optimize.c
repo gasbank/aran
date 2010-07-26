@@ -170,6 +170,11 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) {
+            /*
+             * Walk0   :  Nonnegative
+             * Nav0    :  0~200
+             * Exer0   :  0~200 (failed)
+             */
             //SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
             SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
         }
@@ -256,6 +261,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         return FLT_MAX;
     }
     MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
+    MSK_putintparam (task, MSK_IPAR_INTPNT_NUM_THREADS, 2);
+    //MSK_putintparam (task , MSK_IPAR_OPTIMIZER , MSK_OPTIMIZER_FREE_SIMPLEX);
+
+
 
     /* Give MOSEK an estimate of the size of the input data.
     This is done to increase the speed of inputting data.
