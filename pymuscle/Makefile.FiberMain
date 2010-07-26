@@ -1,0 +1,33 @@
+CC=gcc
+CFLAGS=-O3 -c -fPIC -Wall \
+-I ${HOME}/src/include \
+-I ${HOME}/src/CHOLMOD/Include \
+-I ${HOME}/mosek/6/tools/platform/linux64x86/h
+
+LD=gcc
+LDFLAGS=-L${HOME}/mosek/6/tools/platform/linux64x86/bin \
+-L${HOME}/src/lib
+
+OBJS=Biped.o PymJointAnchor.o TripletMatrix.o \
+PymPodUtil.o dRdv_real.o \
+MathUtil.o              PymuscleConfig.o   fibDiffW.o \
+ExpBodyMoEq_real.o   MuscleFiber.o           RigidBody.o        \
+FiberEffectImp.o     OneRbImp.o                        \
+FiberEffectImpAll.o  Optimize.o              StateDependents.o  \
+FiberMain.o          SymbolicTensor.o \
+ToSparse.o
+
+TARGET=pymuscle
+LIBS=-lm -lcholmod -lmosek64 -lconfig -lpthread
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(LD) $(LDFLAGS) $(OBJS) $(LIBS) -o $(TARGET)
+	 
+clean:
+	rm -f *.o $(TARGET)
+	
+.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+	

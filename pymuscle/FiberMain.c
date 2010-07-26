@@ -10,8 +10,6 @@
 #include "Control.h"
 #include "MathUtil.h"
 #include "SimCore.h"
-#include "lemke.h"
-#include "LCP_exp.h"
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
@@ -24,19 +22,27 @@
 
 static const int MAX_CORRESMAP = 50;
 
+typedef struct _deviation_stat_entry {
+    double chi_d_norm;
+    int nContact;
+    int bodyIdx;
+} deviation_stat_entry;
+
+typedef struct _pym_cmdline_options_t {
+    const char *simconf;
+    int frame;
+    char *trajconf;
+    char *trajdata;
+    char *output;
+    double slant;
+    int notrack;
+    int freeTrajStrings;
+    int freeOutputStrings;
+} pym_cmdline_options_t;
+
 int PymMin(int a, int b) {
     if (a<b) return a;
     else return b;
-}
-
-int main3(int argc, const char **argv)
-{
-    cholmod_common c ;
-    cholmod_start (&c) ;
-    int status = lemkeTester(&c);
-    printf("Status = %d\n", status);
-    cholmod_finish(&c);
-    return 0;
 }
 
 int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
@@ -136,12 +142,6 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
     return 0;
 }
 
-typedef struct _deviation_stat_entry {
-    double chi_d_norm;
-    int nContact;
-    int bodyIdx;
-} deviation_stat_entry;
-
 int DevStatCompare(const void * a, const void * b) {
     deviation_stat_entry *at = (deviation_stat_entry *)a;
     deviation_stat_entry *bt = (deviation_stat_entry *)b;
@@ -150,18 +150,6 @@ int DevStatCompare(const void * a, const void * b) {
     else if (diff < 0) return -1;
     else return 0;
 }
-
-typedef struct _pym_cmdline_options_t {
-    const char *simconf;
-    int frame;
-    char *trajconf;
-    char *trajdata;
-    char *output;
-    double slant;
-    int notrack;
-    int freeTrajStrings;
-    int freeOutputStrings;
-} pym_cmdline_options_t;
 
 int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
     /* initialize default options first */
