@@ -131,7 +131,13 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         const double ctY = pcj_2_nocf_W[1];
         const double theta = pymCfg->slant;
         const double z = -ctY*tan(theta); /* ground level */
-        if (pcj_2_nocf_W[2] <= z+0.030) { /* 0.030 optimal */
+        /* TODO: contact point threshold
+         * Optimal value table
+         *    Walk0 - 0.050
+         *    Nav0  - 0.050
+         *    Exer0 - 0.050 (unknown)
+         */
+        if (pcj_2_nocf_W[2] <= z+0.050) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;

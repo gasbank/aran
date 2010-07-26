@@ -155,11 +155,12 @@ if __name__ == '__main__':
 			self.nFrame   = nFrame
 	
 	TEST_SET = [ TestSet( 'Walk0',  300  ),
-	             TestSet( 'Nav0',  2000  ), ]
+	             TestSet( 'Nav0',  2000  ),
+	             TestSet( 'Exer0', 4600  ) ]
 	#
 	# ==================== USER PARAMETERS ========================
 	# Select test set first.
-	ts = 1
+	ts = 2
 	assert ts < len(TEST_SET)
 	#
 	#
@@ -295,34 +296,36 @@ if __name__ == '__main__':
 			A[3] = Aloc.resize4D()
 			
 			m = A*Xhead*PARENT
+
+			if ts in [0,1]:
+				### MOTION TRAJECTORY CORRECTION ###
+				if bone.name == 'LeftAnkle':
+					cor = Quaternion(Vector(1,0,0),-15)
+					m = cor.toMatrix().resize4x4() * m
+				elif bone.name == 'RightAnkle':
+					cor = Quaternion(Vector(1,0,0),-19)
+					m = cor.toMatrix().resize4x4() * m
 			
-			
-			
-			### MOTION TRAJECTORY CORRECTION ###
-			if bone.name == 'LeftAnkle':
-				cor = Quaternion(Vector(1,0,0),-15)
-				m = cor.toMatrix().resize4x4() * m
-			elif bone.name == 'RightAnkle':
-				cor = Quaternion(Vector(1,0,0),-19)
-				m = cor.toMatrix().resize4x4() * m
 			# Move to middle of head and tail
 			T = Matrix()
 			T.identity()
 			T[3] = Vector(0,bone.length/2,0,1)
 			m = T*m
+
 			
-			### MOTION TRAJECTORY CORRECTION ###
-			if bone.name == 'LeftAnkle':
-				cor = Quaternion(Vector(0,1,0),30)
-				m = cor.toMatrix().resize4x4() * m
-			elif bone.name == 'RightAnkle':
-				cor = Quaternion(Vector(0,1,0),-30)
-				m = cor.toMatrix().resize4x4() * m
-			elif bone.name == 'Head':
-				cor = Quaternion(Vector(0,0,1),-8)
-				m = cor.toMatrix().resize4x4() * m
-				cor = Quaternion(Vector(0,1,0),5)
-				m = cor.toMatrix().resize4x4() * m
+			if ts in [0,1]:
+				### MOTION TRAJECTORY CORRECTION ###
+				if bone.name == 'LeftAnkle':
+					cor = Quaternion(Vector(0,1,0),30)
+					m = cor.toMatrix().resize4x4() * m
+				elif bone.name == 'RightAnkle':
+					cor = Quaternion(Vector(0,1,0),-30)
+					m = cor.toMatrix().resize4x4() * m
+				elif bone.name == 'Head':
+					cor = Quaternion(Vector(0,0,1),-8)
+					m = cor.toMatrix().resize4x4() * m
+					cor = Quaternion(Vector(0,1,0),5)
+					m = cor.toMatrix().resize4x4() * m
 					
 			# rb.setMatrix(m) -- do not use this one.
 			rb.setLocation(m[3][0], m[3][1], m[3][2])

@@ -482,7 +482,7 @@ int main(int argc, const char **argv) {
         else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
         else solstaStr = "ERROR!";
 
-        printf("Frame %5d / %5d  (%6.2lf %%) finished.\n", i, pymCfg.nSimFrame-1, (double)i/(pymCfg.nSimFrame-1)*100);
+        printf("Frame %5d / %5d  (%6.2lf %%) finished.\n", i, pymCfg.nSimFrame-1, (double)(i+1)/(pymCfg.nSimFrame)*100);
 
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);

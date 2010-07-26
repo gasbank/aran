@@ -496,10 +496,13 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         char iden[128];
         ExtractAnchorIdentifier(iden, anchorName);
         //printf("Name: %s (%s)\n", anchorName, iden);
-        if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0)
+        if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0) {
             bipEta[ Ari[4] + i ] = 0.05; /* TODO joint dislocation threshold */
-        else
+            //bipEta[ Ari[4] + i ] = 0.15;
+        } else {
             bipEta[ Ari[4] + i ] = 0.03; /* TODO joint dislocation threshold */
+            //bipEta[ Ari[4] + i ] = 0.05;
+        }
     }
     bod->bipEta = bipEta;
 
