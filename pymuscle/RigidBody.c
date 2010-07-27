@@ -214,3 +214,30 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
     *_eta = eta;
     //__PRINT_VECTOR(eta, etaDim);
 }
+
+void PymReparameterizeRotParam(pym_rb_named_t *rbn, const pym_config_t *pymCfg) {
+    double th_0 = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
+    double th_1 = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
+    int k;
+    while (th_0 > 2*M_PI) {
+        printf("th_0 = %lf\n", th_0);
+        FOR_0(k, 3) rbn->q0[k] = rbn->q0[k]/th_0 * (th_0-2*M_PI);
+        th_0 -= 2*M_PI;
+    }
+    while (th_1 > 2*M_PI) {
+        printf("th_1 = %lf\n", th_1);
+        FOR_0(k, 3) rbn->q[k] = rbn->q[k]/th_1 * (th_1-2*M_PI);
+        th_1 -= 2*M_PI;
+    }
+
+    if (th_0 > M_PI && th_1 > M_PI) {
+        FOR_0(k, 3) {
+            rbn->q0[k] = (1-2*M_PI/th_0)*rbn->q0[k];
+            rbn->q[k]  = (1-2*M_PI/th_1)*rbn->q [k];
+            rbn->qd[k] = (rbn->q[k] - rbn->q0[k]) / pymCfg->h;
+        }
+        const double th_0new = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
+        const double th_1new = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
+        printf("    NOTE: %s re-parameterized. (th_0=%lf --> %lf, th_1=%lf --> %lf)\n", rbn->name, th_0, th_0new, th_1, th_1new);
+    }
+}
