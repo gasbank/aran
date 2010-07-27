@@ -77,6 +77,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     assert(bodyConf);
     const unsigned int nBody = config_setting_length(bodyConf);
     pym_rb_t body[nBody];
+    memset(body, 0, sizeof(pym_rb_t)*nBody);
 	double extForce[nBody][6];
 	char bodyNames[nBody][128];
 	memset(extForce, 0, sizeof(double)*nBody*6); /* NOTE: No external force for now. */

@@ -184,7 +184,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
         FOR_0(j, nd) {
             M_q_q0 += (sd->M[i][j] * (2*chi_1[j] - chi_0[j]))/(h*h);
         }
-        eta[sd->Ari[0] + i] = M_q_q0 + (-sd->Cqd[i] + sd->f_g[i]);
+        eta[sd->Ari[0] + i] = M_q_q0 + (-sd->Cqd[i] + sd->f_g[i] + sd->f_ext[i]);
     }
     /* p^(l)_{cfix,i}   and   (-V_ij)re_{j \in P} */
     FOR_0(i, np) {

@@ -99,6 +99,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     double grav_force[3] = { 0, 0, -9.81 * rbn->m };
     double ZERO3[3] = {0,0,0};
     GeneralizedForce(sd->f_g, rbn->q, grav_force, ZERO3);
+    /* TODO External force on each rigid body */
+    GeneralizedForce(sd->f_ext, rbn->q, rbn->extForce, rbn->extForcePos);
     double dRdvn[3][3][3];
     dRdv(dRdvn[0], dRdvn[1], dRdvn[2], rbn->q);
     int i,j,k;

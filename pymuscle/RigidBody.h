@@ -46,6 +46,8 @@ struct _pym_rb_named_t {
         int nAnchor;
         char jointAnchorNames[MAX_JOINTANCHORS][128];
         double jointAnchors[MAX_JOINTANCHORS][4];
+        double extForce[3];       /* External force applied to this body */
+        double extForcePos[3];    /* External force applied position in local coord. */
 };
 
 union _pym_rb_t
