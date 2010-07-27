@@ -19,7 +19,7 @@ import copy
 import RigidBody
 import MuscleFiber
 import GlobalContext
-import Parameters
+import BipedParameter
 from WriteSimcoreConfFile import *
 
 inf   = 0.0 # just for using the symbol 'inf' on MOSEK

@@ -395,6 +395,8 @@ int main(int argc, const char **argv) {
 
     /* Let's start the simulation happily :) */
     printf("Starting the tracking simulation...\n");
+    double total_opttime = 0;
+    int rotParamFailure = 0;
     FOR_0(i, pymCfg.nSimFrame) {
 
         FOR_0(j, nb) {
@@ -407,7 +409,8 @@ int main(int argc, const char **argv) {
                 printf("Error - %s rotation parameterization failure:\n", rbn->name);
                 printf("        th_0 = %e (%e, %e, %e)\n", th_0, rbn->q0[0], rbn->q0[1], rbn->q0[2]);
                 printf("        th_1 = %e (%e, %e, %e)\n", th_1, rbn->q[0], rbn->q[1], rbn->q[2]);
-                abort();
+                rotParamFailure = 1;
+                break;
             }
 
             /* Re-parameterize the rotation if needed */
@@ -434,6 +437,11 @@ int main(int argc, const char **argv) {
 //            }
         }
 
+        if (rotParamFailure) {
+            printf("Error - Rotation parameterization failure detected.\n");
+            break;
+        }
+
         if (cmdopt.trajconf) {
             FOR_0(j, pymCfg.nBody) {
                 memcpy(pymCfg.body[j].b.chi_ref,
@@ -452,7 +460,9 @@ int main(int argc, const char **argv) {
         PymConstructBipedEqConst(&bipEq, sd, &pymCfg, &cc);
         //cholmod_print_sparse(bod.bipMat, "bipMat", &cc);
 
-        // TODO: drop small elements...
+        /*
+         * TODO [TUNE] Drop tiny values from constraint matrix A
+         */
         //cholmod_drop(1e-8, bipEq.bipMat, &cc);
 
         //PrintEntireSparseMatrix(bod.bipMat);
@@ -460,7 +470,9 @@ int main(int argc, const char **argv) {
         double xx[bipEq.bipMat->ncol];
         memset(xx, 0, sizeof(xx));
         MSKsolstae solsta;
-        double cost = PymOptimize(xx, &solsta, &bipEq, sd, &pymCfg, &env, &cc);
+        double opttime;
+        double cost = PymOptimize(xx, &solsta, &opttime, &bipEq, sd, &pymCfg, &env, &cc);
+        total_opttime += opttime;
         if (cost == FLT_MAX) {
             printf("Something goes wrong while optimizing.\n");
         }
@@ -599,6 +611,8 @@ int main(int argc, const char **argv) {
     if (cmdopt.freeOutputStrings) {
         free(cmdopt.output);
     }
+
+    printf("Accumulated pure MOSEK optimizer time : %lf s\n", total_opttime);
     return 0;
 }
 

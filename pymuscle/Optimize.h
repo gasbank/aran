@@ -9,6 +9,7 @@ void PymCleanupMosek(MSKenv_t *env);
 
 double PymOptimize(double *xx,
                    MSKsolstae *_solsta, /* MOSEK solution status */
+                   double *opttime,
                  const pym_biped_eqconst_t *bod,
                  const pym_rb_statedep_t *sd,
                  const pym_config_t *pymCfg,

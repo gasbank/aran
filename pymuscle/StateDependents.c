@@ -131,7 +131,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         const double ctY = pcj_2_nocf_W[1];
         const double theta = pymCfg->slant;
         const double z = -ctY*tan(theta); /* ground level */
-        /* TODO: contact point threshold
+        /*
+         * TODO [TUNE] Contact point level threshold
          * Optimal value table
          *    Walk0 - 0.050
          *    Nav0  - 0.050

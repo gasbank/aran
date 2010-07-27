@@ -113,7 +113,10 @@ def BuildInitialTransform(interestedArmature, interested):
 	
 	
 	for i in range(nb):
-		rb = bpy.data.objects['RB.' + interested[0][i]]
+		try:
+			rb = bpy.data.objects['RB.' + interested[0][i]]
+		except:
+			rb = None
 		bone = interested[2][i]
 		
 		#print bone.name, X
@@ -137,7 +140,8 @@ def BuildInitialTransform(interestedArmature, interested):
 		MXHALF = XtoMat( (headPos, boneDir, q) )
 
 		interested[4].append(MX * XP)
-		rb.setMatrix(MXHALF * XP)
+		if rb:
+			rb.setMatrix(MXHALF * XP)
 		
 		
 	
@@ -156,7 +160,7 @@ if __name__ == '__main__':
 	
 	TEST_SET = [ TestSet( 'Walk0',  300  ),
 	             TestSet( 'Nav0',  2000  ),
-	             TestSet( 'Exer0', 4600  ) ]
+	             TestSet( 'Exer0',  500  ) ]
 	#
 	# ==================== USER PARAMETERS ========================
 	# Select test set first.
@@ -232,9 +236,17 @@ if __name__ == '__main__':
 	arma = bpy.data.objects[interestedArmature]
 	assert arma
 	boneNameList = [v.name for v in arma.getData().bones.values()]
+	rbMissing = False
 	for bt in bodyTable:
 		assert bt[0] in boneNameList
-		assert bpy.data.objects['RB.' + bt[0]] is not None
+		isExist = False
+		for obs in bpy.data.objects:
+			if obs.name == 'RB.' + bt[0]:
+				isExist = True
+				break
+		if not isExist:
+			print 'Warning - RB object \'RB.' + bt[0] + '\' does not exist.'
+			rbMissing = True
 		
 	interestedBodyNames = [ a for a, b, c, d in bodyTable ]
 
@@ -270,7 +282,10 @@ if __name__ == '__main__':
 	
 		traj_qi = []
 		for j in range(nb):
-			rb = bpy.data.objects['RB.' + interested[0][j]]
+			try:
+				rb = bpy.data.objects['RB.' + interested[0][j]]
+			except:
+				rb = None
 			bone = interested[2][j]
 					
 			# Calculate the local anim transform
@@ -326,11 +341,12 @@ if __name__ == '__main__':
 					m = cor.toMatrix().resize4x4() * m
 					cor = Quaternion(Vector(0,1,0),5)
 					m = cor.toMatrix().resize4x4() * m
-					
-			# rb.setMatrix(m) -- do not use this one.
-			rb.setLocation(m[3][0], m[3][1], m[3][2])
-			mteul = m.toEuler()
-			rb.setEuler(mteul.x/180*math.pi, mteul.y/180*math.pi, mteul.z/180*math.pi)
+			
+			if rb:		
+				# rb.setMatrix(m) -- do not use this one.
+				rb.setLocation(m[3][0], m[3][1], m[3][2])
+				mteul = m.toEuler()
+				rb.setEuler(mteul.x/180*math.pi, mteul.y/180*math.pi, mteul.z/180*math.pi)
 			
 			# Position(q) for a single body
 			trans = m.translationPart()
@@ -378,7 +394,9 @@ if __name__ == '__main__':
 				
 			else:
 				raise Exception('unknown rotation parameterization.')
-			bb = rb.getBoundBox(0)
+			
+			#bb = rb.getBoundBox(0)
+			
 			#print [2*abs(b) for b in bb[0]]
 			"""		
 			T[3] = Vector(0,bone.length,0,1)
@@ -390,9 +408,17 @@ if __name__ == '__main__':
 			
 		traj_q.append(traj_qi)
 		
-		Blender.Redraw()
+		# If you want to check the animation of
+		# rigid bodies then remove the comment
+		# of the following line
+		
+		#Blender.Redraw()
 	
 	
+	# Final 'Redraw()' function on blender is crucial
+	# to get joint anchors in local coordinates.
+	# Don't know why...
+	Blender.Redraw()
 	traj_qd = []
 	print 'Total # of frames:', len(traj_q)
 	print 'Total # of bodies:', len(traj_q[0])
@@ -446,23 +472,27 @@ if __name__ == '__main__':
 			traj_qdd_file.write(('%15e'*vecLen % tuple(j)) + '\n')
 	traj_qdd_file.close()
 	
-	rbconf_file = open(fnRigidBodyConfig, 'w')
-	for (name, xAxis, yAxis, corresName), bone in zip(bodyTable, interested[2]):
-		rb = bpy.data.objects['RB.' + name]
-		bb = rb.getBoundBox(0)[0]
-		boundbox = [ abs(bbi)*2 for bbi in bb ]
-		rbconf_file.write('%-16s'%name + ' ')
-		rbconf_file.write('%15e'*3 % tuple(boundbox) + '   ')
-		rbconf_file.write(xAxis + '   ' + yAxis + '   ')
-		rbconf_file.write('%15e'%bone.length + '    ')
-		rbconf_file.write(corresName)
-		rbconf_file.write('\n')
-	rbconf_file.close()
+	if not rbMissing:
+		rbconf_file = open(fnRigidBodyConfig, 'w')
+		for (name, xAxis, yAxis, corresName), bone in zip(bodyTable, interested[2]):
+			rb = bpy.data.objects['RB.' + name]
+			bb = rb.getBoundBox(0)[0]
+			boundbox = [ abs(bbi)*2 for bbi in bb ]
+			rbconf_file.write('%-16s'%name + ' ')
+			rbconf_file.write('%15e'*3 % tuple(boundbox) + '   ')
+			rbconf_file.write(xAxis + '   ' + yAxis + '   ')
+			rbconf_file.write('%15e'%bone.length + '    ')
+			rbconf_file.write(corresName)
+			rbconf_file.write('\n')
+		rbconf_file.close()
 	
 	
 	jaconf_file = open(fnJointAnchorConfig, 'w')
 	for (name, xAxis, yAxis, corresName), bone in zip(bodyTable, interested[2]):
-		rb = bpy.data.objects['RB.' + name]
+		try:
+			rb = bpy.data.objects['RB.' + name]
+		except:
+			continue
 		jaList = []
 		for obj in bpy.data.objects:
 			if obj.getParent() == rb:

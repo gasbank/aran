@@ -59,6 +59,7 @@ void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
 
 double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod->bipMat->ncol) */
                    MSKsolstae *_solsta, /* MOSEK solution status */
+                   double *opttime,
                    const pym_biped_eqconst_t *bod,
                    const pym_rb_statedep_t *sd,
                    const pym_config_t *pymCfg,
@@ -71,8 +72,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     MSKboundkeye bkc[NUMCON];
     double       blc[NUMCON];
     double       buc[NUMCON];
+    /* Equality constraints */
     FOR_0(i, NUMCON) bkc[i] = MSK_BK_FX;
-    /* TODO: can be optimized */
     memcpy(blc, bod->bipEta, sizeof(double)*NUMCON);
     memcpy(buc, bod->bipEta, sizeof(double)*NUMCON);
     //FOR_0(i, NUMCON) printf("%lf  ", bod->bipEta[i]);
@@ -120,12 +121,25 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     int tauOffset;
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         FOR_0(j, nplist[i]) {
-            /* 0.01 ~ 0.02 */
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0; /* minimize the contact normal force */
+            /*
+             * TODO [TUNE] Minimize the contact normal force
+             * Walk0, Nav0  - 0
+             * Exer0        - ?
+             */
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0;
             c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 2e-1; /* Estimated position of z-coordinate of contact point */
         }
-        for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j)
-            c[j] = 5e-1; /* minimize the movement of candidate contact points */
+        for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j) {
+            /*
+             * TODO [TUNE] Minimize the movement of candidate contact points
+             *
+             * Walk0        -  1
+             * Nav0         -  5e-1
+             * Exer0        -  1
+             */
+            c[j] = 5e-1;
+        }
+
 
         /** DEBUG **/
         //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
@@ -134,7 +148,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 1e-8; /* TODO ligament actuation */
+    c[ Aci[4] ] = 1e-8; /* ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -143,18 +157,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
      * the optimization variables c[Aci[2]+j] separately where
      * 'j' is the index of an actuated muscle fiber.
      */
-    c[ Aci[5] ] = 1e-6; /* TODO actuated muscle fiber actuation */
-//    FOR_0(j, nf) {
-//        const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
-//        if (mt == PMT_ACTUATED_MUSCLE) {
-//            c[ Aci[2] + j ] = 1e-8;
-//        }
-//        else if (mt == PMT_LIGAMENT) {
-//            // DO NOT SET COST FUNCTION HERE!
-//        }
-//        else
-//            abort();
-//    }
+    c[ Aci[5] ] = 1e-6; /* actuated muscle fiber actuation */
+
 
     /***********************/
     /***********************/
@@ -167,16 +171,17 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         SET_NONNEGATIVE( tauOffset + sd[i].Aci[0] + 2 ); /* chi_2_z */
         FOR_0(j, nplist[i]) SET_NONNEGATIVE( tauOffset + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
-        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 2 ); /* c_c_z (TODO: Assumes flat ground) */
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) {
             /*
+             * TODO [TUNE] Contact normal force constraint tuning
              * Walk0   :  Nonnegative
              * Nav0    :  0~200
              * Exer0   :  0~200 (failed)
              */
             //SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
             SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
+            //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 140); /* c_c_n */
         }
         FOR_0(j, nplist[i]) {
             //SET_NONNEGATIVE( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
@@ -187,7 +192,11 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             const double z = -ctY*tan(theta);
             SET_LOWER_BOUND( tauOffset + sd[i].Aci[3] + 4*j + 2, z ); /* p_c_2_z : next step CP z-pos */
         }
-        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z (TODO: How to allow contact break?) */
+        /*
+         * TODO [TUNE] Constraints for fixing contact points
+         * p_c_2_z
+         */
+        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[3] + 4*j + 2 );
         FOR_0(j, nplist[i]) SET_FIXED_ONE  ( tauOffset + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
         for(j=tauOffset + sd[i].Aci[5]; j<tauOffset + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
         for(j=tauOffset + sd[i].Aci[6]; j<tauOffset + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
@@ -226,31 +235,6 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         bux[i] = pymCfg->fiber[j].b.xrest_upper;
     }
 
-    /* TODO: ### DEBUG PURPOSE (REMOVE IT!) ### */
-    FOR_0(k, nb) {
-        /* Useful when 'stay still' mode.
-//        FOR_0(j, 3) {
-//            i = Aci[k]+3+j; /* angular rx,ry,rz-axis position of body i */
-//            SET_FIXED_ZERO(i);
-//        }
-//        if (strncmp(pymCfg->body[k].b.name, "toe", 3) != 0) {
-//            i = Aci[k]+1;   /* linear y-axis */
-//            SET_FIXED_ZERO(i);
-//        }
-//        if (strcmp(pymCfg->body[k].b.name, "trunk") == 0) {
-//            i = Aci[k]+0;   /* linear x-axis */
-//            SET_FIXED_ZERO(i);
-//        }
-
-        /* Linear position reference as constraint (?) */
-//        FOR_0(j, 3) {
-//            i = Aci[k] + j;
-//            bkx[i] = MSK_BK_FX;
-//            blx[i] = pymCfg->body[k].b.chi_ref[j];
-//            bux[i] = blx[i];
-//        }
-    }
-
     MSKtask_t   task;
 
     /* Create the optimization task. */
@@ -261,7 +245,11 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         return FLT_MAX;
     }
     MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
-    MSK_putintparam (task, MSK_IPAR_INTPNT_NUM_THREADS, 2);
+    /* On my(gykim) computer, the other values except 1 for the
+     * number of threads does not work. (segfault or hang)
+     * Other PCs seemed to fine, though.
+     */
+    MSK_putintparam (task, MSK_IPAR_INTPNT_NUM_THREADS, 1);
     //MSK_putintparam (task , MSK_IPAR_OPTIMIZER , MSK_OPTIMIZER_FREE_SIMPLEX);
 
 
@@ -343,7 +331,12 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                         tauOffset + sd[i].Aci[8]);
 
         FOR_0(j, nplist[i]) {
-            //# CP movement minimization
+            /*
+             * TODO [TUNE] CP movement minimization
+             *
+             * Walk0, Nav0 - including z-axis movement (0~3)
+             * Exer0       - excluding z-axis movement (0~2)
+             */
             AppendConeRange(task,
                             tauOffset + sd[i].Aci[5] + j,
                             tauOffset + sd[i].Aci[4]+4*j+0,
@@ -395,6 +388,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     MSK_writedata(task,"pymuscle_c.opf");
     /* Run optimizer */
     r = MSK_optimizetrm(task,&trmcode);
+
+    if (opttime)
+        MSK_getdouinf ( task , MSK_DINF_OPTIMIZER_TIME , opttime );
 
     /* Print a summary containing information
        about the solution for debugging purposes*/

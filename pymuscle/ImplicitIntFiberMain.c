@@ -96,7 +96,16 @@ int mainxx(int argc, const char **argv)
     {
         const char *errText = config_error_text(&conf);
         const int errLine = config_error_line(&conf);
-        /* TODO: libconfig version mismatch */
+        /*
+         * TODO libconfig version mismatch
+         *
+         * config_error_file() function available on
+         * libconfig-1.3.2 but available in 1.4.5.
+         * Since Ubuntu 10.04 (Lucid) supports 1.3.2
+         * officially and this function is not that
+         * important, we get rid of this function
+         * temporarily.
+         */
         //const char *errFile = config_error_file(&conf);
         //printf("Configuration file %s (line %d) %s!\n", errFile, errLine, errText);
         printf("Configuration file ?? (line %d) %s!\n", errLine, errText);

@@ -26,7 +26,7 @@ import RigidBody
 from PmMuscle import *
 from GlobalContext import *
 import ctypes as ct
-from Parameters import *
+from BipedParameter import *
 import box_lcp3_exp_multibody as BLEM
 
 from dRdv_real import GeneralizedForce, QuatdFromV

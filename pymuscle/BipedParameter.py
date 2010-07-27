@@ -132,7 +132,8 @@ class BipedParameter:
                 self.nameList.append(rb.name)
                 if rb.anotherName != '*':
                     self.anotherNameList.append(rb.anotherName)
-                
+            print '# of RB from', fnRbConf, ':', len(rbConf)
+            assert len(rbConf) > 0
             # Body name correspondence
             bnCorres = {}
             bnCorres['trunk'] = 'Chest'

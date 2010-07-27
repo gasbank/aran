@@ -27,7 +27,7 @@ from ExpBodyMoEq_real import MassMatrixAndCqdVector
 from dRdv_real import GeneralizedForce
 import ExpBody
 import ZV
-import Parameters
+import BipedParameter
 
 class RigidBody:
     def __init__(self, name, pName, mass, boxsize, q, qd, dc, rotParam):

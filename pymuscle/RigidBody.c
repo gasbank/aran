@@ -198,7 +198,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
         eta[sd->Ari[5] + i] = rbn->chi_ref[i];
 
         if (i==2) {
-            /* TODO : slant DEBUG */
+            /* TODO Ground slant parameter - ground level calculation */
             const double ctY = rb->b.p[1];
             const double theta = pymCfg->slant;
             const double z = -ctY*tan(theta);

@@ -26,7 +26,7 @@ from PmBody import *
 from PmMuscle import *
 from GlobalContext import *
 import ctypes as ct
-from Parameters import *
+from BipedParameter import *
 
 # A general OpenGL initialization function.  Sets all of the initial parameters. 
 def InitializeGl (gCon):				# We call this right after our OpenGL window is created.

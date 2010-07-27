@@ -40,7 +40,16 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     {
         const char *errText = config_error_text(&conf);
         const int errLine = config_error_line(&conf);
-        /* TODO: libconfig version mismatch */
+        /*
+         * TODO libconfig version mismatch
+         *
+         * config_error_file() function available on
+         * libconfig-1.3.2 but available in 1.4.5.
+         * Since Ubuntu 10.04 (Lucid) supports 1.3.2
+         * officially and this function is not that
+         * important, we get rid of this function
+         * temporarily.
+         */
         //const char *errFile = config_error_file(&conf);
         //printf("Configuration file %s (line %d) %s!\n", errFile, errLine, errText);
         printf("Configuration file ?? (line %d) %s!\n", errLine, errText);
@@ -57,7 +66,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
     const double h = pymCfg->h;
     confret = config_lookup_float(&conf, "mu", &pymCfg->mu);
 
-    /* TODO: Slant */
+    /* TODO Ground slant parameter */
     pymCfg->slant = 0.0;
 
     assert(confret == CONFIG_TRUE);
@@ -195,11 +204,11 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
         musclePair[j][1] = biIdx;
         mfn->org = boIdx;
         mfn->ins = biIdx;
-        /* TODO: xrest upper and lower bounds */
+        /*
+         * TODO [TUNE] Muscle fiber rest length bounds
+         */
         mfn->xrest_lower = mfn->xrest*0.5;
         mfn->xrest_upper = mfn->xrest*2.0;
-//        mfn->xrest_lower = -100;
-//        mfn->xrest_upper = +100;
         pym_rb_named_t *bjbOrg = &body[ boIdx ].b;
         pym_rb_named_t *bjbIns = &body[ biIdx ].b;
         bjbOrg->fiber[ bjbOrg->nFiber ] = j; ++bjbOrg->nFiber;
@@ -451,7 +460,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 2, i, i, k[1]);
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 3, i, i, k[2]);
     }
-    /* TODO Sub-block 07 - D */
+    /* Sub-block 07 - D */
     FOR_0(i, nj) {
         FOR_0(l, 4) {
             const pym_anchored_joint_t *aJoint = pymCfg->anchoredJoints + i;
@@ -496,12 +505,14 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         char iden[128];
         ExtractAnchorIdentifier(iden, anchorName);
         //printf("Name: %s (%s)\n", anchorName, iden);
+
+        /*
+         * TODO [TUNE] Joint dislocation threshold
+         */
         if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0) {
-            bipEta[ Ari[4] + i ] = 0.05; /* TODO joint dislocation threshold */
-            //bipEta[ Ari[4] + i ] = 0.15;
+            bipEta[ Ari[4] + i ] = 0.05;
         } else {
-            bipEta[ Ari[4] + i ] = 0.03; /* TODO joint dislocation threshold */
-            //bipEta[ Ari[4] + i ] = 0.05;
+            bipEta[ Ari[4] + i ] = 0.03;
         }
     }
     bod->bipEta = bipEta;
