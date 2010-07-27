@@ -397,7 +397,24 @@ int main(int argc, const char **argv) {
     printf("Starting the tracking simulation...\n");
     double total_opttime = 0;
     int rotParamFailure = 0;
+
+    pym_rb_named_t *rbnTrunk = 0;
+    FOR_0(j, nb) {
+        pym_rb_named_t *rbn = &pymCfg.body[j].b;
+        if (strcmp(rbn->name, "trunk") == 0) {
+            rbnTrunk = rbn;
+        }
+    }
+    assert(rbnTrunk);
     FOR_0(i, pymCfg.nSimFrame) {
+
+        if (100 <= i && i < 150) {
+            rbnTrunk->extForce[0] = -600;
+            rbnTrunk->extForce[1] = -600;
+        } else {
+            rbnTrunk->extForce[0] = 0;
+            rbnTrunk->extForce[1] = 0;
+        }
 
         FOR_0(j, nb) {
             pym_rb_named_t *rbn = &pymCfg.body[j].b;
