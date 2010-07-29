@@ -77,7 +77,7 @@ def KeyPressed(*args):
     elif key == '8': # +Yaxis rot
         gRot[1] -= rotAmount
     elif key == '+':
-        if gSlowVideo > 1:
+        if gSlowVideo >= 1:
             gSlowVideo -= 1
     elif key == '-':
         gSlowVideo += 1

@@ -119,7 +119,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Exer0        - ?
              */
             c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0;
-            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 2e-1; /* Estimated position of z-coordinate of contact point */
+            /* Estimated position of z-coordinate of contact point
+             * Default: 2e-1      */
+            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 0;
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j) {
             /*
@@ -129,7 +131,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Nav0         -  5e-1
              * Exer0        -  1
              */
-            c[j] = 5e-1;
+            c[j] = 0;
         }
         /*
          * TODO [TUNE] Reference following coefficient
@@ -170,9 +172,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Nav0    :  0~200
              * Exer0   :  0~200 (failed)
              */
-            SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
+            //SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
             //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
             //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 140); /* c_c_n */
+        	SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 115); /* c_c_n */
         }
         FOR_0(j, nplist[i]) {
             //SET_NONNEGATIVE( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
@@ -213,19 +216,19 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             bux[i] =  200*9.81;
         }
         else if (mt == PMT_LIGAMENT) {
-            if (strncmp(fibName, "ankleLiga", 9) == 0) {
-                bkx[i] = MSK_BK_RA;
-                blx[i] = -800*9.81;
-                bux[i] =  800*9.81;
-            } else if (strncmp(fibName, "hipLiga", 7) == 0) {
-                bkx[i] = MSK_BK_RA;
-                blx[i] = -800*9.81;
-                bux[i] =  800*9.81;
-            } else {
-                bkx[i] = MSK_BK_RA;
-                blx[i] = -600*9.81;
-                bux[i] =  600*9.81;
-            }
+//            if (strncmp(fibName, "ankleLiga", 9) == 0) {
+//                bkx[i] = MSK_BK_RA;
+//                blx[i] = -800*9.81;
+//                bux[i] =  800*9.81;
+//            } else if (strncmp(fibName, "hipLiga", 7) == 0) {
+//                bkx[i] = MSK_BK_RA;
+//                blx[i] = -800*9.81;
+//                bux[i] =  800*9.81;
+//            } else {
+//                bkx[i] = MSK_BK_RA;
+//                blx[i] = -600*9.81;
+//                bux[i] =  600*9.81;
+//            }
         }
         else
             abort();
@@ -271,6 +274,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 //    assert(r == MSK_RES_OK);
     r = MSK_putintparam (task , MSK_IPAR_DATA_CHECK, MSK_OFF);
     assert(r == MSK_RES_OK);
+//    r = MSK_putintparam (task , MSK_IPAR_INTPNT_MAX_ITERATIONS, 10);
+//    assert(r == MSK_RES_OK);
+
 
     /* Give MOSEK an estimate of the size of the input data.
     This is done to increase the speed of inputting data.
@@ -340,7 +346,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
      * Input the cones
      */
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
-        //# epsilon_Delta >= || Delta_chi_{i,ref} || (6-DOF)
+        /* Reference trajectory cone constraints, i.e.,
+         * epsilon_Delta >= || Delta_chi_{i,ref} || (6-DOF)      */
         AppendConeRange(task,
                         tauOffset + sd[i].Aci[8],
                         tauOffset + sd[i].Aci[7],
@@ -358,7 +365,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                             tauOffset + sd[i].Aci[4]+4*j+0,
                             tauOffset + sd[i].Aci[4]+4*j+3);
 
-            //# Friction cone constraints
+            /* Friction cone constraints */
             AppendConeRange(task,
                             tauOffset + sd[i].Aci[6]+j,            // mu*c_n
                             tauOffset + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
@@ -366,7 +373,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         }
     }
     FOR_0(j, pymCfg->nJoint) {
-        // Anchored joint dislocation constraints
+        /* Anchored joint dislocation constraints */
         AppendConeRange(task,
                         Aci[7] + j,                      // epsilon_d
                         Aci[6] + 4*j,                    // dAx ~ dAz
@@ -374,7 +381,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
 
     /*
-     * Minimal tension/actuation force constraints
+     * TODO [TUNE] Cone constraints for minimizing tension/actuation forces
      */
     int csubLigaAct[1+nf];
     int nCsubLigaAct = 1;
@@ -404,7 +411,13 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     double cost = FLT_MAX;
     MSKrescodee trmcode;
     /* Run optimizer */
-    r = MSK_optimizetrm(task,&trmcode);
+    //r = MSK_optimize(task);
+    r = MSK_optimizetrm(task, &trmcode);
+
+    if (r == MSK_RES_TRM_MAX_ITERATIONS)
+    	printf("Error - MSK_RES_TRM_MAX_ITERATIONS returned.\n");
+    else if (r == MSK_RES_TRM_STALL)
+    	printf("Error - MSK_RES_TRM_STALL returned.\n");
 
     if (opttime)
         MSK_getdouinf ( task , MSK_DINF_OPTIMIZER_TIME , opttime );
@@ -453,7 +466,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
     else
     {
-        printf("Error - Optimization failed.\n");
+        printf("Error - An error occurred while optimizing.\n");
         printf("        Refer to /tmp/pymoptimize_log and pymuscle_c.opf\n");
         printf("        for further investigation.\n");
         MSK_writedata(task, "pymuscle_c.opf");
@@ -461,12 +474,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         /* In case of an error print error code and description. */
         char symname[MSK_MAX_STR_LEN];
         char desc[MSK_MAX_STR_LEN];
-
-        printf("An error occurred while optimizing.\n");
-        MSK_getcodedesc (r,
-                         symname,
-                         desc);
-        printf("Error %s - '%s'\n",symname,desc);
+        MSK_getcodedesc (r, symname, desc);
+        printf("Error - %s: %s\n", symname, desc);
         cost = FLT_MAX;
     }
 

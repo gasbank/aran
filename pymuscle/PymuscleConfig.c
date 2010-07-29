@@ -26,7 +26,7 @@ int PymDestoryConfig(pym_config_t *pymCfg) {
     return 0;
 }
 
-int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
+int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosestream) {
     #define csgfe(a,b) config_setting_get_float_elem(a,b)
     #define BODY(j,ai) body[j].a[ai]
     #define FIBER(j,ai) fiber[j].a[ai]
@@ -259,13 +259,12 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg) {
 
     int totFiber = 0;
     FOR_0(j, pymCfg->nBody) {
-        printf("   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
+        fprintf(verbosestream,
+        		"   %s has %d fibers.\n", pymCfg->body[j].b.name, pymCfg->body[j].b.nFiber);
         assert(pymCfg->body[j].b.nFiber <= MAX_FIBER_PER_RB);
         totFiber += pymCfg->body[j].b.nFiber;
     }
     assert(totFiber == 2*nMuscle);
-
-
 
     return 0;
     #undef csgfe

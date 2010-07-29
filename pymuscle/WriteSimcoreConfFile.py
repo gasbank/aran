@@ -34,13 +34,13 @@ def WriteSimcoreConfFile(fileName, body, fibers, h, mu=1.0):
     f = open(fileName, 'w')
     f.write('# Pymuscle: rigid body and muscle fiber simulation\n')
     f.write('# Application-wide configuration file\n')
-    f.write('version = \"0.1\";\n')
-    f.write('h = %f;   # Simulation timestep\n' % h)    
-    f.write('mu = %f;   # friction coefficient\n' % mu)    
-    f.write('simFrame = 50000; # Simulation length\n')
+    f.write('version          = \"0.1\";\n')
+    f.write('h                = %f;     # Simulation timestep\n' % h)    
+    f.write('mu               = %f;     # friction coefficient\n' % mu)    
+    f.write('simFrame         = 50000;  # Simulation length\n')
     f.write('plotSamplingRate = 1;\n')
-    f.write('''output = "simresult.txt";\n''')
-
+    f.write('output           = \"simresult.txt\";\n')
+    
     f.write('body = (\n')
     for b in body:
         assert b.rotParam in ['QUAT_WFIRST', 'EXP']

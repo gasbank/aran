@@ -160,7 +160,7 @@ if __name__ == '__main__':
 	
 	TEST_SET = [ TestSet( 'Walk0',  300  ),
 	             TestSet( 'Nav0',  2000  ),
-	             TestSet( 'Exer0',  500  ) ]
+	             TestSet( 'Exer0', 4500  ) ]
 	#
 	# ==================== USER PARAMETERS ========================
 	# Select test set first.
@@ -184,7 +184,7 @@ if __name__ == '__main__':
 	# If it is the same as 'mocapFps', the mocap trajectoriy
 	# is exactly copied. Otherwise, it is upsampled or downsampled
 	# as needed.
-	exportFps = 100
+	exportFps = 30
 	exportFrameTime = 1./exportFps
 	# The clock-time length of the export sequence
 	# can be calculated by the following equation.
@@ -431,8 +431,8 @@ if __name__ == '__main__':
 		traj_qddi = [(qd1-qd0)/h for qd1, qd0 in zip(traj_qd[i+1], traj_qd[i])]
 		traj_qdd.append(traj_qddi)
 	
-	
-	metastr = '%d %d\n' % (len(traj_q), len(traj_q[0]))
+	# Writes the header data for each trajectory file
+	metastr = '%d %d %d\n' % (len(traj_q), len(traj_q[0]), exportFps)
 	
 	assert rotParam in ['EULER_XYZ', 'QUAT_WFIRST', 'EXP']
 	if rotParam in ['EULER_XYZ', 'EXP']:
@@ -458,6 +458,9 @@ if __name__ == '__main__':
 			traj_q_file.write('\n')
 	traj_q_file.close()
 	
+	# Disables writing qd(velocity) and qdd(acceleration)
+	# since it is not used in the current version.
+	'''
 	traj_qd_file = open(fnPrefix + 'qd.txt', 'w')
 	traj_qd_file.write(metastr)
 	for i in traj_qd:
@@ -471,6 +474,7 @@ if __name__ == '__main__':
 		for j in i:
 			traj_qdd_file.write(('%15e'*vecLen % tuple(j)) + '\n')
 	traj_qdd_file.close()
+	'''
 	
 	if not rbMissing:
 		rbconf_file = open(fnRigidBodyConfig, 'w')

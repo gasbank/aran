@@ -50,6 +50,7 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
                            double **_trajData,
                            int *_nBody,
                            int *_nFrame,
+                           int *_exportFps,
                            const char *fnRbCfg,
                            const char *fnTraj) {
     FILE *rbCfg = fopen(fnRbCfg, "r");
@@ -96,11 +97,26 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
     char *trajHeader = 0;
     size_t trajHeaderLen = 0;
     getline(&trajHeader, &trajHeaderLen, traj);
-    int nFrame = atoi(trajHeader);
-    int nBody  = atoi(strrchr(trajHeader, ' '));
-    printf("From Blender\n");
+    char *endp;
+    int nFrame = strtol( trajHeader, &endp, 10 );
+    if (!endp || nFrame <= 0) {
+    	printf("Error - trajectory data header's 'nFrame' field corrupted.\n");
+    	return -1;
+    }
+    int nBody  = strtol( endp, &endp, 10 );
+    if (!endp || nBody <= 0) {
+    	printf("Error - trajectory data header's 'nBody' field corrupted.\n");
+    	return -2;
+    }
+    int exportFps = strtol( endp, &endp, 10 );
+    if (!endp || exportFps <= 0) {
+    	printf("Error - trajectory data header's 'exportFps' field corrupted.\n");
+    	return -3;
+    }
+    printf("Trajectory header information exported from Blender\n");
     printf("  # of frames exported       : %d\n", nFrame);
     printf("  # of rigid bodies exported : %d\n", nBody);
+    printf("  Frames per second (FPS)    : %d (%lf sec per frame)\n", exportFps, 1.0/exportFps);
     assert(nFrame > 0 && nBody > 0);
     assert(nBody == nCorresMap);
     double *trajData = (double *)malloc(nFrame*nBody*sizeof(double)*6);
@@ -135,9 +151,10 @@ int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
     free(trajHeader);
     fclose(rbCfg);
     fclose(traj);
-    *_trajData = trajData;
-    *_nBody = nBody;
-    *_nFrame = nFrame;
+    *_trajData   = trajData;
+    *_nBody      = nBody;
+    *_nFrame     = nFrame;
+    *_exportFps  = exportFps;
     *_nCorresMap = nCorresMap;
     return 0;
 }
@@ -235,6 +252,16 @@ int ParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **ar
     return 0;
 }
 
+typedef enum _pym_debug_message_type_e {
+	PDMTE_INIT_MF_FOR_EACH_RB,
+	PDMTE_INIT_RB_CORRESPONDENCE_1,
+	PDMTE_INIT_RB_CORRESPONDENCE_2,
+	PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT,
+	PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT,
+	PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT,
+	PDMTE_COUNT
+} pym_debug_message_type_e;
+
 int main(int argc, const char **argv) {
     printf("Optimization-based tracker      -- 2010 Geoyeob Kim\n");
     if (argc < 2) {
@@ -253,6 +280,24 @@ int main(int argc, const char **argv) {
         return -1;
     }
     int ret = 0;
+    /* Debug Message Flags */
+    int dmflags[PDMTE_COUNT] = {0,};
+    dmflags[PDMTE_INIT_MF_FOR_EACH_RB]                    = 0;
+    dmflags[PDMTE_INIT_RB_CORRESPONDENCE_1]               = 0;
+    dmflags[PDMTE_INIT_RB_CORRESPONDENCE_2]               = 0;
+    dmflags[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT]        = 0;
+    dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT]         = 0;
+    dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 0;
+
+    FILE *dmstreams[PDMTE_COUNT];
+    FILE *__dmstream = 0;
+    int i, j, k;
+    FILE *devnull = fopen("/dev/null", "w");
+    FOR_0(i, PDMTE_COUNT) {
+    	if (dmflags[i]) dmstreams[i] = stdout;
+    	else dmstreams[i] = devnull;
+    }
+
     pym_cmdline_options_t cmdopt;
     ret = ParseCmdlineOptions(&cmdopt, argc, argv);
     if (ret < 0) {
@@ -264,13 +309,11 @@ int main(int argc, const char **argv) {
     cholmod_start (&cc) ;
 
     pym_config_t pymCfg;
-    ret = PymConstructConfig(cmdopt.simconf, &pymCfg);
+    ret = PymConstructConfig(cmdopt.simconf, &pymCfg, dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
     if (ret < 0) {
         printf("Failed.\n");
         return -1;
     }
-
-    int i, j, k;
 
     PymConvertRotParamInPlace(&pymCfg, RP_EXP);
 
@@ -283,16 +326,33 @@ int main(int argc, const char **argv) {
     int nCorresMap = 0;
     int nBlenderBody = 0;
     int nBlenderFrame = 0;
+    int exportFps = 0;
     double *trajData = 0;
     if (cmdopt.trajconf) {
-        PymParseTrajectoryFile(corresMap,
-                               &nCorresMap,
-                               &trajData,
-                               &nBlenderBody,
-                               &nBlenderFrame,
-                               cmdopt.trajconf,
-                               cmdopt.trajdata);
-        assert(nCorresMap > 0);
+    	int parseRet = PymParseTrajectoryFile(
+    			corresMap,
+    			&nCorresMap,
+    			&trajData,
+    			&nBlenderBody,
+    			&nBlenderFrame,
+    			&exportFps,
+    			cmdopt.trajconf,
+    			cmdopt.trajdata);
+        assert(parseRet == 0);
+    	assert(nCorresMap > 0);
+    	/* The simulation time step defined in simconf and
+    	 * the frame time (reciprocal of FPS) in trajdata
+    	 * should have the same value. If mismatch happens
+    	 * we ignore simulation time step in simconf.
+    	 */
+    	if (fabs(1.0/exportFps - pymCfg.h) > 1e-6) {
+    		printf("Warning - simulation time step defined in simconf and\n");
+    		printf("          trajectory data do not match.\n");
+    		printf("            simconf  : %3d FPS (%lf sec per frame)\n", (int)ceil(1.0/pymCfg.h), pymCfg.h);
+    		printf("            trajconf : %3d FPS (%lf sec per frame)\n", exportFps, 1.0/exportFps);
+    		printf("          simconf's value will be ignored.\n");
+    		pymCfg.h = 1.0/exportFps;
+    	}
         /*
          * We need at least three frames of trajectory data since
          * the first (frame 0) is used as previous step and
@@ -303,11 +363,14 @@ int main(int argc, const char **argv) {
          * following the trajectory entirely.
          */
         assert(nBlenderFrame >= 3);
-        printf("Simulated body and trajectory body correspondance\n");
+        __dmstream = dmstreams[PDMTE_INIT_RB_CORRESPONDENCE_1];
+        fprintf(__dmstream,
+        		"Simulated body and trajectory body correspondence\n");
         FOR_0(i, pymCfg.nBody) {
             FOR_0(j, nBlenderBody) {
                 if (strcmp(pymCfg.body[i].b.name, corresMap[j][1]) == 0) {
-                    printf("%3d %15s -- %d\n", i, pymCfg.body[i].b.name, j);
+                    fprintf(__dmstream,
+                    		"%3d %15s -- %d\n", i, pymCfg.body[i].b.name, j);
                     corresMapIndex[i] = j;
                     break;
                 }
@@ -315,13 +378,17 @@ int main(int argc, const char **argv) {
             assert(corresMapIndex[i] >= 0);
         }
         j = 0;
+        __dmstream = dmstreams[PDMTE_INIT_RB_CORRESPONDENCE_2];
         FOR_0(i, nCorresMap) {
-            printf("%20s <----> %-20s", corresMap[i][0], corresMap[i][1]);
+            fprintf(__dmstream,
+            		"%20s <----> %-20s", corresMap[i][0], corresMap[i][1]);
             if (strcmp(corresMap[i][1], "*") != 0) {
-                printf(" (index=%d)\n", corresMapIndex[j]);
+                fprintf(__dmstream,
+                		" (index=%d)\n", corresMapIndex[j]);
                 ++j;
             } else {
-                printf("\n");
+                fprintf(__dmstream,
+                		"\n");
             }
         }
 
@@ -362,7 +429,8 @@ int main(int argc, const char **argv) {
                     memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg.pymJa[j].localPos, sizeof(double)*3);
                     rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
                     ++rbn->nAnchor;
-                    printf("Joint anchor %15s attached to %8s. (so far %2d)\n", pymCfg.pymJa[j].name, rbn->name, rbn->nAnchor);
+                    fprintf(dmstreams[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT],
+                    		"Joint anchor %15s attached to %8s. (so far %2d)\n", pymCfg.pymJa[j].name, rbn->name, rbn->nAnchor);
                     assert(rbn->nAnchor <= 10);
                 }
             }
@@ -475,7 +543,7 @@ int main(int argc, const char **argv) {
         /*
          * TODO [TUNE] Drop tiny values from constraint matrix A
          */
-        //cholmod_drop(1e-8, bipEq.bipMat, &cc);
+        //cholmod_drop(1e-6, bipEq.bipMat, &cc);
 
         //PrintEntireSparseMatrix(bod.bipMat);
         //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
@@ -494,11 +562,11 @@ int main(int argc, const char **argv) {
         else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
         else solstaStr = "ERROR!";
 
-        printf("Frame %5d / %5d  (%6.2lf %%) finished.\n", i, pymCfg.nSimFrame-1, (double)(i+1)/(pymCfg.nSimFrame)*100);
+        printf("%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e\n",
+        		i, pymCfg.nSimFrame-1, (double)(i+1)/(pymCfg.nSimFrame)*100, solstaStr, cost);
 
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
-        printf("Results:  %15s (cost=%.10e)\n", solstaStr, cost);
         int tauOffset;
         for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
             const double *chi_2 = xx + tauOffset;
@@ -541,26 +609,33 @@ int main(int argc, const char **argv) {
 
         qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
 
-//        printf("Reference trajectory deviation report\n");
-//        const int itemsPerLine = PymMin(nb, 6);
-//        int j0 = 0, j1 = itemsPerLine;
-//        while (j0 < nb && j1 <= nb) {
-//            for (j = j0; j < j1; ++j) {
-//                const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
-//                printf("  %9s", rbn->name);
-//            }
-//            printf("\n");
-//            for (j = j0; j < j1; ++j) {
-//                printf("  %9.3e", dev_stat[j].chi_d_norm);
-//            }
-//            printf("\n");
-//            for (j = j0; j < j1; ++j) {
-//                printf("  %9d", dev_stat[j].nContact);
-//            }
-//            printf("\n");
-//            j0 = PymMin(nb, j0 + itemsPerLine);
-//            j1 = PymMin(nb, j1 + itemsPerLine);
-//        }
+        __dmstream = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
+        fprintf(__dmstream, "Reference trajectory deviation report\n");
+        const int itemsPerLine = PymMin(nb, 6);
+        int j0 = 0, j1 = itemsPerLine;
+        while (j0 < nb && j1 <= nb) {
+            for (j = j0; j < j1; ++j) {
+                const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
+                fprintf(__dmstream,
+                		"  %9s", rbn->name);
+            }
+            fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
+            		"\n");
+            for (j = j0; j < j1; ++j) {
+                fprintf(__dmstream,
+                		"  %9.3e", dev_stat[j].chi_d_norm);
+            }
+            fprintf(__dmstream,
+            		"\n");
+            for (j = j0; j < j1; ++j) {
+                fprintf(__dmstream,
+                		"  %9d", dev_stat[j].nContact);
+            }
+            fprintf(__dmstream,
+            		"\n");
+            j0 = PymMin(nb, j0 + itemsPerLine);
+            j1 = PymMin(nb, j1 + itemsPerLine);
+        }
 
         FOR_0(j, nf) {
             pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
@@ -573,20 +648,23 @@ int main(int argc, const char **argv) {
 //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
         }
 
-//        printf("Anchored joints dislocation report\n");
-//        FOR_0(j, nj) {
-//            const double *dAj = xx + bipEq.Aci[6] + 4*j;
-//            const double disloc = PymNorm(4, dAj);
-//            const char *aAnchorName = pymCfg.body[ pymCfg.anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg.anchoredJoints[j].aAnchorIdx ];
-//            char iden[128];
-//            ExtractAnchorIdentifier(iden, aAnchorName);
-//            printf("%12s disloc = %e", iden, disloc);
-//            if (j%2) printf("\n");
-//
-//            if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
-//                pymCfg.anchoredJoints[j].maxDisloc = disloc;
-//        }
-//        if (nj%2) printf("\n");
+        __dmstream = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
+        fprintf(__dmstream,
+        		"Anchored joints dislocation report\n");
+        FOR_0(j, nj) {
+            const double *dAj = xx + bipEq.Aci[6] + 4*j;
+            const double disloc = PymNorm(4, dAj);
+            const char *aAnchorName = pymCfg.body[ pymCfg.anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg.anchoredJoints[j].aAnchorIdx ];
+            char iden[128];
+            ExtractAnchorIdentifier(iden, aAnchorName);
+            fprintf(__dmstream,
+            		"%12s disloc = %e", iden, disloc);
+            if (j%2) fprintf(__dmstream, "\n");
+
+            if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
+                pymCfg.anchoredJoints[j].maxDisloc = disloc;
+        }
+        if (nj%2) fprintf(__dmstream, "\n");
 
         PymDestroyBipedEqconst(&bipEq, &cc);
         FOR_0(j, pymCfg.nBody) {
