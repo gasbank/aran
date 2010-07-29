@@ -408,13 +408,28 @@ int main(int argc, const char **argv) {
     assert(rbnTrunk);
     FOR_0(i, pymCfg.nSimFrame) {
 
-        if (100 <= i && i < 150) {
-            rbnTrunk->extForce[0] = -600;
-            rbnTrunk->extForce[1] = -600;
-        } else {
-            rbnTrunk->extForce[0] = 0;
-            rbnTrunk->extForce[1] = 0;
-        }
+        /*
+         * TODO [TUNE] External force scenario
+         */
+//        if (100 <= i && i < 110) {
+//            rbnTrunk->extForce[0] = -1100;
+//            rbnTrunk->extForce[1] = -1000;
+//            rbnTrunk->extForcePos[1] = 0.4;
+//        } else if (800 <= i && i < 805) {
+//            rbnTrunk->extForce[0] = 1580;
+//            rbnTrunk->extForce[1] = 0;
+//            rbnTrunk->extForce[2] = -1000;
+//            rbnTrunk->extForcePos[1] = 0.4;
+//        } else if (1100 <= i && i < 1112) {
+//            rbnTrunk->extForce[0] = 1500; //-1500;
+//            rbnTrunk->extForce[1] = 0;
+//            rbnTrunk->extForce[2] = 0;
+//            rbnTrunk->extForcePos[1] = 0.0;
+//        } else {
+//            rbnTrunk->extForce[0] = 0;
+//            rbnTrunk->extForce[1] = 0;
+//            rbnTrunk->extForce[2] = 0;
+//        }
 
         FOR_0(j, nb) {
             pym_rb_named_t *rbn = &pymCfg.body[j].b;
@@ -525,26 +540,27 @@ int main(int argc, const char **argv) {
 
 
         qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
-        printf("Reference trajectory deviation report\n");
-        const int itemsPerLine = PymMin(nb, 6);
-        int j0 = 0, j1 = itemsPerLine;
-        while (j0 < nb && j1 <= nb) {
-            for (j = j0; j < j1; ++j) {
-                const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
-                printf("  %9s", rbn->name);
-            }
-            printf("\n");
-            for (j = j0; j < j1; ++j) {
-                printf("  %9.3e", dev_stat[j].chi_d_norm);
-            }
-            printf("\n");
-            for (j = j0; j < j1; ++j) {
-                printf("  %9d", dev_stat[j].nContact);
-            }
-            printf("\n");
-            j0 = PymMin(nb, j0 + itemsPerLine);
-            j1 = PymMin(nb, j1 + itemsPerLine);
-        }
+
+//        printf("Reference trajectory deviation report\n");
+//        const int itemsPerLine = PymMin(nb, 6);
+//        int j0 = 0, j1 = itemsPerLine;
+//        while (j0 < nb && j1 <= nb) {
+//            for (j = j0; j < j1; ++j) {
+//                const pym_rb_named_t *rbn = &pymCfg.body[ dev_stat[j].bodyIdx ].b;
+//                printf("  %9s", rbn->name);
+//            }
+//            printf("\n");
+//            for (j = j0; j < j1; ++j) {
+//                printf("  %9.3e", dev_stat[j].chi_d_norm);
+//            }
+//            printf("\n");
+//            for (j = j0; j < j1; ++j) {
+//                printf("  %9d", dev_stat[j].nContact);
+//            }
+//            printf("\n");
+//            j0 = PymMin(nb, j0 + itemsPerLine);
+//            j1 = PymMin(nb, j1 + itemsPerLine);
+//        }
 
         FOR_0(j, nf) {
             pym_mf_named_t *mfn = &pymCfg.fiber[j].b;
@@ -557,19 +573,20 @@ int main(int argc, const char **argv) {
 //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
         }
 
-        FOR_0(j, nj) {
-            const double *dAj = xx + bipEq.Aci[6] + 4*j;
-            const double disloc = PymNorm(4, dAj);
-            const char *aAnchorName = pymCfg.body[ pymCfg.anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg.anchoredJoints[j].aAnchorIdx ];
-            char iden[128];
-            ExtractAnchorIdentifier(iden, aAnchorName);
-            printf("%12s disloc = %e", iden, disloc);
-            if (j%2) printf("\n");
-
-            if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
-                pymCfg.anchoredJoints[j].maxDisloc = disloc;
-        }
-        if (nj%2) printf("\n");
+//        printf("Anchored joints dislocation report\n");
+//        FOR_0(j, nj) {
+//            const double *dAj = xx + bipEq.Aci[6] + 4*j;
+//            const double disloc = PymNorm(4, dAj);
+//            const char *aAnchorName = pymCfg.body[ pymCfg.anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg.anchoredJoints[j].aAnchorIdx ];
+//            char iden[128];
+//            ExtractAnchorIdentifier(iden, aAnchorName);
+//            printf("%12s disloc = %e", iden, disloc);
+//            if (j%2) printf("\n");
+//
+//            if (pymCfg.anchoredJoints[j].maxDisloc < disloc)
+//                pymCfg.anchoredJoints[j].maxDisloc = disloc;
+//        }
+//        if (nj%2) printf("\n");
 
         PymDestroyBipedEqconst(&bipEq, &cc);
         FOR_0(j, pymCfg.nBody) {

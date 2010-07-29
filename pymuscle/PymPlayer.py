@@ -203,7 +203,7 @@ def Draw():
     #sys.exit ()
     ##
     
-    time.sleep(0.01*gSlowVideo)
+    time.sleep(h * gSlowVideo)
 
 def Main():
     glutInit(sys.argv)
@@ -334,13 +334,7 @@ if __name__ == '__main__':
         nSimFrame  = len(simData)  / simHeader[1]
         assert nSimFrame > 0
         print '# of simulation frames :', nSimFrame
-
-    print 'Initialize a rigid body with initial conditions...'
-    bipedParam = gBiped
-    plist = bipedParam.buildBody('EXP')
-    flist = bipedParam.buildFiber([b.name for b in plist])
-    print '# of rigid bodies  :', len(plist)
-    print '# of muscle fibers :', len(flist)
+    
     h = GetSimTimeStep()
     
     try:

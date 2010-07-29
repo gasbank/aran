@@ -27,15 +27,20 @@ void PymInitializeMosek(MSKenv_t *env) {
     /* Create the mosek environment. */
     r = MSK_makeenv(env,NULL,NULL,NULL,NULL);
     /* Check if return code is ok. */
-    if ( r==MSK_RES_OK )
-    {
-        /* Directs the log stream to the
-           'printstr' function. */
-        MSK_linkfunctoenvstream(*env,MSK_STREAM_LOG,NULL,printstr);
-    }
+    assert ( r==MSK_RES_OK );
+    /* Directs the log stream to the
+       'printstr' function. */
+    r = MSK_linkfunctoenvstream(*env,MSK_STREAM_LOG,NULL,printstr);
+    assert ( r==MSK_RES_OK );
+    /* Manually configure the CPU type */
+    r = MSK_putcpudefaults(*env, MSK_CPU_INTEL_CORE2, 128*1024, 6144*1024);
+    assert ( r==MSK_RES_OK );
     /* Initialize the environment. */
-    if ( r==MSK_RES_OK )
-        r = MSK_initenv(*env);
+    assert ( r==MSK_RES_OK );
+    r = MSK_initenv(*env);
+
+
+
 }
 
 void PymCleanupMosek(MSKenv_t *env) {
@@ -68,7 +73,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     const int NUMVAR = bod->bipMat->ncol;   /* Number of variables.               */
     const int NUMANZ = cholmod_nnz(bod->bipMat, cc);   /* Number of non-zeros in A.          */
     MSKrescodee  r;
-    int i,j,k;
+    int i,j;
     MSKboundkeye bkc[NUMCON];
     double       blc[NUMCON];
     double       buc[NUMCON];
@@ -102,19 +107,6 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     double       c[NUMVAR];
     memset(c, 0, sizeof(double)*NUMVAR);
 
-//    double bodyRefWeight[] = {
-//            /* trunk  */ 1,
-//            /* thighL */ 1,
-//            /* thighR */ 1,
-//            /* calfL  */ 1,
-//            /* calfR  */ 1,
-//            /* soleL  */ 1,
-//            /* soleR  */ 1,
-//            /* toeL   */ 1,
-//            /* toeR   */ 1,
-//    };
-//    assert(sizeof(bodyRefWeight) == sizeof(double)*nb);
-
     /***********************/
     /* Cost function setup */
     /***********************/
@@ -139,16 +131,15 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              */
             c[j] = 5e-1;
         }
-
-
-        /** DEBUG **/
-        //c[ tauOffset + sd[i].Aci[8] ] = bodyRefWeight[i]; /* minimize the deviation with reference trajectories */
+        /*
+         * TODO [TUNE] Reference following coefficient
+         */
         c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 1e-8; /* ligament actuation */
+    //c[ Aci[4] ] = 0e-8; /* ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -157,7 +148,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
      * the optimization variables c[Aci[2]+j] separately where
      * 'j' is the index of an actuated muscle fiber.
      */
-    c[ Aci[5] ] = 1e-6; /* actuated muscle fiber actuation */
+    //c[ Aci[5] ] = 1e-6; /* actuated muscle fiber actuation */
 
 
     /***********************/
@@ -179,8 +170,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Nav0    :  0~200
              * Exer0   :  0~200 (failed)
              */
-            //SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
-            SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
+            SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
+            //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
             //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 140); /* c_c_n */
         }
         FOR_0(j, nplist[i]) {
@@ -207,6 +198,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
     FOR_0(j, nf) {
         const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+        const char *fibName = pymCfg->fiber[j].b.name;
 
         /* Tension range constraint */
         i = Aci[1]+j;
@@ -221,9 +213,19 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             bux[i] =  200*9.81;
         }
         else if (mt == PMT_LIGAMENT) {
-            bkx[i] = MSK_BK_RA;
-            blx[i] = -500*9.81;
-            bux[i] =  200*9.81;
+            if (strncmp(fibName, "ankleLiga", 9) == 0) {
+                bkx[i] = MSK_BK_RA;
+                blx[i] = -800*9.81;
+                bux[i] =  800*9.81;
+            } else if (strncmp(fibName, "hipLiga", 7) == 0) {
+                bkx[i] = MSK_BK_RA;
+                blx[i] = -800*9.81;
+                bux[i] =  800*9.81;
+            } else {
+                bkx[i] = MSK_BK_RA;
+                blx[i] = -600*9.81;
+                bux[i] =  600*9.81;
+            }
         }
         else
             abort();
@@ -239,20 +241,36 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
     /* Create the optimization task. */
     r = MSK_maketask(*pEnv,NUMCON,NUMVAR,&task); assert(r == MSK_RES_OK);
-    FILE *mosekLogFile = fopen("/tmp/pymoptimize_log", "w");
-    if (!mosekLogFile) {
-        printf("Opening MOSEK output log file failed.\n");
-        return FLT_MAX;
-    }
-    MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
+    assert(r == MSK_RES_OK);
+
+    /* If some error or infeasibility condition detected from
+     * MOSEK, the user can inspect this log file.     */
+    FILE *mosekLogFile = 0;
+    /* TODO MOSEK optimization logging */
+//    mosekLogFile = fopen("/tmp/pymoptimize_log", "w");
+//    if (!mosekLogFile) {
+//        printf("Opening MOSEK output log file failed.\n");
+//        return FLT_MAX;
+//    }
+//    r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
+
+    assert(r == MSK_RES_OK);
     /* On my(gykim) computer, the other values except 1 for the
      * number of threads does not work. (segfault or hang)
      * Other PCs seemed to fine, though.
      */
-    MSK_putintparam (task, MSK_IPAR_INTPNT_NUM_THREADS, 1);
+    r = MSK_putintparam (task, MSK_IPAR_INTPNT_NUM_THREADS, 1);
+    assert(r == MSK_RES_OK);
     //MSK_putintparam (task , MSK_IPAR_OPTIMIZER , MSK_OPTIMIZER_FREE_SIMPLEX);
 
-
+    //r = MSK_putintparam (task , MSK_IPAR_CPU_TYPE , MSK_CPU_INTEL_CORE2);
+    //assert(r == MSK_RES_OK);
+//    r = MSK_putintparam (task , MSK_IPAR_CACHE_SIZE_L1, 128*1024);
+//    assert(r == MSK_RES_OK);
+//    r = MSK_putintparam (task , MSK_IPAR_CACHE_SIZE_L2, 6144*1024);
+//    assert(r == MSK_RES_OK);
+    r = MSK_putintparam (task , MSK_IPAR_DATA_CHECK, MSK_OFF);
+    assert(r == MSK_RES_OK);
 
     /* Give MOSEK an estimate of the size of the input data.
     This is done to increase the speed of inputting data.
@@ -319,10 +337,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
 
 
     /*
-    #
-    # Input the cones
-    #
-    */
+     * Input the cones
+     */
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         //# epsilon_Delta >= || Delta_chi_{i,ref} || (6-DOF)
         AppendConeRange(task,
@@ -357,7 +373,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                         Aci[6] + 4*j + 3);
     }
 
-    //# Minimal tension/actuation force constraints
+    /*
+     * Minimal tension/actuation force constraints
+     */
     int csubLigaAct[1+nf];
     int nCsubLigaAct = 1;
     csubLigaAct[0] = Aci[4];
@@ -377,15 +395,14 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         else
             abort();
     }
-    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubLigaAct, csubLigaAct);
-    assert(r == MSK_RES_OK);
+//    r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubLigaAct, csubLigaAct);
+//    assert(r == MSK_RES_OK);
     r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubActAct, csubActAct);
     assert(r == MSK_RES_OK);
 
 
     double cost = FLT_MAX;
     MSKrescodee trmcode;
-    MSK_writedata(task,"pymuscle_c.opf");
     /* Run optimizer */
     r = MSK_optimizetrm(task,&trmcode);
 
@@ -436,7 +453,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     }
     else
     {
-        printf("Error while optimizing.\n");
+        printf("Error - Optimization failed.\n");
+        printf("        Refer to /tmp/pymoptimize_log and pymuscle_c.opf\n");
+        printf("        for further investigation.\n");
+        MSK_writedata(task, "pymuscle_c.opf");
 
         /* In case of an error print error code and description. */
         char symname[MSK_MAX_STR_LEN];
@@ -450,7 +470,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         cost = FLT_MAX;
     }
 
-    fclose(mosekLogFile);
+    if (mosekLogFile)
+        fclose(mosekLogFile);
     /* Delete the task and the associated data. */
     MSK_deletetask(&task);
     return cost;

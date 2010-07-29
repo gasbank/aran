@@ -160,12 +160,12 @@ def DrawBiped():
     
     glLineWidth(1)
     glBegin(GL_LINES)
-    if gDrawLiga:
+    if gDrawLiga and not mvo.noliga:
         glColor(1,1,1) # Ligament is white
         for (muscleName, orgPos, insPos, orgName, insName) in gBiped.getAllLigaments():
             glVertex(orgPos[0], orgPos[1], orgPos[2])
             glVertex(insPos[0], insPos[1], insPos[2])
-    if gDrawMuscle:
+    if gDrawMuscle and not mvo.noact:
         glColor(1,0,0) # Muscle is red
         for (muscleName, orgPos, insPos, orgName, insName) in gBiped.getAllMuscles():
             glVertex(orgPos[0], orgPos[1], orgPos[2])
@@ -220,6 +220,8 @@ class ModelViewerOptions:
         self.trajconf = None
         self.output   = None
         self.nogl     = False
+        self.noliga   = False
+        self.noact    = False
         self.mu       = 100.0
 
 def ParseCommandLine(argv):
@@ -232,8 +234,12 @@ def ParseCommandLine(argv):
             mvo.output = avparts[2]
         elif avparts[0] == '--nogl':
             mvo.nogl = True
+        elif avparts[0] == '--noliga':
+            mvo.noliga = True
+        elif avparts[0] == '--noact':
+            mvo.noact = True
         elif avparts[0] == '--mu':
-            mvo.mu = float(avparts[2])                        
+            mvo.mu = float(avparts[2])
         else:
             print 'Error - command line argument', av, 'unknown.'
             raise Exception
@@ -246,7 +252,7 @@ def ParseCommandLine(argv):
 
 if __name__ == '__main__':
     print 'PymModelBuilder: Biped model builder      -- 2010 Geoyeob Kim'
-    if len(sys.argv) > 4 or '--help' in sys.argv[1:]:
+    if len(sys.argv) > 7 or '--help' in sys.argv[1:]:
         print '  Usage:'
         print '    python PymModelBuilder.py [Options]'
         print
@@ -254,6 +260,8 @@ if __name__ == '__main__':
         print '    --trajconf=<path>  : input trajectory conf'
         print '    --output=<path>    : output simulation conf'
         print '    --nogl             : only writing simulation conf'
+        print '    --noliga           : exclude ligaments from model'
+        print '    --noact            : exclude actuated fibers from model'
         print '    --mu=<real number> : friction coefficient'
         print
         sys.exit(-1)
@@ -280,17 +288,17 @@ if __name__ == '__main__':
         print '    using', fnRbConf
     bipedParam = gBiped
     plist = bipedParam.buildBody('EXP')
-    flist = bipedParam.buildFiber([b.name for b in plist])
+    flist = bipedParam.buildFiber([b.name for b in plist], mvo.noliga, mvo.noact)
     h = GetSimTimeStep()
-    print 'Biped Height          :', bipHeight, 'm'
-    print '# of rigid bodies     :', len(plist)
-    print '# of muscle fibers    :', len(flist)
-    print 'Simulation time step  :', h, 'seconds'
-    
     fnOutput = mvo.output
     WriteSimcoreConfFile(fnOutput, plist, flist, h, mvo.mu)
+    print 'Biped Height                  :', bipHeight, 'm'
+    print '# of rigid bodies             :', len(plist)
+    print '# of muscle fibers (liga+act) :', len(flist)
+    print 'Simulation time step          :', h, 'seconds'
     print 'Simulation conf file written to', fnOutput
-    
+    print '# of ligament for each joint  :'
+    bipedParam.reportLigaments()
     if hasattr(mvo, 'nogl') and mvo.nogl == True:
         pass
     else:

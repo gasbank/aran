@@ -243,15 +243,26 @@ class BipedParameter:
                 self.p[k] = v/100.
 
         self._pos = { 'trunk' : self.getTrunkPos,
-                'thigh' : self.getThighPos,
-                'calf'  : self.getCalfPos,
-                'sole'  : self.getSolePos,
-                'toe'   : self.getToePos,
-                'uarm'  : self.getUarmPos,
-                'larm'  : self.getLarmPos,
-                'head'  : self.getHeadPos  }
+                      'thigh' : self.getThighPos,
+                      'calf'  : self.getCalfPos,
+                      'sole'  : self.getSolePos,
+                      'toe'   : self.getToePos,
+                      'uarm'  : self.getUarmPos,
+                      'larm'  : self.getLarmPos,
+                      'head'  : self.getHeadPos  }
+        self._liga = { 'neck' : self.getNeckLigaments,
+                       'sho'  : self.getShoulderLigaments,
+                       'elb'  : self.getElbowLigaments,
+                       'hip'  : self.getHipLigaments,
+                       'knee' : self.getKneeLigaments,
+                       'ankle': self.getAnkleLigaments,
+                       'toe'  : self.getToeLigaments      }
     def __getitem__(self, i):
         return self.p[i]
+    
+    def reportLigaments(self):
+        for (k,v) in self._liga.iteritems():
+            print '%10s - %3d' % (k, len(v()))
 
     def getBipedHeight(self):
         return   self.p['headLen']       \
@@ -325,10 +336,121 @@ class BipedParameter:
     def getToeJointCenter(self):
         return self.getToePos() + array([0,self['toeLen']/2+self['soleToeGap']/2,0])
 
+
+    def getXyPoints(self, c, wx, wy):
+        ret = []
+        for i in range(3):
+            for j in range(3):
+                ret.append( c + array([(j-1)*(wx/2), (i-1)*(wy/2), 0]) )
+        return ret
+    def getXzPoints(self, c, wx, wz):
+        ret = []
+        for i in range(3):
+            for j in range(3):
+                ret.append( c + array([(j-1)*(wx/2), 0, (i-1)*(wz/2)]) )
+        return ret
+    def getYzPoints(self, c, wy, wz):
+        ret = []
+        for i in range(3):
+            for j in range(3):
+                ret.append( c + array([0, (j-1)*(wy/2), (i-1)*(wz/2)]) )
+        return ret
+    def getFrontalLigaments(self,
+                             ligamentPrefix,
+                             c, gap, 
+                             b1, b1w, b1lw, b1zoff,
+                             b2, b2w, b2lw, b2zoff,
+                             subset
+                             ):
+        # B1 attached points
+        xyp = [self.getXzPoints(c, b1w, b1lw)[i] for i in subset]
+        for xypi in xyp: xypi[1] += gap/2 + b1zoff
+        p = xyp
+        # B2 attached points
+        xyp = [self.getXzPoints(c, b2w, b2lw)[i] for i in subset]
+        for xypi in xyp: xypi[1] += -gap/2 + b2zoff
+        v = xyp
+        ret = []
+        idx = 1
+        for pi in p:
+            for vi in v:
+                ret.append( (ligamentPrefix + str(idx) + 'L',
+                             pi, vi, b1, b2) )
+                idx += 1
+        return ret
+    def getLateralLigaments(self,
+                             ligamentPrefix,
+                             c, gap, 
+                             b1, b1w, b1lw, b1zoff,
+                             b2, b2w, b2lw, b2zoff,
+                             subset
+                             ):
+        # B1 attached points
+        xyp = [self.getYzPoints(c, b1w, b1lw)[i] for i in subset]
+        for xypi in xyp: xypi[0] += gap/2 + b1zoff
+        p = xyp
+        # B2 attached points
+        xyp = [self.getYzPoints(c, b2w, b2lw)[i] for i in subset]
+        for xypi in xyp: xypi[0] += -gap/2 + b2zoff
+        v = xyp
+        ret = []
+        idx = 1
+        for pi in p:
+            for vi in v:
+                ret.append( (ligamentPrefix + str(idx) + 'L',
+                             pi, vi, b1, b2) )
+                idx += 1
+        return ret
+    def getVerticalLigaments(self,
+                             ligamentPrefix,
+                             c, gap, 
+                             b1, b1w, b1lw, b1zoff,
+                             b2, b2w, b2lw, b2zoff,
+                             subset
+                             ):
+        # B1 (body 1) should be posed in higher place than B2 (body 2)
+        # e.g. Thigh as B1, Calf as B2 ---> OK
+        #      Larm as B1, Uarm as B2  ---> Error
+        # B1 attached points
+        xyp = [self.getXyPoints(c, b1w, b1lw)[i] for i in subset]
+        for xypi in xyp: xypi[2] += gap/2 + b1zoff
+        p = xyp
+        # B2 attached points
+        xyp = [self.getXyPoints(c, b2w, b2lw)[i] for i in subset]
+        for xypi in xyp: xypi[2] += -gap/2 + b2zoff
+        v = xyp
+        ret = []
+        idx = 1
+        for pi in p:
+            for vi in v:
+                ret.append( (ligamentPrefix + str(idx) + 'L',
+                             pi, vi, b1, b2) )
+                idx += 1
+        return ret
     #
     # LIGAMENTS
     #
+    def getNeckLigaments_Subset(self, subset):
+        c = self.getNeckJointCenter()
+        trhg = self['trunkHeadGap']
+        # neck attached points
+        hw   = self['headWidth']
+        hlw  = self['headLatWidth']
+        # trunk attached points
+        trw  = self['trunkWidth']
+        trlw = self['trunkLatWidth']
+        
+        return self.getVerticalLigaments('neckLiga', c, trhg,
+                                         'head', hw, hlw, 0,
+                                         'trunk', trw, trlw, 0,
+                                         subset)
+    def getNeckLigaments_FullyConnected(self):
+        return self.getNeckLigaments_Subset([1,3,5,7])
+    def getNeckLigaments_Triangular(self):
+        return self.getNeckLigaments_Subset([1,6,8])
     def getNeckLigaments(self):
+        return self.getNeckLigaments_Triangular()
+    def getNeckLigaments_Original(self):
         c = self.getNeckJointCenter()
         p1 = c + array([0, 0, -self['trunkHeadGap']/2])
         p2 = c + array([0, 0,  self['trunkHeadGap']/2])
@@ -351,8 +473,21 @@ class BipedParameter:
                 ret.append( ('neckLiga'+str(idx)+'L', pi, vi, 'trunk', 'head') )
                 idx += 1
         return ret
-        
     def getShoulderLigaments(self):
+        c = self.getShoulderJointCenter()
+        trug = self['trunkUarmGap']
+        # uarm attached points
+        uw   = self['uarmWidth']
+        ulw  = self['uarmLatWidth']
+        # trunk attached points
+        trw  = self['uarmWidth']*2
+        trlw = self['uarmLatWidth']*2
+        
+        return self.getLateralLigaments('shoLiga', c, trug,
+                                         'uarmL', uw, ulw, 0,
+                                         'trunk', trw, trlw, 0,
+                                         [1,6,8])
+    def getShoulderLigaments_Original(self):
         c = self.getShoulderJointCenter()
         p1 = c + array([-self['trunkUarmGap']/2, 0, 0])
         p2 = c + array([ self['trunkUarmGap']/2, 0, 0])
@@ -377,6 +512,20 @@ class BipedParameter:
         
     def getElbowLigaments(self):
         c = self.getElbowJointCenter()
+        ulg = self['uarmLarmGap']
+        # uarm attached points
+        uw   = self['uarmWidth']
+        ulw  = self['uarmLatWidth']
+        # larm attached points
+        lw  = self['larmWidth']
+        llw = self['larmLatWidth']
+        
+        return self.getVerticalLigaments('elbLiga', c, ulg,
+                                         'uarmL', uw, ulw, 0,
+                                         'larmL', lw, llw, 0,
+                                         [2,3,8])
+    def getElbowLigaments_Original(self):
+        c = self.getElbowJointCenter()
         p1 = c + array([0, 0,  self['uarmLarmGap']/2])
         p2 = c + array([0, 0, -self['uarmLarmGap']/2])
         
@@ -396,8 +545,29 @@ class BipedParameter:
                 ret.append( ('elbLiga'+str(idx)+'L', pi, vi, 'uarmL', 'larmL') )
                 idx += 1
         return ret
+
+
+    def getHipLigaments_Subset(self, subset):
+        c = self.getHipJointCenter()
+        trtg = self['trunkThighGap']
+        # trunk attached points
+        trw  = self['hipMuscleDist']
+        trlw = self['trunkLatWidth']
+        # thighL attached points
+        tw  = self['thighWidth']
+        tlw = self['thighLatWidth']
         
+        return self.getVerticalLigaments('hipLiga', c, trtg,
+                                         'trunk', trw, trlw, 0,
+                                         'thighL', tw, tlw, 0,
+                                         subset)
+    def getHipLigaments_FullyConnected(self):
+        return self.getHipLigaments_Subset([1,3,5,7])
+    def getHipLigaments_Triangular(self):
+        return self.getHipLigaments_Subset([1,6,8])
     def getHipLigaments(self):
+        return self.getHipLigaments_Triangular()
+    def getHipLigaments_Original(self):
         c = self.getHipJointCenter()
         p1 = c + array([0, 0, self['trunkThighGap']/2])
         p2 = c + array([0, 0, -self['trunkThighGap']/2])
@@ -445,36 +615,46 @@ class BipedParameter:
                  ('hipLiga3L', p9,p6, 'trunk', 'thighL'),
                  ('hipLiga4L', p9,p8, 'trunk', 'thighL'),
                  ('hipLiga5L', p9,p10, 'trunk', 'thighL') ]
-    def getKneeLigaments(self):
+    
+    def getKneeLigaments_Subset(self, subset):
         c = self.getKneeJointCenter()
-        p1 = c + array([0, -self['thighLatWidth']/2, self['thighCalfGap']*2])
-        p2 = c + array([0, +self['thighLatWidth']/2, self['thighCalfGap']*2])
-        p3 = c + array([0, -self['calfLatWidth']/2, -self['thighCalfGap']*2])
-        p4 = c + array([0, +self['calfLatWidth']/2, -self['thighCalfGap']*2])
-
-        p5 = c + array([-self['thighWidth']/2, 0, self['thighCalfGap']/2])
-        p6 = c + array([+self['thighWidth']/2, 0, self['thighCalfGap']/2])
-        p7 = c + array([-self['calfWidth']/2, 0, -self['thighCalfGap']/2])
-        p8 = c + array([+self['calfWidth']/2, 0, -self['thighCalfGap']/2])
-
-        return [ ('kneeLiga1L', p1,p4, 'thighL', 'calfL'),
-                 ('kneeLiga2L', p1,p3, 'thighL', 'calfL'),
-                 ('kneeLiga3L', p1,p7, 'thighL', 'calfL'),
-                 ('kneeLiga4L', p1,p8, 'thighL', 'calfL'),
-                 ('kneeLiga1L', p2,p4, 'thighL', 'calfL'),
-                 ('kneeLiga2L', p2,p3, 'thighL', 'calfL'),
-                 ('kneeLiga3L', p2,p7, 'thighL', 'calfL'),
-                 ('kneeLiga4L', p2,p8, 'thighL', 'calfL'),
-                 ('kneeLiga1L', p5,p4, 'thighL', 'calfL'),
-                 ('kneeLiga2L', p5,p3, 'thighL', 'calfL'),
-                 ('kneeLiga3L', p5,p7, 'thighL', 'calfL'),
-                 ('kneeLiga4L', p5,p8, 'thighL', 'calfL'),
-                 ('kneeLiga1L', p6,p4, 'thighL', 'calfL'),
-                 ('kneeLiga2L', p6,p3, 'thighL', 'calfL'),
-                 ('kneeLiga3L', p6,p7, 'thighL', 'calfL'),
-                 ('kneeLiga4L', p6,p8, 'thighL', 'calfL') ]
-        
+        tcg = self['thighCalfGap']
+        # thighL attached points
+        tw  = self['thighWidth']
+        tlw = self['thighLatWidth']
+        # calfL attached points
+        cw  = self['calfWidth']
+        clw = self['calfLatWidth']
+        return self.getVerticalLigaments('kneeLiga', c, tcg,
+                                         'thighL', tw, tlw, 0,
+                                         'calfL', cw, clw, 0,
+                                         subset)
+    def getKneeLigaments_FullyConnected(self):
+        return self.getKneeLigaments_Subset([1,3,5,7])
+    def getKneeLigaments_Triangular(self):
+        return self.getKneeLigaments_Subset([1,6,8])
+    def getKneeLigaments(self):
+        return self.getKneeLigaments_Triangular()
+    def getAnkleLigaments_Subset(self, subset):
+        c = self.getAnkleJointCenter()
+        csg = self['calfSoleGap']
+        # calfL attached points
+        cw  = self['calfWidth']
+        clw = self['calfLatWidth']
+        # soleL attached points
+        sw   = self['soleWidth']
+        slen = self['soleLen']
+        return self.getVerticalLigaments('ankleLiga', c, csg,
+                                         'calfL', cw, clw, 0,
+                                         'soleL', sw, slen, 0,
+                                         subset)
+    def getAnkleLigaments_FullyConnected(self):
+        return self.getAnkleLigaments_Subset([1,3,5,7])
+    def getAnkleLigaments_Triangular(self):
+        return self.getAnkleLigaments_Subset([1,6,8])
     def getAnkleLigaments(self):
+        return self.getAnkleLigaments_Triangular()
+    def getAnkleLigaments_Original(self):
         # Inclined (/ \)
         c = self.getAnkleJointCenter()
         p1 = c + array([ self['calfWidth']/2,  self['calfLatWidth']/2,  self['calfSoleGap']/2 + self['calfLen']/2 ])
@@ -504,8 +684,27 @@ class BipedParameter:
                  ('ankleLiga2L', p7,p6, 'calfL', 'soleL'),
                  ('ankleLiga2L', p7,p8, 'calfL', 'soleL')
                   ]
-        
+    
+    def getToeLigaments_Subset(self, subset):
+        c = self.getToeJointCenter()
+        stg = self['soleToeGap']
+        # soleL attached points
+        sw = self['soleWidth']
+        sh = self['soleHeight']
+        # toeL attached points
+        tw = self['toeWidth']
+        th = self['toeHeight']
+        return self.getFrontalLigaments('toeLiga', c, stg,
+                                         'soleL', sw, sh, 0,
+                                         'toeL', tw, th, 0,
+                                         subset)
+    def getToeLigaments_FullyConnected(self):
+        return self.getToeLigaments_Subset([1,3,5,7])
+    def getToeLigaments_Triangular(self):
+        return self.getToeLigaments_Subset([0,2,7])
     def getToeLigaments(self):
+        return self.getToeLigaments_Triangular()
+    def getToeLigaments_Original(self):
             c = self.getToeJointCenter()
             p1 = c + array([0, self['soleToeGap']/2, self['toeHeight']/2])
             p2 = c + array([0, self['soleToeGap']/2, -self['toeHeight']/2])
@@ -796,7 +995,7 @@ class BipedParameter:
 
         return body
     
-    def buildFiber(self, availableBodyNames):
+    def buildFiber(self, availableBodyNames, noliga=False, noact=False):
         # Fiber constants for a ligament
         KSE = 100      # Should not be 0
         KPE = 100
@@ -811,12 +1010,13 @@ class BipedParameter:
         T   = 0.
         A   = 0.
         fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A, 'MUSCLE')
-        ### DEBUG ###
-        #return fiber_liga
-        #return []
-        return fiber_liga + fiber_muscle
-        #return fiber_muscle
-        #return fiber_liga
+        
+        ret = []
+        if not noliga:
+            ret += fiber_liga
+        if not noact:
+            ret += fiber_muscle
+        return ret
     def _buildFiber(self, availableBodyNames, fiberList, KSE, KPE, b, T, A, typeStr):
         fiber = []
 
@@ -830,10 +1030,15 @@ class BipedParameter:
                                         orgBody, insBody, None, None, orgPosLocal, insPosLocal)
             if orgBody in availableBodyNames and insBody in availableBodyNames:
                 fiber.append(m)
-                
+            
+            # Ligaments related to the neck joint do not have
+            # right side counterparts. Skip it.
+            if name[:4] == 'neck':
+                continue
+            # If there are left-side fibers, we also need right counterparts
             assert name[-1] == 'L' # Muscle fiber's name should be ended with 'L'
             
-            # If there are left-side fibers, we also need right counterparts
+            
             newName = name[:-1] + 'R'
             #orgBody, orgPos, insBody, insPos, KSE, KPE, b, xrest, T, A = cfg
             if orgBody[-1] == 'L':
