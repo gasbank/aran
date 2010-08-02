@@ -4,6 +4,7 @@
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
+int PymMin(int a, int b);
 double PymNorm(int dim, const double v[dim]);
 double NormalizeVector(int dim, double v[dim]);
 void VtoQuat(double q[4], const double v[3]);

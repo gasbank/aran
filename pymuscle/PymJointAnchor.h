@@ -26,7 +26,9 @@ struct _pym_anchored_joint_t {
 
 inline void ExtractAnchorIdentifier(char *iden, const char *aName);
 
+int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg);
 int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char *fnJaCfg);
 int PymConstructAnchoredJointList(pym_config_t *pymCfg);
+int PymInitJointAnchors(pym_config_t *pymCfg, FILE *dmstreams[]);
 
 #endif /* PYMJOINTANCHOR_H_ */

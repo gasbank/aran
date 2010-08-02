@@ -2,22 +2,7 @@
 #define __PYMUSCLECONFIG_H_
 
 #include "PymJointAnchor.h"
-
-struct _pym_config_t {
-    pym_rb_t *body; unsigned int nBody;
-    pym_mf_t *fiber; unsigned int nFiber;
-    unsigned int nJoint;
-    double h;
-    double mu;
-    int nSimFrame;
-    double slant;
-
-    pym_joint_anchor_t pymJa[100];
-    int na;
-    pym_anchored_joint_t anchoredJoints[50];
-    //int ja : not needed. use nJoint instead.
-};
-
+#include "PymConfig.h"
 
 void PrintRigidBody(const pym_rb_t *rb);
 int PymDestoryConfig(pym_config_t *pymCfg);

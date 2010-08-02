@@ -10,6 +10,16 @@
 #include "PymJointAnchor.h"
 #include "PymuscleConfig.h"
 #include "RigidBody.h"
+#include "PymDebugMessageFlags.h"
+
+int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg) {
+    int trajNameLen = (int)(strchr(fnTrajCfg, '.') - fnTrajCfg);
+    assert(trajNameLen > 0);
+    strncpy(fnJaCfg, fnTrajCfg, trajNameLen);
+    fnJaCfg[ trajNameLen ] = '\0';
+    strcat(fnJaCfg, ".jointanchor.conf");
+    return 0;
+}
 
 int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char *fnJaCfg) {
     FILE *jaCfg = fopen(fnJaCfg, "r");
@@ -146,5 +156,26 @@ int PymConstructAnchoredJointList(pym_config_t *pymCfg) {
     }
     pymCfg->nJoint = njProcessed;
     assert(njProcessed*2 <= pymCfg->na);
+    printf("# of anchored joints constructed : %d\n", pymCfg->nJoint);
     return njProcessed;
+}
+
+int PymInitJointAnchors(pym_config_t *pymCfg, FILE *dmstreams[]) {
+    int i, j;
+    FOR_0(i, pymCfg->nBody) {
+        pym_rb_named_t *rbn = &pymCfg->body[i].b;
+        FOR_0(j, pymCfg->na) {
+            if (strcmp(pymCfg->pymJa[j].bodyName, rbn->name) == 0) {
+                strncpy(rbn->jointAnchorNames[rbn->nAnchor], pymCfg->pymJa[j].name, 128);
+                memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg->pymJa[j].localPos, sizeof(double)*3);
+                rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
+                ++rbn->nAnchor;
+                fprintf(dmstreams[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT],
+                        "Joint anchor %15s attached to %8s. (so far %2d)\n", pymCfg->pymJa[j].name, rbn->name, rbn->nAnchor);
+                assert(rbn->nAnchor <= 10);
+            }
+        }
+    }
+    assert(pymCfg->na%2 == 0);
+    return 0;
 }

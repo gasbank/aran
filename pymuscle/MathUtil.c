@@ -3,6 +3,11 @@
 #include "MathUtil.h"
 #include "dRdv_real.h"
 
+int PymMin(int a, int b) {
+    if (a<b) return a;
+    else return b;
+}
+
 double Dot33(const double a[3], const double b[3]) {
     return Dot(3, a, b);
 }
