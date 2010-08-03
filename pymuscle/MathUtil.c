@@ -26,11 +26,28 @@ double PymNorm(int dim, const double v[dim])
     len = sqrt(len);
     return len;
 }
+float PymNormf(int dim, const float v[dim])
+{
+    float len = 0;
+    int i;
+    for (i = 0; i < dim; ++i)
+        len += v[i]*v[i];
+    len = sqrt(len);
+    return len;
+}
 
 /* Normalize vector in-place */
 double NormalizeVector(int dim, double v[dim])
 {
     double len = PymNorm(dim, v);
+    int i; FOR_0(i, dim) v[i] /= len;
+    return len;
+}
+
+/* Normalize vector in-place */
+float NormalizeVectorf(int dim, float v[dim])
+{
+    float len = PymNormf(dim, v);
     int i; FOR_0(i, dim) v[i] /= len;
     return len;
 }

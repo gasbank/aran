@@ -3,31 +3,32 @@ from numpy import array
 
 RB_FORMAT = \
 '''\
-name     = "%s";
-p        = [%f, %f, %f];
-q        = [%f, %f, %f, %f];
-pd       = [%f, %f, %f];
-qd       = [%f, %f, %f, %f];
-rotParam = "QUAT_WFIRST";
-mass     = %f;
-size     = [%f, %f, %f];
-grav     = true;
+	name        = "%s";
+	blenderName = "%s";
+	p           = [%f, %f, %f];
+	q           = [%f, %f, %f, %f];
+	pd          = [%f, %f, %f];
+	qd          = [%f, %f, %f, %f];
+	rotParam    = "QUAT_WFIRST";
+	mass        = %f;
+	size        = [%f, %f, %f];
+	grav        = true;
 '''
 
 MF_FORMAT = \
 '''\
-name         = "%s";
-origin       = "%s";
-insertion    = "%s";
-KSE          = %f;
-KPE          = %f;
-b            = %f;
-xrest        = %f;
-T            = %f;
-A            = %f;
-originPos    = [%f, %f, %f];
-insertionPos = [%f, %f, %f];
-mType        = "%s";
+	name         = "%s";
+	origin       = "%s";
+	insertion    = "%s";
+	KSE          = %f;
+	KPE          = %f;
+	b            = %f;
+	xrest        = %f;
+	T            = %f;
+	A            = %f;
+	originPos    = [%f, %f, %f];
+	insertionPos = [%f, %f, %f];
+	mType        = "%s";
 '''
 
 def WriteSimcoreConfFile(fileName, body, fibers, h, mu=1.0):
@@ -57,7 +58,7 @@ def WriteSimcoreConfFile(fileName, body, fibers, h, mu=1.0):
         else:
             assert False
         f.write('{\n')
-        f.write(RB_FORMAT % tuple([b.name] + list(chi_1) + list(chid_1) + [b.mass] + list(b.boxsize)) )
+        f.write(RB_FORMAT % tuple([b.name, b.blenderName] + list(chi_1) + list(chid_1) + [b.mass] + list(b.boxsize)) )
         f.write('}%s\n' % (',' if b != body[-1] else ''))
     f.write(');\n')
 

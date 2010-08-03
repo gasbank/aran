@@ -574,10 +574,10 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
 //            printf("  <vel>  %8s - ", rbn->name); __PRINT_VECTOR(chi_v, 6);
 //            printf("\n");
 
-        FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
-        fprintf(outputFile, "\n");
-
-
+        if (outputFile) {
+            FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
+            fprintf(outputFile, "\n");
+        }
         /* Update the current state of rigid bodies */
         SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
     }
@@ -644,7 +644,7 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
 
     PymDestroyBipedEqconst(&bipEq, cc);
     FOR_0(j, pymCfg->nBody) {
-        PymDestroyRbStatedep(sd + j, cc);
+        PymDestroyRbStatedep(sd + j, &pymCfg->body[j].b, cc);
     }
 
     if (cost == FLT_MAX) /* no meaning to process further */

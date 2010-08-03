@@ -7,6 +7,7 @@
 int PymMin(int a, int b);
 double PymNorm(int dim, const double v[dim]);
 double NormalizeVector(int dim, double v[dim]);
+float NormalizeVectorf(int dim, float v[dim]);
 void VtoQuat(double q[4], const double v[3]);
 void quat_rot(double v1[3], const double q[4], const double v0[3]);
 void BoxInertiaTensorFromMassAndSize(double Ixyz[3], double m, double sx, double sy, double sz);

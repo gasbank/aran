@@ -21,6 +21,6 @@ int PymCorresMapIndexFromCorresMap(int corresMapIndex[],
 
 int PymSetInitialStateUsingTrajectory(pym_config_t *pymCfg,
                                       int nBlenderBody,
-                                      int corresMapIndex[],
+                                      const int corresMapIndex[],
                                       const double *trajData);
 #endif

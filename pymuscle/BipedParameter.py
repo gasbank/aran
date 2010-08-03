@@ -33,7 +33,7 @@ ESCAPE = '\033'
 
 
 def RigidBodyFromRbConf(fields):
-    name       = fields[0]
+    name       = fields[0]            # Blender side mesh name
     dimX       = float(fields[1])
     dimY       = float(fields[2])
     dimZ       = float(fields[3])
@@ -46,7 +46,7 @@ def RigidBodyFromRbConf(fields):
     qd         = array([0,0,0,0,0,0])
     dc         = array([0.1,0.2,0.3])
     rotParam   = 'EXP'
-    anotherName= fields[7]
+    anotherName= fields[7]            # Simulator side rigid body name
     rb         = RigidBody.RigidBody(name, None, mass, boxsize, q, qd, dc, rotParam)
     # Two additional attributes added
     rb.xAxis   = xAxis
@@ -129,7 +129,7 @@ class BipedParameter:
                 #print fields
                 rb = RigidBodyFromRbConf(fields)
                 rbConf[rb.name] = rb
-                self.nameList.append(rb.name)
+                self.nameList.append(rb.name) # Blender name list
                 if rb.anotherName != '*':
                     self.anotherNameList.append(rb.anotherName)
             print '# of RB from', fnRbConf, ':', len(rbConf)
@@ -965,6 +965,12 @@ class BipedParameter:
             drawingColor = (0.2,0.1,0.2)
             
             b = RigidBody.RigidBody(name, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
+            if hasattr(self, 'rbConf'):
+                for (k,v) in self.rbConf.iteritems():
+                    if v.anotherName == name:
+                        b.blenderName = v.name
+            else:
+                b.blenderName = ''
             body.append(b)
             
             #print '%10s'%name, pos0, vel0
@@ -987,6 +993,12 @@ class BipedParameter:
                 drawingColor = (0.2,0.1,0.2)
 
                 b = RigidBody.RigidBody(newName, None, ll[3], ll[1], pos0, vel0, drawingColor, rotParam)
+                if hasattr(self, 'rbConf'):
+                    for (k,v) in self.rbConf.iteritems():
+                        if v.anotherName == newName:
+                            b.blenderName = v.name
+                else:
+                    b.blenderName = ''
                 body.append(b)
                 
                 #print '%10s'%newName, pos0, vel0

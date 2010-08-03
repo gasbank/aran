@@ -42,6 +42,6 @@ struct _pym_rb_statedep_t {
 };
 
 int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
-void PymDestroyRbStatedep(pym_rb_statedep_t *sd, cholmod_common *cc);
+void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_common *cc);
 
 #endif

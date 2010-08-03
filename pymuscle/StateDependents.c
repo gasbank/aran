@@ -206,11 +206,14 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     return 0;
 }
 
-void PymDestroyRbStatedep(pym_rb_statedep_t *sd, cholmod_common *cc) {
+void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_common *cc) {
     int j;
     FOR_0(j, sd->nContacts_2) {
         cholmod_free_sparse(&sd->Z[j], cc);
         cholmod_free_sparse(&sd->Q[j], cc);
+    }
+    FOR_0(j, rbn->nAnchor) {
+        cholmod_free_sparse(&sd->Za[j], cc);
     }
 }
 

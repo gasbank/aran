@@ -56,6 +56,10 @@
 			<Add directory="/home/johnu/src/lib" />
 			<Add directory="/home/johnu/mosek/6/tools/platform/linux64x86/bin" />
 		</Linker>
+		<Unit filename="PymCmdLineParser.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="PymCmdLineParser.h" />
 		<Unit filename="TrajParser.c">
 			<Option compilerVar="CC" />
 		</Unit>
