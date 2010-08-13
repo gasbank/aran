@@ -291,8 +291,10 @@ if __name__ == '__main__':
     flist = bipedParam.buildFiber([b.name for b in plist], mvo.noliga, mvo.noact)
     h = GetSimTimeStep()
     fnOutput = mvo.output
+    bipedMass = sum([b.mass for b in plist])
     WriteSimcoreConfFile(fnOutput, plist, flist, h, mvo.mu)
     print 'Biped Height                  :', bipHeight, 'm'
+    print 'Biped Mass                    :', bipedMass, 'kg'
     print '# of rigid bodies             :', len(plist)
     print '# of muscle fibers (liga+act) :', len(flist)
     print 'Simulation time step          :', h, 'seconds'

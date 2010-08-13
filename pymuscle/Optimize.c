@@ -131,7 +131,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 0;
             /* Estimated position of z-coordinate of contact point
              * Default: 2e-1      */
-            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 0;
+            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1;
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j) {
             /*
@@ -141,13 +141,23 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Nav0         -  5e-1
              * Exer0        -  1
              */
-            c[j] = 0;
+            c[j] = 1;
         }
         /*
          * TODO [TUNE] Reference following coefficient
          */
         c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
+    FOR_0(j, nf) {
+        const char *const fibName = pymCfg->fiber[j].b.name;
+
+        if (strncmp(fibName + strlen(fibName)-4, "Cen", 3) == 0) {
+            /* do nothing */
+        } else {
+            c[ Aci[2] + j ] = 1e-6;
+        }
+    }
+
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
@@ -173,7 +183,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     const int nd = 6;
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         SET_NONNEGATIVE( tauOffset + sd[i].Aci[0] + 2 ); /* chi_2_z */
-        FOR_0(j, nplist[i]) SET_NONNEGATIVE( tauOffset + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
+        //FOR_0(j, nplist[i]) SET_NONNEGATIVE( tauOffset + sd[i].Aci[1] + nd*j + 2 ); /* f_c_z */
         FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[2] + 5*j + 3 ); /* c_c_w */
         FOR_0(j, nplist[i]) {
             /*
@@ -182,10 +192,10 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              * Nav0    :  0~200
              * Exer0   :  0~200 (failed)
              */
-            //SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
+            SET_NONNEGATIVE( tauOffset + sd[i].Aci[2] + 5*j + 4 ); /* c_c_n */
             //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 200); /* c_c_n */
             //SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 140); /* c_c_n */
-        	SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 115); /* c_c_n */
+        	//SET_RANGE( tauOffset + sd[i].Aci[2] + 5*j + 4 , 0, 115); /* c_c_n */
         }
         FOR_0(j, nplist[i]) {
             //SET_NONNEGATIVE( tauOffset + sd[i].Aci[3] + 4*j + 2 ); /* p_c_2_z : next step CP z-pos */
@@ -196,11 +206,13 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             const double z = -ctY*tan(theta);
             SET_LOWER_BOUND( tauOffset + sd[i].Aci[3] + 4*j + 2, z ); /* p_c_2_z : next step CP z-pos */
         }
+
         /*
          * TODO [TUNE] Constraints for fixing contact points
          * p_c_2_z
          */
-        //FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[3] + 4*j + 2 );
+        FOR_0(j, nplist[i]) SET_FIXED_ZERO ( tauOffset + sd[i].Aci[3] + 4*j + 2 );
+
         FOR_0(j, nplist[i]) SET_FIXED_ONE  ( tauOffset + sd[i].Aci[3] + 4*j + 3 ); /* p_c_2_w */
         for(j=tauOffset + sd[i].Aci[5]; j<tauOffset + sd[i].Aci[6]; ++j) SET_NONNEGATIVE( j ); /* eps_fric */
         for(j=tauOffset + sd[i].Aci[6]; j<tauOffset + sd[i].Aci[7]; ++j) SET_NONNEGATIVE( j ); /* muf_cz */
@@ -226,6 +238,17 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             bux[i] =  200*9.81;
         }
         else if (mt == PMT_LIGAMENT) {
+
+            if (strncmp(fibName + strlen(fibName)-4, "Cen", 3) == 0) {
+                bkx[i] = MSK_BK_FR;
+                blx[i] = -MSK_INFINITY;
+                bux[i] =  MSK_INFINITY;
+            } else {
+                bkx[i] = MSK_BK_RA;
+                blx[i] = 0;
+                bux[i] =  200*9.81;
+            }
+
 //            if (strncmp(fibName, "ankleLiga", 9) == 0) {
 //                bkx[i] = MSK_BK_RA;
 //                blx[i] = -800*9.81;
@@ -373,7 +396,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
             AppendConeRange(task,
                             tauOffset + sd[i].Aci[5] + j,
                             tauOffset + sd[i].Aci[4]+4*j+0,
-                            tauOffset + sd[i].Aci[4]+4*j+3);
+                            tauOffset + sd[i].Aci[4]+4*j+2);
 
             /* Friction cone constraints */
             AppendConeRange(task,
@@ -541,106 +564,120 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
     *_solstaStr = solstaStr;
     *_cost      = cost;
 
-    deviation_stat_entry dev_stat[nb];
-    memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
-    int tauOffset;
-    for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
-        const double *chi_2 = xx + tauOffset;
-        const pym_rb_named_t *rbn = &pymCfg->body[j].b;
+    if (cost != FLT_MAX) {
+        deviation_stat_entry dev_stat[nb];
+        memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
+        int tauOffset;
+        for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+            const double *chi_2 = xx + tauOffset;
+            const pym_rb_named_t *rbn = &pymCfg->body[j].b;
 
-        double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
-        memcpy(chi_1    , rbn->p,       sizeof(double)*3);
-        memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
-        memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
-        memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
-        memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
-        memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
-        memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
+            double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
+            memcpy(chi_1    , rbn->p,       sizeof(double)*3);
+            memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
+            memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
+            memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
+            memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
+            memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
+            memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
 
-        double chi_d[6];
-        FOR_0(k, 6) {
-            chi_d[k] = chi_2[k] - chi_r[k];
-            dev_stat[j].chi_d_norm += chi_d[k] * chi_d[k];
+            double chi_d[6];
+            FOR_0(k, 6) {
+                chi_d[k] = chi_2[k] - chi_r[k];
+                dev_stat[j].chi_d_norm += chi_d[k] * chi_d[k];
+            }
+            dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
+            dev_stat[j].bodyIdx = j;
+            dev_stat[j].nContact = sd[j].nContacts_2;
+
+    //            printf("  chi_0  %8s - ", rbn->name); __PRINT_VECTOR(chi_0, 6);
+    //            printf("     _1  %8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
+    //            printf("     _2  %8s - ", rbn->name); __PRINT_VECTOR(chi_2, 6);
+    //            printf("  <ref>  %8s - ", rbn->name); __PRINT_VECTOR(chi_r, 6);
+    //            printf("  <dev>  %8s - ", rbn->name); __PRINT_VECTOR(chi_d, 6);
+    //            printf("  <vel>  %8s - ", rbn->name); __PRINT_VECTOR(chi_v, 6);
+    //            printf("\n");
+
+            if (outputFile) {
+                FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
+                fprintf(outputFile, "\n");
+            }
+            /* Update the current state of rigid bodies */
+            SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
         }
-        dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
-        dev_stat[j].bodyIdx = j;
-        dev_stat[j].nContact = sd[j].nContacts_2;
-
-//            printf("  chi_0  %8s - ", rbn->name); __PRINT_VECTOR(chi_0, 6);
-//            printf("     _1  %8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
-//            printf("     _2  %8s - ", rbn->name); __PRINT_VECTOR(chi_2, 6);
-//            printf("  <ref>  %8s - ", rbn->name); __PRINT_VECTOR(chi_r, 6);
-//            printf("  <dev>  %8s - ", rbn->name); __PRINT_VECTOR(chi_d, 6);
-//            printf("  <vel>  %8s - ", rbn->name); __PRINT_VECTOR(chi_v, 6);
-//            printf("\n");
-
-        if (outputFile) {
-            FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
-            fprintf(outputFile, "\n");
-        }
-        /* Update the current state of rigid bodies */
-        SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
-    }
 
 
-    qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
+        qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
 
-    FILE *__dmstream = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
-    fprintf(__dmstream, "Reference trajectory deviation report\n");
-    const int itemsPerLine = PymMin(nb, 6);
-    int j0 = 0, j1 = itemsPerLine;
-    while (j0 < nb && j1 <= nb) {
-        for (j = j0; j < j1; ++j) {
-            const pym_rb_named_t *rbn = &pymCfg->body[ dev_stat[j].bodyIdx ].b;
+        FILE *__dmstream = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
+        fprintf(__dmstream, "Reference trajectory deviation report\n");
+        const int itemsPerLine = PymMin(nb, 6);
+        int j0 = 0, j1 = itemsPerLine;
+        while (j0 < nb && j1 <= nb) {
+            for (j = j0; j < j1; ++j) {
+                const pym_rb_named_t *rbn = &pymCfg->body[ dev_stat[j].bodyIdx ].b;
+                fprintf(__dmstream,
+                        "  %9s", rbn->name);
+            }
+            fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
+                    "\n");
+            for (j = j0; j < j1; ++j) {
+                fprintf(__dmstream,
+                        "  %9.3e", dev_stat[j].chi_d_norm);
+            }
             fprintf(__dmstream,
-                    "  %9s", rbn->name);
-        }
-        fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
-                "\n");
-        for (j = j0; j < j1; ++j) {
+                    "\n");
+            for (j = j0; j < j1; ++j) {
+                fprintf(__dmstream,
+                        "  %9d", dev_stat[j].nContact);
+            }
             fprintf(__dmstream,
-                    "  %9.3e", dev_stat[j].chi_d_norm);
+                    "\n");
+            j0 = PymMin(nb, j0 + itemsPerLine);
+            j1 = PymMin(nb, j1 + itemsPerLine);
         }
+
+        FOR_0(j, nf) {
+            pym_mf_named_t *mfn = &pymCfg->fiber[j].b;
+            const double T_0        = xx[ bipEq.Aci[1] + j ];
+            //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
+            const double xrest_0    = xx[ bipEq.Aci[3] + j ];
+            /* Update the current state of muscle fibers */
+            mfn->T     = T_0;
+            mfn->xrest = xrest_0;
+    //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
+        }
+
+        __dmstream = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
         fprintf(__dmstream,
-                "\n");
-        for (j = j0; j < j1; ++j) {
+                "Anchored joints dislocation report\n");
+        FOR_0(j, nj) {
+            const double *dAj = xx + bipEq.Aci[6] + 4*j;
+            const double disloc = PymNorm(4, dAj);
+            const char *aAnchorName = pymCfg->body[ pymCfg->anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg->anchoredJoints[j].aAnchorIdx ];
+            char iden[128];
+            ExtractAnchorIdentifier(iden, aAnchorName);
             fprintf(__dmstream,
-                    "  %9d", dev_stat[j].nContact);
+                    "%12s disloc = %e", iden, disloc);
+            if (j%2) fprintf(__dmstream, "\n");
+
+            if (pymCfg->anchoredJoints[j].maxDisloc < disloc)
+                pymCfg->anchoredJoints[j].maxDisloc = disloc;
         }
-        fprintf(__dmstream,
-                "\n");
-        j0 = PymMin(nb, j0 + itemsPerLine);
-        j1 = PymMin(nb, j1 + itemsPerLine);
-    }
+        if (nj%2) fprintf(__dmstream, "\n");
 
-    FOR_0(j, nf) {
-        pym_mf_named_t *mfn = &pymCfg->fiber[j].b;
-        const double T_0        = xx[ bipEq.Aci[1] + j ];
-        //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
-        const double xrest_0    = xx[ bipEq.Aci[3] + j ];
-        /* Update the current state of muscle fibers */
-        mfn->T     = T_0;
-        mfn->xrest = xrest_0;
-//            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
-    }
+        for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+            const double *chi_2 = xx + tauOffset;
+            pym_rb_named_t *rbn = &pymCfg->body[j].b;
+            const pym_rb_statedep_t *sdj = sd + j;
 
-    __dmstream = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
-    fprintf(__dmstream,
-            "Anchored joints dislocation report\n");
-    FOR_0(j, nj) {
-        const double *dAj = xx + bipEq.Aci[6] + 4*j;
-        const double disloc = PymNorm(4, dAj);
-        const char *aAnchorName = pymCfg->body[ pymCfg->anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg->anchoredJoints[j].aAnchorIdx ];
-        char iden[128];
-        ExtractAnchorIdentifier(iden, aAnchorName);
-        fprintf(__dmstream,
-                "%12s disloc = %e", iden, disloc);
-        if (j%2) fprintf(__dmstream, "\n");
-
-        if (pymCfg->anchoredJoints[j].maxDisloc < disloc)
-            pymCfg->anchoredJoints[j].maxDisloc = disloc;
+            rbn->nContacts_2 = sdj->nContacts_2;
+            FOR_0(k, sdj->nContacts_2) {
+                memcpy(rbn->contactsPoints_2a[k], chi_2 + sdj->Aci[3] + 4*k,  sizeof(double)*4);
+                memcpy(rbn->contactsForce_2[k],   chi_2 + sdj->Aci[1] + 6*k, sizeof(double)*3);
+            }
+        }
     }
-    if (nj%2) fprintf(__dmstream, "\n");
 
     PymDestroyBipedEqconst(&bipEq, cc);
     FOR_0(j, pymCfg->nBody) {

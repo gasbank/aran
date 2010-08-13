@@ -24,6 +24,7 @@ struct _pym_rb_statedep_t {
     unsigned int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of corner points in next time step */
     double contactsFix_2[MAX_CONTACTS][4];       /* Estimated contact point fixing position in world coordinate frame in next time step */
     double contactsNormal_1[MAX_CONTACTS][4];
+
     int Asubrows;
     int Asubcols;
     int Ari[ 1 +  8 ]; /* 1 + # of sub row */

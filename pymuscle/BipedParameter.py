@@ -366,10 +366,12 @@ class BipedParameter:
         xyp = [self.getXzPoints(c, b1w, b1lw)[i] for i in subset]
         for xypi in xyp: xypi[1] += gap/2 + b1zoff
         p = xyp
+        p_cen = c + array([0, gap/2, 0])
         # B2 attached points
         xyp = [self.getXzPoints(c, b2w, b2lw)[i] for i in subset]
         for xypi in xyp: xypi[1] += -gap/2 + b2zoff
         v = xyp
+        v_cen = c + array([0, -gap/2, 0])
         ret = []
         idx = 1
         for pi in p:
@@ -377,6 +379,8 @@ class BipedParameter:
                 ret.append( (ligamentPrefix + str(idx) + 'L',
                              pi, vi, b1, b2) )
                 idx += 1
+        ret.append( (ligamentPrefix + str(idx) + 'CenL',
+                     p_cen, v_cen, b1, b2) )
         return ret
     def getLateralLigaments(self,
                              ligamentPrefix,
@@ -389,10 +393,12 @@ class BipedParameter:
         xyp = [self.getYzPoints(c, b1w, b1lw)[i] for i in subset]
         for xypi in xyp: xypi[0] += gap/2 + b1zoff
         p = xyp
+        p_cen = c + array([gap/2, 0, 0])
         # B2 attached points
         xyp = [self.getYzPoints(c, b2w, b2lw)[i] for i in subset]
         for xypi in xyp: xypi[0] += -gap/2 + b2zoff
         v = xyp
+        v_cen = c + array([gap/2, 0, 0])
         ret = []
         idx = 1
         for pi in p:
@@ -400,6 +406,8 @@ class BipedParameter:
                 ret.append( (ligamentPrefix + str(idx) + 'L',
                              pi, vi, b1, b2) )
                 idx += 1
+        ret.append( (ligamentPrefix + str(idx) + 'CenL',
+                     p_cen, v_cen, b1, b2) )
         return ret
     def getVerticalLigaments(self,
                              ligamentPrefix,
@@ -415,10 +423,12 @@ class BipedParameter:
         xyp = [self.getXyPoints(c, b1w, b1lw)[i] for i in subset]
         for xypi in xyp: xypi[2] += gap/2 + b1zoff
         p = xyp
+        p_cen = c + array([0, 0, gap/2])
         # B2 attached points
         xyp = [self.getXyPoints(c, b2w, b2lw)[i] for i in subset]
         for xypi in xyp: xypi[2] += -gap/2 + b2zoff
         v = xyp
+        v_cen = c + array([0, 0, -gap/2])
         ret = []
         idx = 1
         for pi in p:
@@ -426,6 +436,8 @@ class BipedParameter:
                 ret.append( (ligamentPrefix + str(idx) + 'L',
                              pi, vi, b1, b2) )
                 idx += 1
+        ret.append( (ligamentPrefix + str(idx) + 'CenL',
+                     p_cen, v_cen, b1, b2) )
         return ret
     #
     # LIGAMENTS

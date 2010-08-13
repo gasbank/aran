@@ -126,9 +126,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     sd->nContacts_1 = 0;
     sd->nContacts_2 = 0;
     for (j=0; j<8; ++j) {
-        double pcj_2_nocf_W[3], pcj_1_W[3];
+        double pcj_2_nocf_W[3], pcj_1_W[3], pcj_0_W[3];
         AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
         AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
+        AffineTransformPoint(pcj_0_W, sd->W_0, rbn->corners[j]);
 
         const double ctY = pcj_2_nocf_W[1];
         const double theta = pymCfg->slant;
@@ -140,10 +141,14 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
          *    Nav0  - 0.050
          *    Exer0 - 0.050 (unknown)
          */
-        if (pcj_2_nocf_W[2] <= z+0.050) {
+        if (pcj_2_nocf_W[2] <= -0.004) {
+        //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
-            for (k=0;k<3;++k) pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
+            for (k=0;k<3;++k) {
+                pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
+                //pcj_fix[k] = pcj_1_W[k];
+            }
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/
             ++sd->nContacts_2;
