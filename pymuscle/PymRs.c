@@ -584,18 +584,11 @@ void endTranslate()
 	endXform();
 }
 
-void DrawRb(const pym_rb_named_t *rbn,
-            const double *const boxSize) {
-    const double *const p = rbn->p;
-    const double *const q = rbn->q;
-
-    /* Translation and Rotation */
+void DrawBox_chi(const double *chi, const double *const boxSize) {
     double W[4][4];
-    double chi[6];
-    memcpy(chi + 0, p, sizeof(double)*3);
-    memcpy(chi + 3, q, sizeof(double)*3);
-    GetWFrom6Dof(W, chi);
+    GetWFrom6Dof(W, chi); /* chi only has translation and rotation */
     int j, k;
+    /* Scaling added w.r.t. boxSize */
     FOR_0(j, 4)
         FOR_0(k, 3)
             W[j][k] *= boxSize[k];
@@ -605,6 +598,27 @@ void DrawRb(const pym_rb_named_t *rbn,
     startXform(W);
     glutSolidCube(1.0);
     endXform();
+}
+
+void DrawBox_pq(const double *p, const double *q, const double *const boxSize) {
+    double chi[6];
+    memcpy(chi + 0, p, sizeof(double)*3);
+    memcpy(chi + 3, q, sizeof(double)*3);
+    DrawBox_chi(chi, boxSize);
+}
+
+void DrawRb(const pym_rb_named_t *rbn,
+            const double *const boxSize) {
+    const double *const p = rbn->p;
+    const double *const q = rbn->q;
+    DrawBox_pq(p, q, boxSize);
+}
+
+void DrawRbRef(const pym_rb_named_t *rbn,
+               const double *const boxSize) {
+    const double *const chi = rbn->chi_ref;
+    assert(chi);
+    DrawBox_chi(chi, boxSize);
 }
 
 void DrawRbContacts(const pym_rb_named_t *rbn) {
