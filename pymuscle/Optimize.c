@@ -550,7 +550,8 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
     memset(xx, 0, sizeof(xx));
     MSKsolstae solsta;
     double opttime;
-    double cost = PymOptimize(xx, &solsta, &opttime, &bipEq, sd, pymCfg, &env, cc);
+    double cost = PymOptimize(xx, &solsta, &opttime,
+                              &bipEq, sd, pymCfg, &env, cc);
     if (pureOptTime)
         *pureOptTime = opttime;
     if (cost == FLT_MAX) {
@@ -568,7 +569,9 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
         int tauOffset;
-        for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+        for (j = 0, tauOffset = 0;
+             j < nb;
+             tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
             const double *chi_2 = xx + tauOffset;
             const pym_rb_named_t *rbn = &pymCfg->body[j].b;
 
@@ -590,14 +593,6 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
             dev_stat[j].bodyIdx = j;
             dev_stat[j].nContact = sd[j].nContacts_2;
 
-    //            printf("  chi_0  %8s - ", rbn->name); __PRINT_VECTOR(chi_0, 6);
-    //            printf("     _1  %8s - ", rbn->name); __PRINT_VECTOR(chi_1, 6);
-    //            printf("     _2  %8s - ", rbn->name); __PRINT_VECTOR(chi_2, 6);
-    //            printf("  <ref>  %8s - ", rbn->name); __PRINT_VECTOR(chi_r, 6);
-    //            printf("  <dev>  %8s - ", rbn->name); __PRINT_VECTOR(chi_d, 6);
-    //            printf("  <vel>  %8s - ", rbn->name); __PRINT_VECTOR(chi_v, 6);
-    //            printf("\n");
-
             if (outputFile) {
                 FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
                 fprintf(outputFile, "\n");
@@ -605,8 +600,6 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
             /* Update the current state of rigid bodies */
             SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
         }
-
-
         qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
 
         FILE *__dmstream = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
@@ -622,17 +615,14 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
             fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
                     "\n");
             for (j = j0; j < j1; ++j) {
-                fprintf(__dmstream,
-                        "  %9.3e", dev_stat[j].chi_d_norm);
+                fprintf(__dmstream, "  %9.3e", dev_stat[j].chi_d_norm);
             }
             fprintf(__dmstream,
                     "\n");
             for (j = j0; j < j1; ++j) {
-                fprintf(__dmstream,
-                        "  %9d", dev_stat[j].nContact);
+                fprintf(__dmstream, "  %9d", dev_stat[j].nContact);
             }
-            fprintf(__dmstream,
-                    "\n");
+            fprintf(__dmstream, "\n");
             j0 = PymMin(nb, j0 + itemsPerLine);
             j1 = PymMin(nb, j1 + itemsPerLine);
         }
@@ -649,14 +639,17 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
         }
 
         __dmstream = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
-        fprintf(__dmstream,
-                "Anchored joints dislocation report\n");
+        fprintf(__dmstream, "Anchored joints dislocation report\n");
         FOR_0(j, nj) {
-            const double *dAj = xx + bipEq.Aci[6] + 4*j;
-            const double disloc = PymNorm(4, dAj);
-            const char *aAnchorName = pymCfg->body[ pymCfg->anchoredJoints[j].aIdx ].b.jointAnchorNames[ pymCfg->anchoredJoints[j].aAnchorIdx ];
+            const double *dAj    = xx + bipEq.Aci[6] + 4*j;
+            const double disloc  = PymNorm(4, dAj);
+            const int ajBodyAIdx = pymCfg->anchoredJoints[j].aIdx;
+            const pym_rb_named_t *ajBodyA
+                                 = &pymCfg->body[ ajBodyAIdx ].b;
+            const int ancIdx     = pymCfg->anchoredJoints[j].aAnchorIdx;
+            const char *aAncName = ajBodyA->jointAnchorNames[ ancIdx ];
             char iden[128];
-            ExtractAnchorIdentifier(iden, aAnchorName);
+            ExtractAnchorIdentifier(iden, aAncName);
             fprintf(__dmstream,
                     "%12s disloc = %e", iden, disloc);
             if (j%2) fprintf(__dmstream, "\n");
@@ -673,8 +666,10 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
 
             rbn->nContacts_2 = sdj->nContacts_2;
             FOR_0(k, sdj->nContacts_2) {
-                memcpy(rbn->contactsPoints_2a[k], chi_2 + sdj->Aci[3] + 4*k,  sizeof(double)*4);
-                memcpy(rbn->contactsForce_2[k],   chi_2 + sdj->Aci[1] + 6*k, sizeof(double)*3);
+                memcpy(rbn->contactsPoints_2a[k], chi_2 + sdj->Aci[3] + 4*k,
+                       sizeof(double)*4);
+                memcpy(rbn->contactsForce_2[k],   chi_2 + sdj->Aci[1] + 6*k,
+                       sizeof(double)*3);
             }
         }
     }
