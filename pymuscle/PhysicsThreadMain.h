@@ -12,6 +12,10 @@ typedef struct _pym_physics_thread_context_t {
     double *trajData;
     int stop;
     double trunkExternalForce[3];
+    /* renderer-accessable memory area */
+    pym_rb_t *renBody;
+    pym_mf_t *renFiber;
+    double   bipCom[3];
 } pym_physics_thread_context_t;
 
 void *PhysicsThreadMain(void *t);

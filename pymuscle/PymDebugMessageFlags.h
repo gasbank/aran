@@ -1,6 +1,10 @@
 #ifndef PYMDEBUGMESSAGEFLAGS_H_INCLUDED
 #define PYMDEBUGMESSAGEFLAGS_H_INCLUDED
 
+/* There are two types of messages:
+ *   - INIT : related to initialization
+ *   - FBYF : related for each frame (i.e. frame by frame)
+ */
 typedef enum _pym_debug_message_type_e {
 	PDMTE_INIT_MF_FOR_EACH_RB,
 	PDMTE_INIT_RB_CORRESPONDENCE_1,
@@ -8,6 +12,8 @@ typedef enum _pym_debug_message_type_e {
 	PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT,
 	PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT,
 	PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT,
+	PDMTE_FBYF_REF_COM_DEVIATION_REPORT,
+	PDMTE_FBYF_ACTIVE_CORNER_POINTS,
 	PDMTE_COUNT
 } pym_debug_message_type_e;
 

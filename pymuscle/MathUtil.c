@@ -17,15 +17,20 @@ double Dot(const unsigned int n, const double a[n], const double b[n]) {
     return r;
 }
 
-double PymNorm(int dim, const double v[dim])
+double PymNormSq(int dim, const double v[dim])
 {
-    double len = 0;
+    double lenSq = 0;
     int i;
     for (i = 0; i < dim; ++i)
-        len += v[i]*v[i];
-    len = sqrt(len);
-    return len;
+        lenSq += v[i]*v[i];
+    return lenSq;
 }
+
+double PymNorm(int dim, const double v[dim])
+{
+    return sqrt(PymNormSq(dim, v));
+}
+
 float PymNormf(int dim, const float v[dim])
 {
     float len = 0;

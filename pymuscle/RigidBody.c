@@ -250,16 +250,19 @@ int PymCheckRotParam(pym_config_t *pymCfg) {
         double th_0 = sqrt(rbn->q0[0]*rbn->q0[0] + rbn->q0[1]*rbn->q0[1] + rbn->q0[2]*rbn->q0[2]);
         double th_1 = sqrt(rbn->q [0]*rbn->q [0] + rbn->q [1]*rbn->q [1] + rbn->q [2]*rbn->q [2]);
 
-        /* we do not have any tumbling bodies */
+        /* TODO: we do not have any tumbling bodies */
         if (th_0 > 2*M_PI || th_1 > 2*M_PI) {
+
+            /* TODO: Re-parameterize the rotation if needed */
+            //PymReparameterizeRotParam(rbn, &pymCfg);
+
             printf("Error - %s rotation parameterization failure:\n", rbn->name);
             printf("        th_0 = %e (%e, %e, %e)\n", th_0, rbn->q0[0], rbn->q0[1], rbn->q0[2]);
             printf("        th_1 = %e (%e, %e, %e)\n", th_1, rbn->q[0], rbn->q[1], rbn->q[2]);
             return -1;
         }
 
-        /* TODO Re-parameterize the rotation if needed */
-        //PymReparameterizeRotParam(rbn, &pymCfg);
+
     }
     return 0;
 }

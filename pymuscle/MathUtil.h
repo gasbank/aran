@@ -5,6 +5,7 @@
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
 int PymMin(int a, int b);
+double PymNormSq(int dim, const double v[dim]);
 double PymNorm(int dim, const double v[dim]);
 double NormalizeVector(int dim, double v[dim]);
 float NormalizeVectorf(int dim, float v[dim]);

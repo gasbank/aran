@@ -11,6 +11,7 @@
 #include "CholmodMacro.h"
 #include "DebugPrintDef.h"
 #include "StateDependents.h"
+#include "PymDebugMessageFlags.h"
 
 void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
          const double chi[6], const double corner[3], const double normal[3], const double W[4][4], const double dRdv_tensor[3][4][4],
@@ -91,7 +92,9 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
 
 }
 
-int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc) {
+int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
+                           FILE *dmstreams[],
+                           const pym_config_t *pymCfg, cholmod_common *cc) {
     const pym_rb_named_t* rbn = &rb->b;
     assert(rbn->rotParam == RP_EXP);
     MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
@@ -105,7 +108,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
     dRdv(dRdvn[0], dRdvn[1], dRdvn[2], rbn->q);
     int i,j,k;
     memset(sd->dWdchi_tensor, 0, sizeof(sd->dWdchi_tensor));
-    for (i=0;i<3;++i) for (j=0;j<3;++j) for (k=0;k<3;++k) sd->dWdchi_tensor[i][j][k] = dRdvn[i][j][k];
+    for (i=0;i<3;++i)
+        for (j=0;j<3;++j)
+            for (k=0;k<3;++k)
+                sd->dWdchi_tensor[i][j][k] = dRdvn[i][j][k];
     double chi_1[6], chi_0[6];
     chi_1[0] = rbn->p[0]; chi_1[1] = rbn->p[1]; chi_1[2] = rbn->p[2];
     chi_1[3] = rbn->q[0]; chi_1[4] = rbn->q[1]; chi_1[5] = rbn->q[2];
@@ -137,12 +143,13 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
         /*
          * TODO [TUNE] Contact point level threshold
          * Optimal value table
-         *    Walk0 - 0.050
-         *    Nav0  - 0.050
-         *    Exer0 - 0.050 (unknown)
+         *    Walk0 -> 0.050
+         *    Nav0  -> 0.050
+         *    Exer0 -> 0.050 (unknown)
          */
-        if (pcj_2_nocf_W[2] <= -0.004) {
+        //if (pcj_2_nocf_W[2] <= -0.004) {
         //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
+        if (pcj_2_nocf_W[2] <= 0.10) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) {
@@ -152,8 +159,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/
             ++sd->nContacts_2;
-//            printf("   ACP : %s (cornerid=%d) %lf %lf %lf\n",
-//                   rbn->name, j, pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
+            FILE *dmst = dmstreams[PDMTE_FBYF_ACTIVE_CORNER_POINTS];
+            fprintf(dmst, "   ACP : %s (cornerid=%d) %lf %lf %lf\n",
+                    rbn->name, j,
+                    pcj_2_nocf_W[0], pcj_2_nocf_W[1], pcj_2_nocf_W[2]);
         }
     }
     const int nd = NUM_DOF;
@@ -179,7 +188,9 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_
                                 nd,          // \Delta \chi
                                 1,           // \epsilon_\Delta
                                 nd*nm,       // f_T
-                                4*na };      // \tilde{p}_A^{(l+1)}
+                                4*na,        // \tilde{p}_A^{(l+1)}
+                                1,           // \epsilon_rotparam
+                                 };
     //__PRINT_VECTOR_INT(Asubcolsizes, 10);
     sd->Asubrows = sizeof(Asubrowsizes)/sizeof(int);
     sd->Asubcols = sizeof(Asubcolsizes)/sizeof(int);

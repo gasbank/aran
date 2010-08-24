@@ -80,6 +80,9 @@ GLboolean selection=GL_FALSE;
 GLint width, height;
 Cursor picking;
 
+int RENDER_WIDTH  = 700;
+int RENDER_HEIGHT = 700;
+int SHADOW_MAP_RATIO = 1;
 /* Model variables */
 MODEL_PTR model=NULL;
 GLfloat roll=0.0f, pitch=0.0f, yaw=0.0f;
@@ -127,6 +130,11 @@ GLuint fboId;
 // Use to activate/disable shadowShader
 GLhandleARB shadowShaderId;
 GLuint shadowMapUniform;
+
+GLuint m_vaoID[5];      // two vertex array objects, one for each drawn object
+GLuint m_vboID[3];      // three VBOs
+const int n_face = 45;   // Circle shaped ground face number
+double zoomRatio = 1.0;
 
 int isExtensionSupported(const char *extension) {
     const GLubyte *extensions = NULL;
@@ -235,8 +243,8 @@ void loadShadowShader()
 	GLhandleARB vertexShaderHandle;
 	GLhandleARB fragmentShaderHandle;
 
-	vertexShaderHandle   = loadShader("VertexShader.c",GL_VERTEX_SHADER);
-	fragmentShaderHandle = loadShader("FragmentShader.c",GL_FRAGMENT_SHADER);
+	vertexShaderHandle   = loadShader("Shadow.vert",GL_VERTEX_SHADER);
+	fragmentShaderHandle = loadShader("Shadow.frag",GL_FRAGMENT_SHADER);
 
 	shadowShaderId = glCreateProgramObjectARB();
 
@@ -249,6 +257,7 @@ void loadShadowShader()
 
 void change_size(GLsizei w, GLsizei h)
 {
+    printf("Size changed to %d x %d.\n", w, h);
     GLfloat m[4][4];
     GLfloat sine, cotangent, deltaZ;
     GLfloat radians, fAspect;
@@ -507,14 +516,17 @@ void generateShadowFBO()
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 }
 
-void setupMatrices(float position_x,float position_y,float position_z,float lookAt_x,float lookAt_y,float lookAt_z)
+void setupMatrices(float position_x, float position_y, float position_z,
+                   float lookAt_x,   float lookAt_y,   float lookAt_z)
 {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45,1.0,1,100);
+	gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	gluLookAt(position_x,position_y,position_z,lookAt_x,lookAt_y,lookAt_z,0,0,1);
+	gluLookAt(position_x, position_y, position_z,
+              lookAt_x,   lookAt_y,   lookAt_z,
+              0,0,1);
 }
 
 void setTextureMatrix(void)
@@ -584,7 +596,7 @@ void endTranslate()
 	endXform();
 }
 
-void DrawBox_chi(const double *chi, const double *const boxSize) {
+void DrawBox_chi(const double *chi, const double *const boxSize, int wf) {
     double W[4][4];
     GetWFrom6Dof(W, chi); /* chi only has translation and rotation */
     int j, k;
@@ -594,31 +606,59 @@ void DrawBox_chi(const double *chi, const double *const boxSize) {
             W[j][k] *= boxSize[k];
 
     /* TODO: Remove scaling factor from the transform matrix W */
-    glColor3f(0.3,0.75,0.3);
     startXform(W);
-    glutSolidCube(1.0);
+    glPushAttrib(GL_POLYGON_BIT);
+    if (wf == 1)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    else if (wf == 0)
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    else
+        assert("What the...");
+
+
+    glBindVertexArray(m_vaoID[3]);      // select second VAO
+    //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
+    //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
+    //glNormalPointer(GL_FLOAT, 0, (void*)(sizeof(float)*3*4*6));
+    //glVertexPointer(3, GL_FLOAT, 0, 0);
+
+    glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
+
+    //glutWireCube(1.0);
+
+    glPopAttrib();
     endXform();
 }
 
-void DrawBox_pq(const double *p, const double *q, const double *const boxSize) {
+void DrawBox_pq(const double *p, const double *q,
+                const double *const boxSize, int wf) {
     double chi[6];
+    assert(p);
     memcpy(chi + 0, p, sizeof(double)*3);
-    memcpy(chi + 3, q, sizeof(double)*3);
-    DrawBox_chi(chi, boxSize);
+    if (q)
+        memcpy(chi + 3, q, sizeof(double)*3);
+    else {
+        chi[3] = 0;
+        chi[4] = 0;
+        chi[5] = 0;
+    }
+    DrawBox_chi(chi, boxSize, wf);
 }
 
 void DrawRb(const pym_rb_named_t *rbn,
-            const double *const boxSize) {
+            const double *const boxSize, int wf) {
     const double *const p = rbn->p;
     const double *const q = rbn->q;
-    DrawBox_pq(p, q, boxSize);
+    glColor3f(0.3,0.75,0.3);
+    DrawBox_pq(p, q, boxSize, wf);
 }
 
 void DrawRbRef(const pym_rb_named_t *rbn,
-               const double *const boxSize) {
+               const double *const boxSize, int wf) {
     const double *const chi = rbn->chi_ref;
     assert(chi);
-    DrawBox_chi(chi, boxSize);
+    glColor3f(1, 0, 0);
+    DrawBox_chi(chi, boxSize, wf);
 }
 
 void DrawRbContacts(const pym_rb_named_t *rbn) {
@@ -626,11 +666,11 @@ void DrawRbContacts(const pym_rb_named_t *rbn) {
     FOR_0(j, rbn->nContacts_2) {
         const double *conPos   = rbn->contactsPoints_2a[j];
         const double *conForce = rbn->contactsForce_2[j];
-        glColor3f(1,0,0);
+        glColor3f(0,1,0);
         startTranslate(conPos[0], conPos[1], conPos[2]);
         glutSolidCube(0.05);
         endTranslate();
-        const double scale = 0.001;
+        static const double scale = 0.001;
         glBegin(GL_LINES);
         glVertex3f(conPos[0], conPos[1], conPos[2]);
         glVertex3f(conPos[0]+conForce[0]*scale,
@@ -640,35 +680,22 @@ void DrawRbContacts(const pym_rb_named_t *rbn) {
     }
 }
 
-void drawObjects(pym_physics_thread_context_t *phyCxt, int forShadow, GLuint *m_vaoID) {
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-//    gluLookAt(8, -8, 8, 0, 0, 0, 0, 0, 1);
-//
-
-    glPushMatrix();
-    //Rotate scene
-    //glRotatef(xRot, 1.0f, 0.0f, 0.0f);
-    //glRotatef(yRot, 0.0f, 1.0f, 0.0f);
-
-
-    //NormalizeVectorf(4, sunPos);
-    //glLightfv(GL_LIGHT0, GL_POSITION, sunPos);
-
-    //glDisable(GL_LIGHTING);
+void DrawAxisOnWorldOrigin() {
     glBegin(GL_LINES);
     glColor3f(1,0,0); glVertex3f(0,0,0); glVertex3f(1,0,0);
     glColor3f(0,1,0); glVertex3f(0,0,0); glVertex3f(0,1,0);
     glColor3f(0,0,1); glVertex3f(0,0,0); glVertex3f(0,0,1);
     glEnd();
-    //glEnable(GL_LIGHTING);
+}
+
+void drawObjects(pym_physics_thread_context_t *phyCon, int forShadow, GLuint *m_vaoID) {
+    glPushMatrix();
+    if (!forShadow)
+        DrawAxisOnWorldOrigin();
+
     const float gndSize = 20.0f;
     const int gndTexRepeat = 4;
     const float gndTexOffset = 0.5;
-//    if (!forShadow) {
-//        glPushAttrib(GL_TEXTURE_BIT);
-//        glBindTexture(GL_TEXTURE_2D, gndTex);
-//    }
 
 
 //    glColor3f(0.3,0.3,0.3);
@@ -683,26 +710,38 @@ void drawObjects(pym_physics_thread_context_t *phyCxt, int forShadow, GLuint *m_
 //    glDrawArrays(GL_TRIANGLES, 0, 3);   // draw first object
 //    glBindVertexArray(0);
 
+    /* Render the flat ground of z=0 */
+    static int groundType = 1; /* 0: square, 1: circle */
     glColor3f(0.4,0.4,0.4);
-    glBindVertexArray(m_vaoID[2]);      // select second VAO
-    glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
-    glDrawArrays(GL_QUADS, 0, 4);   // draw second object
+    if (groundType == 0)
+        glBindVertexArray(m_vaoID[2]);      // select second VAO
+    else
+        glBindVertexArray(m_vaoID[4]);      // select second VAO
+    //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
+    glPushAttrib(GL_POLYGON_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    if (groundType == 0)
+        glDrawArrays(GL_QUADS, 0, 4);   // draw second object
+    else
+        glDrawArrays(GL_TRIANGLE_FAN, 0, (1+n_face+1)*3);   // draw second object
+    glPopAttrib();
 
-
-//    if (!forShadow) {
-//        glPopAttrib();
-//    }
-
-    const int nb = phyCxt->pymCfg->nBody;
+    const int nb = phyCon->pymCfg->nBody;
     pthread_mutex_lock(&main_mutex);
     int i, j, k;
     FOR_0(i, nb) {
-        const pym_rb_named_t *rbn = &phyCxt->pymCfg->body[i].b;
-        const double *const boxSize = phyCxt->pymCfg->body[i].b.boxSize;
-        DrawRb(rbn, boxSize);
-        DrawRbContacts(rbn);
+        /* Access data from renderer-accessable area of phyCon */
+        const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
+        const double *const boxSize = rbn->boxSize;
+        DrawRb(rbn, boxSize, 0);
+        if (!forShadow) {
+            DrawRbRef(rbn, boxSize, 1);
+            DrawRbContacts(rbn);
+        }
     }
-    glEnd();
+    static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
+    glColor3f(1,1,1);
+    DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
     pthread_mutex_unlock(&main_mutex);
 
     glPopMatrix();
@@ -720,7 +759,7 @@ void YRotPoint(float pr[3], float p[3], float th) {
     pr[2] = -sin(th)*p[0] + cos(th)*p[2];
 }
 
-void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
+void render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 {
     static GLint iFrames = 0;
     static GLfloat fps = 0.0f, DeltaT, t;
@@ -735,71 +774,19 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
     dt = etime - t0;
     t0 = etime;
 
-    // Clear the window with current clearing color
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    //First step: Render from the light POV to a FBO, store depth values only
+	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId); //Rendering offscreen
 
-    //Set up camera location and parameters
-    //setup_camera((float)dt);
-
-    //We are in animation mode
-//	if(animation) {
-//	  t1 += (float)dt;
-//
-//	  //End of this keyframe
-//	  if(t1>model->pose[pose].t) {
-//	    t1=t1-model->pose[pose].t;
-//	    old_pose=pose;
-//	    if(pose<model->num_poses-1)
-//	      pose++;
-//	    else
-//	      pose=0;
-//	  }
-//
-//	  //Interpolate start and stop quaternion
-//	  t = t1 / model->pose[pose].t;
-//	  for(i=0; i<model->num_bones; i++) {
-//	    slerp(
-//		  &model->bone[i].Q,
-//		  &model->pose[old_pose].Q[i],
-//		  &model->pose[pose].Q[i],
-//		  t);
-//	    quat2mv(model->bone[i].mvr,&model->bone[i].Q);
-//	  }
-//
-//	  //Update the model
-//	  updateModel(model);
-//	}
-//	//We are in pose mode
-//	else if(sel_bone) {
-//
-//	  //compute modelview matrix for selected bone
-//	  compute_mv(sel_bone-1, roll, pitch, yaw);
-//
-//	  //Update the model
-//	  updateModel(model);
-//	}
-
-//		//Draw skeleton
-//		if(skeleton)
-//		  drawSkeleton(model);
-//
-//		//Draw model
-//		if(transparency)
-//		  glEnable(GL_BLEND);
-//
-//		drawModel(model);
-
-
-
-    //First step: Render from the light POV to a FBO, story depth values only
-	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,fboId);	//Rendering offscreen
-
-	//Using the fixed pipeline to render to the depthbuffer
+	//Using the 'FIXED PIPELINE' to render to the depthbuffer
 	glUseProgramObjectARB(0);
 
 	// In the case we render the shadowmap to a higher resolution, the viewport must be modified accordingly.
-	//glViewport(0,0,RENDER_WIDTH * SHADOW_MAP_RATIO,RENDER_HEIGHT* SHADOW_MAP_RATIO);
-	glViewport(0, 0, 1024, 1024);
+	/*
+	glViewport(0, 0,
+               RENDER_WIDTH * SHADOW_MAP_RATIO,
+               RENDER_HEIGHT* SHADOW_MAP_RATIO);
+    */
+    glViewport(0, 0, 1024, 1024);
 
 	// Clear previous frame values
 	glClear(GL_DEPTH_BUFFER_BIT);
@@ -812,12 +799,12 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
 	float p_light[] = {sunPos[0]*10, sunPos[1]*10, sunPos[2]*10};
 	float l_light[] = {0, 0, 0};
 
-	setupMatrices(p_light[0],p_light[1],p_light[2],
-               l_light[0],l_light[1],l_light[2]);
+	setupMatrices(p_light[0], p_light[1], p_light[2],
+                  l_light[0], l_light[1], l_light[2]);
 
 	// Culling switching, rendering only backface, this is done to avoid self-shadowing
 	glCullFace(GL_FRONT);
-	drawObjects(phyCxt, 1, m_vaoID);
+	drawObjects(phyCon, 1, m_vaoID);
 
 	//Save modelview/projection matrice into texture7, also add a biais
 	setTextureMatrix();
@@ -826,7 +813,7 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
 	// Now rendering from the camera POV, using the FBO to generate shadows
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 
-	glViewport(0, 0, 700, 700);
+	glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
 
 	//Enabling color write (previously disabled for light POV z-buffer rendering)
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
@@ -840,19 +827,16 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
 	glActiveTextureARB(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D,depthTextureId);
 
-
-
-
-	float p_camera[] = {8, -8, 8};
+	float p_camera[] = {8*zoomRatio, -8*zoomRatio, 8*zoomRatio};
 	float l_camera[] = {0, 0, 0};
 	float pRotX[3], pRotXY[3];
 	XRotPoint(pRotX, p_camera, xRot/180.0f*M_PI);
 	YRotPoint(pRotXY, pRotX, yRot/180.0f*M_PI);
-	setupMatrices(pRotXY[0], pRotXY[1], pRotXY[2],
-               l_camera[0],l_camera[1],l_camera[2]);
+	setupMatrices(pRotXY[0],   pRotXY[1],   pRotXY[2],
+                  l_camera[0], l_camera[1], l_camera[2]);
 
 	glCullFace(GL_BACK);
-	drawObjects(phyCxt, 0, m_vaoID);
+	drawObjects(phyCon, 0, m_vaoID);
 
 //    glUseProgramObjectARB(0);
 //    glMatrixMode(GL_PROJECTION);
@@ -877,24 +861,24 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
     glPushMatrix();
     glLoadIdentity();
 
-    glMatrixMode(GL_MODELVIEW);
-    glPushMatrix();
-    glLoadIdentity();
-    glColor3f(0.2,0.2,0.9);
-    glBegin(GL_LINES);
-    glVertex3f(0,0,-1);
-    glVertex3f(1,0,-1);
-    glVertex3f(0,0,-1);
-    glVertex3f(0,1,-1);
-    glEnd();
-    glPopMatrix();
+//    glMatrixMode(GL_MODELVIEW);
+//    glPushMatrix();
+//    glLoadIdentity();
+//    glColor3f(0.2,0.2,0.9);
+//    glBegin(GL_LINES);
+//    glVertex3f(0,0,-1);
+//    glVertex3f(1,0,-1);
+//    glVertex3f(0,0,-1);
+//    glVertex3f(0,1,-1);
+//    glEnd();
+//    glPopMatrix();
 
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glPushAttrib(GL_LIST_BIT);
-    glListBase(fps_font - ' ');
-    glWindowPos2i(0,100);
-    glCallLists(strlen("abc"), GL_UNSIGNED_BYTE, "abc");
-    glPopAttrib();
+//    glColor3f(1.0f, 1.0f, 1.0f);
+//    glPushAttrib(GL_LIST_BIT);
+//    glListBase(fps_font - ' ');
+//    glWindowPos2i(0,100);
+//    glCallLists(strlen("abc"), GL_UNSIGNED_BYTE, "abc");
+//    glPopAttrib();
 
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -916,14 +900,6 @@ void render(pym_physics_thread_context_t *phyCxt, GLuint *m_vaoID)
     if (print_fps)
     {
         sprintf(cBuffer, "FPS: %.1f", fps);
-//	  if(animation)
-//	    sprintf(cBuffer, "FPS: %.1f Pose: %d T: %2.3f",
-//		    fps, pose, t1);
-//	  else
-//	    sprintf(cBuffer, "FPS: %.1f ID: %d Pose: %d T: %2.3f Roll: %2.3f Pitch %2.3f Yaw %2.3f",
-//		    fps, sel_bone, model->num_poses-1,
-//		    model->pose[model->num_poses-1].t,
-//		    roll, pitch, yaw);
 
         glColor3f(1.0f, 1.0f, 1.0f);
         glPushAttrib(GL_LIST_BIT);
@@ -1027,14 +1003,10 @@ void handle_mouse_button( int button, int state, int x, int y )
         old_y = y;
         break;
     case 4: /* rotate wheel upward */
-//	  if(sel_bone-=(sel_bone?1:-model->num_bones))
-//	    retrieve_angles();
+        zoomRatio += 0.1;
         break;
     case 5: /* rotate wheel downward */
-//	  if(sel_bone++<model->num_bones)
-//	    retrieve_angles();
-//	  else
-//	    sel_bone = 0;
+        zoomRatio -= 0.1;
         break;
     }
 }
@@ -1131,10 +1103,8 @@ void simplerender(GLuint *m_vaoID) {
 
 }
 
-void event_loop(Display* display, Window window,
-                Atom wmDeleteMessage,
-                pym_physics_thread_context_t *phyCxt,
-                GLuint *m_vaoID )
+void event_loop(Display* display, Window window, Atom wmDeleteMessage,
+                pym_physics_thread_context_t *phyCon, GLuint *m_vaoID )
 {
     int exertExternalForce = 0;
     while (1)
@@ -1157,7 +1127,9 @@ void event_loop(Display* display, Window window,
             case Expose:
                 break;
             case ConfigureNotify:
-                change_size(event.xconfigure.width, event.xconfigure.height);
+                RENDER_WIDTH  = event.xconfigure.width;
+                RENDER_HEIGHT = event.xconfigure.height;
+                change_size(RENDER_WIDTH, RENDER_HEIGHT);
                 break;
             case KeyPress:
             {
@@ -1167,6 +1139,8 @@ void event_loop(Display* display, Window window,
                     return;
                 if(code == XK_a)
                     exertExternalForce = 1;
+                if(code == XK_r)
+                    pthread_cond_signal(&count_threshold_cv);
                 if(code == XK_w)
                     dCam = tStep;
                 if(code == XK_s)
@@ -1300,15 +1274,15 @@ void event_loop(Display* display, Window window,
             }
         }
 
-        render(phyCxt, m_vaoID);
+        render(phyCon, m_vaoID);
 
         //simplerender(m_vaoID);
 
         glXSwapBuffers( display, window );
         if (exertExternalForce) {
             pthread_mutex_lock(&main_mutex); {
-                phyCxt->trunkExternalForce[0] = 5000;
-                phyCxt->trunkExternalForce[1] = 4000;
+                phyCon->trunkExternalForce[0] = 5000;
+                phyCon->trunkExternalForce[1] = 4000;
 
             } pthread_mutex_unlock(&main_mutex);
             exertExternalForce = 0;
@@ -1528,16 +1502,8 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
     vert2[3] = 0.3; vert2[4] =-0.5; vert2[5] =-1.0;
     vert2[6] = 0.8; vert2[7] = 0.5; vert2[8]= -1.0;
 
-    // Third simple object
-    GLfloat vert3[] = {  5.3f,  5.3f,  0.0f,
-                      -5.3f,  5.3f,  0.0f,
-                      -5.3f, -5.3f,  0.0f,
-                       5.3f, -5.3f,  0.0f  };
-
-
-
     // Three VAOs allocation (Vertex Array Object)
-    glGenVertexArrays(3, m_vaoID);
+    glGenVertexArrays(5, m_vaoID);
 
     // First VAO setup
     glBindVertexArray(m_vaoID[0]);
@@ -1569,7 +1535,11 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
 
     // Third VAO setup
     glBindVertexArray(m_vaoID[2]);
-
+    // Third simple object
+    GLfloat vert3[] = {  15.3f,  5.3f,  0.0f,
+                      -5.3f,  5.3f,  0.0f,
+                      -5.3f, -5.3f,  0.0f,
+                       5.3f, -5.3f,  0.0f  };
     // 1 VBO for the third VAO
     GLuint vboxx;
     glGenBuffers(1, &vboxx);
@@ -1579,20 +1549,99 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
+
+    // Fourth VAO setup
+    glBindVertexArray(m_vaoID[3]);
+    GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
+                         0.5f,  0.5f,  0.5f,
+                         0.5f, -0.5f,  0.5f,
+                         0.5f, -0.5f, -0.5f,
+                         0.5f,  0.5f, -0.5f,
+                        /* Face which has -X normals (x=-0.5) */
+                        -0.5f,  0.5f,  0.5f,
+                        -0.5f,  0.5f, -0.5f,
+                        -0.5f, -0.5f, -0.5f,
+                        -0.5f, -0.5f,  0.5f,
+                        /* Face which has +Y normals (y= 0.5) */
+                         0.5f, 0.5f,  0.5f,
+                         0.5f, 0.5f, -0.5f,
+                        -0.5f, 0.5f, -0.5f,
+                        -0.5f, 0.5f,  0.5f,
+                        /* Face which has -Y normals (y=-0.5) */
+                         0.5f, -0.5f, 0.5f,
+                        -0.5f, -0.5f, 0.5f,
+                        -0.5f, -0.5f,-0.5f,
+                         0.5f, -0.5f,-0.5f,
+                        /* Face which has +Z normals (z= 0.5) */
+                         0.5f,  0.5f, 0.5f,
+                        -0.5f,  0.5f, 0.5f,
+                        -0.5f, -0.5f, 0.5f,
+                         0.5f, -0.5f, 0.5f,
+                        /* Face which has -Z normals (z=-0.5) */
+                         0.5f,  0.5f, -0.5f,
+                         0.5f, -0.5f, -0.5f,
+                        -0.5f, -0.5f, -0.5f,
+                        -0.5f,  0.5f, -0.5f  };
+    GLfloat nor4[] = {
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+        0,0,1,0,0,1,0,0,1,0,0,1,
+        0,0,-1,0,0,-1,0,0,-1,0,0,-1,
+    };
+    // 2 VBOs for the third VAO
+    GLuint vboxx2[2];
+    glGenBuffers(2, &vboxx2);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboxx2[0]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), vert4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboxx2[1]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+
+
+
+    // Fifth VAO setup (Circle shaped ground)
+    glBindVertexArray(m_vaoID[4]);
+    /* center point(1) + vertices around circumference(n_face) + final point(1) */
+    const int n_vert_circle = (1+n_face+1)*3;
+    GLfloat vert5[n_vert_circle];
+    memset(vert5, 0, sizeof(vert5));
+    float circle_radius = 10;
+    int i;
+    for (i=0;i<=n_face;++i) { /* note that '<=' for final point */
+        const double rad = 2*M_PI/n_face*i;
+        vert5[3 + i*3 + 0] = circle_radius*cos(rad);
+        vert5[3 + i*3 + 1] = circle_radius*sin(rad);
+    }
+
+    // 1 VBO for the third VAO
+    glGenBuffers(1, &vboxx);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboxx);
+    glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat), vert5, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+
     glBindVertexArray(0);
 }
-
 int main(int argc, char *argv[])
 {
     int ret=0;
-    char*			display_name;
-    Display*		display;
+    char*           display_name;
+    Display*        display;
     Window			window;
-    int			scrnum;
+    int			    scrnum;
     Window			root;
-    int			x, y;
-    GLXContext		context;
-    XVisualInfo*		vinfo;
+    int			    x, y;
+    GLXContext      context;
+    XVisualInfo*    vinfo;
     XSetWindowAttributes	winattrs;
     XFontStruct*		font;
     unsigned long		winmask;
@@ -1620,26 +1669,30 @@ int main(int argc, char *argv[])
 
     /* Initialize debug message flags (dmflags) */
     int dmflags[PDMTE_COUNT] = {0,};
-    dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
+    //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
     dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
+    dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
     FILE *dmstreams[PDMTE_COUNT];
     int i;
     FILE *devnull = fopen("/dev/null", "w");
-    FOR_0(i, PDMTE_COUNT) {
-    	if (dmflags[i]) dmstreams[i] = stdout;
-    	else dmstreams[i] = devnull;
+    FOR_0(i, PDMTE_COUNT)
+    {
+        if (dmflags[i]) dmstreams[i] = stdout;
+        else dmstreams[i] = devnull;
     }
     /* Parse command line options */
     pym_cmdline_options_t cmdopt;
     ret = PymParseCmdlineOptions(&cmdopt, argc, argv);
-    if (ret < 0) {
+    if (ret < 0)
+    {
         printf("Failed.\n");
         return -2;
     }
     /* Construct pymCfg structure */
     pym_config_t pymCfg;
     ret = PymConstructConfig(cmdopt.simconf, &pymCfg, dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
-    if (ret < 0) {
+    if (ret < 0)
+    {
         printf("Failed.\n");
         return -1;
     }
@@ -1650,35 +1703,37 @@ int main(int argc, char *argv[])
     int nBlenderBody = 0;
     int corresMapIndex[pymCfg.nBody];
     FOR_0(i, pymCfg.nBody)
-        corresMapIndex[i] = -1;
+    corresMapIndex[i] = -1;
     double *trajData = 0;
-    if (cmdopt.trajconf) {
+    if (cmdopt.trajconf)
+    {
         char corresMap[MAX_CORRESMAP][2][128];
         int nCorresMap = 0;
-    	int parseRet = PymParseTrajectoryFile(
-    			corresMap,
-    			&nCorresMap,
-    			&trajData,
-    			&nBlenderBody,
-    			&nBlenderFrame,
-    			&exportFps,
-    			cmdopt.trajconf,
-    			cmdopt.trajdata);
+        int parseRet = PymParseTrajectoryFile(
+                           corresMap,
+                           &nCorresMap,
+                           &trajData,
+                           &nBlenderBody,
+                           &nBlenderFrame,
+                           &exportFps,
+                           cmdopt.trajconf,
+                           cmdopt.trajdata);
         assert(parseRet == 0);
-    	assert(nCorresMap > 0);
-    	/* The simulation time step defined in simconf and
-    	 * the frame time (reciprocal of FPS) in trajdata
-    	 * should have the same value. If mismatch happens
-    	 * we ignore simulation time step in simconf.
-    	 */
-    	if (fabs(1.0/exportFps - pymCfg.h) > 1e-6) {
-    		printf("Warning - simulation time step defined in simconf and\n");
-    		printf("          trajectory data do not match.\n");
-    		printf("            simconf  : %3d FPS (%lf sec per frame)\n", (int)ceil(1.0/pymCfg.h), pymCfg.h);
-    		printf("            trajconf : %3d FPS (%lf sec per frame)\n", exportFps, 1.0/exportFps);
-    		printf("          simconf's value will be ignored.\n");
-    		pymCfg.h = 1.0/exportFps;
-    	}
+        assert(nCorresMap > 0);
+        /* The simulation time step defined in simconf and
+         * the frame time (reciprocal of FPS) in trajdata
+         * should have the same value. If mismatch happens
+         * we ignore simulation time step in simconf.
+         */
+        if (fabs(1.0/exportFps - pymCfg.h) > 1e-6)
+        {
+            printf("Warning - simulation time step defined in simconf and\n");
+            printf("          trajectory data do not match.\n");
+            printf("            simconf  : %3d FPS (%lf sec per frame)\n", (int)ceil(1.0/pymCfg.h), pymCfg.h);
+            printf("            trajconf : %3d FPS (%lf sec per frame)\n", exportFps, 1.0/exportFps);
+            printf("          simconf's value will be ignored.\n");
+            pymCfg.h = 1.0/exportFps;
+        }
 
         PymCorresMapIndexFromCorresMap(corresMapIndex,
                                        nCorresMap,
@@ -1706,7 +1761,9 @@ int main(int argc, char *argv[])
         PymSetInitialStateUsingTrajectory(&pymCfg, nBlenderBody, corresMapIndex, trajData);
         PymInitJointAnchors(&pymCfg, dmstreams);
         PymConstructAnchoredJointList(&pymCfg);
-    } else {
+    }
+    else
+    {
         PymSetPymCfgChiRefToCurrentState(&pymCfg);
     }
 
@@ -1718,7 +1775,8 @@ int main(int argc, char *argv[])
         pymCfg.nSimFrame = 100;
 
     FILE *outputFile = fopen(cmdopt.output, "w");
-    if (!outputFile) {
+    if (!outputFile)
+    {
         printf("Error: Opening the output file %s failed.\n", cmdopt.output);
         return -3;
     }
@@ -1814,66 +1872,66 @@ int main(int argc, char *argv[])
         printf("Error: glewInit() failed\n");
         return 1;
     }
-assert(glXChooseFBConfig);
+    assert(glXChooseFBConfig);
 
-  static int visual_attribs[] =
+    static int visual_attribs[] =
     {
-      GLX_X_RENDERABLE    , True,
-      GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
-      GLX_RENDER_TYPE     , GLX_RGBA_BIT,
-      GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
-      GLX_RED_SIZE        , 8,
-      GLX_GREEN_SIZE      , 8,
-      GLX_BLUE_SIZE       , 8,
-      GLX_ALPHA_SIZE      , 8,
-      GLX_DEPTH_SIZE      , 24,
-      GLX_STENCIL_SIZE    , 8,
-      GLX_DOUBLEBUFFER    , True,
-      //GLX_SAMPLE_BUFFERS  , 1,
-      //GLX_SAMPLES         , 4,
-      None
+        GLX_X_RENDERABLE    , True,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , True,
+        //GLX_SAMPLE_BUFFERS  , 1,
+        //GLX_SAMPLES         , 4,
+        None
     };
-     printf( "Getting matching framebuffer configs\n" );
-      int fbcount;
-      GLXFBConfig *fbc = glXChooseFBConfig( display, DefaultScreen( display ),
-                                            visual_attribs, &fbcount );
-      if ( !fbc )
-      {
+    printf( "Getting matching framebuffer configs\n" );
+    int fbcount;
+    GLXFBConfig *fbc = glXChooseFBConfig( display, DefaultScreen( display ),
+                                          visual_attribs, &fbcount );
+    if ( !fbc )
+    {
         printf( "Failed to retrieve a framebuffer config\n" );
         exit(1);
-      }
-      printf( "Found %d matching FB configs.\n", fbcount );
+    }
+    printf( "Found %d matching FB configs.\n", fbcount );
 
-      // Pick the FB config/visual with the most samples per pixel
-      printf( "Getting XVisualInfos\n" );
-      int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
+    // Pick the FB config/visual with the most samples per pixel
+    printf( "Getting XVisualInfos\n" );
+    int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
 
 
-      for ( i = 0; i < fbcount; i++ )
-      {
+    for ( i = 0; i < fbcount; i++ )
+    {
         XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
         if ( vi )
         {
-          int samp_buf, samples;
-          glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
-          glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
+            int samp_buf, samples;
+            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLE_BUFFERS, &samp_buf );
+            glXGetFBConfigAttrib( display, fbc[i], GLX_SAMPLES       , &samples  );
 
-          printf( "  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d,"
-                  " SAMPLES = %d\n",
-                  i, (int)(vi -> visualid), samp_buf, samples );
+            printf( "  Matching fbconfig %d, visual ID 0x%2x: SAMPLE_BUFFERS = %d,"
+                    " SAMPLES = %d\n",
+                    i, (int)(vi -> visualid), samp_buf, samples );
 
-          if ( (best_fbc < 0) || (samp_buf && (samples > best_num_samp)) )
-            best_fbc = i, best_num_samp = samples;
-          if ( (worst_fbc < 0) || !samp_buf || (samples < worst_num_samp) )
-            worst_fbc = i, worst_num_samp = samples;
+            if ( (best_fbc < 0) || (samp_buf && (samples > best_num_samp)) )
+                best_fbc = i, best_num_samp = samples;
+            if ( (worst_fbc < 0) || !samp_buf || (samples < worst_num_samp) )
+                worst_fbc = i, worst_num_samp = samples;
         }
         XFree( vi );
-      }
+    }
 
-      GLXFBConfig bestFbc = fbc[ best_fbc ];
+    GLXFBConfig bestFbc = fbc[ best_fbc ];
 
-      // Be sure to free the FBConfig list allocated by glXChooseFBConfig()
-      XFree( fbc );
+    // Be sure to free the FBConfig list allocated by glXChooseFBConfig()
+    XFree( fbc );
 
 
     int attribs[] =
@@ -1918,27 +1976,27 @@ assert(glXChooseFBConfig);
 
     gndTex = CreateGridPatternGroundTexture();
 
-    GLuint m_vaoID[3];      // two vertex array objects, one for each drawn object
-    GLuint m_vboID[3];      // three VBOs
-
     setdata(m_vboID, m_vaoID);
     //preparedata();
-	generateShadowFBO();
-	loadShadowShader();
+    generateShadowFBO();
+    loadShadowShader();
 
 
     /* Initialize the physics thread context */
-    pym_physics_thread_context_t phyCxt = {
-        .pymCfg = &pymCfg,
-        .nBlenderBody = nBlenderBody,
-        .cmdopt = &cmdopt,
-        .corresMapIndex = corresMapIndex,
-        .outputFile = outputFile,
-        .dmstreams = dmstreams,
-        .totalPureOptTime = 0,
-        .trajData = trajData,
-        .stop = 0,
-        .trunkExternalForce = {0,}
+    pym_physics_thread_context_t phyCon =
+    {
+        .pymCfg             = &pymCfg,
+        .nBlenderBody       = nBlenderBody,
+        .cmdopt             = &cmdopt,
+        .corresMapIndex     = corresMapIndex,
+        .outputFile         = outputFile,
+        .dmstreams          = dmstreams,
+        .totalPureOptTime   = 0,
+        .trajData           = trajData,
+        .stop               = 0,
+        .trunkExternalForce = {0,},
+        .renBody            = calloc(pymCfg.nBody,  sizeof(pym_rb_t)),
+        .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t))
     };
     pthread_t thPhysics;
     pthread_attr_t attr;
@@ -1952,7 +2010,7 @@ assert(glXChooseFBConfig);
     /* For portability, explicitly create threads in a joinable state */
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    pthread_create(&thPhysics, &attr, PhysicsThreadMain, (void *)&phyCxt);
+    pthread_create(&thPhysics, &attr, PhysicsThreadMain, (void *)&phyCon);
     //pthread_create(&threads[1], &attr, inc_count, (void *)t2);
     //pthread_create(&threads[2], &attr, inc_count, (void *)t3);
 
@@ -1964,8 +2022,9 @@ assert(glXChooseFBConfig);
     glEnable(GL_LIGHT0);
     glEnable(GL_TEXTURE_2D);
     //glCullFace(GL_BACK);
-    glEnable(GL_NORMALIZE);
+    //glEnable(GL_NORMALIZE);
     glEnable(GL_ALPHA_TEST);
+    glShadeModel(GL_FLAT);
 
     glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
 
@@ -1983,14 +2042,15 @@ assert(glXChooseFBConfig);
     /*************
      * Event loop
      *************/
-    event_loop( display, window, wmDeleteMessage, &phyCxt, m_vaoID );
+    event_loop( display, window, wmDeleteMessage, &phyCon, m_vaoID );
 
     pthread_mutex_lock(&main_mutex);
-    phyCxt.stop = 1;
+    phyCon.stop = 1;
     pthread_mutex_unlock(&main_mutex);
 
     /* Wait for the physics thread to complete */
     puts("Wait for the physics thread to complete...\n");
+    pthread_cond_signal(&count_threshold_cv);
     pthread_join(thPhysics, NULL);
 
     /* TODO: Force-canceling physics thread.
@@ -2007,15 +2067,17 @@ assert(glXChooseFBConfig);
 
     free(trajData);
 
-    if (cmdopt.freeTrajStrings) {
+    if (cmdopt.freeTrajStrings)
+    {
         free(cmdopt.trajconf);
         free(cmdopt.trajdata);
     }
-    if (cmdopt.freeOutputStrings) {
+    if (cmdopt.freeOutputStrings)
+    {
         free(cmdopt.output);
     }
 
-    printf("Accumulated pure MOSEK optimizer time : %lf s\n", phyCxt.totalPureOptTime);
+    printf("Accumulated pure MOSEK optimizer time : %lf s\n", phyCon.totalPureOptTime);
 
 
 //    /* Setup Rendering Context */

@@ -18,9 +18,9 @@ void PymCleanupMosek(MSKenv_t *env);
 double PymOptimize(double *xx,
                    MSKsolstae *_solsta, /* MOSEK solution status */
                    double *opttime,
-                   const pym_biped_eqconst_t *bod,
-                   const pym_rb_statedep_t *sd,
-                   const pym_config_t *pymCfg,
+                   const pym_biped_eqconst_t *const bod,
+                   const pym_rb_statedep_t *const sd,
+                   const pym_config_t *const pymCfg,
                    MSKenv_t *pEnv, cholmod_common *cc);
 
 int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,

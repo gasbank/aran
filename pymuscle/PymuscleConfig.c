@@ -340,6 +340,21 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* 
     *_R_i = R_i;
 }
 
+void PymCalculateRefCom(double *refCom, const pym_config_t *const pymCfg) {
+    int i, j;
+    double totMass = 0;
+    FOR_0(j, 3)
+        refCom[j] = 0;
+    FOR_0(i, pymCfg->nBody) {
+        const pym_rb_named_t *const rbn = &pymCfg->body[i].b;
+        FOR_0(j, 3)
+            refCom[j] += rbn->m * rbn->chi_ref[j];
+        totMass += rbn->m;
+    }
+    FOR_0(j, 3)
+        refCom[j] /= totMass;
+}
+
 void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t *sd, const pym_config_t *pymCfg, cholmod_common *cc)
 {
     const int nb = pymCfg->nBody;
@@ -352,7 +367,9 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
                                      2*nd*nf,
                                      nf,
                                      4*nj,
-                                     nj };
+                                     nj,
+                                     3,
+                                     3 };
     int Asubcolsizes[          ] = { 0, /* be calculated later */
                                      nf,
                                      nf,
@@ -360,7 +377,10 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
                                      1,
                                      1,
                                      4*nj,
-                                     nj };
+                                     nj,
+                                     3,
+                                     3,
+                                     1 };
     int i, j, l;
     FOR_0(i, nb) {
         GetAMatrix(A_trip + i, sd + i, pymCfg->body + i, pymCfg, cc);
@@ -401,6 +421,10 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     nzmax += 2*4*nj;   /* sub-block 07 - D */
     nzmax += 4*nj;     /* sub-block 08 - (-1) */
     nzmax += nj;       /* sub-block 09 - (1) */
+    nzmax += 3*nb;     /* sub-block 10 - A_com */
+    nzmax += 3;        /* sub-block 11 - 1*M */
+    nzmax += 3;        /* sub-block 12 - 1 */
+    nzmax += 3;        /* sub-block 13 - -1 */
 
 //    printf("    BipA matrix constants (nb)      : %d\n", nb);
 //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -430,7 +454,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         FOR_0(j, nd*nfi) {
             SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 0,
                                       EoffsetRow + j,
-                                      EoffsetCol + A_trip[i]->ncol - nd*nfi + j - 4*nai,
+                                      EoffsetCol + sd[i].Aci[9] + j,
                                       -1);
         }
         EoffsetRow += nd*pymCfg->body[i].b.nFiber;
@@ -480,16 +504,39 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     /* Sub-block 09 - (1) */
     FOR_0(i, nj)
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 4, 7, i, i, 1);
+    /* Sub-block 10 - A_com */
+    EoffsetCol = 0;
+    double totMass = 0;
+    FOR_0(i, nb) {
+        const double mass = pymCfg->body[i].b.m;
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 0, EoffsetCol + 0, mass);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 1, EoffsetCol + 1, mass);
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 2, EoffsetCol + 2, mass);
+        totMass += mass;
+        EoffsetCol += A_trip[i]->ncol;
+    }
+    /* Sub-block 11 - 1*M */
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 0, 0, -totMass);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 1, 1, -totMass);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 2, 2, -totMass);
+    /* Sub-block 12 - 1 */
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 0, 0, 1);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 1, 1, 1);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 2, 2, 1);
+    /* Sub-block 13 - 1 */
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 0, 0, -1);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 1, 1, -1);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 2, 2, -1);
+    /* Finish: convert AMatrix_trip to column compressed format */
     bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
     cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */
     assert(bod->bipMat);
-
     /*********************
      * Eta vector setup  *
      *********************/
     double *bipEta = calloc(Ari[Asubrows], sizeof(double));
-    //memset(bipEta, 0, sizeof(double)*Ari[Asubrows]);
     int etaOffset = 0;
+    /* Eta sub-block 00 - eta */
     FOR_0(i, nb) {
         double *etai;
         GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc); /* Space for 'etai' is allocated at GetEta() */
@@ -497,9 +544,11 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
         free(etai); /* so free here */
         etaOffset += A_trip[i]->nrow;
     }
+    /* Eta sub-block 02 - s */
     FOR_0(i, nf) {
         bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
+    /* Eta sub-block 04 - d_disloc */
     FOR_0(i, nj) {
         const char *anchorName = pymCfg->pymJa[ pymCfg->anchoredJoints[i].aAnchorIdxGbl ].name;
         char iden[128];
@@ -510,11 +559,16 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
          * TODO [TUNE] Joint dislocation threshold
          */
         if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0) {
-            bipEta[ Ari[4] + i ] = 0.05;
+            bipEta[ Ari[4] + i ] = 0.03;
         } else {
             bipEta[ Ari[4] + i ] = 0.03;
         }
     }
+    /* Eta sub-block 06 - p_{com,ref} */
+    double refCom[3];
+    PymCalculateRefCom(refCom, pymCfg);
+    memcpy(bipEta + Ari[6], refCom, sizeof(double)*3);
+
     bod->bipEta = bipEta;
 
     FOR_0(i, nb) cholmod_free_triplet(&A_trip[i], cc);

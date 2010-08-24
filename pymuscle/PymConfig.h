@@ -3,19 +3,23 @@
 
 #include "PymJointAnchor.h"
 
+#define MAX_NUM_JOINT_ANCHORS    (100)
+#define MAX_NUM_ANCHORED_JOINTS  (50)
+
 struct _pym_config_t {
     pym_rb_t *body; unsigned int nBody;
     pym_mf_t *fiber; unsigned int nFiber;
-    unsigned int nJoint;
-    double h;
-    double mu;
+    double h; /* simulation time step */
+    double mu; /* ground friction coefficient */
     int nSimFrame;
-    double slant;
+    double slant; /* ground slant angle */
 
-    pym_joint_anchor_t pymJa[100];
-    int na;
-    pym_anchored_joint_t anchoredJoints[50];
-    //int ja : not needed. use nJoint instead.
+    int na; /* number of joint anchors (points) */
+    pym_joint_anchor_t pymJa[MAX_NUM_JOINT_ANCHORS];
+    int nJoint; /* number of anchored joints */
+    pym_anchored_joint_t anchoredJoints[MAX_NUM_ANCHORED_JOINTS];
+
+    double bipCom[3]; /* Is part of opt variable */
 };
 
 #endif // PYMCONFIG_H_INCLUDED

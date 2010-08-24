@@ -1710,30 +1710,36 @@ c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
 The matrix-vector notation for equility constraints:
 \begin{equation}\notag
 \bordermatrix{
-                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}        \cr
-\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                           \cr
-\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                           \cr
-\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                           \cr
-\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                           \cr
-\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}
+                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}     &  \scriptstyle{8 : 3} &  \scriptstyle{9:3} \cr
+\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    \cr
+\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                        &                      &                    \cr
+\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                        &                      &                    \cr
+\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                        &                      &                    \cr
+\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}                            &                      &                    \cr
+\scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    \cr
+\scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}
 }
 \left(\begin{array}{c}
-\tau  \\
-T \\
-u \\
-x_r \\ 
-\epsilon_T \\
-\epsilon_u \\
-d_A \\ 
-\epsilon_d
+\tau                        \\
+T                           \\
+u                           \\
+x_r                         \\ 
+\epsilon_\text{lig}         \\
+\epsilon_\text{act}         \\
+d_A                         \\ 
+\epsilon_d                  \\
+p_\text{com}^{(l+1)}        \\
+\Delta p_{\text{com},ref}   \\
 \end{array}\right)
 =
-\left(\begin{array}{c}
-\eta       \\
-\vec{0}    \\
-s          \\
-\vec{0}    \\
-d_\text{disloc}
+\left( \begin{array}{c}
+\eta                        \\
+\vec{0}                     \\
+s                           \\
+\vec{0}                     \\
+d_\text{disloc}             \\
+\vec{0}                     \\
+p_{\text{com},ref}^{(l+1)}  \\
 \end{array}\right)
 \end{equation}
 \begin{equation}\notag
@@ -1763,6 +1769,9 @@ d_\text{disloc}  \equiv (d_{\text{disloc},i})^{\text{re}}_{i \in \mathcal{J}}
 \mathbf{R}_i : n_d | \mathcal{M}(i) | \times |\mathcal{M}|, \quad
 \tilde{\mathbf{E}}_i = [\mathbf{0},-\mathbf{1},\mathbf{0}_{n_d | \mathcal{M}(i) | \times 4|\mathcal{A}(i)|}] \quad : n_d | \mathcal{M}(i) | \times \text{colsize}(\mathbf{A}_i)
 \end{equation}
+\begin{equation}\notag
+\mathbf{A}_\text{com} = ([ \mathbf{1}m_j, \mathbf{0} ])^{ce}_{j \in \mathcal{B}}
+\end{equation}
 
 \noindent Inequality constraints:
 \begin{equation}\notag
@@ -1771,9 +1780,11 @@ x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
 
 \noindent Second-order cone constraints:
 \begin{equation}\notag
-\epsilon_T \geq \| T \|, \quad \epsilon_u \geq \| u \|, \quad
+\epsilon_\text{lig} \geq \| u_\text{lig} \|, \quad \epsilon_\text{act} \geq \| u_\text{act} \|, \quad
 \epsilon_{d,i} \geq \| d_{A,i} \| \quad \forall i \in \mathcal{J}
 \end{equation}
+
+\pagebreak
 
 \noindent The equility constraints $\mathbf{A}_i \tau_i = \eta_i \quad \forall i \in \mathcal{B}$ :
 
@@ -1823,6 +1834,23 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \scriptstyle{7} &   (-V_{i,j})_{j \in \mathcal{A}}^\text{re}   
 }
 \end{equation}
+
+\begin{table}[h!b!p!]
+\caption{Set naming convention}
+\centering
+\begin{tabular}{ c l }
+\hline
+Set              & Description                  \\
+\hline
+$\mathcal{B}$    & rigid bodies                 \\
+$\mathcal{M}$    & muscle fibers                \\
+$\mathcal{A}$    & anchor points                \\ 
+$\mathcal{J}$    & anchored joints              \\
+$\mathcal{P}$    & contact points               \\
+\hline
+\end{tabular}
+\end{table}
+
 \pagebreak
 
 
