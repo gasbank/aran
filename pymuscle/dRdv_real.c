@@ -338,7 +338,7 @@ void __RotationMatrixFromV0(double rotMat0[3][3], const double v[3], const doubl
     rotMat0[  2][  1] = (_x12+_x9)/2-_x6*(_x12+_x11)/24;
     rotMat0[  2][  2] = _x6*(_x5+_x2+_x1-12)/48-(_x5+_x2+_x1-4)/4;
  }
-void RotationMatrixFromV(double R[3][3], double v[3]) {
+void RotationMatrixFromV(double R[3][3], const double v[3]) {
     double th = sqrt(v1*v1+v2*v2+v3*v3);
     if (th < THETA) __RotationMatrixFromV0(R, v, th);
     else __RotationMatrixFromV(R, v, th);

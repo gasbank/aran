@@ -1,6 +1,10 @@
+#version 150
 uniform sampler2D ShadowMap;
+out vec4 gl_FragColor;
 
-varying vec4 ShadowCoord;
+in vec4 ShadowCoord;
+//in vec4 gl_Color;
+in vec4 out_Color;
 
 void main()
 {	
@@ -17,8 +21,9 @@ void main()
  	if (ShadowCoord.w > 0.0)
  		shadow = distanceFromLight < shadowCoordinateWdivide.z ? 0.5 : 1.0 ;
   	
-	
-  	gl_FragColor =	 shadow * gl_Color;
+	vec4 tempcol = vec4(0,0,0,0);
+    gl_FragColor = shadow * out_Color;
+  	//gl_FragColor = tempcol + out_Color + 1e-10*(shadow * out_Color);
     //gl_FragColor = vec4(1,0,0,1);
   
 }

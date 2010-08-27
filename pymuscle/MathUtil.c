@@ -121,6 +121,39 @@ void QuatToEuler(double eul[3], double q[4])
     eul[2] = atan2(2*(q[0]*q[3]+q[1]*q[2]), 1.-2*(q[2]*q[2]+q[3]*q[3]));
 }
 
+void Invert3x3Matrixf(float Minv[3][3], const float M[3][3])
+{
+    double determinant =+M[0][0]*(M[1][1]*M[2][2]-M[2][1]*M[1][2])
+                        -M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])
+                        +M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+    double invdet = 1./determinant;
+    Minv[0][0] =  (M[1][1]*M[2][2]-M[2][1]*M[1][2])*invdet;
+    Minv[1][0] = -(M[0][1]*M[2][2]-M[0][2]*M[2][1])*invdet;
+    Minv[2][0] =  (M[0][1]*M[1][2]-M[0][2]*M[1][1])*invdet;
+    Minv[0][1] = -(M[1][0]*M[2][2]-M[1][2]*M[2][0])*invdet;
+    Minv[1][1] =  (M[0][0]*M[2][2]-M[0][2]*M[2][0])*invdet;
+    Minv[2][1] = -(M[0][0]*M[1][2]-M[1][0]*M[0][2])*invdet;
+    Minv[0][2] =  (M[1][0]*M[2][1]-M[2][0]*M[1][1])*invdet;
+    Minv[1][2] = -(M[0][0]*M[2][1]-M[2][0]*M[0][1])*invdet;
+    Minv[2][2] =  (M[0][0]*M[1][1]-M[1][0]*M[0][1])*invdet;
+}
+void Invert3x3Matrixd(double Minv[3][3], const double M[3][3])
+{
+    double determinant =+M[0][0]*(M[1][1]*M[2][2]-M[2][1]*M[1][2])
+                        -M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])
+                        +M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
+    double invdet = 1./determinant;
+    Minv[0][0] =  (M[1][1]*M[2][2]-M[2][1]*M[1][2])*invdet;
+    Minv[1][0] = -(M[0][1]*M[2][2]-M[0][2]*M[2][1])*invdet;
+    Minv[2][0] =  (M[0][1]*M[1][2]-M[0][2]*M[1][1])*invdet;
+    Minv[0][1] = -(M[1][0]*M[2][2]-M[1][2]*M[2][0])*invdet;
+    Minv[1][1] =  (M[0][0]*M[2][2]-M[0][2]*M[2][0])*invdet;
+    Minv[2][1] = -(M[0][0]*M[1][2]-M[1][0]*M[0][2])*invdet;
+    Minv[0][2] =  (M[1][0]*M[2][1]-M[2][0]*M[1][1])*invdet;
+    Minv[1][2] = -(M[0][0]*M[2][1]-M[2][0]*M[0][1])*invdet;
+    Minv[2][2] =  (M[0][0]*M[1][1]-M[1][0]*M[0][1])*invdet;
+}
+
 void Invert6x6MassMatrix(double Minv[6][6], const double M[6][6])
 {
     /*
@@ -154,7 +187,7 @@ void Invert6x6MassMatrix(double Minv[6][6], const double M[6][6])
     Minv[5][5] =  (M[3][3]*M[4][4]-M[4][3]*M[3][4])*invdet;
 }
 
-void GetWFrom6Dof(double W[4][4], double chiexp[6]) {
+void GetWFrom6Dof(double W[4][4], const double chiexp[6]) {
     double R[3][3];
     RotationMatrixFromV(R, &chiexp[3]);
     int i,j;

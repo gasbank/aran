@@ -86,7 +86,7 @@ int SHADOW_MAP_RATIO = 1;
 /* Model variables */
 MODEL_PTR model=NULL;
 GLfloat roll=0.0f, pitch=0.0f, yaw=0.0f;
-GLuint texture_id, sel_bone=0;
+GLint texture_id, sel_bone=0;
 GLfloat t_inc=0.1f;
 GLuint pose=1, old_pose=0;
 
@@ -129,7 +129,10 @@ GLuint depthTextureId;
 GLuint fboId;
 // Use to activate/disable shadowShader
 GLhandleARB shadowShaderId;
-GLuint shadowMapUniform;
+GLint shadowMapUniform;
+GLint projMatUniform;
+GLint modelViewMatUniform;
+GLint normalMatUniform;
 
 GLuint m_vaoID[5];      // two vertex array objects, one for each drawn object
 GLuint m_vboID[3];      // three VBOs
@@ -180,11 +183,12 @@ GLhandleARB loadShader(char* filename, unsigned int type)
 	memset(buffer,0,400000);
 
 	// This will raise a warning on MS compiler
+	printf("Loading shader %s...\n", filename);
 	pfile = fopen(filename, "rb");
 	if(!pfile)
 	{
 		printf("Sorry, can't open file: '%s'.\n", filename);
-		exit(0);
+		exit(-1);
 	}
 
 	fread(buffer,sizeof(char),400000,pfile);
@@ -198,7 +202,7 @@ GLhandleARB loadShader(char* filename, unsigned int type)
 	{
 		//We have failed creating the vertex shader object.
 		printf("Failed creating vertex shader object from file: %s.",filename);
-		exit(0);
+		exit(-1);
 	}
 
 	files[0] = (const GLcharARB*)buffer;
@@ -212,47 +216,83 @@ GLhandleARB loadShader(char* filename, unsigned int type)
 
 	//Compilation checking.
 	glGetObjectParameterivARB(handle, GL_OBJECT_COMPILE_STATUS_ARB, &result);
-
-	// If an error was detected.
-	if (!result)
-	{
-		//We failed to compile.
-		printf("Shader '%s' failed compilation.\n",filename);
-
-		//Attempt to get the length of our error log.
-		glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &errorLoglength);
-
-		//Create a buffer to read compilation error message
+    //Attempt to get the length of our error and warning log.
+	glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &errorLoglength);
+	if (errorLoglength) {
+	    //Create a buffer to read compilation error message
 		errorLogText = malloc(sizeof(char) * errorLoglength);
 
 		//Used to get the final length of the log.
 		glGetInfoLogARB(handle, errorLoglength, &actualErrorLogLength, errorLogText);
-
 		// Display errors.
 		printf("%s\n",errorLogText);
-
-		// Free the buffer malloced earlier
-		free(errorLogText);
+        // Free the buffer malloced earlier
+        free(errorLogText);
+        // In case of error occurred:
+		if (!result) {
+		    //We failed to compile.
+            printf("Shader '%s' failed compilation.\n", filename);
+            exit(-2);
+		}
 	}
-
 	return handle;
 }
 
+void CheckLinkError(GLhandleARB obj)
+{
+    int infologLength = 0;
+    int charsWritten  = 0;
+    char *infoLog;
+    GLint result;
+    glGetObjectParameterivARB(obj, GL_OBJECT_LINK_STATUS_ARB, &result);
+    if (!result) {
+        glGetObjectParameterivARB(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB,
+                                  &infologLength);
+        if (infologLength > 0) {
+            infoLog = (char *)malloc(infologLength);
+            glGetInfoLogARB(obj, infologLength, &charsWritten, infoLog);
+                printf("%s\n",infoLog);
+            free(infoLog);
+        }
+        exit(-2);
+    }
+}
 void loadShadowShader()
 {
 	GLhandleARB vertexShaderHandle;
 	GLhandleARB fragmentShaderHandle;
 
-	vertexShaderHandle   = loadShader("Shadow.vert",GL_VERTEX_SHADER);
-	fragmentShaderHandle = loadShader("Shadow.frag",GL_FRAGMENT_SHADER);
-
+	vertexShaderHandle   = loadShader("Shadow.vert", GL_VERTEX_SHADER_ARB);
+	printf("Vertex   shader handle : %d\n", vertexShaderHandle);
+	fragmentShaderHandle = loadShader("Shadow.frag", GL_FRAGMENT_SHADER_ARB);
+    printf("Fragment shader handle : %d\n", fragmentShaderHandle);
 	shadowShaderId = glCreateProgramObjectARB();
+    printf("Program handle         : %d\n", shadowShaderId);
+	glAttachObjectARB(shadowShaderId, vertexShaderHandle);
+	glAttachObjectARB(shadowShaderId, fragmentShaderHandle);
 
-	glAttachObjectARB(shadowShaderId,vertexShaderHandle);
-	glAttachObjectARB(shadowShaderId,fragmentShaderHandle);
+	glBindAttribLocationARB(shadowShaderId, 0, "in_Position");
+    glBindAttribLocationARB(shadowShaderId, 1, "in_Color");
+    glBindAttribLocationARB(shadowShaderId, 2, "in_Normal");
+
 	glLinkProgramARB(shadowShaderId);
+	CheckLinkError(shadowShaderId);
+	glUseProgram(shadowShaderId);
 
-	shadowMapUniform = glGetUniformLocationARB(shadowShaderId,"ShadowMap");
+    printf("Shadow shader loaded successfully.\n");
+
+	shadowMapUniform = glGetUniformLocation(shadowShaderId,
+                                         "ShadowMap");
+	projMatUniform   = glGetUniformLocation(shadowShaderId,
+                                            "projection_matrix");
+    modelViewMatUniform = glGetUniformLocation(shadowShaderId,
+                                               "modelview_matrix");
+    normalMatUniform = glGetUniformLocation(shadowShaderId,
+                                            "normal_matrix");
+    assert(shadowMapUniform >= 0);
+    assert(projMatUniform >= 0);
+    assert(modelViewMatUniform >= 0);
+    //assert(normalMatUniform >= 0);
 }
 
 void change_size(GLsizei w, GLsizei h)
@@ -434,9 +474,7 @@ void drawModel(MODEL_PTR model)
 
 /*
  * Compute modelview matrix for selected bone and given euler angles (1-2-3)
- *
  */
-
 void compute_mv(GLuint bone, GLfloat roll, GLfloat pitch, GLfloat yaw)
 {
 
@@ -459,12 +497,7 @@ void compute_mv(GLuint bone, GLfloat roll, GLfloat pitch, GLfloat yaw)
 
 }
 
-/*
- * render
- */
-
-void generateShadowFBO()
-{
+void generateShadowFBO() {
     /*
 	int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
 	int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
@@ -489,9 +522,6 @@ void generateShadowFBO()
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
 
 	//glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
-
-
-
 	// No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
 	glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
@@ -517,20 +547,25 @@ void generateShadowFBO()
 }
 
 void setupMatrices(float position_x, float position_y, float position_z,
-                   float lookAt_x,   float lookAt_y,   float lookAt_z)
-{
+                   float lookAt_x,   float lookAt_y,   float lookAt_z) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
+
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	gluLookAt(position_x, position_y, position_z,
               lookAt_x,   lookAt_y,   lookAt_z,
               0,0,1);
+
+    GLfloat mat[16];
+	glGetFloatv(GL_PROJECTION_MATRIX, mat);
+	glUniformMatrix4fvARB(projMatUniform, 1, 0, mat);
+	glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+	glUniformMatrix4fvARB(modelViewMatUniform, 1, 0, mat);
 }
 
-void setTextureMatrix(void)
-{
+void setTextureMatrix(void) {
 	static double modelView[16];
 	static double projection[16];
 
@@ -564,15 +599,15 @@ void setTextureMatrix(void)
 	glMatrixMode(GL_MODELVIEW);
 }
 
-void startXform(double W[4][4])
-{
+void startXform(const double W[4][4]) {
+    const GLdouble *const Wa = (const GLdouble *const)W;
     glPushMatrix();
-	glMultTransposeMatrixd(W);
+	glMultTransposeMatrixd(Wa);
 
 	glMatrixMode(GL_TEXTURE);
 	glActiveTextureARB(GL_TEXTURE7);
 	glPushMatrix();
-	glMultTransposeMatrixd(W);
+	glMultTransposeMatrixd(Wa);
 }
 void endXform() {
     glPopMatrix();
@@ -580,8 +615,7 @@ void endXform() {
 	glPopMatrix();
 }
 
-void startTranslate(float x,float y,float z)
-{
+void startTranslate(float x, float y, float z) {
 	glPushMatrix();
 	glTranslatef(x,y,z);
 
@@ -591,9 +625,30 @@ void startTranslate(float x,float y,float z)
 	glTranslatef(x,y,z);
 }
 
-void endTranslate()
-{
+void endTranslate() {
 	endXform();
+}
+
+void SetUniforms() {
+    GLfloat mat44[4][4];
+    /* Projection matrix to vertex shader */
+	glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat *)mat44);
+	glUniformMatrix4fvARB(projMatUniform, 1, GL_FALSE, (GLfloat *)mat44);
+    /* Modelview matrix to vertex shader */
+	glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mat44);
+	glUniformMatrix4fvARB(modelViewMatUniform, 1, GL_FALSE, (GLfloat *)mat44);
+	/* Normal matrix (transpose of inverse of modelview matrix)
+     * to vertex shader */
+	GLfloat mat33[3][3];
+	int i, j;
+	FOR_0(i, 3) {
+	    FOR_0(j, 3) {
+	        mat33[i][j] = mat44[i][j];
+	    }
+	}
+	GLfloat mat33Inv[3][3];
+	Invert3x3Matrixf(mat33Inv, mat33);
+	glUniformMatrix3fvARB(normalMatUniform, 1, GL_TRUE, (GLfloat *)mat33Inv);
 }
 
 void DrawBox_chi(const double *chi, const double *const boxSize, int wf) {
@@ -615,6 +670,7 @@ void DrawBox_chi(const double *chi, const double *const boxSize, int wf) {
     else
         assert("What the...");
 
+    SetUniforms();
 
     glBindVertexArray(m_vaoID[3]);      // select second VAO
     //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
@@ -688,7 +744,35 @@ void DrawAxisOnWorldOrigin() {
     glEnd();
 }
 
-void drawObjects(pym_physics_thread_context_t *phyCon, int forShadow, GLuint *m_vaoID) {
+typedef enum {
+    PYM_UNKNOWN_GROUND,
+    PYM_SQUARE_GROUND,
+    PYM_CIRCLE_GROUND,
+} pym_ground_type_t;
+
+void DrawGround(pym_ground_type_t gndType, const GLuint *const m_vaoID) {
+    if (gndType == PYM_SQUARE_GROUND)
+        glBindVertexArray(m_vaoID[2]);
+    else if (gndType == PYM_CIRCLE_GROUND)
+        glBindVertexArray(m_vaoID[4]);
+    else
+        return;
+    glPushAttrib(GL_POLYGON_BIT);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glVertexAttrib3f((GLuint)1, 0.3, 0.3, 0.3); // in_Color  (vertex shader)
+    glVertexAttrib3f((GLuint)2, 0.0, 0.0, 1.0); // in_Normal (vertex shader)
+
+    SetUniforms();
+
+    if (gndType == PYM_SQUARE_GROUND)
+        glDrawArrays(GL_QUADS, 0, 4);   // draw second object
+    else if (gndType == PYM_CIRCLE_GROUND)
+        glDrawArrays(GL_TRIANGLE_FAN, 0, (1+n_face+1)*3);   // draw second object
+    glPopAttrib();
+}
+
+void DrawAll(pym_physics_thread_context_t *phyCon, int forShadow,
+             GLuint *m_vaoID) {
     glPushMatrix();
     if (!forShadow)
         DrawAxisOnWorldOrigin();
@@ -697,38 +781,11 @@ void drawObjects(pym_physics_thread_context_t *phyCon, int forShadow, GLuint *m_
     const int gndTexRepeat = 4;
     const float gndTexOffset = 0.5;
 
-
-//    glColor3f(0.3,0.3,0.3);
-//    glBegin(GL_QUADS);
-//    glTexCoord2f(gndTexRepeat+gndTexOffset, gndTexRepeat+gndTexOffset); glNormal3f(0,0,1); glVertex3f( gndSize/2, gndSize/2, 0);
-//    glTexCoord2f(0+gndTexOffset,            gndTexRepeat+gndTexOffset); glNormal3f(0,0,1); glVertex3f(-gndSize/2, gndSize/2, 0);
-//    glTexCoord2f(0+gndTexOffset,                       0+gndTexOffset); glNormal3f(0,0,1); glVertex3f(-gndSize/2,-gndSize/2, 0);
-//    glTexCoord2f(gndTexRepeat+gndTexOffset,            0+gndTexOffset); glNormal3f(0,0,1); glVertex3f( gndSize/2,-gndSize/2, 0);
-//    glEnd();
-
-//    glBindVertexArray(m_vaoID[0]);      // select first VAO
-//    glDrawArrays(GL_TRIANGLES, 0, 3);   // draw first object
-//    glBindVertexArray(0);
-
-    /* Render the flat ground of z=0 */
-    static int groundType = 1; /* 0: square, 1: circle */
-    glColor3f(0.4,0.4,0.4);
-    if (groundType == 0)
-        glBindVertexArray(m_vaoID[2]);      // select second VAO
-    else
-        glBindVertexArray(m_vaoID[4]);      // select second VAO
-    //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
-    glPushAttrib(GL_POLYGON_BIT);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    if (groundType == 0)
-        glDrawArrays(GL_QUADS, 0, 4);   // draw second object
-    else
-        glDrawArrays(GL_TRIANGLE_FAN, 0, (1+n_face+1)*3);   // draw second object
-    glPopAttrib();
+    DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
 
     const int nb = phyCon->pymCfg->nBody;
     pthread_mutex_lock(&main_mutex);
-    int i, j, k;
+    int i;
     FOR_0(i, nb) {
         /* Access data from renderer-accessable area of phyCon */
         const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
@@ -759,13 +816,12 @@ void YRotPoint(float pr[3], float p[3], float th) {
     pr[2] = -sin(th)*p[0] + cos(th)*p[2];
 }
 
-void render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
+void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 {
     static GLint iFrames = 0;
-    static GLfloat fps = 0.0f, DeltaT, t;
+    static GLfloat fps = 0.0f, DeltaT;
     static char cBuffer[64];
     struct timeval tv;
-    GLuint i;
 
     // Update timer
     gettimeofday(&tv, NULL);
@@ -804,7 +860,7 @@ void render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 
 	// Culling switching, rendering only backface, this is done to avoid self-shadowing
 	glCullFace(GL_FRONT);
-	drawObjects(phyCon, 1, m_vaoID);
+	DrawAll(phyCon, 1, m_vaoID);
 
 	//Save modelview/projection matrice into texture7, also add a biais
 	setTextureMatrix();
@@ -821,11 +877,12 @@ void render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 	// Clear previous frame values
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//Using the shadow shader
+	/**** Using the shadow shader ****/
 	glUseProgramObjectARB(shadowShaderId);
-	glUniform1iARB(shadowMapUniform,7);
+
+	glUniform1iARB(shadowMapUniform, 7);
 	glActiveTextureARB(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D,depthTextureId);
+	glBindTexture(GL_TEXTURE_2D, depthTextureId);
 
 	float p_camera[] = {8*zoomRatio, -8*zoomRatio, 8*zoomRatio};
 	float l_camera[] = {0, 0, 0};
@@ -836,54 +893,7 @@ void render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
                   l_camera[0], l_camera[1], l_camera[2]);
 
 	glCullFace(GL_BACK);
-	drawObjects(phyCon, 0, m_vaoID);
-
-//    glUseProgramObjectARB(0);
-//    glMatrixMode(GL_PROJECTION);
-//    glLoadIdentity();
-//    glOrtho(-350,350,-350,350,1,20);
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-//    glColor4f(1,1,1,1);
-//    glActiveTextureARB(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D,depthTextureId);
-//    glEnable(GL_TEXTURE_2D);
-//    glTranslated(0,0,-1);
-//    glBegin(GL_QUADS);
-//    glTexCoord2d(0,0);glVertex3f(0,0,0);
-//    glTexCoord2d(1,0);glVertex3f(700/2,0,0);
-//    glTexCoord2d(1,1);glVertex3f(700/2,700/2,0);
-//    glTexCoord2d(0,1);glVertex3f(0,700/2,0);
-//    glEnd();
-//    glDisable(GL_TEXTURE_2D);
-
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
-
-//    glMatrixMode(GL_MODELVIEW);
-//    glPushMatrix();
-//    glLoadIdentity();
-//    glColor3f(0.2,0.2,0.9);
-//    glBegin(GL_LINES);
-//    glVertex3f(0,0,-1);
-//    glVertex3f(1,0,-1);
-//    glVertex3f(0,0,-1);
-//    glVertex3f(0,1,-1);
-//    glEnd();
-//    glPopMatrix();
-
-//    glColor3f(1.0f, 1.0f, 1.0f);
-//    glPushAttrib(GL_LIST_BIT);
-//    glListBase(fps_font - ' ');
-//    glWindowPos2i(0,100);
-//    glCallLists(strlen("abc"), GL_UNSIGNED_BYTE, "abc");
-//    glPopAttrib();
-
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-
-    glMatrixMode(GL_MODELVIEW);
+	DrawAll(phyCon, 0, m_vaoID);
 
 
     iFrames++;
@@ -934,7 +944,8 @@ inline void retrieve_angles(void)
 
 void processSelection(int x, int y)
 {
-    GLuint i, vp[4];
+    GLuint i;
+    GLint vp[4];
     GLubyte pix[3];
     GLfloat ps;
 
@@ -1103,8 +1114,8 @@ void simplerender(GLuint *m_vaoID) {
 
 }
 
-void event_loop(Display* display, Window window, Atom wmDeleteMessage,
-                pym_physics_thread_context_t *phyCon, GLuint *m_vaoID )
+void EventLoop(Display* display, Window window, Atom wmDeleteMessage,
+               pym_physics_thread_context_t *phyCon, GLuint *m_vaoID )
 {
     int exertExternalForce = 0;
     while (1)
@@ -1274,7 +1285,7 @@ void event_loop(Display* display, Window window, Atom wmDeleteMessage,
             }
         }
 
-        render(phyCon, m_vaoID);
+        Render(phyCon, m_vaoID);
 
         //simplerender(m_vaoID);
 
@@ -1356,7 +1367,7 @@ int CreateGridPatternGroundTexture(void) {
     return gndTex;
 }
 
-void PrintCmdLineHelp(int argc, const char *const argv[]) {
+void PrintCmdLineHelp(int argc, char *argv[]) {
     printf("  Usage:\n");
     printf("    %s config_file <simulation conf file> [Options]\n", strrchr(argv[0], '/') + 1);
     printf("\n");
@@ -1387,6 +1398,7 @@ char* filetobuf(char *file)
 }
 void preparedata(void)
 {
+    assert(0);
     //int i; /* Simple iterator */
     //GLuint vao, vbo[2]; /* Create handles for our Vertex Array Object and two Vertex Buffer Objects */
 
@@ -1481,8 +1493,7 @@ void preparedata(void)
 
 }
 
-void setdata(GLuint *m_vboID, GLuint *m_vaoID)
-{
+GLuint InitTriangleVao() {
     // First simple object
     float vert[9]; // vertex array
     float col[9];  // color array
@@ -1495,63 +1506,78 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
     col[3] = 0.0; col[4] = 1.0; col[5] = 0.0;
     col[6] = 0.0; col[7] = 0.0; col[8] = 1.0;
 
-    // Second simple object
+    GLuint vaoId = 0;
+    glGenVertexArrays(1, &vaoId);
+
+    // First VAO setup
+    glBindVertexArray(vaoId);
+
+    // 2 VBOs (Vertex Buffer Object) for the first VAO
+    GLuint vboId[2] = {0,};
+    glGenBuffers(2, vboId);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
+    glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vert, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
+    glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), col, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
+
+    return vaoId;
+}
+
+GLuint InitQuadVao() {
     float vert2[9]; // vertex array
 
     vert2[0] =-0.2; vert2[1] = 0.5; vert2[2] =-1.0;
     vert2[3] = 0.3; vert2[4] =-0.5; vert2[5] =-1.0;
     vert2[6] = 0.8; vert2[7] = 0.5; vert2[8]= -1.0;
 
-    // Three VAOs allocation (Vertex Array Object)
-    glGenVertexArrays(5, m_vaoID);
-
-    // First VAO setup
-    glBindVertexArray(m_vaoID[0]);
-
-    // 2 VBOs (Vertex Buffer Object) for the first VAO
-    glGenBuffers(2, m_vboID);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vboID[0]);
-    glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vert, GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, m_vboID[1]);
-    glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), col, GL_STATIC_DRAW);
-    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(1);
-
-    // Second VAO setup
-    glBindVertexArray(m_vaoID[1]);
+    GLuint vaoId = 0;
+    glGenVertexArrays(1, &vaoId);
+    glBindVertexArray(vaoId);
 
     // 1 VBO for the second VAO
-    glGenBuffers(1, &m_vboID[2]);
+    GLuint vboId = 0;
+    glGenBuffers(1, &vboId);
 
-    glBindBuffer(GL_ARRAY_BUFFER, m_vboID[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
     glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vert2, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
+    return vaoId;
+}
 
-    // Third VAO setup
-    glBindVertexArray(m_vaoID[2]);
+GLuint InitQuad2Vao() {
+    GLuint vaoId = 0;
+    glGenVertexArrays(1, &vaoId);
+    glBindVertexArray(vaoId);
+
     // Third simple object
     GLfloat vert3[] = {  15.3f,  5.3f,  0.0f,
                       -5.3f,  5.3f,  0.0f,
                       -5.3f, -5.3f,  0.0f,
                        5.3f, -5.3f,  0.0f  };
     // 1 VBO for the third VAO
-    GLuint vboxx;
-    glGenBuffers(1, &vboxx);
+    GLuint vboId = 0;
+    glGenBuffers(1, &vboId);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboxx);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
     glBufferData(GL_ARRAY_BUFFER, 12*sizeof(GLfloat), vert3, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
+    return vaoId;
+}
 
+GLuint InitUnitBoxVao() {
+    GLuint vaoId = 0;
+    glGenVertexArrays(1, &vaoId);
+    glBindVertexArray(vaoId);
 
-    // Fourth VAO setup
-    glBindVertexArray(m_vaoID[3]);
     GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
                          0.5f,  0.5f,  0.5f,
                          0.5f, -0.5f,  0.5f,
@@ -1590,24 +1616,38 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
         0,0,1,0,0,1,0,0,1,0,0,1,
         0,0,-1,0,0,-1,0,0,-1,0,0,-1,
     };
-    // 2 VBOs for the third VAO
-    GLuint vboxx2[2];
-    glGenBuffers(2, &vboxx2);
+    GLfloat col4[3*4*6];
+    int i;
+    FOR_0(i, 3*4*6) {
+        if (i%3 == 0)
+            col4[i] = 1;
+    }
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboxx2[0]);
+    GLuint vboId[3] = {0,};
+    glGenBuffers(3, vboId);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
     glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), vert4, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboxx2[1]);
-    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), col4, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(1);
 
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
+    return vaoId;
+}
 
+GLuint InitCircleVao() {
+    GLuint vaoId = 0;
+    glGenVertexArrays(1, &vaoId);
+    glBindVertexArray(vaoId);
 
-    // Fifth VAO setup (Circle shaped ground)
-    glBindVertexArray(m_vaoID[4]);
     /* center point(1) + vertices around circumference(n_face) + final point(1) */
     const int n_vert_circle = (1+n_face+1)*3;
     GLfloat vert5[n_vert_circle];
@@ -1621,16 +1661,26 @@ void setdata(GLuint *m_vboID, GLuint *m_vaoID)
     }
 
     // 1 VBO for the third VAO
-    glGenBuffers(1, &vboxx);
+    GLuint vboId = 0;
+    glGenBuffers(1, &vboId);
 
-    glBindBuffer(GL_ARRAY_BUFFER, vboxx);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId);
     glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat), vert5, GL_STATIC_DRAW);
     glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
+    return vaoId;
+}
 
-
+void InitVertexArrayObjects(GLuint *m_vaoID)
+{
+    m_vaoID[0] = InitTriangleVao();
+    m_vaoID[1] = InitQuadVao();
+    m_vaoID[2] = InitQuad2Vao();
+    m_vaoID[3] = InitUnitBoxVao();
+    m_vaoID[4] = InitCircleVao();
     glBindVertexArray(0);
 }
+
 int main(int argc, char *argv[])
 {
     int ret=0;
@@ -1670,8 +1720,8 @@ int main(int argc, char *argv[])
     /* Initialize debug message flags (dmflags) */
     int dmflags[PDMTE_COUNT] = {0,};
     //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
-    dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
-    dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
+    //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
+    //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
     FILE *dmstreams[PDMTE_COUNT];
     int i;
     FILE *devnull = fopen("/dev/null", "w");
@@ -1976,7 +2026,7 @@ int main(int argc, char *argv[])
 
     gndTex = CreateGridPatternGroundTexture();
 
-    setdata(m_vboID, m_vaoID);
+    InitVertexArrayObjects(m_vaoID);
     //preparedata();
     generateShadowFBO();
     loadShadowShader();
@@ -2042,7 +2092,7 @@ int main(int argc, char *argv[])
     /*************
      * Event loop
      *************/
-    event_loop( display, window, wmDeleteMessage, &phyCon, m_vaoID );
+    EventLoop( display, window, wmDeleteMessage, &phyCon, m_vaoID );
 
     pthread_mutex_lock(&main_mutex);
     phyCon.stop = 1;

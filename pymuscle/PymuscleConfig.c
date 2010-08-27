@@ -450,7 +450,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     /* Sub-block 02 - E := [0 -1 0] */
     FOR_0(i, nb) {
         const int nfi = pymCfg->body[i].b.nFiber;
-        const int nai = pymCfg->body[i].b.nAnchor;
+        //const int nai = pymCfg->body[i].b.nAnchor;
         FOR_0(j, nd*nfi) {
             SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 0,
                                       EoffsetRow + j,

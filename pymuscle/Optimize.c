@@ -72,27 +72,46 @@ void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
 	assert(r == MSK_RES_OK);
 }
 
-double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod->bipMat->ncol) */
-                   MSKsolstae *_solsta, /* MOSEK solution status */
-                   double *opttime,
-                   const pym_biped_eqconst_t *const bod,
-                   const pym_rb_statedep_t *const sd,
-                   const pym_config_t *const pymCfg,
-                   MSKenv_t *pEnv, cholmod_common *cc) {
+pym_opt_t PymNewOptimization(
+    const pym_biped_eqconst_t *const bod,
+    const pym_rb_statedep_t *const sd,
+    const pym_config_t *const pymCfg,
+    MSKenv_t *pEnv,
+    cholmod_common *cc)
+{
+    pym_opt_t pymOpt = {
+        .xx      = calloc(bod->bipMat->ncol, sizeof(double)),
+        ._solsta = MSK_RES_OK,
+        .opttime = DBL_MAX,
+        .cost    = DBL_MAX,
+        .bod     = bod,
+        .sd      = sd,
+        .pymCfg  = pymCfg,
+        .pEnv    = pEnv,
+        .cc      = cc
+    };
+    return pymOpt;
+}
+
+void PymDelOptimization(pym_opt_t *pymOpt) {
+    free(pymOpt->xx);
+    pymOpt->xx = 0;
+}
+
+void PymOptimize(pym_opt_t *pymOpt) {
+    double *xx = pymOpt->xx;
+    const pym_biped_eqconst_t *const bod = pymOpt->bod;
+    const pym_rb_statedep_t *const sd = pymOpt->sd;
+    const pym_config_t *const pymCfg = pymOpt->pymCfg;
+    MSKenv_t *pEnv = pymOpt->pEnv;
+    cholmod_common *cc = pymOpt->cc;
+
     /* Number of constraints related to linear function of optimization variables. */
     assert(pymCfg->nJoint);
     const int nb = pymCfg->nBody;
     const int nf = pymCfg->nFiber;
-    /* Linear equality constraints have form of Ax=b and
-     * Quadratic constraints have form of x^T*A*x <= b will be
-     * denoted in the same matrix A and vector b. */
-    const int n_lin_eq_con = bod->bipMat->nrow;
-    const int n_quad_con   = pymCfg->nJoint;
-    /*
-    const int NUMCON = n_lin_eq_con + n_quad_con;
-    */
-    const int NUMCON = n_lin_eq_con;
-
+    /* Number of Ax=b style constraints */
+    const int NUMCON = bod->bipMat->nrow;
     /* Number of optimization variables. */
     const int NUMVAR = bod->bipMat->ncol;
     /* Number of non-zeros in A. */
@@ -100,31 +119,21 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     MSKrescodee  r;
     int i,j;
 
-    /* Constraints related to linear function of optimization variables */
+    /* 'x_lower < A*x < x_upper' style constraints.
+     * Default is 'fixed' equality constraint, i.e. a*x=b. */
     MSKboundkeye bkc[NUMCON];
     double       blc[NUMCON];
     double       buc[NUMCON];
-    FOR_0(i, n_lin_eq_con) {
+    FOR_0(i, NUMCON) {
         bkc[i] = MSK_BK_FX; /* 'Fixed' for equality constraints */
     }
-    memcpy(blc, bod->bipEta, sizeof(double)*n_lin_eq_con);
-    memcpy(buc, bod->bipEta, sizeof(double)*n_lin_eq_con);
+    memcpy(blc, bod->bipEta, sizeof(double)*NUMCON);
+    memcpy(buc, bod->bipEta, sizeof(double)*NUMCON);
     //FOR_0(i, NUMCON) printf("%lf  ", bod->bipEta[i]);
-    for (i = n_lin_eq_con; i < NUMCON; ++i) {
-        /* 'Upper bound' for quadratic constraints.
-         * Weight matrix should be positive semi-definite (PSD) */
-        bkc[i] = MSK_BK_UP;
-        /* Properly calculate buc for quadratic constraints.
-         * We use 0.5*x^T*A*x <= b. So we need
-         * x^T*A*x <= 2*b == (x_upper)^2, and therefore
-         * b == 0.5*(x_upper)^2. */
-        static const double ANCHORED_JOINT_DISLOCATION = 0.05;
-        blc[i] = 0;
-        buc[i] = 0.5*ANCHORED_JOINT_DISLOCATION*ANCHORED_JOINT_DISLOCATION;
-    }
 
-    /* Constraints related to optimization variables itself.
-     * Initialize all optimization variables as free variables for now. */
+    /* 'x_lower < x < x_upper' style constraints.
+     * (constraints related to optimization variables itself.)
+     * Initialize all optimization variables as 'free' variables for now. */
     MSKboundkeye bkx[NUMVAR];
     double       blx[NUMVAR];
     double       bux[NUMVAR];
@@ -145,24 +154,28 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     //int *Ari = bod->Ari;
     const int *const Aci = bod->Aci;
 
-    double       c[NUMVAR];
+    /******************************************/
+    /* Linar cost function coefficients setup */
+    /******************************************/
+    double c[NUMVAR];
     memset(c, 0, sizeof(double)*NUMVAR);
 
-    /***********************/
-    /* Cost function setup */
-    /***********************/
     int tauOffset;
     for (i = 0, tauOffset = 0; i < nb; tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
         FOR_0(j, nplist[i]) {
             /*
              * TODO [TUNE] Minimize the contact normal force
              * Walk0, Nav0  - 0
-             * Exer0        - ?
+             * Exer0        - 10
+             * Jump0        - ?
+             * Jump1        - 2
              */
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 10;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 0 ] = 1;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 1 ] = 1;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1;
 
             /* Estimated position of z-coordinate of contact point
-             * Default: 2e-1      */
+             * Default: 2e-1, 1e-3      */
             c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1e-3;
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j) {
@@ -171,14 +184,16 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
              *
              * Walk0        -  1
              * Nav0         -  5e-1
-             * Exer0        -  1
+             * Exer0        -  10
+             * Jump0        -  ?
+             * Jump1        -  ?
              */
             c[j] = 10;
         }
         /*
          * TODO [TUNE] Reference following coefficient
          */
-        c[ tauOffset + sd[i].Aci[8] ] = 1;
+        c[ tauOffset + sd[i].Aci[8] ] = 1e5;
     }
     FOR_0(j, nf) {
         const char *const fibName = pymCfg->fiber[j].b.name;
@@ -207,8 +222,9 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     //c[ Aci[5] ] = 1e-6; /* actuated muscle fiber actuation */
 
 
-    /***********************/
-    /***********************/
+    /***********************************/
+    /* x_l < x < x_u style constraints */
+    /***********************************/
 #define SET_NONNEGATIVE(j) { bkx[j] = MSK_BK_LO; blx[j] = 0; bux[j] = MSK_INFINITY; }
 #define SET_FIXED_ZERO(j)  { bkx[j] = MSK_BK_FX; blx[j] = 0; bux[j] = 0; }
 #define SET_FIXED_ONE(j)   { bkx[j] = MSK_BK_FX; blx[j] = 1; bux[j] = 1; }
@@ -281,7 +297,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                 //SET_RANGE(i, -1000, 1000);
             } else {
                 //SET_NONNEGATIVE(i);
-                //SET_RANGE(i, -10, 10);
+                //SET_RANGE(i, -1000, 1000);
             }
 
 //            if (strncmp(fibName, "ankleLiga", 9) == 0) {
@@ -335,7 +351,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     mosekLogFile = fopen("/tmp/pymoptimize_log", "w");
     if (!mosekLogFile) {
         printf("Opening MOSEK output log file failed.\n");
-        return FLT_MAX;
+        pymOpt->cost = DBL_MAX;
+        return;
     }
     r = MSK_linkfunctotaskstream(task, MSK_STREAM_LOG, mosekLogFile, printstr);
 
@@ -564,32 +581,21 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
     //r = MSK_putqobj ( task , quadNum, qsubi , qsubj , qval );
     assert(r == MSK_RES_OK);
 
-    /* Quadratic constraints */
-    printf("pymCfg->nJoint = %d\n", pymCfg->nJoint);
-    for (i = 0; i < n_quad_con; ++i) {
-        MSKidxt qsubi2[3] = { bod->Aci[6] + 4*i + 0,
-                           bod->Aci[6] + 4*i + 1,
-                           bod->Aci[6] + 4*i + 2 };
-        MSKidxt qsubj2[3];
-        double qval2[3] = { 1.0, 1.0, 1.0 };
-        memcpy(qsubj2, qsubi2, sizeof(MSKidxt)*3);
-        //r = MSK_putqconk(task, n_lin_eq_con + i, 3, qsubi2, qsubj2, qval2);
-        assert(r == MSK_RES_OK);
-    }
-
-    double cost = FLT_MAX;
+    double cost = DBL_MAX;
     MSKrescodee trmcode;
     /* Run optimizer */
     //r = MSK_optimize(task);
     r = MSK_optimizetrm(task, &trmcode);
 
-    if (r == MSK_RES_TRM_MAX_ITERATIONS)
-    	printf("Error - MSK_RES_TRM_MAX_ITERATIONS returned.\n");
-    else if (r == MSK_RES_TRM_STALL)
-    	printf("Error - MSK_RES_TRM_STALL returned.\n");
+    if (r == MSK_RES_TRM_MAX_ITERATIONS) {
+    	printf("Error - MSK_RES_TRM_MAX_ITERATIONS returned. Abort.\n");
+    	abort();
+    } else if (r == MSK_RES_TRM_STALL) {
+    	printf("Error - MSK_RES_TRM_STALL returned. Abort.\n");
+    	abort();
+    }
 
-    if (opttime)
-        MSK_getdouinf ( task , MSK_DINF_OPTIMIZER_TIME , opttime );
+    MSK_getdouinf ( task , MSK_DINF_OPTIMIZER_TIME , &pymOpt->opttime );
 
     /* Print a summary containing information
        about the solution for debugging purposes*/
@@ -602,10 +608,8 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         MSK_getsolutionstatus (task,
                              MSK_SOL_ITR,
                              NULL,
-                             &solsta);
-        *_solsta = solsta;
-
-        switch(solsta)
+                             &pymOpt->_solsta);
+        switch (pymOpt->_solsta)
         {
         case MSK_SOL_STA_UNKNOWN:
             //printf("   ***   The status of the solution could not be determined.   ***\n");
@@ -617,6 +621,7 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
                                    0,              /* Index of first variable.    */
                                    NUMVAR,         /* Index of last variable+1.   */
                                    xx);
+            /* TODO: Better way to calculate(or query) cost from MOSEK */
             cost = Dot(NUMVAR, xx, c);
             break;
         case MSK_SOL_STA_DUAL_INFEAS_CER:
@@ -624,12 +629,12 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         case MSK_SOL_STA_NEAR_DUAL_INFEAS_CER:
         case MSK_SOL_STA_NEAR_PRIM_INFEAS_CER:
             printf("Primal or dual infeasibility certificate found.\n");
-            cost = FLT_MAX;
+            cost = DBL_MAX;
             break;
 
         default:
             printf("Other solution status.");
-            cost = FLT_MAX;
+            cost = DBL_MAX;
             break;
         }
     }
@@ -645,14 +650,14 @@ double PymOptimize(double *xx, /* Preallocated solution vector space (size = bod
         char desc[MSK_MAX_STR_LEN];
         MSK_getcodedesc (r, symname, desc);
         printf("Error - %s: %s\n", symname, desc);
-        cost = FLT_MAX;
+        cost = DBL_MAX;
     }
 
     if (mosekLogFile)
         fclose(mosekLogFile);
     /* Delete the task and the associated data. */
     MSK_deletetask(&task);
-    return cost;
+    pymOpt->cost = cost;
 }
 
 int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
@@ -682,26 +687,24 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
 
     //PrintEntireSparseMatrix(bod.bipMat);
     //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
-    double xx[bipEq.bipMat->ncol];
-    memset(xx, 0, sizeof(xx));
-    MSKsolstae solsta;
-    double opttime;
-    double cost = PymOptimize(xx, &solsta, &opttime,
-                              &bipEq, sd, pymCfg, &env, cc);
+    pym_opt_t pymOpt = PymNewOptimization(&bipEq, sd, pymCfg, &env, cc);
+    PymOptimize(&pymOpt);
     if (pureOptTime)
-        *pureOptTime = opttime;
-    if (cost == FLT_MAX) {
+        *pureOptTime = pymOpt.opttime;
+    if (pymOpt.cost == DBL_MAX) {
         printf("Something goes wrong while optimizing.\n");
     }
-    const char *solstaStr;
-    if (solsta == MSK_SOL_STA_UNKNOWN) solstaStr = "UNKNOWN";
-    else if (solsta == MSK_SOL_STA_OPTIMAL) solstaStr = "optimal";
-    else if (solsta == MSK_SOL_STA_NEAR_OPTIMAL) solstaStr = "near optimal";
-    else solstaStr = "ERROR!";
+    const char *solstaStr = 0;
+    switch (pymOpt._solsta) {
+        case MSK_SOL_STA_UNKNOWN:      solstaStr = "UNKNOWN"; break;
+        case MSK_SOL_STA_OPTIMAL:      solstaStr = "optimal"; break;
+        case MSK_SOL_STA_NEAR_OPTIMAL: solstaStr = "near optimal"; break;
+        default:                       solstaStr = "ERROR!"; break;
+    }
     *_solstaStr = solstaStr;
-    *_cost      = cost;
-
-    if (cost != FLT_MAX) {
+    *_cost      = pymOpt.cost;
+    const double *const xx = pymOpt.xx;
+    if (pymOpt.cost != DBL_MAX) {
         deviation_stat_entry dev_stat[nb];
         memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
         int tauOffset;
@@ -825,7 +828,7 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
         PymDestroyRbStatedep(sd + j, &pymCfg->body[j].b, cc);
     }
 
-    if (cost == FLT_MAX) /* no meaning to process further */
+    if (pymOpt.cost == DBL_MAX) /* no meaning to process further */
     {
         printf("Optimization failure report\n");
         printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
@@ -833,7 +836,9 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
         printf("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n");
         if (ret)
             printf("Warning - /tmp/pyoptimize_log opening failure.\n");
+        PymDelOptimization(&pymOpt);
         return -1;
     }
+    PymDelOptimization(&pymOpt);
     return 0;
 }

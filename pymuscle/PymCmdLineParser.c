@@ -5,7 +5,7 @@
 #include "PymStruct.h"
 #include "PymCmdLineParser.h"
 
-int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, const char **argv) {
+int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]) {
     /* initialize default options first */
     cmdopt->simconf           =  0;
     cmdopt->frame             = -1;   /* not specified for now */

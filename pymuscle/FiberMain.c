@@ -21,7 +21,7 @@
 #include "TrajParser.h"
 #include "PymCmdLineParser.h"
 
-int main(int argc, const char **argv) {
+int main(int argc, char *argv[]) {
     printf("Optimization-based tracker      -- 2010 Geoyeob Kim\n");
     if (argc < 2) {
         printf("  Usage:\n");
