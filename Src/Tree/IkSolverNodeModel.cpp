@@ -54,7 +54,6 @@ QVariant IkSolverNodeModel::data (const QModelIndex &index, int role) const
             }
             else if (index.row () == 3)
             {
-                char name[64];
                 QString type;
                 if (m_node->isEndeffector ())
                     type += tr("Endeffector(%1)").arg(m_node->getEffectorNum ());

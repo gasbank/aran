@@ -232,8 +232,9 @@ void TreeMainWindow::createActions()
 
 void TreeMainWindow::open()
 {
+    QString homePath = QDesktopServices::storageLocation(QDesktopServices::HomeLocation);
     QString fileName = QFileDialog::getOpenFileName(this, tr("Open ARAN XML"),
-                                                    "/home/gbu", tr("XML Files (*.xml)"));
+                                                    homePath, tr("XML Files (*.xml)"));
     if (!fileName.isEmpty())
         loadFile(fileName);
 }

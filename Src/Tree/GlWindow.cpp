@@ -26,9 +26,9 @@ GlWindow::GlWindow(QWidget *parent)
     , m_xRot(0)
     , m_yRot(0)
     , m_zRot(0)
+    , m_viewMode(VM_UNKNOWN)
     , m_activeIkSolver(0)
     , m_activeNode(0)
-    , m_viewMode(VM_UNKNOWN)
 {
     m_refreshTimer = startTimer(10);
 

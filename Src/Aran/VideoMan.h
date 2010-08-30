@@ -100,7 +100,7 @@ public:
 	size_t											unregisterAllRenderLayers();
 	RenderLayer*									getRenderLayerAt(unsigned int ui);
 	const ARN_CAMERA*								getMainCamera() const { return &mainCamera; }
-	const void										getScreenInfo(int& width, int& height) { width = screenWidth; height = screenHeight; }
+    void                                            getScreenInfo(int& width, int& height) const { width = screenWidth; height = screenHeight; }
 	const ArnMatrix*								getModelArcBallRotation() const { return &modelArcBallRotation; }
 	void											renderMeshesOnly(ArnNode* node, const ArnMatrix& globalXform = ArnConsts::ARNMAT_IDENTITY);
 	float											getFPS() const { return m_fFPS; }

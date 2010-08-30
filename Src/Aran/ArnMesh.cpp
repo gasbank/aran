@@ -90,11 +90,13 @@ ArnMesh::getMaterial( unsigned int i ) const
 		static bool b = true;
 		if (b)
 		{
-			std::cerr << "Material index corruption on ArnMesh." << std::endl;
+            std::cerr << "Warning - The material index is corrupted on ArnMesh."
+                         "Later warning will be suppressed." << std::endl;
 			b = false;
 			return 0;
 		}
 	}
+    return 0;
 }
 
 void
