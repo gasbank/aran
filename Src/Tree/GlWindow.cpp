@@ -198,7 +198,12 @@ void GlWindow::setSceneGraph (ArnSceneGraph *sg)
         delete ikSolver;
     }
     m_ikSolvers.clear();
-    ArnCreateArnIkSolversOnSceneGraph(m_ikSolvers, m_sg);
+    /* TODO: Transform skinned objects and armatures into
+             IK solver enabled instances.
+             This disables armature-related animations.
+             If you want enable animation, not IK solver,
+             comment the following line. */
+    //ArnCreateArnIkSolversOnSceneGraph(m_ikSolvers, m_sg);
 
     m_xRot = 0;
     m_yRot = 0;
