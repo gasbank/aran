@@ -668,7 +668,9 @@ exportPlace = 'bin'
 
 sce = bpy.data.scenes.active # Get active scene automatically
 doc = Document()
-homedir = os.path.expanduser('~')
+# TODO: Export file output path
+#homedir = os.path.expanduser('~')
+homedir = 'F:/Devel3/Working/models'
 print 'Export Directory: %s' % homedir
 xmlFile = open('%s/%s.xml' % (homedir, sce.name), 'w')
 binFile = open('%s/%s.bin' % (homedir, sce.name), 'wb')

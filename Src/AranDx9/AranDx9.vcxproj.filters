@@ -1,14 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
-    </Filter>
     <Filter Include="Source Files">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
@@ -19,9 +11,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="AranDx9PCH.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ArnActions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ArnAnim.cpp">
@@ -37,9 +26,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ArnNodeFactory.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ArnSceneGraphDx9.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ArnSkeletonDx9.cpp">
@@ -86,83 +72,29 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ArnCommonTypes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Macros.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AranDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="AranDx9PCH.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnActions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnAnim.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnFile.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnHierarchy.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnMeshDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnNodeFactory.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnSceneGraphDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnSkeletonDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnSkinInfo.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ArnTextureDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Character.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CharacterAnimationCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CharacterInterface.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputMan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="LoiterCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelReader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ResourceMan.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="StructsDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UndefinedCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="VideoManDx9.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WalkCallback.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
+    <ClInclude Include="AranDx9.h" />
+    <ClInclude Include="AranDx9PCH.h" />
+    <ClInclude Include="ArnAnim.h" />
+    <ClInclude Include="ArnFile.h" />
+    <ClInclude Include="ArnHierarchy.h" />
+    <ClInclude Include="ArnMeshDx9.h" />
+    <ClInclude Include="ArnNodeFactory.h" />
+    <ClInclude Include="ArnSceneGraphDx9.h" />
+    <ClInclude Include="ArnSkeletonDx9.h" />
+    <ClInclude Include="ArnSkinInfo.h" />
+    <ClInclude Include="ArnTextureDx9.h" />
+    <ClInclude Include="Character.h" />
+    <ClInclude Include="CharacterAnimationCallback.h" />
+    <ClInclude Include="CharacterInterface.h" />
+    <ClInclude Include="InputMan.h" />
+    <ClInclude Include="LoiterCallback.h" />
+    <ClInclude Include="ModelDrawer.h" />
+    <ClInclude Include="ModelReader.h" />
+    <ClInclude Include="ResourceMan.h" />
+    <ClInclude Include="StructsDx9.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="UndefinedCallback.h" />
+    <ClInclude Include="VideoManDx9.h" />
+    <ClInclude Include="WalkCallback.h" />
   </ItemGroup>
 </Project>

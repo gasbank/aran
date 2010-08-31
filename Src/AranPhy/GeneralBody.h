@@ -51,10 +51,12 @@ public:
 	void							setBoundingBoxType(ArnBoundingBoxType abbt) { m_abbt = abbt; }
 	ArnBoundingBoxType				getBoundingBoxType() const { return m_abbt; }
 	void							setBoundingBoxSize(const ArnVec3& size);
+	const ArnVec3&					getBoundingBoxSize() const { return m_boundingSize; }
 	void							getGeomSize(dVector3 out) const;
 	void							setMassDistributionType(ArnMassDistributionType amdt) { m_amdt = amdt; }
 	ArnMassDistributionType			getMassDistributionType() const { return m_amdt; }
 	void							setMassDistributionSize(const ArnVec3& size);
+	const ArnVec3&					getMassDistributionSize() const { return m_massDistSize; }
 	//@}
 	/*!
 	 * @brief		강체의 질량을 설정

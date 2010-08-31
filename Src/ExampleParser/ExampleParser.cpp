@@ -53,7 +53,9 @@ int main(int argc, const char* argv[])
 	printf(" ================ [ Rigid Bodies ] ================\n");
 	foreach (const GeneralBodyPtr &b, sw->getGeneralBodyPtrSet())
 	{
-		printf ("Body: %s (%f)\n", b->getName(), b->getMass());
+		printf ("Body: %s (%.2f kg, BB type %d)\n", b->getName(), b->getMass(), b->getBoundingBoxType());
+		printf ("   > Bounding box size: "); b->getBoundingBoxSize().printFormatString();
+		printf ("   > Mass dist size: "); b->getMassDistributionSize().printFormatString();
 	}
 
 	printf(" ================ [ Joints ] ================\n");

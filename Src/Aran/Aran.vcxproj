@@ -6,7 +6,7 @@
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="ReleaseDLL|Win32">
-      <Configuration>ReleaseDLL</Configuration>
+      <Configuration>dd</Configuration>
       <Platform>Win32</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Template|Win32">
@@ -19,22 +19,11 @@
     <RootNamespace>Aran</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="Configuration">
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
-    <WholeProgramOptimization>true</WholeProgramOptimization>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
-    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
-    <Import Project="..\EnvVar.props" />
-    <Import Project="..\ReleaseDLLProp.props" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" />
@@ -49,12 +38,6 @@
     <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" />
-    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Template|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
-    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Template|Win32'" />
     <TargetName Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">$(ProjectName)_D</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
@@ -82,7 +65,7 @@
       <EnablePREfast>false</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>AranMath_D.lib;tinyxmlSTL_D.lib;DevIL.lib;zlib1d.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>AranMath_D.lib;tinyxmlSTL_D.lib;zlib_D.lib;DevIL.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -93,51 +76,7 @@
       </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
-    <CustomBuildStep>
-      <Message>
-      </Message>
-      <Command>
-      </Command>
-      <Outputs>%(Outputs)</Outputs>
-    </CustomBuildStep>
-    <ClCompile>
-      <Optimization>Full</Optimization>
-      <IntrinsicFunctions>true</IntrinsicFunctions>
-      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
-      <WholeProgramOptimization>true</WholeProgramOptimization>
-      <AdditionalIncludeDirectories>../;../AranMath;$(CODEBASE)/cml-1_0_0;$(CODEBASE)/DevIL-SDK-x86-1.7.8/include;$(CODEBASE)/zlib-1.2.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;ARAN_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>AranPCH.h</PrecompiledHeaderFile>
-      <WarningLevel>Level3</WarningLevel>
-      <DebugInformationFormat>
-      </DebugInformationFormat>
-      <DisableSpecificWarnings>4251;%(DisableSpecificWarnings)</DisableSpecificWarnings>
-      <EnablePREfast>false</EnablePREfast>
-    </ClCompile>
-    <Link>
-      <AdditionalDependencies>AranMath.lib;tinyxmlSTL.lib;DevIL.lib;zlib1.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../ReleaseDLL;$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Release;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Release;$(CODEBASE)/freetype-2.3.9/objs/win32/vc2008;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Release;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Release_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <TargetMachine>MachineX86</TargetMachine>
-    </Link>
-    <PostBuildEvent>
-      <Command>
-      </Command>
-    </PostBuildEvent>
-  </ItemDefinitionGroup>
   <ItemGroup>
-    <ResourceCompile Include="Aran.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CopyResourcesToWorking.bat" />
-    <None Include="icon1.ico" />
-    <None Include="readme.txt" />
-    <None Include="..\Shaders\basic.fx" />
-    <None Include="..\Shaders\vertBlendDynamic.fx" />
-    <None Include="..\Shaders\vertBlendStatic.fx" />
     <None Include="ArnGenericBuffer.inl" />
     <None Include="ArnMesh.inl" />
     <None Include="ArnNode.inl" />
@@ -172,7 +111,6 @@
     <ClCompile Include="AranApi.cpp" />
     <ClCompile Include="AranPCH.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="BwWin32Timer.cpp" />
     <ClCompile Include="DungeonInterface.cpp" />
@@ -218,11 +156,6 @@
     <ClInclude Include="RenderLayer.h" />
     <ClInclude Include="Singleton.h" />
     <ClInclude Include="VideoMan.h" />
-    <ClInclude Include="..\ArnCommonTypes.h" />
-    <ClInclude Include="glext.h" />
-    <ClInclude Include="..\Macros.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="Structs.h" />
     <ClInclude Include="ArnJoint.h" />
     <ClInclude Include="doxygen_main.h" />
   </ItemGroup>

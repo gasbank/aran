@@ -11,8 +11,7 @@ ArnSceneGraphDx9::~ArnSceneGraphDx9(void)
 
 
 ArnSceneGraphDx9::ArnSceneGraphDx9( const ArnFileData* afd )
-: ArnNode(NDT_RT_SCENEGRAPH)
-, m_afd(afd)
+: m_afd(afd)
 {
 	assert(afd);
 

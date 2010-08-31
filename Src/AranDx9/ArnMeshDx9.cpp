@@ -80,7 +80,17 @@ ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
 	{
 		unsigned int triCount, quadCount;
 		mesh->getFaceCount (triCount, quadCount, fg);
-		assert (quadCount == 0); // Not supporting quad faces yet.
+		// TODO: Quad faces support on Dx9
+		if (quadCount)
+		{
+			std::cout << "Warning - mesh '" << mesh->getName() << "' has " << quadCount << " quad-face(s). "
+				         "Quad-faces will be ignored." << std::endl;
+			if (triCount == 0)
+			{
+				std::cout << "Error - mesh '" << mesh->getName() << "' has " << triCount << " tri-face(s). ";
+				throw std::runtime_error("No tri-faces on mesh.");
+			}
+		}
 
 		for (unsigned int t = 0; t < triCount; ++t)
 		{

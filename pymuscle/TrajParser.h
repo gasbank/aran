@@ -1,7 +1,11 @@
 #ifndef __TRAJPARSER_H_
 #define __TRAJPARSER_H_
 
+#ifdef WIN32
+#define MAX_CORRESMAP (50)
+#else
 static const int MAX_CORRESMAP = 50;
+#endif
 
 int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
                            int *_nCorresMap,

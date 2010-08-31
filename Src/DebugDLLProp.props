@@ -9,8 +9,8 @@
     </ClCompile>
     <Link>
       <OutputFile>$(TargetPath)</OutputFile>
-      <AdditionalLibraryDirectories>$(SolutionDir)/DebugDLL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <ImportLibrary>../DebugDLL/$(TargetName).lib</ImportLibrary>
+      <AdditionalLibraryDirectories>$(Working)/lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <ImportLibrary>$(Working)/lib/$(TargetName).lib</ImportLibrary>
     </Link>
   </ItemDefinitionGroup>
 </Project>

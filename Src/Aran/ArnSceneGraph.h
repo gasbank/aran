@@ -57,7 +57,7 @@ public:
 	//@{
 	virtual void					interconnect(ArnNode* sceneRoot);
 	//@}
-private:
+protected: // TODO: protected or private?
 									ArnSceneGraph();
 	EXPORT_VERSION					m_exportVersion;
 	ArnBinaryChunk*					m_binaryChunk;

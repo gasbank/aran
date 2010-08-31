@@ -23,7 +23,6 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -41,12 +40,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
-    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(WORKING)</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</LinkIncremental>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
     <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkIncremental>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectName)_D</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -62,7 +62,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>Aran_D.lib;AranMath_D.lib;d3dx9d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Aran_D.lib;AranMath_D.lib;d3d9.lib;d3dx9d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>../DebugDLL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
@@ -94,13 +94,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="ArnActions.cpp" />
     <ClCompile Include="ArnAnim.cpp" />
     <ClCompile Include="ArnFile.cpp" />
     <ClCompile Include="ArnHierarchy.cpp" />
     <ClCompile Include="ArnMeshDx9.cpp" />
     <ClCompile Include="ArnNodeFactory.cpp" />
-    <ClCompile Include="ArnSceneGraphDx9.cpp" />
     <ClCompile Include="ArnSkeletonDx9.cpp" />
     <ClCompile Include="ArnSkinInfo.cpp" />
     <ClCompile Include="ArnTextureDx9.cpp" />
@@ -126,9 +124,7 @@
   <ItemGroup>
     <ClInclude Include="AranDx9.h" />
     <ClInclude Include="AranDx9PCH.h" />
-    <ClInclude Include="ArnActions.h" />
     <ClInclude Include="ArnAnim.h" />
-    <ClInclude Include="..\ArnCommonTypes.h" />
     <ClInclude Include="ArnFile.h" />
     <ClInclude Include="ArnHierarchy.h" />
     <ClInclude Include="ArnMeshDx9.h" />
@@ -142,7 +138,7 @@
     <ClInclude Include="CharacterInterface.h" />
     <ClInclude Include="InputMan.h" />
     <ClInclude Include="LoiterCallback.h" />
-    <ClInclude Include="..\Macros.h" />
+    <ClInclude Include="ModelDrawer.h" />
     <ClInclude Include="ModelReader.h" />
     <ClInclude Include="ResourceMan.h" />
     <ClInclude Include="StructsDx9.h" />

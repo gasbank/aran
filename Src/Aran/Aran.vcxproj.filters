@@ -4,34 +4,11 @@
     <Filter Include="Arn">
       <UniqueIdentifier>{45e2b917-bc73-45ed-90fb-0778c4a90f9d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Headers only">
-      <UniqueIdentifier>{6dc3d1ce-3ee5-4cf1-84ef-a4f7173934e6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Misc">
-      <UniqueIdentifier>{2e86574a-412c-4df0-ae41-8af03b2aa41a}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Shader">
-      <UniqueIdentifier>{c26e892d-f65f-40ea-b9fa-b9da7c636c67}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Sources &amp; Headers">
       <UniqueIdentifier>{796698f9-2086-4202-8d18-efc1a06f1219}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="Aran.rc">
-      <Filter>Misc</Filter>
-    </ResourceCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\Shaders\basic.fx">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="..\Shaders\vertBlendDynamic.fx">
-      <Filter>Shader</Filter>
-    </None>
-    <None Include="..\Shaders\vertBlendStatic.fx">
-      <Filter>Shader</Filter>
-    </None>
     <None Include="ArnGenericBuffer.inl">
       <Filter>Arn</Filter>
     </None>
@@ -47,17 +24,8 @@
     <None Include="ArnXformable.inl">
       <Filter>Arn</Filter>
     </None>
-    <None Include="CopyResourcesToWorking.bat">
-      <Filter>Misc</Filter>
-    </None>
-    <None Include="icon1.ico">
-      <Filter>Misc</Filter>
-    </None>
     <None Include="PreciseTimer.inl">
       <Filter>Sources &amp; Headers</Filter>
-    </None>
-    <None Include="readme.txt">
-      <Filter>Misc</Filter>
     </None>
     <None Include="VTune\Aran.vpj" />
   </ItemGroup>
@@ -159,12 +127,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\ArnCommonTypes.h">
-      <Filter>Headers only</Filter>
-    </ClInclude>
-    <ClInclude Include="..\Macros.h">
-      <Filter>Headers only</Filter>
-    </ClInclude>
     <ClInclude Include="Animation.h">
       <Filter>Sources &amp; Headers</Filter>
     </ClInclude>
@@ -243,9 +205,6 @@
     <ClInclude Include="DungeonInterface.h">
       <Filter>Sources &amp; Headers</Filter>
     </ClInclude>
-    <ClInclude Include="glext.h">
-      <Filter>Headers only</Filter>
-    </ClInclude>
     <ClInclude Include="Log.h">
       <Filter>Sources &amp; Headers</Filter>
     </ClInclude>
@@ -261,14 +220,8 @@
     <ClInclude Include="RenderLayer.h">
       <Filter>Sources &amp; Headers</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Headers only</Filter>
-    </ClInclude>
     <ClInclude Include="Singleton.h">
       <Filter>Sources &amp; Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Structs.h">
-      <Filter>Headers only</Filter>
     </ClInclude>
     <ClInclude Include="VideoMan.h">
       <Filter>Sources &amp; Headers</Filter>
