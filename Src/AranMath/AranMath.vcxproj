@@ -69,7 +69,6 @@
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
       <OutputFile>$(TargetPath)</OutputFile>
     </Link>
   </ItemDefinitionGroup>

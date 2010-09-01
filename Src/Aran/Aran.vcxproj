@@ -51,7 +51,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../;../AranMath;../AranPhy;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ARAN_EXPORTS;TIXML_USE_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;ARAN_EXPORTS;TIXML_USE_STL;USE_DEVIL_AS_IMAGELIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -69,7 +69,6 @@
       <AdditionalLibraryDirectories>$(CODEBASE)/SDL-1.2.13/VisualC/SDL/Debug;$(CODEBASE)/SDL-1.2.13/VisualC/SDLmain/Debug;$(CODEBASE)/DevIL-SDK-x86-1.7.8/lib;$(CODEBASE)/zlib-1.2.3/projects/visualc6/Win32_DLL_Debug;$(CODEBASE)/tinyxml_2_5_3/tinyxml/Debug_STL;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
     </Link>
     <PostBuildEvent>
       <Command>

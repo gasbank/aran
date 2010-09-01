@@ -93,13 +93,13 @@ EpSafeReleaseAll( T& obj )
 
 // Throws
 #define ARN_THROW_REMOVE_FUNCTION_ERROR \
-	{ throw new std::runtime_error("This function should not be called because it was removed by the design issue!"); }
+	{ throw std::runtime_error("This function should not be called because it was removed by the design issue!"); }
 #define ARN_THROW_NOT_IMPLEMENTED_ERROR \
-	{ throw new std::runtime_error("Not implemented!"); }
+	{ throw std::runtime_error("Not implemented!"); }
 #define ARN_THROW_UNEXPECTED_CASE_ERROR \
-	{ throw new std::runtime_error("Unexpected error!"); }
+	{ throw std::runtime_error("Unexpected error!"); }
 #define ARN_THROW_SHOULD_NOT_BE_USED_ERROR \
-	{ throw new std::runtime_error("This code should not be used!"); }
+	{ throw std::runtime_error("This code should not be used!"); }
 
 
 //

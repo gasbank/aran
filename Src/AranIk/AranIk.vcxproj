@@ -70,7 +70,6 @@
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
-      <TargetMachine>MachineX86</TargetMachine>
       <OutputFile>$(TargetPath)</OutputFile>
     </Link>
   </ItemDefinitionGroup>

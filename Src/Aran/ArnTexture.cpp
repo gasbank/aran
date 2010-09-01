@@ -125,7 +125,9 @@ ArnInitializeImageLibrary()
 {
 	if (gs_ilInitialized == false)
 	{
+#ifdef USE_DEVIL_AS_IMAGELIB
 		ilInit();
+#endif
 		gs_ilInitialized = true;
 		return 0;
 	}
@@ -162,7 +164,7 @@ T nearestpower2(T v)
 	return static_cast<T>(1U) << (k + 1);
 }
 
-
+#ifdef USE_DEVIL_AS_IMAGELIB
 void
 ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, ArnColorFormat* format, const char* fileName )
 {
@@ -211,6 +213,15 @@ ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned in
 	ilCopyPixels(0, 0, 0, *width, *height, 1, fmt, type, &data[0]);
 	ilDeleteImages(1, &handle);
 }
+#else // #ifdef USE_DEVIL_AS_IMAGELIB
+void
+ArnTextureGetRawDataFromimageFile( std::vector<unsigned char>& data, unsigned int* width, unsigned int* height, ArnColorFormat* format, const char* fileName )
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+#endif // #ifdef USE_DEVIL_AS_IMAGELIB
+
+
 
 ArnTexture*
 ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsigned int height, ArnColorFormat format, bool wrap )
@@ -220,9 +231,7 @@ ArnCreateTextureFromArray( const unsigned char* data, unsigned int width, unsign
 	return ret;
 }
 
-
-
-
+#ifdef USE_DEVIL_AS_IMAGELIB
 // Bitmap data returned is (R,G,B) tuples in row-major order.
 unsigned char* readBMP2(const char* fileName, int& width, int& height, bool& rgbOrBgr)
 {
@@ -254,3 +263,9 @@ unsigned char* readBMP2(const char* fileName, int& width, int& height, bool& rgb
 	ilDeleteImages(1, &handle);
 	return data;
 }
+#else // #ifdef USE_DEVIL_AS_IMAGELIB
+unsigned char* readBMP2(const char* fileName, int& width, int& height, bool& rgbOrBgr)
+{
+	ARN_THROW_NOT_IMPLEMENTED_ERROR
+}
+#endif // #ifdef USE_DEVIL_AS_IMAGELIB
