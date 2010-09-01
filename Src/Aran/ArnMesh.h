@@ -40,6 +40,13 @@ struct VertexGroup
 	ArnBinaryChunk*		vertGroupChunk;
 };
 
+struct ArnxBoneRecord
+{
+	float numInf[4];			// Should be 'int numInf' but shader compatability
+	float influences[4];
+	float m[4];					// Should be 'int m[4]' but shader compatability
+};
+
 /*!
  * @brief 메시
  */

@@ -72,13 +72,6 @@ struct ArnxQuadFaceChunkEntry
 	int v0, v1, v2, v3;
 };
 
-struct ArnxBoneRecord
-{
-	float numInf[4];			// Should be 'int numInf' but shader compatability
-	float influences[4];
-	float m[4];					// Should be 'int m[4]' but shader compatability
-};
-
 bool
 ArnMeshGl::initRendererObjectXml()
 {
@@ -241,7 +234,6 @@ ArnMeshGl::initRendererObjectXml()
 		return false;
 	}
 }
-
 
 void
 ArnMeshGl::renderVbIb() const

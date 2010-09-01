@@ -2,6 +2,7 @@
 #include "ArnMeshDx9.h"
 #include "AranDx9.h"
 #include "VideoManDx9.h"
+#include "ArnBinaryChunk.h"
 
 ArnMeshDx9::ArnMeshDx9(void)
 : m_d3dxMesh(0)
@@ -43,9 +44,11 @@ ArnMeshDx9::createFrom( const NodeBase* nodeBase )
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
+ArnMeshDx9*
+ArnMeshDx9::createFrom (const ArnMesh* mesh)
 {
 	ArnMeshDx9 *ret = new ArnMeshDx9 ();
+	assert(mesh->getFaceGroupCount() && mesh->getVertGroupCount());
 	/*
 	 * Should set the following members of NodeMesh3:
 	 *
@@ -58,7 +61,6 @@ ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
 	 */
 	NodeMesh3 nm3;
 	nm3.m_armatureName = 0;
-
 	nm3.m_meshVerticesCount = mesh->getVertCountOfVertGroup (0);
 	ArnVertex *vertex_mem = new ArnVertex[nm3.m_meshVerticesCount];
 	for (unsigned int v = 0; v < nm3.m_meshVerticesCount; ++v)
@@ -80,16 +82,35 @@ ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
 	{
 		unsigned int triCount, quadCount;
 		mesh->getFaceCount (triCount, quadCount, fg);
-		// TODO: Quad faces support on Dx9
-		if (quadCount)
+		assert(triCount + quadCount > 0);
+		for (unsigned int t = 0; t < quadCount; ++t)
 		{
-			std::cout << "Warning - mesh '" << mesh->getName() << "' has " << quadCount << " quad-face(s). "
-				         "Quad-faces will be ignored." << std::endl;
-			if (triCount == 0)
+			unsigned int faceIdx;
+			unsigned int vind[4];
+			mesh->getQuadFace (faceIdx, vind, fg, t);
+			/* A single quad face transformed to
+			 * two tri faces.
+			 *
+			 *       vind[0] vind[1] vind[2] vind[3]
+			 * faceA    1      2        3
+			 * faceB    3               1      2
+			 */
+			static const int faceAIdx[3] = { 0, 1, 2 };
+			static const int faceBIdx[3] = { 2, 3, 0 };
+			/* faceA */
+			for (int i = 0; i < 3; ++i)
 			{
-				std::cout << "Error - mesh '" << mesh->getName() << "' has " << triCount << " tri-face(s). ";
-				throw std::runtime_error("No tri-faces on mesh.");
+				assert (vind[ faceAIdx[i] ] < 0x0000ffff);
+				faces.push_back (vind[ faceAIdx[i] ]);
 			}
+			attr.push_back (fg);
+			/* faceB */
+			for (int i = 0; i < 3; ++i)
+			{
+				assert (vind[ faceBIdx[i] ] < 0x0000ffff);
+				faces.push_back (vind[ faceBIdx[i] ]);
+			}
+			attr.push_back (fg);
 		}
 
 		for (unsigned int t = 0; t < triCount; ++t)
@@ -127,7 +148,8 @@ ArnMeshDx9 *ArnMeshDx9::createFrom (const ArnMesh* mesh)
 	}
 }
 
-void ArnMeshDx9::interconnect( ArnNode* sceneRoot )
+void
+ArnMeshDx9::interconnect( ArnNode* sceneRoot )
 {
 	/*
 	if (m_data.armatureName.length())
@@ -139,6 +161,7 @@ void ArnMeshDx9::interconnect( ArnNode* sceneRoot )
 	*/
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
+
 void
 ArnMeshDx9::buildFrom(const NodeMesh2* nm)
 {
@@ -216,13 +239,15 @@ ArnMeshDx9::buildFrom(const NodeMesh3* nm)
 	ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 }
 
-int ArnMeshDx9::render( bool bIncludeShadeless ) const
+int
+ArnMeshDx9::render( bool bIncludeShadeless ) const
 {
 	assert (m_d3dxMesh);
 	return m_d3dxMesh->DrawSubset (0);
 }
 
-void ArnMeshDx9::cleanup()
+void
+ArnMeshDx9::cleanup()
 {
 	ARN_THROW_NOT_IMPLEMENTED_ERROR
 }
