@@ -420,6 +420,16 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	assert(strcmp(xmlFile + strlen(xmlFile) - 4, ".xml") == 0);
 	assert(gs_xmlInitialized);
 
+	// 경로명에 포함된 특정한 심볼을
+	// 찾아서 원래 값으로 찾아 바꾸기를 한다.
+	// 현재는 임시로 구현되어 있는 상태.
+	std::string xmlFileStr = xmlFile;
+	const std::string mp("{ModelPath}");
+	const std::string working(getenv("WORKING"));
+	const std::string modelPath(working + "/models/");
+	if (xmlFileStr.find(mp) != -1)
+		xmlFileStr.replace(xmlFileStr.find(mp), mp.length(), modelPath);
+	xmlFile = xmlFileStr.c_str();
 	TiXmlDocument xmlDoc(xmlFile);
 	if (!xmlDoc.LoadFile())
 	{
