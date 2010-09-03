@@ -32,13 +32,13 @@ ArnTextureDx9* ArnTextureDx9::createFrom( const ArnTexture* tex )
 		if (ret->init() < 0)
 		{
 			delete ret;
-			printf("ArnTextureGl initialization failed!\n");
+			printf("ArnTextureDx9 initialization failed!\n");
 			return 0;
 		}
 		else
 		{
 			ret->setInitialized(true);
-			ret->setRendererType(RENDERER_GL);
+			ret->setRendererType(RENDERER_DX9);
 			return ret;
 		}
 	}
@@ -48,6 +48,11 @@ ArnTextureDx9* ArnTextureDx9::createFrom( const ArnTexture* tex )
 
 int ArnTextureDx9::render( bool bIncludeShadeless ) const
 {
+	assert(m_d3d9Tex);
+	assert(GetVideoManagerDx9 ().GetDev ());
+	D3DPERF_BeginEvent(0xffff0000, L"Texture set");
+	GetVideoManagerDx9 ().GetDev ()->SetTexture(0, m_d3d9Tex);
+	D3DPERF_EndEvent();
 	return 0;
 }
 

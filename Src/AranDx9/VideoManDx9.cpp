@@ -1364,6 +1364,23 @@ VideoManDx9::setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix&
 	this->lpD3DDevice->SetTransform(D3DTS_PROJECTION, ArnMatrixGetConstDxPtr(getProjectionMatrix()));
 }
 
+template<typename T1, typename T2> void CopyColorValue(T1& t1, const T2& t2)
+{
+	t1.r = t2.r;
+	t1.g = t2.g;
+	t1.b = t2.b;
+	t1.a = t2.a;
+}
+
+template<typename T1, typename T2> void CopyMaterialData(T1& t1, const T2& t2)
+{
+	CopyColorValue(t1.Diffuse, t2.Diffuse);
+	CopyColorValue(t1.Ambient, t2.Ambient);
+	CopyColorValue(t1.Specular, t2.Specular);
+	CopyColorValue(t1.Emissive, t2.Emissive);
+	t1.Power = t2.Power;
+}
+
 void
 VideoManDx9::renderSingleMesh( ArnMesh* mesh, const ArnMatrix& globalXform /*= DX_CONSTS::D3DXMAT_IDENTITY*/ )
 {
@@ -1390,6 +1407,31 @@ VideoManDx9::renderSingleMesh( ArnMesh* mesh, const ArnMatrix& globalXform /*= D
 				{
 					// TODO: Texture in DX9
 					//GetDev()->SetTexture(0, texture->getDxTexture());
+				}
+			}
+			else
+			{
+				const char *mtrlName = mesh->getMaterialReferenceName(j);
+				assert(mtrlName && strlen(mtrlName));
+				const ArnNode* mtrlNode = mesh->getSceneRoot()->getConstNodeByName( mtrlName );
+				const ArnMaterial* mtrl2 = dynamic_cast<const ArnMaterial*>(mtrlNode);
+				assert(mtrl2);
+				const ArnMaterialData &amd = mtrl2->getD3DMaterialData();
+				D3DMATERIAL9 m;
+				CopyMaterialData(m, amd);
+				GetDev()->SetMaterial(&m);
+
+				if (mtrl2->getTextureCount())
+				{
+					const ArnTexture* tex = mtrl2->getFirstTexture();
+					const ArnRenderableObject* renderable = tex->getRenderableObject();
+					assert(renderable);
+					// 'Rendering texture' has meaning of 'binding texture'
+					renderable->render(false);
+				}
+				else
+				{
+					GetDev()->SetTexture(0, 0);
 				}
 			}
 			// TODO: Mesh render in DX9

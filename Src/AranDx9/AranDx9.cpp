@@ -5,6 +5,8 @@
 #include "AranDx9.h"
 #include "StructsDx9.h"
 #include "ArnMeshDx9.h"
+#include "ArnTextureDx9.h"
+#include "ArnMaterial.h"
 
 //////////////////////////////////////////////////////////////////////////
 
@@ -164,10 +166,25 @@ D3DXMATRIX* ArnMatrixGetDxPtr(ArnMatrix& mat)
 	return reinterpret_cast<D3DXMATRIX*>(&mat);
 }
 
-static void
-InitializeArnMeshRenderableObjectDx9( INOUT ArnMesh* mesh )
+static void InitializeArnMeshRenderableObjectDx9( INOUT ArnMesh* mesh )
 {
 	mesh->attachChild( ArnMeshDx9::createFrom(mesh) );
+}
+
+static void	InitializeArnTextureRenderableObjectDx9( INOUT ArnTexture* tex )
+{
+	tex->attachChild( ArnTextureDx9::createFrom(tex) );
+}
+
+static void	InitializeArnMaterialRenderableObjectDx9( const ArnMaterial* mtrl )
+{
+	unsigned int texCount = mtrl->getTextureCount();
+	for (unsigned int i = 0; i < texCount; ++i)
+	{
+		ArnTexture* tex = mtrl->getD3DTexture(i);
+		tex->init();
+		InitializeArnTextureRenderableObjectDx9(tex);
+	}
 }
 
 void ArnInitializeRenderableObjectsDx9( ArnNode* node )
@@ -179,8 +196,8 @@ void ArnInitializeRenderableObjectsDx9( ArnNode* node )
 	}
 	else if (node->getType() == NDT_RT_MATERIAL)
 	{
-		//ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
-		//InitializeArnMaterialRenderableObjectGl(mtrl);
+		ArnMaterial* mtrl = static_cast<ArnMaterial*>(node);
+		InitializeArnMaterialRenderableObjectDx9(mtrl);
 	}
 	else if (node->getType() == NDT_RT_SKELETON)
 	{
