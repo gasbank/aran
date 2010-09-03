@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <PropertyGroup Label="UserMacros">
-    <CODEBASE>F:\Devel3\</CODEBASE>
-    <WORKING>F:\Devel3\Working\</WORKING>
-  </PropertyGroup>
+  <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
     <_ProjectFileVersion>10.0.21006.1</_ProjectFileVersion>
     <_PropertySheetDisplayName>EnvVar</_PropertySheetDisplayName>
@@ -19,12 +16,5 @@
       <OutputFile>$(TargetPath)</OutputFile>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <BuildMacro Include="CODEBASE">
-      <Value>$(CODEBASE)</Value>
-    </BuildMacro>
-    <BuildMacro Include="WORKING">
-      <Value>$(WORKING)</Value>
-    </BuildMacro>
-  </ItemGroup>
+  <ItemGroup />
 </Project>
