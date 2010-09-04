@@ -309,7 +309,7 @@ def createMeshData(doc, ob):
 		groupElm.appendChild(chunk)
 		meshData.appendChild(groupElm)
 	
-	# Vertex
+	# Vertex (UV coordinates are handled in per-face way. Not per-vertex.)
 	vertex = doc.createElement('vertex')
 	chunk = createChunk(doc, exportPlace, [('coordinates', 'float3'), ('normal', 'float3')])
 	for v in mesh.verts:
@@ -668,12 +668,15 @@ exportPlace = 'bin'
 
 sce = bpy.data.scenes.active # Get active scene automatically
 doc = Document()
-# TODO: Export file output path
-#homedir = os.path.expanduser('~')
-homedir = 'F:/Devel3/Working/models'
-print 'Export Directory: %s' % homedir
-xmlFile = open('%s/%s.xml' % (homedir, sce.name), 'w')
-binFile = open('%s/%s.bin' % (homedir, sce.name), 'wb')
+# TODO: Export file to {MODELPATH}, that is, {WORKING}/models.
+workdir = os.getenv('WORKING')
+if workdir is None:
+	print 'ERROR - Environment variable WORKING is not set.'
+	raise Exception('ENVVAR error')
+modelpath = workdir + '/models'
+print 'Model export directory: %s' % modelpath
+xmlFile = open('%s/%s.xml' % (modelpath, sce.name), 'w')
+binFile = open('%s/%s.bin' % (modelpath, sce.name), 'wb')
 linkedMaterials = []
 linkedIpos      = []
 linkedActions   = []
@@ -714,10 +717,10 @@ xmlFile.close()
 binFile.close() # Raw binary data file writing finished
 
 # Compress binary file
-binFile = open('%s/%s.bin' % (homedir, sce.name), 'rb')
+binFile = open('%s/%s.bin' % (modelpath, sce.name), 'rb')
 compressedData = zlib.compress(binFile.read())
 binFile.close()
-binFile = open('%s/%s.bin' % (homedir, sce.name), 'wb')
+binFile = open('%s/%s.bin' % (modelpath, sce.name), 'wb')
 binFile.write(compressedData)
 binFile.close()
 
