@@ -5,6 +5,7 @@
  */
 #include "PymPch.h"
 #include <pthread.h>
+#include "include/PrsGraphCapi.h"
 #include "PymStruct.h"
 #include "PymConfig.h"
 #include "PymCmdLineParser.h"
@@ -24,6 +25,11 @@ extern pthread_mutex_t main_mutex;
 extern pthread_cond_t count_threshold_cv;
 extern pthread_cond_t physics_thread_finished;
 
+extern const int zdatasize;
+extern double zdata[100];
+extern int zdatastart;
+extern int zdataend;
+
 void *PhysicsThreadMain(void *t)
 {
     pym_physics_thread_context_t *phyCon = (pym_physics_thread_context_t *)t;
@@ -42,7 +48,7 @@ void *PhysicsThreadMain(void *t)
     MSKenv_t    env;
     PymInitializeMosek(&env);
 
-    int i = 0, j;
+    int i = 0, j, k;
     /* Get trunk RB address for later external force testing */
     pym_rb_named_t *rbnTrunk = 0;
     FOR_0(j, pymCfg->nBody) {
@@ -53,13 +59,14 @@ void *PhysicsThreadMain(void *t)
     }
     assert(rbnTrunk);
     int resetFlag = 0;
-    while (1) {
+    while (1) { /* CAUTION: local variable 'i' is a loop variable effectively. */
         if ((i >= pymCfg->nSimFrame) || resetFlag) {
             pthread_mutex_lock(&main_mutex);
             PymSetInitialStateUsingTrajectory(pymCfg, nBlenderBody,
                                               corresMapIndex, trajData);
             pthread_mutex_unlock(&main_mutex);
             i = 0;
+            zdatastart = 0;
             resetFlag = 0;
         }
         /*
@@ -75,7 +82,7 @@ void *PhysicsThreadMain(void *t)
             pthread_mutex_unlock(&main_mutex);
             //continue;
         }
-
+        /* Set reference */
         if (cmdopt->trajconf) {
             FOR_0(j, pymCfg->nBody) {
                 memcpy(pymCfg->body[j].b.chi_ref,
@@ -83,6 +90,21 @@ void *PhysicsThreadMain(void *t)
                        sizeof(double)*6);
             }
         }
+        /* Compute reference COM */
+        double refCom[3] = {0,};
+        double totMass = 0;
+        FOR_0(j, pymCfg->nBody)
+            totMass += pymCfg->body[j].b.m;
+        FOR_0(j, pymCfg->nBody) {
+            FOR_0(k, 3)
+                refCom[k] += pymCfg->body[j].b.m * pymCfg->body[j].b.chi_ref[k];
+        }
+        FOR_0(j, 3)
+            refCom[j] /= totMass;
+
+
+
+
 
         double pureOptTime = 0;
         const char *solstaStr;
@@ -99,15 +121,24 @@ void *PhysicsThreadMain(void *t)
             pthread_mutex_unlock(&main_mutex);
             //continue;
         }
+
         pthread_mutex_lock(&main_mutex); {
             if (phyCon->stop) {
                 /* stop flag signaled from the main thread */
                 break;
             }
+
+            PrsGraphPushBackTo(phyCon->comGraph, PCG_SIM_COM, pymCfg->bipCom[2]);
+            PrsGraphPushBackTo(phyCon->comGraph, PCG_REF_COM, refCom[2]);
+
             /* Copy RB and MF data to renderer-accessable memory area */
-            memcpy(phyCon->renBody,  pymCfg->body,   sizeof(pym_rb_t)*pymCfg->nBody);
-            memcpy(phyCon->renFiber, pymCfg->fiber,  sizeof(pym_mf_t)*pymCfg->nFiber);
-            memcpy(phyCon->bipCom,   pymCfg->bipCom, sizeof(double)*3);
+            memcpy(phyCon->renBody,   pymCfg->body,      sizeof(pym_rb_t)*pymCfg->nBody);
+            memcpy(phyCon->renFiber,  pymCfg->fiber,     sizeof(pym_mf_t)*pymCfg->nFiber);
+            /* Simulated biped COM position */
+            memcpy(phyCon->bipCom,    pymCfg->bipCom,    sizeof(double)*3);
+            /* Reference biped COM position (note that pymCfg, not phyCon!) */
+            memcpy(pymCfg->bipRefCom, refCom, sizeof(double)*3);
+
             /* Write external force excertion */
             memcpy(rbnTrunk->extForce, phyCon->trunkExternalForce,
                    sizeof(double)*3);

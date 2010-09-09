@@ -33,8 +33,8 @@
 #include <GL/glew.h>
 #include <GL/glxew.h>
 #include <GL/gl.h>
-//#include <GL/glext.h>
-//#include <GL/glx.h>
+///#include <GL/glext.h>
+///#include <GL/glx.h>
 #include <GL/glut.h>
 #include <sys/time.h>
 #include <pthread.h>
@@ -43,6 +43,8 @@
 #include <umfpack.h>
 #include <mosek.h>
 #include <libconfig.h>
+
+#include "include/PrsGraphCapi.h"
 
 #include "PymStruct.h"
 #include "Biped.h"
@@ -65,6 +67,8 @@
 #include "camera.h"
 #include "image.h"
 #include "quaternion.h"
+
+#include "test.h"
 
 /*
  * Globals
@@ -799,6 +803,7 @@ void DrawAll(pym_physics_thread_context_t *phyCon, int forShadow,
     static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
     glColor3f(1,1,1);
     DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
+    DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
     pthread_mutex_unlock(&main_mutex);
 
     glPopMatrix();
@@ -816,6 +821,10 @@ void YRotPoint(float pr[3], float p[3], float th) {
     pr[2] = -sin(th)*p[0] + cos(th)*p[2];
 }
 
+const int zdatasize = 100;
+double zdata[100] = {0,};
+int zdatastart = 0;
+int zdataend   = 0;
 void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 {
     static GLint iFrames = 0;
@@ -896,6 +905,21 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 	DrawAll(phyCon, 0, m_vaoID);
 
 
+    /* Head-up Display
+     * --------------------------
+     * Turn off shader and use fixed pipeline.
+     * Also make sure we have identities
+     * on projection and modelview matrix.
+     */
+	glUseProgramObjectARB(0);
+    glDisable(GL_LIGHTING);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+
+    PrsGraphRender(phyCon->comGraph);
+
     iFrames++;
     DeltaT = (GLfloat)(etime-t2);
     if( DeltaT >= Timed )
@@ -921,6 +945,7 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     lCam = 0.0f;
     vCam = 0.0f;
     dCam = 0.0f;
+
 }
 
 /*
@@ -2046,8 +2071,17 @@ int main(int argc, char *argv[])
         .stop               = 0,
         .trunkExternalForce = {0,},
         .renBody            = calloc(pymCfg.nBody,  sizeof(pym_rb_t)),
-        .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t))
+        .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t)),
+        .comGraph           = PrsGraphNew(),
     };
+    PrsGraphSetMaxY(phyCon.comGraph, 4.0);
+    PRSGRAPHDATA simComGd = PrsGraphDataNew(pymCfg.nSimFrame);
+    PrsGraphDataSetLineColor(simComGd, 0, 1, 0);
+    PrsGraphAttach(phyCon.comGraph, PCG_SIM_COM, simComGd);
+    PRSGRAPHDATA refComGd = PrsGraphDataNew(pymCfg.nSimFrame);
+    PrsGraphDataSetLineColor(refComGd, 1, 0, 0);
+    PrsGraphAttach(phyCon.comGraph, PCG_REF_COM, refComGd);
+
     pthread_t thPhysics;
     pthread_attr_t attr;
 
@@ -2094,6 +2128,7 @@ int main(int argc, char *argv[])
      *************/
     EventLoop( display, window, wmDeleteMessage, &phyCon, m_vaoID );
 
+
     pthread_mutex_lock(&main_mutex);
     phyCon.stop = 1;
     pthread_mutex_unlock(&main_mutex);
@@ -2114,6 +2149,8 @@ int main(int argc, char *argv[])
     printf("Output written to %s\n", cmdopt.output);
 
     PymDestoryConfig(&pymCfg);
+
+    PrsGraphDelete(phyCon.comGraph);
 
     free(trajData);
 
