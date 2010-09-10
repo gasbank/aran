@@ -170,13 +170,13 @@ void PymOptimize(pym_opt_t *pymOpt) {
              * Jump0        - ?
              * Jump1        - 2
              */
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 0 ] = 1;
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 1 ] = 1;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 0 ] = 0;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 1 ] = 0;
             c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1;
 
             /* Estimated position of z-coordinate of contact point
              * Default: 2e-1, 1e-3      */
-            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1e-3;
+            c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 1;
         }
         for (j= tauOffset + sd[i].Aci[5]; j < tauOffset + sd[i].Aci[6]; ++j) {
             /*
@@ -188,12 +188,12 @@ void PymOptimize(pym_opt_t *pymOpt) {
              * Jump0        -  ?
              * Jump1        -  ?
              */
-            c[j] = 10;
+            c[j] = 1;
         }
         /*
          * TODO [TUNE] Reference following coefficient
          */
-        c[ tauOffset + sd[i].Aci[8] ] = 1e5;
+        c[ tauOffset + sd[i].Aci[8] ] = 1;
     }
     FOR_0(j, nf) {
         const char *const fibName = pymCfg->fiber[j].b.name;
@@ -210,7 +210,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    //c[ Aci[4] ] = 1e-5; /* ligament actuation */
+    c[ Aci[4] ] = 1; /* ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -335,7 +335,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
     if (nptotal) {
         bkx[ bod->Aci[10] ] = MSK_BK_RA;
         blx[ bod->Aci[10] ] = 0;
-        bux[ bod->Aci[10] ] = 0.15;
+        bux[ bod->Aci[10] ] = 0.55;
     }
 
     MSKtask_t   task;
@@ -527,9 +527,10 @@ void PymOptimize(pym_opt_t *pymOpt) {
             abort();
     }
     /*** TODO ***/
-    /*
+
     r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubLigaAct, csubLigaAct);
     assert(r == MSK_RES_OK);
+    /*
     r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubActAct, csubActAct);
     assert(r == MSK_RES_OK);
     */

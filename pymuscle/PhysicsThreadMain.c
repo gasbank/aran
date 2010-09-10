@@ -25,11 +25,6 @@ extern pthread_mutex_t main_mutex;
 extern pthread_cond_t count_threshold_cv;
 extern pthread_cond_t physics_thread_finished;
 
-extern const int zdatasize;
-extern double zdata[100];
-extern int zdatastart;
-extern int zdataend;
-
 void *PhysicsThreadMain(void *t)
 {
     pym_physics_thread_context_t *phyCon = (pym_physics_thread_context_t *)t;
@@ -66,7 +61,6 @@ void *PhysicsThreadMain(void *t)
                                               corresMapIndex, trajData);
             pthread_mutex_unlock(&main_mutex);
             i = 0;
-            zdatastart = 0;
             resetFlag = 0;
         }
         /*

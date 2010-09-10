@@ -68,8 +68,6 @@
 #include "image.h"
 #include "quaternion.h"
 
-#include "test.h"
-
 /*
  * Globals
  */
@@ -821,10 +819,20 @@ void YRotPoint(float pr[3], float p[3], float th) {
     pr[2] = -sin(th)*p[0] + cos(th)*p[2];
 }
 
-const int zdatasize = 100;
-double zdata[100] = {0,};
-int zdatastart = 0;
-int zdataend   = 0;
+void RenderGraph(PRSGRAPH g) {
+    glPushMatrix(); /* stack A */
+    const double margin = 0.05;
+    if (width > height) {
+        glTranslated(-1 + margin*(height/width), -(1-margin), 0);
+        glScaled(0.5*height/width, 0.5, 1);
+    } else {
+        glTranslated(-(1-margin), -1 + margin*(width/height), 0);
+        glScaled(0.5, 0.5*width/height, 1);
+    }
+    PrsGraphRender(g);
+    glPopMatrix(); /* stack A */
+}
+
 void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 {
     static GLint iFrames = 0;
@@ -918,7 +926,7 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    PrsGraphRender(phyCon->comGraph);
+    RenderGraph(phyCon->comGraph);
 
     iFrames++;
     DeltaT = (GLfloat)(etime-t2);
