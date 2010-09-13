@@ -193,7 +193,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
         /*
          * TODO [TUNE] Reference following coefficient
          */
-        c[ tauOffset + sd[i].Aci[8] ] = 1;
+        c[ tauOffset + sd[i].Aci[8] ] = 1e3;
     }
     FOR_0(j, nf) {
         const char *const fibName = pymCfg->fiber[j].b.name;
@@ -205,12 +205,12 @@ void PymOptimize(pym_opt_t *pymOpt) {
         }
     }
     /* Cost for COM deviation */
-    c[ Aci[10] ] = 1;
+    c[ Aci[10] ] = 1e4;
 
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 1; /* ligament actuation */
+    c[ Aci[4] ] = 1e-3; /* ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -335,7 +335,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
     if (nptotal) {
         bkx[ bod->Aci[10] ] = MSK_BK_RA;
         blx[ bod->Aci[10] ] = 0;
-        bux[ bod->Aci[10] ] = 0.55;
+        bux[ bod->Aci[10] ] = 0.1;
     }
 
     MSKtask_t   task;
@@ -482,10 +482,10 @@ void PymOptimize(pym_opt_t *pymOpt) {
                         Aci[6] + 4*j + 3);
     }
     /* COM constraint */
-
+    /* TODO */
     AppendConeRange(task,
                     Aci[10],                      // epsilon_com
-                    Aci[9],                       // delta p_{com,ref}
+                    Aci[9]+2,                     // delta p_{com,ref} (z-axis only)
                     Aci[10]);
 
     /*

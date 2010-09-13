@@ -819,16 +819,29 @@ void YRotPoint(float pr[3], float p[3], float th) {
     pr[2] = -sin(th)*p[0] + cos(th)*p[2];
 }
 
-void RenderGraph(PRSGRAPH g) {
+void RenderGraph(PRSGRAPH g, int slotid) {
     glPushMatrix(); /* stack A */
     const double margin = 0.05;
+    double graphX, graphY;
+    double graphW, graphH;
+    double graphGapX, graphGapY;
     if (width > height) {
-        glTranslated(-1 + margin*(height/width), -(1-margin), 0);
-        glScaled(0.5*height/width, 0.5, 1);
+        graphGapX = margin*height/width;
+        graphGapY = margin;
+        graphW = 0.5*height/width;
+        graphH = 0.5;
+        graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
+        graphY = -1 + graphGapY;
     } else {
-        glTranslated(-(1-margin), -1 + margin*(width/height), 0);
-        glScaled(0.5, 0.5*width/height, 1);
+        graphGapX = margin;
+        graphGapY = margin*width/height;
+        graphW = 0.5;
+        graphH = 0.5*width/height;
+        graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
+        graphY = -1 + graphGapY;
     }
+    glTranslated(graphX, graphY, 0);
+    glScaled(graphW, graphH, 1);
     PrsGraphRender(g);
     glPopMatrix(); /* stack A */
 }
@@ -926,7 +939,9 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    RenderGraph(phyCon->comGraph);
+    RenderGraph(phyCon->comGraph, 0);
+    RenderGraph(phyCon->comGraph, 1);
+    RenderGraph(phyCon->comGraph, 2);
 
     iFrames++;
     DeltaT = (GLfloat)(etime-t2);
