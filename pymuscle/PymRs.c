@@ -822,7 +822,6 @@ void YRotPoint(float pr[3], float p[3], float th) {
 void RenderGraph(PRSGRAPH g, int slotid) {
     glPushMatrix(); /* stack A */
     const double margin = 0.05;
-    double graphX, graphY;
     double graphW, graphH;
     double graphGapX, graphGapY;
     if (width > height) {
@@ -830,16 +829,14 @@ void RenderGraph(PRSGRAPH g, int slotid) {
         graphGapY = margin;
         graphW = 0.5*height/width;
         graphH = 0.5;
-        graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
-        graphY = -1 + graphGapY;
     } else {
         graphGapX = margin;
         graphGapY = margin*width/height;
         graphW = 0.5;
         graphH = 0.5*width/height;
-        graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
-        graphY = -1 + graphGapY;
     }
+    const double graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
+    const double graphY = -1 + graphGapY;
     glTranslated(graphX, graphY, 0);
     glScaled(graphW, graphH, 1);
     PrsGraphRender(g);

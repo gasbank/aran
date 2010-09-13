@@ -172,7 +172,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
              */
             c[ tauOffset + sd[i].Aci[2] + 5*j + 0 ] = 0;
             c[ tauOffset + sd[i].Aci[2] + 5*j + 1 ] = 0;
-            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1;
+            c[ tauOffset + sd[i].Aci[2] + 5*j + 4 ] = 1e2;
 
             /* Estimated position of z-coordinate of contact point
              * Default: 2e-1, 1e-3      */
@@ -205,12 +205,12 @@ void PymOptimize(pym_opt_t *pymOpt) {
         }
     }
     /* Cost for COM deviation */
-    c[ Aci[10] ] = 1e4;
+    c[ Aci[10] ] = 1e3;
 
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
     /* minimize aggregate tension of actuated muscle fiber */
-    c[ Aci[4] ] = 1e-3; /* ligament actuation */
+    c[ Aci[4] ] = 0; /* ligament actuation */
 
     /*
      * Since actuation forces on actuated muscle fibers are
@@ -335,7 +335,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
     if (nptotal) {
         bkx[ bod->Aci[10] ] = MSK_BK_RA;
         blx[ bod->Aci[10] ] = 0;
-        bux[ bod->Aci[10] ] = 0.1;
+        bux[ bod->Aci[10] ] = 0.01;
     }
 
     MSKtask_t   task;
@@ -604,8 +604,6 @@ void PymOptimize(pym_opt_t *pymOpt) {
 
     if ( r==MSK_RES_OK )
     {
-        MSKsolstae solsta;
-
         MSK_getsolutionstatus (task,
                              MSK_SOL_ITR,
                              NULL,
