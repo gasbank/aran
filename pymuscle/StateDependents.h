@@ -1,7 +1,6 @@
 #ifndef __STATEDEPENDENTS_H_
 #define __STATEDEPENDENTS_H_
 
-
 struct _pym_rb_statedep_t {
     double W_0[4][4];   /* previous homogeneous transform matrix */
     double W_1[4][4];   /* current homogeneous transform matrix */

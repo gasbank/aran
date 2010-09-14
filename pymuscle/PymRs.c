@@ -50,6 +50,7 @@
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
 #include "PymuscleConfig.h"
 #include "StateDependents.h"
 #include "Config.h"
@@ -786,23 +787,23 @@ void DrawAll(pym_physics_thread_context_t *phyCon, int forShadow,
     DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
 
     const int nb = phyCon->pymCfg->nBody;
-    pthread_mutex_lock(&main_mutex);
-    int i;
-    FOR_0(i, nb) {
-        /* Access data from renderer-accessable area of phyCon */
-        const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-        const double *const boxSize = rbn->boxSize;
-        DrawRb(rbn, boxSize, 0);
-        if (!forShadow) {
-            DrawRbRef(rbn, boxSize, 1);
-            DrawRbContacts(rbn);
+    pthread_mutex_lock(&main_mutex); {
+        int i;
+        FOR_0(i, nb) {
+            /* Access data from renderer-accessable area of phyCon */
+            const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
+            const double *const boxSize = rbn->boxSize;
+            DrawRb(rbn, boxSize, 0);
+            if (!forShadow) {
+                DrawRbRef(rbn, boxSize, 1);
+                DrawRbContacts(rbn);
+            }
         }
-    }
-    static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
-    glColor3f(1,1,1);
-    DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
-    DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
-    pthread_mutex_unlock(&main_mutex);
+        static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
+        glColor3f(1,1,1);
+        DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
+        DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
+    } pthread_mutex_unlock(&main_mutex);
 
     glPopMatrix();
 }
@@ -841,6 +842,59 @@ void RenderGraph(PRSGRAPH g, int slotid) {
     glScaled(graphW, graphH, 1);
     PrsGraphRender(g);
     glPopMatrix(); /* stack A */
+}
+
+void RenderSupportPolygon(const pym_physics_thread_context_t *const phyCon) {
+    int i;
+    const int chInputLen = phyCon->pymCfg->renChInputLen;
+    const int chOutputLen = phyCon->pymCfg->renChOutputLen;
+    if (!(chInputLen+1 >= chOutputLen)) {
+        printf("chInputLen = %d, chOutputLen = %d\n", chInputLen, chOutputLen);
+        assert(chInputLen+1 >= chOutputLen);
+    }
+    if (chOutputLen) {
+        glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT); /* PAIR A */
+        glPushMatrix(); /* PAIR B */
+        glScaled(0.5, 0.5, 0.5);
+        double chSumX = 0, chSumY = 0;
+        FOR_0(i, chOutputLen) {
+            chSumX += phyCon->pymCfg->renChOutput[i].x;
+            chSumY += phyCon->pymCfg->renChOutput[i].y;
+        }
+        const double chMeanX = chSumX / chOutputLen;
+        const double chMeanY = chSumY / chOutputLen;
+        glColor3f(0,1,0);
+        glBegin(GL_LINE_LOOP);
+        FOR_0(i, chOutputLen) {
+            glVertex3d(phyCon->pymCfg->renChOutput[i].x - chMeanX,
+                       phyCon->pymCfg->renChOutput[i].y - chMeanY,
+                       0);
+        }
+        glEnd();
+
+        assert(chInputLen > 0);
+        glPointSize(3);
+        glColor3f(0,1,0);
+        glBegin(GL_POINTS);
+        FOR_0(i, chInputLen) {
+            glVertex3d(phyCon->pymCfg->renChInput[i].x - chMeanX,
+                       phyCon->pymCfg->renChInput[i].y - chMeanY,
+                       0);
+        }
+        glEnd();
+
+        glPointSize(5);
+        glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
+                     phyCon->pymCfg->bipCom[1] - chMeanY,
+                     0);
+        glScaled(0.015,0.015,0.015);
+        glBegin(GL_LINE_LOOP);
+        glVertex3d(1,1,0);glVertex3d(-1,1,0);glVertex3d(-1,-1,0);glVertex3d(1,-1,0);
+        glEnd();
+
+        glPopMatrix(); /* PAIR B */
+        glPopAttrib(); /* PAIR A */
+    }
 }
 
 void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
@@ -939,6 +993,10 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     RenderGraph(phyCon->comGraph, 0);
     RenderGraph(phyCon->comGraph, 1);
     RenderGraph(phyCon->comGraph, 2);
+
+    pthread_mutex_lock(&main_mutex); {
+        RenderSupportPolygon(phyCon);
+    } pthread_mutex_unlock(&main_mutex);
 
     iFrames++;
     DeltaT = (GLfloat)(etime-t2);

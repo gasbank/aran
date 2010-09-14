@@ -21,6 +21,17 @@ struct _pym_config_t {
 
     double bipCom[3]; /* simulated biped COM position; is part of opt variable */
     double bipRefCom[3]; /* reference biped COM position */
+
+    /* Convex hull output points (thread-unsafe) */
+    Point_C chInput[100];
+    int chInputLen;
+    Point_C chOutput[101];
+    int chOutputLen;
+    /* Convex hull output points (thread-safe) */
+    Point_C renChInput[100];
+    int renChInputLen;
+    Point_C renChOutput[101];
+    int renChOutputLen;
 };
 
 #endif // PYMCONFIG_H_INCLUDED

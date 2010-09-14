@@ -8,6 +8,7 @@
 #include "PymStruct.h"
 #include "Config.h"
 #include "PymJointAnchor.h"
+#include "ConvexHullCapi.h"
 #include "PymuscleConfig.h"
 #include "RigidBody.h"
 #include "PymDebugMessageFlags.h"

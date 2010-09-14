@@ -4,6 +4,7 @@
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
 #include "PymuscleConfig.h"
 #include "StateDependents.h"
 #include "MathUtil.h"

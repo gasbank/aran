@@ -9,6 +9,7 @@
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
 #include "StateDependents.h"
 #include "PymuscleConfig.h"
 #include "DebugPrintDef.h"
@@ -659,6 +660,28 @@ void PymOptimize(pym_opt_t *pymOpt) {
     pymOpt->cost = cost;
 }
 
+void PymConstructSupportPolygon(pym_config_t *pymCfg, pym_rb_statedep_t *sd) {
+    int chOutputLen = 0;
+    int i, j;
+    pymCfg->chInputLen = 0;
+    const int nb = pymCfg->nBody;
+    FOR_0(i, nb) {
+        pym_rb_statedep_t *sdi = sd + i;
+        FOR_0(j, sdi->nContacts_2) {
+            pymCfg->chInput[ pymCfg->chInputLen ].x = sdi->contactsFix_2[j][0];
+            pymCfg->chInput[ pymCfg->chInputLen ].y = sdi->contactsFix_2[j][1];
+            ++pymCfg->chInputLen;
+        }
+    }
+    assert(pymCfg->chInputLen < 100);
+    if (pymCfg->chInputLen > 0) {
+        pymCfg->chOutputLen = PymConvexHull(pymCfg->chInput, pymCfg->chInputLen, pymCfg->chOutput);
+    } else {
+        pymCfg->chOutputLen = 0;
+    }
+    assert(pymCfg->chInputLen >= chOutputLen);
+}
+
 int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
                          pym_config_t *pymCfg, FILE *dmstreams[],
                          const char **_solstaStr, double *_cost,
@@ -674,6 +697,8 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
     FOR_0(j, nb) {
         PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
     }
+
+    PymConstructSupportPolygon(pymCfg, sd);
 
     pym_biped_eqconst_t bipEq;
     PymConstructBipedEqConst(&bipEq, sd, pymCfg, cc);

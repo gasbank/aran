@@ -2,6 +2,7 @@
 #include "PymStruct.h"
 #include "Config.h"
 #include "RigidBody.h"
+#include "ConvexHullCapi.h"
 #include "PymuscleConfig.h"
 #include "StateDependents.h"
 #include "CholmodMacro.h"

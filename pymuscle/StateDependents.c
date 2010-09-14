@@ -5,6 +5,7 @@
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
 #include "PymuscleConfig.h"
 #include "dRdv_real.h"
 #include "Config.h"

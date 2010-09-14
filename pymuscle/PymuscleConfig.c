@@ -4,6 +4,7 @@
 #include "Biped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
 #include "StateDependents.h"
 #include "SymbolicTensor.h"
 #include "Config.h"
@@ -265,6 +266,11 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
         totFiber += pymCfg->body[j].b.nFiber;
     }
     assert(totFiber == 2*nMuscle);
+
+    pymCfg->chInputLen     = 0;
+    pymCfg->renChInputLen  = 0;
+    pymCfg->chOutputLen    = 0;
+    pymCfg->renChOutputLen = 0;
 
     return 0;
     #undef csgfe

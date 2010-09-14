@@ -11,6 +11,7 @@
 #include "PymDebugMessageFlags.h"
 #include "TrajParser.h"
 #include "PymJointAnchor.h"
+#include "ConvexHullCapi.h"
 #include "PymConfig.h"
 #include "PymRbPod.h"
 

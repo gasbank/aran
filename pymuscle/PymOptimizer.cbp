@@ -62,6 +62,10 @@
 		<Unit filename="CholmodMacro.h" />
 		<Unit filename="Config.h" />
 		<Unit filename="Control.h" />
+		<Unit filename="ConvexHull.cpp" />
+		<Unit filename="ConvexHull.h" />
+		<Unit filename="ConvexHullCapi.cpp" />
+		<Unit filename="ConvexHullCapi.h" />
 		<Unit filename="DebugPrintDef.h" />
 		<Unit filename="ExpBodyMoEq_real.c">
 			<Option compilerVar="CC" />

@@ -92,6 +92,7 @@ void quat_mult(double q[4], const double q1[4], const double q2[4]) {
     #undef c2
     #undef d2
 }
+
 void quat_rot(double v1[3], const double q[4], const double v0[3]) {
     DECLARE_COPY_VECTOR(qconj, 4, q);
     qconj[1] *= -1; qconj[2] *= -1; qconj[3] *= -1;
@@ -198,6 +199,7 @@ void GetWFrom6Dof(double W[4][4], const double chiexp[6]) {
     }
     W[3][3] = 1.0;
 }
+
 void _TransformPoint(double pt[3], const double W[4][4], const double p[3], int affineAssert) {
     /*
      *    /                   \ /      \     /       \
@@ -224,13 +226,14 @@ void _TransformPoint(double pt[3], const double W[4][4], const double p[3], int 
         pt[i] = val;
     }
 }
+
 void AffineTransformPoint(double pt[3], const double W[4][4], const double p[3]) {
     _TransformPoint(pt, W, p, 1);
 }
+
 void TransformPoint(double pt[3], const double W[4][4], const double p[3]) {
     _TransformPoint(pt, W, p, 0);
 }
-
 
 void QuatToV(double v[3], const double q[4]) {
 	v[0] = q[1];

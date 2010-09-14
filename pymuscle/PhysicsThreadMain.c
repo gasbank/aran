@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include "include/PrsGraphCapi.h"
 #include "PymStruct.h"
+#include "ConvexHullCapi.h"
 #include "PymConfig.h"
 #include "PymCmdLineParser.h"
 #include "RigidBody.h"
@@ -132,6 +133,11 @@ void *PhysicsThreadMain(void *t)
             memcpy(phyCon->bipCom,    pymCfg->bipCom,    sizeof(double)*3);
             /* Reference biped COM position (note that pymCfg, not phyCon!) */
             memcpy(pymCfg->bipRefCom, refCom, sizeof(double)*3);
+
+            memcpy(pymCfg->renChInput, pymCfg->chInput,  sizeof(pymCfg->chInput));
+            pymCfg->renChInputLen = pymCfg->chInputLen;
+            memcpy(pymCfg->renChOutput, pymCfg->chOutput,  sizeof(pymCfg->chOutput));
+            pymCfg->renChOutputLen = pymCfg->chOutputLen;
 
             /* Write external force excertion */
             memcpy(rbnTrunk->extForce, phyCon->trunkExternalForce,
