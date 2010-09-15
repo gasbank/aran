@@ -841,7 +841,17 @@ void RenderGraph(PRSGRAPH g, int slotid) {
     glTranslated(graphX, graphY, 0);
     glScaled(graphW, graphH, 1);
     PrsGraphRender(g);
+    /* Graph title */
+    glColor3f(1.0f, 1.0f, 1.0f);
+    glPushAttrib(GL_LIST_BIT); /* stack B */
+    glListBase(fps_font - ' ');
+    static const double fontHeight = 14.0;
+    glWindowPos2d((graphX + 1)*width/2, (graphY + 1)*height/2 - fontHeight);
+    const char *test = PrsGraphTitle(g);
+    glCallLists(strlen(test), GL_UNSIGNED_BYTE, test);
+    glPopAttrib(); /* stack B */
     glPopMatrix(); /* stack A */
+
 }
 
 void RenderSupportPolygon(const pym_physics_thread_context_t *const phyCon) {
@@ -855,7 +865,29 @@ void RenderSupportPolygon(const pym_physics_thread_context_t *const phyCon) {
     if (chOutputLen) {
         glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT); /* PAIR A */
         glPushMatrix(); /* PAIR B */
-        glScaled(0.5, 0.5, 0.5);
+
+        const double margin = 0.05;
+        /* size on normalized coordinates */
+        const double sizeW = 0.5, sizeH = 0.5;
+        double graphW, graphH;
+        double graphGapX, graphGapY;
+        if (width > height) {
+            graphGapX = margin*height/width;
+            graphGapY = margin;
+            graphW = sizeW*height/width;
+            graphH = sizeH;
+        } else {
+            graphGapX = margin;
+            graphGapY = margin*width/height;
+            graphW = sizeW;
+            graphH = sizeH*width/height;
+        }
+        const int slotid = 0;
+        const double graphX = -1 + graphW/2 + graphGapX + slotid*(graphW/2 + graphGapX);
+        const double graphY = 1 - graphGapY - graphH/2;
+        glTranslated(graphX, graphY, 0);
+        glScaled(graphW, graphH, 1);
+
         double chSumX = 0, chSumY = 0;
         FOR_0(i, chOutputLen) {
             chSumX += phyCon->pymCfg->renChOutput[i].x;
@@ -946,7 +978,6 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 	//Save modelview/projection matrice into texture7, also add a biais
 	setTextureMatrix();
 
-
 	// Now rendering from the camera POV, using the FBO to generate shadows
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
 
@@ -990,9 +1021,8 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    RenderGraph(phyCon->comGraph, 0);
-    RenderGraph(phyCon->comGraph, 1);
-    RenderGraph(phyCon->comGraph, 2);
+    RenderGraph(phyCon->comZGraph, 0);
+    RenderGraph(phyCon->comDevGraph, 1);
 
     pthread_mutex_lock(&main_mutex); {
         RenderSupportPolygon(phyCon);
@@ -1023,7 +1053,6 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     lCam = 0.0f;
     vCam = 0.0f;
     dCam = 0.0f;
-
 }
 
 /*
@@ -2150,15 +2179,23 @@ int main(int argc, char *argv[])
         .trunkExternalForce = {0,},
         .renBody            = calloc(pymCfg.nBody,  sizeof(pym_rb_t)),
         .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t)),
-        .comGraph           = PrsGraphNew(),
+        .comZGraph          = PrsGraphNew("COM Z"),
+        .comDevGraph        = PrsGraphNew("COM Z Dev."),
     };
-    PrsGraphSetMaxY(phyCon.comGraph, 4.0);
+    /* comZGraph */
+    PrsGraphSetMaxY(phyCon.comZGraph, 4.0);
     PRSGRAPHDATA simComGd = PrsGraphDataNew(pymCfg.nSimFrame);
     PrsGraphDataSetLineColor(simComGd, 0, 1, 0);
-    PrsGraphAttach(phyCon.comGraph, PCG_SIM_COM, simComGd);
+    PrsGraphAttach(phyCon.comZGraph, PCG_SIM_COMZ, simComGd);
     PRSGRAPHDATA refComGd = PrsGraphDataNew(pymCfg.nSimFrame);
     PrsGraphDataSetLineColor(refComGd, 1, 0, 0);
-    PrsGraphAttach(phyCon.comGraph, PCG_REF_COM, refComGd);
+    PrsGraphAttach(phyCon.comZGraph, PCG_REF_COMZ, refComGd);
+    /* comDevGraph */
+    PrsGraphSetMaxY(phyCon.comDevGraph, 0.1);
+    PRSGRAPHDATA comDevGd = PrsGraphDataNew(pymCfg.nSimFrame);
+    PrsGraphDataSetLineColor(comDevGd, 0, 1, 0);
+    PrsGraphAttach(phyCon.comDevGraph, PCG_COMDEV, comDevGd);
+    PrsGraphAddGuideY(phyCon.comDevGraph, 0.01, 1, 1, 0);
 
     pthread_t thPhysics;
     pthread_attr_t attr;
@@ -2228,7 +2265,8 @@ int main(int argc, char *argv[])
 
     PymDestoryConfig(&pymCfg);
 
-    PrsGraphDelete(phyCon.comGraph);
+    PrsGraphDelete(phyCon.comZGraph);
+    PrsGraphDelete(phyCon.comDevGraph);
 
     free(trajData);
 

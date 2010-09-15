@@ -150,7 +150,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
          */
         //if (pcj_2_nocf_W[2] <= -0.004) {
         //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
-        if (pcj_2_nocf_W[2] <= 0.050) {
+        if (pcj_2_nocf_W[2] <= 0.100) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) {

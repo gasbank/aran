@@ -32,6 +32,11 @@ struct _pym_config_t {
     int renChInputLen;
     Point_C renChOutput[101];
     int renChOutputLen;
+
+    /* Total # of contacts through three frames */
+    int prevTotContacts;
+    int curTotContacts;
+    int nextTotContacts;
 };
 
 #endif // PYMCONFIG_H_INCLUDED

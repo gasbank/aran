@@ -267,10 +267,14 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
     }
     assert(totFiber == 2*nMuscle);
 
-    pymCfg->chInputLen     = 0;
-    pymCfg->renChInputLen  = 0;
-    pymCfg->chOutputLen    = 0;
-    pymCfg->renChOutputLen = 0;
+    pymCfg->chInputLen      = 0;
+    pymCfg->renChInputLen   = 0;
+    pymCfg->chOutputLen     = 0;
+    pymCfg->renChOutputLen  = 0;
+
+    pymCfg->prevTotContacts = 0;
+    pymCfg->curTotContacts  = 0;
+    pymCfg->nextTotContacts = 0;
 
     return 0;
     #undef csgfe
@@ -369,24 +373,27 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     cholmod_triplet *A_trip[nb]; /* should be deallocated here */
     const int nd = 6;
 
-    int Asubrowsizes[          ] = { 0, /* be calculated later */
-                                     2*nd*nf,
-                                     nf,
-                                     4*nj,
-                                     nj,
-                                     3,
-                                     3 };
-    int Asubcolsizes[          ] = { 0, /* be calculated later */
-                                     nf,
-                                     nf,
-                                     nf,
-                                     1,
-                                     1,
-                                     4*nj,
-                                     nj,
-                                     3,
-                                     3,
-                                     1 };
+    int Asubrowsizes[ ] = { 0, /* be calculated later */
+                            2*nd*nf,
+                            nf,
+                            4*nj,
+                            nj,
+                            3,
+                            3,
+                            3 };
+    int Asubcolsizes[ ] = { 0, /* be calculated later */
+                            nf,
+                            nf,
+                            nf,
+                            1,
+                            1,
+                            4*nj,
+                            nj,
+                            3,
+                            3,
+                            1,
+                            3,
+                            1 };
     int i, j, l;
     FOR_0(i, nb) {
         GetAMatrix(A_trip + i, sd + i, pymCfg->body + i, pymCfg, cc);
@@ -431,6 +438,8 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     nzmax += 3;        /* sub-block 11 - 1*M */
     nzmax += 3;        /* sub-block 12 - 1 */
     nzmax += 3;        /* sub-block 13 - -1 */
+    nzmax += 6*pymCfg->nextTotContacts; /* sub-block 14 - G */
+    nzmax += 3;        /* sub-block 15 - -1 */
 
 //    printf("    BipA matrix constants (nb)      : %d\n", nb);
 //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -515,24 +524,47 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     double totMass = 0;
     FOR_0(i, nb) {
         const double mass = pymCfg->body[i].b.m;
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 0, EoffsetCol + 0, mass);
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 1, EoffsetCol + 1, mass);
-        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, 2, EoffsetCol + 2, mass);
+        FOR_0(j, 3)
+            SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, j, EoffsetCol + j, mass);
         totMass += mass;
         EoffsetCol += A_trip[i]->ncol;
     }
     /* Sub-block 11 - 1*M */
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 0, 0, -totMass);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 1, 1, -totMass);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, 2, 2, -totMass);
+    FOR_0(i, 3)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 8, i, i, -totMass);
     /* Sub-block 12 - 1 */
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 0, 0, 1);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 1, 1, 1);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, 2, 2, 1);
+    FOR_0(i, 3)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 8, i, i, 1);
     /* Sub-block 13 - 1 */
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 0, 0, -1);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 1, 1, -1);
-    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, 2, 2, -1);
+    FOR_0(i, 3)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 6, 9, i, i, -1);
+    /* Sub-block 14 - G */
+    FOR_0(i, nb) {
+        FOR_0(j, sd[i].nContacts_2) {
+            double r[3];
+            FOR_0(l, 3)
+                r[l] = sd[i].contactsFix_2[j][l] - pymCfg->bipCom[l];
+            double rx[3][3];
+            PymCrossToMat(rx, r);
+            const int basecol = bod->Aici[i] + sd[i].Aci[1] + nd*j;
+            /*
+             *   [  0   x   x  ]
+             *   [  x   0   x  ]
+             *   [  x   x   0  ]
+             */
+            const int indx[][2] = { {0, 1}, {0, 2},
+                                    {1, 0}, {1, 2},
+                                    {2, 0}, {2, 1} };
+            FOR_0(l, 6) {
+                SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 7, 0,
+                                          indx[l][0], basecol + indx[l][1],
+                                          rx[ indx[l][0] ][ indx[l][1] ]);
+            }
+        }
+    }
+    /* Sub-block 15 - -1 */
+    FOR_0(i, 3)
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 7, 11, i, i, -1);
     /* Finish: convert AMatrix_trip to column compressed format */
     bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
     cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */

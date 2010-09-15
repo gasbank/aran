@@ -4,6 +4,8 @@
 #define PYM_MIN(a,b) (a)>(b)?(b):(a)
 #define PYM_MAX(a,b) (b)>(a)?(b):(a)
 
+void PymCrossToMat(double mat[3][3], const double v[3]);
+double PymDist(int dim, const double *const v1, const double *const v2);
 int PymMin(int a, int b);
 double PymNormSq(int dim, const double v[dim]);
 double PymNorm(int dim, const double v[dim]);

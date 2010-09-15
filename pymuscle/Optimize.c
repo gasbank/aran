@@ -207,6 +207,8 @@ void PymOptimize(pym_opt_t *pymOpt) {
     }
     /* Cost for COM deviation */
     c[ Aci[10] ] = 1e3;
+    /* Cost for torque-around-COM */
+    c[ Aci[12] ] = 1e3;
 
     assert(Aci[2] - Aci[1] == pymCfg->nFiber);
     assert(Aci[3] - Aci[2] == pymCfg->nFiber);
@@ -535,6 +537,11 @@ void PymOptimize(pym_opt_t *pymOpt) {
     r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubActAct, csubActAct);
     assert(r == MSK_RES_OK);
     */
+    /* Torque-about-COM constraint cone */
+    AppendConeRange(task,
+                    bod->Aci[12], /* epsilon_{tau,com} */
+                    bod->Aci[11], /* tau_com */
+                    bod->Aci[12]);
 
     /*** TODO: SOCP to QCQP ***/
     /*******************/
@@ -696,6 +703,19 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
 
     FOR_0(j, nb) {
         PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
+    }
+
+    /* Count total # of contact points */
+    pymCfg->prevTotContacts = pymCfg->curTotContacts;
+    pymCfg->curTotContacts  = pymCfg->nextTotContacts;
+    pymCfg->nextTotContacts = 0;
+    FOR_0(j, pymCfg->nBody) {
+        pymCfg->nextTotContacts += sd[j].nContacts_2;
+    }
+    if (pymCfg->curTotContacts > 0 && pymCfg->nextTotContacts == 0) {
+        printf("Flight phase started!\n");
+    } else if (pymCfg->curTotContacts == 0 && pymCfg->nextTotContacts > 0) {
+        printf("Flight phase ended!\n");
     }
 
     PymConstructSupportPolygon(pymCfg, sd);

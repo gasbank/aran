@@ -2,9 +2,9 @@
 #define __PHYSICSTHREADMAIN_H_
 
 typedef enum _pym_com_graphs_t {
-    PCG_SIM_COM,
-    PCG_REF_COM,
-    PCG_SIZE,
+    PCG_SIM_COMZ = 0,
+    PCG_REF_COMZ,
+    PCG_COMDEV = 0,
 } pym_com_graphs_t;
 
 typedef struct _pym_physics_thread_context_t {
@@ -23,7 +23,8 @@ typedef struct _pym_physics_thread_context_t {
     pym_mf_t *renFiber;
     double   bipCom[3];
 
-    PRSGRAPH comGraph;
+    PRSGRAPH comZGraph;      /* z-axis of COM position graph */
+    PRSGRAPH comDevGraph;    /* COM position deviation graph */
 } pym_physics_thread_context_t;
 
 void *PhysicsThreadMain(void *t);

@@ -8,6 +8,7 @@
 #include "include/PrsGraphCapi.h"
 #include "PymStruct.h"
 #include "ConvexHullCapi.h"
+#include "MathUtil.h"
 #include "PymConfig.h"
 #include "PymCmdLineParser.h"
 #include "RigidBody.h"
@@ -80,9 +81,11 @@ void *PhysicsThreadMain(void *t)
         /* Set reference */
         if (cmdopt->trajconf) {
             FOR_0(j, pymCfg->nBody) {
-                memcpy(pymCfg->body[j].b.chi_ref,
-                       trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6,
-                       sizeof(double)*6);
+                const double *const ref =
+                    trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6;
+                for (k = 0; k < 6; ++k) {
+                    pymCfg->body[j].b.chi_ref[k] = ref[k];
+                }
             }
         }
         /* Compute reference COM */
@@ -96,10 +99,24 @@ void *PhysicsThreadMain(void *t)
         }
         FOR_0(j, 3)
             refCom[j] /= totMass;
-
-
-
-
+        /* Tune reference to have no significant COM deviation between
+         * simulated result. */
+//        const double comdev = PymDist(3, pymCfg->bipCom, refCom);
+//        if (cmdopt->trajconf && i != 0) {
+//            if (comdev > 0.25) {
+//                double comdiff[3];
+//                FOR_0(k, 3) {
+//                    comdiff[k] = pymCfg->bipCom[k] - refCom[k];
+//                    printf("comdiff[%d] = %lf\n", k, comdiff[k]);
+//                }
+//
+//                FOR_0(j, pymCfg->nBody) {
+//                    for (k = 0; k < 3; ++k) {
+//                        pymCfg->body[j].b.chi_ref[k] += comdiff[k];
+//                    }
+//                }
+//            }
+//        }
 
         double pureOptTime = 0;
         const char *solstaStr;
@@ -123,8 +140,10 @@ void *PhysicsThreadMain(void *t)
                 break;
             }
 
-            PrsGraphPushBackTo(phyCon->comGraph, PCG_SIM_COM, pymCfg->bipCom[2]);
-            PrsGraphPushBackTo(phyCon->comGraph, PCG_REF_COM, refCom[2]);
+            PrsGraphPushBackTo(phyCon->comZGraph, PCG_SIM_COMZ, pymCfg->bipCom[2]);
+            PrsGraphPushBackTo(phyCon->comZGraph, PCG_REF_COMZ, refCom[2]);
+            const double comzdev = fabs(pymCfg->bipCom[2] - refCom[2]);
+            PrsGraphPushBackTo(phyCon->comDevGraph, PCG_COMDEV, comzdev);
 
             /* Copy RB and MF data to renderer-accessable memory area */
             memcpy(phyCon->renBody,   pymCfg->body,      sizeof(pym_rb_t)*pymCfg->nBody);

@@ -16,7 +16,6 @@
 #include <math.h>
 #include <limits.h>
 #include <execinfo.h>
-#include <float.h>
 
 #include <cholmod.h>
 #include <umfpack.h>

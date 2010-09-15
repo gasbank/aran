@@ -3,7 +3,7 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{graphicx}
-\usepackage[margin=3.0cm]{geometry}
+\usepackage[margin=1.0cm]{geometry}
 \usepackage{pdflscape}
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
@@ -1710,14 +1710,15 @@ c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
 The matrix-vector notation for equility constraints:
 \begin{equation}\notag
 \bordermatrix{
-                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}     &  \scriptstyle{8 : 3} &  \scriptstyle{9:3} & \scriptstyle{10:1} \cr
-\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                    \cr
-\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                    \cr
-\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                        &                      &                    &                    \cr
-\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                        &                      &                    &                    \cr
-\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}                            &                      &                    &                    \cr
-\scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    &                    \cr
-\scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}       &                    
+                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}     &  \scriptstyle{8 : 3} &  \scriptstyle{9:3} & \scriptstyle{10:1}  &  \scriptstyle{11:3}  & \scriptstyle{12:1}  \cr
+\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
+\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
+\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
+\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                        &                      &                    &                     &                      &                     \cr
+\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}                            &                      &                    &                     &                      &                     \cr
+\scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    &                     &                      &                     \cr
+\scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}       &                     &                      &                     \cr
+\scriptstyle{7 : 3 }                    & \mathbf{G}                   &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     & \mathbf{-1}          &                        
 }
 \left(\begin{array}{c}
 \tau                        \\
@@ -1730,7 +1731,9 @@ d_A                         \\
 \epsilon_d                  \\
 p_\text{com}^{(l+1)}        \\
 \Delta p_{\text{com},ref}   \\
-\epsilon_{\text{com}}
+\epsilon_{\text{com}}       \\
+\tau_{com}                  \\
+\epsilon_{\tau,com}
 \end{array}\right)
 =
 \left( \begin{array}{c}
@@ -1741,6 +1744,7 @@ s                           \\
 d_\text{disloc}             \\
 \vec{0}                     \\
 p_{\text{com},ref}^{(l+1)}  \\
+\vec{0}
 \end{array}\right)
 \end{equation}
 \begin{equation}\notag

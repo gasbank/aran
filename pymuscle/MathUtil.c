@@ -3,6 +3,12 @@
 #include "MathUtil.h"
 #include "dRdv_real.h"
 
+void PymCrossToMat(double mat[3][3], const double v[3]) {
+    mat[0][0] = 0;    mat[0][1] = -v[2]; mat[0][2] = v[1];
+    mat[1][0] = v[2]; mat[1][1] =   0  ; mat[1][2] =-v[0];
+    mat[2][0] =-v[1]; mat[2][1] =  v[0]; mat[2][2] =  0  ;
+}
+
 int PymMin(int a, int b) {
     if (a<b) return a;
     else return b;
@@ -11,10 +17,21 @@ int PymMin(int a, int b) {
 double Dot33(const double a[3], const double b[3]) {
     return Dot(3, a, b);
 }
+
 double Dot(const unsigned int n, const double a[n], const double b[n]) {
     int i; double r = 0;
     for (i=0;i<n;++i) r+=a[i]*b[i];
     return r;
+}
+
+double PymDist(int dim, const double *const v1, const double *const v2) {
+    double d = 0;
+    int i;
+    for (i = 0; i < dim; ++i) {
+        d += (v1[i]-v2[i]) * (v1[i]-v2[i]);
+    }
+    d = sqrt(d);
+    return d;
 }
 
 double PymNormSq(int dim, const double v[dim])
@@ -245,3 +262,4 @@ void QuatToV(double v[3], const double q[4]) {
 	else scaleFactor = 2*acos(q[0])/qv_mag;
 	int i; for (i=0;i<3;++i) v[i] *= scaleFactor;
 }
+

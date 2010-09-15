@@ -1,5 +1,6 @@
 #include <map>
 #include <vector>
+#include <string>
 #include <GL/gl.h>
 #include <boost/foreach.hpp>
 #include <boost/circular_buffer.hpp>
@@ -8,9 +9,10 @@
 #include "../include/PrsGraphData.h"
 #include "../include/PrsGraph.h"
 
-PrsGraph::PrsGraph()
+PrsGraph::PrsGraph(const char *title)
 : m_axisWidth(1.0)
 , m_maxY(1.0)
+, m_title(title)
 {
     /* Default axis color is white */
     m_axisColor[0] = 1.0;
@@ -46,6 +48,12 @@ void PrsGraph::render() const {
             glVertex2f( (double)(i  )/G->capacity(), G->at(G->xoffset() + i  )/m_maxY);
             glVertex2f( (double)(i+1)/G->capacity(), G->at(G->xoffset() + i+1)/m_maxY);
         }
+        /* Guides */
+        foreach (const Guide &guide, m_guideY) {
+            glColor3dv(guide.color);
+            glVertex2f( 0, guide.xy/m_maxY);
+            glVertex2f( 1, guide.xy/m_maxY);
+        }
         glEnd();
         /* Data in points */
         glBegin(GL_POINTS);
@@ -67,4 +75,8 @@ void PrsGraph::attach(int gdid, PrsGraphData *gd) {
     gd->setAttached(true);
     assert(m_gd.find(gdid) == m_gd.end());
     m_gd[gdid] = gd;
+}
+
+void PrsGraph::addGuideY(double y, double r, double g, double b) {
+    m_guideY.push_back( Guide(y, r, g, b) );
 }
