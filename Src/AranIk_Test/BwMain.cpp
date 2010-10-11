@@ -620,7 +620,7 @@ UpdateSceneGraphList( BwAppContext& ac )
 }
 
 /*!
-* @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯¿Í ¹«°ü)
+* @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ì™€ ë¬´ê´€)
 */
 static int
 InitializeRendererIndependentsFromSg(BwAppContext& ac)
@@ -660,7 +660,7 @@ InitializeRendererIndependentsFromSg(BwAppContext& ac)
 }
 
 /*!
-* @brief Scene graph°¡ »õ·Î ·ÎµåµÇ¾úÀ» ¶§ ¼öÇàµÇ´Â ÃÊ±âÈ­ (·»´õ·¯ Á¾¼Ó)
+* @brief Scene graphê°€ ìƒˆë¡œ ë¡œë“œë˜ì—ˆì„ ë•Œ ìˆ˜í–‰ë˜ëŠ” ì´ˆê¸°í™” (ë Œë”ëŸ¬ ì¢…ì†)
 */
 static int
 InitializeRendererDependentsFromSg(BwAppContext& ac)
@@ -685,7 +685,7 @@ InitializeRendererDependentOnce(BwAppContext& ac)
 	//printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
 	printf("\n");
 
-	/// OpenGL ÇÃ·¡±×¸¦ ¼³Á¤ÇÕ´Ï´Ù.
+	/// OpenGL í”Œë˜ê·¸ë¥¼ ì„¤ì •í•©ë‹ˆë‹¤.
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LINE_SMOOTH);
@@ -707,7 +707,7 @@ InitializeRendererDependentOnce(BwAppContext& ac)
 		glDisable(GL_LIGHT0 + lightId);
 	}
 
-	/// OpenGL È®Àå ±â´ÉÀ» ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// OpenGL í™•ì¥ ê¸°ëŠ¥ì„ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (ArnInitGlExtFunctions() < 0)
 	{
 		std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
@@ -716,13 +716,13 @@ InitializeRendererDependentOnce(BwAppContext& ac)
 		return -50;
 	}
 
-	/// ARAN OpenGL ÆĞÅ°Áö¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// ARAN OpenGL íŒ¨í‚¤ì§€ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (ArnInitializeGl() < 0)
 	{
 		return -3;
 	}
 
-	/// Mass map ÅØ½ºÃ³¸¦ »ı¼ºÇÕ´Ï´Ù.
+	/// Mass map í…ìŠ¤ì²˜ë¥¼ ìƒì„±í•©ë‹ˆë‹¤.
 	glGenTextures(1, &ac.massMapTex);
 	glBindTexture( GL_TEXTURE_2D, ac.massMapTex );
 	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
@@ -742,10 +742,10 @@ int
 InitializeRendererIndependentOnce(BwAppContext& ac)
 {
 	/*!
-	* ·»´õ·¯ µ¶¸³Àû ARAN ÆĞÅ°ÁöÀÎ ARAN Core, ARAN Physics¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
-	* ÃÊ±âÈ­°¡ ¼º°øÇÑ ÀÌÈÄ ÇÁ·Î±×·¥ÀÇ Ä¡¸íÀûÀÎ ¿À·ù·Î ÀÎÇØ ½ÇÇàÀÌ Áß´ÜµÉ °æ¿ì
-	* ¹İµå½Ã Cleanup() À» È£ÃâÇØ¾ß ÇÕ´Ï´Ù.
-	* º» ÃÊ±âÈ­°¡ ½ÇÆĞÇÒ °æ¿ì¿¡´Â ÇÁ·Î±×·¥ÀÌ Á¾·áµË´Ï´Ù.
+	* ë Œë”ëŸ¬ ë…ë¦½ì  ARAN íŒ¨í‚¤ì§€ì¸ ARAN Core, ARAN Physicsë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
+	* ì´ˆê¸°í™”ê°€ ì„±ê³µí•œ ì´í›„ í”„ë¡œê·¸ë¨ì˜ ì¹˜ëª…ì ì¸ ì˜¤ë¥˜ë¡œ ì¸í•´ ì‹¤í–‰ì´ ì¤‘ë‹¨ë  ê²½ìš°
+	* ë°˜ë“œì‹œ Cleanup() ì„ í˜¸ì¶œí•´ì•¼ í•©ë‹ˆë‹¤.
+	* ë³¸ ì´ˆê¸°í™”ê°€ ì‹¤íŒ¨í•  ê²½ìš°ì—ëŠ” í”„ë¡œê·¸ë¨ì´ ì¢…ë£Œë©ë‹ˆë‹¤.
 	*/
 	if (ArnInitializeXmlParser() < 0)
 	{
@@ -765,7 +765,7 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	// Notice for 32-bit and 64-bit build: Do not confuse the size of pointers!
 	std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
 	std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
-	/// \c SceneList.txt ¸¦ ÆÄ½ÌÇÕ´Ï´Ù.
+	/// \c SceneList.txt ë¥¼ íŒŒì‹±í•©ë‹ˆë‹¤.
 	if (LoadSceneList(ac.sceneList) < 0)
 	{
 		std::cerr << " *** Init failed..." << std::endl;
@@ -801,7 +801,7 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	ac.sceneGraphList				= 0;
 	// Rigid body simulation
 	ac.bSimulate					= false;
-	/// ´ÙÀ½ Ä«¸Ş¶ó·Î º¯°æ ÇÃ·¡±× ÃÊ±âÈ­
+	/// ë‹¤ìŒ ì¹´ë©”ë¼ë¡œ ë³€ê²½ í”Œë˜ê·¸ ì´ˆê¸°í™”
 	ac.bNextCamera					= false;
 	// Timer init
 	ac.timer.start();
@@ -813,7 +813,7 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 
 
 
-	/// Ã¹ Àå¸é ÆÄÀÏÀ» ¸Ş¸ğ¸®¿¡ ·ÎµåÇÕ´Ï´Ù.
+	/// ì²« ì¥ë©´ íŒŒì¼ì„ ë©”ëª¨ë¦¬ì— ë¡œë“œí•©ë‹ˆë‹¤.
 	assert(ac.sceneList.size() > 0);
 	ac.curSceneIndex = -1;
 	ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
@@ -826,7 +826,7 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
 	assert(ac.sgPtr);
 
 
-	/// Ã³À½À¸·Î ·ÎµåÇÑ ¸ğµ¨ ÆÄÀÏ¿¡ Á¾¼ÓÀûÀÎ µ¥ÀÌÅÍ¸¦ ÃÊ±âÈ­ÇÕ´Ï´Ù.
+	/// ì²˜ìŒìœ¼ë¡œ ë¡œë“œí•œ ëª¨ë¸ íŒŒì¼ì— ì¢…ì†ì ì¸ ë°ì´í„°ë¥¼ ì´ˆê¸°í™”í•©ë‹ˆë‹¤.
 	if (InitializeRendererIndependentsFromSg(ac) < 0)
 	{
 		Cleanup();
