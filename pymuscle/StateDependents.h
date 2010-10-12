@@ -18,9 +18,9 @@ struct _pym_rb_statedep_t {
      */
     double dWdchi_tensor[3][4][4];
     double contacts_1[MAX_CONTACTS][3]; /* Contact point position in world coordinate frame */
-    unsigned int nContacts_1;
-    unsigned int nContacts_2;
-    unsigned int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of corner points in next time step */
+    int nContacts_1;
+    int nContacts_2;
+    int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of corner points in next time step */
     double contactsFix_2[MAX_CONTACTS][4];       /* Estimated contact point fixing position in world coordinate frame in next time step */
     double contactsNormal_1[MAX_CONTACTS][4];
 

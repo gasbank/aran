@@ -218,8 +218,9 @@ int main(int argc, char *argv[]) {
         double pureOptTime = 0;
         const char *solstaStr;
         double cost = 0;
+        pym_rb_statedep_t sd[nb];
         ret = PymOptimizeFrameMove(&pureOptTime, outputFile,
-                                   &pymCfg, dmstreams,
+                                   &pymCfg, sd, dmstreams,
                                    &solstaStr, &cost,
                                    &cc, env);
         if (ret) {

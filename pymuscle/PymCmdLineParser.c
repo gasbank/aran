@@ -59,7 +59,15 @@ int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]
          *  from sim conf file name. In this case
          *  we assume the user provided conventional
          *  file name for sim conf. */
-        assert( strcmp(strchr(cmdopt->simconf, '.'), ".sim.conf") == 0 );
+        const char *scSuffix = strchr(cmdopt->simconf, '.');
+        if (!scSuffix) {
+            printf("Error - Simconf file name should not contain any dot.\n");
+            return -1;
+        }
+        if (strcmp(scSuffix, ".sim.conf")) {
+            printf("Error - Simconf file name should have suffix '.sim.conf'\n");
+            return -2;
+        }
         cmdopt->freeTrajStrings = 1;
         int prefixLen = (int)(strchr(cmdopt->simconf, '.') - cmdopt->simconf);
 

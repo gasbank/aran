@@ -542,8 +542,19 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t 
     FOR_0(i, nb) {
         FOR_0(j, sd[i].nContacts_2) {
             double r[3];
-            FOR_0(l, 3)
-                r[l] = sd[i].contactsFix_2[j][l] - pymCfg->bipCom[l];
+            FOR_0(l, 3) {
+                /* We are optimizing to find the next state
+                 * based on the current state and data.
+                 * If we inevitably need for data depends on the next state,
+                 * approximation is used.
+                 * In this case, we actually need for the next COM position,
+                 * which is not availble for now. So we approximate
+                 * next COM by using current COM with assumption of
+                 * they are not so different.
+                 * ('curBipCom' should have valid value.)
+                 */
+                r[l] = sd[i].contactsFix_2[j][l] - pymCfg->curBipCom[l];
+            }
             double rx[3][3];
             PymCrossToMat(rx, r);
             const int basecol = bod->Aici[i] + sd[i].Aci[1] + nd*j;

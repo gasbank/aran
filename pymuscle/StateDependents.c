@@ -96,7 +96,7 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
 int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
                            FILE *dmstreams[],
                            const pym_config_t *pymCfg, cholmod_common *cc) {
-    const pym_rb_named_t* rbn = &rb->b;
+    const pym_rb_named_t *const rbn = &rb->b;
     assert(rbn->rotParam == RP_EXP);
     MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
     Invert6x6MassMatrix(sd->Minv, sd->M);
@@ -130,13 +130,15 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
         chi_2_nocf[i] = 2*chi_1[i] - chi_0[i] + Minv_h2_C_fg;
     }
     double W_2_nocf[4][4]; GetWFrom6Dof(W_2_nocf, chi_2_nocf);
+    double W_ref[4][4]; GetWFrom6Dof(W_ref, rbn->chi_ref);
     sd->nContacts_1 = 0;
     sd->nContacts_2 = 0;
     for (j=0; j<8; ++j) {
-        double pcj_2_nocf_W[3], pcj_1_W[3], pcj_0_W[3];
+        double pcj_2_nocf_W[3], pcj_1_W[3], pcj_0_W[3], pcj_ref[3];
         AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
         AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
         AffineTransformPoint(pcj_0_W, sd->W_0, rbn->corners[j]);
+        AffineTransformPoint(pcj_ref, W_ref, rbn->corners[j]);
 
         const double ctY = pcj_2_nocf_W[1];
         const double theta = pymCfg->slant;
@@ -150,12 +152,15 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
          */
         //if (pcj_2_nocf_W[2] <= -0.004) {
         //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
-        if (pcj_2_nocf_W[2] <= 0.100) {
+        //if (pcj_2_nocf_W[2] <= 0.15) {
+        if (pcj_1_W[2] <= 0.15) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) {
-                pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
+                //pcj_fix[k] = (pcj_1_W[k] + pcj_2_nocf_W[k]) / 2.0;
                 //pcj_fix[k] = pcj_1_W[k];
+                //pcj_fix[k] = pcj_ref[k];
+                pcj_fix[k] = rbn->chi_ref[k] + rbn->corners[j][k];
             }
             pcj_fix[2] = 0; /* fix contact points Z axis to 0 (flat ground assumption) */
             pcj_fix[3] = 1; /* homogeneous component*/

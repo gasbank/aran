@@ -196,7 +196,12 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, cons
     }
     /* chi^(l)_{i, ref} */
     FOR_0(i, nd) {
-        eta[sd->Ari[5] + i] = rbn->chi_ref[i];
+        /* TODO */
+        //eta[sd->Ari[5] + i] = rbn->chi_ref[i];
+        if (i < 3)
+            eta[sd->Ari[5] + i] = rbn->p[i];
+        else
+            eta[sd->Ari[5] + i] = rbn->q[i-3];
 
         if (i==2) {
             /* TODO Ground slant parameter - ground level calculation */

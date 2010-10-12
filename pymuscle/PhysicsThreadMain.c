@@ -55,16 +55,28 @@ void *PhysicsThreadMain(void *t)
         }
     }
     assert(rbnTrunk);
-    int resetFlag = 0;
+    int resetFlag = 1;
     while (1) { /* CAUTION: local variable 'i' is a loop variable effectively. */
         if ((i >= pymCfg->nSimFrame) || resetFlag) {
             pthread_mutex_lock(&main_mutex);
+            printf("Set biped to the initial state.\n");
             PymSetInitialStateUsingTrajectory(pymCfg, nBlenderBody,
                                               corresMapIndex, trajData);
+
+            memcpy(phyCon->renBody,   pymCfg->body,      sizeof(pym_rb_t)*pymCfg->nBody);
+            memcpy(phyCon->renFiber,  pymCfg->fiber,     sizeof(pym_mf_t)*pymCfg->nFiber);
+
             pthread_mutex_unlock(&main_mutex);
+            pymCfg->prevTotContacts = 0;
+            pymCfg->curTotContacts = 0;
+            pymCfg->nextTotContacts = 0;
+            FOR_0(j, pymCfg->nFiber)
+                pymCfg->fiber[j].b.T = 0;
             i = 0;
             resetFlag = 0;
         }
+        printf("%5d / %5d\n", i, pymCfg->nSimFrame-1);
+
         /*
          * A very long and time-consuming simulation task goes here ...
          */
@@ -76,7 +88,7 @@ void *PhysicsThreadMain(void *t)
             printf("Reset signal detected.\n");
             resetFlag = 1;
             pthread_mutex_unlock(&main_mutex);
-            //continue;
+            continue;
         }
         /* Set reference */
         if (cmdopt->trajconf) {
@@ -88,17 +100,27 @@ void *PhysicsThreadMain(void *t)
                 }
             }
         }
-        /* Compute reference COM */
+        /* Compute current step simulated biped COM */
+        /* Compute next step reference COM */
+        double curSimCom[3] = {0,};
         double refCom[3] = {0,};
         double totMass = 0;
         FOR_0(j, pymCfg->nBody)
             totMass += pymCfg->body[j].b.m;
         FOR_0(j, pymCfg->nBody) {
-            FOR_0(k, 3)
-                refCom[k] += pymCfg->body[j].b.m * pymCfg->body[j].b.chi_ref[k];
+            const double massj = pymCfg->body[j].b.m;
+            FOR_0(k, 3) {
+                curSimCom[k] += massj * pymCfg->body[j].b.p[k];
+                refCom[k]    += massj * pymCfg->body[j].b.chi_ref[k];
+            }
         }
-        FOR_0(j, 3)
+        FOR_0(j, 3) {
+            curSimCom[k] /= totMass;
             refCom[j] /= totMass;
+        }
+        memcpy(pymCfg->curBipCom, curSimCom, sizeof(double)*3);
+
+
         /* Tune reference to have no significant COM deviation between
          * simulated result. */
 //        const double comdev = PymDist(3, pymCfg->bipCom, refCom);
@@ -121,7 +143,8 @@ void *PhysicsThreadMain(void *t)
         double pureOptTime = 0;
         const char *solstaStr;
         double cost = 0;
-        ret = PymOptimizeFrameMove(&pureOptTime, outputFile, pymCfg, dmstreams,
+        ret = PymOptimizeFrameMove(&pureOptTime, outputFile, pymCfg, phyCon->sd,
+                                   dmstreams,
                                    &solstaStr, &cost, &cc, env);
         if (ret) {
             printf("Error - Something goes wrong "
@@ -131,7 +154,7 @@ void *PhysicsThreadMain(void *t)
             printf("Reset signal detected.\n");
             resetFlag = 1;
             pthread_mutex_unlock(&main_mutex);
-            //continue;
+            continue;
         }
 
         pthread_mutex_lock(&main_mutex); {
@@ -169,7 +192,7 @@ void *PhysicsThreadMain(void *t)
         printf("%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e\n",
                i, pymCfg->nSimFrame-1, percent, solstaStr, cost);
         phyCon->totalPureOptTime += pureOptTime;
-        ++i;
+        //++i;
     }
     PymCleanupMosek(&env);
     cholmod_finish(&cc);

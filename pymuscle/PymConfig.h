@@ -19,6 +19,7 @@ struct _pym_config_t {
     int nJoint; /* number of anchored joints */
     pym_anchored_joint_t anchoredJoints[MAX_NUM_ANCHORED_JOINTS];
 
+    double curBipCom[3];
     double bipCom[3]; /* simulated biped COM position; is part of opt variable */
     double bipRefCom[3]; /* reference biped COM position */
 

@@ -25,6 +25,8 @@ typedef struct _pym_physics_thread_context_t {
 
     PRSGRAPH comZGraph;      /* z-axis of COM position graph */
     PRSGRAPH comDevGraph;    /* COM position deviation graph */
+
+    pym_rb_statedep_t *sd;
 } pym_physics_thread_context_t;
 
 void *PhysicsThreadMain(void *t);

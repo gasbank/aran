@@ -35,7 +35,6 @@
 #include <GL/gl.h>
 ///#include <GL/glext.h>
 ///#include <GL/glx.h>
-#include <GL/glut.h>
 #include <sys/time.h>
 #include <pthread.h>
 
@@ -553,13 +552,17 @@ void setupMatrices(float position_x, float position_y, float position_z,
                    float lookAt_x,   float lookAt_y,   float lookAt_z) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
+
+	//gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
+	glOrtho(-3, 3, -3, 3, 1e-2, 1e5);
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
 	gluLookAt(position_x, position_y, position_z,
               lookAt_x,   lookAt_y,   lookAt_z,
               0,0,1);
+
 
     GLfloat mat[16];
 	glGetFloatv(GL_PROJECTION_MATRIX, mat);
@@ -665,13 +668,15 @@ void DrawBox_chi(const double *chi, const double *const boxSize, int wf) {
 
     /* TODO: Remove scaling factor from the transform matrix W */
     startXform(W);
-    glPushAttrib(GL_POLYGON_BIT);
-    if (wf == 1)
+    glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+    if (wf == 1) {
+        glDisable(GL_CULL_FACE);
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    else if (wf == 0)
+    } else if (wf == 0) {
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    else
+    } else {
         assert("What the...");
+    }
 
     SetUniforms();
 
@@ -727,7 +732,9 @@ void DrawRbContacts(const pym_rb_named_t *rbn) {
         const double *conForce = rbn->contactsForce_2[j];
         glColor3f(0,1,0);
         startTranslate(conPos[0], conPos[1], conPos[2]);
-        glutSolidCube(0.05);
+
+        /* TODO: No draw call */
+
         endTranslate();
         static const double scale = 0.001;
         glBegin(GL_LINES);
@@ -840,10 +847,11 @@ void RenderGraph(PRSGRAPH g, int slotid) {
     const double graphY = -1 + graphGapY;
     glTranslated(graphX, graphY, 0);
     glScaled(graphW, graphH, 1);
+    glPushAttrib(GL_LIST_BIT | GL_DEPTH_BUFFER_BIT); /* stack B */
+    glDisable(GL_DEPTH_TEST);
     PrsGraphRender(g);
     /* Graph title */
     glColor3f(1.0f, 1.0f, 1.0f);
-    glPushAttrib(GL_LIST_BIT); /* stack B */
     glListBase(fps_font - ' ');
     static const double fontHeight = 14.0;
     glWindowPos2d((graphX + 1)*width/2, (graphY + 1)*height/2 - fontHeight);
@@ -929,6 +937,64 @@ void RenderSupportPolygon(const pym_physics_thread_context_t *const phyCon) {
     }
 }
 
+void RenderFootContactStatus(const pym_physics_thread_context_t *const phyCon) {
+    static const double pointBoxSize[3] = { 3e-2, 3e-2, 3e-2 };
+    static const double pzero[3] = {0,};
+    static const double q1[3] = {1,1,1};
+
+    int i, j, k;
+    FOR_0(i, phyCon->pymCfg->nBody) {
+        /* Access data from renderer-accessable area of phyCon */
+        const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
+        const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
+        const double pos[4][2] = { { -0.7, 0 }, {0.7, 0}, {-0.7, 0.2}, {0.7, 0.2} };
+        FOR_0(k, 4) {
+            if (strcmp(rbn->name, footParts[k]) == 0) {
+                const double *const boxSize = rbn->boxSize;
+
+                glPushMatrix(); /* Stack A */
+                glTranslated(pos[k][0], pos[k][1], 0);
+                glRotatef(30, 1, 0, 0);
+                glRotatef(45, 0, 1, 0);
+                glColor3f(1,1,1);
+                DrawBox_pq(pzero, 0, boxSize, 1);
+                glColor3f(1,0,0);
+                FOR_0(j, phyCon->sd[i].nContacts_2) {
+                    const int ci = phyCon->sd[i].contactIndices_2[j];
+                    glColor3f(1,0,0);
+                    DrawBox_pq(rbn->corners[ ci ], 0, pointBoxSize, 0);
+                    //glColor3f(1, 0, 0);
+                    //DrawBox_pq(rbn->corners[ 6 ], 0, pointBoxSize, 0);
+
+                }
+                glPopMatrix(); /* Stack A */
+                break;
+            }
+        }
+    }
+}
+
+void RenderFootContactFixPosition(const pym_physics_thread_context_t *const phyCon) {
+    static const double pointBoxSize[3] = { 5e-2, 5e-2, 5e-2 };
+    static const double pzero[3] = {0,};
+    static const double q1[3] = {1,1,1};
+
+    int i, j, k;
+    FOR_0(i, phyCon->pymCfg->nBody) {
+        /* Access data from renderer-accessable area of phyCon */
+        const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
+        const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
+        FOR_0(k, 4) {
+            if (strcmp(rbn->name, footParts[k]) == 0) {
+                glColor3f(1, 0, 0);
+                FOR_0(j, phyCon->sd[i].nContacts_2) {
+                    DrawBox_pq(phyCon->sd[i].contactsFix_2[j], 0, pointBoxSize, 1);
+                }
+            }
+        }
+    }
+}
+
 void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 {
     static GLint iFrames = 0;
@@ -964,7 +1030,7 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 	glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
 
 	// Directional light (e.g. sunlight)
-    float sunPos[4] = { 0.2, -0.8, 1, 0 };
+    float sunPos[4] = { 0.2, -0.8, 0, 0 };
 	float p_light[] = {sunPos[0]*10, sunPos[1]*10, sunPos[2]*10};
 	float l_light[] = {0, 0, 0};
 
@@ -996,7 +1062,7 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 	glActiveTextureARB(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, depthTextureId);
 
-	float p_camera[] = {8*zoomRatio, -8*zoomRatio, 8*zoomRatio};
+	float p_camera[] = {8*zoomRatio, -8*zoomRatio, 0};
 	float l_camera[] = {0, 0, 0};
 	float pRotX[3], pRotXY[3];
 	XRotPoint(pRotX, p_camera, xRot/180.0f*M_PI);
@@ -1006,6 +1072,8 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
 
 	glCullFace(GL_BACK);
 	DrawAll(phyCon, 0, m_vaoID);
+
+	RenderFootContactFixPosition(phyCon);
 
 
     /* Head-up Display
@@ -1020,13 +1088,17 @@ void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
 
     RenderGraph(phyCon->comZGraph, 0);
     RenderGraph(phyCon->comDevGraph, 1);
-
     pthread_mutex_lock(&main_mutex); {
         RenderSupportPolygon(phyCon);
+        RenderFootContactStatus(phyCon);
     } pthread_mutex_unlock(&main_mutex);
+
+    glEnable(GL_DEPTH_TEST);
+
 
     iFrames++;
     DeltaT = (GLfloat)(etime-t2);
@@ -1839,15 +1911,23 @@ int main(int argc, char *argv[])
         0
     };
     printf("Pymuscle realtime simulator      -- 2010 Geoyeob Kim\n");
-    if (argc < 2)
+    if ( argc < 2 || (argc == 2 && strcmp(argv[1], "--help") == 0) )
     {
         PrintCmdLineHelp(argc, argv);
         return 1;
     }
     /* GLUT is used for using glutSolidCube() or glutWireCube()
      * routines only. */
-    glutInit(&argc, argv);
+    //glutInit(&argc, argv);
 
+    /* Parse command line options */
+    pym_cmdline_options_t cmdopt;
+    ret = PymParseCmdlineOptions(&cmdopt, argc, argv);
+    if (ret < 0)
+    {
+        printf("Failed.\n");
+        return -2;
+    }
 
     /* Initialize debug message flags (dmflags) */
     int dmflags[PDMTE_COUNT] = {0,};
@@ -1862,14 +1942,7 @@ int main(int argc, char *argv[])
         if (dmflags[i]) dmstreams[i] = stdout;
         else dmstreams[i] = devnull;
     }
-    /* Parse command line options */
-    pym_cmdline_options_t cmdopt;
-    ret = PymParseCmdlineOptions(&cmdopt, argc, argv);
-    if (ret < 0)
-    {
-        printf("Failed.\n");
-        return -2;
-    }
+
     /* Construct pymCfg structure */
     pym_config_t pymCfg;
     ret = PymConstructConfig(cmdopt.simconf, &pymCfg, dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
@@ -2181,6 +2254,7 @@ int main(int argc, char *argv[])
         .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t)),
         .comZGraph          = PrsGraphNew("COM Z"),
         .comDevGraph        = PrsGraphNew("COM Z Dev."),
+        .sd                 = malloc(sizeof(pym_rb_statedep_t) * pymCfg.nBody),
     };
     /* comZGraph */
     PrsGraphSetMaxY(phyCon.comZGraph, 4.0);
@@ -2251,7 +2325,7 @@ int main(int argc, char *argv[])
     /* Wait for the physics thread to complete */
     puts("Wait for the physics thread to complete...\n");
     pthread_cond_signal(&count_threshold_cv);
-    pthread_join(thPhysics, NULL);
+    //pthread_join(thPhysics, NULL);
 
     /* TODO: Force-canceling physics thread.
      *       Is there way to exit gracefully? */
@@ -2269,6 +2343,7 @@ int main(int argc, char *argv[])
     PrsGraphDelete(phyCon.comDevGraph);
 
     free(trajData);
+    free(phyCon.sd);
 
     if (cmdopt.freeTrajStrings)
     {
