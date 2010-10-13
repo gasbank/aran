@@ -52,9 +52,6 @@ void PymInitializeMosek(MSKenv_t *env) {
     /* Initialize the environment. */
     assert ( r==MSK_RES_OK );
     r = MSK_initenv(*env);
-
-
-
 }
 
 void PymCleanupMosek(MSKenv_t *env) {
@@ -63,17 +60,17 @@ void PymCleanupMosek(MSKenv_t *env) {
 }
 
 void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
-    /*
-     * Append a second-order cone constraint which has
-     * the form of x >= norm([ r1, r1+1, ... , r2-1 ])
-     */
-	assert(r1>=0 && r2>=0 && r2>=r1 && x>=0);
-	int csub[1 + r2 - r1];
-	csub[0] = x;
-	int j;
-	for (j=0; j<r2 - r1; ++j) csub[j+1] = r1 + j;
-	MSKrescodee r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, 1+r2-r1, csub);
-	assert(r == MSK_RES_OK);
+  /*
+   * Append a second-order cone constraint which has
+   * the form of x >= norm([ r1, r1+1, ... , r2-1 ])
+   */
+  assert(r1>=0 && r2>=0 && r2>=r1 && x>=0);
+  int csub[1 + r2 - r1];
+  csub[0] = x;
+  int j;
+  for (j=0; j<r2 - r1; ++j) csub[j+1] = r1 + j;
+  MSKrescodee r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, 1+r2-r1, csub);
+  assert(r == MSK_RES_OK);
 }
 
 static pym_opt_t PymNewOptimization(const pym_biped_eqconst_t *const bod,
@@ -579,15 +576,11 @@ static void pym_optimize_mosek_upper_lower(const pym_opt_t *const pymOpt,
   }
 }
 
-static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
-				    MSKtask_t task) {
-  int i, j, tauOffset;
+static void pym_optimize_mosek_cone_rb(const pym_opt_t *const pymOpt,
+				       MSKtask_t task) {
+  int i, tauOffset;
   const int nb = pymOpt->pymCfg->nBody;
   const pym_rb_statedep_t *const sd = pymOpt->sd;
-  const pym_biped_eqconst_t *const bod = pymOpt->bod;
-  const int *const Aci = bod->Aci;
-  const pym_config_t *const pymCfg = pymOpt->pymCfg;
-  MSKrescodee r = MSK_RES_OK;
   for (i = 0, tauOffset = 0; i < nb;
        tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
     /* Reference trajectory cone constraints, i.e.,
@@ -596,6 +589,25 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
 		    tauOffset + sd[i].Aci[8],
 		    tauOffset + sd[i].Aci[7],
 		    tauOffset + sd[i].Aci[8]);
+  }
+  /* Rotation parameterization constraints */
+  for (i = 0, tauOffset = 0; i < nb;
+       tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
+    AppendConeRange(task,
+		    tauOffset + sd[i].Aci[11],        // epsilon_rot
+		    tauOffset + sd[i].Aci[0] + 3,     // chi[3..6]
+		    tauOffset + sd[i].Aci[0] + 6);
+  }
+}
+
+static void pym_optimize_mosek_cone_contact_point
+(const pym_opt_t *const pymOpt,
+ MSKtask_t task) {
+  int i, j, tauOffset;
+  const int nb = pymOpt->pymCfg->nBody;
+  const pym_rb_statedep_t *const sd = pymOpt->sd;
+  for (i = 0, tauOffset = 0; i < nb;
+       tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
     FOR_0(j, pymOpt->nplist[i]) {
       /*
        * TODO [TUNE] CP movement minimization
@@ -607,7 +619,19 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
 		      tauOffset + sd[i].Aci[5] + j,
 		      tauOffset + sd[i].Aci[4]+4*j+0,
 		      tauOffset + sd[i].Aci[4]+4*j+3);
+    }
+  }
+}
 
+static void pym_optimize_mosek_cone_contact_force
+(const pym_opt_t *const pymOpt,
+ MSKtask_t task) {
+  int i, j, tauOffset;
+  const int nb = pymOpt->pymCfg->nBody;
+  const pym_rb_statedep_t *const sd = pymOpt->sd;
+  for (i = 0, tauOffset = 0; i < nb;
+       tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
+    FOR_0(j, pymOpt->nplist[i]) {
       /* Friction cone constraints */
       AppendConeRange(task,
 		      tauOffset + sd[i].Aci[6]+j,            // mu*c_n
@@ -615,6 +639,16 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
 		      tauOffset + sd[i].Aci[2]+5*j+3);
     }
   }
+
+}
+
+static void pym_optimize_mosek_cone_anchored_joint
+(const pym_opt_t *const pymOpt,
+ MSKtask_t task) {
+  int j;
+  const pym_biped_eqconst_t *const bod = pymOpt->bod;
+  const int *const Aci = bod->Aci;
+  const pym_config_t *const pymCfg = pymOpt->pymCfg;
   FOR_0(j, pymCfg->nJoint) {
     /* Anchored joint dislocation constraints */
     AppendConeRange(task,
@@ -622,27 +656,16 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
 		    Aci[6] + 4*j,                    // dAx ~ dAz
 		    Aci[6] + 4*j + 3);
   }
-  /* COM constraint */
-  AppendConeRange(task,
-		  Aci[10],                      // epsilon_com
-		  Aci[9],                     // delta p_{com,ref} (z-axis only)
-		  Aci[10]);
-  /* Torque-about-COM constraint cone */
-  AppendConeRange(task,
-		  Aci[12], /* epsilon_{tau,com} */
-		  Aci[11], /* Torque-about-COM (tau_com) */
-		  Aci[12]);
+}
 
-
-  /* Rotation parameterization constraints */
-  for (i = 0, tauOffset = 0; i < nb;
-       tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
-    AppendConeRange(task,
-		    tauOffset + sd[i].Aci[11],        // epsilon_rot
-		    tauOffset + sd[i].Aci[0] + 3,     // chi[3..6]
-		    tauOffset + sd[i].Aci[0] + 6);
-  }
-
+static void pym_optimize_mosek_cone_muscle
+(const pym_opt_t *const pymOpt,
+ MSKtask_t task) {
+  int j;
+  const pym_biped_eqconst_t *const bod = pymOpt->bod;
+  const int *const Aci = bod->Aci;
+  const pym_config_t *const pymCfg = pymOpt->pymCfg;
+  MSKrescodee r = MSK_RES_OK;
   /*
    * TODO [TUNE] Cone constraints for minimizing tension/actuation forces
    */
@@ -671,6 +694,32 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
   assert(r == MSK_RES_OK);
   r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubActAct, csubActAct);
   assert(r == MSK_RES_OK);
+}
+
+static void pym_optimize_mosek_cone_biped(const pym_opt_t *const pymOpt,
+					  MSKtask_t task) {
+  const pym_biped_eqconst_t *const bod = pymOpt->bod;
+  const int *const Aci = bod->Aci;
+  /* COM constraint */
+  AppendConeRange(task,
+		  Aci[10],                      // epsilon_com
+		  Aci[9],                     // delta p_{com,ref} (z-axis only)
+		  Aci[10]);
+  /* Torque-about-COM constraint cone */
+  AppendConeRange(task,
+		  Aci[12], /* epsilon_{tau,com} */
+		  Aci[11], /* Torque-about-COM (tau_com) */
+		  Aci[12]);
+}
+
+static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
+				    MSKtask_t task) {
+  pym_optimize_mosek_cone_rb(pymOpt, task);
+  pym_optimize_mosek_cone_contact_point(pymOpt, task);
+  pym_optimize_mosek_cone_contact_force(pymOpt, task);
+  pym_optimize_mosek_cone_anchored_joint(pymOpt, task);
+  pym_optimize_mosek_cone_biped(pymOpt, task);
+  pym_optimize_mosek_cone_muscle(pymOpt, task);
 }
 
 static MSKrescodee pym_optimize_mosek_optimize(MSKtask_t task) {
