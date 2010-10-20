@@ -17,46 +17,46 @@
 #include "Optimize.h"
 #include "PymDebugMessageFlags.h"
 
-#define HORIZONTAL_LINE_NL \
-"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
+#define HORIZONTAL_LINE_NL						\
+  "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
 
 static int DevStatCompare(const void * a, const void * b) {
-    deviation_stat_entry *at = (deviation_stat_entry *)a;
-    deviation_stat_entry *bt = (deviation_stat_entry *)b;
-    double diff = bt->chi_d_norm - at->chi_d_norm;
-    if (diff > 0) return 1;
-    else if (diff < 0) return -1;
-    else return 0;
+  deviation_stat_entry *at = (deviation_stat_entry *)a;
+  deviation_stat_entry *bt = (deviation_stat_entry *)b;
+  double diff = bt->chi_d_norm - at->chi_d_norm;
+  if (diff > 0) return 1;
+  else if (diff < 0) return -1;
+  else return 0;
 }
 
 static void MSKAPI printstr(void *handle,
                             char str[])
 {
-    FILE *out = (FILE *)handle;
-    fprintf(out, "%s", str);
+  FILE *out = (FILE *)handle;
+  fprintf(out, "%s", str);
 } /* printstr */
 
 void PymInitializeMosek(MSKenv_t *env) {
-    MSKrescodee  r;
-    /* Create the mosek environment. */
-    r = MSK_makeenv(env,NULL,NULL,NULL,NULL);
-    /* Check if return code is ok. */
-    assert ( r==MSK_RES_OK );
-    /* Directs the log stream to the
-       'printstr' function. */
-    r = MSK_linkfunctoenvstream(*env,MSK_STREAM_LOG,NULL,printstr);
-    assert ( r==MSK_RES_OK );
-    /* Manually configure the CPU type */
-    r = MSK_putcpudefaults(*env, MSK_CPU_INTEL_CORE2, 128*1024, 6144*1024);
-    assert ( r==MSK_RES_OK );
-    /* Initialize the environment. */
-    assert ( r==MSK_RES_OK );
-    r = MSK_initenv(*env);
+  MSKrescodee  r;
+  /* Create the mosek environment. */
+  r = MSK_makeenv(env,NULL,NULL,NULL,NULL);
+  /* Check if return code is ok. */
+  assert ( r==MSK_RES_OK );
+  /* Directs the log stream to the
+     'printstr' function. */
+  r = MSK_linkfunctoenvstream(*env,MSK_STREAM_LOG,NULL,printstr);
+  assert ( r==MSK_RES_OK );
+  /* Manually configure the CPU type */
+  r = MSK_putcpudefaults(*env, MSK_CPU_INTEL_CORE2, 128*1024, 6144*1024);
+  assert ( r==MSK_RES_OK );
+  /* Initialize the environment. */
+  assert ( r==MSK_RES_OK );
+  r = MSK_initenv(*env);
 }
 
 void PymCleanupMosek(MSKenv_t *env) {
-    /* Delete the environment and the associated data. */
-    MSK_deleteenv(env);
+  /* Delete the environment and the associated data. */
+  MSK_deleteenv(env);
 }
 
 void AppendConeRange(MSKtask_t task, int x, int r1, int r2) {
@@ -790,7 +790,7 @@ static void pym_optimize_mosek_analyze_result(pym_opt_t *pymOpt,
     char desc[MSK_MAX_STR_LEN];
     MSK_getcodedesc (taskr, symname, desc);
     printf("Error - %s: %s\n", symname, desc);
-      cost = DBL_MAX;
+    cost = DBL_MAX;
   }
   pymOpt->cost = cost;
 }
@@ -804,7 +804,7 @@ void PymOptimize(pym_opt_t *pymOpt) {
   /* Number of constraints related to linear function
      of optimization variables. */
   assert(pymCfg->nJoint);
-    /* Number of Ax=b style constraints */
+  /* Number of Ax=b style constraints */
   const int NUMCON = bod->bipMat->nrow;
   /* Number of optimization variables. */
   const int NUMVAR = bod->bipMat->ncol;
@@ -875,27 +875,161 @@ void PymConstructSupportPolygon(pym_config_t *pymCfg,
   assert(pymCfg->chInputLen >= chOutputLen);
 }
 
-int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
-                         pym_config_t *pymCfg, pym_rb_statedep_t *sd,
-                         FILE *dmstreams[],
-                         const char **_solstaStr, double *_cost,
-                         cholmod_common *cc, MSKenv_t env) {
-  /* shorthand notations */
-  const int nb = pymCfg->nBody;
-  const int nf = pymCfg->nFiber;
-  const int nj = pymCfg->nJoint;
+static void pym_analyze_rb_deviation_stat(const pym_opt_t *const pymOpt,
+					  FILE *outputFile,
+					  FILE *dmstreams[]) {
+  const double *const xx = pymOpt->xx;
+  const int nb = pymOpt->pymCfg->nBody;
+  const pym_config_t *const pymCfg = pymOpt->pymCfg;
+  const pym_rb_statedep_t *const sd = pymOpt->sd;
+  deviation_stat_entry dev_stat[nb];
+  memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
+  int j, tauOffset;
+  for (j = 0, tauOffset = 0;
+       j < nb;
+       tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+    const double *chi_2 = xx + tauOffset;
+    const pym_rb_named_t *rbn = &pymCfg->body[j].b;
 
-  int j, k;
-  //pym_rb_statedep_t sd[nb];
+    double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
+    memcpy(chi_1    , rbn->p,       sizeof(double)*3);
+    memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
+    memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
+    memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
+    memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
+    memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
+    memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
 
-  FOR_0(j, nb) {
-    PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
+    double chi_d[6];
+    int k;
+    FOR_0(k, 6) {
+      chi_d[k] = chi_2[k] - chi_r[k];
+      dev_stat[j].chi_d_norm += chi_d[k] * chi_d[k];
+    }
+    dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
+    dev_stat[j].bodyIdx = j;
+    dev_stat[j].nContact = sd[j].nContacts_2;
+
+    if (outputFile) {
+      FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
+      fprintf(outputFile, "\n");
+    }
   }
+  qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
 
-  /* Count total # of contact points */
+  FILE *dmst = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
+  fprintf(dmst, "Reference trajectory deviation report\n");
+  const int itemsPerLine = PymMin(nb, 6);
+  int j0 = 0, j1 = itemsPerLine;
+  while (j0 < nb && j1 <= nb) {
+    for (j = j0; j < j1; ++j) {
+      const pym_rb_named_t *rbn = &pymCfg->body[ dev_stat[j].bodyIdx ].b;
+      fprintf(dmst,
+	      "  %9s", rbn->name);
+    }
+    fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
+	    "\n");
+    for (j = j0; j < j1; ++j) {
+      fprintf(dmst, "  %9.3e", dev_stat[j].chi_d_norm);
+    }
+    fprintf(dmst,
+	    "\n");
+    for (j = j0; j < j1; ++j) {
+      fprintf(dmst, "  %9d", dev_stat[j].nContact);
+    }
+    fprintf(dmst, "\n");
+    j0 = PymMin(nb, j0 + itemsPerLine);
+    j1 = PymMin(nb, j1 + itemsPerLine);
+  }
+}
+
+static void pym_update_rb_and_biped_com
+(pym_config_t *pymCfg,
+ const pym_opt_t *const pymOpt,
+ const pym_biped_eqconst_t *const bipEq) {
+  const double *const xx = pymOpt->xx;
+  const int nb = pymOpt->pymCfg->nBody;
+  const pym_rb_statedep_t *const sd = pymOpt->sd;
+  int j, tauOffset;
+  for (j = 0, tauOffset = 0;
+       j < nb;
+       tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+    const double *chi_2 = xx + tauOffset;
+    /* Update the current state of rigid bodies */
+    SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
+  }
+  /* Update COM of biped. This is part of opt. var. */
+  memcpy(pymCfg->bipCom, xx + bipEq->Aci[8], sizeof(double)*3);
+}
+
+static void pym_update_muscle
+(pym_config_t *pymCfg,
+ const pym_opt_t *const pymOpt,
+ const pym_biped_eqconst_t *const bipEq) {
+  const int nf = pymCfg->nFiber;
+  const double *const xx = pymOpt->xx;
+  int j;
+  FOR_0(j, nf) {
+    pym_mf_named_t *mfn = &pymCfg->fiber[j].b;
+    const double T_0        = xx[ bipEq->Aci[1] + j ];
+    //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
+    const double xrest_0    = xx[ bipEq->Aci[3] + j ];
+    /* Update the current state of muscle fibers */
+    mfn->T     = T_0;
+    mfn->xrest = xrest_0;
+    //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
+  }
+}
+
+static void pym_analyze_anchored_joint_stat
+(pym_config_t *pymCfg,
+ const pym_opt_t *const pymOpt,
+ const pym_biped_eqconst_t *const bipEq,
+ FILE *dmstreams[]) {
+  FILE *dmst = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
+  fprintf(dmst, "Anchored joints dislocation report\n");
+  const double *const xx = pymOpt->xx;
+  int j;
+  const int nj = pymCfg->nJoint;
+  FOR_0(j, nj) {
+    const double *dAj    = xx + bipEq->Aci[6] + 4*j;
+    assert(dAj[3] == 0); /* homogeneous component */
+    const double disloc  = PymNorm(4, dAj);
+    const int ajBodyAIdx = pymCfg->anchoredJoints[j].aIdx;
+    const pym_rb_named_t *ajBodyA
+      = &pymCfg->body[ ajBodyAIdx ].b;
+    const int ancIdx     = pymCfg->anchoredJoints[j].aAnchorIdx;
+    const char *aAncName = ajBodyA->jointAnchorNames[ ancIdx ];
+    char iden[128];
+    ExtractAnchorIdentifier(iden, aAncName);
+    fprintf(dmst,
+	    "%12s disloc = %e", iden, disloc);
+    if (j%2) fprintf(dmst, "\n");
+
+    if (pymCfg->anchoredJoints[j].maxDisloc < disloc)
+      pymCfg->anchoredJoints[j].maxDisloc = disloc;
+  }
+  if (nj%2) fprintf(dmst, "\n");
+}
+
+static void pym_analyze_biped_com_deviation_stat
+(const pym_opt_t *const pymOpt,
+ const pym_biped_eqconst_t *const bipEq,
+ FILE *dmstreams[]) {
+  const double *const xx = pymOpt->xx;
+  FILE *dmst = dmstreams[PDMTE_FBYF_REF_COM_DEVIATION_REPORT];
+  const double *const comDev = xx + bipEq->Aci[9];
+  const double comDevLenSq = PymNormSq(3, comDev);
+  fprintf(dmst, "COM deviation: dev=[%lf,%lf,%lf], |dev|^2=%lf\n",
+	  comDev[0], comDev[1], comDev[2], comDevLenSq);
+}
+
+static void pym_count_total_num_cp(pym_config_t *pymCfg,
+				   pym_rb_statedep_t *sd) {
   pymCfg->prevTotContacts = pymCfg->curTotContacts;
   pymCfg->curTotContacts  = pymCfg->nextTotContacts;
   pymCfg->nextTotContacts = 0;
+  int j;
   FOR_0(j, pymCfg->nBody) {
     pymCfg->nextTotContacts += sd[j].nContacts_2;
   }
@@ -907,7 +1041,105 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
   printf("prevTotContacts = %d\n", pymCfg->prevTotContacts);
   printf("curTotContacts  = %d\n", pymCfg->curTotContacts);
   printf("nextTotContacts = %d\n", pymCfg->nextTotContacts);
+}
 
+static void pym_pass_opt_result(double *pureOptTime, const char **_solstaStr,
+				double *_cost, const pym_opt_t *const pymOpt) {
+  if (pureOptTime) {
+    *pureOptTime = pymOpt->opttime;
+  }
+  if (pymOpt->cost == DBL_MAX) {
+    printf("Something goes wrong while optimizing.\n");
+  }
+  const char *solstaStr = 0;
+  switch (pymOpt->_solsta) {
+  case MSK_SOL_STA_UNKNOWN:      solstaStr = "UNKNOWN"; break;
+  case MSK_SOL_STA_OPTIMAL:      solstaStr = "optimal"; break;
+  case MSK_SOL_STA_NEAR_OPTIMAL: solstaStr = "near optimal"; break;
+  default:                       solstaStr = "ERROR!"; break;
+  }
+  *_solstaStr = solstaStr;
+  *_cost      = pymOpt->cost;
+}
+
+static void pym_copy_cp_and_cf(pym_config_t *pymCfg,
+			       pym_rb_statedep_t *sd,
+			       const double *const xx) {
+  const int nb = pymCfg->nBody;
+  int j, k, tauOffset;
+  for (j = 0, tauOffset = 0; j < nb;
+       tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+    const double *const chi_2 = xx + tauOffset;
+    pym_rb_named_t *rbn = &pymCfg->body[j].b;
+    const pym_rb_statedep_t *sdj = sd + j;
+    rbn->nContacts_2 = sdj->nContacts_2;
+    FOR_0(k, sdj->nContacts_2) {
+      memcpy(rbn->contactsPoints_2a[k], chi_2 + sdj->Aci[3] + 4*k,
+	     sizeof(double)*4);
+      memcpy(rbn->contactsForce_2[k],   chi_2 + sdj->Aci[1] + 6*k,
+	     sizeof(double)*3);
+    }
+  }
+}
+
+static void pym_analyze_cp_slip(pym_config_t *pymCfg,
+				pym_rb_statedep_t *sd,
+				const double *const xx) {
+  const int nb = pymCfg->nBody;
+  int j, k, tauOffset;
+  for (j = 0, tauOffset = 0; j < nb;
+       tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
+    const double *chi_2 = xx + tauOffset;
+    pym_rb_named_t *rbn = &pymCfg->body[j].b;
+    const pym_rb_statedep_t *sdj = sd + j;
+
+    rbn->nContacts_2 = sdj->nContacts_2;
+    FOR_0(k, sdj->nContacts_2) {
+      const double epsil = *(chi_2 + sdj->Aci[5] + k);
+      const double zpos  = *(chi_2 + sdj->Aci[3] + 4*k + 2);
+      printf("%s [%d <%d>] - CP dev %lf / Z-pos %lf\n",
+	     rbn->name, k, sdj->contactIndices_2[k], epsil, zpos);
+    }
+  }
+}
+
+static void pym_analyze_and_update(pym_config_t *pymCfg,
+				   pym_opt_t *pymOpt,
+				   FILE *outputFile,
+				   FILE *dmstreams[],
+				   pym_biped_eqconst_t *bipEq,
+				   pym_rb_statedep_t *sd,
+				   const double *const xx) {
+  pym_analyze_rb_deviation_stat(pymOpt, outputFile, dmstreams);
+  pym_update_rb_and_biped_com(pymCfg, pymOpt, bipEq);
+  pym_update_muscle(pymCfg, pymOpt, bipEq);
+  pym_analyze_anchored_joint_stat(pymCfg, pymOpt, bipEq, dmstreams);
+  pym_analyze_biped_com_deviation_stat(pymOpt, bipEq, dmstreams);
+  pym_copy_cp_and_cf(pymCfg, sd, xx);
+  pym_analyze_cp_slip(pymCfg, sd, xx);
+}
+
+static void pym_print_opt_fail_log() {
+  printf("Optimization failure report\n");
+  printf(HORIZONTAL_LINE_NL);
+  int ret = 0;
+  //ret = system("cat /tmp/pymoptimize_log");
+  printf(HORIZONTAL_LINE_NL);
+  if (ret)
+    printf("Warning - /tmp/pyoptimize_log opening failure.\n");
+}
+
+int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
+                         pym_config_t *pymCfg, pym_rb_statedep_t *sd,
+                         FILE *dmstreams[],
+                         const char **_solstaStr, double *_cost,
+                         cholmod_common *cc, MSKenv_t env) {
+  const int nb = pymCfg->nBody;
+  int j;
+  FOR_0(j, nb) {
+    PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
+  }
+  pym_count_total_num_cp(pymCfg, sd);
   PymConstructSupportPolygon(pymCfg, sd);
 
   pym_biped_eqconst_t bipEq;
@@ -923,174 +1155,22 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
   //__PRINT_VECTOR_VERT(bod.bipEta, bod.bipMat->nrow);
   pym_opt_t pymOpt = PymNewOptimization(&bipEq, sd, pymCfg, &env, cc);
   PymOptimize(&pymOpt);
-  if (pureOptTime)
-    *pureOptTime = pymOpt.opttime;
-  if (pymOpt.cost == DBL_MAX) {
-    printf("Something goes wrong while optimizing.\n");
-  }
-  const char *solstaStr = 0;
-  switch (pymOpt._solsta) {
-  case MSK_SOL_STA_UNKNOWN:      solstaStr = "UNKNOWN"; break;
-  case MSK_SOL_STA_OPTIMAL:      solstaStr = "optimal"; break;
-  case MSK_SOL_STA_NEAR_OPTIMAL: solstaStr = "near optimal"; break;
-  default:                       solstaStr = "ERROR!"; break;
-  }
-  *_solstaStr = solstaStr;
-  *_cost      = pymOpt.cost;
+  pym_pass_opt_result(pureOptTime, _solstaStr, _cost, &pymOpt);
   const double *const xx = pymOpt.xx;
+  int ret = 0;
   if (pymOpt.cost != DBL_MAX) {
-    deviation_stat_entry dev_stat[nb];
-    memset(dev_stat, 0, sizeof(deviation_stat_entry)*nb);
-    int tauOffset;
-    for (j = 0, tauOffset = 0;
-	 j < nb;
-	 tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
-      const double *chi_2 = xx + tauOffset;
-      const pym_rb_named_t *rbn = &pymCfg->body[j].b;
-
-      double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
-      memcpy(chi_1    , rbn->p,       sizeof(double)*3);
-      memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
-      memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
-      memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
-      memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
-      memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
-      memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
-
-      double chi_d[6];
-      FOR_0(k, 6) {
-	chi_d[k] = chi_2[k] - chi_r[k];
-	dev_stat[j].chi_d_norm += chi_d[k] * chi_d[k];
-      }
-      dev_stat[j].chi_d_norm = sqrt(dev_stat[j].chi_d_norm);
-      dev_stat[j].bodyIdx = j;
-      dev_stat[j].nContact = sd[j].nContacts_2;
-
-      if (outputFile) {
-	FOR_0(k, 6) fprintf(outputFile, "%18.8e", chi_2[k]);
-	fprintf(outputFile, "\n");
-      }
-      /* Update the current state of rigid bodies */
-      SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
-    }
-    /* Update COM of biped. This is part of opt. var. */
-    memcpy(pymCfg->bipCom, xx + bipEq.Aci[8], sizeof(double)*3);
-
-    qsort(dev_stat, nb, sizeof(deviation_stat_entry), DevStatCompare);
-
-    FILE *dmst = dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT];
-    fprintf(dmst, "Reference trajectory deviation report\n");
-    const int itemsPerLine = PymMin(nb, 6);
-    int j0 = 0, j1 = itemsPerLine;
-    while (j0 < nb && j1 <= nb) {
-      for (j = j0; j < j1; ++j) {
-	const pym_rb_named_t *rbn = &pymCfg->body[ dev_stat[j].bodyIdx ].b;
-	fprintf(dmst,
-		"  %9s", rbn->name);
-      }
-      fprintf(dmstreams[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT],
-	      "\n");
-      for (j = j0; j < j1; ++j) {
-	fprintf(dmst, "  %9.3e", dev_stat[j].chi_d_norm);
-      }
-      fprintf(dmst,
-	      "\n");
-      for (j = j0; j < j1; ++j) {
-	fprintf(dmst, "  %9d", dev_stat[j].nContact);
-      }
-      fprintf(dmst, "\n");
-      j0 = PymMin(nb, j0 + itemsPerLine);
-      j1 = PymMin(nb, j1 + itemsPerLine);
-    }
-
-    FOR_0(j, nf) {
-      pym_mf_named_t *mfn = &pymCfg->fiber[j].b;
-      const double T_0        = xx[ bipEq.Aci[1] + j ];
-      //const double u_0        = xx[ bipEq.Aci[nb + 1] + j ];
-      const double xrest_0    = xx[ bipEq.Aci[3] + j ];
-      /* Update the current state of muscle fibers */
-      mfn->T     = T_0;
-      mfn->xrest = xrest_0;
-      //            printf("%16s -   T = %15.8e     u = %15.8e     xrest = %15.8e\n", mfn->name, T_0, u_0, xrest_0);
-    }
-
-    dmst = dmstreams[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT];
-    fprintf(dmst, "Anchored joints dislocation report\n");
-    FOR_0(j, nj) {
-      const double *dAj    = xx + bipEq.Aci[6] + 4*j;
-      assert(dAj[3] == 0); /* homogeneous component */
-      const double disloc  = PymNorm(4, dAj);
-      const int ajBodyAIdx = pymCfg->anchoredJoints[j].aIdx;
-      const pym_rb_named_t *ajBodyA
-	= &pymCfg->body[ ajBodyAIdx ].b;
-      const int ancIdx     = pymCfg->anchoredJoints[j].aAnchorIdx;
-      const char *aAncName = ajBodyA->jointAnchorNames[ ancIdx ];
-      char iden[128];
-      ExtractAnchorIdentifier(iden, aAncName);
-      fprintf(dmst,
-	      "%12s disloc = %e", iden, disloc);
-      if (j%2) fprintf(dmst, "\n");
-
-      if (pymCfg->anchoredJoints[j].maxDisloc < disloc)
-	pymCfg->anchoredJoints[j].maxDisloc = disloc;
-    }
-    if (nj%2) fprintf(dmst, "\n");
-
-    dmst = dmstreams[PDMTE_FBYF_REF_COM_DEVIATION_REPORT];
-    const double *const comDev = xx + bipEq.Aci[9];
-    const double comDevLenSq = PymNormSq(3, comDev);
-    fprintf(dmst, "COM deviation: dev=[%lf,%lf,%lf], |dev|^2=%lf\n",
-	    comDev[0], comDev[1], comDev[2], comDevLenSq);
-
-    for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
-      const double *chi_2 = xx + tauOffset;
-      pym_rb_named_t *rbn = &pymCfg->body[j].b;
-      const pym_rb_statedep_t *sdj = sd + j;
-
-      rbn->nContacts_2 = sdj->nContacts_2;
-      FOR_0(k, sdj->nContacts_2) {
-	memcpy(rbn->contactsPoints_2a[k], chi_2 + sdj->Aci[3] + 4*k,
-	       sizeof(double)*4);
-	memcpy(rbn->contactsForce_2[k],   chi_2 + sdj->Aci[1] + 6*k,
-	       sizeof(double)*3);
-      }
-    }
-
-
-    for (j = 0, tauOffset = 0; j < nb; tauOffset += sd[j].Aci[ sd[j].Asubcols ], j++) {
-      const double *chi_2 = xx + tauOffset;
-      pym_rb_named_t *rbn = &pymCfg->body[j].b;
-      const pym_rb_statedep_t *sdj = sd + j;
-
-      rbn->nContacts_2 = sdj->nContacts_2;
-      FOR_0(k, sdj->nContacts_2) {
-	const double epsil = *(chi_2 + sdj->Aci[5] + k);
-	const double zpos  = *(chi_2 + sdj->Aci[3] + 4*k + 2);
-	printf("%s [%d <%d>] - CP dev %lf / Z-pos %lf\n", rbn->name, k, sdj->contactIndices_2[k], epsil, zpos);
-      }
-    }
-
+    system("cat /tmp/pymoptimize_log");
+    pym_analyze_and_update(pymCfg, &pymOpt, outputFile, dmstreams,
+			   &bipEq, sd, xx);
+    ret = 0;
+  } else {
+    pym_print_opt_fail_log();
+    ret = -1;
   }
-
   PymDestroyBipedEqconst(&bipEq, cc);
   FOR_0(j, pymCfg->nBody) {
     PymDestroyRbStatedep(sd + j, &pymCfg->body[j].b, cc);
   }
-
-  system("cat /tmp/pymoptimize_log");
-
-  if (pymOpt.cost == DBL_MAX) /* no meaning to process further */
-    {
-      printf("Optimization failure report\n");
-      printf(HORIZONTAL_LINE_NL);
-      int ret = 0;
-      //ret = system("cat /tmp/pymoptimize_log");
-      printf(HORIZONTAL_LINE_NL);
-      if (ret)
-	printf("Warning - /tmp/pyoptimize_log opening failure.\n");
-      PymDelOptimization(&pymOpt);
-      return -1;
-    }
   PymDelOptimization(&pymOpt);
-  return 0;
+  return ret;
 }
