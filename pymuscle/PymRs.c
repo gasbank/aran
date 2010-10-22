@@ -1303,190 +1303,163 @@ void simplerender(GLuint *m_vaoID) {
 }
 
 void EventLoop(Display* display, Window window, Atom wmDeleteMessage,
-               pym_physics_thread_context_t *phyCon, GLuint *m_vaoID )
-{
+               pym_physics_thread_context_t *phyCon, GLuint *m_vaoID ) {
   int exertExternalForce = 0;
-  while (1)
-    {
-      while (XPending(display) > 0)
-        {
-	  XEvent event;
-	  int code;
-	  XNextEvent( display, &event );
+  while (1) {
+    while (XPending(display) > 0) {
+      XEvent event;
+      int code;
+      XNextEvent( display, &event );
+      if (event.type == ClientMessage &&
+	  event.xclient.data.l[0] == wmDeleteMessage) {
+	printf("Shutting down now!!!\n");
+	return;
+      }
+      switch (event.type) {
+      case Expose:
+	break;
+      case ConfigureNotify:
+	RENDER_WIDTH  = event.xconfigure.width;
+	RENDER_HEIGHT = event.xconfigure.height;
+	change_size(RENDER_WIDTH, RENDER_HEIGHT);
+	break;
+      case KeyPress:
+	code = XLookupKeysym( &event.xkey, 0);
 
-	  if (event.type == ClientMessage &&
-	      event.xclient.data.l[0] == wmDeleteMessage)
-            {
-	      printf("Shutting down now!!!\n");
-	      return;
-            }
+	if ((code == XK_Escape)||(code == XK_q))
+	  return;
+	if(code == XK_a)
+	  exertExternalForce = 1;
+	if(code == XK_r)
+	  pthread_cond_signal(&count_threshold_cv);
+	if(code == XK_w)
+	  dCam = tStep;
+	if(code == XK_s)
+	  dCam = -tStep;
+	if(code == XK_d)
+	  lCam = tStep;
+	if(code == XK_a)
+	  lCam = -tStep;
+	if(code == XK_Up)
+	  model->bone[0].mvr[13]+=0.2;
+	if(code == XK_Down)
+	  model->bone[0].mvr[13]-=0.2;
+	if(code == XK_Left)
+	  model->bone[0].mvr[12]-=0.2;
+	if(code == XK_Right)
+	  model->bone[0].mvr[12]+=0.2;
+	if(code == XK_f)
+	  print_fps = !print_fps;
+	if(code == XK_t)
+	  transparency=!transparency;
+	if(code == XK_b)
+	  skeleton=!skeleton;
+	if(code == XK_l)
+	  if(model->num_poses>1) {
+	    animation=!animation;
+	    pose = 1;
+	    old_pose = 0;
+	    t1 = 0.0f;
+	  }
+	if(code == XK_p) {
 
-	  switch (event.type)
-            {
-            case Expose:
-	      break;
-            case ConfigureNotify:
-	      RENDER_WIDTH  = event.xconfigure.width;
-	      RENDER_HEIGHT = event.xconfigure.height;
-	      change_size(RENDER_WIDTH, RENDER_HEIGHT);
-	      break;
-            case KeyPress:
-	      {
-                code = XLookupKeysym( &event.xkey, 0);
+	  //Dump quaternions to STDOUT and add them as a pose
 
-                if ((code == XK_Escape)||(code == XK_q))
-		  return;
-                if(code == XK_a)
-		  exertExternalForce = 1;
-                if(code == XK_r)
-		  pthread_cond_signal(&count_threshold_cv);
-                if(code == XK_w)
-		  dCam = tStep;
-                if(code == XK_s)
-		  dCam = -tStep;
-                if(code == XK_d)
-		  lCam = tStep;
-                if(code == XK_a)
-		  lCam = -tStep;
-                if(code == XK_Up)
-		  model->bone[0].mvr[13]+=0.2;
-                if(code == XK_Down)
-		  model->bone[0].mvr[13]-=0.2;
-                if(code == XK_Left)
-		  model->bone[0].mvr[12]-=0.2;
-                if(code == XK_Right)
-		  model->bone[0].mvr[12]+=0.2;
-                if(code == XK_f)
-		  print_fps = !print_fps;
-                if(code == XK_t)
-		  transparency=!transparency;
-                if(code == XK_b)
-		  skeleton=!skeleton;
-                if(code == XK_l)
-		  if(model->num_poses>1)
-                    {
-		      animation=!animation;
-		      pose = 1;
-		      old_pose = 0;
-		      t1 = 0.0f;
-                    }
-                if(code == XK_p)
-		  {
+	  GLuint i;
 
-                    //Dump quaternions to STDOUT and add them as a pose
+	  model->num_poses++;
+	  model->pose=(POSE_PTR)realloc(model->pose,
+					sizeof(POSE)*model->num_poses);
+	  model->pose[model->num_poses-1].Q=
+	    (VECTOR4D_PTR)malloc(sizeof(VECTOR4D)*model->num_bones);
+	  model->pose[model->num_poses-1].t=2.0f;
 
-                    GLuint i;
-
-                    model->num_poses++;
-                    model->pose=(POSE_PTR)realloc(model->pose,
-                                                  sizeof(POSE)*model->num_poses);
-                    model->pose[model->num_poses-1].Q=
-		      (VECTOR4D_PTR)malloc(sizeof(VECTOR4D)*model->num_bones);
-                    model->pose[model->num_poses-1].t=2.0f;
-
-                    printf("Dumping quaternions\n");
-                    for(i=0; i<model->num_bones; i++)
-		      {
-                        mv2quat(&model->bone[i].Q, model->bone[i].mvr);
-                        model->pose[model->num_poses-1].Q[i].x=model->bone[i].Q.x;
-                        model->pose[model->num_poses-1].Q[i].y=model->bone[i].Q.y;
-                        model->pose[model->num_poses-1].Q[i].z=model->bone[i].Q.z;
-                        model->pose[model->num_poses-1].Q[i].w=model->bone[i].Q.w;
-                        printf("%3.6f %3.6f %3.6f %3.6f\n",
-                               model->bone[i].Q.x,
-                               model->bone[i].Q.y,
-                               model->bone[i].Q.z,
-                               model->bone[i].Q.w);
-		      }
-		  }
-                if (code == XK_r)
-		  {
-                    wireframe = !wireframe;
-                    if (wireframe)
-		      glPolygonMode(GL_FRONT, GL_LINE);
-                    else
-		      glPolygonMode(GL_FRONT, GL_FILL);
-		  }
-                if (code == XK_Shift_L)
-		  {
-                    selection=GL_TRUE;
-                    XDefineCursor(display, window, picking);
-		  }
-                if (code == XK_bracketleft)
-		  {
-                    if( (model->pose[model->num_poses-1].t -= t_inc) < t_inc )
-		      model->pose[model->num_poses-1].t=t_inc;
-		  }
-                if (code == XK_bracketright)
-		  model->pose[model->num_poses-1].t += t_inc;
-                break;
-	      }
-            case KeyRelease:
-	      {
-                code = XLookupKeysym( &event.xkey, 0);
-
-                if (code == XK_Shift_L)
-		  {
-                    selection=GL_FALSE;
-                    XUndefineCursor(display, window);
-		  }
-                break;
-	      }
-            case ButtonPress:
-	      {
-                handle_mouse_button(event.xbutton.button,
-                                    0,
-                                    event.xbutton.x,
-                                    event.xbutton.y);
-                break;
-	      }
-            case ButtonRelease:
-	      {
-                handle_mouse_button(event.xbutton.button,
-                                    1,
-                                    event.xbutton.x,
-                                    event.xbutton.y);
-                break;
-	      }
-            case MotionNotify:
-	      {
-                if (event.xmotion.state & Button1Mask)
-		  {
-                    handle_mouse_motion(1,
-                                        event.xmotion.x,
-                                        event.xmotion.y);
-                    break;
-		  }
-                if (event.xmotion.state & Button2Mask)
-		  {
-                    handle_mouse_motion(2,
-                                        event.xmotion.x,
-                                        event.xmotion.y);
-                    break;
-		  }
-                if (event.xmotion.state & Button3Mask)
-		  handle_mouse_motion(3,
-				      event.xmotion.x,
-				      event.xmotion.y);
-                break;
-	      }
-            }
-        }
-
-      Render(phyCon, m_vaoID);
-
-      //simplerender(m_vaoID);
-
-      glXSwapBuffers( display, window );
-      if (exertExternalForce) {
-	pthread_mutex_lock(&main_mutex); {
-	  phyCon->trunkExternalForce[0] = 5000;
-	  phyCon->trunkExternalForce[1] = 4000;
-
-	} pthread_mutex_unlock(&main_mutex);
-	exertExternalForce = 0;
+	  printf("Dumping quaternions\n");
+	  for(i=0; i<model->num_bones; i++) {
+	    mv2quat(&model->bone[i].Q, model->bone[i].mvr);
+	    model->pose[model->num_poses-1].Q[i].x=model->bone[i].Q.x;
+	    model->pose[model->num_poses-1].Q[i].y=model->bone[i].Q.y;
+	    model->pose[model->num_poses-1].Q[i].z=model->bone[i].Q.z;
+	    model->pose[model->num_poses-1].Q[i].w=model->bone[i].Q.w;
+	    printf("%3.6f %3.6f %3.6f %3.6f\n",
+		   model->bone[i].Q.x,
+		   model->bone[i].Q.y,
+		   model->bone[i].Q.z,
+		   model->bone[i].Q.w);
+	  }
+	}
+	if (code == XK_r) {
+	  wireframe = !wireframe;
+	  if (wireframe)
+	    glPolygonMode(GL_FRONT, GL_LINE);
+	  else
+	    glPolygonMode(GL_FRONT, GL_FILL);
+	}
+	if (code == XK_Shift_L) {
+	  selection=GL_TRUE;
+	  XDefineCursor(display, window, picking);
+	}
+	if (code == XK_bracketleft) {
+	  if( (model->pose[model->num_poses-1].t -= t_inc) < t_inc )
+	    model->pose[model->num_poses-1].t=t_inc;
+	}
+	if (code == XK_bracketright)
+	  model->pose[model->num_poses-1].t += t_inc;
+	break;
+      case KeyRelease:
+	code = XLookupKeysym( &event.xkey, 0);
+	if (code == XK_Shift_L) {
+	  selection=GL_FALSE;
+	  XUndefineCursor(display, window);
+	}
+	break;
+      case ButtonPress:
+	handle_mouse_button(event.xbutton.button,
+			    0,
+			    event.xbutton.x,
+			    event.xbutton.y);
+	break;
+      case ButtonRelease:
+	handle_mouse_button(event.xbutton.button,
+			    1,
+			    event.xbutton.x,
+			    event.xbutton.y);
+	break;
+      case MotionNotify:
+	if (event.xmotion.state & Button1Mask) {
+	  handle_mouse_motion(1,
+			      event.xmotion.x,
+			      event.xmotion.y);
+	  break;
+	}
+	if (event.xmotion.state & Button2Mask) {
+	  handle_mouse_motion(2,
+			      event.xmotion.x,
+			      event.xmotion.y);
+	  break;
+	}
+	if (event.xmotion.state & Button3Mask)
+	  handle_mouse_motion(3,
+			      event.xmotion.x,
+			      event.xmotion.y);
+	break;
       }
     }
+    Render(phyCon, m_vaoID);
+
+    //simplerender(m_vaoID);
+
+    glXSwapBuffers( display, window );
+    if (exertExternalForce) {
+      pthread_mutex_lock(&main_mutex);
+      {
+	phyCon->trunkExternalForce[0] = 5000;
+	phyCon->trunkExternalForce[1] = 4000;
+      }
+      pthread_mutex_unlock(&main_mutex);
+      exertExternalForce = 0;
+    }
+  }
 }
 
 int CreateGridPatternGroundTexture(void) {
@@ -1853,7 +1826,8 @@ GLuint InitCircleVao() {
   glGenBuffers(1, &vboId);
 
   glBindBuffer(GL_ARRAY_BUFFER, vboId);
-  glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat), vert5, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat),
+	       vert5, GL_STATIC_DRAW);
   glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
   return vaoId;
@@ -1867,6 +1841,19 @@ void InitVertexArrayObjects(GLuint *m_vaoID)
   m_vaoID[3] = InitUnitBoxVao();
   m_vaoID[4] = InitCircleVao();
   glBindVertexArray(0);
+}
+
+static void pym_init_debug_msg_streams(FILE *dmstreams[]) {
+  int dmflags[PDMTE_COUNT] = {0,};
+  //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
+  //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
+  //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
+  int i;
+  FILE *devnull = fopen("/dev/null", "w");
+  FOR_0(i, PDMTE_COUNT) {
+    if (dmflags[i]) dmstreams[i] = stdout;
+    else dmstreams[i] = devnull;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -1910,17 +1897,8 @@ int main(int argc, char *argv[]) {
   }
 
   /* Initialize debug message flags (dmflags) */
-  int dmflags[PDMTE_COUNT] = {0,};
-  //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
   FILE *dmstreams[PDMTE_COUNT];
-  int i;
-  FILE *devnull = fopen("/dev/null", "w");
-  FOR_0(i, PDMTE_COUNT) {
-    if (dmflags[i]) dmstreams[i] = stdout;
-    else dmstreams[i] = devnull;
-  }
+  pym_init_debug_msg_streams(dmstreams);
 
   /* Construct pymCfg structure */
   pym_config_t pymCfg;
@@ -1936,6 +1914,7 @@ int main(int argc, char *argv[]) {
   int nBlenderFrame = 0;
   int nBlenderBody = 0;
   int corresMapIndex[pymCfg.nBody];
+  int i;
   FOR_0(i, pymCfg.nBody)
     corresMapIndex[i] = -1;
   double *trajData = 0;
@@ -1999,15 +1978,18 @@ int main(int argc, char *argv[]) {
     PymInitJointAnchors(&pymCfg, dmstreams);
     PymConstructAnchoredJointList(&pymCfg);
   } else {
+    /* No trajconf provided. */
     PymSetPymCfgChiRefToCurrentState(&pymCfg);
   }
 
-  if (cmdopt.frame >= 0)
+  if (cmdopt.frame >= 0) {
+    /* Last frame set by user */
     pymCfg.nSimFrame = cmdopt.frame;
-  else if (cmdopt.trajconf)
+  } else if (cmdopt.trajconf) {
     pymCfg.nSimFrame = nBlenderFrame - 2;
-  else
+  } else {
     pymCfg.nSimFrame = 100;
+  }
 
   FILE *outputFile = fopen(cmdopt.output, "w");
   if (!outputFile) {

@@ -175,28 +175,31 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
     const int np = sd->nContacts_2;
     const int na = rbn->nAnchor;
     const int nm = rbn->nFiber;
-    const int Asubrowsizes[] = {nd,         // inertial constraints
-                                nd*np,      // generalized contact forces <--> contact forces relationship
-                                4*np,       // compose contact point non-moving variable
-                                np,         // compose friction cone constraints variable (mu*normal_force)
-                                4*np,       // next state <--> next CP position relationship
-                                nd,         // next state <--> trajectory relationship
-                                np,         // tangential/normal contact force constraint (tan dot nor == 0)
-                                4*na };     // next state <--> next JA position relationship
-
-    const int Asubcolsizes[] = {nd,          // chi^{(l+1)}
-                                nd*np,       // f_c
-                                5*np,        // c_c
-                                4*np,        // \tilde{p}_c^{(l+1)}
-                                4*np,        // \Delta \tilde{p}_c
-                                np,          // \epsilon_c
-                                np,          // \mu f_{c,z}
-                                nd,          // \Delta \chi
-                                1,           // \epsilon_\Delta
-                                nd*nm,       // f_T
-                                4*na,        // \tilde{p}_A^{(l+1)}
-                                1,           // \epsilon_rotparam
-                                 };
+    const int Asubrowsizes[] = {nd,         // 0:inertial constraints
+                                nd*np,      // 1:generalized contact forces <--> contact forces relationship
+                                4*np,       // 2:compose contact point non-moving variable
+                                np,         // 3:compose friction cone constraints variable (mu*normal_force)
+                                4*np,       // 4:next state <--> next CP position relationship
+                                nd,         // 5:next state <--> trajectory relationship
+                                np,         // 6:tangential/normal contact force constraint (tan dot nor == 0)
+                                4*na,       // 7:next state <--> next JA position relationship
+				nd,         // 8:next state <--> current state relationship
+    };
+    const int Asubcolsizes[] = {nd,          // 0:chi^{(l+1)}
+                                nd*np,       // 1:f_c
+                                5*np,        // 2:c_c
+                                4*np,        // 3:\tilde{p}_c^{(l+1)}
+                                4*np,        // 4:\Delta \tilde{p}_c
+                                np,          // 5:\epsilon_c
+                                np,          // 6:\mu f_{c,z}
+                                nd,          // 7:\Delta \chi ref
+                                1,           // 8:\epsilon_\Delta ref
+                                nd*nm,       // 9:f_T
+                                4*na,        // 10:\tilde{p}_A^{(l+1)}
+                                1,           // 11:\epsilon_rotparam
+				nd,          // 12:\Delta \chi prv
+				1,           // 13:\epsilon_\Delta \chi prv
+    };
     //__PRINT_VECTOR_INT(Asubcolsizes, 10);
     sd->Asubrows = sizeof(Asubrowsizes)/sizeof(int);
     sd->Asubcols = sizeof(Asubcolsizes)/sizeof(int);

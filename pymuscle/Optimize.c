@@ -228,7 +228,11 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt) {
     /*
      * TODO [TUNE] Reference following coefficient
      */
-    c[ tauOffset + sd[i].Aci[8] ] = 0.5;
+    c[ tauOffset + sd[i].Aci[8] ] = 1;
+    /*
+     * TODO [TUNE] Previous close coefficient
+     */
+    c[ tauOffset + sd[i].Aci[13] ] = 2;
   }
   FOR_0(j, nf) {
     const char *const fibName = pymCfg->fiber[j].b.name;
@@ -589,6 +593,12 @@ static void pym_optimize_mosek_cone_rb(const pym_opt_t *const pymOpt,
 		    tauOffset + sd[i].Aci[8],
 		    tauOffset + sd[i].Aci[7],
 		    tauOffset + sd[i].Aci[8]);
+    /* Previous state close cone constraints, i.e.,
+     * epsilon_Delta >= || Delta_chi_{i,prv} || (6-DOF)      */
+    AppendConeRange(task,
+		    tauOffset + sd[i].Aci[13],
+		    tauOffset + sd[i].Aci[12],
+		    tauOffset + sd[i].Aci[13]);
   }
   /* Rotation parameterization constraints */
   for (i = 0, tauOffset = 0; i < nb;

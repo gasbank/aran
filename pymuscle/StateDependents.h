@@ -26,9 +26,9 @@ struct _pym_rb_statedep_t {
 
     int Asubrows;
     int Asubcols;
-    int Ari[ 1 +  8 ]; /* 1 + # of sub row */
-    int Aci[ 1 + 12 ]; /* 1 + # of sub col */
-
+    int Ari[ 1 +  9 ]; /* 1 + # of sub row */
+    int Aci[ 1 + 14 ]; /* 1 + # of sub col */
+  
     /*
      * Z and V : Coefficients for calculating next state based on current state
      * chi^(l+1) = Z chi^(l) + V
