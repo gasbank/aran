@@ -15,7 +15,7 @@ enum _pym_rot_param_t {
 };
 
 #define MAX_FIBER_PER_RB (256)
-
+typedef enum _pym_rot_param_t pym_rot_param_t;
 struct _pym_rb_named_t {
     /*
      * q,qd indices  0    1    2    3

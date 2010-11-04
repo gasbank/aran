@@ -14,6 +14,12 @@
  */
 
 #include "model.h"
+// use this to delete an array
+#define SAFE_DELETE_ARRAY(p)  \
+  if(p) { \
+    free (p); \
+    (p) = 0; \
+  } \
 
 /*
  * Do a fast inversion of a rotation and translation matrix

@@ -11,6 +11,6 @@ typedef struct _pym_biped_eqconst_t pym_biped_eqconst_t;
 typedef struct _pym_rb_named_t pym_rb_named_t;
 typedef struct _pym_mf_named_t pym_mf_named_t;
 typedef struct _pym_cmdline_options_t pym_cmdline_options_t;
-typedef enum _pym_rot_param_t pym_rot_param_t;
+
 
 #endif

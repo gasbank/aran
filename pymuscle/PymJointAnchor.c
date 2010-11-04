@@ -9,8 +9,8 @@
 #include "Config.h"
 #include "PymJointAnchor.h"
 #include "ConvexHullCapi.h"
-#include "PymuscleConfig.h"
 #include "RigidBody.h"
+#include "PymuscleConfig.h"
 #include "PymDebugMessageFlags.h"
 
 int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg) {

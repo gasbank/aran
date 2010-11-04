@@ -1,7 +1,7 @@
 #include "PymPch.h"
 #include "PymStruct.h"
 #include "MathUtil.h"
-#include "Biped.h"
+#include "PymBiped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
 #include "ConvexHullCapi.h"
@@ -156,6 +156,7 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
   pym_mf_t fiber[nMuscle];
   unsigned int musclePair[nMuscle][2];
   char muscleName[nMuscle][128];
+  int nActMuscle = 0, nLigMuscle = 0;
   for (j = 0; j < nMuscle; ++j)
     {
       pym_mf_named_t  *mfn = &fiber[j].b;
@@ -165,12 +166,15 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
       strncpy(muscleName[j], mName, 128);
       strncpy(mfn->name, mName, 128);
       config_setting_lookup_string(mConf, "mType", &mType);
-      if (strcmp(mType, "MUSCLE") == 0)
+      if (strcmp(mType, "MUSCLE") == 0) {
 	mfn->mType = PMT_ACTUATED_MUSCLE;
-      else if (strcmp(mType, "LIGAMENT") == 0)
+	nActMuscle++;
+      } else if (strcmp(mType, "LIGAMENT") == 0) {
 	mfn->mType = PMT_LIGAMENT;
-      else
+	nLigMuscle++;
+      } else {
 	assert(0);
+      }
       //printf("    Fiber %3d : %s\n", j, mName);
       config_setting_t *KSE = config_setting_get_member(mConf, "KSE"); assert(KSE);
       FIBER(j,0) = config_setting_get_float(KSE);
@@ -220,7 +224,8 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
 
   printf("Info - # of RB parsed = %d\n", nBody);
   printf("Info - # of MF parsed = %d\n", nMuscle);
-
+  printf("          actuated    = %d\n", nActMuscle);
+  printf("          ligament    = %d\n", nLigMuscle);
   pymCfg->nJoint = 0;
   int simFrame; /* simulation length */
   confret = config_lookup_int(&conf, "simFrame", &simFrame);
@@ -276,6 +281,8 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
   pymCfg->curTotContacts  = 0;
   pymCfg->nextTotContacts = 0;
 
+  pymCfg->renderFibers = 0;
+
   return 0;
 #undef csgfe
 #undef BODY
@@ -284,58 +291,59 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
 
 void PymConvertRotParamInPlace(pym_config_t *pymCfg, pym_rot_param_t targetRotParam) {
   assert(targetRotParam == RP_EXP);
-  int i;
+  int		i;
   for (i = 0; i < pymCfg->nBody; ++i) {
     assert(pymCfg->body[i].b.rotParam == RP_QUAT_WFIRST);
-    double v[3];
+    double	v[3];
     /* chi 1 */
     QuatToV(v, pymCfg->body[i].b.q);
     memcpy(pymCfg->body[i].b.q, v, sizeof(double)*3);
-    pymCfg->body[i].b.q[3] = DBL_MAX; /* Should be ignored */
+    pymCfg->body[i].b.q[3]  = DBL_MAX;	/* Should be ignored */
     /* chi 0 */
     QuatToV(v, pymCfg->body[i].b.q0);
     memcpy(pymCfg->body[i].b.q0, v, sizeof(double)*3);
-    pymCfg->body[i].b.q0[3] = DBL_MAX; /* Should be ignored */
+    pymCfg->body[i].b.q0[3] = DBL_MAX;	/* Should be ignored */
 
     pymCfg->body[i].b.rotParam = RP_EXP;
+    printf("%s - %d\n", pymCfg->body[i].b.name, pymCfg->body[i].b.rotParam);
   }
 }
 
 void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* RB index */, const pym_config_t *pymCfg, cholmod_common *cc) {
-  int j, k;
+  int				 j, k;
   /*
    * PARAMETER   i   global RB index
    * LOCAL       j   local MF index of RB i
    * LOCAL       k   <generic iterate variable>
    */
-  const pym_rb_named_t *rbn = &pymCfg->body[i].b;
-  const int nf = pymCfg->nFiber;
-  const int nd = 6;
-  cholmod_triplet *R_i = cholmod_allocate_triplet(nd*rbn->nFiber, nf, nd*rbn->nFiber, 0, CHOLMOD_REAL, cc);
+  const pym_rb_named_t		*rbn	      = &pymCfg->body[i].b;
+  const int			 nf	      = pymCfg->nFiber;
+  const int			 nd	      = 6;
+  cholmod_triplet		*R_i	      = cholmod_allocate_triplet(nd*rbn->nFiber, nf, nd*rbn->nFiber, 0, CHOLMOD_REAL, cc);
   FOR_0(j, rbn->nFiber) {
-    int fidx = rbn->fiber[j]; /* global MF index of local MF j of RB i */
+    int				 fidx	      = rbn->fiber[j];	/* global MF index of local MF j of RB i */
     assert(fidx < nf);
-    const double *attPos1, *attPos2;
-    int oppositeBidx = -1;
-    const pym_mf_named_t *mf = &pymCfg->fiber[ fidx ].b;
+    const double		*attPos1, *attPos2;
+    int				 oppositeBidx = -1;
+    const pym_mf_named_t	*mf	      = &pymCfg->fiber[ fidx ].b;
     if (i == mf->org) {
-      attPos1 = mf->fibb_org;
-      attPos2 = mf->fibb_ins;
-      oppositeBidx = mf->ins;
+      attPos1				      = mf->fibb_org;
+      attPos2				      = mf->fibb_ins;
+      oppositeBidx			      = mf->ins;
     } else if (i == mf->ins) {
-      attPos1 = mf->fibb_ins;
-      attPos2 = mf->fibb_org;
-      oppositeBidx = mf->org;
+      attPos1				      = mf->fibb_ins;
+      attPos2				      = mf->fibb_org;
+      oppositeBidx			      = mf->org;
     } else {
       assert (0);
     }
-    double pt1[3], pt2[3], direction[3];
+    double	pt1[3], pt2[3], direction[3];
     AffineTransformPoint(pt1, sd[i].W_1, attPos1);
     AffineTransformPoint(pt2, sd[oppositeBidx].W_1, attPos2);
     FOR_0(k, 3) direction[k] = pt2[k] - pt1[k];
-    double dirLen = NormalizeVector(3, direction);
+    double	dirLen	     = NormalizeVector(3, direction);
     assert(dirLen > 1e-4);
-    double gf[6];
+    double	gf[6];
     GeneralizedForce(gf, rbn->q, direction, attPos1);
 
     FOR_0(k, 6) SET_TRIPLET_RCV(R_i, nd*j + k, fidx, gf[k]);
@@ -351,31 +359,31 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd, const int i /* 
 }
 
 void PymCalculateRefCom(double *refCom, const pym_config_t *const pymCfg) {
-  int i, j;
-  double totMass = 0;
+  int				i, j;
+  double			totMass	 = 0;
   FOR_0(j, 3)
-    refCom[j] = 0;
+    refCom[j]				 = 0;
   FOR_0(i, pymCfg->nBody) {
-    const pym_rb_named_t *const rbn = &pymCfg->body[i].b;
+    const pym_rb_named_t *const rbn	 = &pymCfg->body[i].b;
     FOR_0(j, 3)
-      refCom[j] += rbn->m * rbn->chi_ref[j];
-    totMass += rbn->m;
+      refCom[j]				+= rbn->m * rbn->chi_ref[j];
+    totMass				+= rbn->m;
   }
   FOR_0(j, 3)
     refCom[j] /= totMass;
 }
 
-void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
-			      const pym_rb_statedep_t *sd,
-			      const pym_config_t *pymCfg,
+void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
+			      const pym_rb_statedep_t	*sd,
+			      const pym_config_t	*pymCfg,
 			      cholmod_common *cc) {
-  const int nb = pymCfg->nBody;
-  const int nf = pymCfg->nFiber;
-  const int nj = pymCfg->nJoint;
-  cholmod_triplet *A_trip[nb]; /* should be deallocated here */
-  const int nd = 6;
+  const int						 nb = pymCfg->nBody;
+  const int						 nf = pymCfg->nFiber;
+  const int						 nj = pymCfg->nJoint;
+  cholmod_triplet					*A_trip[nb];	/* should be deallocated here */
+  const int						 nd = 6;
 
-  int Asubrowsizes[ ] = { 0, /* be calculated later */
+  int Asubrowsizes[ ]  = { 0,	/* be calculated later */
 			  2*nd*nf,
 			  nf,
 			  4*nj,
@@ -383,7 +391,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
 			  3,
 			  3,
 			  3 };
-  int Asubcolsizes[ ] = { 0, /* be calculated later */
+  int Asubcolsizes[ ]  = { 0,	/* be calculated later */
 			  nf,
 			  nf,
 			  nf,
@@ -396,63 +404,63 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
 			  1,
 			  3,
 			  1 };
-  int i, j, l;
+  int	i, j, l;
   FOR_0(i, nb) {
     GetAMatrix(A_trip + i, sd + i, pymCfg->body + i, pymCfg, cc);
-    Asubrowsizes[0] += A_trip[i]->nrow;
-    Asubcolsizes[0] += A_trip[i]->ncol;
+    Asubrowsizes[0]   += A_trip[i]->nrow;
+    Asubcolsizes[0]   += A_trip[i]->ncol;
   }
-  const int Asubrows = sizeof(Asubrowsizes)/sizeof(int);
-  const int Asubcols = sizeof(Asubcolsizes)/sizeof(int);
-  int *Ari = (int *)malloc( sizeof(int)*(1+Asubrows) );
-  int *Aci = (int *)malloc( sizeof(int)*(1+Asubcols) );
-  bod->Ari = Ari;
-  bod->Aci = Aci;
-  Ari[0] = 0;
-  Aci[0] = 0;
+  const int	 Asubrows     = sizeof(Asubrowsizes)/sizeof(int);
+  const int	 Asubcols     = sizeof(Asubcolsizes)/sizeof(int);
+  int		*Ari	      = (int *)malloc( sizeof(int)*(1+Asubrows) );
+  int		*Aci	      = (int *)malloc( sizeof(int)*(1+Asubcols) );
+  bod->Ari		      = Ari;
+  bod->Aci		      = Aci;
+  Ari[0]		      = 0;
+  Aci[0]		      = 0;
   FOR_0(i, Asubrows) Ari[i+1] = Ari[i] + Asubrowsizes[i];
   FOR_0(i, Asubcols) Aci[i+1] = Aci[i] + Asubcolsizes[i];
 
-  int *Airi = (int *)malloc( sizeof(int)*(1+nb) );
-  int *Aici = (int *)malloc( sizeof(int)*(1+nb) );
-  bod->Airi = Airi;
-  bod->Aici = Aici;
-  Airi[0] = 0;
-  Aici[0] = 0;
+  int	*Airi = (int *)malloc( sizeof(int)*(1+nb) );
+  int	*Aici		 = (int *)malloc( sizeof(int)*(1+nb) );
+  bod->Airi		 = Airi;
+  bod->Aici		 = Aici;
+  Airi[0]		 = 0;
+  Aici[0]		 = 0;
   FOR_0(i, nb) Airi[i+1] = Airi[i] + A_trip[i]->nrow;
   FOR_0(i, nb) Aici[i+1] = Aici[i] + A_trip[i]->ncol;
 
-  size_t nzmax = 0;
-  size_t totFiberCon = 0;
+  size_t	nzmax	     = 0;
+  size_t	totFiberCon  = 0;
   FOR_0(i, nb) {
-    nzmax += A_trip[i]->nnz;                /* Sub-block 01 - A_i */
-    nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 02 - [0 -1] */
-    nzmax += nd*pymCfg->body[i].b.nFiber;   /* Sub-block 03 - R_i */
+    nzmax		    += A_trip[i]->nnz;	/* Sub-block 01 - A_i */
+    nzmax		    += nd*pymCfg->body[i].b.nFiber;	/* Sub-block 02 - [0 -1] */
+    nzmax		    += nd*pymCfg->body[i].b.nFiber;	/* Sub-block 03 - R_i */
 
     totFiberCon += pymCfg->body[i].b.nFiber;
   }
   assert(totFiberCon == 2*nf); /* Since a fiber always connected
 				  to two different RB */
-  nzmax += 3*nf;     /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
-  nzmax += 2*4*nj;   /* sub-block 07 - D */
-  nzmax += 4*nj;     /* sub-block 08 - (-1) */
-  nzmax += nj;       /* sub-block 09 - (1) */
-  nzmax += 3*nb;     /* sub-block 10 - A_com */
-  nzmax += 3;        /* sub-block 11 - 1*M */
-  nzmax += 3;        /* sub-block 12 - 1 */
-  nzmax += 3;        /* sub-block 13 - -1 */
-  nzmax += 6*pymCfg->nextTotContacts; /* sub-block 14 - G */
-  nzmax += 3;        /* sub-block 15 - -1 */
+  nzmax += 3*nf;		/* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
+  nzmax += 2*4*nj;		/* sub-block 07 - D */
+  nzmax += 4*nj;		/* sub-block 08 - (-1) */
+  nzmax += nj;			/* sub-block 09 - (1) */
+  nzmax += 3*nb;		/* sub-block 10 - A_com */
+  nzmax += 3;			/* sub-block 11 - 1*M */
+  nzmax += 3;			/* sub-block 12 - 1 */
+  nzmax += 3;			/* sub-block 13 - -1 */
+  nzmax += 6*pymCfg->nextTotContacts;	/* sub-block 14 - G */
+  nzmax += 3;			/* sub-block 15 - -1 */
 
   //    printf("    BipA matrix constants (nb)      : %d\n", nb);
   //    printf("    BipA matrix constants (nf)      : %d\n", nf);
   //    printf("    BipA matrix subblock dimension  : %d x %d\n", Asubrows, Asubcols);
   //    printf("    BipA matrix size                : %d x %d\n", Ari[Asubrows], Aci[Asubcols]);
-  cholmod_triplet *AMatrix_trip = cholmod_allocate_triplet(Ari[Asubrows], Aci[Asubcols], nzmax, 0, CHOLMOD_REAL, cc);
+  cholmod_triplet	*AMatrix_trip = cholmod_allocate_triplet(Ari[Asubrows], Aci[Asubcols], nzmax, 0, CHOLMOD_REAL, cc);
   assert(AMatrix_trip->nnz == 0);
 
   /* Sub-block 01 - A */
-  int AoffsetRow = 0, AoffsetCol = 0;
+  int	AoffsetRow = 0, AoffsetCol = 0;
   FOR_0(i, nb) {
     FOR_0(j, A_trip[i]->nnz) {
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 0, 0,
@@ -464,11 +472,11 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
     AoffsetCol += A_trip[i]->ncol;
   }
   assert(AoffsetRow == Ari[1] && AoffsetCol == Aci[1]);
-  int EoffsetRow = 0, EoffsetCol = 0;
+  int		EoffsetRow = 0, EoffsetCol = 0;
   /* Sub-block 02 - E := [0 -1 0] */
   FOR_0(i, nb) {
-    const int nfi = pymCfg->body[i].b.nFiber;
-    //const int nai = pymCfg->body[i].b.nAnchor;
+    const int	nfi	   = pymCfg->body[i].b.nFiber;
+    //const int nai	   = pymCfg->body[i].b.nAnchor;
     FOR_0(j, nd*nfi) {
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 0,
 				EoffsetRow + j,
@@ -480,9 +488,9 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   }
   assert(Ari[1]+EoffsetRow == Ari[2] && Aci[0]+EoffsetCol == Aci[1]);
   /* Sub-block 03 - R */
-  int RoffsetRow = 0;
+  int			 RoffsetRow = 0;
   FOR_0(i, nb) {
-    cholmod_triplet *R_i;
+    cholmod_triplet	*R_i;
     GetR_i(&R_i, sd, i, pymCfg, cc);
     FOR_0(j, R_i->nnz) {
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 1, 1,
@@ -496,7 +504,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   assert(Ari[1]+RoffsetRow == Ari[2]);
   /* Sub-block 04, 05, 06 - K_11, K_12, K_13 */
   FOR_0(i, nf) {
-    double k[3];
+    double	k[3];
     GetMuscleFiberK(k, pymCfg->fiber + i, pymCfg);
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 1, i, i, k[0]);
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 2, 2, i, i, k[1]);
@@ -505,7 +513,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   /* Sub-block 07 - D */
   FOR_0(i, nj) {
     FOR_0(l, 4) {
-      const pym_anchored_joint_t *aJoint = pymCfg->anchoredJoints + i;
+      const pym_anchored_joint_t	*aJoint = pymCfg->anchoredJoints + i;
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 3, 0,
 				4*i + l,
 				bod->Aici[ aJoint->aIdx ] + sd[ aJoint->aIdx ].Aci[10] + 4*aJoint->aAnchorIdx + l,
@@ -523,14 +531,14 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   FOR_0(i, nj)
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 4, 7, i, i, 1);
   /* Sub-block 10 - A_com */
-  EoffsetCol = 0;
-  double totMass = 0;
+  EoffsetCol			 = 0;
+  double		totMass	 = 0;
   FOR_0(i, nb) {
-    const double mass = pymCfg->body[i].b.m;
+    const double	mass	 = pymCfg->body[i].b.m;
     FOR_0(j, 3)
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 5, 0, j, EoffsetCol + j, mass);
-    totMass += mass;
-    EoffsetCol += A_trip[i]->ncol;
+    totMass			+= mass;
+    EoffsetCol			+= A_trip[i]->ncol;
   }
   /* Sub-block 11 - 1*M */
   FOR_0(i, 3)
@@ -544,7 +552,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   /* Sub-block 14 - G */
   FOR_0(i, nb) {
     FOR_0(j, sd[i].nContacts_2) {
-      double r[3];
+      double	r[3];
       FOR_0(l, 3) {
 	/* We are optimizing to find the next state
 	 * based on the current state and data.
@@ -558,9 +566,9 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
 	 */
 	r[l] = sd[i].contactsFix_2[j][l] - pymCfg->curBipCom[l];
       }
-      double rx[3][3];
+      double	rx[3][3];
       PymCrossToMat(rx, r);
-      const int basecol = bod->Aici[i] + sd[i].Aci[1] + nd*j;
+      const int basecol	  = bod->Aici[i] + sd[i].Aci[1] + nd*j;
       /*
        *   [  0   x   x  ]
        *   [  x   0   x  ]
@@ -580,21 +588,21 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   FOR_0(i, 3)
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 7, 11, i, i, -1);
   /* Finish: convert AMatrix_trip to column compressed format */
-  bod->bipMat = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
-  cholmod_free_triplet(&AMatrix_trip, cc); /* not needed anymore */
+  bod->bipMat		    = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
+  cholmod_free_triplet(&AMatrix_trip, cc);	/* not needed anymore */
   assert(bod->bipMat);
   /*********************
    * Eta vector setup  *
    *********************/
-  double *bipEta = calloc(Ari[Asubrows], sizeof(double));
-  int etaOffset = 0;
+  double	*bipEta	    = calloc(Ari[Asubrows], sizeof(double));
+  int		 etaOffset  = 0;
   /* Eta sub-block 00 - eta */
   FOR_0(i, nb) {
-    double *etai;
-    GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc); /* Space for 'etai' is allocated at GetEta() */
+    double	*etai;
+    GetEta(&etai, sd + i, pymCfg->body + i, pymCfg, cc);	/* Space for 'etai' is allocated at GetEta() */
     memcpy(bipEta + etaOffset, etai, sizeof(double)*A_trip[i]->nrow);
-    free(etai); /* so free here */
-    etaOffset += A_trip[i]->nrow;
+    free(etai);			/* so free here */
+    etaOffset		   += A_trip[i]->nrow;
   }
   /* Eta sub-block 02 - s */
   FOR_0(i, nf) {
@@ -602,8 +610,8 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
   }
   /* Eta sub-block 04 - d_disloc */
   FOR_0(i, nj) {
-    const char *anchorName = pymCfg->pymJa[ pymCfg->anchoredJoints[i].aAnchorIdxGbl ].name;
-    char iden[128];
+    const char	*anchorName = pymCfg->pymJa[ pymCfg->anchoredJoints[i].aAnchorIdxGbl ].name;
+    char	 iden[128];
     ExtractAnchorIdentifier(iden, anchorName);
     //printf("Name: %s (%s)\n", anchorName, iden);
 
@@ -611,13 +619,13 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
      * TODO [TUNE] Joint dislocation threshold
      */
     if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0) {
-      bipEta[ Ari[4] + i ] = 0.03;
+      bipEta[ Ari[4] + i ]    = 0.05;
     } else {
-      bipEta[ Ari[4] + i ] = 0.03;
+      bipEta[ Ari[4] + i ]    = 0.05;
     }
   }
   /* Eta sub-block 06 - p_{com,ref} */
-  double refCom[3];
+  double	refCom[3];
   PymCalculateRefCom(refCom, pymCfg);
   memcpy(bipEta + Ari[6], refCom, sizeof(double)*3);
 
@@ -627,7 +635,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t *bod,
 }
 
 void PymSetPymCfgChiRefToCurrentState(pym_config_t *pymCfg) {
-  int i;
+  int	i;
   FOR_0(i, pymCfg->nBody) {
     memcpy(pymCfg->body[i].b.chi_ref  , pymCfg->body[i].b.p, sizeof(double)*3);
     memcpy(pymCfg->body[i].b.chi_ref+3, pymCfg->body[i].b.q, sizeof(double)*4);

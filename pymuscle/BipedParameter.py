@@ -751,13 +751,13 @@ class BipedParameter:
     def getBicepsFemoris(self):
         c1 = self.getHipJointCenter()
         c2 = self.getThighPos()
-        p1 = c1 + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2])
+        p1 = c1 + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2])
         p2 = c2 + array([0, -self['thighLatWidth']/2, -self['thighLen']/2])
-        p3 = c1 + array([0, +self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2])
+        p3 = c1 + array([0, +self['trunkLatWidth']/2, self['trunkThighGap']/2])
         p4 = c2 + array([0, +self['thighLatWidth']/2, -self['thighLen']/2])
-        p5 = c1 + array([-self['legsDist'], 0, self['trunkThighGap']/2 + self['trunkLen']/2])
+        p5 = c1 + array([-self['legsDist']/2, 0, self['trunkThighGap']/2 ])
         p6 = c2 + array([-self['thighWidth']/2, 0, -self['thighLen']/2])
-        p7 = c1 + array([+self['legsDist']/2, 0, self['trunkThighGap']/2 + self['trunkLen']/2])
+        p7 = c1 + array([+self['legsDist']/4, 0, self['trunkThighGap']/2])
         p8 = c2 + array([+self['thighWidth']/2, 0, -self['thighLen']/2])
         return [ ('BicepsFemoris1L', p1,p2, 'trunk', 'thighL'),
                  ('BicepsFemoris2L', p1,p4, 'trunk', 'thighL'),
@@ -781,10 +781,10 @@ class BipedParameter:
     def getQuadricepsFemoris(self):
         c1 = self.getHipJointCenter()
         p = []
-        p.append( c1 + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2]) )
-        p.append( c1 + array([0, +self['trunkLatWidth']/2, self['trunkThighGap']/2 + self['trunkLen']/2]) )
-        p.append( c1 + array([-self['legsDist'], 0, self['trunkThighGap']/2 + self['trunkLen']/4]) )
-        p.append( c1 + array([+self['legsDist']/2, 0, self['trunkThighGap']/2 + self['trunkLen']/4]) )
+        p.append( c1 + array([0, -self['trunkLatWidth']/2, self['trunkThighGap']/2]) )
+        p.append( c1 + array([0, +self['trunkLatWidth']/2, self['trunkThighGap']/2]) )
+        p.append( c1 + array([-self['legsDist']/2, 0, self['trunkThighGap']/2]) )
+        p.append( c1 + array([+self['legsDist']/4, 0, self['trunkThighGap']/2]) )
         c2 = self.getCalfPos()
         v = []
         v.append( c2 + array([ self['calfWidth']/2,  self['calfLatWidth']/2,  0]) )
@@ -1021,16 +1021,16 @@ class BipedParameter:
     
     def buildFiber(self, availableBodyNames, noliga=False, noact=False):
         # Fiber constants for a ligament
-        KSE = 1      # Should not be 0
-        KPE = 0
-        b   = 1         # Should not be 0
+        KSE = 100      # Should not be 0
+        KPE = 100
+        b   = 0.1         # Should not be 0
         T   = 0.
         A   = 0.
         fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A, 'LIGAMENT')
         # Fiber constants for a muscle fiber
-        KSE = 1            # Should not be 0
-        KPE = 0
-        b   = 1            # Should not be 0
+        KSE = 100            # Should not be 0
+        KPE = 100
+        b   = 0.1            # Should not be 0
         T   = 0.
         A   = 0.
         fiber_muscle = self._buildFiber(availableBodyNames, self.getAllMuscles(), KSE, KPE, b, T, A, 'MUSCLE')

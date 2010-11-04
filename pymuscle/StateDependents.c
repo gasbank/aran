@@ -2,7 +2,7 @@
 #include "PymStruct.h"
 #include "MathUtil.h"
 #include "ExpBodyMoEq_real.h"
-#include "Biped.h"
+#include "PymBiped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
 #include "ConvexHullCapi.h"
@@ -153,7 +153,16 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
         //if (pcj_2_nocf_W[2] <= -0.004) {
         //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
         //if (pcj_2_nocf_W[2] <= 0.15) {
-        if (pcj_1_W[2] <= 0.15) {
+	double groundLevel = 0.15;
+	if (strcmp(pymCfg->trajName, "Walk1") == 0) {
+	  if (pymCfg->curFrame > 180) 
+	    groundLevel += 0.630;
+	  else if (pymCfg->curFrame > 150)
+	    groundLevel += 0.413;
+	  else if (pymCfg->curFrame > 120)
+	    groundLevel += 0.210;
+	}
+        if (pcj_1_W[2] <= groundLevel) {
             sd->contactIndices_2[ sd->nContacts_2 ] = j;
             double *pcj_fix = sd->contactsFix_2[ sd->nContacts_2 ];
             for (k=0;k<3;++k) {

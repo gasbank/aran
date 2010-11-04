@@ -148,7 +148,7 @@ GLboolean LoadPCX(IMAGE_PTR image, const char *filename);
 GLboolean LoadDDS(IMAGE_PTR image, const char *filename);
 GLboolean WriteTGA(IMAGE_PTR image, const char* filename);
 GLboolean FlipVertically(IMAGE_PTR image);
-GLboolean LoadTexture( GLint* texture_id, const char* filename, GLboolean clamp, GLfloat AnisoLevel );
+GLboolean LoadTexture( GLuint* texture_id, const char* filename, GLboolean clamp, GLfloat AnisoLevel );
 GLboolean SaveTexture( GLint texture_id, const char* filename);
 GLboolean PrintScreen( const char* filename );
 

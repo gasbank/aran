@@ -20,6 +20,13 @@
 
 #include "image.h"
 
+// use this to delete an array
+#define SAFE_DELETE_ARRAY(p)  \
+  if(p) { \
+    free (p); \
+    (p) = 0; \
+  } \
+
 /*
  * Module globals
  */
@@ -709,7 +716,8 @@ unsigned char* temp;
 	return GL_TRUE;
 }
 
-GLboolean LoadTexture( GLint* texture_id, const char* filename, GLboolean clamp, GLfloat AnisoLevel )
+GLboolean LoadTexture( GLuint* texture_id,
+		       const char* filename, GLboolean clamp, GLfloat AnisoLevel )
 {
 IMAGE_PTR image;
 

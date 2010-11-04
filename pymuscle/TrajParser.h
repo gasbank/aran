@@ -1,30 +1,26 @@
 #ifndef __TRAJPARSER_H_
 #define __TRAJPARSER_H_
 
-#ifdef WIN32
 #define MAX_CORRESMAP (50)
-#else
-static const int MAX_CORRESMAP = 50;
-#endif
 
-int PymParseTrajectoryFile(char corresMap[MAX_CORRESMAP][2][128],
-                           int *_nCorresMap,
-                           double **_trajData,
-                           int *_nBody,
-                           int *_nFrame,
-                           int *_exportFps,
+typedef struct aaa_pym_traj_t {
+  int exportFps;
+  int nBlenderFrame;
+  int nBlenderBody;
+  int corresMapIndex[MAX_CORRESMAP]; //[pymCfg->nBody];
+  char corresMap[MAX_CORRESMAP][2][128];
+  int nCorresMap;
+  double *trajData;
+} pym_traj_t;
+
+int PymParseTrajectoryFile(pym_traj_t *pymTraj,
                            const char *fnRbCfg,
                            const char *fnTraj);
 
-int PymCorresMapIndexFromCorresMap(int corresMapIndex[],
-                                   int nCorresMap,
-                                   char corresMap[nCorresMap][2][128],
-                                   int nBlenderBody,
+int PymCorresMapIndexFromCorresMap(pym_traj_t *pymTraj,
                                    pym_config_t *pymCfg,
                                    FILE *dmstreams[PDMTE_COUNT]);
 
 int PymSetInitialStateUsingTrajectory(pym_config_t *pymCfg,
-                                      int nBlenderBody,
-                                      const int corresMapIndex[],
-                                      const double *trajData);
+				      pym_traj_t *pymTraj);
 #endif

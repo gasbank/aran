@@ -1,7 +1,7 @@
 #include "PymPch.h"
 #include "PymStruct.h"
 #include "Config.h"
-#include "Biped.h"
+#include "PymBiped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
 #include "ConvexHullCapi.h"

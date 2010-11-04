@@ -8,7 +8,7 @@
 #include "PymPch.h"
 #include "PymStruct.h"
 #include "MathUtil.h"
-#include "Biped.h"
+#include "PymBiped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
 #include "ConvexHullCapi.h"

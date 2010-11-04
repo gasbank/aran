@@ -2,6 +2,7 @@
  * PymRs.c: Pymuscle Realtime Simulator
  * 2010 Geoyeob Kim
  */
+
 /*
  * HEADERS
  */
@@ -30,7 +31,7 @@
 #include "include/PrsGraphCapi.h"
 
 #include "PymStruct.h"
-#include "Biped.h"
+#include "PymBiped.h"
 #include "RigidBody.h"
 #include "MuscleFiber.h"
 #include "ConvexHullCapi.h"
@@ -41,89 +42,91 @@
 #include "Optimize.h"
 #include "PymJointAnchor.h"
 #include "PymDebugMessageFlags.h"
-#include "PhysicsThreadMain.h"
 #include "TrajParser.h"
+#include "PhysicsThreadMain.h"
 #include "PymCmdLineParser.h"
 #include "MathUtil.h"
 
 #include "model.h"
 #include "common.h"
-#include "camera.h"
 #include "image.h"
 #include "quaternion.h"
 
+#include "pymrscore.h"
+#include "pymrsrender.h"
+
 /*
- * Globals
+ * Macros
  */
-
-GLboolean print_fps=GL_FALSE;
-GLboolean wireframe=GL_FALSE;
-GLboolean transparency=GL_FALSE;
-GLboolean skeleton=GL_FALSE;
-GLboolean animation=GL_FALSE;
-GLboolean selection=GL_FALSE;
-
-GLint width, height;
-Cursor picking;
-
-int RENDER_WIDTH  = 700;
-int RENDER_HEIGHT = 700;
-int SHADOW_MAP_RATIO = 1;
-/* Model variables */
-MODEL_PTR model=NULL;
-GLfloat roll=0.0f, pitch=0.0f, yaw=0.0f;
-GLint texture_id, sel_bone=0;
-GLfloat t_inc=0.1f;
-GLuint pose=1, old_pose=0;
-
-/* Motion and view variables */
-const GLfloat tStep = 100.f;	//Translational step
-const GLfloat aStep = 0.001f;	//Rotational step (radians)
-const GLfloat mouse_scale_t  = 0.001f; //Mouse smoothing translations
-const GLfloat mouse_scale_r  = 0.2f;   //Mouse smoothing rotations
-const GLfloat mouse_scale_a  = 0.002f; //Mouse smoothing angles
-GLfloat t1 = 0.0f;
-
-GLfloat sinE, cosE, sinA, cosA, fScale;
-
-GLint old_x, old_y;
-
-GLfloat xRot = 0.f, yRot = 0.f;
-GLfloat xCam, yCam, zCam, eCam, aCam, lCam, vCam, dCam;
-
-/* Timer */
-struct timeval tv;
-double etime, dt;
-double t0 = 0.0f, t2;
-GLuint fps_font;
-GLfloat Timed = 0.5f;
-GLfloat fps_mean = 0.0f, fps_count = 0.0f;
-
 #define NUM_THREADS  3
 #define TCOUNT 10
 #define COUNT_LIMIT 12
 
+/*
+ * Globals
+ */
+GLboolean	print_fps	 = GL_FALSE;
+GLboolean	wireframe	 = GL_FALSE;
+GLboolean	transparency	 = GL_FALSE;
+GLboolean	skeleton	 = GL_FALSE;
+GLboolean	animation	 = GL_FALSE;
+GLboolean	selection	 = GL_FALSE;
+GLint		width, height;
+Cursor		picking;
+int		RENDER_WIDTH	 = 700;
+int		RENDER_HEIGHT	 = 700;
+int		SHADOW_MAP_RATIO = 1;
+
+/* Model variables */
+MODEL_PTR	model		     = NULL;
+GLuint		texture_id, sel_bone = 0;
+GLfloat		t_inc		     = 0.1f;
+GLuint		pose		     = 1, old_pose=0;
+
+/* Motion and view variables */
+const GLfloat	tStep	      = 100.f;	//Translational step
+const GLfloat	aStep	      = 0.001f;	//Rotational step (radians)
+const GLfloat	mouse_scale_t = 0.001f;	//Mouse smoothing translations
+const GLfloat	mouse_scale_r = 0.2f;	//Mouse smoothing rotations
+const GLfloat	mouse_scale_a = 0.002f;	//Mouse smoothing angles
+GLfloat		t1	      = 0.0f;
+GLfloat		xRot	      = 0.f;
+GLfloat		yRot	      = 0.f;
+GLfloat		xCam, yCam, zCam, eCam, aCam, lCam, vCam, dCam;
+GLfloat		sinE, cosE, sinA, cosA, fScale;
+GLint		old_x, old_y;
+
+/* Timer */
+struct timeval	tv;
+double		etime, dt;
+double		t0	 = 0.0f, t2;
+GLuint		fps_font;
+GLfloat		Timed	 = 0.5f;
+GLfloat		fps_mean = 0.0f, fps_count = 0.0f;
+
+/* Threads */
 int     count = 0;
 int     thread_ids[3] = {0,1,2};
 pthread_mutex_t count_mutex, main_mutex;
 pthread_cond_t count_threshold_cv, physics_thread_finished;
 
-GLuint gndTex;
-// Z values will be rendered to this texture when using fboId framebuffer
-GLuint depthTextureId;
-// Hold id of the framebuffer for light POV rendering
-GLuint fboId;
-// Use to activate/disable shadowShader
-GLhandleARB shadowShaderId;
-GLint shadowMapUniform;
-GLint projMatUniform;
-GLint modelViewMatUniform;
-GLint normalMatUniform;
 
-GLuint m_vaoID[5];      // two vertex array objects, one for each drawn object
-GLuint m_vboID[3];      // three VBOs
-const int n_face = 45;   // Circle shaped ground face number
-double zoomRatio = 1.0;
+
+double		zoomRatio = 1.0;
+
+/* Camera position denoted by spherical coordinate system */
+/* r     - distance between center pos */
+/* phi   - azimuth direction (angle with -Y axis) */
+/* theta - zenith  direction (angle with +Z axis) */
+static double	cam_r	   = 10;     
+static double	cam_phi	   = 30.0/180*M_PI;
+static double	cam_dphi   = 0;
+static double	cam_theta  = 60.0/180*M_PI;
+static double	cam_dtheta = 0;
+//static double	cam_cen[3];
+static int	g_mouse_pressed_pos_x;
+static int	g_mouse_pressed_pos_y;
+static int	g_mouse_dragging;
 
 int isExtensionSupported(const char *extension) {
   const GLubyte *extensions = NULL;
@@ -149,136 +152,6 @@ int isExtensionSupported(const char *extension) {
     start = terminator;
   }
   return 0;
-}
-
-
-// Loading shader function
-GLhandleARB loadShader(char* filename, unsigned int type)
-{
-  FILE *pfile;
-  GLhandleARB handle;
-  const GLcharARB* files[1];
-
-  // shader Compilation variable
-  GLint result;				// Compilation code result
-  GLint errorLoglength ;
-  char* errorLogText;
-  GLsizei actualErrorLogLength;
-
-  char buffer[400000];
-  memset(buffer,0,400000);
-
-  // This will raise a warning on MS compiler
-  printf("Loading shader %s...\n", filename);
-  pfile = fopen(filename, "rb");
-  if(!pfile)
-    {
-      printf("Sorry, can't open file: '%s'.\n", filename);
-      exit(-1);
-    }
-
-  fread(buffer,sizeof(char),400000,pfile);
-  //printf("%s\n",buffer);
-
-
-  fclose(pfile);
-
-  handle = glCreateShaderObjectARB(type);
-  if (!handle)
-    {
-      //We have failed creating the vertex shader object.
-      printf("Failed creating vertex shader object from file: %s.",filename);
-      exit(-1);
-    }
-
-  files[0] = (const GLcharARB*)buffer;
-  glShaderSourceARB(
-		    handle, //The handle to our shader
-		    1, //The number of files.
-		    files, //An array of const char * data, which represents the source code of theshaders
-		    NULL);
-
-  glCompileShaderARB(handle);
-
-  //Compilation checking.
-  glGetObjectParameterivARB(handle, GL_OBJECT_COMPILE_STATUS_ARB, &result);
-  //Attempt to get the length of our error and warning log.
-  glGetObjectParameterivARB(handle, GL_OBJECT_INFO_LOG_LENGTH_ARB, &errorLoglength);
-  if (errorLoglength) {
-    //Create a buffer to read compilation error message
-    errorLogText = malloc(sizeof(char) * errorLoglength);
-
-    //Used to get the final length of the log.
-    glGetInfoLogARB(handle, errorLoglength, &actualErrorLogLength, errorLogText);
-    // Display errors.
-    printf("%s\n",errorLogText);
-    // Free the buffer malloced earlier
-    free(errorLogText);
-    // In case of error occurred:
-    if (!result) {
-      //We failed to compile.
-      printf("Shader '%s' failed compilation.\n", filename);
-      exit(-2);
-    }
-  }
-  return handle;
-}
-
-void CheckLinkError(GLhandleARB obj)
-{
-  int infologLength = 0;
-  int charsWritten  = 0;
-  char *infoLog;
-  GLint result;
-  glGetObjectParameterivARB(obj, GL_OBJECT_LINK_STATUS_ARB, &result);
-  if (!result) {
-    glGetObjectParameterivARB(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB,
-			      &infologLength);
-    if (infologLength > 0) {
-      infoLog = (char *)malloc(infologLength);
-      glGetInfoLogARB(obj, infologLength, &charsWritten, infoLog);
-      printf("%s\n",infoLog);
-      free(infoLog);
-    }
-    exit(-2);
-  }
-}
-void loadShadowShader()
-{
-  GLhandleARB vertexShaderHandle;
-  GLhandleARB fragmentShaderHandle;
-
-  vertexShaderHandle   = loadShader("Shadow.vert", GL_VERTEX_SHADER_ARB);
-  printf("Vertex   shader handle : %d\n", vertexShaderHandle);
-  fragmentShaderHandle = loadShader("Shadow.frag", GL_FRAGMENT_SHADER_ARB);
-  printf("Fragment shader handle : %d\n", fragmentShaderHandle);
-  shadowShaderId = glCreateProgramObjectARB();
-  printf("Program handle         : %d\n", shadowShaderId);
-  glAttachObjectARB(shadowShaderId, vertexShaderHandle);
-  glAttachObjectARB(shadowShaderId, fragmentShaderHandle);
-
-  glBindAttribLocationARB(shadowShaderId, 0, "in_Position");
-  glBindAttribLocationARB(shadowShaderId, 1, "in_Color");
-  glBindAttribLocationARB(shadowShaderId, 2, "in_Normal");
-
-  glLinkProgramARB(shadowShaderId);
-  CheckLinkError(shadowShaderId);
-  glUseProgram(shadowShaderId);
-
-  printf("Shadow shader loaded successfully.\n");
-
-  shadowMapUniform = glGetUniformLocation(shadowShaderId,
-					  "ShadowMap");
-  projMatUniform   = glGetUniformLocation(shadowShaderId,
-					  "projection_matrix");
-  modelViewMatUniform = glGetUniformLocation(shadowShaderId,
-					     "modelview_matrix");
-  normalMatUniform = glGetUniformLocation(shadowShaderId,
-					  "normal_matrix");
-  assert(shadowMapUniform >= 0);
-  assert(projMatUniform >= 0);
-  assert(modelViewMatUniform >= 0);
-  //assert(normalMatUniform >= 0);
 }
 
 void change_size(GLsizei w, GLsizei h)
@@ -483,773 +356,62 @@ void compute_mv(GLuint bone, GLfloat roll, GLfloat pitch, GLfloat yaw)
 
 }
 
-void generateShadowFBO() {
-  /*
-    int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
-    int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
-  */
-  int shadowMapWidth = 1024;
-  int shadowMapHeight = 1024;
-
-  //GLfloat borderColor[4] = {0,0,0,0};
-
-  GLenum FBOstatus;
-
-  // Try to use a texture depth component
-  glGenTextures(1, &depthTextureId);
-  glBindTexture(GL_TEXTURE_2D, depthTextureId);
-
-  // GL_LINEAR does not make sense for depth texture. However, next tutorial shows usage of GL_LINEAR and PCF
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-  // Remove artefact on the edges of the shadowmap
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
-
-  //glTexParameterfv( GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor );
-  // No need to force GL_DEPTH_COMPONENT24, drivers usually give you the max precision if available
-  glTexImage2D( GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, shadowMapWidth, shadowMapHeight, 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_BYTE, 0);
-  glBindTexture(GL_TEXTURE_2D, 0);
-
-  // create a framebuffer object
-  glGenFramebuffersEXT(1, &fboId);
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId);
-
-  // Instruct openGL that we won't bind a color texture with the currently binded FBO
-  glDrawBuffer(GL_NONE);
-  glReadBuffer(GL_NONE);
-
-  // attach the texture to FBO depth attachment point
-  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT, GL_DEPTH_ATTACHMENT_EXT,GL_TEXTURE_2D, depthTextureId, 0);
-
-  // check FBO status
-  FBOstatus = glCheckFramebufferStatusEXT(GL_FRAMEBUFFER_EXT);
-  if(FBOstatus != GL_FRAMEBUFFER_COMPLETE_EXT)
-    printf("GL_FRAMEBUFFER_COMPLETE_EXT failed, CANNOT use FBO\n");
-
-  // switch back to window-system-provided framebuffer
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
-}
-
-void setupMatrices(float position_x, float position_y, float position_z,
-                   float lookAt_x,   float lookAt_y,   float lookAt_z) {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-
-  //gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
-  glOrtho(-3, 3, -3, 3, 1e-2, 1e5);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  gluLookAt(position_x, position_y, position_z,
-	    lookAt_x,   lookAt_y,   lookAt_z,
-	    0,0,1);
-
-
-  GLfloat mat[16];
-  glGetFloatv(GL_PROJECTION_MATRIX, mat);
-  glUniformMatrix4fvARB(projMatUniform, 1, 0, mat);
-  glGetFloatv(GL_MODELVIEW_MATRIX, mat);
-  glUniformMatrix4fvARB(modelViewMatUniform, 1, 0, mat);
-}
-
-void setTextureMatrix(void) {
-  static double modelView[16];
-  static double projection[16];
-
-  // This is matrix transform every coordinate x,y,z
-  // x = x* 0.5 + 0.5
-  // y = y* 0.5 + 0.5
-  // z = z* 0.5 + 0.5
-  // Moving from unit cube [-1,1] to [0,1]
-  const GLdouble bias[16] = {
-    0.5, 0.0, 0.0, 0.0,
-    0.0, 0.5, 0.0, 0.0,
-    0.0, 0.0, 0.5, 0.0,
-    0.5, 0.5, 0.5, 1.0};
-
-  // Grab modelview and transformation matrices
-  glGetDoublev(GL_MODELVIEW_MATRIX, modelView);
-  glGetDoublev(GL_PROJECTION_MATRIX, projection);
-
-
-  glMatrixMode(GL_TEXTURE);
-  glActiveTextureARB(GL_TEXTURE7);
-
-  glLoadIdentity();
-  glLoadMatrixd(bias);
-
-  // concatating all matrice into one.
-  glMultMatrixd (projection);
-  glMultMatrixd (modelView);
-
-  // Go back to normal matrix mode
-  glMatrixMode(GL_MODELVIEW);
-}
-
-void startXform(const double W[4][4]) {
-  const GLdouble *const Wa = (const GLdouble *const)W;
-  glPushMatrix();
-  glMultTransposeMatrixd(Wa);
-
-  glMatrixMode(GL_TEXTURE);
-  glActiveTextureARB(GL_TEXTURE7);
-  glPushMatrix();
-  glMultTransposeMatrixd(Wa);
-}
-void endXform() {
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-  glPopMatrix();
-}
-
-void startTranslate(float x, float y, float z) {
-  glPushMatrix();
-  glTranslatef(x,y,z);
-
-  glMatrixMode(GL_TEXTURE);
-  glActiveTextureARB(GL_TEXTURE7);
-  glPushMatrix();
-  glTranslatef(x,y,z);
-}
-
-void endTranslate() {
-  endXform();
-}
-
-void SetUniforms() {
-  GLfloat mat44[4][4];
-  /* Projection matrix to vertex shader */
-  glGetFloatv(GL_PROJECTION_MATRIX, (GLfloat *)mat44);
-  glUniformMatrix4fvARB(projMatUniform, 1, GL_FALSE, (GLfloat *)mat44);
-  /* Modelview matrix to vertex shader */
-  glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mat44);
-  glUniformMatrix4fvARB(modelViewMatUniform, 1, GL_FALSE, (GLfloat *)mat44);
-  /* Normal matrix (transpose of inverse of modelview matrix)
-   * to vertex shader */
-  GLfloat mat33[3][3];
-  int i, j;
-  FOR_0(i, 3) {
-    FOR_0(j, 3) {
-      mat33[i][j] = mat44[i][j];
-    }
-  }
-  GLfloat mat33Inv[3][3];
-  Invert3x3Matrixf(mat33Inv, mat33);
-  glUniformMatrix3fvARB(normalMatUniform, 1, GL_TRUE, (GLfloat *)mat33Inv);
-}
-
-void DrawBox_chi(const double *chi, const double *const boxSize, int wf) {
-  double W[4][4];
-  GetWFrom6Dof(W, chi); /* chi only has translation and rotation */
-  int j, k;
-  /* Scaling added w.r.t. boxSize */
-  FOR_0(j, 4)
-    FOR_0(k, 3)
-    W[j][k] *= boxSize[k];
-
-  /* TODO: Remove scaling factor from the transform matrix W */
-  startXform(W);
-  glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-  if (wf == 1) {
-    glDisable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  } else if (wf == 0) {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+void handle_mouse_button( int button, int state, int x, int y ) {
+  /* state == 0 : pressed */
+  /* state == 1 : released */
+  if (state == 0) {
+    printf("Pressed at (%d,%d).\n", x, y);
+    g_mouse_pressed_pos_x = x;
+    g_mouse_pressed_pos_y = y;
+    g_mouse_dragging = 1;
   } else {
-    assert("What the...");
+    printf("Release at (%d,%d).\n", x, y);
+    g_mouse_dragging = 0;
+    cam_phi += cam_dphi;
+    cam_theta += cam_dtheta;
+    cam_dphi = 0;
+    cam_dtheta = 0;
   }
-
-  SetUniforms();
-
-  glBindVertexArray(m_vaoID[3]);      // select second VAO
-  //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
-  //glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); // set constant color attribute
-  //glNormalPointer(GL_FLOAT, 0, (void*)(sizeof(float)*3*4*6));
-  //glVertexPointer(3, GL_FLOAT, 0, 0);
-
-  glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
-
-  //glutWireCube(1.0);
-
-  glPopAttrib();
-  endXform();
-}
-
-void DrawBox_pq(const double *p, const double *q,
-                const double *const boxSize, int wf) {
-  double chi[6];
-  assert(p);
-  memcpy(chi + 0, p, sizeof(double)*3);
-  if (q)
-    memcpy(chi + 3, q, sizeof(double)*3);
-  else {
-    chi[3] = 0;
-    chi[4] = 0;
-    chi[5] = 0;
-  }
-  DrawBox_chi(chi, boxSize, wf);
-}
-
-void DrawRb(const pym_rb_named_t *rbn,
-            const double *const boxSize, int wf) {
-  const double *const p = rbn->p;
-  const double *const q = rbn->q;
-  glColor3f(0.3,0.75,0.3);
-  DrawBox_pq(p, q, boxSize, wf);
-}
-
-void DrawRbRef(const pym_rb_named_t *rbn,
-               const double *const boxSize, int wf) {
-  const double *const chi = rbn->chi_ref;
-  assert(chi);
-  glColor3f(1, 0, 0);
-  DrawBox_chi(chi, boxSize, wf);
-}
-
-void DrawRbContacts(const pym_rb_named_t *rbn) {
-  int j;
-  FOR_0(j, rbn->nContacts_2) {
-    const double *conPos   = rbn->contactsPoints_2a[j];
-    const double *conForce = rbn->contactsForce_2[j];
-    glColor3f(0,1,0);
-    startTranslate(conPos[0], conPos[1], conPos[2]);
-
-    /* TODO: No draw call */
-
-    endTranslate();
-    static const double scale = 0.001;
-    glBegin(GL_LINES);
-    glVertex3f(conPos[0], conPos[1], conPos[2]);
-    glVertex3f(conPos[0]+conForce[0]*scale,
-	       conPos[1]+conForce[1]*scale,
-	       conPos[2]+conForce[2]*scale);
-    glEnd();
-  }
-}
-
-void DrawAxisOnWorldOrigin() {
-  glBegin(GL_LINES);
-  glColor3f(1,0,0); glVertex3f(0,0,0); glVertex3f(1,0,0);
-  glColor3f(0,1,0); glVertex3f(0,0,0); glVertex3f(0,1,0);
-  glColor3f(0,0,1); glVertex3f(0,0,0); glVertex3f(0,0,1);
-  glEnd();
-}
-
-typedef enum {
-  PYM_UNKNOWN_GROUND,
-  PYM_SQUARE_GROUND,
-  PYM_CIRCLE_GROUND,
-} pym_ground_type_t;
-
-void DrawGround(pym_ground_type_t gndType, const GLuint *const m_vaoID) {
-  if (gndType == PYM_SQUARE_GROUND)
-    glBindVertexArray(m_vaoID[2]);
-  else if (gndType == PYM_CIRCLE_GROUND)
-    glBindVertexArray(m_vaoID[4]);
-  else
-    return;
-  glPushAttrib(GL_POLYGON_BIT);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  glVertexAttrib3f((GLuint)1, 0.3, 0.3, 0.3); // in_Color  (vertex shader)
-  glVertexAttrib3f((GLuint)2, 0.0, 0.0, 1.0); // in_Normal (vertex shader)
-
-  SetUniforms();
-
-  if (gndType == PYM_SQUARE_GROUND)
-    glDrawArrays(GL_QUADS, 0, 4);   // draw second object
-  else if (gndType == PYM_CIRCLE_GROUND)
-    glDrawArrays(GL_TRIANGLE_FAN, 0, (1+n_face+1)*3);   // draw second object
-  glPopAttrib();
-}
-
-void DrawAll(pym_physics_thread_context_t *phyCon, int forShadow,
-             GLuint *m_vaoID) {
-  glPushMatrix();
-  if (!forShadow)
-    DrawAxisOnWorldOrigin();
-
-  const float gndSize = 20.0f;
-  const int gndTexRepeat = 4;
-  const float gndTexOffset = 0.5;
-
-  DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
-
-  const int nb = phyCon->pymCfg->nBody;
-  pthread_mutex_lock(&main_mutex); {
-    int i;
-    FOR_0(i, nb) {
-      /* Access data from renderer-accessable area of phyCon */
-      const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-      const double *const boxSize = rbn->boxSize;
-      DrawRb(rbn, boxSize, 0);
-      if (!forShadow) {
-	DrawRbRef(rbn, boxSize, 1);
-	DrawRbContacts(rbn);
-      }
-    }
-    static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
-    glColor3f(1,1,1);
-    DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
-    DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
-  } pthread_mutex_unlock(&main_mutex);
-
-  glPopMatrix();
-}
-
-void XRotPoint(float pr[3], float p[3], float th) {
-  pr[0] = p[0];
-  pr[1] = cos(th)*p[1] - sin(th)*p[2];
-  pr[2] = sin(th)*p[1] + cos(th)*p[2];
-}
-
-void YRotPoint(float pr[3], float p[3], float th) {
-  pr[0] = cos(th)*p[0] + sin(th)*p[2];
-  pr[1] = p[1];
-  pr[2] = -sin(th)*p[0] + cos(th)*p[2];
-}
-
-void RenderGraph(PRSGRAPH g, int slotid) {
-  glPushMatrix(); /* stack A */
-  const double margin = 0.05;
-  double graphW, graphH;
-  double graphGapX, graphGapY;
-  if (width > height) {
-    graphGapX = margin*height/width;
-    graphGapY = margin;
-    graphW = 0.5*height/width;
-    graphH = 0.5;
-  } else {
-    graphGapX = margin;
-    graphGapY = margin*width/height;
-    graphW = 0.5;
-    graphH = 0.5*width/height;
-  }
-  const double graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
-  const double graphY = -1 + graphGapY;
-  glTranslated(graphX, graphY, 0);
-  glScaled(graphW, graphH, 1);
-  glPushAttrib(GL_LIST_BIT | GL_DEPTH_BUFFER_BIT); /* stack B */
-  glDisable(GL_DEPTH_TEST);
-  PrsGraphRender(g);
-  /* Graph title */
-  glColor3f(1.0f, 1.0f, 1.0f);
-  glListBase(fps_font - ' ');
-  static const double fontHeight = 14.0;
-  glWindowPos2d((graphX + 1)*width/2, (graphY + 1)*height/2 - fontHeight);
-  const char *test = PrsGraphTitle(g);
-  glCallLists(strlen(test), GL_UNSIGNED_BYTE, test);
-  glPopAttrib(); /* stack B */
-  glPopMatrix(); /* stack A */
-
-}
-
-void RenderSupportPolygon(const pym_physics_thread_context_t *const phyCon) {
-  int i;
-  const int chInputLen = phyCon->pymCfg->renChInputLen;
-  const int chOutputLen = phyCon->pymCfg->renChOutputLen;
-  if (!(chInputLen+1 >= chOutputLen)) {
-    printf("chInputLen = %d, chOutputLen = %d\n", chInputLen, chOutputLen);
-    assert(chInputLen+1 >= chOutputLen);
-  }
-  if (chOutputLen) {
-    glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT); /* PAIR A */
-    glPushMatrix(); /* PAIR B */
-
-    const double margin = 0.05;
-    /* size on normalized coordinates */
-    const double sizeW = 0.5, sizeH = 0.5;
-    double graphW, graphH;
-    double graphGapX, graphGapY;
-    if (width > height) {
-      graphGapX = margin*height/width;
-      graphGapY = margin;
-      graphW = sizeW*height/width;
-      graphH = sizeH;
-    } else {
-      graphGapX = margin;
-      graphGapY = margin*width/height;
-      graphW = sizeW;
-      graphH = sizeH*width/height;
-    }
-    const int slotid = 0;
-    const double graphX = -1 + graphW/2 + graphGapX + slotid*(graphW/2 + graphGapX);
-    const double graphY = 1 - graphGapY - graphH/2;
-    glTranslated(graphX, graphY, 0);
-    glScaled(graphW, graphH, 1);
-
-    double chSumX = 0, chSumY = 0;
-    FOR_0(i, chOutputLen) {
-      chSumX += phyCon->pymCfg->renChOutput[i].x;
-      chSumY += phyCon->pymCfg->renChOutput[i].y;
-    }
-    const double chMeanX = chSumX / chOutputLen;
-    const double chMeanY = chSumY / chOutputLen;
-    glColor3f(0,1,0);
-    glBegin(GL_LINE_LOOP);
-    FOR_0(i, chOutputLen) {
-      glVertex3d(phyCon->pymCfg->renChOutput[i].x - chMeanX,
-		 phyCon->pymCfg->renChOutput[i].y - chMeanY,
-		 0);
-    }
-    glEnd();
-
-    assert(chInputLen > 0);
-    glPointSize(3);
-    glColor3f(0,1,0);
-    glBegin(GL_POINTS);
-    FOR_0(i, chInputLen) {
-      glVertex3d(phyCon->pymCfg->renChInput[i].x - chMeanX,
-		 phyCon->pymCfg->renChInput[i].y - chMeanY,
-		 0);
-    }
-    glEnd();
-
-    glPointSize(5);
-    glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
-		 phyCon->pymCfg->bipCom[1] - chMeanY,
-		 0);
-    glScaled(0.015,0.015,0.015);
-    glBegin(GL_LINE_LOOP);
-    glVertex3d(1,1,0);glVertex3d(-1,1,0);glVertex3d(-1,-1,0);glVertex3d(1,-1,0);
-    glEnd();
-
-    glPopMatrix(); /* PAIR B */
-    glPopAttrib(); /* PAIR A */
-  }
-}
-
-void RenderFootContactStatus(const pym_physics_thread_context_t *const phyCon) {
-  static const double pointBoxSize[3] = { 3e-2, 3e-2, 3e-2 };
-  static const double pzero[3] = {0,};
-  static const double q1[3] = {1,1,1};
-
-  int i, j, k;
-  FOR_0(i, phyCon->pymCfg->nBody) {
-    /* Access data from renderer-accessable area of phyCon */
-    const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-    const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
-    const double pos[4][2] = { { -0.7, 0 }, {0.7, 0}, {-0.7, 0.2}, {0.7, 0.2} };
-    FOR_0(k, 4) {
-      if (strcmp(rbn->name, footParts[k]) == 0) {
-	const double *const boxSize = rbn->boxSize;
-
-	glPushMatrix(); /* Stack A */
-	glTranslated(pos[k][0], pos[k][1], 0);
-	glRotatef(30, 1, 0, 0);
-	glRotatef(45, 0, 1, 0);
-	glColor3f(1,1,1);
-	DrawBox_pq(pzero, 0, boxSize, 1);
-	glColor3f(1,0,0);
-	FOR_0(j, phyCon->sd[i].nContacts_2) {
-	  const int ci = phyCon->sd[i].contactIndices_2[j];
-	  glColor3f(1,0,0);
-	  DrawBox_pq(rbn->corners[ ci ], 0, pointBoxSize, 0);
-	  //glColor3f(1, 0, 0);
-	  //DrawBox_pq(rbn->corners[ 6 ], 0, pointBoxSize, 0);
-
-	}
-	glPopMatrix(); /* Stack A */
-	break;
-      }
-    }
-  }
-}
-
-void RenderFootContactFixPosition(const pym_physics_thread_context_t *const phyCon) {
-  static const double pointBoxSize[3] = { 5e-2, 5e-2, 5e-2 };
-  static const double pzero[3] = {0,};
-  static const double q1[3] = {1,1,1};
-
-  int i, j, k;
-  FOR_0(i, phyCon->pymCfg->nBody) {
-    /* Access data from renderer-accessable area of phyCon */
-    const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-    const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
-    FOR_0(k, 4) {
-      if (strcmp(rbn->name, footParts[k]) == 0) {
-	glColor3f(1, 0, 0);
-	FOR_0(j, phyCon->sd[i].nContacts_2) {
-	  DrawBox_pq(phyCon->sd[i].contactsFix_2[j], 0, pointBoxSize, 1);
-	}
-      }
-    }
-  }
-}
-
-void Render(pym_physics_thread_context_t *phyCon, GLuint *m_vaoID)
-{
-  static GLint iFrames = 0;
-  static GLfloat fps = 0.0f, DeltaT;
-  static char cBuffer[64];
-  struct timeval tv;
-
-  // Update timer
-  gettimeofday(&tv, NULL);
-  etime = (double)tv.tv_sec + tv.tv_usec / 1000000.0f;
-
-  dt = etime - t0;
-  t0 = etime;
-
-  //First step: Render from the light POV to a FBO, store depth values only
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, fboId); //Rendering offscreen
-
-  //Using the 'FIXED PIPELINE' to render to the depthbuffer
-  glUseProgramObjectARB(0);
-
-  // In the case we render the shadowmap to a higher resolution, the viewport must be modified accordingly.
-  /*
-    glViewport(0, 0,
-    RENDER_WIDTH * SHADOW_MAP_RATIO,
-    RENDER_HEIGHT* SHADOW_MAP_RATIO);
-  */
-  glViewport(0, 0, 1024, 1024);
-
-  // Clear previous frame values
-  glClear(GL_DEPTH_BUFFER_BIT);
-
-  //Disable color rendering, we only want to write to the Z-Buffer
-  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-
-  // Directional light (e.g. sunlight)
-  float sunPos[4] = { 0.2, -0.8, 0, 0 };
-  float p_light[] = {sunPos[0]*10, sunPos[1]*10, sunPos[2]*10};
-  float l_light[] = {0, 0, 0};
-
-  setupMatrices(p_light[0], p_light[1], p_light[2],
-		l_light[0], l_light[1], l_light[2]);
-
-  // Culling switching, rendering only backface, this is done to avoid self-shadowing
-  glCullFace(GL_FRONT);
-  DrawAll(phyCon, 1, m_vaoID);
-
-  //Save modelview/projection matrice into texture7, also add a biais
-  setTextureMatrix();
-
-  // Now rendering from the camera POV, using the FBO to generate shadows
-  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
-
-  glViewport(0, 0, RENDER_WIDTH, RENDER_HEIGHT);
-
-  //Enabling color write (previously disabled for light POV z-buffer rendering)
-  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-
-  // Clear previous frame values
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  /**** Using the shadow shader ****/
-  glUseProgramObjectARB(shadowShaderId);
-
-  glUniform1iARB(shadowMapUniform, 7);
-  glActiveTextureARB(GL_TEXTURE7);
-  glBindTexture(GL_TEXTURE_2D, depthTextureId);
-
-  float p_camera[] = {8*zoomRatio, -8*zoomRatio, 0};
-  float l_camera[] = {0, 0, 0};
-  float pRotX[3], pRotXY[3];
-  XRotPoint(pRotX, p_camera, xRot/180.0f*M_PI);
-  YRotPoint(pRotXY, pRotX, yRot/180.0f*M_PI);
-  setupMatrices(pRotXY[0],   pRotXY[1],   pRotXY[2],
-		l_camera[0], l_camera[1], l_camera[2]);
-
-  glCullFace(GL_BACK);
-  DrawAll(phyCon, 0, m_vaoID);
-
-  RenderFootContactFixPosition(phyCon);
-
-
-  /* Head-up Display
-   * --------------------------
-   * Turn off shader and use fixed pipeline.
-   * Also make sure we have identities
-   * on projection and modelview matrix.
-   */
-  glUseProgramObjectARB(0);
-  glDisable(GL_LIGHTING);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glDisable(GL_DEPTH_TEST);
-
-  RenderGraph(phyCon->comZGraph, 0);
-  RenderGraph(phyCon->comDevGraph, 1);
-  pthread_mutex_lock(&main_mutex); {
-    RenderSupportPolygon(phyCon);
-    RenderFootContactStatus(phyCon);
-  } pthread_mutex_unlock(&main_mutex);
-
-  glEnable(GL_DEPTH_TEST);
-
-
-  iFrames++;
-  DeltaT = (GLfloat)(etime-t2);
-  if( DeltaT >= Timed )
-    {
-      fps = (GLfloat)(iFrames)/DeltaT;
-      fps_count++;
-      fps_mean = ((fps_count - 1.0f) * fps_mean + fps ) / fps_count;
-
-      iFrames = 0;
-      t2 = etime;
-    }
-  if (print_fps)
-    {
-      sprintf(cBuffer, "FPS: %.1f", fps);
-
-      glColor3f(1.0f, 1.0f, 1.0f);
-      glPushAttrib(GL_LIST_BIT);
-      glListBase(fps_font - ' ');
-      glWindowPos2i(0,2);
-      glCallLists(strlen(cBuffer), GL_UNSIGNED_BYTE, cBuffer);
-      glPopAttrib();
-    }
-  lCam = 0.0f;
-  vCam = 0.0f;
-  dCam = 0.0f;
-}
-
-/*
- * Retrieve attitude angles
- *
- */
-inline void retrieve_angles(void)
-{
-
-  roll=atan2f(-model->bone[sel_bone-1].mvr[6],
-	      model->bone[sel_bone-1].mvr[10]);
-  yaw =atan2f(-model->bone[sel_bone-1].mvr[1],
-	      model->bone[sel_bone-1].mvr[0]);
-  pitch=asinf(model->bone[sel_bone-1].mvr[2]);
-}
-
-/*
- * Process the selection triggered by left mouse click while in selection mode
- *
- */
-
-void processSelection(int x, int y)
-{
-  GLuint i;
-  GLint vp[4];
-  GLubyte pix[3];
-  GLfloat ps;
-
-  glDisable(GL_DITHER);
-  glDisable(GL_TEXTURE_2D);
-  glGetFloatv(GL_POINT_SIZE, &ps);
-  glPointSize(20.0f);
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glPushMatrix();
-
-  setup_camera((float)dt);
-  glRotatef(xRot, 1.0f, 0.0f, 0.0f);
-  glRotatef(yRot, 0.0f, 1.0f, 0.0f);
-
-  //Draw joints to backbuffer
-  glBegin(GL_POINTS);
-  for(i=0; i<model->num_bones; i++)
-    {
-      glColor3ub(i+1, 0, 0);
-      glVertex3fv(&model->bone[i].mva[12]);
-    }
-  glEnd();
-
-  glPopMatrix();
-  glEnable(GL_TEXTURE_2D);
-  glEnable(GL_DITHER);
-  glPointSize(ps);
-
-  glGetIntegerv(GL_VIEWPORT, vp);
-
-  glReadPixels(x,vp[3]-y,1,1,
-	       GL_RGB,GL_UNSIGNED_BYTE,(void *)pix);
-
-  sel_bone=pix[0];
-  if(sel_bone)
-    retrieve_angles();
-}
-
-/*
- * handle_mouse_button
- */
-
-void handle_mouse_button( int button, int state, int x, int y )
-{
   if (state)
     return;
-  switch (button)
-    {
-    case 1:
-      if(selection)
-	processSelection(x,y);
-      else
-        {
-	  old_x = x;
-	  old_y = y;
-        }
-      break;
-    case 2:
-      old_x = x;
-      old_y = y;
-      break;
-    case 3:
-      old_x = x;
-      old_y = y;
-      break;
-    case 4: /* rotate wheel upward */
-      zoomRatio += 0.1;
-      break;
-    case 5: /* rotate wheel downward */
-      zoomRatio -= 0.1;
-      break;
-    }
+  switch (button) {
+  case 1:
+    break;
+  case 2:
+    old_x = x;
+    old_y = y;
+    break;
+  case 3:
+    old_x = x;
+    old_y = y;
+    break;
+  case 4: /* rotate wheel upward */
+    zoomRatio += 0.1;
+    break;
+  case 5: /* rotate wheel downward */
+    zoomRatio -= 0.1;
+    break;
+  }
 }
 
 /*
  * handle_mouse_motion
  */
-
-void handle_mouse_motion(int button, int x, int y )
-{
-  switch (button)
-    {
-    case 1:
-      if(!selection)
-        {
-	  if(sel_bone)
-            {
-	      yaw   -= (y-old_y) * mouse_scale_a;
-	      pitch += (x-old_x) * mouse_scale_a;
-            }
-	  else
-            {
-	      eCam += (y-old_y) * mouse_scale_t;
-	      aCam += (x-old_x) * mouse_scale_t;
-            }
-	  old_y = y;
-	  old_x = x;
-        }
-      break;
-    case 2:
-      if(sel_bone)
-        {
-	  roll  -= (y-old_y) * mouse_scale_a;
-	  pitch += (x-old_x) * mouse_scale_a;
-        }
-      old_y = y;
-      old_x = x;
-      break;
-    case 3:
-      xRot -=(y-old_y) * mouse_scale_r;
-      yRot -=(x-old_x) * mouse_scale_r;
-      old_y = y;
-      old_x = x;
-    }
+void handle_mouse_motion(int button, int x, int y ) {
+  if (g_mouse_dragging) {
+    const int dx = x - g_mouse_pressed_pos_x;
+    const int dy = y - g_mouse_pressed_pos_y;
+    cam_dphi = -(double)dx/200;
+    cam_dtheta = -(double)dy/200;
+  }
+  switch (button) {
+  case 1:
+    break;
+  case 2:
+    break;
+  case 3:
+    break;
+  }
 }
 
 void simplerender(GLuint *m_vaoID) {
@@ -1276,7 +438,7 @@ void simplerender(GLuint *m_vaoID) {
   //    glBindVertexArray(0);
 
 
-  GLenum err;
+  //GLenum err;
 
   glColor3f(1,0,0);
 
@@ -1296,16 +458,22 @@ void simplerender(GLuint *m_vaoID) {
   //
   //
   //    glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
-
-
-
-
 }
 
 void EventLoop(Display* display, Window window, Atom wmDeleteMessage,
-               pym_physics_thread_context_t *phyCon, GLuint *m_vaoID ) {
+               PYMRS rs) {
   int exertExternalForce = 0;
   while (1) {
+    static GLint iFrames = 0;
+    static GLfloat fps = 0.0f, DeltaT;
+    static char cBuffer[64];
+    struct timeval tv;
+    // Update timer
+    gettimeofday(&tv, NULL);
+    etime = (double)tv.tv_sec + tv.tv_usec / 1000000.0f;
+    dt = etime - t0;
+    t0 = etime;
+
     while (XPending(display) > 0) {
       XEvent event;
       int code;
@@ -1445,97 +613,54 @@ void EventLoop(Display* display, Window window, Atom wmDeleteMessage,
 	break;
       }
     }
-    Render(phyCon, m_vaoID);
+    pym_render_config_t rc;
+    rc.cam_r	 = cam_r;
+    rc.cam_phi	 = cam_phi + cam_dphi;
+    rc.cam_theta = cam_theta + cam_dtheta;
+    rc.vpx	 = 0;
+    rc.vpy	 = 0;
+    rc.vpw	 = RENDER_WIDTH;
+    rc.vph	 = RENDER_HEIGHT;
 
+    pthread_mutex_lock(&main_mutex); {
+      PymRsRender(rs, &rc);
+    } pthread_mutex_unlock(&main_mutex);
     //simplerender(m_vaoID);
 
+    iFrames++;
+    DeltaT = (GLfloat)(etime-t2);
+    if( DeltaT >= Timed ) {
+      fps = (GLfloat)(iFrames)/DeltaT;
+      fps_count++;
+      fps_mean = ((fps_count - 1.0f) * fps_mean + fps ) / fps_count;
+      iFrames = 0;
+      t2 = etime;
+    }
+    if (print_fps) {
+      sprintf(cBuffer, "FPS: %.1f", fps);
+      glColor3f(1.0f, 1.0f, 1.0f);
+      glPushAttrib(GL_LIST_BIT);
+      glListBase(fps_font - ' ');
+      glWindowPos2i(0,2);
+      glCallLists(strlen(cBuffer), GL_UNSIGNED_BYTE, cBuffer);
+      glPopAttrib();
+    }
+    lCam = 0.0f;
+    vCam = 0.0f;
+    dCam = 0.0f;
+  
     glXSwapBuffers( display, window );
     if (exertExternalForce) {
       pthread_mutex_lock(&main_mutex);
       {
-	phyCon->trunkExternalForce[0] = 5000;
-	phyCon->trunkExternalForce[1] = 4000;
+	rs->phyCon.trunkExternalForce[0] = 5000;
+	rs->phyCon.trunkExternalForce[1] = 4000;
       }
       pthread_mutex_unlock(&main_mutex);
       exertExternalForce = 0;
     }
   }
 }
-
-int CreateGridPatternGroundTexture(void) {
-  GLuint gndTex;
-  glGenTextures(1, &gndTex);
-  assert(gndTex > 0);
-  glBindTexture( GL_TEXTURE_2D, gndTex );
-  glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		   GL_LINEAR_MIPMAP_LINEAR );
-  // when texture area is large, bilinear filter the original
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-
-  // the texture wraps over at the edges (repeat)
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-  glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-
-  // allocate buffer
-  int gndTexSize = 512;
-  unsigned char *data = malloc( gndTexSize * gndTexSize * 3 );
-  memset(data, 0, gndTexSize * gndTexSize * 3);
-
-  unsigned char xAxisColor[] = { 120, 200, 220 };
-  unsigned char yAxisColor[] = { 120, 200, 220 };
-  int i, j;
-  FOR_0(i, gndTexSize) {
-    for (j=-1; j<=1; ++j) {
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 0] = xAxisColor[0];
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 1] = xAxisColor[1];
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 2] = xAxisColor[2];
-
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 0] = yAxisColor[0];
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 1] = yAxisColor[1];
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 2] = yAxisColor[2];
-    }
-
-    for (j=-gndTexSize/2; j<gndTexSize/2-1; j+=32) {
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 0] = xAxisColor[0];
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 1] = xAxisColor[1];
-      data[3*(gndTexSize*(gndTexSize/2+j) + i) + 2] = xAxisColor[2];
-
-      //            data[3*(gndTexSize*(gndTexSize/2+j+1) + i) + 0] = xAxisColor[0];
-      //            data[3*(gndTexSize*(gndTexSize/2+j+1) + i) + 1] = xAxisColor[1];
-      //            data[3*(gndTexSize*(gndTexSize/2+j+1) + i) + 2] = xAxisColor[2];
-    }
-
-    for (j=-gndTexSize/2; j<gndTexSize/2-1; j+=32) {
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 0] = yAxisColor[0];
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 1] = yAxisColor[1];
-      data[3*(gndTexSize*i + (gndTexSize/2+j)) + 2] = yAxisColor[2];
-
-      //            data[3*(gndTexSize*i + (gndTexSize/2+j+1)) + 0] = yAxisColor[0];
-      //            data[3*(gndTexSize*i + (gndTexSize/2+j+1)) + 1] = yAxisColor[1];
-      //            data[3*(gndTexSize*i + (gndTexSize/2+j+1)) + 2] = yAxisColor[2];
-    }
-  }
-
-
-  // open and read texture data
-
-  // build our texture mipmaps
-  gluBuild2DMipmaps( GL_TEXTURE_2D, 3, gndTexSize, gndTexSize,
-		     GL_RGB, GL_UNSIGNED_BYTE, data );
-  glBindTexture(GL_TEXTURE_2D, 0);
-  free(data);
-  return gndTex;
-}
-
-void PrintCmdLineHelp(int argc, char *argv[]) {
-  printf("  Usage:\n");
-  printf("    %s config_file <simulation conf file> [Options]\n", strrchr(argv[0], '/') + 1);
-  printf("\n");
-  printf("  Options:\n");
-  printf("\n");
-}
-
 
 /* A simple function that will read a file into an allocated char pointer buffer */
 char* filetobuf(char *file)
@@ -1654,209 +779,9 @@ void preparedata(void)
 
 }
 
-GLuint InitTriangleVao() {
-  // First simple object
-  float vert[9]; // vertex array
-  float col[9];  // color array
-
-  vert[0] =-0.3; vert[1] = 0.5; vert[2] =-1.0;
-  vert[3] =-0.8; vert[4] =-0.5; vert[5] =-1.0;
-  vert[6] = 0.2; vert[7] =-0.5; vert[8]= -1.0;
-
-  col[0] = 1.0; col[1] = 1.0; col[2] = 1.0;
-  col[3] = 0.0; col[4] = 1.0; col[5] = 0.0;
-  col[6] = 0.0; col[7] = 0.0; col[8] = 1.0;
-
-  GLuint vaoId = 0;
-  glGenVertexArrays(1, &vaoId);
-
-  // First VAO setup
-  glBindVertexArray(vaoId);
-
-  // 2 VBOs (Vertex Buffer Object) for the first VAO
-  GLuint vboId[2] = {0,};
-  glGenBuffers(2, vboId);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
-  glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vert, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
-  glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), col, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
-
-  return vaoId;
-}
-
-GLuint InitQuadVao() {
-  float vert2[9]; // vertex array
-
-  vert2[0] =-0.2; vert2[1] = 0.5; vert2[2] =-1.0;
-  vert2[3] = 0.3; vert2[4] =-0.5; vert2[5] =-1.0;
-  vert2[6] = 0.8; vert2[7] = 0.5; vert2[8]= -1.0;
-
-  GLuint vaoId = 0;
-  glGenVertexArrays(1, &vaoId);
-  glBindVertexArray(vaoId);
-
-  // 1 VBO for the second VAO
-  GLuint vboId = 0;
-  glGenBuffers(1, &vboId);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId);
-  glBufferData(GL_ARRAY_BUFFER, 9*sizeof(GLfloat), vert2, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-
-  return vaoId;
-}
-
-GLuint InitQuad2Vao() {
-  GLuint vaoId = 0;
-  glGenVertexArrays(1, &vaoId);
-  glBindVertexArray(vaoId);
-
-  // Third simple object
-  GLfloat vert3[] = {  15.3f,  5.3f,  0.0f,
-		       -5.3f,  5.3f,  0.0f,
-		       -5.3f, -5.3f,  0.0f,
-                       5.3f, -5.3f,  0.0f  };
-  // 1 VBO for the third VAO
-  GLuint vboId = 0;
-  glGenBuffers(1, &vboId);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId);
-  glBufferData(GL_ARRAY_BUFFER, 12*sizeof(GLfloat), vert3, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  return vaoId;
-}
-
-GLuint InitUnitBoxVao() {
-  GLuint vaoId = 0;
-  glGenVertexArrays(1, &vaoId);
-  glBindVertexArray(vaoId);
-
-  GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
-    0.5f,  0.5f,  0.5f,
-    0.5f, -0.5f,  0.5f,
-    0.5f, -0.5f, -0.5f,
-    0.5f,  0.5f, -0.5f,
-    /* Face which has -X normals (x=-0.5) */
-    -0.5f,  0.5f,  0.5f,
-    -0.5f,  0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f,  0.5f,
-    /* Face which has +Y normals (y= 0.5) */
-    0.5f, 0.5f,  0.5f,
-    0.5f, 0.5f, -0.5f,
-    -0.5f, 0.5f, -0.5f,
-    -0.5f, 0.5f,  0.5f,
-    /* Face which has -Y normals (y=-0.5) */
-    0.5f, -0.5f, 0.5f,
-    -0.5f, -0.5f, 0.5f,
-    -0.5f, -0.5f,-0.5f,
-    0.5f, -0.5f,-0.5f,
-    /* Face which has +Z normals (z= 0.5) */
-    0.5f,  0.5f, 0.5f,
-    -0.5f,  0.5f, 0.5f,
-    -0.5f, -0.5f, 0.5f,
-    0.5f, -0.5f, 0.5f,
-    /* Face which has -Z normals (z=-0.5) */
-    0.5f,  0.5f, -0.5f,
-    0.5f, -0.5f, -0.5f,
-    -0.5f, -0.5f, -0.5f,
-    -0.5f,  0.5f, -0.5f  };
-  GLfloat nor4[] = {
-    1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-    -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-    0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-    0,0,1,0,0,1,0,0,1,0,0,1,
-    0,0,-1,0,0,-1,0,0,-1,0,0,-1,
-  };
-  GLfloat col4[3*4*6];
-  int i;
-  FOR_0(i, 3*4*6) {
-    if (i%3 == 0)
-      col4[i] = 1;
-  }
-
-  GLuint vboId[3] = {0,};
-  glGenBuffers(3, vboId);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), vert4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), col4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(2);
-  return vaoId;
-}
-
-GLuint InitCircleVao() {
-  GLuint vaoId = 0;
-  glGenVertexArrays(1, &vaoId);
-  glBindVertexArray(vaoId);
-
-  /* center point(1) + vertices around circumference(n_face) + final point(1) */
-  const int n_vert_circle = (1+n_face+1)*3;
-  GLfloat vert5[n_vert_circle];
-  memset(vert5, 0, sizeof(vert5));
-  float circle_radius = 10;
-  int i;
-  for (i=0;i<=n_face;++i) { /* note that '<=' for final point */
-    const double rad = 2*M_PI/n_face*i;
-    vert5[3 + i*3 + 0] = circle_radius*cos(rad);
-    vert5[3 + i*3 + 1] = circle_radius*sin(rad);
-  }
-
-  // 1 VBO for the third VAO
-  GLuint vboId = 0;
-  glGenBuffers(1, &vboId);
-
-  glBindBuffer(GL_ARRAY_BUFFER, vboId);
-  glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat),
-	       vert5, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
-  return vaoId;
-}
-
-void InitVertexArrayObjects(GLuint *m_vaoID)
-{
-  m_vaoID[0] = InitTriangleVao();
-  m_vaoID[1] = InitQuadVao();
-  m_vaoID[2] = InitQuad2Vao();
-  m_vaoID[3] = InitUnitBoxVao();
-  m_vaoID[4] = InitCircleVao();
-  glBindVertexArray(0);
-}
-
-static void pym_init_debug_msg_streams(FILE *dmstreams[]) {
-  int dmflags[PDMTE_COUNT] = {0,};
-  //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
-  int i;
-  FILE *devnull = fopen("/dev/null", "w");
-  FOR_0(i, PDMTE_COUNT) {
-    if (dmflags[i]) dmstreams[i] = stdout;
-    else dmstreams[i] = devnull;
-  }
-}
-
-int main(int argc, char *argv[]) {
+static int pym_init_xwindow(Display **_display, Window *_window,
+			    Atom *_wmDeleteMessage,
+			    XFontStruct **_font) {
   int             ret=0;
   char*           display_name;
   Display*        display;
@@ -1879,172 +804,38 @@ int main(int argc, char *argv[]) {
     GLX_DEPTH_SIZE, 24,
     0
   };
-  printf("Pymuscle realtime simulator      -- 2010 Geoyeob Kim\n");
-  if ( argc < 2 || (argc == 2 && strcmp(argv[1], "--help") == 0) ) {
-    PrintCmdLineHelp(argc, argv);
-    return 1;
-  }
-  /* GLUT is used for using glutSolidCube() or glutWireCube()
-   * routines only. */
-  //glutInit(&argc, argv);
-
-  /* Parse command line options */
-  pym_cmdline_options_t cmdopt;
-  ret = PymParseCmdlineOptions(&cmdopt, argc, argv);
-  if (ret < 0) {
-    printf("Failed.\n");
-    return -2;
-  }
-
-  /* Initialize debug message flags (dmflags) */
-  FILE *dmstreams[PDMTE_COUNT];
-  pym_init_debug_msg_streams(dmstreams);
-
-  /* Construct pymCfg structure */
-  pym_config_t pymCfg;
-  ret = PymConstructConfig(cmdopt.simconf, &pymCfg,
-			   dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
-  if (ret < 0) {
-    printf("Failed.\n");
-    return -1;
-  }
-  PymConvertRotParamInPlace(&pymCfg, RP_EXP);
-
-  int exportFps = 0;
-  int nBlenderFrame = 0;
-  int nBlenderBody = 0;
-  int corresMapIndex[pymCfg.nBody];
-  int i;
-  FOR_0(i, pymCfg.nBody)
-    corresMapIndex[i] = -1;
-  double *trajData = 0;
-  if (cmdopt.trajconf) {
-    char corresMap[MAX_CORRESMAP][2][128];
-    int nCorresMap = 0;
-    int parseRet = PymParseTrajectoryFile(corresMap,
-					  &nCorresMap,
-					  &trajData,
-					  &nBlenderBody,
-					  &nBlenderFrame,
-					  &exportFps,
-					  cmdopt.trajconf,
-					  cmdopt.trajdata);
-    assert(parseRet == 0);
-    assert(nCorresMap > 0);
-    /* The simulation time step defined in simconf and
-     * the frame time (reciprocal of FPS) in trajdata
-     * should have the same value. If mismatch happens
-     * we ignore simulation time step in simconf.
-     */
-    if (fabs(1.0/exportFps - pymCfg.h) > 1e-6)
-      {
-	printf("Warning - simulation time step defined in simconf and\n");
-	printf("          trajectory data do not match.\n");
-	printf("            simconf  : %3d FPS (%lf sec per frame)\n",
-	       (int)ceil(1.0/pymCfg.h), pymCfg.h);
-	printf("            trajconf : %3d FPS (%lf sec per frame)\n",
-	       exportFps, 1.0/exportFps);
-	printf("          simconf's value will be ignored.\n");
-	pymCfg.h = 1.0/exportFps;
-      }
-
-    PymCorresMapIndexFromCorresMap(corresMapIndex,
-				   nCorresMap,
-				   corresMap,
-				   nBlenderBody,
-				   &pymCfg,
-				   dmstreams);
-    char fnJaCfg[128] = {0};
-    PymInferJointAnchorConfFileName(fnJaCfg, cmdopt.trajconf);
-    const size_t num_joint_anchor =
-      sizeof(pymCfg.pymJa)/sizeof(pym_joint_anchor_t);
-    pymCfg.na = PymParseJointAnchorFile(pymCfg.pymJa, num_joint_anchor,
-					fnJaCfg);
-    assert(pymCfg.na >= 0);
-    printf("Info - # of joint anchors parsed = %d\n", pymCfg.na);
-    /*
-     * We need at least three frames of trajectory data
-     * to follow one or more reference trajectory frames since
-     * the first (frame 0) is used as previous step and
-     * the second (frame 1) is used as current step and
-     * the third (frame 2) is used as the reference trajectory for next step
-     *
-     * We need (nBlenderFrame-2) simulation iteration to complete
-     * following the trajectory entirely. So the following assertion helds:
-     */
-    assert(nBlenderFrame >= 3);
-    PymSetInitialStateUsingTrajectory(&pymCfg, nBlenderBody,
-				      corresMapIndex, trajData);
-    PymInitJointAnchors(&pymCfg, dmstreams);
-    PymConstructAnchoredJointList(&pymCfg);
-  } else {
-    /* No trajconf provided. */
-    PymSetPymCfgChiRefToCurrentState(&pymCfg);
-  }
-
-  if (cmdopt.frame >= 0) {
-    /* Last frame set by user */
-    pymCfg.nSimFrame = cmdopt.frame;
-  } else if (cmdopt.trajconf) {
-    pymCfg.nSimFrame = nBlenderFrame - 2;
-  } else {
-    pymCfg.nSimFrame = 100;
-  }
-
-  FILE *outputFile = fopen(cmdopt.output, "w");
-  if (!outputFile) {
-    printf("Error: Opening the output file %s failed.\n", cmdopt.output);
-    return -3;
-  }
-  fprintf(outputFile, "%d %d\n", pymCfg.nSimFrame, pymCfg.nBody);
-
-  /* Let's start the simulation happily :) */
-  printf("Starting the tracking simulation...\n");
-
-  /******************************/
-  /******************************/
 
   /* Open the connection to the X server */
   display_name = getenv("DISPLAY");
   display = XOpenDisplay(display_name);
-
   if (!display) {
     printf("Error: couldn't open display %s\n", display_name);
     return 1;
   }
-
   /* Find the proper visual */
   scrnum = DefaultScreen( display );
   root = RootWindow( display, scrnum );
-
   x = 0;
   y = 0;
-
   //    width = DisplayWidth( display, scrnum )*3/4;
   //    height = DisplayHeight( display, scrnum )*3/4;
   width = 700;
   height = 700;
-
   vinfo = glXChooseVisual(display, scrnum, attributes);
-
   if (!vinfo) {
     printf("Error: couldn't get an RGB, Double-buffered visual\n");
     return 1;
   }
-
   /* Create the window */
   winattrs.event_mask =	ExposureMask | StructureNotifyMask |
     ButtonPressMask | ButtonReleaseMask |
     PointerMotionMask | KeyPressMask | KeyReleaseMask;
-
   winattrs.background_pixel = BlackPixel(display, scrnum);
   winattrs.border_pixel = BlackPixel(display, scrnum);
   winattrs.bit_gravity = StaticGravity;
   winattrs.colormap = XCreateColormap( display, root, vinfo->visual, AllocNone);
-
   winmask = CWBitGravity | CWBackPixel | CWBorderPixel |
     CWColormap | CWEventMask;
-
   window = XCreateWindow( display, root,
 			  x, y, width, height, 0, vinfo->depth, InputOutput,
 			  vinfo->visual, winmask, &winattrs );
@@ -2052,20 +843,17 @@ int main(int argc, char *argv[]) {
     printf("Error: couldn't create window\n");
     return 1;
   }
-
-  const char *fullAppName = "Pymuscle Realtime Simulator";
-  const char *taskbarAppName = "Pymuscle";
+  const char *const fullAppName = "Pymuscle Realtime Simulator";
+  const char *const taskbarAppName = "Pymuscle";
   XChangeProperty(display, window, XA_WM_NAME, XA_STRING, 8, 0,
-		  fullAppName, strlen(fullAppName));
+		  (unsigned char*)fullAppName, strlen(fullAppName));
   XChangeProperty(display, window, XA_WM_ICON_NAME, XA_STRING, 8, 0,
-		  taskbarAppName, strlen(taskbarAppName));
+		  (unsigned char*)taskbarAppName, strlen(taskbarAppName));
 
   Atom wmDeleteMessage = XInternAtom(display, "WM_DELETE_WINDOW", False);
   XSetWMProtocols(display, window, &wmDeleteMessage, 1);
-
   /* Create the picking cursor */
   picking = XCreateFontCursor(display, 34);
-
   /* Create the OpenGL context */
   context = glXCreateContext(display, vinfo, 0, True);
 
@@ -2073,19 +861,15 @@ int main(int argc, char *argv[]) {
     printf("Error: glXCreateContext failed\n");
     return 1;
   }
-
   XFree(vinfo);
-
   XMapWindow( display, window );
   glXMakeCurrent( display, window, context );
-
   GLenum err = glewInit();
   if (GLEW_OK != err) {
     printf("Error: glewInit() failed\n");
     return 1;
   }
   assert(glXChooseFBConfig);
-
   static int visual_attribs[] = {
     GLX_X_RENDERABLE    , True,
     GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
@@ -2114,7 +898,7 @@ int main(int argc, char *argv[]) {
   // Pick the FB config/visual with the most samples per pixel
   printf( "Getting XVisualInfos\n" );
   int best_fbc = -1, worst_fbc = -1, best_num_samp = -1, worst_num_samp = 999;
-
+  int i = 0;
   for ( i = 0; i < fbcount; i++ ) {
     XVisualInfo *vi = glXGetVisualFromFBConfig( display, fbc[i] );
     if ( vi ) {
@@ -2133,113 +917,69 @@ int main(int argc, char *argv[]) {
     }
     XFree( vi );
   }
-
-  GLXFBConfig bestFbc = fbc[ best_fbc ];
-
   // Be sure to free the FBConfig list allocated by glXChooseFBConfig()
   XFree( fbc );
-
-
-  int attribs[] = {
-    GLX_CONTEXT_MAJOR_VERSION_ARB, 3,
-    GLX_CONTEXT_MINOR_VERSION_ARB, 2,
-    GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
-    0
-  };
-  GLXContext ctx = 0;
+  //  GLXContext ctx = 0;
   /* Setup fonts */
   font = XLoadQueryFont(display,
 			"-*-courier-bold-r-normal--14-*-*-*-*-*-*-*");
   fps_font = glGenLists(96);
   glXUseXFont(font->fid, ' ', 96, fps_font);
+  *_display = display;
+  *_window = window;
+  *_wmDeleteMessage = wmDeleteMessage;
+  *_font = font;
+  return ret;
+}
 
-  gndTex = CreateGridPatternGroundTexture();
-  InitVertexArrayObjects(m_vaoID);
-  //preparedata();
-  generateShadowFBO();
-  loadShadowShader();
-
-  /* Initialize the physics thread context */
-  pym_physics_thread_context_t phyCon = {
-    .pymCfg             = &pymCfg,
-    .nBlenderBody       = nBlenderBody,
-    .cmdopt             = &cmdopt,
-    .corresMapIndex     = corresMapIndex,
-    .outputFile         = outputFile,
-    .dmstreams          = dmstreams,
-    .totalPureOptTime   = 0,
-    .trajData           = trajData,
-    .stop               = 0,
-    .trunkExternalForce = {0,},
-    .renBody            = calloc(pymCfg.nBody,  sizeof(pym_rb_t)),
-    .renFiber           = calloc(pymCfg.nFiber, sizeof(pym_mf_t)),
-    .comZGraph          = PrsGraphNew("COM Z"),
-    .comDevGraph        = PrsGraphNew("COM Z Dev."),
-    .sd                 = malloc(sizeof(pym_rb_statedep_t) * pymCfg.nBody),
-  };
-  /* comZGraph */
-  PrsGraphSetMaxY(phyCon.comZGraph, 4.0);
-  PRSGRAPHDATA simComGd = PrsGraphDataNew(pymCfg.nSimFrame);
-  PrsGraphDataSetLineColor(simComGd, 0, 1, 0);
-  PrsGraphAttach(phyCon.comZGraph, PCG_SIM_COMZ, simComGd);
-  PRSGRAPHDATA refComGd = PrsGraphDataNew(pymCfg.nSimFrame);
-  PrsGraphDataSetLineColor(refComGd, 1, 0, 0);
-  PrsGraphAttach(phyCon.comZGraph, PCG_REF_COMZ, refComGd);
-  /* comDevGraph */
-  PrsGraphSetMaxY(phyCon.comDevGraph, 0.1);
-  PRSGRAPHDATA comDevGd = PrsGraphDataNew(pymCfg.nSimFrame);
-  PrsGraphDataSetLineColor(comDevGd, 0, 1, 0);
-  PrsGraphAttach(phyCon.comDevGraph, PCG_COMDEV, comDevGd);
-  PrsGraphAddGuideY(phyCon.comDevGraph, 0.01, 1, 1, 0);
-
-  pthread_t thPhysics;
-  pthread_attr_t attr;
-
-  /* Initialize mutex and condition variable objects */
-  pthread_mutex_init(&count_mutex, NULL);
-  pthread_mutex_init(&main_mutex, NULL);
-  pthread_cond_init (&count_threshold_cv, NULL);
-  pthread_cond_init (&physics_thread_finished, NULL);
-
-  /* For portability, explicitly create threads in a joinable state */
-  pthread_attr_init(&attr);
-  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  pthread_create(&thPhysics, &attr, PhysicsThreadMain, (void *)&phyCon);
-  //pthread_create(&threads[1], &attr, inc_count, (void *)t2);
-  //pthread_create(&threads[2], &attr, inc_count, (void *)t3);
-
-  glClearColor(0.1, 0.1, 0.2, 0);
-
+static void pym_init_opengl() {
+  glClearColor(0.8, 0.8, 0.8, 0);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   glEnable(GL_TEXTURE_2D);
   //glCullFace(GL_BACK);
-  //glEnable(GL_NORMALIZE);
+  glEnable(GL_NORMALIZE);
   glEnable(GL_ALPHA_TEST);
   glShadeModel(GL_FLAT);
-
   glHint(GL_PERSPECTIVE_CORRECTION_HINT,GL_NICEST);
-
-  const float cutoff = 180;
-  glLightfv(GL_LIGHT0, GL_SPOT_CUTOFF, &cutoff);
-  const float noAmbient[] = {0.5f, 0.5f, 0.5f, 1.0f};
-  const float whiteDiffuse[] = {1.0f, 1.0f, 1.0f, 1.0f};
-  glLightfv(GL_LIGHT0, GL_AMBIENT, noAmbient);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, whiteDiffuse);
-
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(45, 1.0, 0.1, 100.0);
+}
 
-  /*************
-   * Event loop
-   *************/
-  EventLoop( display, window, wmDeleteMessage, &phyCon, m_vaoID );
+int main(int argc, char *argv[]) {
+  Display*      display;
+  Window        window;
+  Atom          wmDeleteMessage;
+  XFontStruct*	font;
+  PYMRS rs = PymRsInitContext(argc, argv);
+  if (!rs) {
+    /* Realtime simulator context acquisition failed. */
+    return -1;
+  }
+  pym_init_xwindow(&display, &window, &wmDeleteMessage, &font);
+  pym_init_opengl();
+  PymRsInitRender();
+  pthread_t thPhysics;
+  pthread_attr_t attr;
+  /* Initialize mutex and condition variable objects */
+  pthread_mutex_init(&count_mutex, NULL);
+  pthread_mutex_init(&main_mutex, NULL);
+  pthread_cond_init (&count_threshold_cv, NULL);
+  pthread_cond_init (&physics_thread_finished, NULL);
+  /* For portability, explicitly create threads in a joinable state */
+  pthread_attr_init(&attr);
+  pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+  pthread_create(&thPhysics, &attr, PhysicsThreadMain, (void *)rs);
+  //pthread_create(&threads[1], &attr, inc_count, (void *)t2);
+  //pthread_create(&threads[2], &attr, inc_count, (void *)t3);
+
+  EventLoop( display, window, wmDeleteMessage, rs );
 
   pthread_mutex_lock(&main_mutex);
-  phyCon.stop = 1;
+  rs->phyCon.stop = 1;
   pthread_mutex_unlock(&main_mutex);
 
   /* Wait for the physics thread to complete */
@@ -2254,54 +994,19 @@ int main(int argc, char *argv[]) {
   /* Print average fps */
   printf("\nAverage FPS: %.1f\n", fps_mean);
 
-  fclose(outputFile);
-  printf("Output written to %s\n", cmdopt.output);
-
-  PymDestoryConfig(&pymCfg);
-
-  PrsGraphDelete(phyCon.comZGraph);
-  PrsGraphDelete(phyCon.comDevGraph);
-
-  free(trajData);
-  free(phyCon.sd);
-
-  if (cmdopt.freeTrajStrings) {
-    free(cmdopt.trajconf);
-    free(cmdopt.trajdata);
-  }
-  if (cmdopt.freeOutputStrings) {
-    free(cmdopt.output);
-  }
-
-  printf("Accumulated pure MOSEK optimizer time : %lf s\n",
-	 phyCon.totalPureOptTime);
-
-  //    /* Setup Rendering Context */
-  //    if (setup(argv[1])) {
-  //       printf("Setup failed, exiting ...\n");
-  //       ret=1;
-  //    }
-  //    else {
-  //       /* Event loop */
-  //      event_loop( display, window );
-  //      /* Print average fps */
-  //      printf("\nAverage FPS: %.1f\n", fps_mean);
-  //    }
-
   /* Clean up */
+  PymRsDestroyContext(rs);
+  rs = 0;
+  PymRsDestroyRender();
   if(model)
     deleteModel(model);
   if(texture_id)
     glDeleteTextures(1, &texture_id);
-
-  glDeleteTextures(1, &gndTex);
-
   XFreeFont(display, font);
   //glXDestroyContext( display, context );
-  glXDestroyContext( display, ctx );
+  //  glXDestroyContext( display, ctx );
   XDestroyWindow( display, window );
   XCloseDisplay( display );
-
 
   /* pthread Clean up and exit */
   pthread_attr_destroy(&attr);
@@ -2310,5 +1015,5 @@ int main(int argc, char *argv[]) {
   pthread_cond_destroy(&count_threshold_cv);
   pthread_cond_destroy(&physics_thread_finished);
   //pthread_exit(ret);
-  return ret;
+  return 0;
 }

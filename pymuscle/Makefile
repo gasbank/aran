@@ -4,7 +4,7 @@ CFLAGS=-c -fPIC -Wall -Wfatal-errors -g \
 -I/home/johnu/src/include \
 -I/home/johnu/src/CHOLMOD/Include \
 -I/home/johnu/mosek/6/tools/platform/linux64x86/h
-CXXFLAGS=-c -fPIC -Wall
+CXXFLAGS=-c -fPIC -Wall -g
 LD=gcc
 LDFLAGS=        -L. -L/home/johnu/src/lib \
 	-L/home/johnu/mosek/6/tools/platform/linux64x86/bin \
@@ -23,7 +23,7 @@ LIBS=-lm
 
 OBJS_libpymparser=PymCmdLineParser.o TrajParser.o
 
-OBJS_libpymoptimizer_c=Biped.o \
+OBJS_libpymoptimizer_c=PymBiped.o \
 ExpBodyMoEq_real.o \
 MathUtil.o \
 MuscleFiber.o \
@@ -40,7 +40,7 @@ dRdv_real.o \
 fibDiffW.o
 OBJS_libpymoptimizer_cxx=ConvexHull.o ConvexHullCapi.o
 
-OBJS_libpymrs_c= camera.o image.o model.o quaternion.o
+OBJS_libpymrs_c= image.o model.o quaternion.o pymrscore.o pymrsrender.o pymrsphysics.o
 OBJS_libpymrs_cxx=src/PrsGraph.o src/PrsGraphCapi.o src/PrsGraphData.o
 
 OBJS_rsnat_c=PymRs.o PhysicsThreadMain.o
@@ -48,7 +48,6 @@ OBJS_rsnat_cxx=
 
 OBJS_rsfltk_c=
 OBJS_rsfltk_cxx=rsfltk.o
-
 
 all: $(TARGETS)
 
@@ -92,17 +91,6 @@ $(WORKING)/libpymoptimizerd.so $(WORKING)/libpymrsd.so
 	`fltk-config --ldflags --cxxflags --use-gl` -o rsfltkd
 	mv rsfltkd $(WORKING)
 
-.depend: depend
-
-depend: $(OBJS_libpymparser) $(OBJS_libpymoptimizer_c) \
-$(OBJS_libpymoptimizer_cxx) $(OBJS_libpymrs_c) \
-$(OBJS_libpymrs_cxx) $(OBJS_rsnat_c) \
-$(OBJS_rsnat_cxx) $(OBJS_rsfltk_c) \
-$(OBJS_rsfltk_cxx)
-	rm -f ./.depend
-	$(CC) $(CFLAGS) -MM $^>> ./.depend
-
-include .depend
 
 clean:
 	-rm `find . -name "*.o"`
