@@ -3,6 +3,7 @@ CONFIG += dll \
     precompile_header
 DEPENDPATH += .
 include(../PathInc.pro)
+DEFINES += USE_DEVIL_AS_IMAGELIB
 win32 { 
     DEFINES += WIN32 \
         _USRDLL \

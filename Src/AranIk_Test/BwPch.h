@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BWPCH_H__
+#define __BWPCH_H__
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -19,7 +20,8 @@
 #else
 	#include <tr1/memory>
 #endif
-
+#include <GL/glew.h>
+//#include <GL/glxew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include "glext.h"
@@ -232,3 +234,40 @@
 #include <FL/gl.h>
 #include <FL/math.h>
 #include <FL/fl_draw.H>
+
+// Pym Realtime Simulator (pymrs) module
+
+#include <cholmod.h>
+#include <umfpack.h>
+#include <mosek.h>
+#include <libconfig.h>
+
+#include "include/PrsGraphCapi.h"
+
+#include "PymStruct.h"
+#include "PymBiped.h"
+#include "RigidBody.h"
+#include "MuscleFiber.h"
+#include "ConvexHullCapi.h"
+#include "PymuscleConfig.h"
+#include "StateDependents.h"
+#include "Config.h"
+#include "DebugPrintDef.h"
+#include "Optimize.h"
+#include "PymJointAnchor.h"
+#include "PymDebugMessageFlags.h"
+#include "TrajParser.h"
+#include "PhysicsThreadMain.h"
+#include "PymCmdLineParser.h"
+#include "MathUtil.h"
+
+#include "model.h"
+#include "common.h"
+#include "image.h"
+#include "quaternion.h"
+
+#include "pymrscore.h"
+#include "pymrsrender.h"
+#include "pymrsphysics.h"
+
+#endif // #ifndef __BWPCH_H__

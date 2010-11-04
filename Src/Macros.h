@@ -5,7 +5,8 @@
 // Should have dependency on d3dx9.h but NOT have on any 3ds Max related headers
 // since Aran game engine itself must not rely on 3ds Max.
 //
-#pragma once
+#ifndef __ARAN_MACROS_H__
+#define __ARAN_MACROS_H__
 
 #ifndef V
 #define V(x)           { hr = (x); if( FAILED(hr) ) { DXTrace( __FILE__, (DWORD)__LINE__, hr, L#x, true ); } }
@@ -39,12 +40,14 @@
 #endif
 
 #ifndef EP_SAFE_RELEASE
+#define EP_SAFE_RELEASE
 #define EP_SAFE_release(p)      { if (p) { (p)->release(); SAFE_DELETE(p); } }
 #define EP_SAFE_Release(p)      { if (p) { (p)->Release(); SAFE_DELETE(p); } }
-#endif
+#endif // #ifndef EP_SAFE_RELEASE
 
-template<typename T> void
-EpSafeReleaseAll( T& obj )
+#ifndef EP_SAVE_RELEASE_ALL
+#define EP_SAVE_RELEASE_ALL
+template<typename T> void EpSafeReleaseAll( T& obj )
 {
 	typename T::iterator it = obj.begin();
 	for ( ; it != obj.end(); ++it )
@@ -53,7 +56,7 @@ EpSafeReleaseAll( T& obj )
 	}
 	obj.clear();
 }
-
+#endif // #ifndef EP_SAVE_RELEASE_ALL
 
 #ifndef V_RETURN
 #define V_RETURN(x)    { hr = (x); if( FAILED(hr) ) { return hr; } }
@@ -92,15 +95,22 @@ EpSafeReleaseAll( T& obj )
 #endif
 
 // Throws
+#ifndef ARN_THROW_REMOVE_FUNCTION_ERROR
 #define ARN_THROW_REMOVE_FUNCTION_ERROR \
 	{ throw std::runtime_error("This function should not be called because it was removed by the design issue!"); }
+#endif
+#ifndef ARN_THROW_NOT_IMPLEMENTED_ERROR
 #define ARN_THROW_NOT_IMPLEMENTED_ERROR \
 	{ throw std::runtime_error("Not implemented!"); }
+#endif
+#ifndef ARN_THROW_UNEXPECTED_CASE_ERROR
 #define ARN_THROW_UNEXPECTED_CASE_ERROR \
 	{ throw std::runtime_error("Unexpected error!"); }
+#endif
+#ifndef ARN_THROW_SHOULD_NOT_BE_USED_ERROR
 #define ARN_THROW_SHOULD_NOT_BE_USED_ERROR \
 	{ throw std::runtime_error("This code should not be used!"); }
-
+#endif
 
 //
 // DLL export macro for Aran (ARAN Core Package)
@@ -230,6 +240,11 @@ EpSafeReleaseAll( T& obj )
  * HRESULT == int
  * BOOL    == int
  */
+#ifndef WIN32
+    typedef unsigned int DWORD;
+    typedef int BOOL;
+    typedef int HRESULT;
+#endif
 //#ifndef DWORD
 //#define DWORD unsigned int
 //#endif
@@ -251,3 +266,5 @@ EpSafeReleaseAll( T& obj )
 	class type; \
         typedef std::tr1::shared_ptr < type > type##Ptr; \
         typedef std::tr1::shared_ptr < const type > type##ConstPtr;
+
+#endif // #ifndef __ARAN_MACROS_H__

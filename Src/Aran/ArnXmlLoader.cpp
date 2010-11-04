@@ -424,8 +424,17 @@ ArnSceneGraph::createFrom(const char* xmlFile)
 	// 찾아서 원래 값으로 찾아 바꾸기를 한다.
 	// 현재는 임시로 구현되어 있는 상태.
 	std::string xmlFileStr = xmlFile;
+    std::string working;
+    if (getenv("WORKING")) {
+        working = getenv("WORKING");
+        std::cout << "Working directory set from the environment variable WORKING.\n";
+    } else {
+        char *workingCstr = getcwd(0, 0);
+        working = workingCstr;
+        std::cout << "Working directory set from the function getcwd().\n";
+        free(workingCstr);
+    }
 	const std::string mp("{ModelPath}");
-	const std::string working(getenv("WORKING"));
 	const std::string modelPath(working + "/models/");
 	if (xmlFileStr.find(mp) != -1)
 		xmlFileStr.replace(xmlFileStr.find(mp), mp.length(), modelPath);

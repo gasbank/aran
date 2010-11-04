@@ -39,8 +39,10 @@ INCLUDEPATH += $${DIRECTX_PATH}/Include
 LIBS += opengl32.lib glu32.lib winmm.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib user32.lib
 }
 
-LIBPATH += "$${WORKING_ROOT}"
-LIBPATH += "$${TINYXML_ROOT}"
+unix {
+LIBS += -L"$${WORKING_ROOT}"
+LIBS += -L"$${TINYXML_ROOT}"
+}
 
 CONFIG(debug, debug|release) {
     #error(Building debug.)
