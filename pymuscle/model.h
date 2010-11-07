@@ -21,10 +21,6 @@
 #include <malloc.h>
 #include <GL/gl.h>
 
-#include "vector.h"
-#include "quaternion.h"
-#include "common.h"
-
 //Globals
 
 #define MV_SIZE 16

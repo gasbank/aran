@@ -69,7 +69,7 @@
     #define SANITY_MATRIX(m, r, c) {\
         int i,j; for (i=0;i<r;++i) {\
         for(j=0; j<c; ++j) {\
-            if (isinf(m[i][j]) || isnan(m[i][j])) {\
+            if (std::isinf(m[i][j]) || std::isnan(m[i][j])) {\
                 __PRINT_FLH;\
                 printf(" ??? NAN or INFINITE ??? ...: ");\
                 __PRINT_MATRIX(m, r, c);\
