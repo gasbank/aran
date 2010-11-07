@@ -1,8 +1,8 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(pym)
 SET(CMAKE_OSX_ARCHITECTURES i386)
-SET(PYM_3RDPARTIES_ROOT f:/devel3/src/)
-SET(MOSEK_ROOT "C:/Program Files (x86)/Mosek/")
+SET(PYM_3RDPARTIES_ROOT c:/devel/src/)
+SET(MOSEK_ROOT "C:/Program Files/Mosek/")
 SET(BOOST_ROOT C:/boost_1_44_0)
 
 # ---------- Setup output Directories -------------------------
