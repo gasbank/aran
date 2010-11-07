@@ -41,9 +41,9 @@ struct _pym_rb_statedep_t {
     double          Va [MAX_JOINTANCHORS][4];  /* for joint anchors */
 };
 
-int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
+PYMCORE_API int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
                            FILE *dmstreams[],
                            const pym_config_t *pymCfg, cholmod_common *cc);
-void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_common *cc);
+PYMCORE_API void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_common *cc);
 
 #endif

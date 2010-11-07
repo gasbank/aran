@@ -1,5 +1,5 @@
-#include <boost/circular_buffer.hpp>
-#include "../include/PrsGraphData.h"
+#include "PymRsPch.h"
+#include "PrsGraphData.h"
 
 PrsGraphData::PrsGraphData(int capacity)
 : m_data(capacity)

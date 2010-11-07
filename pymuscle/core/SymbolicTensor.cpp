@@ -1,4 +1,4 @@
-#include "PymPch.h"
+#include "PymCorePch.h"
 
 void SymbolicTensor(double I[4],
                     const double sx,

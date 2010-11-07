@@ -1,6 +1,7 @@
 /*
  * TrajParser.c : Trajectory parser
  */
+#include "PymParserPch.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,8 +11,8 @@
 #include "Config.h"
 #include "PymDebugMessageFlags.h"
 #include "TrajParser.h"
-//#include "PymJointAnchor.h"
-//#include "ConvexHullCapi.h"
+#include "PymJointAnchor.h"
+#include "ConvexHullCapi.h"
 #include "PymConfig.h"
 #include "PymRbPod.h"
 

@@ -12,8 +12,11 @@ PymBiped.cpp
 PymuscleConfig.cpp 
 StateDependents.cpp 
 dRdv_real.cpp 
+SymbolicTensor.cpp 
+ExpBodyMoEq_real.cpp 
 )
 SET(PYMCORE_HEADERS
+../PymPch.h
 PymCorePch.h
 MathUtil.h 
 MuscleFiber.h 
@@ -26,15 +29,23 @@ PymBiped.h
 PymuscleConfig.h 
 StateDependents.h 
 dRdv_real.h 
+SymbolicTensor.h
+ExpBodyMoEq_real.h
 )
-SET(CMAKE_OSX_ARCHITECTURES i386)
-INCLUDE_DIRECTORIES(C:/devel/src/include C:/devel/src/CHOLMOD/Include "C:/Program Files/Mosek/6/tools/platform/win32x86/h" C:/devel/libconfig-1.3.2)
-INCLUDE_DIRECTORIES(C:/devel/src/libconfig-1.3.2)
-INCLUDE_DIRECTORIES(C:/devel/src/glew-1.5.7/include)
-INCLUDE_DIRECTORIES(C:/boost_1_44_0)
-INCLUDE_DIRECTORIES(..)
-LINK_DIRECTORIES(C:/devel/src/lib "C:/Program Files/Mosek/6/tools/platform/win32x86/bin")
-LINK_DIRECTORIES(C:/devel/src/libconfig-1.3.2/Debug)
-LINK_DIRECTORIES(C:/devel/src/glew-1.5.7/lib)
-#ADD_EXECUTABLE(KGServer ${KGSERVER_SOURCES})
-ADD_LIBRARY(pymcore SHARED ${PYMCORE_SOURCES})
+INCLUDE_DIRECTORIES(
+..
+${BOOST_ROOT}
+${PYM_3RDPARTIES_ROOT}include
+${PYM_3RDPARTIES_ROOT}CHOLMOD/Include
+${PYM_3RDPARTIES_ROOT}libconfig-1.3.2
+${PYM_3RDPARTIES_ROOT}glew-1.5.7/include
+${MOSEK_ROOT}6/tools/platform/win32x86/h
+)
+LINK_DIRECTORIES(
+${PYM_3RDPARTIES_ROOT}lib
+${PYM_3RDPARTIES_ROOT}libconfig-1.3.2/Debug
+${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
+${MOSEK_ROOT}6/tools/platform/win32x86/bin
+)
+ADD_LIBRARY(pymcore SHARED ${PYMCORE_SOURCES} ${PYMCORE_HEADERS})
+TARGET_LINK_LIBRARIES(pymcore cholmod libconfig)

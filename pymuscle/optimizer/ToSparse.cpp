@@ -8,7 +8,7 @@
  * Make a dense matrix to a sparse form
  *
  */
-#include "PymPch.h"
+#include "PymOptimizerPch.h"
 #include "ToSparse.h"
 #include "DebugPrintDef.h"
 cholmod_sparse *ToSparseAndTranspose(int row, int col, double **mat /*[row][col]*/, cholmod_common *c)

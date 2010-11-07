@@ -13,6 +13,6 @@ struct _pym_biped_eqconst_t {
     int *Aici; /* dynamic array of size (1+nb) */
 };
 
-void PymDestroyBipedEqconst(pym_biped_eqconst_t *bipEq, cholmod_common *cc);
+PYMCORE_API void PymDestroyBipedEqconst(pym_biped_eqconst_t *bipEq, cholmod_common *cc);
 
 #endif

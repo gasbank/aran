@@ -130,7 +130,7 @@ template<typename T> void EpSafeReleaseAll( T& obj )
 	#define ARAN_API			ARAN_API_IMPORT
 	#define ARAN_API_EXTERN		extern
 #endif
-version()
+
 //
 // DLL Export macro for AranMath (ARAN Math Package)
 //

@@ -3,22 +3,6 @@
 
 #define MAX_CORRESMAP (50)
 
-#if defined(_USRDLL) && defined(PYMPARSER_EXPORTS)
-#define PYMPARSER_API			PYMPARSER_API_EXPORT
-#define PYMPARSER_API_EXTERN
-#else
-#define PYMPARSER_API			PYMPARSER_API_IMPORT
-#define PYMPARSER_API_EXTERN		extern
-#endif
-
-#ifdef WIN32
-#define PYMPARSER_API_EXPORT __declspec(dllexport)
-#define PYMPARSER_API_IMPORT __declspec(dllimport)
-#else
-#define PYMPARSER_API_EXPORT
-#define PYMPARSER_API_IMPORT
-#endif
-
 typedef struct aaa_pym_traj_t {
   int exportFps;
   int nBlenderFrame;
@@ -29,11 +13,11 @@ typedef struct aaa_pym_traj_t {
   double *trajData;
 } pym_traj_t;
 
-int PymParseTrajectoryFile(pym_traj_t *pymTraj,
+PYMPARSER_API int PymParseTrajectoryFile(pym_traj_t *pymTraj,
                            const char *fnRbCfg,
                            const char *fnTraj);
 
-int PymCorresMapIndexFromCorresMap(pym_traj_t *pymTraj,
+PYMPARSER_API int PymCorresMapIndexFromCorresMap(pym_traj_t *pymTraj,
                                    pym_config_t *pymCfg,
                                    FILE *dmstreams[PDMTE_COUNT]);
 

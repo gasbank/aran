@@ -13,6 +13,6 @@ struct _pym_cmdline_options_t {
     int freeOutputStrings;
 };
 
-int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]);
+PYMPARSER_API int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]);
 
 #endif

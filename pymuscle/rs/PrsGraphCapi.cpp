@@ -1,10 +1,7 @@
-#include <map>
-#include <vector>
-#include <boost/circular_buffer.hpp>
-
-#include "../include/PrsGraphCapi.h"
-#include "../include/PrsGraphData.h"
-#include "../include/PrsGraph.h"
+#include "PymRsPch.h"
+#include "PrsGraphCapi.h"
+#include "PrsGraphData.h"
+#include "PrsGraph.h"
 
 // PrsGraphData
 

@@ -1,23 +1,6 @@
-#ifndef WIN32
-#include <GL/glew.h>
-#include <GL/glxew.h>
-#include <sys/time.h>
-#include <pthread.h>
-#else
-#include <windows.h>
-#include <GL/glew.h>
-#include <GL/wglew.h>
-#include <GL/gl.h>
-#endif
-#include <map>
-#include <vector>
-#include <string>
-#include <boost/foreach.hpp>
-#include <boost/circular_buffer.hpp>
-#define foreach         BOOST_FOREACH
-#define reverse_foreach BOOST_REVERSE_FOREACH
-#include "../include/PrsGraphData.h"
-#include "../include/PrsGraph.h"
+#include "PymRsPch.h"
+#include "PrsGraphData.h"
+#include "PrsGraph.h"
 
 PrsGraph::PrsGraph(const char *title)
 : m_axisWidth(1.0)

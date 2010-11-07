@@ -3,7 +3,7 @@
  * 2010 Geoyeob Kim
  * As a part of the thesis implementation
  */
-#include "PymPch.h"
+#include "PymOptimizerPch.h"
 #include "PymStruct.h"
 #include "Config.h"
 #include "PymBiped.h"

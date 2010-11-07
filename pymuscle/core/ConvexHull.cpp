@@ -8,7 +8,7 @@
 // Assume that a class is already given for the object:
 //    Point with coordinates {float x, y;}
 //===================================================================
-
+#include "PymCorePch.h"
 #include "ConvexHull.h"
 
 namespace ConvexHull

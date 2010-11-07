@@ -7,7 +7,7 @@
  *
  * Rotation is parameterized by an exponential map technique
  */
-#include "PymPch.h"
+#include "PymCorePch.h"
 #include "Config.h"
 
 #define p1  p [0]

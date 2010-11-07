@@ -1,21 +1,6 @@
-#ifndef WIN32
-#include <sys/time.h>
-#include <pthread.h>
-#else
-#include <windows.h>
-#endif
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <cholmod.h>
-#include <umfpack.h>
-#include <mosek.h>
-#include <libconfig.h>
+#include "PymRsPch.h"
 
-#include "include/PrsGraphCapi.h"
-
+#include "PrsGraphCapi.h"
 #include "PymStruct.h"
 #include "PymBiped.h"
 #include "RigidBody.h"

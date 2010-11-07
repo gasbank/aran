@@ -9,6 +9,8 @@ PrsGraphCapi.cpp
 PrsGraphData.cpp
 )
 SET(PYMRS_HEADERS
+../PymPch.h
+PymRsPch.h
 pymrscore.h
 pymrsrender.h
 pymrsphysics.h
@@ -16,16 +18,24 @@ PrsGraph.h
 PrsGraphCapi.h
 PrsGraphData.h
 )
-SET(CMAKE_OSX_ARCHITECTURES i386)
-INCLUDE_DIRECTORIES(C:/devel/src/include C:/devel/src/CHOLMOD/Include "C:/Program Files/Mosek/6/tools/platform/win32x86/h" C:/devel/libconfig-1.3.2)
-INCLUDE_DIRECTORIES(C:/devel/src/libconfig-1.3.2)
-INCLUDE_DIRECTORIES(C:/devel/src/glew-1.5.7/include)
-INCLUDE_DIRECTORIES(C:/boost_1_44_0)
-LINK_DIRECTORIES(C:/devel/src/lib "C:/Program Files/Mosek/6/tools/platform/win32x86/bin")
-LINK_DIRECTORIES(C:/devel/src/libconfig-1.3.2/Debug)
-LINK_DIRECTORIES(C:/devel/src/glew-1.5.7/lib)
-#ADD_EXECUTABLE(KGServer ${KGSERVER_SOURCES})
-
-ADD_LIBRARY(pymrs SHARED ${PYMRS_SOURCES})
+INCLUDE_DIRECTORIES(
+..
+../core
+../parser
+../optimizer
+${BOOST_ROOT}
+${PYM_3RDPARTIES_ROOT}include
+${PYM_3RDPARTIES_ROOT}CHOLMOD/Include
+${PYM_3RDPARTIES_ROOT}libconfig-1.3.2
+${PYM_3RDPARTIES_ROOT}glew-1.5.7/include
+${MOSEK_ROOT}6/tools/platform/win32x86/h
+)
+LINK_DIRECTORIES(
+${PYM_3RDPARTIES_ROOT}lib
+${PYM_3RDPARTIES_ROOT}libconfig-1.3.2/Debug
+${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
+${MOSEK_ROOT}6/tools/platform/win32x86/bin
+)
+ADD_LIBRARY(pymrs SHARED ${PYMRS_SOURCES} ${PYMRS_HEADERS})
 TARGET_LINK_LIBRARIES(pymrs pymoptimizer opengl32 glu32 glew32)
-ADD_DEPENDENCIES(pymrs pymoptimizer pymparser)
+ADD_DEPENDENCIES(pymrs pymoptimizer)

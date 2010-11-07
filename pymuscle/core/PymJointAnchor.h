@@ -24,11 +24,10 @@ struct _pym_anchored_joint_t {
     double maxDisloc;
 };
 
-void ExtractAnchorIdentifier(char *iden, const char *aName);
-
-int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg);
-int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char *fnJaCfg);
-int PymConstructAnchoredJointList(pym_config_t *pymCfg);
-int PymInitJointAnchors(pym_config_t *pymCfg, FILE *dmstreams[]);
+PYMCORE_API void ExtractAnchorIdentifier(char *iden, const char *aName);
+PYMCORE_API int PymConstructAnchoredJointList(pym_config_t *pymCfg);
+PYMCORE_API int PymInitJointAnchors(pym_config_t *pymCfg, FILE *dmstreams[]);
+PYMCORE_API int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char *fnJaCfg);
+PYMCORE_API int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg);
 
 #endif /* PYMJOINTANCHOR_H_ */

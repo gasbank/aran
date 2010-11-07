@@ -42,11 +42,11 @@ typedef struct _pym_opt_t {
 } pym_opt_t;
 
 
-void PymInitializeMosek(MSKenv_t *env);
-void PymCleanupMosek(MSKenv_t *env);
+PYMOPTIMIZER_API void PymInitializeMosek(MSKenv_t *env);
+PYMOPTIMIZER_API void PymCleanupMosek(MSKenv_t *env);
 
 void PymOptimize(pym_opt_t *pymOpt);
-int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
+PYMOPTIMIZER_API int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
                          pym_config_t *pymCfg, pym_rb_statedep_t *sd,
                          FILE *dmstreams[],
                          const char **_solstaStr, double *_cost,

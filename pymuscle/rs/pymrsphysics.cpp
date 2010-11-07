@@ -3,8 +3,8 @@
  *                      for realtime simulator
  * 2010 Geoyeob Kim
  */
-#include "PymPch.h"
-#include "include/PrsGraphCapi.h"
+#include "PymRsPch.h"
+#include "PrsGraphCapi.h"
 #include "PymStruct.h"
 #include "ConvexHullCapi.h"
 #include "MathUtil.h"
