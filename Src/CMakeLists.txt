@@ -36,6 +36,7 @@ ADD_SUBDIRECTORY(AranDx9)
 ADD_SUBDIRECTORY(AranGl)
 # --- example projects ---
 ADD_SUBDIRECTORY(AranIk_Test)
+ADD_SUBDIRECTORY(pymuscle)
 #ADD_SUBDIRECTORY(TexturedQuadViewer)
 #ADD_SUBDIRECTORY(SceneViewer)
 
