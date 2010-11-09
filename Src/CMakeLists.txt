@@ -1,12 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(aran)
 SET(CMAKE_OSX_ARCHITECTURES i386)
-SET(CODEBASE "f:/devel3/")
-SET(WORKING "f:/devel3/Working/")
+# Get CODEBASE and WORKING from envvar.
+SET(CODEBASE $ENV{CODEBASE})
+SET(WORKING $ENV{WORKING})
 SET(CMAKE_OSX_ARCHITECTURES i386)
-SET(PYM_3RDPARTIES_ROOT f:/devel3/src/)
-SET(MOSEK_ROOT "C:/Program Files (x86)/Mosek/")
-SET(BOOST_ROOT d:/boost_1_44_0)
+SET(PYM_3RDPARTIES_ROOT "${CODEBASE}src/")
+SET(MOSEK_ROOT "C:/Program Files/Mosek/")
+SET(BOOST_ROOT "c:/boost_1_44_0/")
 SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WORKING} )
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKING} )
 SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${WORKING} )
@@ -17,8 +18,15 @@ if (MSVC)
    set_source_files_properties(${src} PROPERTIES COMPILE_FLAGS "/Yc\"${hdr}\"")
 endif(MSVC)
 ENDMACRO(ADD_MSVC_PRECOMPILED_HEADER)
+INCLUDE_DIRECTORIES(
+${CODEBASE}tinyxml_2_5_3
+${CODEBASE}opende/include
+${CODEBASE}cml-1_0_1
+${CODEBASE}zlib-1.2.3
+${CODEBASE}DevIL-SDK-x86-1.7.8/include
+)
 LINK_DIRECTORIES(
-D:/boost_1_44_0/stage/lib
+${BOOST_ROOT}stage/lib
 ${CODEBASE}sdl-1.2.14/lib
 ${CODEBASE}SDL_gfx-2.0.22/Debug
 ${CODEBASE}SDL-1.2.13/VisualC/SDL/Debug
@@ -30,8 +38,8 @@ ${CODEBASE}Working/lib
 ${CODEBASE}freetype-2.3.9/objs/win32/vc2008
 ${CODEBASE}DevIL-SDK-x86-1.7.8/lib
 ${CODEBASE}fltk-1.1.10/lib
-${CODEBASE}arangit/pymuscle/build/bin/Debug
 ${CODEBASE}src/glew-1.5.7/lib
+${CODEBASE}opende/lib/DebugDoubleDLL
 ${PYM_3RDPARTIES_ROOT}lib
 ${PYM_3RDPARTIES_ROOT}libconfig-1.3.2/Debug
 ${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
@@ -54,4 +62,4 @@ ADD_DEPENDENCIES(Aran AranMath)
 ADD_DEPENDENCIES(AranIk AranMath Aran)
 ADD_DEPENDENCIES(AranDx9 AranMath Aran AranPhy AranIk)
 ADD_DEPENDENCIES(AranGl AranMath Aran AranPhy AranIk)
-ADD_DEPENDENCIES(AranIk_Test AranMath Aran AranPhy AranIk pymcore pymoptimizer pymrs pymparser Jarvis)
+ADD_DEPENDENCIES(AranIk_Test AranMath Aran AranPhy AranIk pymcore pymoptimizer pymrs pymparser)

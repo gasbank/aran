@@ -563,7 +563,7 @@ void DrawBox_chi(const double *chi,
   //SetUniforms();
 
   glBindVertexArray(m_vaoID[3]);      // select second VAO
-
+  
   /* // set constant color attribute */
   /* glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); */
   /* // set constant color attribute */
@@ -689,6 +689,7 @@ void DrawAxisOnWorldOrigin() {
 
 void DrawGround(pym_ground_type_t gndType,
 		const GLuint *const m_vaoID) {
+	assert(glBindVertexArray);
   if (gndType == PYM_SQUARE_GROUND)
     glBindVertexArray(m_vaoID[2]);
   else if (gndType == PYM_CIRCLE_GROUND)
@@ -848,8 +849,8 @@ static void pym_draw_all(pym_physics_thread_context_t *phyCon,
   if (!forShadow)
     DrawAxisOnWorldOrigin();
   pym_strict_checK_gl();
-
-  DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
+  if (glBindVertexArray)
+    DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
   pym_strict_checK_gl();
   //pym_draw_square_ground();
   pym_strict_checK_gl();

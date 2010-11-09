@@ -32,7 +32,6 @@ ExpBodyMoEq_real.h
 )
 INCLUDE_DIRECTORIES(
 ..
-../../Jarvis
 ${BOOST_ROOT}
 ${PYM_3RDPARTIES_ROOT}include
 ${PYM_3RDPARTIES_ROOT}CHOLMOD/Include
