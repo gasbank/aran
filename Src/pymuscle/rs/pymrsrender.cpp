@@ -1040,14 +1040,14 @@ static void RenderSupportPolygon
 (const pym_physics_thread_context_t *const phyCon,
  pym_render_config_t *rc) {
   int i;
-  const int chInputLen = phyCon->pymCfg->renChInputLen;
-  const int chOutputLen = phyCon->pymCfg->renChOutputLen;
+  const int chInputLen = phyCon->pymCfg->chInputLen;
+  const int chOutputLen = phyCon->pymCfg->chOutputLen;
   const int width = rc->vpw;
   const int height = rc->vph;
-  if (!(chInputLen+1 >= chOutputLen)) {
-    printf("chInputLen = %d, chOutputLen = %d\n",
+  if (chInputLen+1 < chOutputLen) {
+    printf("ERROR - chInputLen = %d, chOutputLen = %d\n",
 	   chInputLen, chOutputLen);
-    assert(chInputLen+1 >= chOutputLen);
+    abort();
   }
   if (chOutputLen) {
     /* PAIR A */
@@ -1079,17 +1079,16 @@ static void RenderSupportPolygon
 
     double chSumX = 0, chSumY = 0;
     FOR_0(i, chOutputLen) {
-      chSumX += phyCon->pymCfg->renChOutput[i].x;
-      chSumY += phyCon->pymCfg->renChOutput[i].y;
+      chSumX += phyCon->pymCfg->chOutput[i].x;
+      chSumY += phyCon->pymCfg->chOutput[i].y;
     }
     const double chMeanX = chSumX / chOutputLen;
     const double chMeanY = chSumY / chOutputLen;
     glColor3f(0,1,0);
     glBegin(GL_LINE_LOOP);
     FOR_0(i, chOutputLen) {
-      glVertex3d(phyCon->pymCfg->renChOutput[i].x - chMeanX,
-		 phyCon->pymCfg->renChOutput[i].y - chMeanY,
-		 0);
+      glVertex3d(phyCon->pymCfg->chOutput[i].x - chMeanX,
+        phyCon->pymCfg->chOutput[i].y - chMeanY, 0);
     }
     glEnd();
 
@@ -1098,17 +1097,18 @@ static void RenderSupportPolygon
     glColor3f(0,1,0);
     glBegin(GL_POINTS);
     FOR_0(i, chInputLen) {
-      glVertex3d(phyCon->pymCfg->renChInput[i].x - chMeanX,
-		 phyCon->pymCfg->renChInput[i].y - chMeanY,
+      glVertex3d(phyCon->pymCfg->chInput[i].x - chMeanX,
+		 phyCon->pymCfg->chInput[i].y - chMeanY,
 		 0);
     }
     glEnd();
 
     glPointSize(5);
+    glColor3f(1,0,0);
     glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
 		 phyCon->pymCfg->bipCom[1] - chMeanY,
 		 0);
-    glScaled(0.015,0.015,0.015);
+    glScaled(0.015,0.015,1);
     glBegin(GL_LINE_LOOP);
     glVertex3d(1,1,0);
     glVertex3d(-1,1,0);
@@ -1191,7 +1191,7 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
 
   pym_strict_checK_gl();
   RenderSupportPolygon(&rs->phyCon, rc);
-  //RenderFootContactStatus(&rs->phyCon);
+  RenderFootContactStatus(&rs->phyCon);
   pym_strict_checK_gl();
 
   glEnable(GL_DEPTH_TEST);

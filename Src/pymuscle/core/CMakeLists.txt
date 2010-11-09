@@ -6,7 +6,6 @@ MuscleFiber.cpp
 RigidBody.cpp 
 PymJointAnchor.cpp 
 PymPodUtil.cpp 
-ConvexHull.cpp
 ConvexHullCapi.cpp
 PymBiped.cpp 
 PymuscleConfig.cpp 
@@ -23,7 +22,6 @@ MuscleFiber.h
 RigidBody.h 
 PymJointAnchor.h 
 PymPodUtil.h 
-ConvexHull.h
 ConvexHullCapi.h
 PymBiped.h 
 PymuscleConfig.h 
@@ -34,6 +32,7 @@ ExpBodyMoEq_real.h
 )
 INCLUDE_DIRECTORIES(
 ..
+../../Jarvis
 ${BOOST_ROOT}
 ${PYM_3RDPARTIES_ROOT}include
 ${PYM_3RDPARTIES_ROOT}CHOLMOD/Include

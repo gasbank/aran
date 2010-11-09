@@ -17,9 +17,10 @@ if (MSVC)
    set_source_files_properties(${src} PROPERTIES COMPILE_FLAGS "/Yc\"${hdr}\"")
 endif(MSVC)
 ENDMACRO(ADD_MSVC_PRECOMPILED_HEADER)
-
 LINK_DIRECTORIES(
 D:/boost_1_44_0/stage/lib
+${CODEBASE}sdl-1.2.14/lib
+${CODEBASE}SDL_gfx-2.0.22/Debug
 ${CODEBASE}SDL-1.2.13/VisualC/SDL/Debug
 ${CODEBASE}SDL-1.2.13/VisualC/SDLmain/Debug
 ${CODEBASE}DevIL-SDK-x86-1.7.8/lib
@@ -53,4 +54,4 @@ ADD_DEPENDENCIES(Aran AranMath)
 ADD_DEPENDENCIES(AranIk AranMath Aran)
 ADD_DEPENDENCIES(AranDx9 AranMath Aran AranPhy AranIk)
 ADD_DEPENDENCIES(AranGl AranMath Aran AranPhy AranIk)
-ADD_DEPENDENCIES(AranIk_Test AranMath Aran AranPhy AranIk pymcore pymoptimizer pymrs pymparser)
+ADD_DEPENDENCIES(AranIk_Test AranMath Aran AranPhy AranIk pymcore pymoptimizer pymrs pymparser Jarvis)

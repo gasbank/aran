@@ -9,7 +9,6 @@ BwOpenGlWindow.cpp BwOpenGlWindow.h
 BwPch.cpp BwPch.h
 BwPlaybackSlider.cpp BwPlaybackSlider.h
 BwTopWindow.cpp BwTopWindow.h
-ConvexHull.cpp ConvexHull.h
 )
 ADD_DEFINITIONS(
 -DTIXML_USE_STL
@@ -28,6 +27,7 @@ INCLUDE_DIRECTORIES(
 ../pymuscle/optimizer
 ../pymuscle/rs
 ../pymuscle
+../Jarvis
 ${CODEBASE}freetype-2.3.9/include
 ${CODEBASE}opende/include
 ${CODEBASE}fltk-1.1.10

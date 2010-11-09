@@ -1170,7 +1170,7 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
     PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
   }
   pym_count_total_num_cp(pymCfg, sd);
-  //PymConstructSupportPolygon(pymCfg, sd);
+  PymConstructSupportPolygon(pymCfg, sd);
 
   pym_biped_eqconst_t bipEq;
   PymConstructBipedEqConst(&bipEq, sd, pymCfg, cc);

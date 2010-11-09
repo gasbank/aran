@@ -273,9 +273,9 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
   assert(totFiber == 2*nMuscle);
 
   pymCfg->chInputLen      = 0;
-  pymCfg->renChInputLen   = 0;
   pymCfg->chOutputLen     = 0;
-  pymCfg->renChOutputLen  = 0;
+  /*pymCfg->renChInputLen   = 0;
+  pymCfg->renChOutputLen  = 0;*/
 
   pymCfg->prevTotContacts = 0;
   pymCfg->curTotContacts  = 0;

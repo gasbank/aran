@@ -6,10 +6,9 @@
 #include "BwWin32Timer.h"
 #include "BwDrawingOptionsWindow.h"
 #include "BwPlaybackSlider.h"
-#include "ConvexHull.h"
-
 #include "boost/filesystem.hpp"
 #include "boost/lexical_cast.hpp"
+#include "ConvexHullCapi.h"
 namespace fs = boost::filesystem;
 
 #if !HAVE_GL
@@ -410,11 +409,6 @@ LoadSceneList(std::vector<std::string>& sceneList)
   return sceneCount;
 }
 
-bool IsectsSort(const ArnVec3& v1, const ArnVec3& v2)
-{
-  return v1.x > v2.x;
-}
-
 static void
 UpdateScene(BwAppContext& ac, float fElapsedTime)
 {
@@ -565,16 +559,18 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
   }
 
   if (ac.isects.size()) {
-    std::sort(ac.isects.begin(), ac.isects.end(), IsectsSort); // Should be sorted before applying CH algo.
-    std::vector<ConvexHull::Point> isectsCgal(ac.isects.size());
+    //PYMCORE_API int PymConvexHull(Point_C *P, int n, Point_C *H);
+
+    std::vector<Point_C> isectsCgal(ac.isects.size());
     int a = 0;
     foreach (const ArnVec3& contactPos, ac.isects) {
-      isectsCgal[a] = ConvexHull::Point(contactPos.x, contactPos.y);
+      isectsCgal[a].x = contactPos.x;
+      isectsCgal[a].y = contactPos.y;
       ++a;
     }
-    std::vector<ConvexHull::Point> out(isectsCgal.size() + 1);
+    std::vector<Point_C> out(isectsCgal.size() + 1);
     int outEnd;
-    outEnd = ConvexHull::chainHull_2D(&isectsCgal[0], isectsCgal.size(), &out[0]);
+    outEnd = PymConvexHull(&isectsCgal[0], isectsCgal.size(), &out[0]);
 
     for (int i = 0; i < outEnd; ++i) {
       ac.supportPolygon.push_back(ArnVec3(out[i].x, out[i].y, 0));

@@ -30,11 +30,13 @@ struct _pym_config_t {
   int			 chInputLen;
   Point_C		 chOutput[101];
   int			 chOutputLen;
-  /* Convex hull output points (thread-safe) */
-  Point_C		 renChInput[100];
-  int			 renChInputLen;
-  Point_C		 renChOutput[101];
-  int			 renChOutputLen;
+
+  ///* Convex hull output points (thread-safe) */
+  //Point_C		 renChInput[100];
+  //int			 renChInputLen;
+  //Point_C		 renChOutput[101];
+  //int			 renChOutputLen;
+
   /* Total # of contacts through three frames */
   int			 prevTotContacts;
   int			 curTotContacts;

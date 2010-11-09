@@ -526,105 +526,91 @@ RenderScene(const BwAppContext& ac)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	
   // Set modelview and projection matrices here
-  if (ac.viewMode == VM_CAMERA || ac.viewMode == VM_UNKNOWN)
-    {
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      if (ac.activeCam)
-	{
-	  ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
-	  ArnConfigureViewMatrixGl(ac.activeCam);
-	}
-    }
-  else if (ac.viewMode == VM_TOP || ac.viewMode == VM_RIGHT || ac.viewMode == VM_BACK)
-    {
-      static float eye[3], at[3], up[3];
-      if (ac.viewMode == VM_TOP)
-	{
-	  eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
-	  eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
-	  eye[2] = 100.0f;
+  if (ac.viewMode == VM_CAMERA || ac.viewMode == VM_UNKNOWN) {
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    if (ac.activeCam) {
+	    ArnConfigureViewportProjectionMatrixGl(&ac.avd, ac.activeCam);
+	    ArnConfigureViewMatrixGl(ac.activeCam);
+	  }
+  } else if (ac.viewMode == VM_TOP || ac.viewMode == VM_RIGHT || ac.viewMode == VM_BACK) {
+    static float eye[3], at[3], up[3];
+    if (ac.viewMode == VM_TOP) {
+	    eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
+	    eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
+	    eye[2] = 100.0f;
 
-	  at[0] = eye[0];
-	  at[1] = eye[1];
-	  at[2] = 0;
+	    at[0] = eye[0];
+	    at[1] = eye[1];
+	    at[2] = 0;
 			
-	  up[0] = 0;
-	  up[1] = 1.0f;
-	  up[2] = 0;
-	}
-      else if (ac.viewMode == VM_RIGHT)
-	{
-	  eye[0] = 100.0f;
-	  eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
-	  eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
+	    up[0] = 0;
+	    up[1] = 1.0f;
+	    up[2] = 0;
+	  } else if (ac.viewMode == VM_RIGHT) {
+	    eye[0] = 100.0f;
+	    eye[1] = ac.panningCenter[1] + ac.dPanningCenter[1];
+	    eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
 
-	  at[0] = 0;
-	  at[1] = eye[1];
-	  at[2] = eye[2];
+	    at[0] = 0;
+	    at[1] = eye[1];
+	    at[2] = eye[2];
 
-	  up[0] = 0;
-	  up[1] = 0;
-	  up[2] = 1.0f;
-	}
-      else if (ac.viewMode == VM_BACK)
-	{
-	  eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
-	  eye[1] = -100.0f;
-	  eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
+	    up[0] = 0;
+	    up[1] = 0;
+	    up[2] = 1.0f;
+	  } else if (ac.viewMode == VM_BACK) {
+	    eye[0] = ac.panningCenter[0] + ac.dPanningCenter[0];
+	    eye[1] = -100.0f;
+	    eye[2] = ac.panningCenter[2] + ac.dPanningCenter[2];
 
-	  at[0] = eye[0];
-	  at[1] = 0;
-	  at[2] = eye[2];
+	    at[0] = eye[0];
+	    at[1] = 0;
+	    at[2] = eye[2];
 
-	  up[0] = 0;
-	  up[1] = 0;
-	  up[2] = 1.0f;
-	}
+	    up[0] = 0;
+	    up[1] = 0;
+	    up[2] = 1.0f;
+	  }
 
-      glMatrixMode(GL_MODELVIEW);
-      glLoadIdentity();
-      gluLookAt(eye[0], eye[1], eye[2], at[0], at[1], at[2], up[0], up[1], up[2]);
-      glMatrixMode(GL_PROJECTION);
-      glLoadIdentity();
-      const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
-      const float viewDistance = (float)ac.orthoViewDistance;
-      glOrtho(-viewDistance*aspectRatio, viewDistance*aspectRatio, -viewDistance, viewDistance, 0, 10000);
-      glMatrixMode(GL_MODELVIEW);
-    }
-
-
-  if (ac.activeLight)
-    {
-      ArnConfigureLightGl(0, ac.activeLight);
-    }
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(eye[0], eye[1], eye[2], at[0], at[1], at[2], up[0], up[1], up[2]);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
+    const float viewDistance = (float)ac.orthoViewDistance;
+    glOrtho(-viewDistance*aspectRatio, viewDistance*aspectRatio, -viewDistance, viewDistance, 0, 10000);
+    glMatrixMode(GL_MODELVIEW);
+  }
+  
+  if (ac.activeLight) {
+    ArnConfigureLightGl(0, ac.activeLight);
+  }
 
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  if (ac.bDrawGrid)
-    {
-      const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
-      RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
-      RenderGrid(ac, 2.5f, 2, gridColor, 1.0f);
-    }
+  if (ac.bDrawGrid) {
+    const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
+    RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
+    RenderGrid(ac, 2.5f, 2, gridColor, 1.0f);
+  }
 	
   // Render skeletons under control of IK solver
-  foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
-    {
-      glPushMatrix();
-      TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
-      glPopMatrix();
-    }
+  foreach (ArnIkSolver* ikSolver, ac.ikSolvers) {
+    glPushMatrix();
+    TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
+    glPopMatrix();
+  }
 
   // Render the main scene graph
   glPushMatrix();
   {
-    if (ac.sgPtr)
-      {
-	ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
-      }
+    if (ac.sgPtr) {
+	    ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
+    }
   }
   glPopMatrix();
 
@@ -665,62 +651,57 @@ RenderScene(const BwAppContext& ac)
   glPushAttrib(GL_DEPTH_BUFFER_BIT);
   glDisable(GL_DEPTH_TEST);
   {
-    if (ac.trunk)
-      {
-	ArnVec3 netContactForce;
-	const unsigned int contactCount = ac.swPtr->getContactCount();
-	// Calculate the net contact force and render the individual contact force
-	for (unsigned int i = 0; i < contactCount; ++i)
-	  {
-	    ArnVec3 contactPos, contactForce;
-	    ac.swPtr->getContactPosition(i, &contactPos);
-	    ac.swPtr->getContactForce1(i, &contactForce);
-	    netContactForce += contactForce; // Accumulate contact forces
+    if (ac.trunk) {
+	    ArnVec3 netContactForce;
+	    const unsigned int contactCount = ac.swPtr->getContactCount();
+	    // Calculate the net contact force and render the individual contact force
+	    for (unsigned int i = 0; i < contactCount; ++i) {
+	      ArnVec3 contactPos, contactForce;
+	      ac.swPtr->getContactPosition(i, &contactPos);
+	      ac.swPtr->getContactForce1(i, &contactForce);
+	      netContactForce += contactForce; // Accumulate contact forces
 
-	    // Render the individual contact force and contact point
-	    glPushMatrix();
-	    {
-	      glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-	      if (ac.bDrawContactIndicator)
-		{
-		  ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
-		  ArnRenderSphereGl(0.025, 16, 16);
-		}
+	      // Render the individual contact force and contact point
+	      glPushMatrix();
+	      {
+	        glTranslatef(contactPos.x, contactPos.y, contactPos.z);
+	        if (ac.bDrawContactIndicator) {
+		        ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
+		        ArnRenderSphereGl(0.025, 16, 16);
+		      }
 
-	      if (ac.bDrawContactForaceIndicator)
-		{
-		  glEnable(GL_COLOR_MATERIAL);
-		  glBegin(GL_LINES);
-		  glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
-		  glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
-		  glEnd();
-		  glDisable(GL_COLOR_MATERIAL);
-		}
+	        if (ac.bDrawContactForaceIndicator) {
+		        glEnable(GL_COLOR_MATERIAL);
+		        glBegin(GL_LINES);
+		        glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
+		        glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
+		        glEnd();
+		        glDisable(GL_COLOR_MATERIAL);
+		      }
 
-	      // TODO: Contact forces in the second direction. Should be zero.
-	      ac.swPtr->getContactForce2(i, &contactForce);
-	      //assert(contactForce == ArnConsts::ARNVEC3_ZERO);
+	        // TODO: Contact forces in the second direction. Should be zero.
+	        ac.swPtr->getContactForce2(i, &contactForce);
+	        //assert(contactForce == ArnConsts::ARNVEC3_ZERO);
+	      }
+	      glPopMatrix();
 	    }
+	    glPushMatrix();
+	    const ArnVec3& bipedComPos = *ac.bipedComPos.rbegin();
+	    glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
+	    ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
+	    ArnRenderSphereGl(0.025, 16, 16); // COM indicator
+	    glEnable(GL_COLOR_MATERIAL);
+	    //float netContactForceSize = ArnVec3Length(netContactForce);
+	    /*
+	      glBegin(GL_LINES);
+	      glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
+	      glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
+	      glEnd();
+	    */
+	    glDisable(GL_COLOR_MATERIAL);
+	    //printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
 	    glPopMatrix();
-	  }
-	glPushMatrix();
-	const ArnVec3& bipedComPos = *ac.bipedComPos.rbegin();
-	glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
-	ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
-	ArnRenderSphereGl(0.025, 16, 16); // COM indicator
-	glEnable(GL_COLOR_MATERIAL);
-	//float netContactForceSize = ArnVec3Length(netContactForce);
-	/*
-	  glBegin(GL_LINES);
-	  glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
-	  glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
-	  glEnd();
-	*/
-	glDisable(GL_COLOR_MATERIAL);
-	//printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
-	glPopMatrix();
-      }
-
+    }
     /*
       foreach (const ArnVec3& isect, ac.isects)
       {
