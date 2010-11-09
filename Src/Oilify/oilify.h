@@ -25,8 +25,10 @@
 #include <GL/glu.h>
 #include "glext.h"
 
+#ifndef WIN32
 #include "ft2build.h"
 #include FT_FREETYPE_H
+#endif
 
 //
 // ODE

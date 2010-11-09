@@ -18,12 +18,12 @@ typedef struct aaa_pym_render_config_t {
 #ifdef __cplusplus
 extern "C" {
 #endif
-  void PymRsInitRender();
-  void PymRsDestroyRender();
-  void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc);
-  void PymLookUpLeft(double *look, double *up, double *left,
+  PYMRS_API void PymRsInitRender();
+  PYMRS_API void PymRsDestroyRender();
+  PYMRS_API void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc);
+  PYMRS_API void PymLookUpLeft(double *look, double *up, double *left,
 		     double r, double phi, double theta);
-  void pym_sphere_to_cartesian(double *c, double r,
+  PYMRS_API void pym_sphere_to_cartesian(double *c, double r,
 			       double phi, double theta);
 
 #ifdef __cplusplus

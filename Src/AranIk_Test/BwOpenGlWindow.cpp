@@ -3,6 +3,10 @@
 #include "BwAppContext.h"
 #include "IL/il.h"
 
+#if _MSC_VER
+#define snprintf _snprintf
+#endif
+
 static void SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy);
 static void RenderScene(const BwAppContext& ac);
 static void RenderHud(const BwAppContext& ac);
@@ -90,9 +94,15 @@ void BwOpenGlWindow::draw()
     ilTexImage(rc.vpw, rc.vph, 0, 4, IL_RGBA, IL_UNSIGNED_BYTE, imageData);
     ilEnable(IL_FILE_OVERWRITE);
     assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
+#ifdef UNICODE
+    wchar_t ssName[128];
+    _snwprintf(ssName, 128, L"/home/johnu/pymss/%05d.png", m_ac.pymRs->ssIdx);
+    ilSaveImage(ssName);
+#else
     char ssName[128];
     snprintf(ssName, 128, "/home/johnu/pymss/%05d.png", m_ac.pymRs->ssIdx);
     ilSaveImage(ssName);
+#endif
     //printf("%s\n", ssName);
     ilDeleteImages(1, &ImageName);
     free(imageData);

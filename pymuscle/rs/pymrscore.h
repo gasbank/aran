@@ -33,8 +33,8 @@ pym_init_phy_thread_ctx(pym_config_t *pymCfg,
 #ifdef __cplusplus
 extern "C" {
 #endif
-  PYMRS PymRsInitContext(int argc, char *argv[]);
-  void PymRsDestroyContext(PYMRS rs);
+  PYMRS_API PYMRS PymRsInitContext(int argc, char *argv[]);
+  PYMRS_API void PymRsDestroyContext(PYMRS rs);
 #ifdef __cplusplus
 }
 #endif

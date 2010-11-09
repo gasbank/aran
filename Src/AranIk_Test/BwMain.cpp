@@ -398,18 +398,15 @@ LoadSceneList(std::vector<std::string>& sceneList)
   assert(sceneList.size() == 0);
   std::ifstream sceneListStream("SceneList.txt");
   std::string sceneFile;
-  if (!sceneListStream.is_open())
-    {
-      fprintf(stderr, " *** SceneList.txt file corrupted or not available.\n");
-      Cleanup();
-      return -12;
-    }
+  if (!sceneListStream.is_open()) {
+    std::cout << " *** WARN: SceneList.txt file is not available.\n";
+    return 0; // No scene loaded.
+  }
   int sceneCount = 0;
-  while (std::getline(sceneListStream, sceneFile))
-    {
-      sceneList.push_back(sceneFile);
-      ++sceneCount;
-    }
+  while (std::getline(sceneListStream, sceneFile)) {
+    sceneList.push_back(sceneFile);
+    ++sceneCount;
+  }
   return sceneCount;
 }
 
@@ -607,7 +604,8 @@ UpdateSceneGraphList( BwAppContext& ac )
 {
   if (ac.sceneGraphList) {
     ac.sceneGraphList->clear();
-    AddToSceneGraphList(ac.sgPtr->getSceneRoot(), ac.sceneGraphList, 0);
+    if (ac.sgPtr)
+      AddToSceneGraphList(ac.sgPtr->getSceneRoot(), ac.sceneGraphList, 0);
   }
 }
 
@@ -654,7 +652,8 @@ InitializeRendererIndependentsFromSg(BwAppContext& ac)
 static int
 InitializeRendererDependentsFromSg(BwAppContext& ac)
 {
-  ArnInitializeRenderableObjectsGl(ac.sgPtr.get());
+  if (ac.sgPtr.get())
+    ArnInitializeRenderableObjectsGl(ac.sgPtr.get());
   return 0;
 }
 
@@ -741,30 +740,26 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
    * 반드시 Cleanup() 을 호출해야 합니다.
    * 본 초기화가 실패할 경우에는 프로그램이 종료됩니다.
    */
-  if (ArnInitializeXmlParser() < 0)
-    {
-      Cleanup();
-      return -1;
-    }
-  if (ArnInitializeImageLibrary() < 0)
-    {
-      Cleanup();
-      return -2;
-    }
-  if (ArnInitializePhysics() < 0)
-    {
-      Cleanup();
-      return -3;
-    }
+  if (ArnInitializeXmlParser() < 0) {
+    Cleanup();
+    return -1;
+  }
+  if (ArnInitializeImageLibrary() < 0) {
+    Cleanup();
+    return -2;
+  }
+  if (ArnInitializePhysics() < 0) {
+    Cleanup();
+    return -3;
+  }
   // Notice for 32-bit and 64-bit build: Do not confuse the size of pointers!
   std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
   std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
   /// \c SceneList.txt 를 파싱합니다.
-  if (LoadSceneList(ac.sceneList) < 0)
-    {
-      std::cerr << " *** Init failed..." << std::endl;
-      return -10;
-    }
+  if (LoadSceneList(ac.sceneList) < 0) {
+    std::cerr << " *** Init failed..." << std::endl;
+    return -10;
+  }
   memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
   // Default viewport init
   ac.avd.X			 = 0;
@@ -805,28 +800,25 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
   ac.contactCheckPlane.setV0(ArnVec3(0, 0, 0.01f));
   ac.contactCheckPlane.setNormal(ArnVec3(0, 0, 1.0f));
 
-
-
-  /// 첫 장면 파일을 메모리에 로드합니다.
-  assert(ac.sceneList.size() > 0);
+  /// (있다면) 첫 장면 파일을 메모리에 로드합니다.
   ac.curSceneIndex = -1;
-  ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
-  if (!ac.sgPtr)
-    {
+  if (ac.sceneList.size() > 0) {
+    ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, 0, ac.sceneList, ac.avd);
+    if (!ac.sgPtr) {
       std::cerr << " *** Scene graph loading failed..." << std::endl;
       Cleanup();
       return -20;
     }
-  assert(ac.sgPtr);
+    assert(ac.sgPtr);
 
-
-  /// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
-  if (InitializeRendererIndependentsFromSg(ac) < 0)
-    {
+    /// 처음으로 로드한 모델 파일에 종속적인 데이터를 초기화합니다.
+    if (InitializeRendererIndependentsFromSg(ac) < 0) {
       Cleanup();
       return -1;
     }
-
+  } else {
+    std::cout << "WARN: No scene file listed on SceneList.txt\n";
+  }
   return 0;
 }
 
@@ -1091,20 +1083,19 @@ int doMain(int argc, char **argv)
        saved in /home/johnu/pymss. */
     fs::path pathSS("/home/johnu/pymss");
     if ( !exists( pathSS ) )
-      assert("Screenshot path does not exist!\n");
+      assert(!"Error: Screenshot path does not exist!\n");
     fs::directory_iterator end_itr; // default construction yields past-the-end
     int ssIdx = 0;
-    for ( fs::directory_iterator itr( pathSS );
-	  itr != end_itr;
-	  ++itr ) {
+    for ( fs::directory_iterator itr( pathSS ); itr != end_itr; ++itr ) {
       if ( fs::is_directory(itr->status()) ) {
+        /* Do nothing */
       } else {
-	std::string fn(itr->leaf());
-	fn = fn.substr(0, fn.find('.'));
-	int idx = boost::lexical_cast<int>(fn);
-	//std::cout << fn << " " << idx << std::endl;
-	if (idx > ssIdx)
-	  ssIdx = idx;
+	      std::string fn(itr->path().filename().generic_string());
+	      fn = fn.substr(0, fn.find('.'));
+	      int idx = boost::lexical_cast<int>(fn);
+	      //std::cout << fn << " " << idx << std::endl;
+	      if (idx > ssIdx)
+	        ssIdx = idx;
       }
     }
     appContext.pymRs->ssIdx = ssIdx + 1; /* Screenshot file name continues... */

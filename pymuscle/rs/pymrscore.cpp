@@ -20,10 +20,16 @@
 
 #include "pymrscore.h"
 
+#ifdef WIN32
+#define PATH_SEPARATOR '\\'
+#else
+#define PATH_SEPARATOR '/'
+#endif
+
 void PrintCmdLineHelp(int argc, char *argv[]) {
   printf("  Usage:\n");
   printf("    %s config_file <simulation conf file> [Options]\n",
-	 strrchr(argv[0], '/') + 1);
+	 strrchr(argv[0], PATH_SEPARATOR) + 1);
   printf("\n");
   printf("  Options:\n");
   printf("\n");

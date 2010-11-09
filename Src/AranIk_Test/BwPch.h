@@ -26,8 +26,10 @@
 #include <GL/glu.h>
 #include "glext.h"
 
+#ifndef WIN32
 #include "ft2build.h"
 #include FT_FREETYPE_H
+#endif
 
 //
 // ODE
@@ -238,11 +240,12 @@
 // Pym Realtime Simulator (pymrs) module
 
 #include <cholmod.h>
-#include <umfpack.h>
+//#include <umfpack.h>
 #include <mosek.h>
-#include <libconfig.h>
+//#include <libconfig.h>
 
-#include "include/PrsGraphCapi.h"
+#include "PymApiMacro.h"
+#include "PrsGraphCapi.h"
 
 #include "PymStruct.h"
 #include "PymBiped.h"
@@ -260,11 +263,6 @@
 #include "PhysicsThreadMain.h"
 #include "PymCmdLineParser.h"
 #include "MathUtil.h"
-
-#include "model.h"
-#include "common.h"
-#include "image.h"
-#include "quaternion.h"
 
 #include "pymrscore.h"
 #include "pymrsrender.h"

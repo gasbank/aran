@@ -1,22 +1,14 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(pym)
 SET(CMAKE_OSX_ARCHITECTURES i386)
+SET(CODEBASE "f:/devel3/")
+SET(WORKING "f:/devel3/Working/")
 SET(PYM_3RDPARTIES_ROOT f:/devel3/src/)
 SET(MOSEK_ROOT "C:/Program Files (x86)/Mosek/")
 SET(BOOST_ROOT C:/boost_1_44_0)
-
-# ---------- Setup output Directories -------------------------
-SET (CMAKE_LIBRARY_OUTPUT_DIRECTORY
-   ${PROJECT_BINARY_DIR}/bin )
-
-# --------- Setup the Executable output Directory -------------
-SET (CMAKE_RUNTIME_OUTPUT_DIRECTORY
-   ${PROJECT_BINARY_DIR}/bin )
-
-# --------- Setup the Executable output Directory -------------
-SET (CMAKE_ARCHIVE_OUTPUT_DIRECTORY
-   ${PROJECT_BINARY_DIR}/bin )
-
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WORKING} )
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKING} )
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${WORKING} )
 ADD_SUBDIRECTORY(core)
 ADD_SUBDIRECTORY(parser)
 ADD_SUBDIRECTORY(optimizer)

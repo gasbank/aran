@@ -13,6 +13,15 @@
 #include "ArnMath.h"
 #include "ArnTexture.h"
 
+#ifdef WIN32
+#include <direct.h>
+#define GetCurrentDir _getcwd
+#else
+#include <unistd.h>
+#define GetCurrentDir getcwd
+#endif
+
+
 static bool gs_xmlInitialized = false;
 
 ArnXmlLoader::ArnXmlLoader()
@@ -429,7 +438,7 @@ ArnSceneGraph::createFrom(const char* xmlFile)
         working = getenv("WORKING");
         std::cout << "Working directory set from the environment variable WORKING.\n";
     } else {
-        char *workingCstr = getcwd(0, 0);
+        char *workingCstr = GetCurrentDir (0, 0);
         working = workingCstr;
         std::cout << "Working directory set from the function getcwd().\n";
         free(workingCstr);

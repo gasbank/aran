@@ -36,9 +36,9 @@ int inf(FILE *source, char *dest)
 	do {
 		strm.avail_in = fread(in, 1, CHUNK, source);
 		if (ferror(source)) {
-			(void)inflateEnd(&strm);
-			return Z_ERRNO;
-		}
+      (void)inflateEnd(&strm);
+      return Z_ERRNO;
+    }
 		if (strm.avail_in == 0)
 			break;
 		strm.next_in = in;

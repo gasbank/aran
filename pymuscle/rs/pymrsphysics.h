@@ -4,10 +4,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-  int PymRsInitPhysics(pym_rs_t *rs);
-  int PymRsDestroyPhysics(pym_rs_t *rs);
-  int PymRsResetPhysics(pym_rs_t *rs);
-  int PymRsFrameMove(pym_rs_t *rs, int i);
+  PYMRS_API int PymRsInitPhysics(pym_rs_t *rs);
+  PYMRS_API int PymRsDestroyPhysics(pym_rs_t *rs);
+  PYMRS_API int PymRsResetPhysics(pym_rs_t *rs);
+  PYMRS_API int PymRsFrameMove(pym_rs_t *rs, int i);
 #ifdef __cplusplus
 }
 #endif
