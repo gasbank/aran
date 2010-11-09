@@ -1,0 +1,9 @@
+*~
+*.user
+build/
+DebugDLL/
+Debug/
+*.sdf
+*.suo
+*.blend1
+*.pyc
