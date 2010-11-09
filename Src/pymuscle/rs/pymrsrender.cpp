@@ -560,20 +560,58 @@ void DrawBox_chi(const double *chi,
     assert("What the...");
   }
 
-  //SetUniforms();
-
-  glBindVertexArray(m_vaoID[3]);      // select second VAO
-  
-  /* // set constant color attribute */
-  /* glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0); */
-  /* // set constant color attribute */
-  /* glVertexAttrib3f((GLuint)1, 1.0, 1.0, 0.0);  */
-  /* glNormalPointer(GL_FLOAT, 0, (void*)(sizeof(float)*3*4*6)); */
-  /* glVertexPointer(3, GL_FLOAT, 0, 0); */
-
-  glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
-
-  //glutWireCube(1.0);
+  if (glBindVertexArray) {
+    glBindVertexArray(m_vaoID[3]);      // select second VAO
+    glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
+  } else {
+    static GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
+      0.5f,  0.5f,  0.5f,
+      0.5f, -0.5f,  0.5f,
+      0.5f, -0.5f, -0.5f,
+      0.5f,  0.5f, -0.5f,
+      /* Face which has -X normals (x=-0.5) */
+      -0.5f,  0.5f,  0.5f,
+      -0.5f,  0.5f, -0.5f,
+      -0.5f, -0.5f, -0.5f,
+      -0.5f, -0.5f,  0.5f,
+      /* Face which has +Y normals (y= 0.5) */
+      0.5f, 0.5f,  0.5f,
+      0.5f, 0.5f, -0.5f,
+      -0.5f, 0.5f, -0.5f,
+      -0.5f, 0.5f,  0.5f,
+      /* Face which has -Y normals (y=-0.5) */
+      0.5f, -0.5f, 0.5f,
+      -0.5f, -0.5f, 0.5f,
+      -0.5f, -0.5f,-0.5f,
+      0.5f, -0.5f,-0.5f,
+      /* Face which has +Z normals (z= 0.5) */
+      0.5f,  0.5f, 0.5f,
+      -0.5f,  0.5f, 0.5f,
+      -0.5f, -0.5f, 0.5f,
+      0.5f, -0.5f, 0.5f,
+      /* Face which has -Z normals (z=-0.5) */
+      0.5f,  0.5f, -0.5f,
+      0.5f, -0.5f, -0.5f,
+      -0.5f, -0.5f, -0.5f,
+      -0.5f,  0.5f, -0.5f  };
+      static GLfloat nor4[] = {
+        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+        0,0,1,0,0,1,0,0,1,0,0,1,
+        0,0,-1,0,0,-1,0,0,-1,0,0,-1,
+      };
+    glBegin(GL_QUADS);
+    for (int j = 0; j < 6; ++j) {
+      /* One quad(rectangle) face */
+      for (int i = 0; i < 4; ++i) {
+        glNormal3fv(nor4  + 3*4*j + 3*i);
+        glVertex3fv(vert4 + 3*4*j + 3*i);
+      }
+    }
+    glEnd();
+  }
 
   glPopAttrib();
   endXform();
