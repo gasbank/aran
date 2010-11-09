@@ -854,7 +854,9 @@ void PymOptimize(pym_opt_t *pymOpt) {
     return;
   }
   /* TODO MOSEK optimization logging */
-  mosekLogFile = fopen("/tmp/pymoptimize_log", "w");
+  std::string workingPath(getenv("WORKING"));
+  workingPath += "/pymoptimize_log.txt";
+  mosekLogFile = fopen(workingPath.c_str(), "w");
   if (!mosekLogFile) {
     printf("Error - Opening MOSEK output log file failed.\n");
     pymOpt->cost = DBL_MAX;

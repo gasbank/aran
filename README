@@ -1,0 +1,25 @@
+aran project 2010-11-09 Geoyeob Kim
+
+Memo
+
+WORKING, CODEBASE system-wide environment variables should be set.
+
+
+Most recent news
+
+1. CMake used to create Makefiles (including Visual Studio projects)
+2. Dependencies for build
+  - CMake 2.8
+  - Boost 1.44
+  - zlib 1.2.3
+  - tinyxml 2.5.3
+  - tcl 8.5.8
+  - RakNet 3.26
+  - fltk 1.1.10
+  - Python 2.6
+  - numpy, scipy, PyOpenGL
+  - DevIL 1.7.8
+  - cml 1.0.1
+  - CHOLMOD, AMD
+  - MOSEK
+  - Blender 2.49b (for creating motion trajectories)

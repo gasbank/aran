@@ -41,7 +41,12 @@ void pym_init_debug_msg_streams(FILE *dmstreams[]) {
   //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
   //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
   int i;
+#ifdef WIN32
+  FILE *devnull = fopen("nul", "w");
+#else
   FILE *devnull = fopen("/dev/null", "w");
+#endif
+  assert(devnull);
   FOR_0(i, PDMTE_COUNT) {
     if (dmflags[i]) dmstreams[i] = stdout;
     else dmstreams[i] = devnull;
@@ -232,7 +237,7 @@ PYMRS PymRsInitContext(int argc, char *argv[]) {
 
 void PymRsDestroyContext(PYMRS rs) {
   printf("Accumulated pure MOSEK optimizer time : %lf s\n",
-	 rs->phyCon.totalPureOptTime);
+    rs->phyCon.totalPureOptTime);
   fclose(rs->outputFile);
   printf("Output written to %s\n", rs->cmdopt.output);
   PymDestoryConfig(&rs->pymCfg);

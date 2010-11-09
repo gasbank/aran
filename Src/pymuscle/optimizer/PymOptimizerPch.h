@@ -3,6 +3,7 @@
 #define __PYMOPTIMIZERPCH_H_
 
 #include "PymPch.h"
+#include <string>
 
 #include <cholmod.h>
 #include <umfpack.h>

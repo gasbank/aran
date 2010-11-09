@@ -917,7 +917,7 @@ static void pym_draw_all(pym_physics_thread_context_t *phyCon,
   pym_strict_checK_gl();
   DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
   DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
-  printf("pymCfg address2 = %p\n", phyCon->pymCfg);
+  //printf("pymCfg address2 = %p\n", phyCon->pymCfg);
   if (strcmp(phyCon->pymCfg->trajName, "Walk1") == 0) {
     static const double s[3][3] = { { 1.557, 0.580, 0.210 },
 				    { 1.557, 0.580, 0.413 },

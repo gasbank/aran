@@ -36,6 +36,7 @@ class BwOpenGlWindow : public Fl_Gl_Window
   double	m_cam_theta;
   double	m_cam_dtheta;
   double m_cam_cen[3];
+  bool m_screenshot_fbyf;
 };
 
 struct HitRecord

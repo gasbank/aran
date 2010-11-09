@@ -103,16 +103,17 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
     printf("Error - Rotation parameterization failure detected.\n");
     return -2;
   }
+
   /* Set reference */
   if (cmdopt->trajconf) {
     FOR_0(j, pymCfg->nBody) {
       const double *const ref =
-	trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6;
+        trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6;
       //printf("pymCfg address : %p\n", pymCfg);
       //printf("%p -- ", &pymCfg->body[j].b.chi_ref[0]);
       for (k = 0; k < 6; ++k) {
-	pymCfg->body[j].b.chi_ref[k] = ref[k];
-	//printf("%e ", ref[k]);
+        pymCfg->body[j].b.chi_ref[k] = ref[k];
+	      //printf("%e ", ref[k]);
       }
       //printf("\n");
     }
@@ -132,11 +133,10 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
     }
   }
   FOR_0(j, 3) {
-    curSimCom[k] /= totMass;
+    curSimCom[j] /= totMass;
     refCom[j] /= totMass;
   }
   memcpy(pymCfg->curBipCom, curSimCom, sizeof(double)*3);
-
   /* Tune reference to have no significant COM deviation between
    * simulated result. */
   //        const double comdev = PymDist(3, pymCfg->bipCom, refCom);
@@ -162,6 +162,7 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
   ret = PymOptimizeFrameMove(&pureOptTime, outputFile, pymCfg, phyCon->sd,
 			     dmstreams,
 			     &solstaStr, &cost, &rs->cc, rs->env);
+  
   if (ret) {
     printf("Error - Something goes wrong during optimization frame move.\n");
     return -1;

@@ -20,6 +20,7 @@ BwOpenGlWindow::BwOpenGlWindow(int x, int y, int w, int h, const char *l, BwAppC
   , m_cam_dphi(0)
   , m_cam_theta(0)
   , m_cam_dtheta(0)
+  , m_screenshot_fbyf(false)
 {
   sides		    = overlay_sides = 3;
   m_ac.windowWidth  = w;
@@ -81,32 +82,29 @@ void BwOpenGlWindow::draw()
     rc.cam_cen[2] = m_cam_cen[2];
     PymRsRender(m_ac.pymRs, &rc);
 
-    
-    /* Take a screenshot */
-    //Allocate memory for storing the image
-    GLvoid *imageData = malloc(rc.vpw*rc.vph*32);
-    //Copy the image to the array imageData
-    glReadPixels(0, 0, rc.vpw, rc.vph, GL_RGBA, GL_UNSIGNED_BYTE, imageData); 
-    ILuint ImageName; // The image name to return.
-    ilGenImages(1, &ImageName); // Grab a new image name.
-    //printf("%d\n", ImageName);
-    ilBindImage(ImageName);
-    ilTexImage(rc.vpw, rc.vph, 0, 4, IL_RGBA, IL_UNSIGNED_BYTE, imageData);
-    ilEnable(IL_FILE_OVERWRITE);
-    assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
-#ifdef UNICODE
-    wchar_t ssName[128];
-    _snwprintf(ssName, 128, L"/home/johnu/pymss/%05d.png", m_ac.pymRs->ssIdx);
-    ilSaveImage(ssName);
-#else
-    char ssName[128];
-    snprintf(ssName, 128, "/home/johnu/pymss/%05d.png", m_ac.pymRs->ssIdx);
-    ilSaveImage(ssName);
-#endif
-    //printf("%s\n", ssName);
-    ilDeleteImages(1, &ImageName);
-    free(imageData);
-    ++m_ac.pymRs->ssIdx;
+    if (m_screenshot_fbyf) {
+      /* Take a screenshot */
+      //Allocate memory for storing the image
+      GLvoid *imageData = malloc(rc.vpw*rc.vph*32);
+      //Copy the image to the array imageData
+      glReadPixels(0, 0, rc.vpw, rc.vph, GL_RGBA, GL_UNSIGNED_BYTE, imageData); 
+      ILuint ImageName; // The image name to return.
+      ilGenImages(1, &ImageName); // Grab a new image name.
+      //printf("%d\n", ImageName);
+      ilBindImage(ImageName);
+      ilTexImage(rc.vpw, rc.vph, 0, 4, IL_RGBA, IL_UNSIGNED_BYTE, imageData);
+      ilEnable(IL_FILE_OVERWRITE);
+      assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
+      char ssName[128];
+      std::string ssPath(getenv("WORKING"));
+      ssPath += "/pymss/%05d.png";
+      snprintf(ssName, 128, ssPath.c_str(), m_ac.pymRs->ssIdx);
+      ilSaveImage(ssName);
+      //printf("%s\n", ssName);
+      ilDeleteImages(1, &ImageName);
+      free(imageData);
+      ++m_ac.pymRs->ssIdx;
+    }
   }
   /* Check for error conditions. */
   GLenum gl_error = glGetError();

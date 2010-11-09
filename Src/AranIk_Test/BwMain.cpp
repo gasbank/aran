@@ -1049,7 +1049,8 @@ int doMain(int argc, char **argv)
   topWindow.setSceneList(&sceneList);
   topWindow.setDrawingOptionsWindow(&drawingOptions);
   topWindow.end();
-  topWindow.show(argc,argv);
+  //topWindow.show(argc,argv);
+  topWindow.show();
   openGlWindow.show();
   openGlWindow.make_current();
   openGlWindow.redraw_overlay();
@@ -1073,9 +1074,13 @@ int doMain(int argc, char **argv)
 
     /* Query latest(newest) screen shot file name
        saved in /home/johnu/pymss. */
-    fs::path pathSS("/home/johnu/pymss");
-    if ( !exists( pathSS ) )
+    std::string ssPathStr(getenv("WORKING"));
+    ssPathStr += "/pymss/";
+    fs::path pathSS(ssPathStr);
+    if ( !exists( pathSS ) ) {
       assert(!"Error: Screenshot path does not exist!\n");
+      abort();
+    }
     fs::directory_iterator end_itr; // default construction yields past-the-end
     int ssIdx = 0;
     for ( fs::directory_iterator itr( pathSS ); itr != end_itr; ++itr ) {
@@ -1096,9 +1101,9 @@ int doMain(int argc, char **argv)
   ret = Fl::run();
 
   if (appContext.pymRs) {
-    PymRsDestroyContext(appContext.pymRs);
     PymRsDestroyPhysics(appContext.pymRs);
     PymRsDestroyRender();
+    PymRsDestroyContext(appContext.pymRs);
     appContext.pymRs = 0;
   }
   std::ofstream windowPosAndSize("BwWindow.txt");
