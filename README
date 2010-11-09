@@ -17,7 +17,7 @@ Most recent news
   - RakNet 3.26
   - fltk 1.1.10
   - Python 2.6
-  - numpy, scipy, PyOpenGL
+  - numpy, scipy, PyOpenGL, pygame
   - DevIL 1.7.8
   - cml 1.0.1
   - CHOLMOD, AMD

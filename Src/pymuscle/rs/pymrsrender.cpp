@@ -315,8 +315,8 @@ GLhandleARB loadShader(char* filename, unsigned int type)
     // In case of error occurred:
     if (!result) {
       //We failed to compile.
-      printf("Shader '%s' failed compilation.\n", filename);
-      exit(-2);
+      printf("WARN - Shader '%s' failed compilation.\n", filename);
+      return 0;
     }
   }
   return handle;
@@ -1162,10 +1162,11 @@ static void RenderSupportPolygon
 
 void PymRsInitRender() {
   gndTex = CreateGridPatternGroundTexture();
-  InitVertexArrayObjects(m_vaoID);
+  if (glGenVertexArrays && glBindVertexArray)
+    InitVertexArrayObjects(m_vaoID);
   //preparedata();
-  generateShadowFBO();
-  loadShadowShader();
+  //generateShadowFBO();
+  //loadShadowShader();
 }
 
 void PymRsDestroyRender() {
@@ -1174,7 +1175,8 @@ void PymRsDestroyRender() {
 
 void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   pym_strict_checK_gl();
-  glUseProgramObjectARB(0);
+  if (glUseProgramObjectARB)
+    glUseProgramObjectARB(0);
   glViewport(rc->vpx, rc->vpy, rc->vpw, rc->vph);
   glClearColor(0.3,0.3,0.3,1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
