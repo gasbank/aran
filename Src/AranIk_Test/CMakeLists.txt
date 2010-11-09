@@ -1,3 +1,6 @@
+LINK_DIRECTORIES(
+${CODEBASE}src/CHOLMOD/Debug
+)
 ADD_EXECUTABLE(AranIk_Test
 BwAppContext.cpp BwAppContext.h
 BwDrawingOptionsWindow.cpp BwDrawingOptionsWindow.h
@@ -20,6 +23,11 @@ INCLUDE_DIRECTORIES(
 ../AranPhy
 ../AranIk
 ../AranGl
+../pymuscle/core
+../pymuscle/parser
+../pymuscle/optimizer
+../pymuscle/rs
+../pymuscle
 ${CODEBASE}freetype-2.3.9/include
 ${CODEBASE}opende/include
 ${CODEBASE}fltk-1.1.10
@@ -30,11 +38,6 @@ ${CODEBASE}src/AMD/Include
 ${CODEBASE}src/CHOLMOD/Include
 ${CODEBASE}src/libconfig-1.3.2
 "C:/Program Files (x86)/Mosek/6/tools/platform/win32x86/h"
-${CODEBASE}arangit/pymuscle/core
-${CODEBASE}arangit/pymuscle/parser
-${CODEBASE}arangit/pymuscle/optimizer
-${CODEBASE}arangit/pymuscle/rs
-${CODEBASE}arangit/pymuscle
 )
 TARGET_LINK_LIBRARIES(AranIk_Test
 AranMath

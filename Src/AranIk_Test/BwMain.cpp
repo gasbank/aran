@@ -434,8 +434,8 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
   simLoop = 2; // TODO: Simulation frequency
   for (unsigned int step = 0; step < simLoop; ++step) {
     //printf("frame duration: %d / simloop original: %d / current simstep %d\n", frameDurationMs, (unsigned int)(frameDurationMs / 1000.0 * simFreq), step);
-
-    ac.swPtr->updateFrame(1.0 / simFreq);
+    if (ac.swPtr)
+      ac.swPtr->updateFrame(1.0 / simFreq);
   }
   if (ac.sgPtr) {
     ac.sgPtr->update(ac.timer.getTicks() / 1000.0, fElapsedTime);
@@ -510,10 +510,10 @@ UpdateScene(BwAppContext& ac, float fElapsedTime)
     cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
     }
   */
-
-  ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
-  ac.activeCam->recalcLocalXform();
-
+  if (ac.activeCam) {
+    ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
+    ac.activeCam->recalcLocalXform();
+  }
   ac.isects.clear();
   ac.verticalLineIsects.clear();
   ac.supportPolygon.clear();
@@ -862,8 +862,8 @@ void idle_cb(void* ac)
 
     appContext.playbackSlider->setAvailableFrames(appContext.frames);
     appContext.playbackSlider->value(appContext.frames);
-
-    appContext.swPtr->getSimWorldState(appContext.simWorldHistory[appContext.frames]);
+    if (appContext.swPtr)
+      appContext.swPtr->getSimWorldState(appContext.simWorldHistory[appContext.frames]);
 
     if (appContext.pymRs) {
       printf("FRAME %d\n", simFrame);
@@ -939,52 +939,44 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
   BwOpenGlWindow& openGlWindow = *sbh->openGlWindow;
   MessageHandleResult done = sbh->mhr;
 
+  if (ac.sceneList.size() == 0) {
+    std::cout << "No scene loaded at all.\n";
+    return;
+  }
+
   int reconfigScene = false;
-  if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)
-    {
-      int nextSceneIndex;
-      if (done == MHR_NEXT_SCENE)
-	nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+  if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE) {
+    int nextSceneIndex;
+    if (done == MHR_NEXT_SCENE) {
+      nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
+    } else {
+      if (ac.curSceneIndex == 0)
+        nextSceneIndex = ac.sceneList.size() - 1;
       else
-	{
-	  if (ac.curSceneIndex == 0)
-	    nextSceneIndex = ac.sceneList.size() - 1;
-	  else
-	    nextSceneIndex = ac.curSceneIndex - 1;
-	}
-
-      ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
-      if (!ac.sgPtr)
-	{
-	  std::cerr << " *** Aborting..." << std::endl;
-	  done = MHR_EXIT_APP;
-	}
-      else
-	{
-	  reconfigScene = true;
-	}
+        nextSceneIndex = ac.curSceneIndex - 1;
     }
-  else if (done == MHR_RELOAD_SCENE)
-    {
-      ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
-      if (!ac.sgPtr)
-	{
-	  std::cerr << " *** Aborting..." << std::endl;
-	  done = MHR_EXIT_APP;
-	}
-      else
-	{
-	  reconfigScene = true;
-	}
+    ac.sgPtr = ConfigureNextTestSceneWithRetry(ac.curSceneIndex, nextSceneIndex, ac.sceneList, ac.avd);
+    if (!ac.sgPtr)	{
+      std::cerr << " *** Aborting..." << std::endl;
+      done = MHR_EXIT_APP;
+    } else {
+      reconfigScene = true;
     }
-
-  if (reconfigScene)
-    {
-      InitializeRendererIndependentsFromSg(ac);
-      InitializeRendererDependentsFromSg(ac);
-
-      openGlWindow.redraw();
+  } else if (done == MHR_RELOAD_SCENE) {
+    ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
+    if (!ac.sgPtr) {
+      std::cerr << " *** Aborting..." << std::endl;
+      done = MHR_EXIT_APP;
+    } else {
+      reconfigScene = true;
     }
+  }
+
+  if (reconfigScene) {
+    InitializeRendererIndependentsFromSg(ac);
+    InitializeRendererDependentsFromSg(ac);
+    openGlWindow.redraw();
+  }
 }
 
 int doMain(int argc, char **argv)

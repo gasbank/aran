@@ -6,6 +6,9 @@ const float BwAppContext::massMapDeviation = 0.05f;
 BwAppContext::BwAppContext()
   : bipedComPos(50)
   , massMapData(new unsigned char[massMapResolution*2 * massMapResolution*2 * 4])
+  , activeCam(0)
+  , activeLight(0)
+  , frames(0)
 {
   massMap.resize(massMapResolution*2);
   for (int i = 0; i < massMapResolution*2; ++i) {

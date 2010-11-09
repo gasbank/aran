@@ -64,7 +64,7 @@ class BwAppContext : private Uncopyable
   bool					bDrawContactForaceIndicator;
   bool					bDrawRootNodeIndicator;
   bool					bSimulate;
-  unsigned int				frames;
+  unsigned int				frames; // Current frame
   float					panningCenter[3];
   float					dPanningCenter[3];
   Fl_Browser*				sceneGraphList;

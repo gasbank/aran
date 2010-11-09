@@ -1,0 +1,262 @@
+/* 
+ * ExpMap.mac: Paper implementation
+ * 
+ * Practical Parameterization of Rotations Using the Exponential Map
+ * By Grassia [JGT 98]
+ *
+ * 2010 Geoyeob Kim
+ */
+
+load("MyMathFunc.mac");
+load("PrintClike.mac");
+
+/* Print calculation time for each command */
+showtime: true;
+optimprefix:_x;
+ratprint: false;
+
+thsimplify(ex) := block(
+      ex_s : subst(th, sqrt(v1^2+v2^2+v3^2), ex),
+      ex_s : subst(th^2, v1^2+v2^2+v3^2, ex_s),
+      /*  ex_s : subst(th, abs(th), ex_s),  */
+      ex_s
+      )$
+
+/* 
+ * CRUCIAL for talyor expension, since it automatically
+ * substitutes expressions such as 'abs(th)' to 'th'
+ */
+assume(th >= 0)$
+
+/* Rotation vector */
+v : [v1, v2, v3]$
+vd : [ vd1, vd2, vd3 ]$ /* its time derivative */
+/* Length(angle) of rotation vector */
+theta : sqrt(v1^2+v2^2+v3^2)$
+/* Rotation quaternion */
+qx : sin(0.5*theta) * v1 / theta$
+qy : sin(0.5*theta) * v2 / theta$
+qz : sin(0.5*theta) * v3 / theta$
+qw : cos(0.5*theta)$
+q : [qw, qx, qy, qz]$
+qnorm : qw^2 + qx^2 + qy^2 + qz^2 $
+assume(equal(qnorm, 1))$ /* is this assumption necessary? */
+
+/* Rotation matrix */
+R : RotationMatrixFromQuaternion(qw,qx,qy,qz)$
+/* Derivatives */
+dRdv1 : diff(R, v1)$ /* 3x3 matrix */
+dRdv2 : diff(R, v2)$ /* 3x3 matrix */
+dRdv3 : diff(R, v3)$ /* 3x3 matrix */
+/* theta^2 expressions are substituted to thsq */
+dRdv1_s : thsimplify(dRdv1)$
+dRdv2_s : thsimplify(dRdv2)$
+dRdv3_s : thsimplify(dRdv3)$
+/* Taylor expension form for very small values of thsq */
+dRdv1_s0 : taylor(dRdv1_s, th, 0, 3)$
+dRdv2_s0 : taylor(dRdv2_s, th, 0, 3)$
+dRdv3_s0 : taylor(dRdv3_s, th, 0, 3)$
+
+OpenFile("dRdv.py");
+WriteDirectToFile("from numpy import array, linalg, zeros~%");
+WriteDirectToFile("from math import sin, cos~%");
+WriteDirectToFile("from scipy import sparse~%");
+WriteDirectToFile("from MathUtil import cot~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("THETA = 0.001       # Threshold for theta~%");
+WriteDirectToFile("~%");
+
+WriteDirectToFile("def __dRdv(v, th):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    dRdv1_s = array(zeros((3,3)))~%");
+WriteDirectToFile("    dRdv2_s = array(zeros((3,3)))~%");
+WriteDirectToFile("    dRdv3_s = array(zeros((3,3)))~%");
+WriteBlockToClike("dRdv1_s", optimize(dRdv1_s), [3,3]);
+WriteBlockToClike("dRdv2_s", optimize(dRdv2_s), [3,3]);
+WriteBlockToClike("dRdv3_s", optimize(dRdv3_s), [3,3]);
+WriteDirectToFile("    return dRdv1_s, dRdv2_s, dRdv3_s~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __dRdv0(v, th):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    dRdv1_s0 = array(zeros((3,3)))~%");
+WriteDirectToFile("    dRdv2_s0 = array(zeros((3,3)))~%");
+WriteDirectToFile("    dRdv3_s0 = array(zeros((3,3)))~%");
+WriteBlockToClike("dRdv1_s0", optimize(dRdv1_s0), [3,3]);
+WriteBlockToClike("dRdv2_s0", optimize(dRdv2_s0), [3,3]);
+WriteBlockToClike("dRdv3_s0", optimize(dRdv3_s0), [3,3]);
+WriteDirectToFile("    return dRdv1_s0, dRdv2_s0, dRdv3_s0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def dRdv(v, omega):~%");
+WriteDirectToFile("    assert len(v) == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __dRdv0(v, th)~%");
+WriteDirectToFile("    else         : return __dRdv(v, th)~%");
+
+/*
+ *  Admissible region function fx(X)
+ * 
+ *               d fx(X)
+ *  We need     ---------  .
+ *                 d X
+ * 
+ *  Cartesian coordinates : [p1, p2, p3]
+ *  Rotation vector       : [v1, v2 v3]
+ *  Corner point coord    : [pc1, pc2, pc3] (in body coord)
+ *
+ */
+X : [p1, p2, p3, v1, v2, v3]$
+pc : [pc1, pc2, pc3]$
+fx : p3 + (R[3][1] * pc1 + R[3][2] * pc2 + R[3][3] * pc3)$
+dfxdp1 : diff(fx, p1)$
+dfxdp2 : diff(fx, p2)$
+dfxdp3 : diff(fx, p3)$
+dfxdv1_s : thsimplify( diff(fx, v1) )$
+dfxdv2_s : thsimplify( diff(fx, v2) )$
+dfxdv3_s : thsimplify( diff(fx, v3) )$
+dfxdv1_s0 : taylor(dfxdv1_s, th, 0, 3)$
+dfxdv2_s0 : taylor(dfxdv2_s, th, 0, 3)$
+dfxdv3_s0 : taylor(dfxdv3_s, th, 0, 3)$
+
+dfxdX  : [ dfxdp1, dfxdp2, dfxdp3, dfxdv1_s, dfxdv2_s, dfxdv3_s ]$
+dfxdX0 : [ dfxdp1, dfxdp2, dfxdp3, dfxdv1_s0, dfxdv2_s0, dfxdv3_s0 ]$
+
+WriteDirectToFile("~%");
+WriteDirectToFile("def __dfxdX(p, v, th, pc):~%");
+WriteDirectToFile("    p1, p2, p3 = p~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    pc1, pc2, pc3 = pc~%");
+WriteDirectToFile("    dfxdX = array(zeros(6))~%");
+WriteBlockToClike("dfxdX", optimize(dfxdX), [6,1]);
+WriteDirectToFile("    return dfxdX~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __dfxdX0(p, v, th, pc):~%");
+WriteDirectToFile("    p1, p2, p3 = p~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    pc1, pc2, pc3 = pc~%");
+WriteDirectToFile("    dfxdX0 = array(zeros(6))~%");
+WriteBlockToClike("dfxdX0", optimize(dfxdX0), [6,1]);
+WriteDirectToFile("    return dfxdX0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def dfxdX(p, v, pc):~%");
+WriteDirectToFile("    assert len(v) == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __dfxdX0(p, v, th, pc)~%");
+WriteDirectToFile("    else         : return __dfxdX(p, v, th, pc)~%");
+
+WriteDirectToFile("~%");
+WriteDirectToFile("def __RotationMatrixFromV(v, th):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    rotMat = array(zeros((3,3)))~%");
+WriteBlockToClike("rotMat", optimize(R), [3,3]);
+WriteDirectToFile("    return rotMat~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __RotationMatrixFromV0(v, th):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    rotMat0 = array(zeros((3,3)))~%");
+WriteBlockToClike("rotMat0", optimize(taylor(thsimplify(R), th, 0, 3)), [3,3]);
+WriteDirectToFile("    return rotMat0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def RotationMatrixFromV(v):~%");
+WriteDirectToFile("    assert len(v) == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __RotationMatrixFromV0(v, th)~%");
+WriteDirectToFile("    else         : return __RotationMatrixFromV(v, th)~%");
+
+
+omega : [omega1, omega2, omega3]$
+bp    : cross(omega, v)$
+gamma : theta*cot(theta/2)$
+eta   : (omega.v)/theta*(cot(theta/2) - 2/theta)$
+vd    : (gamma*omega + bp - eta*v)/2$
+vd_s  : thsimplify(vd)$
+vd_s0 : taylor(vd_s, th, 0, 3)$
+
+WriteDirectToFile("~%");
+WriteDirectToFile("def __VdotFromOmega(v, th, omega):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    omega1, omega2, omega3 = omega~%");
+WriteDirectToFile("    vd = array(zeros(3))~%");
+WriteBlockToClike("vd", optimize(vd_s), [3,1]);
+WriteDirectToFile("    return vd~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __VdotFromOmega0(v, th, omega):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    omega1, omega2, omega3 = omega~%");
+WriteDirectToFile("    vd0 = array(zeros(3))~%");
+WriteBlockToClike("vd0", optimize(vd_s0), [3,1]);
+WriteDirectToFile("    return vd0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def VdotFromOmega(v, omega):~%");
+WriteDirectToFile("    assert len(v) == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __VdotFromOmega0(v, th, omega)~%");
+WriteDirectToFile("    else         : return __VdotFromOmega(v, th, omega)~%");
+
+Fr : [Fr1, Fr2, Fr3]$
+r  : [p1, p2, p3] + R . [r1, r2, r3]$
+length(r);
+length(r[1]);
+Q : makelist(concat("Q",i),i,1,6)$  /* Generalized force */
+for j:1 thru 6 do (
+	Q[j] : thsimplify(Fr . diff(r, X[j]))
+)$
+Q0 : taylor(Q, th, 0, 3)$
+
+WriteDirectToFile("~%");
+WriteDirectToFile("def __GeneralizedForce(v, th, Fr, r):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    Fr1, Fr2, Fr3 = Fr~%");
+WriteDirectToFile("    r1, r2, r3 = r~%");
+WriteDirectToFile("    Q = array(zeros(6))~%");
+WriteBlockToClike("Q", optimize(Q), [6,1]);
+WriteDirectToFile("    return Q~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __GeneralizedForce0(v, th, Fr, r):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    Fr1, Fr2, Fr3 = Fr~%");
+WriteDirectToFile("    r1, r2, r3 = r~%");
+WriteDirectToFile("    Q0 = array(zeros(6))~%");
+WriteBlockToClike("Q0", optimize(Q0), [6,1]);
+WriteDirectToFile("    return Q0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def GeneralizedForce(v, Fr, r):~%");
+WriteDirectToFile("    assert len(v)  == 3~%");
+WriteDirectToFile("    assert len(Fr) == 3~%");
+WriteDirectToFile("    assert len(r)  == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __GeneralizedForce0(v, th, Fr, r)~%");
+WriteDirectToFile("    else         : return __GeneralizedForce(v, th, Fr, r)~%");
+
+
+vd    : [vd1, vd2, vd3]$
+dqdt3 : (   (cos( theta/2 )/2*(v.vd) - sin(theta/2)/theta*(v.vd))/theta**2   )*v
+       + sin(theta/2)/theta*vd$
+dqdt  : [ -sin(theta/2)/(2*theta)*(v.vd), dqdt3[1], dqdt3[2], dqdt3[3] ]$
+dqdt  : thsimplify(dqdt);
+dqdt0 : taylor(dqdt, th, 0, 3);
+
+WriteDirectToFile("~%");
+WriteDirectToFile("def __QuatdFromV(v, th, vd):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    vd1, vd2, vd3 = vd~%");
+WriteDirectToFile("    dqdt = array(zeros(4))~%");
+WriteBlockToClike("dqdt", optimize(dqdt), [4,1]);
+WriteDirectToFile("    return dqdt~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def __QuatdFromV0(v, th, vd):~%");
+WriteDirectToFile("    v1, v2, v3 = v~%");
+WriteDirectToFile("    vd1, vd2, vd3 = vd~%");
+WriteDirectToFile("    dqdt0 = array(zeros(4))~%");
+WriteBlockToClike("dqdt0", optimize(dqdt0), [4,1]);
+WriteDirectToFile("    return dqdt0~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def QuatdFromV(v, vd):~%");
+WriteDirectToFile("    assert len(v)  == 3~%");
+WriteDirectToFile("    assert len(vd) == 3~%");
+WriteDirectToFile("    th = linalg.norm(v)~%");
+WriteDirectToFile("    if th < THETA: return __QuatdFromV0(v, th, vd)~%");
+WriteDirectToFile("    else         : return __QuatdFromV(v, th, vd)~%");
+
+
+quit();
+

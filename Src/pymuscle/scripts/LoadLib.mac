@@ -1,0 +1,10 @@
+load("PrintClike.mac");
+
+
+optimprefix:_x;
+v1:[x+y/z, y^80, y/z];
+v2:[x+y, -y/z, x+y+y/z];
+opted : optimize(append(v1,v2))$
+
+WriteBlockToClike(opted);
+
