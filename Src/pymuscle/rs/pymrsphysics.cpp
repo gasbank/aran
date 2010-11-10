@@ -100,8 +100,8 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
    */
   int ret = PymCheckRotParam(pymCfg);
   if (ret < 0) {
-    printf("Error - Rotation parameterization failure detected.\n");
-    return -2;
+    //printf("Error - Rotation parameterization failure detected.\n");
+    //return -2;
   }
 
   /* Set reference */
@@ -208,15 +208,15 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
   memcpy(pymCfg->renChOutput, pymCfg->chOutput,  sizeof(pymCfg->chOutput));
   pymCfg->renChOutputLen = pymCfg->chOutputLen;*/
 
-  /* Write external force excertion */
+  /* Write external force exertion */
   memcpy(rbnTrunk->extForce, phyCon->trunkExternalForce,
 	 sizeof(double)*3);
   rbnTrunk->extForcePos[2] = 0.2;
   memset(phyCon->trunkExternalForce, 0, sizeof(double)*3);
 
-  //const double percent = (double)(i+1)/(pymCfg->nSimFrame)*100;
-  /* printf("%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e\n", */
-  /* 	   i, pymCfg->nSimFrame-1, percent, solstaStr, cost); */
+  const double percent = (double)(i+1)/(pymCfg->nSimFrame)*100;
+  printf("%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e\n",
+    i, pymCfg->nSimFrame-1, percent, solstaStr, cost);
   phyCon->totalPureOptTime += pureOptTime;
   return 0;
 }

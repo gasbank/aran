@@ -92,8 +92,10 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
     int parseRet = PymParseTrajectoryFile(pymTraj,
 					  cmdopt->trajconf,
 					  cmdopt->trajdata);
-    assert(parseRet == 0);
-    assert(pymTraj->nCorresMap > 0);
+    if (parseRet)
+      printf("Trajectory data file not exists.\n");
+    else
+      assert(pymTraj->nCorresMap > 0);
     /* The simulation time step defined in simconf and
      * the frame time (reciprocal of FPS) in trajdata
      * should have the same value. If mismatch happens

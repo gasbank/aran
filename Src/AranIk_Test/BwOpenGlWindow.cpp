@@ -249,7 +249,7 @@ int BwOpenGlWindow::handle_keydown() {
   } else if (key == 'x') {
     int ti1 = rand()%360;
     int ti2 = rand()%35 + 55;
-    double r = 3000;
+    double r = 30000;
     double phi = ti1/360.0*2*M_PI;
     double theta = ti2/360.0*2*M_PI;
     double car[3];

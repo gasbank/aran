@@ -353,7 +353,10 @@ private :
 };
 
 int PymConvexHull(Point_C *P, int n, Point_C *H) {
-  assert(3 <= n && n < 1000);
+  assert(n < 1000);
+  if (n < 3)
+    return 0;
+
   std::ofstream null_file( "nul" );
   GrahamScan g(n);
   for (int i = 0; i < n; ++i) {

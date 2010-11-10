@@ -26,9 +26,9 @@ struct _pym_config_t {
   double		 bipCom[3];	
   double		 bipRefCom[3];	/* reference biped COM position */
   /* Convex hull output points (thread-unsafe) */
-  Point_C		 chInput[100];
+  Point_C		 chInput[1000];
   int			 chInputLen;
-  Point_C		 chOutput[101];
+  Point_C		 chOutput[1001];
   int			 chOutputLen;
 
   ///* Convex hull output points (thread-safe) */

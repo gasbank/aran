@@ -619,9 +619,9 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
      * TODO [TUNE] Joint dislocation threshold
      */
     if (strcmp(iden, "HipL") == 0 || strcmp(iden, "HipR") == 0) {
-      bipEta[ Ari[4] + i ]    = 0.05;
+      bipEta[ Ari[4] + i ]    = 10000.05;
     } else {
-      bipEta[ Ari[4] + i ]    = 0.05;
+      bipEta[ Ari[4] + i ]    = 10000.05;
     }
   }
   /* Eta sub-block 06 - p_{com,ref} */

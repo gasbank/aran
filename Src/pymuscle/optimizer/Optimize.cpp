@@ -214,7 +214,7 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt) {
       c[ tauOffset + sd[i].Aci[3] + 4*j + 2 ] = 0;
     }
     for (j= tauOffset + sd[i].Aci[5];
-	 j < tauOffset + sd[i].Aci[6]; ++j) {
+      j < tauOffset + sd[i].Aci[6]; ++j) {
       /*
        * TODO [TUNE] Minimize the movement of candidate contact points
        *
@@ -226,10 +226,17 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt) {
        */
       c[j] = 0;
     }
+    for (j= tauOffset + sd[i].Aci[14];
+      j < tauOffset + sd[i].Aci[15]; ++j) {
+      /*
+       * TODO [TUNE] 'eps' >= |p_c_z|
+       */
+      c[j] = 1;
+    }
     /*
      * TODO [TUNE] Reference following coefficient
      */
-    c[ tauOffset + sd[i].Aci[8] ] = 1;
+    c[ tauOffset + sd[i].Aci[8] ] = 0;
     /*
      * TODO [TUNE] Previous close coefficient
      */
@@ -289,11 +296,11 @@ static void pym_optimize_rb_com(pym_opt_t *pymOpt) {
   for (i = 0, tauOffset = 0; i < nb;
        tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
     /* chi_2_z: Z-axis of COM for each body should be nonnegative */
-    SET_NONNEGATIVE( pymOpt, tauOffset + sd[i].Aci[0] + 2 );
+    //SET_NONNEGATIVE( pymOpt, tauOffset + sd[i].Aci[0] + 2 );
 
     /* rotation parameterization constraint */
     /* Should not be used with Nav0 reference. */
-    //SET_RANGE( pymOpt, tauOffset + sd[i].Aci[11], 0, 1.1*M_PI );
+    //SET_RANGE( pymOpt, tauOffset + sd[i].Aci[11], 0, 1.1*3.14 );
 
     /* eps_delta: eps_delta > |chi - chi_ref| */
     for(j=tauOffset + sd[i].Aci[8]; j<tauOffset + sd[i].Aci[9]; ++j) {
@@ -367,7 +374,8 @@ static void pym_optimize_contact_point(pym_opt_t *pymOpt) {
       const double theta = pymCfg->slant;
       const double z = -ctY*tan(theta);
       assert(z == 0); /* Only flat ground implemented. */
-      SET_LOWER_BOUND( pymOpt, tauOffset + sd[i].Aci[3] + 4*j + 2, z );
+      /* [TUNE] Non-penetration constraint */
+      //SET_LOWER_BOUND( pymOpt, tauOffset + sd[i].Aci[3] + 4*j + 2, z );
     }
     /*
      * TODO [TUNE] Constraints for fixing contact points
@@ -642,6 +650,13 @@ static void pym_optimize_mosek_cone_contact_point
 		      tauOffset + sd[i].Aci[5] + j,
 		      tauOffset + sd[i].Aci[4]+4*j+0,
 		      tauOffset + sd[i].Aci[4]+4*j+2);
+      /*
+       * TODO [TUNE] CP Z-pos: eps >= |p_c_z|
+       */
+      AppendConeRange(task,
+		      tauOffset + sd[i].Aci[14] + j,
+		      tauOffset + sd[i].Aci[3]+4*j+2,
+		      tauOffset + sd[i].Aci[3]+4*j+3);
     }
   }
 }
@@ -893,7 +908,7 @@ void PymConstructSupportPolygon(pym_config_t *pymCfg,
       ++pymCfg->chInputLen;
     }
   }
-  assert(pymCfg->chInputLen < 100);
+  assert(pymCfg->chInputLen < 1000);
   if (pymCfg->chInputLen > 0) {
     pymCfg->chOutputLen = PymConvexHull(pymCfg->chInput,
 					pymCfg->chInputLen, pymCfg->chOutput);

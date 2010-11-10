@@ -37,7 +37,12 @@ int PymParseTrajectoryFile(pym_traj_t *pymTraj,
   size_t trajHeaderLen = 0;
   printf("Opening trajconf %s...\n", fnRbCfg);
   if (rbCfg == 0) {
-    printf("Error - %s opening failure.\n", fnRbCfg);
+    printf("Warn - Trajectory config data %s opening failure.\n", fnRbCfg);
+    pymTraj->exportFps = 30;
+    pymTraj->trajData = 0;
+    pymTraj->nBlenderBody = 0;
+    pymTraj->nBlenderFrame = 0;
+    pymTraj->nCorresMap = 0;
     return -1;
   }
 
@@ -195,17 +200,20 @@ PYMPARSER_API int PymSetInitialStateUsingTrajectory(pym_config_t *pymCfg,
     /* previous step */
     prev = pymTraj->trajData + prevFrameIdx*pymTraj->nBlenderBody*6
       + pymTraj->corresMapIndex[i]*6 + 0;
-    memcpy(rbn->p0, prev + 0, sizeof(double)*3);
-    memcpy(rbn->q0, prev + 3, sizeof(double)*3);
     /* current step */
     current = pymTraj->trajData + curFrameIdx*pymTraj->nBlenderBody*6
       + pymTraj->corresMapIndex[i]*6 + 0;
+    memcpy(rbn->p0, current + 0, sizeof(double)*3);
+    memcpy(rbn->q0, current + 3, sizeof(double)*3);
     memcpy(rbn->p, current + 0, sizeof(double)*3);
     memcpy(rbn->q, current + 3, sizeof(double)*3);
     /* update discrete velocity based on current and previous step */
     FOR_0(j, 3) {
-      rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg->h;
-      rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg->h;
+      rbn->pd[j] = 0;
+      rbn->qd[j] = 0;
+
+      //rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg->h;
+      //rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg->h;
     }
   }
   printf("Total mass = %lf\n", totMass);

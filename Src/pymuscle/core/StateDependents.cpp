@@ -153,7 +153,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
         //if (pcj_2_nocf_W[2] <= -0.004) {
         //if (pcj_1_W[2] <= 0 && pcj_0_W[2] > pcj_1_W[2]) {
         //if (pcj_2_nocf_W[2] <= 0.15) {
-	double groundLevel = 0.15;
+	double groundLevel = 0.0;
 	if (strcmp(pymCfg->trajName, "Walk1") == 0) {
 	  if (pymCfg->curFrame > 180) 
 	    groundLevel += 0.630;
@@ -206,8 +206,9 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
                                 nd*nm,       // 9:f_T
                                 4*na,        // 10:\tilde{p}_A^{(l+1)}
                                 1,           // 11:\epsilon_rotparam
-				nd,          // 12:\Delta \chi prv
-				1,           // 13:\epsilon_\Delta \chi prv
+				                        nd,          // 12:\Delta \chi prv
+				                        1,           // 13:\epsilon_\Delta \chi prv
+                                np,          // 14:epsilon_cp_|z|
     };
     //__PRINT_VECTOR_INT(Asubcolsizes, 10);
     sd->Asubrows = sizeof(Asubrowsizes)/sizeof(int);

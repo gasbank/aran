@@ -1086,7 +1086,7 @@ static void RenderSupportPolygon
   if (chInputLen+1 < chOutputLen) {
     printf("ERROR - chInputLen = %d, chOutputLen = %d\n",
 	   chInputLen, chOutputLen);
-    abort();
+    //abort();
   }
   if (chOutputLen) {
     /* PAIR A */

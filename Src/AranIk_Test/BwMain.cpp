@@ -872,31 +872,30 @@ void idle_cb(void* ac)
       double totMass = 0;
       int i, j, k;
       FOR_0(i, nb) {
-	/* Access data from renderer-accessable area of phyCon */
-	const pym_rb_named_t *rbn = &appContext.pymRs->phyCon.renBody[i].b;
-	FOR_0(j, rbn->nContacts_2) {
-	  const double *conForce = rbn->contactsForce_2[j];
-	  FOR_0(k, 3) {
-	    totConForce[k] += conForce[k];
-	    COM[k] += rbn->q[k]*rbn->m;
-	  }
-
-	}
-	FOR_0(k, 3) {
-	  COM[k] += rbn->q[k]*rbn->m;
-	}
-	totMass += rbn->m;
+	      /* Access data from renderer-accessible area of phyCon */
+	      const pym_rb_named_t *rbn = &appContext.pymRs->phyCon.renBody[i].b;
+	      FOR_0(j, rbn->nContacts_2) {
+	        const double *conForce = rbn->contactsForce_2[j];
+	        FOR_0(k, 3) {
+	          totConForce[k] += conForce[k];
+	          COM[k] += rbn->q[k]*rbn->m;
+	        }
+	      }
+	      FOR_0(k, 3) {
+	        COM[k] += rbn->q[k]*rbn->m;
+	      }
+	      totMass += rbn->m;
       }
       printf("totConForce = %lf, %lf, %lf\n", totConForce[0],
-	     totConForce[1], totConForce[2]);
+        totConForce[1], totConForce[2]);
       FOR_0(k, 3) {
-	COM[k] /= totMass;
+        COM[k] /= totMass;
       }
       BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(appContext.glWindow);
       ++simFrame;
       if (ret || simFrame >= appContext.pymRs->pymCfg.nSimFrame) {
-	PymRsResetPhysics(appContext.pymRs);
-	simFrame = 0;
+	      //PymRsResetPhysics(appContext.pymRs);
+	      //simFrame = 0;
       }
     }
     ++appContext.frames;
