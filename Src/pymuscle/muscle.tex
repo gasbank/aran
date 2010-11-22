@@ -278,8 +278,6 @@ of our biped model. The actuated and unactuated muscles are explicitly configure
 with respect to a corresponding phase.
 
 
-%\includegraphics[width=130mm]{algo}
-
 \pagebreak
 
 \section{Dynamics algorithm}
@@ -431,6 +429,34 @@ An \emph{agonist}, or \emph{prime mover}, is a muscle whose contraction is chief
 A muscle fibers has its \emph{antagonist}. The antagonist is a muscle whose action opposes that of a particular agonist.
 We can choose specific muscle fibers to be used in the biped model based on agonists related to legs.
 Also we can inform the optimizer to reduce actuation force on a muscle fiber when its antagonist is actively actuated.
+
+\subsection{Soft joints}
+
+Conventional biped models use reduced coordinates to represent a state.
+They use a 6-DOF value on the root of the biped for position and orientation.
+States for other bodies composing the biped have three or less DOFs with respect to joint types.
+Since the other bodies have its own parent body, states are defined in the parent body local coordinates.
+For instance, a calf has 1-DOF since its parent is a thigh and they are connected with a knee joint.
+On the contrary, every body in the biped model we propose has a full 6-DOF to allow a slight joint dislocation.
+In dynamics point of view, multiple rigid bodies are simulated individually without any joint constraints involved.
+Without joint constraints, the pose of biped is not maintained occasionally due to a serious joint dislocation occurred during optimization process.
+For instance, all bodies tend to collapse to the ground rather than preserving its normal pose when a high cost is given to the muscle fiber actuation.
+By all means a certain human pose should be maintained and that is critically related to degrees of the joint dislocation.
+We introduced a biomechanically-inspired ball joint to our biped model.
+There are certain points defined in body coordinates on the bodies.
+Two points came from two different bodies may form a soft joint.
+The distance between two points should be constrained to $\epsilon$ or smaller where $\epsilon$ is a joint dislocation threshold.
+To satisfy the constraints, we connect these two points with a stiff ligament fiber.
+We assume that ligament fibers have no cost for actuation.
+With these kind of joints, the biped can take advantages of shock absorption mechanism as well as prevention of joint dislocation.
+
+\subsection{Contact model (penalty method)}
+A penalty method is a way to calculate contact normal forces with allowing a certain amount of penetration.
+A temporary spring-damper element is created and attached where a contact is established.
+The spring-damper exerts a strong force to separate two penetrated bodies.
+After non-penetration constraints recovered the spring-damper is removed immediately.
+Typically, a critically-damped spring is used to make the separation time minimal without oscillation.
+
 
 \subsection{Contact model (LCP)}
 
@@ -832,7 +858,6 @@ Jacobian also can be calculated in a separated manner.
         & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
 \end{align}
 
-%\includegraphics[width=120mm]{testplot}
 
 
 \section{Muscle control algorithm}
@@ -1833,7 +1858,9 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \scriptstyle{10}&   \tilde{p}^{(l+1)}_{A,i}           \cr
 \scriptstyle{11}&   \epsilon_{\text{rot}}             \cr
 \scriptstyle{12}&   \Delta\chi_{i,prv}               \cr
-\scriptstyle{13} &   \epsilon_{\Delta,i,prv}
+\scriptstyle{13} &   \epsilon_{\Delta,i,prv}          \cr
+\scriptstyle{14} &   \epsilon_{p,z}          \cr
+\scriptstyle{15} &   \kappa_{compen}
 }
 , \quad
 \eta_i \equiv
@@ -1847,7 +1874,10 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \scriptstyle{5} &   \chi^{(l)}_{i,ref}                         \cr
 \scriptstyle{6} &   0                                          \cr
 \scriptstyle{7} &   (-V_{i,j})_{j \in \mathcal{A}}^\text{re}      \cr
-\scriptstyle{8} &   \chi^{(l)}_{i}
+\scriptstyle{8} &   \chi^{(l)}_{i} \cr
+\scriptstyle{9} &   ns \cr
+\scriptstyle{10} &  0 \cr
+\scriptstyle{11} &  0 \cr
 }
 \end{equation}
 
