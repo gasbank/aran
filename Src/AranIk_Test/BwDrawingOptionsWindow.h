@@ -1,4 +1,5 @@
-#pragma once
+#ifndef __BWDRAWINGOPTIONSWINDOW_H_
+#define __BWDRAWINGOPTIONSWINDOW_H_
 
 class BwAppContext;
 class BwOpenGlWindow;
@@ -14,3 +15,5 @@ private:
 	BwAppContext& m_ac;
 	BwOpenGlWindow& m_openGlWindow;
 };
+
+#endif // #ifndef __BWDRAWINGOPTIONSWINDOW_H_

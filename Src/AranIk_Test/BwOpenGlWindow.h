@@ -12,6 +12,7 @@ class BwOpenGlWindow : public Fl_Gl_Window
   virtual int	handle(int);
   virtual void	resize(int,int,int,int);
   void setCamCen(double cx, double cy, double cz);
+  const ArnVec3 &omega() const { return m_omega; }
  private:
   void		draw();
   void		handle_push();
@@ -37,6 +38,7 @@ class BwOpenGlWindow : public Fl_Gl_Window
   double	m_cam_dtheta;
   double m_cam_cen[3];
   bool m_screenshot_fbyf;
+  ArnVec3 m_omega;
 };
 
 struct HitRecord

@@ -1,4 +1,5 @@
 #include "AranMathPCH.h"
+#include "LinearR3.h"
 #include "ArnIntersection.h"
 #include "ArnPlane.h"
 #include "ArnMath.h"

@@ -77,3 +77,9 @@ ArnVec3* ArnVec3Assign(ArnVec3* v1, const double* v2)
 	v1->z = static_cast<float>(v2[2]);
 	return v1;
 }
+
+std::ostream & operator<<( std::ostream &s, const ArnVec3 &v )
+{
+  s << "(" << v.x << ", " << v.y << ", " << v.z << ")";
+  return s;
+}

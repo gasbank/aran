@@ -5,15 +5,116 @@
 #include "BwAppContext.h"
 #include "BwWin32Timer.h"
 #include "BwDrawingOptionsWindow.h"
+#include "BwDebugPrintOptionsWindow.h"
+#include "BwRbTrackingOptionsWindow.h"
 #include "BwPlaybackSlider.h"
-#include "boost/filesystem.hpp"
-#include "boost/lexical_cast.hpp"
 #include "ConvexHullCapi.h"
+#include "QuaternionEOM.h"
+#include "SliderInput.h"
+
 namespace fs = boost::filesystem;
+
+void idle_cb(void* ac);
 
 #if !HAVE_GL
 #error OpenGL in FLTK not enabled.
 #endif
+
+struct SceneButtonsHolder
+{
+  BwAppContext* ac;
+  MessageHandleResult mhr;
+};
+
+struct cost_term {
+  optimization_cost_terms e;
+  std::string label;
+  double lo, def, hi; /* lower, default, high bound */
+};
+
+static cost_term cost_terms[oct_count] = {
+  { oct_normal_force, "normal", 0, 0, 10 },
+  { oct_contact_point_zpos, "contact z", 0, 0, 10 },
+  { oct_normal_force_nonneg_comp, "normal compen", 0, 10, 10 },
+  { oct_contact_point_movement, "contact movement", 0, 0, 10},
+  { oct_contact_point_zpos_epsilon, "contact z epsilon", 0, 0, 10},
+  { oct_rb_reference_deviation, "reference dev.", 0, 10, 10},
+  { oct_rb_previous_deviation, "previous dev.", 0, 0, 10},
+  { oct_biped_com_deviation, "biped com dev.", 0, 0, 10},
+  { oct_torque_around_com, "torque com dev.", 0, 0, 10},
+  { oct_ligament_actuation, "lig act", 0, 0, 10},
+  { oct_actuated_muscle_actuation, "act act", 0, 0, 10},
+  { oct_joint_dislocation, "joint dislocation", 0, 0, 10},
+  { oct_uniform_tension_cost, "tension", 0, 0, 10},
+  { oct_uniform_actuation_cost, "actuation", 0, 0, 1}
+};
+
+void dump_cb(Fl_Widget *o, void *ac_raw)
+{
+  BwAppContext& ac = *(BwAppContext*)ac_raw;
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  FILE *f = fopen("dump.dat", "wb");
+  if (!f) {
+    cout << "Warn - dump failed due to file opening failure.\n";
+    return;
+  }
+  for (int i = 0; i <= ac.playbackSlider->getAvailableFrames(); ++i)
+    fwrite(&ac.rb_history[i][0], sizeof(pym_rb_t), pymCfg->nBody, f);
+  fclose(f);
+  cout << "Dump file written.\n";
+}
+
+void print_rb0_cb(Fl_Widget *o, void *ac_raw)
+{
+  BwAppContext& ac = *(BwAppContext*)ac_raw;
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  stringstream ss;
+  pym_print_detailed_rb_state(ss, pymCfg->body[0]);
+  string sss = ss.str();
+  cout << sss << endl;
+}
+
+void load_cb(Fl_Widget *o, void *ac_raw)
+{
+  BwAppContext& ac = *(BwAppContext*)ac_raw;
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  FILE *f = fopen("dump.dat", "rb");
+  if (!f) {
+    cout << "Error - load failed due to dump file opening.\n";
+    return;
+  }
+
+  std::cout << "sizeof(intmax_t) is " << sizeof(boost::intmax_t) << '\n';
+
+  fs::path p( "dump.dat" );
+
+  if ( !fs::exists( p ) )
+  {
+    std::cout << "not found: dump.dat" << std::endl;
+    return;
+  }
+
+  if ( !fs::is_regular( p ) )
+  {
+    std::cout << "not a regular file: dump.dat" << std::endl;
+    return;
+  }
+
+  boost::uintmax_t file_s = fs::file_size( p );
+  int nFrames = file_s/(pymCfg->nBody*sizeof(pym_rb_t));
+  cout << "file size of dump.dat is " << file_s << " bytes." << endl;
+  cout << "File contains " << nFrames << " frames of data." << endl;
+  ac.rb_history.clear();
+  for (int i = 0; i < nFrames; ++i) {
+    vector<pym_rb_t> a(pymCfg->nBody);
+    fread(&a[0], sizeof(pym_rb_t), pymCfg->nBody, f);
+    ac.rb_history.push_back(a);
+  }
+  fclose(f);
+  cout << "Loaded from dump file.\n";
+  ac.playbackSlider->setAvailableFrames(nFrames-1); /* frame index range is 0..nFrames-1 */
+  ac.playbackSlider->redraw();
+}
 
 static inline double
 FootHeight(double t, double stepLength, double maxStepHeight)
@@ -23,299 +124,6 @@ FootHeight(double t, double stepLength, double maxStepHeight)
   else
     return -4.0*maxStepHeight*t*(t-stepLength)/(stepLength*stepLength);
 }
-
-
-/*
-  static MessageHandleResult
-  HandleEvent(SDL_Event* event, AppContext& ac)
-  {
-  static std::pair<int, int> mousePosition;
-  MessageHandleResult done = MHR_DO_NOTHING;
-  ArnSkeleton* skel = 0;
-  if (ac.sgPtr)
-  {
-  skel = reinterpret_cast<ArnSkeleton*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_SKELETON));
-  }
-  switch( event->type )
-  {
-  case SDL_VIDEORESIZE:
-  {
-  ac.windowWidth = event->resize.w;
-  ac.windowHeight = event->resize.h;
-  ac.avd.Width	= ac.windowWidth;
-  ac.avd.Height	= ac.windowHeight;
-  glViewport(0, 0, ac.windowWidth, ac.windowHeight);
-  printf("Resized window size is %d x %d.\n", ac.windowWidth, ac.windowHeight);
-  break;
-  }
-  case SDL_JOYAXISMOTION:
-  {
-  //std::cout << "Type " << (int)event->jaxis.type << " / Which " << (int)event->jaxis.which << " axis " << (int)event->jaxis.axis << " / value " << (int)event->jaxis.value << std::endl;
-  if ((int)event->jaxis.axis == 0)
-  {
-  if (abs(event->jaxis.value) > 9000)
-  {
-  ac.linVelX = float(event->jaxis.value / 16000.0);
-  }
-  else
-  {
-  ac.linVelX = 0;
-  }
-  }
-  if ((int)event->jaxis.axis == 1)
-  {
-  if (abs(event->jaxis.value) > 9000)
-  {
-  ac.linVelZ = float(-event->jaxis.value / 16000.0);
-
-  }
-  else
-  {
-  ac.linVelZ = 0;
-  }
-  }
-  GeneralBodyPtr gbPtr = ac.swPtr->getBodyByNameFromSet("EndEffector");
-  if (gbPtr)
-  {
-  gbPtr->setLinearVel(ac.linVelX, 0, ac.linVelZ);
-  }
-  /////////////////////////////////////////////////////////////////////////
-  if ((int)event->jaxis.axis == 2)
-  {
-  if (abs(event->jaxis.value) > 9000)
-  {
-  ac.torque = event->jaxis.value / 10.0f;
-  }
-  else
-  {
-  ac.torque = 0;
-  }
-  }
-
-  if ((int)event->jaxis.axis == 5)
-  {
-  if (abs(event->jaxis.value) > 10)
-  {
-  ac.torqueAnkle = event->jaxis.value / 500.0f;
-  }
-  else
-  {
-  ac.torqueAnkle = 0;
-  }
-  }
-  }
-  break;
-  case SDL_JOYBALLMOTION:
-  {
-  std::cout << "SDL_JOYBALLMOTION" << std::endl;
-  }
-  break;
-  case SDL_JOYHATMOTION:
-  {
-  std::cout << "SDL_JOYHATMOTION" << std::endl;
-  }
-  break;
-  case SDL_JOYBUTTONDOWN:
-  {
-  std::cout << "SDL_JOYBUTTONDOWN" << std::endl;
-  }
-  break;
-  case SDL_JOYBUTTONUP:
-  {
-  std::cout << "SDL_JOYBUTTONUP" << std::endl;
-  std::cout << "gs_torque =  " << ac.torque << std::endl;
-  std::cout << "gs_linVelX = " << ac.linVelX << std::endl;
-  std::cout << "gs_linVelZ = " << ac.linVelZ << std::endl;
-  }
-  break;
-  case SDL_MOUSEBUTTONUP:
-  {
-  if (event->button.button == SDL_BUTTON_LEFT)
-  {
-  SelectGraphicObject(
-  ac,
-  float(event->motion.x),
-  float(ac.avd.Height - event->motion.y) // Note that Y-coord flipped.
-  );
-
-  if (ac.sgPtr)
-  {
-  ArnMatrix modelview, projection;
-  glGetFloatv(GL_MODELVIEW_MATRIX, reinterpret_cast<GLfloat*>(modelview.m));
-  modelview = modelview.transpose();
-  glGetFloatv(GL_PROJECTION_MATRIX, reinterpret_cast<GLfloat*>(projection.m));
-  projection = projection.transpose();
-  ArnVec3 origin, direction;
-  ArnMakePickRay(&origin, &direction, float(event->motion.x), float(ac.avd.Height - event->motion.y), &modelview, &projection, &ac.avd);
-  ArnMesh* mesh = reinterpret_cast<ArnMesh*>(ac.sgPtr->findFirstNodeOfType(NDT_RT_MESH));
-  if (mesh)
-  {
-  bool bHit = false;
-  unsigned int faceIdx = 0;
-  ArnIntersectGl(mesh, &origin, &direction, &bHit, &faceIdx, 0, 0, 0, 0, 0);
-  if (bHit)
-  printf("Hit on Face %u of mesh %s\n", faceIdx, mesh->getName());
-  }
-  }
-  }
-  else if (event->button.button == SDL_BUTTON_WHEELUP)
-  {
-  if (ac.viewMode == VM_TOP || ac.viewMode == VM_LEFT || ac.viewMode == VM_FRONT)
-  {
-  if (ac.orthoViewDistance > 1)
-  --ac.orthoViewDistance;
-  }
-  }
-  else if (event->button.button == SDL_BUTTON_WHEELDOWN)
-  {
-  if (ac.viewMode == VM_TOP || ac.viewMode == VM_LEFT || ac.viewMode == VM_FRONT)
-  {
-  ++ac.orthoViewDistance;
-  }
-  }
-  }
-  break;
-  case SDL_MOUSEBUTTONDOWN:
-  {
-  break;
-  }
-  case SDL_MOUSEMOTION:
-  {
-  mousePosition.first = event->motion.x;
-  mousePosition.second = event->motion.y;
-
-  printf("%d %d\n", event->motion.x, event->motion.y);
-
-  if (ac.bPanningButtonDown)
-  {
-  int dx = (int)event->motion.x - ac.panningStartPoint.first;
-  int dy = (int)event->motion.y - ac.panningStartPoint.second;
-  const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
-  ac.dPanningCenter.first = -(2.0f * ac.orthoViewDistance * aspectRatio / ac.windowWidth) * dx;
-  ac.dPanningCenter.second = -(-2.0f * ac.orthoViewDistance / ac.windowHeight) * dy;
-
-  //printf("%f   %f\n", ac.dPanningCenter.first, ac.dPanningCenter.second);
-  }
-  break;
-  }
-  case SDL_KEYDOWN:
-  ac.bHoldingKeys[event->key.keysym.sym] = true;
-
-  if ( event->key.keysym.sym == SDLK_ESCAPE )
-  {
-  done = MHR_EXIT_APP;
-  }
-  else if (event->key.keysym.sym == SDLK_n)
-  {
-  done = MHR_NEXT_SCENE;
-  }
-  else if (event->key.keysym.sym == SDLK_b)
-  {
-  done = MHR_PREV_SCENE;
-  }
-  else if (event->key.keysym.sym == SDLK_r)
-  {
-  done = MHR_RELOAD_SCENE;
-  }
-  else if (event->key.keysym.sym == SDLK_KP7)
-  {
-  ac.viewMode = VM_TOP;
-  printf("  View mode set to top.\n");
-  }
-  else if (event->key.keysym.sym == SDLK_KP1)
-  {
-  ac.viewMode = VM_LEFT;
-  printf("  View mode set to left.\n");
-  }
-  else if (event->key.keysym.sym == SDLK_KP3)
-  {
-  ac.viewMode = VM_FRONT;
-  printf("  View mode set to front.\n");
-  }
-  else if (event->key.keysym.sym == SDLK_KP4)
-  {
-  ac.viewMode = VM_CAMERA;
-  printf("  View mode set to camera.\n");
-  }
-  else if (event->key.keysym.sym == SDLK_h)
-  {
-  ac.bRenderHud = !ac.bRenderHud;
-  }
-  else if (event->key.keysym.sym == SDLK_1)
-  {
-  if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 0)
-  {
-  skel->getAnimCtrl()->SetTrackAnimationSet(0, 0);
-  skel->getAnimCtrl()->SetTrackPosition(0, skel->getAnimCtrl()->GetTime());
-  ARNTRACK_DESC desc;
-  skel->getAnimCtrl()->GetTrackDesc(0, &desc);
-  skel->getAnimCtrl()->SetTrackEnable(0, desc.Enable ? false : true);
-  skel->getAnimCtrl()->SetTrackWeight(0, 1);
-  }
-  }
-  else if (event->key.keysym.sym == SDLK_2)
-  {
-  if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 1)
-  {
-  skel->getAnimCtrl()->SetTrackAnimationSet(1, 1);
-  skel->getAnimCtrl()->SetTrackPosition(1, skel->getAnimCtrl()->GetTime());
-  ARNTRACK_DESC desc;
-  skel->getAnimCtrl()->GetTrackDesc(1, &desc);
-  skel->getAnimCtrl()->SetTrackEnable(1, desc.Enable ? false : true);
-  skel->getAnimCtrl()->SetTrackWeight(1, 1);
-  }
-  }
-  else if (event->key.keysym.sym == SDLK_3)
-  {
-  if (skel && skel->getAnimCtrl() && skel->getAnimCtrl()->getTrackCount() > 2)
-  {
-  skel->getAnimCtrl()->SetTrackAnimationSet(2, 2);
-  skel->getAnimCtrl()->SetTrackPosition(2, skel->getAnimCtrl()->GetTime());
-  ARNTRACK_DESC desc;
-  skel->getAnimCtrl()->GetTrackDesc(2, &desc);
-  skel->getAnimCtrl()->SetTrackEnable(2, desc.Enable ? false : true);
-  skel->getAnimCtrl()->SetTrackWeight(2, 1);
-  }
-  }
-  else if (event->key.keysym.sym == SDLK_SPACE)
-  {
-  ac.bPanningButtonDown = true;
-  ac.panningStartPoint = mousePosition;
-
-
-  const float aspectRatio = (float)ac.windowWidth / ac.windowHeight;
-  float worldX = (2.0f * ac.orthoViewDistance * aspectRatio / ac.windowWidth) * mousePosition.first + (ac.panningCenter.first - ac.orthoViewDistance * aspectRatio);
-  float worldY = (-2.0f * ac.orthoViewDistance / ac.windowHeight) * mousePosition.second + (ac.panningCenter.second + ac.orthoViewDistance);
-  printf("Panning start point is (%d, %d) or (%.3f, %.3f)\n", mousePosition.first, mousePosition.second, worldX, worldY);
-
-  }
-  //printf("key '%s' pressed\n", SDL_GetKeyName(event->key.keysym.sym));
-  break;
-  case SDL_KEYUP:
-  ac.bHoldingKeys[event->key.keysym.sym] = false;
-
-  if (event->key.keysym.sym == SDLK_c)
-  {
-  ac.bNextCamera = true;
-  }
-  else if (event->key.keysym.sym == SDLK_SPACE)
-  {
-  ac.bPanningButtonDown = false;
-
-  ac.panningCenter.first += ac.dPanningCenter.first;
-  ac.panningCenter.second += ac.dPanningCenter.second;
-
-  ac.dPanningCenter.first = 0;
-  ac.dPanningCenter.second = 0;
-  }
-  break;
-  case SDL_QUIT:
-  done = MHR_EXIT_APP;
-  break;
-  }
-  return done;
-  }
-*/
 
 static ArnSceneGraphPtr
 ConfigureTestScene(const char* sceneFileName, const ArnViewportData* avd)
@@ -774,14 +582,8 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
   ac.dPanningCenter[1]		 = 0;
   ac.dPanningCenter[2]		 = 0;
   // Drawing options
-  ac.bDrawGrid			 = true;
-  ac.bDrawHud			 = false;
-  ac.bDrawJointIndicator	 = false;
-  ac.bDrawEndeffectorIndicator	 = false;
-  ac.bDrawJointAxisIndicator	 = false;
-  ac.bDrawContactIndicator	 = false;
-  ac.bDrawContactForaceIndicator = false;
-  ac.bDrawRootNodeIndicator	 = false;
+  for (int i = 0; i < pym_do_count; ++i)
+    ac.drawing_options[i] = false;
   // Scene graph UI
   ac.sceneGraphList		 = 0;
   // Rigid body simulation
@@ -833,114 +635,182 @@ void overlay_sides_cb(Fl_Widget *o, void *p)
   sw->redraw_overlay();
 }
 
-void idle_cb(void* ac)
+void update_idle_cb_attachment(BwAppContext &ac)
+{
+  ac.bSimulate = ac.simulateButton->value() ? true : false;
+  if (ac.bSimulate) {
+    if (!Fl::has_idle(idle_cb, &ac))
+      Fl::add_idle(idle_cb, &ac);
+  } else {
+    if (Fl::has_idle(idle_cb, &ac))
+      Fl::remove_idle(idle_cb, &ac);
+  }
+}
+
+void step(BwAppContext &ac)
 {
   static double start_time		= 0;
   static double frameStartMs		= 0;
   static double frameDurationMs	= 0;
   static double frameEndMs		= 0;
-  static char frameStr[32];
   static int simFrame = 0;
-  BwAppContext& appContext = *(BwAppContext*)ac;
-  if (appContext.bSimulate) {
-    if (!start_time)
-      start_time = appContext.timer.getTicks();
-    frameDurationMs = frameEndMs - frameStartMs;
-    //printf("Total %lf FrameDuration %lf\n", frameStartMs - start_time, frameDurationMs);
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  const int nb = pymCfg->nBody;
+  if (!start_time)
+    start_time = ac.timer.getTicks();
+  frameDurationMs = frameEndMs - frameStartMs;
+  //printf("Total %lf FrameDuration %lf\n", frameStartMs - start_time, frameDurationMs);
 
-    frameStartMs = appContext.timer.getTicks();
-    UpdateScene(appContext, (float)(frameDurationMs / 1000.0));
+  frameStartMs = ac.timer.getTicks();
+  UpdateScene(ac, (float)(frameDurationMs / 1000.0));
 
-    frameEndMs = appContext.timer.getTicks();
-    appContext.glWindow->redraw();
-    sprintf(frameStr, "%u(%.0lf)", appContext.frames, frameDurationMs);
-    appContext.frameLabel->label(frameStr);
+  frameEndMs = ac.timer.getTicks();
+  ac.glWindow->redraw();
+  
+  
+  if (ac.swPtr)
+    ac.swPtr->getSimWorldState(ac.simWorldHistory[ac.frames]);
 
-    appContext.playbackSlider->setAvailableFrames(appContext.frames);
-    appContext.playbackSlider->value(appContext.frames);
-    if (appContext.swPtr)
-      appContext.swPtr->getSimWorldState(appContext.simWorldHistory[appContext.frames]);
+  std::stringstream ss;
+  ss << setiosflags(ios::fixed) << setprecision(4);
 
-    if (appContext.pymRs) {
-      printf("FRAME %d\n", simFrame);
-      appContext.pymRs->phyCon.pymCfg->curFrame = simFrame;
-      int ret = 0;
-      ret = PymRsFrameMove(appContext.pymRs, simFrame);
-      const int nb = appContext.pymRs->phyCon.pymCfg->nBody;
-      double totConForce[3] = {0,};
-      double COM[3] = {0,};
-      double totMass = 0;
-      int i, j, k;
-      FOR_0(i, nb) {
-	      /* Access data from renderer-accessible area of phyCon */
-	      const pym_rb_named_t *rbn = &appContext.pymRs->phyCon.renBody[i].b;
-	      FOR_0(j, rbn->nContacts_2) {
-	        const double *conForce = rbn->contactsForce_2[j];
-	        FOR_0(k, 3) {
-	          totConForce[k] += conForce[k];
-	          COM[k] += rbn->q[k]*rbn->m;
-	        }
-	      }
-	      FOR_0(k, 3) {
-	        COM[k] += rbn->q[k]*rbn->m;
-	      }
-	      totMass += rbn->m;
+  int frame_move_ret = 0;
+  char result_msg[2048] = {0,};
+  if (ac.pymRs) {
+    //cout << pymCfg->body[0] << endl;
+    //printf("FRAME %d\n", simFrame);
+    pymCfg->curFrame = simFrame;
+    for (int i = 0; i < oct_count; ++i) {
+      const double cv = ac.cost_coeff_sliders[ i ]->value();
+      pymCfg->opt_cost_coeffs[ cost_terms[i].e ] = cv;
+    }
+    for (int i = 0; i < nb; ++i) {
+      // fltk check browser item index starts at 1.
+      pymCfg->body[i].b.track = ac.rb_tracking_options->checked(i+1) == 1 ? true : false;
+    }
+    pymCfg->joint_dislocation_threshold = ac.joint_dislocation_slider->value();
+    pymCfg->joint_dislocation_enabled = ac.joint_dislocation_button->value();
+    frame_move_ret = PymRsFrameMove(ac.pymRs, simFrame, result_msg);
+    if (frame_move_ret < 0) {
+      ac.simulateButton->value(0);
+      update_idle_cb_attachment(ac);
+    }
+    const int nb = ac.pymRs->phyCon.pymCfg->nBody;
+    double totConForce[3] = {0,};
+    double COM[3] = {0,};
+    double totMass = 0;
+    int i, j, k;
+    FOR_0(i, nb) {
+      /* Access data from renderer-accessible area of phyCon */
+      const pym_rb_named_t *rbn = &pymCfg->body[i].b;
+      FOR_0(j, rbn->nContacts_1) {
+        const double *conForce = rbn->contactsForce_2[j];
+        FOR_0(k, 3) {
+          totConForce[k] += conForce[k];
+          COM[k] += rbn->q[k]*rbn->m;
+        }
       }
-      printf("totConForce = %lf, %lf, %lf\n", totConForce[0],
-        totConForce[1], totConForce[2]);
       FOR_0(k, 3) {
-        COM[k] /= totMass;
+        COM[k] += rbn->q[k]*rbn->m;
       }
-      BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(appContext.glWindow);
-      ++simFrame;
-      if (ret || simFrame >= appContext.pymRs->pymCfg.nSimFrame) {
-	      //PymRsResetPhysics(appContext.pymRs);
-	      //simFrame = 0;
+      totMass += rbn->m;
+    }
+    const int nf = pymCfg->nFiber;
+    double totActAct = 0, totActTen = 0;
+    double totLigAct = 0, totLigTen = 0;
+    FOR_0(j, nf) {
+      pym_mf_named_t *mf = &pymCfg->fiber[j].b;
+      if (mf->mType == PMT_ACTUATED_MUSCLE) {
+        totActAct += mf->A;
+        totActTen += fabs(mf->T);
+      } else {
+        totLigAct += mf->A;
+        totLigTen += fabs(mf->T);
       }
     }
-    ++appContext.frames;
+    //printf("totAct  Act %lf  Ten %lf\n", totActAct, totActTen);
+    //printf("totLig  Act %lf  Ten %lf\n", totLigAct, totLigTen);
+    //printf("totConForce = %lf, %lf, %lf\n", totConForce[0], totConForce[1], totConForce[2]);
+    ss << result_msg << endl;
+    ss << "Cube omega: " << ac.glWindow->omega() << endl;
+    ss << "totConForce: [" << totConForce[0] << ", " << totConForce[1] << ", " << totConForce[2] << "]\n";
+
+    FOR_0(k, 3) {
+      COM[k] /= totMass;
+    }
+    static vector<string> fiber_str_items;
+    ac.fiber_browser->clear();
+    for (int i = 0; i < pymCfg->nFiber; ++i) {
+      pym_mf_named_t *mfi = &pymCfg->fiber[i].b;
+      std::stringstream str_s;
+      str_s << setiosflags(ios::fixed) << setprecision(6);
+      str_s << mfi->name << "\t" << mfi->A << "\t" << mfi->T << "\t" << mfi->kse << "\t"
+        << mfi->kpe << "\t" << mfi->b << "\t" << mfi->xrest;
+      ac.fiber_browser->add(str_s.str().c_str());
+    }
+
+    BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(ac.glWindow);
+    ++simFrame;
+    if (frame_move_ret || simFrame >= pymCfg->nSimFrame) {
+      //PymRsResetPhysics(appContext.pymRs);
+      simFrame = 0;
+    }
+  }
+  std::string sss(ss.str());
+  static char slidersss[1024];
+  strncpy(slidersss, sss.c_str(), 1024);
+  ac.slider->label(slidersss);
+
+  if (ac.pymRs && !frame_move_ret) {
+    if (ac.frames < BwAppContext::MAX_SIMULATION_FRAMES) {
+      ++ac.frames;
+      sprintf(ac.frameStr, "%d", ac.frames);
+      ac.frameLabel->redraw_label();
+
+      ac.playbackSlider->setAvailableFrames(ac.frames);
+      ac.playbackSlider->value(ac.frames);
+    }
+
+    static vector<pym_rb_t> body_states(pymCfg->nBody);
+    memcpy(&body_states[0], pymCfg->body, sizeof(pym_rb_t)*pymCfg->nBody);
+    ac.rb_history.erase_end( ac.rb_history.size() - ac.frames );
+    ac.rb_history.push_back(body_states);
+    //printf("rb_history.size() = %d\n", ac.rb_history.size());
+  }
+}
+static const int aaa = 100;
+char bbb[aaa];
+void idle_cb(void* ac_raw)
+{
+  BwAppContext& ac = *(BwAppContext*)ac_raw;
+  if (ac.bSimulate) {
+    step(ac);
   }
 }
 
 void simulate_button_cb(Fl_Widget *o, void *p)
 {
   Fl_Light_Button* widget = (Fl_Light_Button*)o;
-  BwAppContext& appContext = *(BwAppContext*)p;
-  appContext.bSimulate = widget->value() ? true : false;
-
-  if (appContext.bSimulate)
-    {
-      if (!Fl::has_idle(idle_cb, &appContext))
-	Fl::add_idle(idle_cb, &appContext);
-    }
-  else
-    {
-      if (Fl::has_idle(idle_cb, &appContext))
-	Fl::remove_idle(idle_cb, &appContext);
-    }
+  BwAppContext& ac = *(BwAppContext*)p;
+  update_idle_cb_attachment(ac);
 }
 
-struct SceneButtonsHolder
+void real_muscle_cb(Fl_Widget *o, void *p)
 {
-  BwAppContext* ac;
-  BwOpenGlWindow* openGlWindow;
-  MessageHandleResult mhr;
-};
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  ac.pymRs->pymCfg.real_muscle = widget->value() == 1 ? true : false;
+}
 
 void scene_buttons_cb(Fl_Widget* o, void* p)
 {
   SceneButtonsHolder* sbh = (SceneButtonsHolder*)p;
   BwAppContext& ac = *sbh->ac;
-  BwOpenGlWindow& openGlWindow = *sbh->openGlWindow;
+  BwOpenGlWindow& openGlWindow = *sbh->ac->glWindow;
   MessageHandleResult done = sbh->mhr;
 
-  if (ac.sceneList.size() == 0) {
-    std::cout << "No scene loaded at all.\n";
-    return;
-  }
-
   int reconfigScene = false;
-  if (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE) {
+  if (ac.sceneList.size() && (done == MHR_NEXT_SCENE || done == MHR_PREV_SCENE)) {
     int nextSceneIndex;
     if (done == MHR_NEXT_SCENE) {
       nextSceneIndex = (ac.curSceneIndex + 1) % ac.sceneList.size();
@@ -958,18 +828,24 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
       reconfigScene = true;
     }
   } else if (done == MHR_RELOAD_SCENE) {
-    ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
-    if (!ac.sgPtr) {
-      std::cerr << " *** Aborting..." << std::endl;
-      done = MHR_EXIT_APP;
-    } else {
-      reconfigScene = true;
+    if (ac.sceneList.size()) {
+      ac.sgPtr = ReloadCurrentScene(ac.curSceneIndex, ac.sceneList, ac.avd);
+      if (!ac.sgPtr) {
+        std::cerr << " *** Aborting..." << std::endl;
+        done = MHR_EXIT_APP;
+      }
     }
+    PymRsResetPhysics(ac.pymRs);
+    reconfigScene = true;
+  } else if (done == MHR_STEP_SIMULATION) {
+    step(ac);
   }
 
   if (reconfigScene) {
-    InitializeRendererIndependentsFromSg(ac);
-    InitializeRendererDependentsFromSg(ac);
+    if (ac.sceneList.size()) {
+      InitializeRendererIndependentsFromSg(ac);
+      InitializeRendererDependentsFromSg(ac);
+    }
     openGlWindow.redraw();
   }
 }
@@ -977,13 +853,14 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
 int doMain(int argc, char **argv)
 {
   int ret = 0;
-  BwAppContext appContext;
-  if (InitializeRendererIndependentOnce(appContext) < 0) {
+  BwAppContext ac;
+  if (InitializeRendererIndependentOnce(ac) < 0) {
     printf("Critical error during initialization of "
 	   "application context. Aborting...\n");
     abort();
   }
-  BwTopWindow topWindow(800, 600, "aran", appContext);
+  ac.pymRs = PymRsInitContext(argc, argv);
+  BwTopWindow topWindow(800, 600, "aran", ac);
 
   std::ifstream windowPosAndSizeInput("BwWindow.txt");
   if (windowPosAndSizeInput.is_open()) {
@@ -992,27 +869,20 @@ int doMain(int argc, char **argv)
     topWindow.resize(x, y, w, h);
   }
 
-  BwOpenGlWindow openGlWindow(10, 75,
-			      topWindow.w()-20-200, topWindow.h()-90,
-			      0, appContext);
+  BwOpenGlWindow openGlWindow(210, 75,
+			      topWindow.w()-20-400, topWindow.h()-290,
+			      0, ac);
   //openGlWindow.mode(FL_RGB | FL_DOUBLE | FL_DEPTH);
   topWindow.setShapeWindow(&openGlWindow);
   //sw.mode(FL_RGB);
   topWindow.resizable(&openGlWindow);
 
-  SceneButtonsHolder sbh[3];
-  sbh[0].ac = &appContext;
-  sbh[0].openGlWindow = &openGlWindow;
-  sbh[0].mhr = MHR_RELOAD_SCENE;
-
-  sbh[1].ac = &appContext;
-  sbh[1].openGlWindow = &openGlWindow;
-  sbh[1].mhr = MHR_PREV_SCENE;
-
-  sbh[2].ac = &appContext;
-  sbh[2].openGlWindow = &openGlWindow;
-  sbh[2].mhr = MHR_NEXT_SCENE;
-
+  SceneButtonsHolder sbh[4] = {
+    {&ac, MHR_RELOAD_SCENE},
+    {&ac, MHR_PREV_SCENE},
+    {&ac, MHR_NEXT_SCENE},
+    {&ac, MHR_STEP_SIMULATION},
+  };
   Fl_Button reloadSceneButton(10, 5, 70, 30, "Reload");
   reloadSceneButton.callback(scene_buttons_cb, &sbh[0]);
   Fl_Button nextSceneButton(10+75, 5, 50, 30, "Prev");
@@ -1020,29 +890,114 @@ int doMain(int argc, char **argv)
   Fl_Button prevSceneButton(10+75+55, 5, 50, 30, "Next");
   prevSceneButton.callback(scene_buttons_cb, &sbh[2]);
   Fl_Light_Button simulateButton(10, 40, 100, 30, "@> Simulate");
-  simulateButton.callback(simulate_button_cb, &appContext);
-  Fl_Button frameLabel(10+100+5, 40, 150, 30, "Frame");
+  simulateButton.callback(simulate_button_cb, &ac);
+  ac.simulateButton = &simulateButton;
+  Fl_Button stepButton(115, 40, 40, 30, "Step");
+  stepButton.callback(scene_buttons_cb, &sbh[3]);
+  Fl_Button frameLabel(10+100+60, 40, 100, 30, "Frame");
   frameLabel.box(FL_NO_BOX);
-  appContext.frameLabel = &frameLabel;
-  Fl_Hor_Slider slider(260, 5, topWindow.w()-270, 30, "Sides:");
-  slider.align(FL_ALIGN_LEFT);
+  frameLabel.align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT);
+  frameLabel.label(ac.frameStr);
+  ac.frameLabel = &frameLabel;
+  Fl_Button load(300, 5, 100, 30, "Load");
+  load.callback(load_cb, &ac);
+  Fl_Button dump(415, 5, 100, 30, "Dump");
+  dump.callback(dump_cb, &ac);
+  
+  Fl_Hor_Slider slider(510, 5, topWindow.w()-520, 30, "Sides");
+  slider.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
   slider.callback(sides_cb, &openGlWindow);
   slider.step(1);
   slider.bounds(3,40);
-  PlaybackSlider playbackSlider(300, 40, topWindow.w()-310, 30, 0, appContext);
-  appContext.playbackSlider = &playbackSlider;
-  playbackSlider.bounds(0, 9999);
+  PlaybackSlider playbackSlider(300, 40, topWindow.w()-310, 30, 0, ac);
+  ac.playbackSlider = &playbackSlider;
+  playbackSlider.bounds(0, ac.MAX_SIMULATION_FRAMES-1); // Maximum 10000 frames can be simulated.
   playbackSlider.align(FL_ALIGN_LEFT);
   playbackSlider.step(1);
   BwDrawingOptionsWindow drawingOptions(topWindow.w()-200, 75,
-					190, 100, 0, appContext, openGlWindow);
-  Fl_Browser sceneList(topWindow.w()-200, 75+110, 190, 100);
-  Fl_Browser sceneGraphList(topWindow.w()-200, 75+110+110,
-			    190, topWindow.h()-90-110-110);
-  appContext.sceneGraphList = &sceneGraphList;
-  appContext.glWindow = &openGlWindow;
+					190, 200, "Drawings", ac, openGlWindow);
+  BwDebugPrintOptionsWindow debugMsgOptions(topWindow.w()-200, 300,
+    190, 200, "Debug messages", ac);
+  BwRbTrackingOptionsWindow rbTrackingOptions(topWindow.w()-200, 520,
+    190, 200, "Rigid body tracking", ac);
+  ac.rb_tracking_options = &rbTrackingOptions;
+  Fl_Button print_rb0_btn(topWindow.w()-200, 740, 190, 25, "Print RB[0] State");
+  print_rb0_btn.callback(print_rb0_cb, &ac);
+  
+  Fl_Browser sceneList(10000+topWindow.w()-200, 75+110+100, 190, 100);
+  Fl_Browser sceneGraphList(10000+topWindow.w()-200, 75+110+110+100,
+			    190, topWindow.h()-90-110-110-200);
+  ac.sceneGraphList = &sceneGraphList;
+  ac.glWindow = &openGlWindow;
+  Fl_Button omega_label(0, 75+110+110 + (topWindow.h()-90-110-110-200), 600, 300, "text info");
+  omega_label.box(FL_NO_BOX);
+  omega_label.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT | FL_ALIGN_TOP);
+  ac.slider = &omega_label;
+
+  
+  Fl_Button *cost_labels[oct_count];
+  //Fl_Value_Slider *cost_coefficients[oct_count];
+  SliderInput *cost_coeff_sliders[oct_count];
+  for (int i = 0; i < oct_count; ++i) {
+    assert(cost_terms[i].lo <= cost_terms[i].def && cost_terms[i].def <= cost_terms[i].hi);
+    cost_labels[i] = new Fl_Button(0, 75+40*i, 200, 20, cost_terms[i].label.c_str());
+    cost_labels[i]->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+    cost_labels[i]->labelsize(12);
+    cost_labels[i]->box(FL_NO_BOX);
+
+    cost_coeff_sliders[i] = new SliderInput(0, 75+40*i+20, 200, 20);
+    cost_coeff_sliders[i]->type(FL_HOR_SLIDER);
+    cost_coeff_sliders[i]->bounds(cost_terms[i].lo, cost_terms[i].hi);
+    cost_coeff_sliders[i]->value(cost_terms[i].def);
+  }
+  ac.cost_coeff_sliders = cost_coeff_sliders;
+
+  Fl_Check_Button joint_dislocation_button(0, 75+20+40*oct_count, 200, 20, "Joint dislocation");
+  joint_dislocation_button.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
+  joint_dislocation_button.labelsize(12);
+
+  SliderInput joint_dislocation_si = SliderInput(0, 75+20+40*oct_count+20, 200, 20);
+  joint_dislocation_si.type(FL_HOR_SLIDER);
+  joint_dislocation_si.bounds(0.0, 1.0);
+  joint_dislocation_si.value(0.05);
+  ac.joint_dislocation_slider = &joint_dislocation_si;
+  ac.joint_dislocation_button = &joint_dislocation_button;
+
+  Fl_Light_Button real_muscle(0, 75+20+40*oct_count+20+100, 100, 30, "Real muscle");
+  real_muscle.callback(real_muscle_cb, &ac);
+
+
+  Fl_Browser *b = new Fl_Browser(500,75+110+110 + (topWindow.h()-90-110-110-200),500,200);
+  int widths[] = { 100, 100, 100, 70, 70, 40, 40, 70, 70, 50, 0 };               // widths for each column
+  b->textsize(9);
+  b->column_widths(widths);
+  b->column_char('\t');                                                       // tabs as column delimiters
+  b->type(FL_MULTI_BROWSER);
+  ac.fiber_browser = b;
+
+  // Style table
+  Fl_Text_Display::Style_Table_Entry stable[] = {
+    // FONT COLOR      FONT FACE   FONT SIZE
+    // --------------- ----------- --------------
+    {  FL_RED,         FL_COURIER, 10 }, // A - Red
+    {  FL_DARK_YELLOW, FL_COURIER, 10 }, // B - Yellow
+    {  FL_DARK_GREEN,  FL_COURIER, 10 }, // C - Green
+    {  FL_BLUE,        FL_COURIER, 10 }, // D - Blue
+  };
+  Fl_Text_Display *disp = new Fl_Text_Display(0, 800, 200, 200, "Display");
+  Fl_Text_Buffer *tbuff = new Fl_Text_Buffer();      // text buffer
+  Fl_Text_Buffer *sbuff = new Fl_Text_Buffer();      // style buffer
+  disp->buffer(tbuff);
+  int stable_size = sizeof(stable)/sizeof(stable[0]);
+  disp->highlight_data(sbuff, stable, stable_size, 'A', 0, 0);
+  // Text
+  tbuff->text("Red Line 1\nYel Line 2\nGrn Line 3\nBlu Line 4\n"
+    "Red Line 5\nYel Line 6\nGrn Line 7\nBlu Line 8\n");
+  // Style for text
+  sbuff->text("AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\n"
+    "AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\n");
+
   topWindow.setSceneList(&sceneList);
-  topWindow.setDrawingOptionsWindow(&drawingOptions);
   topWindow.end();
   //topWindow.show(argc,argv);
   topWindow.show();
@@ -1054,18 +1009,24 @@ int doMain(int argc, char **argv)
     printf("Error: glewInit() failed\n");
     return 1;
   }
-  InitializeRendererDependentOnce(appContext);
-  UpdateSceneGraphList(appContext);
+  InitializeRendererDependentOnce(ac);
+  UpdateSceneGraphList(ac);
   // scene list available now
-  foreach (const std::string& scene, appContext.sceneList) {
+  foreach (const std::string& scene, ac.sceneList) {
     sceneList.add(scene.c_str());
   }
-  appContext.pymRs = PymRsInitContext(argc, argv);
-  if (appContext.pymRs) {
+
+  if (ac.pymRs) {
     PymRsInitRender();
-    PymRsInitPhysics(appContext.pymRs);
-    PymRsResetPhysics(appContext.pymRs);
-    PymRsFrameMove(appContext.pymRs, 0);
+    PymRsInitPhysics(ac.pymRs);
+    PymRsResetPhysics(ac.pymRs);
+    ac.pymRs->drawing_options = ac.drawing_options;
+    rbTrackingOptions.init_items();
+    pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+    vector<pym_rb_t> body_states(pymCfg->nBody);
+    memcpy(&body_states[0], ac.pymRs->pymCfg.body, sizeof(pym_rb_t)*pymCfg->nBody);
+    ac.rb_history.push_back(body_states); // First frame
+    assert(ac.rb_history.size() == 1);
 
     /* Query latest(newest) screen shot file name
        saved in /home/johnu/pymss. */
@@ -1090,22 +1051,66 @@ int doMain(int argc, char **argv)
 	        ssIdx = idx;
       }
     }
-    appContext.pymRs->ssIdx = ssIdx + 1; /* Screenshot file name continues... */
+    ac.pymRs->ssIdx = ssIdx + 1; /* Screenshot file name continues... */
   }
 
   ret = Fl::run();
 
-  if (appContext.pymRs) {
-    PymRsDestroyPhysics(appContext.pymRs);
+  if (ac.pymRs) {
+    PymRsDestroyPhysics(ac.pymRs);
     PymRsDestroyRender();
-    PymRsDestroyContext(appContext.pymRs);
-    appContext.pymRs = 0;
+    PymRsDestroyContext(ac.pymRs);
+    ac.pymRs = 0;
   }
   std::ofstream windowPosAndSize("BwWindow.txt");
   windowPosAndSize << topWindow.x() << " " << topWindow.y() << " "
 		   << topWindow.w() << " " << topWindow.h() << std::endl;
   windowPosAndSize.close();
   return ret;
+}
+
+int main4()
+{
+  // Quaternion EOM test box
+  unsigned long long i = 0;
+  while (true) {
+    static AranMath::Quaternion q0(VectorR3(1,2,3),0.8);
+    static AranMath::Quaternion q1(VectorR3(1,2,3),0.800005);
+    const double h = 0.01;
+    q0.normalize();
+    q1.normalize();
+    AranMath::Quaternion q2 = quaternion_eom(q0, q1, h);
+    VectorR3 omega = calc_angular_velocity(q1, q0, h);
+    if (i%100000 == 0)
+      std::cout << i << " : " << omega << std::endl;
+    q0 = q1;
+    q1 = q2;
+    ++i;
+  }
+  return 0;
+  
+}
+
+int main3()
+{
+  // Quaternion EOM test box
+  unsigned long long i = 0;
+  while (true) {
+    static AranMath::Quaternion q0(VectorR3(0,1,0),0.8);
+    static VectorR3 omega0(0.3, 0.2, 0.1);
+    q0.normalize();
+    if (i%100000 == 0)
+      std::cout << i << " : " << omega0 << std::endl;
+
+    const double h = 0.01;
+    AranMath::Quaternion q1;
+    VectorR3 omega1;
+    quaternion_eom_av_rkn4(q1, omega1, q0, omega0, 0, h);
+    q0 = q1;
+    omega0 = omega1;
+    ++i;
+  }
+  return 0;
 }
 
 int main(int argc, char **argv)

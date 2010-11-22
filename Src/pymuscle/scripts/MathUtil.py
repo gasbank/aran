@@ -148,6 +148,8 @@ def MatrixToQuaternion(M):
 		qz = 0.25 * S;
 	return array([qw,qx,qy,qz])
 
+def QuatMult(q1, q2):
+	print 'ahaha'
 
 if __name__ == '__main__':
 	q = array([sqrt(2.)/2, 0, sqrt(2.)/2, 0])

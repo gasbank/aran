@@ -7,13 +7,17 @@ static void cb(Fl_Widget *o, void *p)
 {
 	PlaybackSlider* ps = (PlaybackSlider*)p;
 	BwAppContext& ac = ps->getAppContext();
-	
 	const int frame = (int)ps->value();
-	ac.frames = frame;
+	ac.frames = min(frame, ps->getAvailableFrames());
+	sprintf(ac.frameStr, "%d", ac.frames);
+  ac.frameLabel->redraw_label();
+  
+  ac.simulateButton->value(0);
+  ac.bSimulate = false;
 
-	char frameStr[32];
-	sprintf(frameStr, "%d", ac.frames);
-	ac.frameLabel->label(frameStr);
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  memcpy(pymCfg->body, &ac.rb_history[ac.frames][0], sizeof(pym_rb_t)*pymCfg->nBody);
+  ac.glWindow->redraw();
 
 	if (!ac.bSimulate)
 	{
@@ -30,7 +34,7 @@ PlaybackSlider::PlaybackSlider( int x, int y, int w, int h, const char* c, BwApp
 , m_availableFrames(0)
 , m_ac(ac)
 {
-	callback(cb, this);
+  callback(cb, this);
 }
 
 PlaybackSlider::~PlaybackSlider(void)
@@ -41,7 +45,7 @@ void PlaybackSlider::draw()
 {
 	Fl_Hor_Slider::draw();
 
-	Fl_Color c = fl_color_cube(255, 0, 0);
+	Fl_Color c = fl_rgb_color(255, 0, 0);
 	fl_rect(x(), y() + h()/2 - 5, w()/10000.0 * m_availableFrames, 10, c);
 }
 

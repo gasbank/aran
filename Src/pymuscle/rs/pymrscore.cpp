@@ -26,31 +26,44 @@
 #define PATH_SEPARATOR '/'
 #endif
 
+static FILE *devnull;
+
+FILE *PymGetDevnull() {
+  return devnull;
+}
+
 void PrintCmdLineHelp(int argc, char *argv[]) {
   printf("  Usage:\n");
   printf("    %s config_file <simulation conf file> [Options]\n",
 	 strrchr(argv[0], PATH_SEPARATOR) + 1);
   printf("\n");
   printf("  Options:\n");
+  printf("    --test    simulator test mode (no simulation conf file needed)\n");
   printf("\n");
 }
 
-void pym_init_debug_msg_streams(FILE *dmstreams[]) {
-  int dmflags[PDMTE_COUNT] = {0,};
-  //dmflags[PDMTE_FBYF_REF_TRAJ_DEVIATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_ANCHORED_JOINT_DISLOCATION_REPORT] = 1;
-  //dmflags[PDMTE_FBYF_REF_COM_DEVIATION_REPORT] = 1;
+void pym_update_debug_msg_streams(int *dmflags, FILE *dmstreams[]) {
   int i;
 #ifdef WIN32
-  FILE *devnull = fopen("nul", "w");
+  devnull = fopen("nul", "w");
 #else
-  FILE *devnull = fopen("/dev/null", "w");
+  devnull = fopen("/dev/null", "w");
 #endif
   assert(devnull);
   FOR_0(i, PDMTE_COUNT) {
     if (dmflags[i]) dmstreams[i] = stdout;
     else dmstreams[i] = devnull;
   }
+}
+
+void pym_init_debug_msg_streams(FILE *dmstreams[]) {
+  int dmflags[PDMTE_COUNT] = {0,};
+  dmflags[PDMTE_INIT_MF_FOR_EACH_RB] = 1;
+  dmflags[PDMTE_INIT_RB_CORRESPONDENCE_1] = 1;
+  dmflags[PDMTE_INIT_RB_CORRESPONDENCE_2] = 1;
+  dmflags[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT] = 1;
+
+  pym_update_debug_msg_streams(dmflags, dmstreams);
 }
 
 int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
@@ -73,11 +86,12 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
 
   /* Construct pymCfg structure */
   ret = PymConstructConfig(cmdopt->simconf, pymCfg,
-			   dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
+    dmstreams[PDMTE_INIT_MF_FOR_EACH_RB]);
   if (ret < 0) {
-    printf("Failed.\n");
+    printf("PymConstructConfig() Failed.\n");
     return -1;
   }
+  
   PymConvertRotParamInPlace(pymCfg, RP_EXP);
   const char *t1 = strrchr(cmdopt->trajconf, '/') + 1;
   const char *t2 = strchr(t1, '.');
@@ -89,69 +103,78 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
   FOR_0(i, pymCfg->nBody)
     pymTraj->corresMapIndex[i] = -1;
   if (cmdopt->trajconf) {
+    char fnJaCfg[128] = {0};
     int parseRet = PymParseTrajectoryFile(pymTraj,
 					  cmdopt->trajconf,
 					  cmdopt->trajdata);
-    if (parseRet)
-      printf("Trajectory data file not exists.\n");
-    else
+    if (parseRet) {
+      /* from now on, we should not refer 'pymTraj' variable in this case. */
+      printf("Warn - trajectory data file not exists.\n");
+      /* No trajconf provided. */
+      PymSetPymCfgChiRefToCurrentState(pymCfg);
+    } else {
       assert(pymTraj->nCorresMap > 0);
-    /* The simulation time step defined in simconf and
-     * the frame time (reciprocal of FPS) in trajdata
-     * should have the same value. If mismatch happens
-     * we ignore simulation time step in simconf.
-     */
-    if (fabs(1.0/pymTraj->exportFps - pymCfg->h) > 1e-6)
+      /* The simulation time step defined in simconf and
+      * the frame time (reciprocal of FPS) in trajdata
+      * should have the same value. If mismatch happens
+      * we ignore simulation time step in simconf.
+      */
+      if (fabs(1.0/pymTraj->exportFps - pymCfg->h) > 1e-6)
       {
-	printf("Warning - simulation time step defined in simconf and\n");
-	printf("          trajectory data do not match.\n");
-	printf("            simconf  : %3d FPS (%lf sec per frame)\n",
-	       (int)ceil(1.0/pymCfg->h), pymCfg->h);
-	printf("            trajconf : %3d FPS (%lf sec per frame)\n",
-	       pymTraj->exportFps, 1.0/pymTraj->exportFps);
-	printf("          simconf's value will be ignored.\n");
-	pymCfg->h = 1.0/pymTraj->exportFps;
+        printf("Warning - simulation time step defined in simconf and\n");
+        printf("          trajectory data do not match.\n");
+        printf("            simconf  : %3d FPS (%lf sec per frame)\n",
+          (int)ceil(1.0/pymCfg->h), pymCfg->h);
+        printf("            trajconf : %3d FPS (%lf sec per frame)\n",
+          pymTraj->exportFps, 1.0/pymTraj->exportFps);
+        printf("          simconf's value will be ignored.\n");
+        pymCfg->h = 1.0/pymTraj->exportFps;
       }
 
-    PymCorresMapIndexFromCorresMap(pymTraj,
-				   pymCfg,
-				   dmstreams);
-    char fnJaCfg[128] = {0};
+      PymCorresMapIndexFromCorresMap(pymTraj,
+        pymCfg,
+        dmstreams);
+      /*
+      * We need at least three frames of trajectory data
+      * to follow one or more reference trajectory frames since
+      * the first (frame 0) is used as previous step and
+      * the second (frame 1) is used as current step and
+      * the third (frame 2) is used as the reference trajectory for next step
+      *
+      * We need (nBlenderFrame-2) simulation iteration to complete
+      * following the trajectory entirely. So the following assertion helds:
+      */
+      assert(pymTraj->nBlenderFrame >= 3);
+      PymSetInitialStateUsingTrajectory(pymCfg, pymTraj);
+    }
+    
     PymInferJointAnchorConfFileName(fnJaCfg, cmdopt->trajconf);
     const size_t num_joint_anchor =
       sizeof(pymCfg->pymJa)/sizeof(pym_joint_anchor_t);
     pymCfg->na = PymParseJointAnchorFile(pymCfg->pymJa, num_joint_anchor,
 					fnJaCfg);
-    assert(pymCfg->na >= 0);
-    printf("Info - # of joint anchors parsed = %d\n", pymCfg->na);
-    /*
-     * We need at least three frames of trajectory data
-     * to follow one or more reference trajectory frames since
-     * the first (frame 0) is used as previous step and
-     * the second (frame 1) is used as current step and
-     * the third (frame 2) is used as the reference trajectory for next step
-     *
-     * We need (nBlenderFrame-2) simulation iteration to complete
-     * following the trajectory entirely. So the following assertion helds:
-     */
-    assert(pymTraj->nBlenderFrame >= 3);
-    PymSetInitialStateUsingTrajectory(pymCfg, pymTraj);
+    if (pymCfg->na < 0) {
+      /* Joint anchor conf file parse failure. Ignore joint anchors happily. */
+      pymCfg->na = 0;
+    }
+    printf("Info - # of joint anchors = %d\n", pymCfg->na);
     PymInitJointAnchors(pymCfg, dmstreams);
     PymConstructAnchoredJointList(pymCfg);
   } else {
     /* No trajconf provided. */
     PymSetPymCfgChiRefToCurrentState(pymCfg);
   }
-
+  pymCfg->real_muscle = false;
   if (cmdopt->frame >= 0) {
-    /* Last frame set by user */
+    /* Total simulation frame set by user */
     pymCfg->nSimFrame = cmdopt->frame;
-  } else if (cmdopt->trajconf) {
+  } else if (cmdopt->trajconf && pymTraj->trajData) {
     pymCfg->nSimFrame = pymTraj->nBlenderFrame - 2;
   } else {
+    /* if no traj conf data provided */
     pymCfg->nSimFrame = 100;
   }
-
+  assert(pymCfg->nSimFrame >= 1);
   FILE *outputFile = fopen(cmdopt->output, "w");
   if (!outputFile) {
     printf("Error: Opening the output file %s failed.\n", cmdopt->output);
@@ -160,7 +183,7 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
   fprintf(outputFile, "%d %d\n", pymCfg->nSimFrame, pymCfg->nBody);
   *_outputFile = outputFile;
   /* Let's start the simulation happily :) */
-  printf("Starting the tracking simulation...\n");
+  printf("Starting the simulation...\n");
   return 0;
 }
 
@@ -172,26 +195,26 @@ pym_init_phy_thread_ctx(pym_config_t *pymCfg,
 			FILE *dmstreams[]) {
   pym_physics_thread_context_t phyCon;
   phyCon.pymCfg             = pymCfg;
-phyCon.cmdopt             = cmdopt;
-phyCon.pymTraj            = pymTraj;
-phyCon.outputFile         = outputFile;
-phyCon.dmstreams          = dmstreams;
-phyCon.totalPureOptTime   = 0;
-phyCon.stop               = 0;
-phyCon.trunkExternalForce[0] = 0;
-phyCon.trunkExternalForce[1] = 0;
-phyCon.trunkExternalForce[2] = 0;
-phyCon.renBody            = (pym_rb_t *)calloc(pymCfg->nBody,  sizeof(pym_rb_t));
-phyCon.renFiber           = (pym_mf_t *)calloc(pymCfg->nFiber, sizeof(pym_mf_t));
-phyCon.comZGraph          = PrsGraphNew("COM Z");
-phyCon.comDevGraph        = PrsGraphNew("COM Z Dev.");
-phyCon.actGraph		= PrsGraphNew("Act");
-phyCon.ligGraph		= PrsGraphNew("Lig");
-phyCon.sd			= (pym_rb_statedep_t *)malloc(sizeof(pym_rb_statedep_t) * pymCfg->nBody);
+  phyCon.cmdopt             = cmdopt;
+  phyCon.pymTraj            = pymTraj;
+  phyCon.outputFile         = outputFile;
+  phyCon.dmstreams          = dmstreams;
+  phyCon.totalPureOptTime   = 0;
+  phyCon.stop               = 0;
+  phyCon.trunkExternalForce[0] = 0;
+  phyCon.trunkExternalForce[1] = 0;
+  phyCon.trunkExternalForce[2] = 0;
+  phyCon.comZGraph          = PrsGraphNew("COM Z");
+  phyCon.comDevGraph        = PrsGraphNew("COM Z Dev.");
+  phyCon.actGraph		= PrsGraphNew("Act");
+  phyCon.ligGraph		= PrsGraphNew("Lig");
+  phyCon.sd			= (pym_rb_statedep_t *)malloc(sizeof(pym_rb_statedep_t) * pymCfg->nBody);
+  for (int i = 0; i < pymCfg->nBody; ++i)
+    pym_init_statedep(phyCon.sd[i]);
   return phyCon;
 }
 
-PYMRS PymRsInitContext(int argc, char *argv[]) {
+pym_rs_t *PymRsInitContext(int argc, char *argv[]) {
   printf("Pymuscle realtime simulator      -- 2010 Geoyeob Kim\n");
   pym_rs_t *rs = (pym_rs_t *)malloc(sizeof(pym_rs_t));
   int ret = pym_init_global(argc, argv, &rs->pymCfg, &rs->pymTraj,
@@ -200,6 +223,7 @@ PYMRS PymRsInitContext(int argc, char *argv[]) {
     /* something goes wrong */
     return 0;
   }
+  rs->drawing_options = 0;
   /* Initialize the physics thread context */
   rs->phyCon = pym_init_phy_thread_ctx(&rs->pymCfg, &rs->cmdopt,
 				       &rs->pymTraj,
@@ -213,7 +237,7 @@ PYMRS PymRsInitContext(int argc, char *argv[]) {
   PrsGraphDataSetLineColor(refComGd, 1, 0, 0);
   PrsGraphAttach(rs->phyCon.comZGraph, PCG_REF_COMZ, refComGd);
   /* comDevGraph */
-  PrsGraphSetMaxY(rs->phyCon.comDevGraph, 0.1);
+  PrsGraphSetMaxY(rs->phyCon.comDevGraph, 2.0);
   PRSGRAPHDATA comDevGd = PrsGraphDataNew(rs->pymCfg.nSimFrame);
   PrsGraphDataSetLineColor(comDevGd, 0, 1, 0);
   PrsGraphAttach(rs->phyCon.comDevGraph, PCG_COMDEV, comDevGd);
@@ -237,7 +261,7 @@ PYMRS PymRsInitContext(int argc, char *argv[]) {
   return rs;
 }
 
-void PymRsDestroyContext(PYMRS rs) {
+void PymRsDestroyContext(pym_rs_t *rs) {
   printf("Accumulated pure MOSEK optimizer time : %lf s\n",
     rs->phyCon.totalPureOptTime);
   fclose(rs->outputFile);

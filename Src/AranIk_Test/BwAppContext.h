@@ -12,8 +12,13 @@ enum ViewMode {
   VM_CAMERA
 };
 
+#include "pymdrawingoption.h"
+
 class	PlaybackSlider;
+class BwOpenGlWindow;
 typedef std::vector<std::vector<float> > Float2DArray;
+class SliderInput;
+class Fl_Light_Button;
 
 class BwAppContext : private Uncopyable
 {
@@ -55,23 +60,26 @@ class BwAppContext : private Uncopyable
   bool					bPanningButtonDown;
   std::pair<int, int>			panningStartPoint;
   // Drawing options
-  bool					bDrawGrid;
-  bool					bDrawHud;
-  bool					bDrawJointIndicator;
-  bool					bDrawEndeffectorIndicator;
-  bool					bDrawJointAxisIndicator;
-  bool					bDrawContactIndicator;
-  bool					bDrawContactForaceIndicator;
-  bool					bDrawRootNodeIndicator;
+  bool drawing_options[pym_do_count];
   bool					bSimulate;
-  unsigned int				frames; // Current frame
+  int				frames; // Current frame
   float					panningCenter[3];
   float					dPanningCenter[3];
   Fl_Browser*				sceneGraphList;
-  Fl_Gl_Window*				glWindow;
+  BwOpenGlWindow*				glWindow;
   Fl_Button*				frameLabel;
   PlaybackSlider*			playbackSlider;
   std::vector<SimWorldState>		simWorldHistory;
   // A handle for realtime simulator module
-  PYMRS					pymRs;
+  pym_rs_t *pymRs;
+  Fl_Button *slider;
+  SliderInput **cost_coeff_sliders;
+  Fl_Light_Button *simulateButton;
+  SliderInput *joint_dislocation_slider;
+  Fl_Check_Button *joint_dislocation_button;
+  Fl_Browser *fiber_browser;
+  Fl_Check_Browser *rb_tracking_options;
+  static const int MAX_SIMULATION_FRAMES = 10000;
+  boost::circular_buffer< vector<pym_rb_t> > rb_history; /* 'pym_rb_t rb_history[MAX_SIMULATION_FRAMES][nb]' */
+  char frameStr[128];
 };

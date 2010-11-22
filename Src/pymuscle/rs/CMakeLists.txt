@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(pymrs)
 SET(PYMRS_SOURCES
+PymRsPch.cpp
 pymrscore.cpp
 pymrsrender.cpp
 pymrsphysics.cpp
@@ -17,12 +18,17 @@ pymrsphysics.h
 PrsGraph.h
 PrsGraphCapi.h
 PrsGraphData.h
+pymdrawingoption.h
 )
 INCLUDE_DIRECTORIES(
 ..
 ../core
 ../parser
 ../optimizer
+../../
+../../AranMath
+../../Aran
+../../AranGl
 ${BOOST_ROOT}
 ${PYM_3RDPARTIES_ROOT}include
 ${PYM_3RDPARTIES_ROOT}CHOLMOD/Include
@@ -37,5 +43,6 @@ ${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
 ${MOSEK_ROOT}6/tools/platform/win32x86/bin
 )
 ADD_LIBRARY(pymrs SHARED ${PYMRS_SOURCES} ${PYMRS_HEADERS})
-TARGET_LINK_LIBRARIES(pymrs pymoptimizer opengl32 glu32 glew32)
-ADD_DEPENDENCIES(pymrs pymoptimizer)
+TARGET_LINK_LIBRARIES(pymrs pymoptimizer opengl32 glu32 glew32 AranMath Aran AranGl)
+ADD_DEPENDENCIES(pymrs pymoptimizer AranMath Aran AranGl)
+ADD_MSVC_PRECOMPILED_HEADER(pymrs PymRsPch.h PymRsPch.cpp)

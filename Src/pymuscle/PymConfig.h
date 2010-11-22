@@ -3,10 +3,33 @@
 
 #include "PymJointAnchor.h"
 
-#define MAX_NUM_JOINT_ANCHORS    (100)
-#define MAX_NUM_ANCHORED_JOINTS  (50)
+const static int MAX_RIGID_BODIES = 100;
+const static int MAX_NUM_JOINT_ANCHORS = 100;
+const static int MAX_NUM_ANCHORED_JOINTS = 50;
 
-struct _pym_config_t {
+enum optimization_cost_terms {
+  oct_normal_force,
+  oct_normal_force_nonneg_comp, // normal force nonnegativity compensation term
+  oct_contact_point_zpos,
+  oct_contact_point_movement,
+  oct_contact_point_zpos_epsilon,
+  oct_rb_reference_deviation,
+  oct_rb_previous_deviation,
+  oct_biped_com_deviation,
+  oct_torque_around_com,
+  oct_ligament_actuation,
+  oct_actuated_muscle_actuation,
+  oct_joint_dislocation,
+  oct_uniform_tension_cost,
+  oct_uniform_actuation_cost,
+
+  oct_count
+};
+
+union pym_rb_t;
+union pym_mf_t;
+
+struct pym_config_t {
   pym_rb_t		*body;
   int			 nBody;
   pym_mf_t		*fiber;
@@ -40,8 +63,12 @@ struct _pym_config_t {
   /* Total # of contacts through three frames */
   int			 prevTotContacts;
   int			 curTotContacts;
-  int			 nextTotContacts;
   int renderFibers;
+  /* Optimization parameters */
+  double opt_cost_coeffs[oct_count];
+  double joint_dislocation_threshold;
+  bool joint_dislocation_enabled;
+  bool real_muscle;
 };
 
 #endif // PYMCONFIG_H_INCLUDED

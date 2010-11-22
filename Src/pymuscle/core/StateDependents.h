@@ -1,7 +1,7 @@
 #ifndef __STATEDEPENDENTS_H_
 #define __STATEDEPENDENTS_H_
 
-struct _pym_rb_statedep_t {
+struct pym_rb_statedep_t {
     double W_0[4][4];   /* previous homogeneous transform matrix */
     double W_1[4][4];   /* current homogeneous transform matrix */
     double M[6][6];     /* mass matrix */
@@ -17,17 +17,25 @@ struct _pym_rb_statedep_t {
      *   d v_n
      */
     double dWdchi_tensor[3][4][4];
-    double contacts_1[MAX_CONTACTS][3]; /* Contact point position in world coordinate frame */
+    double contacts_0[MAX_CONTACTS][3]; /* Corner points(potential contact points) position in world coordinate frame */
+    double contacts_1[MAX_CONTACTS][3]; /* Corner points(potential contact points) position in world coordinate frame */
+    //double contacts_2[MAX_CONTACTS][3]; /* Estimated corner points(potential contact points) position in world coordinate frame */
+    int nContacts_0;
     int nContacts_1;
-    int nContacts_2;
-    int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of corner points in next time step */
-    double contactsFix_2[MAX_CONTACTS][4];       /* Estimated contact point fixing position in world coordinate frame in next time step */
+    //int nContacts_2;
+    int contactIndices_0[MAX_CONTACTS]; /* Estimated indices of contacted corner points in next time step */
+    int contactIndices_1[MAX_CONTACTS]; /* Estimated indices of contacted corner points in next time step */
+    //int contactIndices_2[MAX_CONTACTS]; /* Estimated indices of contacted corner points in next time step */
+    
+    double contactsFix_1[MAX_CONTACTS][4]; /* Estimated contact point fixing position in world coordinate frame */
+    //double contactsFix_2[MAX_CONTACTS][4]; /* Estimated contact point fixing position in world coordinate frame in next time step */
+    
     double contactsNormal_1[MAX_CONTACTS][4];
 
     int Asubrows;
     int Asubcols;
-    int Ari[ 1 +  9 ]; /* 1 + # of sub row */
-    int Aci[ 1 + 15 ]; /* 1 + # of sub col */
+    int Ari[ 1 + 12 ]; /* 1 + # of sub row */
+    int Aci[ 1 + 16 ]; /* 1 + # of sub col */
   
     /*
      * Z and V : Coefficients for calculating next state based on current state
@@ -41,9 +49,12 @@ struct _pym_rb_statedep_t {
     double          Va [MAX_JOINTANCHORS][4];  /* for joint anchors */
 };
 
+PYMCORE_API void pym_init_statedep( pym_rb_statedep_t &sd );
+
 PYMCORE_API int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
                            FILE *dmstreams[],
                            const pym_config_t *pymCfg, cholmod_common *cc);
 PYMCORE_API void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_common *cc);
+
 
 #endif

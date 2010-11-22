@@ -14,7 +14,7 @@
 #include "PymJointAnchor.h"
 #include "ConvexHullCapi.h"
 #include "PymConfig.h"
-#include "PymRbPod.h"
+#include "RigidBody.h"
 
 #define MAX_LINE_LEN (4096)
 
@@ -209,11 +209,37 @@ PYMPARSER_API int PymSetInitialStateUsingTrajectory(pym_config_t *pymCfg,
     memcpy(rbn->q, current + 3, sizeof(double)*3);
     /* update discrete velocity based on current and previous step */
     FOR_0(j, 3) {
-      rbn->pd[j] = 0;
-      rbn->qd[j] = 0;
+      rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg->h;
+      rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg->h;
+    }
+  }
+  printf("Total mass = %lf\n", totMass);
+  return 0;
+}
 
-      //rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg->h;
-      //rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg->h;
+PYMPARSER_API int PymSetInitialStateUsingSimconf(pym_config_t *pymCfg)
+{
+  /* Set current and previous state according
+   * to the initial frame of trajectory data. */
+  const int prevFrameIdx = 0;
+  const int curFrameIdx  = 1;
+  int i, j;
+  double totMass = 0;
+  FOR_0(i, pymCfg->nBody) {
+    pym_rb_named_t *rbn = &pymCfg->body[i].b;
+  	printf("initial rbn name = %s rotParam = %d mass = %lf kg\n",
+      rbn->name, rbn->rotParam, rbn->m);
+    totMass += rbn->m;
+    assert(rbn->rotParam == RP_EXP);
+    memcpy(rbn->p, rbn->p_simconf, sizeof(double)*3);
+    memcpy(rbn->q, rbn->q_simconf, sizeof(double)*4);
+    memcpy(rbn->pd, rbn->pd_simconf, sizeof(double)*3);
+    memcpy(rbn->qd, rbn->qd_simconf, sizeof(double)*4);
+    FOR_0(j, 3) {
+      rbn->p0[j] = rbn->p[j] - pymCfg->h * rbn->pd[j];
+    }
+    FOR_0(j, 4) {
+      rbn->q0[j] = rbn->q[j] - pymCfg->h * rbn->qd[j];
     }
   }
   printf("Total mass = %lf\n", totMass);

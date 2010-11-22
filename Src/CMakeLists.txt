@@ -32,8 +32,6 @@ ${CODEBASE}SDL_gfx-2.0.22/Debug
 ${CODEBASE}SDL-1.2.13/VisualC/SDL/Debug
 ${CODEBASE}SDL-1.2.13/VisualC/SDLmain/Debug
 ${CODEBASE}DevIL-SDK-x86-1.7.8/lib
-${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Debug
-${CODEBASE}tinyxml_2_5_3/tinyxml/Debug_STL
 ${CODEBASE}Working/lib
 ${CODEBASE}freetype-2.3.9/objs/win32/vc2008
 ${CODEBASE}DevIL-SDK-x86-1.7.8/lib
@@ -45,6 +43,7 @@ ${PYM_3RDPARTIES_ROOT}libconfig-1.3.2/Debug
 ${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
 ${MOSEK_ROOT}6/tools/platform/win32x86/bin
 )
+
 # --- aran library modules ---
 ADD_SUBDIRECTORY(AranMath)
 ADD_SUBDIRECTORY(Aran)

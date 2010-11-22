@@ -9,6 +9,9 @@ BwOpenGlWindow.cpp BwOpenGlWindow.h
 BwPch.cpp BwPch.h
 BwPlaybackSlider.cpp BwPlaybackSlider.h
 BwTopWindow.cpp BwTopWindow.h
+SliderInput.cpp SliderInput.h
+BwDebugPrintOptionsWindow.cpp BwDebugPrintOptionsWindow.h
+BwRbTrackingOptionsWindow.cpp BwRbTrackingOptionsWindow.h
 )
 ADD_DEFINITIONS(
 -DTIXML_USE_STL

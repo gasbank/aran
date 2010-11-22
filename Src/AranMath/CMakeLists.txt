@@ -8,6 +8,12 @@ ArnPlane.cpp ArnPlane.h
 ArnQuat.cpp ArnQuat.h
 ArnVec3.cpp ArnVec3.h
 ArnVec4.cpp ArnVec4.h
+LinearR2.cpp LinearR2.h
+LinearR3.cpp LinearR3.h
+LinearR4.cpp LinearR4.h
+
+MathMisc.h
+Spherical.h
 )
 INCLUDE_DIRECTORIES(
 ..

@@ -8,7 +8,6 @@
 
 typedef struct _deviation_stat_entry {
   double chi_d_norm;
-  int nContact;
   int bodyIdx;
 } deviation_stat_entry;
 
@@ -31,9 +30,7 @@ typedef struct _pym_opt_t {
   MSKsolstae _solsta;                /* MOSEK solution status */
   double opttime;
   double cost;
-  /* Biped-wide state-dependent values */
-  int *nplist;      /* Stores # of CPs for each RB (size=nb) */
-  int nptotal;      /* Total # of CPs (sum of nplist[0..nb-1]) */
+
   const pym_biped_eqconst_t *bod;
   const pym_rb_statedep_t *sd;
   const pym_config_t *pymCfg;

@@ -55,23 +55,21 @@ int PymRsResetPhysics(pym_rs_t *rs) {
   pym_physics_thread_context_t	*phyCon	= &rs->phyCon;
   pym_config_t			*pymCfg	= phyCon->pymCfg;
   //  pthread_mutex_lock(&main_mutex);
-  printf("Set biped to the initial state.\n");
-  PymSetInitialStateUsingTrajectory(pymCfg, phyCon->pymTraj);
-  memcpy(phyCon->renBody,   pymCfg->body,
-	 sizeof(pym_rb_t)*pymCfg->nBody);
-  memcpy(phyCon->renFiber,  pymCfg->fiber,
-	 sizeof(pym_mf_t)*pymCfg->nFiber);
+  printf("Resetting the physics states...\n");
+  if (phyCon->pymTraj->trajData)
+    PymSetInitialStateUsingTrajectory(pymCfg, phyCon->pymTraj);
+  else
+    PymSetInitialStateUsingSimconf(pymCfg);
   //  pthread_mutex_unlock(&main_mutex);
   pymCfg->prevTotContacts = 0;
   pymCfg->curTotContacts = 0;
-  pymCfg->nextTotContacts = 0;
   int j;
   FOR_0(j, pymCfg->nFiber)
     pymCfg->fiber[j].b.T = 0;
   return 0;
 }
 
-int PymRsFrameMove(pym_rs_t *rs, int i) {
+int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
   /* Function argument 'i' is the current frame. */
   pym_physics_thread_context_t	*phyCon		= &rs->phyCon;
   pym_config_t			*pymCfg		= phyCon->pymCfg;
@@ -91,24 +89,23 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
       rbnTrunk = rbn;
     }
   }
-  assert(rbnTrunk);
   assert(pymCfg->nSimFrame >= 3);
-  assert(i < pymCfg->nSimFrame);
+  //assert(i < pymCfg->nSimFrame);
   //    printf("%5d / %5d\n", i, pymCfg->nSimFrame-1);
   /*
    * A very long and time-consuming simulation task goes here ...
    */
   int ret = PymCheckRotParam(pymCfg);
   if (ret < 0) {
-    //printf("Error - Rotation parameterization failure detected.\n");
-    //return -2;
+    printf("Error - Rotation parameterization failure detected.\n");
+    return -2;
   }
 
   /* Set reference */
-  if (cmdopt->trajconf) {
+  if (cmdopt->trajconf && trajData) {
     FOR_0(j, pymCfg->nBody) {
       const double *const ref =
-        trajData + (i+2)*nBlenderBody*6 + corresMapIndex[j]*6;
+        trajData + (fidx+2)*nBlenderBody*6 + corresMapIndex[j]*6;
       //printf("pymCfg address : %p\n", pymCfg);
       //printf("%p -- ", &pymCfg->body[j].b.chi_ref[0]);
       for (k = 0; k < 6; ++k) {
@@ -170,8 +167,8 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
   const int nf = pymCfg->nFiber;
   double totActAct = 0, totActTen = 0;
   double totLigAct = 0, totLigTen = 0;
-  FOR_0(i, nf) {
-    pym_mf_named_t *mf = &pymCfg->fiber[i].b;
+  FOR_0(j, nf) {
+    pym_mf_named_t *mf = &pymCfg->fiber[j].b;
     if (mf->mType == PMT_ACTUATED_MUSCLE) {
       totActAct += mf->A;
       totActTen += fabs(mf->T);
@@ -180,8 +177,7 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
       totLigTen += fabs(mf->T);
     }
   }
-  printf("totAct  Act %lf  Ten %lf\n", totActAct, totActTen);
-  printf("totLig  Act %lf  Ten %lf\n", totLigAct, totLigTen);
+
   PrsGraphPushBackTo(phyCon->comZGraph, PCG_SIM_COMZ, pymCfg->bipCom[2]);
   PrsGraphPushBackTo(phyCon->comZGraph, PCG_REF_COMZ, refCom[2]);
   const double comzdev = fabs(pymCfg->bipCom[2] - refCom[2]);
@@ -193,11 +189,6 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
   //PrsGraphPushBackTo(phyCon->ligGraph, PCG_LIG_ACT, fabs(totLigAct));
   //PrsGraphPushBackTo(phyCon->ligGraph, PCG_LIG_TEN, totLigTen);
 
-  /* Copy RB and MF data to renderer-accessable memory area */
-  memcpy(phyCon->renBody,   pymCfg->body,
-	 sizeof(pym_rb_t)*pymCfg->nBody);
-  memcpy(phyCon->renFiber,  pymCfg->fiber,
-	 sizeof(pym_mf_t)*pymCfg->nFiber);
   /* Simulated biped COM position */
   memcpy(phyCon->bipCom,    pymCfg->bipCom,    sizeof(double)*3);
   /* Reference biped COM position (note that pymCfg, not phyCon!) */
@@ -209,14 +200,19 @@ int PymRsFrameMove(pym_rs_t *rs, int i) {
   pymCfg->renChOutputLen = pymCfg->chOutputLen;*/
 
   /* Write external force exertion */
-  memcpy(rbnTrunk->extForce, phyCon->trunkExternalForce,
-	 sizeof(double)*3);
-  rbnTrunk->extForcePos[2] = 0.2;
+  if (rbnTrunk) {
+    memcpy(rbnTrunk->extForce, phyCon->trunkExternalForce,
+      sizeof(double)*3);
+    rbnTrunk->extForcePos[2] = 0.2;
+  }
   memset(phyCon->trunkExternalForce, 0, sizeof(double)*3);
 
-  const double percent = (double)(i+1)/(pymCfg->nSimFrame)*100;
-  printf("%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e\n",
-    i, pymCfg->nSimFrame-1, percent, solstaStr, cost);
+  const double percent = (double)(fidx+1)/(pymCfg->nSimFrame)*100;
+  char step_result_summary[256];
+  sprintf(step_result_summary, "%5d / %5d  (%6.2lf %%) result - %12s, cost = %.6e",
+    fidx, pymCfg->nSimFrame-1, percent, solstaStr, cost);
+  fprintf(dmstreams[PDMTE_FBYF_STEP_RESULT_SUMMARY], "%s\n", step_result_summary);
+  strcat(result_msg, step_result_summary);
   phyCon->totalPureOptTime += pureOptTime;
   return 0;
 }

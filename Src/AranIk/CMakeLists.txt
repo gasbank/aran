@@ -3,9 +3,6 @@ AranIk.cpp AranIk.h
 AranIkPCH.cpp AranIkPCH.h
 ArnIkSolver.cpp ArnIkSolver.h
 Jacobian.cpp Jacobian.h
-LinearR2.cpp LinearR2.h
-LinearR3.cpp LinearR3.h
-LinearR4.cpp LinearR4.h
 MatrixRmn.cpp MatrixRmn.h
 Node.cpp Node.h
 RgbImage.cpp RgbImage.h

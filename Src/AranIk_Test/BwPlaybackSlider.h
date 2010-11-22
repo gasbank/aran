@@ -9,9 +9,10 @@ public:
 	virtual					~PlaybackSlider(void);
 	int						handle(int eventType);
 	void					setAvailableFrames(int frames);
+  int getAvailableFrames() const { return m_availableFrames; }
 	BwAppContext&			getAppContext();
 protected:
 	 virtual void			draw();
-	 unsigned int			m_availableFrames;
+	 int			m_availableFrames;
 	 BwAppContext&			m_ac;
 };

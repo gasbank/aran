@@ -8,14 +8,20 @@ BwDrawingOptionsWindow::BwDrawingOptionsWindow( int x, int y, int w, int h, cons
 , m_ac(ac)
 , m_openGlWindow(openGlWindow)
 {
-	add("Grid",				(int)m_ac.bDrawGrid);
-	add("HUD",				(int)m_ac.bDrawHud);
-	add("Joint",			(int)m_ac.bDrawJointIndicator);
-	add("Endeffector",		(int)m_ac.bDrawEndeffectorIndicator);
-	add("Joint Axis",		(int)m_ac.bDrawJointAxisIndicator);
-	add("Contact",			(int)m_ac.bDrawContactIndicator);
-	add("Contact Force",	(int)m_ac.bDrawContactForaceIndicator);
-	add("Root Node",		(int)m_ac.bDrawRootNodeIndicator);
+#define DO_REGISTER(n) add(#n, (int)m_ac.drawing_options[pym_do_ ## n])
+  // SHOULD HAVE THE SAME ORDER of pym_do_xxx
+	DO_REGISTER(grid);
+	DO_REGISTER(hud);
+	DO_REGISTER(joint);
+	DO_REGISTER(endeffector);
+	DO_REGISTER(joint_axis);
+	DO_REGISTER(contact);
+	DO_REGISTER(contact_force);
+	DO_REGISTER(root_node);
+  DO_REGISTER(wireframe);
+  DO_REGISTER(reference);
+  DO_REGISTER(fiber);
+#undef DO_REGISTER
 }
 
 BwDrawingOptionsWindow::~BwDrawingOptionsWindow(void)
@@ -26,14 +32,19 @@ int BwDrawingOptionsWindow::handle( int eventType )
 {
 	if (eventType == FL_PUSH || eventType == FL_RELEASE || eventType == FL_KEYDOWN || eventType == FL_KEYUP)
 	{
-		m_ac.bDrawGrid						= checked(1) ? true : false;
-		m_ac.bDrawHud						= checked(2) ? true : false;
-		m_ac.bDrawJointIndicator			= checked(3) ? true : false;
-		m_ac.bDrawEndeffectorIndicator		= checked(4) ? true : false;
-		m_ac.bDrawJointAxisIndicator		= checked(5) ? true : false;
-		m_ac.bDrawContactIndicator			= checked(6) ? true : false;
-		m_ac.bDrawContactForaceIndicator	= checked(7) ? true : false;
-		m_ac.bDrawRootNodeIndicator			= checked(8) ? true : false;
+#define DO_REGISTER(n) m_ac.drawing_options[pym_do_ ## n] = checked(pym_do_ ## n) ? true : false
+    DO_REGISTER(grid);
+    DO_REGISTER(hud);
+    DO_REGISTER(joint);
+    DO_REGISTER(endeffector);
+    DO_REGISTER(joint_axis);
+    DO_REGISTER(contact);
+    DO_REGISTER(contact_force);
+    DO_REGISTER(root_node);
+    DO_REGISTER(wireframe);
+    DO_REGISTER(reference);
+    DO_REGISTER(fiber);
+#undef DO_REGISTER
 		m_openGlWindow.redraw();
 	}
 	return Fl_Check_Browser::handle(eventType);

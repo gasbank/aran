@@ -62,6 +62,7 @@ float PymNormf(int dim, const float *v)
 double NormalizeVector(int dim, double *v)
 {
   double len = PymNorm(dim, v);
+  assert(len>=1e-6);
   int i; FOR_0(i, dim) v[i] /= len;
   return len;
 }

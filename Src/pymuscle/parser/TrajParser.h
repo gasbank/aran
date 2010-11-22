@@ -3,7 +3,7 @@
 
 #define MAX_CORRESMAP (50)
 
-typedef struct aaa_pym_traj_t {
+struct pym_traj_t {
   int exportFps;
   int nBlenderFrame;
   int nBlenderBody;
@@ -11,7 +11,9 @@ typedef struct aaa_pym_traj_t {
   char corresMap[MAX_CORRESMAP][2][128];
   int nCorresMap;
   double *trajData;
-} pym_traj_t;
+};
+
+struct pym_config_t;
 
 PYMPARSER_API int PymParseTrajectoryFile(pym_traj_t *pymTraj,
                            const char *fnRbCfg,
@@ -23,4 +25,5 @@ PYMPARSER_API int PymCorresMapIndexFromCorresMap(pym_traj_t *pymTraj,
 
 PYMPARSER_API int PymSetInitialStateUsingTrajectory(pym_config_t *pymCfg,
 				      pym_traj_t *pymTraj);
+PYMPARSER_API int PymSetInitialStateUsingSimconf(pym_config_t *pymCfg);
 #endif

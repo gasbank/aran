@@ -49,12 +49,12 @@ void PrsGraph::render() const {
         }
         glEnd();
         /* Data in points */
-        glBegin(GL_POINTS);
+        /*glBegin(GL_POINTS);
         glColor3dv(G->lineColor());
         for (int i = 0; i < G->size()-1; ++i) {
             glVertex2f( (double)(i+1)/G->capacity(), G->at(G->xoffset() + i+1)/m_maxY);
         }
-        glEnd();
+        glEnd();*/
     }
     glPopAttrib(); /* PAIR A */
 }

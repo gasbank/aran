@@ -4,6 +4,9 @@
 #include "PymJointAnchor.h"
 #include "PymConfig.h"
 
+enum pym_rot_param_t;
+struct pym_biped_eqconst_t;
+
 PYMCORE_API int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosestream);
 PYMCORE_API void PymConstructBipedEqConst(pym_biped_eqconst_t *bod, const pym_rb_statedep_t *sd, const pym_config_t *pymCfg, cholmod_common *cc);
 PYMCORE_API void PymSetPymCfgChiRefToCurrentState(pym_config_t *pymCfg);

@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(pymcore)
 SET(PYMCORE_SOURCES
+PymCorePch.cpp
 MathUtil.cpp 
 MuscleFiber.cpp 
 RigidBody.cpp 
@@ -13,6 +14,7 @@ StateDependents.cpp
 dRdv_real.cpp 
 SymbolicTensor.cpp 
 ExpBodyMoEq_real.cpp 
+QuaternionEOM.cpp
 )
 SET(PYMCORE_HEADERS
 ../PymPch.h
@@ -29,9 +31,12 @@ StateDependents.h
 dRdv_real.h 
 SymbolicTensor.h
 ExpBodyMoEq_real.h
+QuaternionEOM.h
 )
 INCLUDE_DIRECTORIES(
 ..
+../../
+../../AranMath
 ${BOOST_ROOT}
 ${PYM_3RDPARTIES_ROOT}include
 ${PYM_3RDPARTIES_ROOT}CHOLMOD/Include
@@ -46,4 +51,5 @@ ${PYM_3RDPARTIES_ROOT}glew-1.5.7/lib
 ${MOSEK_ROOT}6/tools/platform/win32x86/bin
 )
 ADD_LIBRARY(pymcore SHARED ${PYMCORE_SOURCES} ${PYMCORE_HEADERS})
-TARGET_LINK_LIBRARIES(pymcore cholmod libconfig)
+TARGET_LINK_LIBRARIES(pymcore cholmod libconfig AranMath)
+ADD_MSVC_PRECOMPILED_HEADER(pymcore PymCorePch.h PymCorePch.cpp)

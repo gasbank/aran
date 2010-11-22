@@ -1,4 +1,5 @@
 #include "AranMathPCH.h"
+#include "LinearR3.h"
 #include "ArnVec3.h"
 #include "ArnVec4.h"
 #include "ArnMatrix.h"
@@ -178,4 +179,111 @@ ARANMATH_API ArnQuat* ArnQuatAssign_ScalarFirst( ArnQuat* q, const double* v )
 	q->z = static_cast<float>(v[3]);
 	q->w = static_cast<float>(v[0]); // Scalar component
 	return q;
+}
+
+
+namespace AranMath
+{ 
+  Quaternion::Quaternion()
+    : w(1), x(0), y(0), z(0) {
+  }
+  Quaternion::Quaternion(double _w, double _x, double _y, double _z)
+    : w(_w), x(_x), y(_y), z(_z) {
+  }
+
+  Quaternion::Quaternion( const ArnVec3 &axis, double angle )
+  {
+    ArnVec3 axis_normalized;
+    ArnVec3Normalize(&axis_normalized, &axis);
+    double s = sin(angle/2);
+    w = cos(angle/2);
+    x = axis_normalized.x * s;
+    y = axis_normalized.y * s;
+    z = axis_normalized.z * s;
+  }
+
+  Quaternion::Quaternion( const VectorR3 &axis, double angle )
+  {
+    VectorR3 axis_normalized(axis);
+    axis_normalized.Normalize();
+    double s = sin(angle/2);
+    w = cos(angle/2);
+    x = axis_normalized.x * s;
+    y = axis_normalized.y * s;
+    z = axis_normalized.z * s;
+  }
+
+  void Quaternion::normalize() {
+    const double len = length();
+    w /= len;
+    x /= len;
+    y /= len;
+    z /= len;
+  }
+  // Matrix version of quaternion multiplication
+  // q*v4 --> [q]v4
+  ArnMatrix Quaternion::get_matrix_mult() const {
+    return ArnMatrix(
+      w, -z, y, x,
+      z, w, -x, y,
+      -y, x, w, z,
+      -x, -y, -z, w);
+  }
+
+  Quaternion Quaternion::inverse() const {
+    Quaternion q = get_conj();
+    const double lensq = q.length_squared();
+    q.w /= lensq;
+    q.x /= lensq;
+    q.y /= lensq;
+    q.z /= lensq;
+    return q;
+  }
+
+  Quaternion operator * (const Quaternion &lhs, const Quaternion &rhs) {
+    const double w = lhs.w*rhs.w - lhs.x*rhs.x - lhs.y*rhs.y - lhs.z*rhs.z;
+    const double x = lhs.w*rhs.x + lhs.x*rhs.w + lhs.y*rhs.z - lhs.z*rhs.y;
+    const double y = lhs.w*rhs.y + lhs.y*rhs.w + lhs.z*rhs.x - lhs.x*rhs.z;
+    const double z = lhs.w*rhs.z + lhs.z*rhs.w + lhs.x*rhs.y - lhs.y*rhs.x;
+    return Quaternion(w, x, y, z);
+  }
+
+  Quaternion& operator*=( Quaternion &lhs, const double s )
+  {
+    lhs.w *= s;
+    lhs.x *= s;
+    lhs.y *= s;
+    lhs.z *= s;
+    return lhs;
+  }
+  Quaternion& operator/=( Quaternion &lhs, const double s )
+  {
+    lhs.w /= s;
+    lhs.x /= s;
+    lhs.y /= s;
+    lhs.z /= s;
+    return lhs;
+  }
+  Quaternion operator + (const Quaternion &lhs, const Quaternion &rhs)
+  {
+    return Quaternion(lhs.w+rhs.w, lhs.x+rhs.x, lhs.y+rhs.y, lhs.z+rhs.z);
+  }
+  Quaternion operator - (const Quaternion &lhs, const Quaternion &rhs)
+  {
+    return Quaternion(lhs.w-rhs.w, lhs.x-rhs.x, lhs.y-rhs.y, lhs.z-rhs.z);
+  }
+  Quaternion operator * (const Quaternion &lhs, const double &s)
+  {
+    return Quaternion(lhs.w*s, lhs.x*s, lhs.y*s, lhs.z*s);
+  }
+  Quaternion operator / (const Quaternion &lhs, const double &s)
+  {
+    return Quaternion(lhs.w/s, lhs.x/s, lhs.y/s, lhs.z/s);
+  }
+
+  std::ostream &operator <<(std::ostream &s, const Quaternion &q)
+  {
+    s << q.w << " [" << q.x << ", " << q.y << ", " << q.z << "]";
+    return s;
+  }
 }

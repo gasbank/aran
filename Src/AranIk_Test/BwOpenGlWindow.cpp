@@ -2,6 +2,7 @@
 #include "BwOpenGlWindow.h"
 #include "BwAppContext.h"
 #include "IL/il.h"
+#include "QuaternionEOM.h"
 
 #if _MSC_VER
 #define snprintf _snprintf
@@ -62,9 +63,14 @@ void BwOpenGlWindow::draw()
     glViewport(0, 0, w(), h());
   }
 
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glEnable(GL_COLOR_MATERIAL);
+
   // RenderScene(m_ac);
   // if (m_ac.bDrawHud)
   //   RenderHud(m_ac);
+
 
   if (m_ac.pymRs) {
     double cam_r = 10, cam_phi = 1.0, cam_dphi = 0;
@@ -81,6 +87,54 @@ void BwOpenGlWindow::draw()
     rc.cam_cen[1] = m_cam_cen[1];
     rc.cam_cen[2] = m_cam_cen[2];
     PymRsRender(m_ac.pymRs, &rc);
+
+
+    pym_configure_light();
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45, 1, 0.01, 100);
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    double cam_car[3];            /* Cartesian coordinate of cam */
+    double up_dir[3];
+    pym_sphere_to_cartesian(cam_car, rc.cam_r, rc.cam_phi, rc.cam_theta);
+    /* printf("cam_car = %lf %lf %lf\n", */
+    /* 	 cam_car[0], cam_car[1], cam_car[2]); */
+    pym_up_dir_from_sphere(up_dir, cam_car, rc.cam_r,
+      rc.cam_phi, rc.cam_theta);
+    gluLookAt(rc.cam_cen[0]+cam_car[0],
+      rc.cam_cen[1]+cam_car[1],
+      rc.cam_cen[2]+cam_car[2],
+      rc.cam_cen[0],
+      rc.cam_cen[1],
+      rc.cam_cen[2],
+      up_dir[0],
+      up_dir[1],
+      up_dir[2]);
+
+    // Quaternion EOM test box
+    static AranMath::Quaternion q0(VectorR3(0,1,0),0.8);
+    static VectorR3 omega0(5, 5, 0);
+    q0.normalize();
+    m_omega = omega0;
+    const double h = 0.005;
+    AranMath::Quaternion q1;
+    VectorR3 omega1;
+    quaternion_eom_av_rk4(q1, omega1, q0, omega0, 0, h);
+    ArnQuat q1_new(q1.x, q1.y, q1.z, q1.w);
+    ArnMatrix q1mat;
+    q1_new.getRotationMatrix(&q1mat);
+    static const double regularBoxSize[3] = { 1, 1, 1 };
+    static const double ZERO[3] = {0,};
+    glPushMatrix();
+    {
+      glMultMatrixf((const GLfloat *)q1mat.m);
+      DrawBox_pq(ZERO, 0, regularBoxSize, 0);
+    }
+    q0 = q1;
+    omega0 = omega1;
+    glPopMatrix();
 
     if (m_screenshot_fbyf) {
       /* Take a screenshot */
@@ -224,7 +278,6 @@ int BwOpenGlWindow::handle_keydown() {
       rbnTrunk = rbn;
     }
   }
-  assert(rbnTrunk);
   srand(time(0));
   double look[3], up[3], left[3];
   PymLookUpLeft(look, up, left, m_cam_r, m_cam_phi, m_cam_theta);
@@ -232,20 +285,25 @@ int BwOpenGlWindow::handle_keydown() {
   const double upNorm = sqrt(up[0]*up[0]+up[1]*up[1]+up[2]*up[2]);
   for (int k = 0; k < 3; ++k)
     up[k] /= upNorm;
-  if (key == 65361) { // LEFT key
+  if (key == FL_Left) {
     for (int k = 0; k < 3; ++k)
       m_cam_cen[k] += left[k]*0.1;
-  } else if (key == 65363) { // RIGHT key
+    return 1;
+  } else if (key == FL_Right) { // RIGHT key
     for (int k = 0; k < 3; ++k)
       m_cam_cen[k] -= left[k]*0.1;
-  } else if (key == 65362) { // UP key
+    return 1;
+  } else if (key == FL_Up) { // UP key
     for (int k = 0; k < 3; ++k)
       m_cam_cen[k] += up[k]*0.1;
-  } else if (key == 65364) { // DOWN key
+    return 1;
+  } else if (key == FL_Down) { // DOWN key
     for (int k = 0; k < 3; ++k)
       m_cam_cen[k] -= up[k]*0.1;
+    return 1;
   } else if (key == 'f') {
     m_ac.pymRs->pymCfg.renderFibers = (m_ac.pymRs->pymCfg.renderFibers) ? 0 : 1;
+    return 1;
   } else if (key == 'x') {
     int ti1 = rand()%360;
     int ti2 = rand()%35 + 55;
@@ -264,10 +322,11 @@ int BwOpenGlWindow::handle_keydown() {
     rbnTrunk->extForcePos[0] = tx/3;
     rbnTrunk->extForcePos[1] = ty/3;
     rbnTrunk->extForcePos[2] = tz/3;
+    return 1;
   }
   redraw();
   //printf("key=%d\n", key);
-  return 1;
+  return 0;
 }
 
 int BwOpenGlWindow::handle_keyup() {
@@ -294,20 +353,24 @@ int BwOpenGlWindow::handle_keyup() {
     m_ac.viewMode = VM_TOP;
     //printf("  View mode set to top.\n");
     redraw();
+    return 1;
   } else if (key == FL_KP + '3') {
     m_ac.viewMode = VM_RIGHT;
     //printf("  View mode set to left.\n");
     redraw();
+    return 1;
   } else if (key == FL_KP + '1') {
     m_ac.viewMode = VM_BACK;
     //printf("  View mode set to front.\n");
     redraw();
+    return 1;
   } else if (key == FL_KP + '4') {
     m_ac.viewMode = VM_CAMERA;
     //printf("  View mode set to camera.\n");
     redraw();
+    return 1;
   }
-  return 1;
+  return 0;
 }
 
 int BwOpenGlWindow::handle( int eventType )
@@ -392,7 +455,10 @@ SelectGraphicObject(BwAppContext& ac, const float mousePx, const float mousePy)
   ArnSceneGraphRenderGl(ac.sgPtr.get(), true);
   foreach (ArnIkSolver* ikSolver, ac.ikSolvers)
     {
-      TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
+      TreeDraw(*ikSolver->getTree(), ac.drawing_options[pym_do_joint],
+        ac.drawing_options[pym_do_endeffector],
+        ac.drawing_options[pym_do_joint_axis],
+        ac.drawing_options[pym_do_root_node]);
     }
   // Rendering routine END
 
@@ -592,7 +658,7 @@ RenderScene(const BwAppContext& ac)
   //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  if (ac.bDrawGrid) {
+  if (ac.drawing_options[pym_do_grid]) {
     const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
     RenderGrid(ac, 0.5f, 10, gridColor, 0.5f);
     RenderGrid(ac, 2.5f, 2, gridColor, 1.0f);
@@ -601,7 +667,10 @@ RenderScene(const BwAppContext& ac)
   // Render skeletons under control of IK solver
   foreach (ArnIkSolver* ikSolver, ac.ikSolvers) {
     glPushMatrix();
-    TreeDraw(*ikSolver->getTree(), ac.bDrawJointIndicator, ac.bDrawEndeffectorIndicator, ac.bDrawJointAxisIndicator, ac.bDrawRootNodeIndicator);
+    TreeDraw(*ikSolver->getTree(), ac.drawing_options[pym_do_joint],
+      ac.drawing_options[pym_do_endeffector],
+      ac.drawing_options[pym_do_joint_axis],
+      ac.drawing_options[pym_do_root_node]);
     glPopMatrix();
   }
 
@@ -665,12 +734,12 @@ RenderScene(const BwAppContext& ac)
 	      glPushMatrix();
 	      {
 	        glTranslatef(contactPos.x, contactPos.y, contactPos.z);
-	        if (ac.bDrawContactIndicator) {
+	        if (ac.drawing_options[pym_do_contact]) {
 		        ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_YELLOW);
 		        ArnRenderSphereGl(0.025, 16, 16);
 		      }
 
-	        if (ac.bDrawContactForaceIndicator) {
+	        if (ac.drawing_options[pym_do_contact_force]) {
 		        glEnable(GL_COLOR_MATERIAL);
 		        glBegin(GL_LINES);
 		        glColor3f(1, 0, 0); glVertex3f(0, 0, 0);

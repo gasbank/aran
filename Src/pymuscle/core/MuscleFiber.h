@@ -1,13 +1,13 @@
 #ifndef __MUSCLEFIBER_H_
 #define __MUSCLEFIBER_H_
 
-typedef enum _pym_muscle_type_e {
+enum pym_muscle_type_e {
     PMT_UNKNOWN,
     PMT_ACTUATED_MUSCLE,
     PMT_LIGAMENT
-} pym_muscle_type_e;
+};
 
-struct _pym_mf_named_t {
+struct pym_mf_named_t {
     double kse, kpe, b, xrest, T, A;
     double fibb_org[3];
     double fibb_ins[3];
@@ -21,7 +21,7 @@ struct _pym_mf_named_t {
     pym_muscle_type_e mType;
 };
 
-union _pym_mf_t
+union pym_mf_t
 {
     double a[1+1+1+1+1+1+3+3];
     pym_mf_named_t b;

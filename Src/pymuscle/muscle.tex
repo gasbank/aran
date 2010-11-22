@@ -3,8 +3,9 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{graphicx}
-\usepackage[margin=1.0cm]{geometry}
+%\usepackage[margin=1.0cm]{geometry}
 \usepackage{pdflscape}
+\usepackage{hyperref}
 \definecolor{orange}{rgb}{1,0.5,0}
 \definecolor{opaqueblue}{rgb}{0.5,0.5,1.0}
 \renewcommand{\baselinestretch}{1.2}
@@ -112,7 +113,7 @@ objectives such as minimizing the actuation force or following the reference
 trajectory without considering how human being tries
 to achieve it biomechanically. For instance, in our model, a set of muscle fibers is
 actuated according to a certain gait phase and the other fibers remain
-unactuated to utilize its passive energy while prevalent approaches blindly seek 
+unactuated to utilize its passive energy while prevalent approaches blindly seek
 this kind of the natural human behavior with the macroscopic objectives.
 Although seemingly having succeeded for generating nice-looking motion,
 they can be enhanced by introducing biomechanical knowledge into both
@@ -129,7 +130,7 @@ challenge in robotics and computer graphics. A physically
 synthesized motion that actively responds to the environment is quite
 promising because it is hard to keyframing a natural animation for every motion
 manually. Although the combination of motion capture data and manual keyframing
-shows a quality of motion, it is not straightforward to make a character 
+shows a quality of motion, it is not straightforward to make a character
 interacts with its environment if a pre-recorded motion clip is used.
 By adapting physical simulation into a character animation we can overcome
 this issue. The problem is that still there is no ultimate solution for controlling
@@ -244,7 +245,7 @@ to reveal its structure as a tracker:
 \begin{equation}\label{MoEq2}
 \mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi ) = f_g(\chi) + f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, \bar\chi, \dot{\bar\chi}).
 \end{equation}
-Note that the muscle actuation force $u$ is calculated in $\tau$ internally. 
+Note that the muscle actuation force $u$ is calculated in $\tau$ internally.
 
 Unfortunately, $C$, $f_c$ and $\tau$ are highly nonlinear functions of the current state and the
 actuation forces, it is hard to figure out the actuation forces which attain
@@ -252,7 +253,7 @@ the desired acceleration of the system. To make matters worse, $f_c$ is the func
 of muscle forces $\tau$, it is extremely difficult or even impossible
 to solve \eqref{MoEq2} for the function of $\tau$ or $u$ in a closed-form
 equation.
-To make the problem tractable, we make a few assumption. 
+To make the problem tractable, we make a few assumption.
 
 Because we represent times as discrete samples, all the functions of
 time-varying variables need to be represented in a discrete domain.
@@ -277,7 +278,7 @@ of our biped model. The actuated and unactuated muscles are explicitly configure
 with respect to a corresponding phase.
 
 
-\includegraphics[width=130mm]{algo}
+%\includegraphics[width=130mm]{algo}
 
 \pagebreak
 
@@ -380,39 +381,39 @@ directly as well as the external forces and torques.
 
 \subsection{Muscle fiber dynamics}
 
-There are many variants of muscle model used in biomechanical area range
-from a simple spring model to a time-varying nonlinear model. \cite{25733}
+There are many variants of muscle fiber model used in biomechanical field range
+from a simple time-invariant spring model to a complicated time-varying model. \cite{25733}
 Although a more sophisticated model gives us a more realistic behavior, unnecessarily
-complicated models will make the biped hard to simulate and control. For a compromise,
-we use one of the simplest time-invariant spring-damper model commonly called
+complicated models will make the biped hard to simulate and control.
+For a compromise, we use one of the simplest time-invariant spring-damper model commonly called
 a Hill type muscle model. \cite{hill}.
 Basically, the model consists of two springs and a viscous damper.
 The damper and the spring are connected in parallel and one spring is
 connected in serial way. The active component in which our controller
-can actuate resides in parallel side. A bundle of muscle fibers can be
-categorized according to their structure and we treat this bundle as
-a single fiber to simplify the model. For each muscle fiber, we need three
-parameters: a serial spring constant $k_{se}$, a parallel spring constant $k_{pe}$,
-a viscosity $b$ and a rest length $x_{r}$. The model can be formulated
-as a first-order ordinary differential equation of a tension $T$ exerted
-at the end of the fiber:
+can actuate resides in parallel side.
+In real human body, many muscle fibers form bundles called \emph{fascicles}.
+And multiple fascicles form a body of muscle.
+To simplify our biped model, we use less than 10 muscle fibers to represent a certain kind of muscle body.
+In the Hill type muscle model, we need four parameters for each:
+a serial spring constant $k_{se}$, a parallel spring constant $k_{pe}$, a viscosity $b$ and a rest length $x_{r}$.
+These parameters can be constants or variables depending on how muscle fibers modeled.
+A mathematical expression defining dynamics of the muscle fiber is a first-order ordinary differential equation:
 
 \begin{equation}\label{Tension}
 \dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+u   \right)
 \end{equation}
-where $x$ is the length of the fiber and $A$ is applied force in the active
-component. Note that all quantities shown in the equation are scalar values.
-Since a muscle fiber always connects two rigid bodies and the same amount of
-tension is applied to both of them with opposite directions,
-we need a clear definition of the sign of $T$. Researchers in biology
-use the term $origin$ and $insertion$ to indicate the attached position
-of various muscle fibers. An origin and an insertion refer where a muscle
-fiber is originated from and inserted to, respectively.
-If we denote the origin and insertion position of the fiber
-as $p_{org}$ and $p_{ins}$ in Cartesian coordinates, the normalized direction of the fiber can be
-defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$. Thus, we can conclude
-the tension $T\hat{d}$ and $-T\hat{d}$ are applied to the origin and insertion body
-of the fiber, respectively.
+where $T$ is a tension exerted at both ends (positive means pulling), $x$ is the length of the fiber and $u$ is actuation force in the active component.
+Note that all quantities shown in the equation are scalar values.
+A muscle fiber always connects two rigid bodies and the same amount of
+tension is applied to both of them with opposite directions.
+
+There are muscle terminology to clearly define the configuration of muscles.
+A muscle fiber has an $origin$ and an $insertion$ which indicate the attached position
+of various muscle fibers at certain bones.
+In other words, an origin and an insertion refer where a muscle fiber is originated from and inserted to, respectively.
+If we denote the origin and insertion position of the fiber as $p_{org}$ and $p_{ins}$ in Cartesian coordinates,
+the normalized direction of the fiber can be defined as $\hat{d}=(p_{ins}-p_{org})/||p_{ins}-p_{org}||$.
+Thus, we can calculate tension $T\hat{d}$ and $-T\hat{d}$ which are applied to the origin and insertion body of the fiber, respectively.
 
 We use two types of muscle fibers: actuated and unactuated muscle fibers.
 Actuated muscle fibers represent the muscles we can actuate. Typically
@@ -426,7 +427,12 @@ This implies that the fiber length $||p_{ins}-p_{org}||$ happen to be zero
 or near zero sometimes during simulation. In that case, we simply set
 $x$ and $\dot{x}$ to zero.
 
-\subsection{Contact model}
+An \emph{agonist}, or \emph{prime mover}, is a muscle whose contraction is chiefly responsible for producing a particular movement.
+A muscle fibers has its \emph{antagonist}. The antagonist is a muscle whose action opposes that of a particular agonist.
+We can choose specific muscle fibers to be used in the biped model based on agonists related to legs.
+Also we can inform the optimizer to reduce actuation force on a muscle fiber when its antagonist is actively actuated.
+
+\subsection{Contact model (LCP)}
 
 \begin{equation}
 \left[ \begin{array}{c}
@@ -509,8 +515,11 @@ c_n \\
 \end{equation}
 
 
+If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
+derived in a generalized coordinate as well as a state and its time derivatives
+the solution will give us contact forces at the instant.
 
-%\subsection{Whole biped model}
+\subsection{Whole biped model}
 
 By modeling the bones as rigid bodies and the bunch of muscles as several muscle
 fibers we can build the whole biped model. We have $n$ rigid bodies and
@@ -758,36 +767,32 @@ y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
 
 
 
-%\section{Contact model}
+\section{Contact model (overview)}
 
-There are various kind of techniques to deal with the calculation of
-contact forces between rigid bodies. The existing algorithms can be
-divided into three categories: constraint-based, penalty-based and
-impulse-based approaches. In constraint-based methods, the contact
-forces are computed by solving an optimization problem such as
-linear complementarity problems (LCP). The contact forces are calculated
-precisely in this case. It is not well suited in the environments
-which contain many contact points. Penalty-based methods compute
-the contact forces by considering a contact as a spring-damper.
-It is scalable and easy to implement. However it requires very short
-integration step especially at collisions and in most cases nonpenetration
-conditions are violated. Impulse-based methods model contacts
-as successive collisions instead of persisting contacts.
+There are various kind of techniques to deal with the calculation of contact forces between rigid bodies.
+The existing algorithms can be divided into three categories: constraint-based, penalty-based and impulse-based approaches.
+In constraint-based methods, the contact forces are computed by solving an optimization problem such as linear complementarity problems (LCP).
+The contact forces are calculated most precisely using LCP.
+However, it is tricky to implement correctly and the solutions may not be found although they are exist or it is unsolvable in some cases \cite{StewartT00}.
+These shortcomings are improved in \cite{Anitescu}.
+They introduced a LCP formulation which guarantees that the contact problem always has a solution which will be found by Lemke's algorithm.
+Penalty-based methods compute the contact forces by considering a contact as a spring-damper.
+It is scalable and easy to implement. However it requires very short integration step especially at collisions and in most cases non-penetration conditions are violated.
+Impulse-based methods model contacts as successive collisions instead of persisting contacts.
 
-The simulation environment contains a relatively small number
-of contact points. The precise contact forces are necessary because
-the global alignment of the character only depends on that forces.
-Although physically conforming contact forces are not strictly needed in
-the point of believable character animation, our controller uses the
-ground reaction forces as input to compute desired actuation forces.
+As long as the biped's poses are properly managed, our simulation configuration contains a relatively small number of contact points.
+Contact forces are crucial because the root position and orientation of the biped can be controlled only by that forces.
+Therefore physically conforming contact forces are important in the point of believable character animation.
 
-We choose a time-stepping method introduced in \cite{StewartT00, oai:CiteSeerPSU:258685}.
-If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
-derived in a generalized coordinate as well as a state and its time derivatives
-the solution will give us contact forces at the instant.
+We use a penalty method which can be easily integrated in our optimization framework.
+The time-stepping method based on LCP is hard to combine with our quadratic programming (QP) formulation
+because there is a case that LCP is not transformed into QP, \emph{i.e.},
+a matrix involved in constraints is not a symmetric positive matrix.
 
 
-%\section{Implicit integration}
+
+
+\section{Implicit integration}
 
 Most of rigid body systems can be simulated using an explicit Euler method
 as far as there is no stiff component exists. The explicit integration
@@ -827,7 +832,7 @@ Jacobian also can be calculated in a separated manner.
         & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
 \end{align}
 
-\includegraphics[width=120mm]{testplot}
+%\includegraphics[width=120mm]{testplot}
 
 
 \section{Muscle control algorithm}
@@ -857,7 +862,7 @@ If we substitute \eqref{SeparatedYdot} and \eqref{ActuationForceRevealed} into
 \eqref{DeltaY} the control structure of $\Delta Y$ is shown.
 
 \begin{equation}\label{DeltaYControl}
-\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} 
+\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1}
             \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} + \dot{Y}_Q^{A(l)} \right)
 \end{equation}
 $\Delta Y$ can be rearranged to be affine in the control argument $u$ as follows:
@@ -932,7 +937,7 @@ Symbol           & Dimension                                & Name \\
 \hline
 $\bar{m}$        &                                          & body mass \\
 $\mathbf{H}$     & $3 \times 3$                             & moments of inertia \\
-$a$              & $3 \times 1$                             & linear acceleration \\ 
+$a$              & $3 \times 1$                             & linear acceleration \\
 $\alpha$         & $3 \times 1$                             & angular acceleration \\
 $\omega$         & $3 \times 1$                             & angular velocity \\
 $f$              & $3 \times 1$                             & external force\\
@@ -1173,7 +1178,7 @@ f_{m,n}(\chi, T )
 \begin{array}{ccc}
 \mathbf{R}_1                      &            &                               \\
                                   &  \ddots    &                               \\
-                                  &            & \mathbf{R}_n 
+                                  &            & \mathbf{R}_n
 \end{array}
 \right ]
 \left [
@@ -1227,7 +1232,7 @@ T_{\mathcal{M}(i)_{|\mathcal{M}(i)|}}
 \subsubsection{Muscle fiber dynamics}
 The discretized version of \eqref{Tension} is the following:
 \begin{equation}
-\frac{T^{(l)}-T^{(l-1)}}{h} 
+\frac{T^{(l)}-T^{(l-1)}}{h}
            = \frac{k_{se}}{b} \left( k_{pe}(x^{(l)}-x_{r})+b\frac{x^{(l)}-x^{(l-1)}}{h}-\left(1+\frac{k_{pe}}{k_{se}}\right) T^{(l)} + u^{(l)}   \right)
 \end{equation}
 
@@ -1294,7 +1299,7 @@ T_1^{(l)} \\ u_1^{(l)} \\ x_{r,1}^{(l)} \\
 \vdots\\
 T_{n_m}^{(l)} \\ u_{n_m}^{(l)} \\ x_{r,n_m}^{(l)}
 \end{array}
-\right ]  & = 
+\right ]  & =
 \left [
 \begin{array}{c}
 s_1 \\
@@ -1483,7 +1488,7 @@ f_{c,z} \geq 0              , \quad\quad
 \begin{equation}
 \epsilon            \geq \| \tilde{c}_{lcp} \| , \quad\quad
 \mu f_{c,z}  \geq \| f_{c,t}         \| , \quad\quad
-\epsilon_{fric}    \geq \| \Delta\chi      \| 
+\epsilon_{fric}    \geq \| \Delta\chi      \|
 \end{equation}
 
 
@@ -1550,7 +1555,7 @@ f_{c,i,z} \geq 0              , \quad\quad
 \begin{equation}
 \epsilon_i            \geq \| \tilde{c}_{lcp,i} \| , \quad\quad
 \mu f_{c,i,z}  \geq \| f_{c,i,t}         \| , \quad\quad
-\epsilon_{fric,i}    \geq \| \Delta\chi_i      \| 
+\epsilon_{fric,i}    \geq \| \Delta\chi_i      \|
 \end{equation}
 
 
@@ -1578,7 +1583,7 @@ f_{c,i,z} \geq 0              , \quad\quad
 \tau_2  \\
 T \\
 u \\
-x_r \\ 
+x_r \\
 \epsilon_T \\
 \epsilon_u
 \end{array}\right]
@@ -1634,7 +1639,7 @@ f_{c,i,z} \geq 0              , \quad\quad
 \begin{equation}
 \epsilon_i            \geq \| \tilde{c}_{lcp,i} \| , \quad\quad
 \mu f_{c,i,z}  \geq \| f_{c,i,t}         \| , \quad\quad
-\epsilon_{fric,i}    \geq \| \Delta\chi_i      \| 
+\epsilon_{fric,i}    \geq \| \Delta\chi_i      \|
 \end{equation}
 
 \pagebreak
@@ -1655,7 +1660,7 @@ f_{c,i,z} \geq 0              , \quad\quad
 \scriptstyle{(2) 4 |\mathcal{P}|}   &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        \cr
 \scriptstyle{(3)   |\mathcal{P}|}   &                                               & (\mathbf{c}_1)_{j \in \mathcal{P}}^\text{de}              &                                                &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        \cr
 \scriptstyle{(4) 4 |\mathcal{P}|}   &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        \cr
-\scriptstyle{(5) n_d}               &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            & 
+\scriptstyle{(5) n_d}               &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &
 }
 \begin{pmatrix}
 \chi^{(l+1)} \\
@@ -1719,16 +1724,16 @@ The matrix-vector notation for equility constraints:
 \scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}                            &                      &                    &                     &                      &                     \cr
 \scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    &                     &                      &                     \cr
 \scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}       &                     &                      &                     \cr
-\scriptstyle{7 : 3 }                    & \mathbf{G}                   &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     & \mathbf{-1}          &                        
+\scriptstyle{7 : 3 }                    & \mathbf{G}                   &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     & \mathbf{-1}          &
 }
 \left(\begin{array}{c}
 \tau                        \\
 T                           \\
 u                           \\
-x_r                         \\ 
+x_r                         \\
 \epsilon_\text{lig}         \\
 \epsilon_\text{act}         \\
-d_A                         \\ 
+d_A                         \\
 \epsilon_d                  \\
 p_\text{com}^{(l+1)}        \\
 \Delta p_{\text{com},ref}   \\
@@ -1749,11 +1754,11 @@ p_{\text{com},ref}^{(l+1)}  \\
 \end{array}\right)
 \end{equation}
 \begin{equation}\notag
-\tau \equiv (\tau_i)^\text{re}_{i \in \mathcal{B}}, \quad 
-T          \equiv (T_i)^\text{re}_{i \in \mathcal{M}}, \quad 
-u          \equiv (u_i)^\text{re}_{i \in \mathcal{M}}, \quad 
+\tau \equiv (\tau_i)^\text{re}_{i \in \mathcal{B}}, \quad
+T          \equiv (T_i)^\text{re}_{i \in \mathcal{M}}, \quad
+u          \equiv (u_i)^\text{re}_{i \in \mathcal{M}}, \quad
 x_r        \equiv (x_{r,i})^\text{re}_{i \in \mathcal{M}}, \quad
-d_A        \equiv (d_{A,i})^\text{re}_{i \in \mathcal{J}}, \quad 
+d_A        \equiv (d_{A,i})^\text{re}_{i \in \mathcal{J}}, \quad
 \epsilon_d \equiv (\epsilon_{d,i})^\text{re}_{i \in \mathcal{J}}
 \end{equation}
 \begin{equation}\notag
@@ -1808,7 +1813,7 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \scriptstyle{5: n_d}                &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &                        &                                                  &                                       &                          &                        &                          \cr
 \scriptstyle{6: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_n)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  &                                       &                                &                         &                          \cr
 \scriptstyle{7: 4 |\mathcal{A}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{A}}^\text{re} &                                                           &                                                &                                      &                                     &                                     &                                   &                        &                        &                                                  &  -\mathbf{1}                          &                                &                         &                         \cr
-\scriptstyle{8: n_d}                &          \mathbf{1}                           &                                                         &                                             &                                     &                                        &                                     &                                 &                         &                          &                                              &                                          &                             &       -\mathbf{1}       &                         
+\scriptstyle{8: n_d}                &          \mathbf{1}                           &                                                         &                                             &                                     &                                        &                                     &                                 &                         &                          &                                              &                                          &                             &       -\mathbf{1}       &
 }
 \end{equation}
 \begin{equation}\notag
@@ -1828,7 +1833,7 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \scriptstyle{10}&   \tilde{p}^{(l+1)}_{A,i}           \cr
 \scriptstyle{11}&   \epsilon_{\text{rot}}             \cr
 \scriptstyle{12}&   \Delta\chi_{i,prv}               \cr
-\scriptstyle{13} &   \epsilon_{\Delta,i,prv}          
+\scriptstyle{13} &   \epsilon_{\Delta,i,prv}
 }
 , \quad
 \eta_i \equiv
@@ -1855,7 +1860,7 @@ Set              & Description                  \\
 \hline
 $\mathcal{B}$    & rigid bodies                 \\
 $\mathcal{M}$    & muscle fibers                \\
-$\mathcal{A}$    & anchor points                \\ 
+$\mathcal{A}$    & anchor points                \\
 $\mathcal{J}$    & anchored joints              \\
 $\mathcal{P}$    & contact points               \\
 \hline
@@ -1888,7 +1893,7 @@ $\mathcal{P}$    & contact points               \\
 0 &                                &                            &          & -\mathbf{c}_{4,|\mathcal{P}|}             &                           &            &                                          &               &        & \mathbf{c}_3   &                     &        & -1                              &    &         &    &            & 0  & 0 &   \\
 0 &                                &  \sqrt{\mathbf{c}_{4,1}}   &          &                                           &                           &            &                                          &               &        &                & 1/2\sqrt{c_{fcz,1}} &        &                                 & -1 &         &    &            & 0  & 0 &   \\
 0 &                                &                            & \ddots   &                                           &                           &            &                                          &               &        &                &                     & \ddots &                                 &    &  \ddots &    &            & 0  & 0 &   \\
-0 &                                &                            &          & \sqrt{\mathbf{c}_{4,|\mathcal{P}|}}       &                           &            &                                          &               &        &                &                     &        & 1/2\sqrt{c_{fcz,|\mathcal{P}|}} &    &         & -1 &            & 0  & 0 &   
+0 &                                &                            &          & \sqrt{\mathbf{c}_{4,|\mathcal{P}|}}       &                           &            &                                          &               &        &                &                     &        & 1/2\sqrt{c_{fcz,|\mathcal{P}|}} &    &         & -1 &            & 0  & 0 &
 \end{array}\right]
 \left[\begin{array}{c}
 \epsilon \\ \chi^{(l+1)} \\

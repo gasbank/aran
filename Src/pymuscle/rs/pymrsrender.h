@@ -5,6 +5,7 @@ typedef enum {
   PYM_UNKNOWN_GROUND,
   PYM_SQUARE_GROUND,
   PYM_CIRCLE_GROUND,
+  PYM_TRANSPARENT_GRID,
 } pym_ground_type_t;
 
 typedef struct aaa_pym_render_config_t {
@@ -25,7 +26,12 @@ extern "C" {
 		     double r, double phi, double theta);
   PYMRS_API void pym_sphere_to_cartesian(double *c, double r,
 			       double phi, double theta);
-
+  PYMRS_API void DrawBox_pq(const double *p, const double *q,
+    const double *const boxSize, int wf);
+  PYMRS_API void pym_up_dir_from_sphere(double *u,
+    const double *const cam_car,
+    double r, double phi, double theta);
+  PYMRS_API void pym_configure_light();
 #ifdef __cplusplus
 }
 #endif

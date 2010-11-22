@@ -33,6 +33,8 @@ public:
 	float					z;
 };
 
+ARANMATH_API std::ostream &operator << (std::ostream &s, const ArnVec3 &v);
+
 ARANMATH_API ArnVec3 CreateArnVec3(float x, float y, float z);
 ARANMATH_API void ArnVec3GetFormatString(char* buf, size_t bufSize, const ArnVec3& v);
 ARANMATH_API ArnVec3 ArnVec3Add(const ArnVec3& v1, const ArnVec3& v2);

@@ -42,6 +42,8 @@
 #include <boost/foreach.hpp>
 #include <boost/array.hpp>
 #include <boost/circular_buffer.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
 #define foreach BOOST_FOREACH
 
 //
@@ -230,12 +232,20 @@
 #include <FL/Fl_Hor_Slider.H>
 #include <FL/Fl_Toggle_Button.H>
 #include <FL/Fl_Light_Button.H>
+#include <FL/Fl_Check_Button.H>
 #include <FL/Fl_Select_Browser.H>
 #include <FL/Fl_Check_Browser.H>
 #include <FL/Fl_Gl_Window.H>
+#include <FL/Fl_Text_Display.H>
+#include <FL/Fl_Value_Slider.H>
+#include <FL/Fl_Int_Input.H>
+#include <FL/Fl_Float_Input.H>
+#include <FL/Fl_Slider.H>
 #include <FL/gl.h>
 #include <FL/math.h>
 #include <FL/fl_draw.H>
+
+
 
 // Pym Realtime Simulator (pymrs) module
 

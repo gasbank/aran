@@ -1,6 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 PROJECT(pymoptimizer)
 SET(PYMOPTIMIZER_SOURCES
+PymOptimizerPch.cpp
 Optimize.cpp 
 ToSparse.cpp 
 TripletMatrix.cpp 
@@ -34,3 +35,4 @@ ${MOSEK_ROOT}6/tools/platform/win32x86/bin
 ADD_LIBRARY(pymoptimizer SHARED ${PYMOPTIMIZER_SOURCES} ${PYMOPTIMIZER_HEADERS})
 TARGET_LINK_LIBRARIES(pymoptimizer pymcore pymparser mosek6_0)
 ADD_DEPENDENCIES(pymoptimizer pymcore pymparser)
+ADD_MSVC_PRECOMPILED_HEADER(pymoptimizer PymOptimizerPch.h PymOptimizerPch.cpp)

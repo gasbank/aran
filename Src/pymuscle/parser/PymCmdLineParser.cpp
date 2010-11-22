@@ -18,6 +18,8 @@ int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]
     cmdopt->notrack           =  0;
     cmdopt->freeTrajStrings   =  0;
     cmdopt->freeOutputStrings =  0;
+    cmdopt->slant             =  0;
+    cmdopt->test              =  0;
 
     assert(argc >= 2);
     cmdopt->simconf = argv[1];
@@ -47,6 +49,8 @@ int PymParseCmdlineOptions(pym_cmdline_options_t *cmdopt, int argc, char *argv[]
                 printf("Error: --slant should be provided as a real number.\n");
                 return -3;
             }
+        } else if (strncmp(argv[i], "--test", strlen("--test")) == 0) {
+            cmdopt->test = 1;
         } else {
             printf("Error: unknown argument provided - %s\n", argv[i]);
             return -2;

@@ -48,9 +48,12 @@ ADD_DEFINITIONS(
 )
 TARGET_LINK_LIBRARIES(Aran
 AranMath
-tinyxmlSTL_D
-zlib_D
 DevIL
+optimized ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Release/zlib1.lib
+optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/Release_STL/tinyxmlSTL.lib
+debug ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Debug/zlib1.lib
+debug ${CODEBASE}tinyxml_2_5_3/tinyxml/Debug_STL/tinyxmlSTL.lib
 winmm
 )
+
 ADD_MSVC_PRECOMPILED_HEADER(Aran AranPCH.h AranPCH.cpp)

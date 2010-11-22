@@ -8,13 +8,13 @@
 #ifndef PYMJOINTANCHOR_H_
 #define PYMJOINTANCHOR_H_
 
-struct _pym_joint_anchor_t {
+struct pym_joint_anchor_t {
     char name[128];
     char bodyName[128];
     double localPos[3];
 };
 
-struct _pym_anchored_joint_t {
+struct pym_anchored_joint_t {
     int aIdx;             /* body 'a' index */
     int aAnchorIdx;       /* joint anchor index of body 'a' */
     int aAnchorIdxGbl;    /* joint anchor index in global list */
@@ -23,6 +23,8 @@ struct _pym_anchored_joint_t {
     int bAnchorIdxGbl;    /* joint anchor index in global list */
     double maxDisloc;
 };
+
+struct pym_config_t;
 
 PYMCORE_API void ExtractAnchorIdentifier(char *iden, const char *aName);
 PYMCORE_API int PymConstructAnchoredJointList(pym_config_t *pymCfg);

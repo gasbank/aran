@@ -13,6 +13,8 @@
 #include "PymuscleConfig.h"
 #include "PymDebugMessageFlags.h"
 
+using namespace std;
+
 int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg) {
   int trajNameLen = (int)(strchr(fnTrajCfg, '.') - fnTrajCfg);
   assert(trajNameLen > 0);
@@ -22,10 +24,31 @@ int PymInferJointAnchorConfFileName(char fnJaCfg[128], const char *fnTrajCfg) {
   return 0;
 }
 
+void Tokenize(const string& str,
+  vector<string>& tokens,
+  const string& delimiters = " ")
+{
+  // Skip delimiters at beginning.
+  string::size_type lastPos = str.find_first_not_of(delimiters, 0);
+  // Find first "non-delimiter".
+  string::size_type pos     = str.find_first_of(delimiters, lastPos);
+
+  while (string::npos != pos || string::npos != lastPos)
+  {
+    // Found a token, add it to the vector.
+    tokens.push_back(str.substr(lastPos, pos - lastPos));
+    // Skip delimiters.  Note the "not_of"
+    lastPos = str.find_first_not_of(delimiters, pos);
+    // Find next "non-delimiter"
+    pos = str.find_first_of(delimiters, lastPos);
+  }
+}
+
+
 int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char *fnJaCfg) {
   FILE *jaCfg = fopen(fnJaCfg, "r");
   if (jaCfg == 0) {
-    printf("Joint anchor configuration file %s parse failed.\n", fnJaCfg);
+    printf("Warn - Joint anchor configuration file %s opening failed.\n", fnJaCfg);
     return -1;
   }
   int i;
@@ -45,15 +68,14 @@ int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char 
       printf("Error - maximum capacity for storing anchors exceeded. (Max=%d)\n", maxNa);
       return -5;
     }
-    //printf("%s", aLine);
-    char *cp = strdup(aLine);
-    char *name = strtok(cp, delimiters);
-    char *bodyName = strtok(0, delimiters);
-    char *dblStr;
+    string aLineStr(aLine);
+    vector<string> tk; // Tokens
+    Tokenize(aLineStr, tk, delimiters);
+    const char *name = tk[0].c_str();
+    const char *bodyName = tk[1].c_str();
     FOR_0(i, 3) {
-      dblStr = strtok (0, delimiters);
-      char *endp;
-      ja[na].localPos[i] = strtod(dblStr, &endp);
+      char *endp = 0;
+      ja[na].localPos[i] = strtod(tk[2+i].c_str(), &endp);
       if (!(endp && *endp == '\0')) {
         printf("Error - corruption on anchor config file %s(%d)\n", fnJaCfg, nLine);
         return -2;
@@ -62,7 +84,6 @@ int PymParseJointAnchorFile(pym_joint_anchor_t *ja, const int maxNa, const char 
     strcpy(ja[na].name, name);
     strcpy(ja[na].bodyName, bodyName);
     ++na;
-    free(cp);
   }
   fclose(jaCfg);
   return na;
@@ -172,9 +193,14 @@ int PymInitJointAnchors(pym_config_t *pymCfg, FILE *dmstreams[]) {
         strncpy(rbn->jointAnchorNames[rbn->nAnchor], pymCfg->pymJa[j].name, 128);
         memcpy(rbn->jointAnchors + rbn->nAnchor, pymCfg->pymJa[j].localPos, sizeof(double)*3);
         rbn->jointAnchors[rbn->nAnchor][3] = 1.0; /* homogeneous component */
+        fprintf(dmstreams[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT],
+          "Joint anchor %15s attached to %8s.\n", pymCfg->pymJa[j].name, rbn->name, rbn->nAnchor);
+        fprintf(dmstreams[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT],
+          "        location in body cooridnate is %lf, %lf, %lf\n",
+          rbn->jointAnchors[rbn->nAnchor][0], rbn->jointAnchors[rbn->nAnchor][1], rbn->jointAnchors[rbn->nAnchor][2]);
         ++rbn->nAnchor;
         fprintf(dmstreams[PDMTE_INIT_JOINT_ANCHOR_ATTACH_REPORT],
-          "Joint anchor %15s attached to %8s. (so far %2d)\n", pymCfg->pymJa[j].name, rbn->name, rbn->nAnchor);
+          "(so far %2d)", rbn->nAnchor);
         assert(rbn->nAnchor <= 10);
       }
     }

@@ -4,4 +4,7 @@
 
 #include "PymPch.h"
 
+#include <iostream>
+#include <sstream>
+
 #endif /* #ifndef __PYMPARSERPCH_H_ */

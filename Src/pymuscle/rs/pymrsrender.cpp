@@ -26,13 +26,15 @@
 
 #include "pymrscore.h"
 #include "pymrsrender.h"
-
+#include "LinearR3.h"
+#include "QuaternionEOM.h"
+#include "pymdrawingoption.h"
 #ifndef M_PI
 #define M_PI 3.14
 #endif
 
 GLuint		m_vaoID[5];     /* two vertex array objects,
-				   one for each drawn object */
+                          one for each drawn object */
 GLuint		m_vboID[3];     // three VBOs
 GLuint		gndTex;
 // Z values will be rendered to this texture when using fboId framebuffer
@@ -55,7 +57,7 @@ static void pym_strict_checK_gl() {
   GLenum gl_error = glGetError();
   if( gl_error != GL_NO_ERROR ) {
     fprintf( stderr, "ARAN: OpenGL error: %s\n",
-	     gluErrorString(gl_error) );
+      gluErrorString(gl_error) );
     abort();
   }
 }
@@ -127,9 +129,9 @@ GLuint InitQuad2Vao() {
 
   // Third simple object
   GLfloat vert3[] = {  15.3f,  5.3f,  0.0f,
-		       -5.3f,  5.3f,  0.0f,
-		       -5.3f, -5.3f,  0.0f,
-                       5.3f, -5.3f,  0.0f  };
+    -5.3f,  5.3f,  0.0f,
+    -5.3f, -5.3f,  0.0f,
+    5.3f, -5.3f,  0.0f  };
   // 1 VBO for the third VAO
   GLuint vboId = 0;
   glGenBuffers(1, &vboId);
@@ -176,39 +178,39 @@ GLuint InitUnitBoxVao() {
     0.5f, -0.5f, -0.5f,
     -0.5f, -0.5f, -0.5f,
     -0.5f,  0.5f, -0.5f  };
-  GLfloat nor4[] = {
-    1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-    -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-    0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-    0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-    0,0,1,0,0,1,0,0,1,0,0,1,
-    0,0,-1,0,0,-1,0,0,-1,0,0,-1,
-  };
-  GLfloat col4[3*4*6];
-  int i;
-  FOR_0(i, 3*4*6) {
-    if (i%3 == 0)
-      col4[i] = 1;
-  }
+    GLfloat nor4[] = {
+      1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+      -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+      0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+      0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+      0,0,1,0,0,1,0,0,1,0,0,1,
+      0,0,-1,0,0,-1,0,0,-1,0,0,-1,
+    };
+    GLfloat col4[3*4*6];
+    int i;
+    FOR_0(i, 3*4*6) {
+      if (i%3 == 0)
+        col4[i] = 1;
+    }
 
-  GLuint vboId[3] = {0,};
-  glGenBuffers(3, vboId);
+    GLuint vboId[3] = {0,};
+    glGenBuffers(3, vboId);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), vert4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[0]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), vert4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(0);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), col4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[1]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), col4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(1);
 
-  glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
-  glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
-  glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
-  glEnableVertexAttribArray(2);
-  return vaoId;
+    glBindBuffer(GL_ARRAY_BUFFER, vboId[2]);
+    glBufferData(GL_ARRAY_BUFFER, 3*4*6*sizeof(GLfloat), nor4, GL_STATIC_DRAW);
+    glVertexAttribPointer((GLuint)2, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(2);
+    return vaoId;
 }
 
 GLuint InitCircleVao() {
@@ -234,7 +236,7 @@ GLuint InitCircleVao() {
 
   glBindBuffer(GL_ARRAY_BUFFER, vboId);
   glBufferData(GL_ARRAY_BUFFER, n_vert_circle*sizeof(GLfloat),
-	       vert5, GL_STATIC_DRAW);
+    vert5, GL_STATIC_DRAW);
   glVertexAttribPointer((GLuint)0, 3, GL_FLOAT, GL_FALSE, 0, 0);
   glEnableVertexAttribArray(0);
   return vaoId;
@@ -270,10 +272,10 @@ GLhandleARB loadShader(char* filename, unsigned int type)
   printf("Loading shader %s...\n", filename);
   pfile = fopen(filename, "rb");
   if(!pfile)
-    {
-      printf("Sorry, can't open file: '%s'.\n", filename);
-      exit(-1);
-    }
+  {
+    printf("Sorry, can't open file: '%s'.\n", filename);
+    exit(-1);
+  }
 
   fread(buffer,sizeof(char),400000,pfile);
   //printf("%s\n",buffer);
@@ -283,18 +285,18 @@ GLhandleARB loadShader(char* filename, unsigned int type)
 
   handle = glCreateShaderObjectARB(type);
   if (!handle)
-    {
-      //We have failed creating the vertex shader object.
-      printf("Failed creating vertex shader object from file: %s.",filename);
-      exit(-1);
-    }
+  {
+    //We have failed creating the vertex shader object.
+    printf("Failed creating vertex shader object from file: %s.",filename);
+    exit(-1);
+  }
 
   files[0] = (const GLcharARB*)buffer;
   glShaderSourceARB(
-		    handle, //The handle to our shader
-		    1, //The number of files.
-		    files, //An array of const char * data, which represents the source code of theshaders
-		    NULL);
+    handle, //The handle to our shader
+    1, //The number of files.
+    files, //An array of const char * data, which represents the source code of theshaders
+    NULL);
 
   glCompileShaderARB(handle);
 
@@ -331,7 +333,7 @@ void CheckLinkError(GLhandleARB obj)
   glGetObjectParameterivARB(obj, GL_OBJECT_LINK_STATUS_ARB, &result);
   if (!result) {
     glGetObjectParameterivARB(obj, GL_OBJECT_INFO_LOG_LENGTH_ARB,
-			      &infologLength);
+      &infologLength);
     if (infologLength > 0) {
       infoLog = (char *)malloc(infologLength);
       glGetInfoLogARB(obj, infologLength, &charsWritten, infoLog);
@@ -367,13 +369,13 @@ void loadShadowShader()
   printf("Shadow shader loaded successfully.\n");
 
   shadowMapUniform = glGetUniformLocation(shadowShaderId,
-					  "ShadowMap");
+    "ShadowMap");
   projMatUniform   = glGetUniformLocation(shadowShaderId,
-					  "projection_matrix");
+    "projection_matrix");
   modelViewMatUniform = glGetUniformLocation(shadowShaderId,
-					     "modelview_matrix");
+    "modelview_matrix");
   normalMatUniform = glGetUniformLocation(shadowShaderId,
-					  "normal_matrix");
+    "normal_matrix");
   assert(shadowMapUniform >= 0);
   assert(projMatUniform >= 0);
   assert(modelViewMatUniform >= 0);
@@ -382,8 +384,8 @@ void loadShadowShader()
 
 void generateShadowFBO() {
   /*
-    int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
-    int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
+  int shadowMapWidth = RENDER_WIDTH * SHADOW_MAP_RATIO;
+  int shadowMapHeight = RENDER_HEIGHT * SHADOW_MAP_RATIO;
   */
   int shadowMapWidth = 1024;
   int shadowMapHeight = 1024;
@@ -430,26 +432,26 @@ void generateShadowFBO() {
 }
 
 void setupMatrices(float position_x, float position_y, float position_z,
-                   float lookAt_x,   float lookAt_y,   float lookAt_z) {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
+  float lookAt_x,   float lookAt_y,   float lookAt_z) {
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
 
-  //gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
-  glOrtho(-3, 3, -3, 3, 1e-2, 1e5);
+    //gluPerspective(45, (double)RENDER_WIDTH/RENDER_HEIGHT, 1, 100);
+    glOrtho(-3, 3, -3, 3, 1e-2, 1e5);
 
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
 
-  gluLookAt(position_x, position_y, position_z,
-	    lookAt_x,   lookAt_y,   lookAt_z,
-	    0,0,1);
+    gluLookAt(position_x, position_y, position_z,
+      lookAt_x,   lookAt_y,   lookAt_z,
+      0,0,1);
 
 
-  GLfloat mat[16];
-  glGetFloatv(GL_PROJECTION_MATRIX, mat);
-  glUniformMatrix4fvARB(projMatUniform, 1, 0, mat);
-  glGetFloatv(GL_MODELVIEW_MATRIX, mat);
-  glUniformMatrix4fvARB(modelViewMatUniform, 1, 0, mat);
+    GLfloat mat[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, mat);
+    glUniformMatrix4fvARB(projMatUniform, 1, 0, mat);
+    glGetFloatv(GL_MODELVIEW_MATRIX, mat);
+    glUniformMatrix4fvARB(modelViewMatUniform, 1, 0, mat);
 }
 
 void setTextureMatrix(void) {
@@ -467,23 +469,23 @@ void setTextureMatrix(void) {
     0.0, 0.0, 0.5, 0.0,
     0.5, 0.5, 0.5, 1.0};
 
-  // Grab modelview and transformation matrices
-  glGetDoublev(GL_MODELVIEW_MATRIX, modelView);
-  glGetDoublev(GL_PROJECTION_MATRIX, projection);
+    // Grab modelview and transformation matrices
+    glGetDoublev(GL_MODELVIEW_MATRIX, modelView);
+    glGetDoublev(GL_PROJECTION_MATRIX, projection);
 
 
-  glMatrixMode(GL_TEXTURE);
-  glActiveTextureARB(GL_TEXTURE7);
+    glMatrixMode(GL_TEXTURE);
+    glActiveTextureARB(GL_TEXTURE7);
 
-  glLoadIdentity();
-  glLoadMatrixd(bias);
+    glLoadIdentity();
+    glLoadMatrixd(bias);
 
-  // concatating all matrice into one.
-  glMultMatrixd (projection);
-  glMultMatrixd (modelView);
+    // concatating all matrice into one.
+    glMultMatrixd (projection);
+    glMultMatrixd (modelView);
 
-  // Go back to normal matrix mode
-  glMatrixMode(GL_MODELVIEW);
+    // Go back to normal matrix mode
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void startXform(double W[4][4]) {
@@ -525,7 +527,7 @@ void SetUniforms() {
   glGetFloatv(GL_MODELVIEW_MATRIX, (GLfloat *)mat44);
   glUniformMatrix4fvARB(modelViewMatUniform, 1, GL_FALSE, (GLfloat *)mat44);
   /* Normal matrix (transpose of inverse of modelview matrix)
-   * to vertex shader */
+  * to vertex shader */
   float mat33[3][3];
   int i, j;
   FOR_0(i, 3) {
@@ -539,97 +541,97 @@ void SetUniforms() {
 }
 
 void DrawBox_chi(const double *chi,
-		 const double *const boxSize, int wf) {
-  double W[4][4];
-  GetWFrom6Dof(W, chi); /* chi only has translation and rotation */
-  int j, k;
-  /* Scaling added w.r.t. boxSize */
-  FOR_0(j, 4)
-    FOR_0(k, 3)
-    W[j][k] *= boxSize[k];
+  const double *const boxSize, int wf) {
+    double W[4][4];
+    GetWFrom6Dof(W, chi); /* chi only has translation and rotation */
+    int j, k;
+    /* Scaling added w.r.t. boxSize */
+    FOR_0(j, 4)
+      FOR_0(k, 3)
+      W[j][k] *= boxSize[k];
 
-  /* TODO: Remove scaling factor from the transform matrix W */
-  startXform(W);
-  glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
-  if (wf == 1) {
-    glDisable(GL_CULL_FACE);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  } else if (wf == 0) {
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-  } else {
-    assert("What the...");
-  }
-
-  if (glBindVertexArray) {
-    glBindVertexArray(m_vaoID[3]);      // select second VAO
-    glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
-  } else {
-    static GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
-      0.5f,  0.5f,  0.5f,
-      0.5f, -0.5f,  0.5f,
-      0.5f, -0.5f, -0.5f,
-      0.5f,  0.5f, -0.5f,
-      /* Face which has -X normals (x=-0.5) */
-      -0.5f,  0.5f,  0.5f,
-      -0.5f,  0.5f, -0.5f,
-      -0.5f, -0.5f, -0.5f,
-      -0.5f, -0.5f,  0.5f,
-      /* Face which has +Y normals (y= 0.5) */
-      0.5f, 0.5f,  0.5f,
-      0.5f, 0.5f, -0.5f,
-      -0.5f, 0.5f, -0.5f,
-      -0.5f, 0.5f,  0.5f,
-      /* Face which has -Y normals (y=-0.5) */
-      0.5f, -0.5f, 0.5f,
-      -0.5f, -0.5f, 0.5f,
-      -0.5f, -0.5f,-0.5f,
-      0.5f, -0.5f,-0.5f,
-      /* Face which has +Z normals (z= 0.5) */
-      0.5f,  0.5f, 0.5f,
-      -0.5f,  0.5f, 0.5f,
-      -0.5f, -0.5f, 0.5f,
-      0.5f, -0.5f, 0.5f,
-      /* Face which has -Z normals (z=-0.5) */
-      0.5f,  0.5f, -0.5f,
-      0.5f, -0.5f, -0.5f,
-      -0.5f, -0.5f, -0.5f,
-      -0.5f,  0.5f, -0.5f  };
-      static GLfloat nor4[] = {
-        1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
-        -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
-        0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
-        0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
-        0,0,1,0,0,1,0,0,1,0,0,1,
-        0,0,-1,0,0,-1,0,0,-1,0,0,-1,
-      };
-    glBegin(GL_QUADS);
-    for (int j = 0; j < 6; ++j) {
-      /* One quad(rectangle) face */
-      for (int i = 0; i < 4; ++i) {
-        glNormal3fv(nor4  + 3*4*j + 3*i);
-        glVertex3fv(vert4 + 3*4*j + 3*i);
-      }
+    /* TODO: Remove scaling factor from the transform matrix W */
+    startXform(W);
+    glPushAttrib(GL_POLYGON_BIT | GL_ENABLE_BIT);
+    if (wf == 1) {
+      glDisable(GL_CULL_FACE);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    } else if (wf == 0) {
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    } else {
+      assert("What the...");
     }
-    glEnd();
-  }
 
-  glPopAttrib();
-  endXform();
+    if (glBindVertexArray) {
+      glBindVertexArray(m_vaoID[3]);      // select second VAO`
+      glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
+    } else {
+      static GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
+        0.5f,  0.5f,  0.5f,
+        0.5f, -0.5f,  0.5f,
+        0.5f, -0.5f, -0.5f,
+        0.5f,  0.5f, -0.5f,
+        /* Face which has -X normals (x=-0.5) */
+        -0.5f,  0.5f,  0.5f,
+        -0.5f,  0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f,  0.5f,
+        /* Face which has +Y normals (y= 0.5) */
+        0.5f, 0.5f,  0.5f,
+        0.5f, 0.5f, -0.5f,
+        -0.5f, 0.5f, -0.5f,
+        -0.5f, 0.5f,  0.5f,
+        /* Face which has -Y normals (y=-0.5) */
+        0.5f, -0.5f, 0.5f,
+        -0.5f, -0.5f, 0.5f,
+        -0.5f, -0.5f,-0.5f,
+        0.5f, -0.5f,-0.5f,
+        /* Face which has +Z normals (z= 0.5) */
+        0.5f,  0.5f, 0.5f,
+        -0.5f,  0.5f, 0.5f,
+        -0.5f, -0.5f, 0.5f,
+        0.5f, -0.5f, 0.5f,
+        /* Face which has -Z normals (z=-0.5) */
+        0.5f,  0.5f, -0.5f,
+        0.5f, -0.5f, -0.5f,
+        -0.5f, -0.5f, -0.5f,
+        -0.5f,  0.5f, -0.5f  };
+        static GLfloat nor4[] = {
+          1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0,
+          -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0,
+          0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+          0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0,
+          0,0,1,0,0,1,0,0,1,0,0,1,
+          0,0,-1,0,0,-1,0,0,-1,0,0,-1,
+        };
+        glBegin(GL_QUADS);
+        for (int j = 0; j < 6; ++j) {
+          /* One quad(rectangle) face */
+          for (int i = 0; i < 4; ++i) {
+            glNormal3fv(nor4  + 3*4*j + 3*i);
+            glVertex3fv(vert4 + 3*4*j + 3*i);
+          }
+        }
+        glEnd();
+    }
+
+    glPopAttrib();
+    endXform();
 }
 
 void DrawBox_pq(const double *p, const double *q,
-                const double *const boxSize, int wf) {
-  double chi[6];
-  assert(p);
-  memcpy(chi + 0, p, sizeof(double)*3);
-  if (q)
-    memcpy(chi + 3, q, sizeof(double)*3);
-  else {
-    chi[3] = 0;
-    chi[4] = 0;
-    chi[5] = 0;
-  }
-  DrawBox_chi(chi, boxSize, wf);
+  const double *const boxSize, int wf) {
+    double chi[6];
+    assert(p);
+    memcpy(chi + 0, p, sizeof(double)*3);
+    if (q)
+      memcpy(chi + 3, q, sizeof(double)*3);
+    else {
+      chi[3] = 0;
+      chi[4] = 0;
+      chi[5] = 0;
+    }
+    DrawBox_chi(chi, boxSize, wf);
 }
 
 static void pym_draw_square_ground() {
@@ -655,51 +657,51 @@ static void pym_draw_square_ground() {
 
 
 void DrawRb(const pym_rb_named_t *rbn,
-            const double *const boxSize, int wf) {
-  const double *const p = rbn->p;
-  const double *const q = rbn->q;
-  glColor3f(0.3,0.75,0.3);
-  DrawBox_pq(p, q, boxSize, wf);
-  /* Draw external force (disturbance) if exists */
-  if (rbn->extForce[0] || rbn->extForce[1] || rbn->extForce[2]) {
-    const double norm = Norm3(rbn->extForce);
-    double chi[6] = { rbn->p[0],
-		      rbn->p[1],
-		      rbn->p[2],
-		      rbn->q[0],
-		      rbn->q[1],
-		      rbn->q[2] };
-    double W[4][4];
-    GetWFrom6Dof(W, chi);
-    double extForcePos[3];
-    TransformPoint(extForcePos, W, rbn->extForcePos);
-    glLineWidth(6.0);
-    glDisable(GL_LIGHTING);
-    glColor3f(1,0,0);
-    glBegin(GL_LINES);
-    glVertex3dv(extForcePos);
-    glVertex3d(extForcePos[0]-rbn->extForce[0]/1000,
-	       extForcePos[1]-rbn->extForce[1]/1000,
-	       extForcePos[2]-rbn->extForce[2]/1000);
-    glEnd();
-    glLineWidth(1.0);
-    glEnable(GL_LIGHTING);
-  }
+  const double *const boxSize, int wf) {
+    const double *const p = rbn->p;
+    const double *const q = rbn->q;
+    glColor3f(0.3,0.75,0.3);
+    DrawBox_pq(p, q, boxSize, wf);
+    /* Draw external force (disturbance) if exists */
+    if (rbn->extForce[0] || rbn->extForce[1] || rbn->extForce[2]) {
+      const double norm = Norm3(rbn->extForce);
+      double chi[6] = { rbn->p[0],
+        rbn->p[1],
+        rbn->p[2],
+        rbn->q[0],
+        rbn->q[1],
+        rbn->q[2] };
+      double W[4][4];
+      GetWFrom6Dof(W, chi);
+      double extForcePos[3];
+      TransformPoint(extForcePos, W, rbn->extForcePos);
+      glLineWidth(6.0);
+      glDisable(GL_LIGHTING);
+      glColor3f(1,0,0);
+      glBegin(GL_LINES);
+      glVertex3dv(extForcePos);
+      glVertex3d(extForcePos[0]-rbn->extForce[0]/1000,
+        extForcePos[1]-rbn->extForce[1]/1000,
+        extForcePos[2]-rbn->extForce[2]/1000);
+      glEnd();
+      glLineWidth(1.0);
+      glEnable(GL_LIGHTING);
+    }
 }
 
 void DrawRbRef(const pym_rb_named_t *rbn,
-               const double *const boxSize, int wf) {
-  const double *const chi = rbn->chi_ref;
-  assert(chi);
-  glColor3f(1, 0, 0);
-  //printf("%p -- %lf\n", &chi[0], chi[0]);
-  DrawBox_chi(chi, boxSize, wf);
+  const double *const boxSize, int wf) {
+    const double *const chi = rbn->chi_ref;
+    assert(chi);
+    glColor3f(1, 0, 0);
+    //printf("%p -- %lf\n", &chi[0], chi[0]);
+    DrawBox_chi(chi, boxSize, wf);
 }
 
 void DrawRbContacts(const pym_rb_named_t *rbn) {
   int j;
-  FOR_0(j, rbn->nContacts_2) {
-    const double *conPos   = rbn->contactsPoints_2a[j];
+  FOR_0(j, rbn->nContacts_1) {
+    const double *conPos   = rbn->contactsPoints_1[j];
     const double *conForce = rbn->contactsForce_2[j];
     glColor3f(0,1,0);
     startTranslate(conPos[0], conPos[1], conPos[2]);
@@ -707,12 +709,12 @@ void DrawRbContacts(const pym_rb_named_t *rbn) {
     /* TODO: No draw call */
 
     endTranslate();
-    static const double scale = 0.001;
+    static const double scale = 0.1;
     glBegin(GL_LINES);
     glVertex3f(conPos[0], conPos[1], conPos[2]);
     glVertex3f(conPos[0]+conForce[0]*scale,
-	       conPos[1]+conForce[1]*scale,
-	       conPos[2]+conForce[2]*scale);
+      conPos[1]+conForce[1]*scale,
+      conPos[2]+conForce[2]*scale);
     glEnd();
   }
 }
@@ -725,9 +727,30 @@ void DrawAxisOnWorldOrigin() {
   glEnd();
 }
 
-void DrawGround(pym_ground_type_t gndType,
-		const GLuint *const m_vaoID) {
-	assert(glBindVertexArray);
+void DrawGround(pym_ground_type_t gndType, const GLuint *const m_vaoID) {
+  if (gndType == PYM_TRANSPARENT_GRID) {
+    glPushAttrib(GL_ENABLE_BIT);
+    glDisable(GL_LIGHTING);
+    glColor3f(0.2, 0.2, 0.2);
+    glBegin(GL_LINES);
+    for (int i = -10; i <= 10; ++i) {
+      glVertex3f(i, -10, 0);
+      glVertex3f(i, 10, 0);
+
+      glVertex3f(-10, i, 0);
+      glVertex3f(10, i, 0);
+    }
+    for (int i = -10; i <= 10; ++i) {
+      for (int j = -10; j <= 10; ++j) {
+        glVertex3f(i, j, 0);
+        glVertex3f(i, j, -0.1);
+      }
+    }
+    glEnd();
+    glPopAttrib();
+    return;
+  }
+  assert(glBindVertexArray);
   if (gndType == PYM_SQUARE_GROUND)
     glBindVertexArray(m_vaoID[2]);
   else if (gndType == PYM_CIRCLE_GROUND)
@@ -770,102 +793,102 @@ void YRotPoint(float pr[3], float p[3], float th) {
 
 
 void RenderFootContactStatus
-(const pym_physics_thread_context_t *const phyCon) {
-  static const double pointBoxSize[3] = { 3e-2, 3e-2, 3e-2 };
-  static const double pzero[3] = {0,};
-  //static const double q1[3] = {1,1,1};
+  (const pym_physics_thread_context_t *const phyCon) {
+    static const double pointBoxSize[3] = { 3e-2, 3e-2, 3e-2 };
+    static const double pzero[3] = {0,};
+    //static const double q1[3] = {1,1,1};
 
-  int i, j, k;
-  FOR_0(i, phyCon->pymCfg->nBody) {
-    /* Access data from renderer-accessable area of phyCon */
-    const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-    const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
-    const double pos[4][2] = { { -0.7, 0 },
-			       {0.7, 0},
-			       {-0.7, 0.2},
-			       {0.7, 0.2} };
-    FOR_0(k, 4) {
-      if (strcmp(rbn->name, footParts[k]) == 0) {
-	const double *const boxSize = rbn->boxSize;
+    int i, j, k;
+    FOR_0(i, phyCon->pymCfg->nBody) {
+      /* Access data from renderer-accessable area of phyCon */
+      const pym_rb_named_t *rbn = &phyCon->pymCfg->body[i].b;
+      const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
+      const double pos[4][2] = { { -0.7, 0 },
+      {0.7, 0},
+      {-0.7, 0.2},
+      {0.7, 0.2} };
+      FOR_0(k, 4) {
+        if (strcmp(rbn->name, footParts[k]) == 0) {
+          const double *const boxSize = rbn->boxSize;
 
-	glPushMatrix(); /* Stack A */
-	glTranslated(pos[k][0], pos[k][1], 0);
-	glRotatef(30, 1, 0, 0);
-	glRotatef(45, 0, 1, 0);
-	glColor3f(1,1,1);
-	DrawBox_pq(pzero, 0, boxSize, 1);
-	glColor3f(1,0,0);
-	FOR_0(j, phyCon->sd[i].nContacts_2) {
-	  const int ci = phyCon->sd[i].contactIndices_2[j];
-	  glColor3f(1,0,0);
-	  DrawBox_pq(rbn->corners[ ci ], 0, pointBoxSize, 0);
-	}
-	glPopMatrix(); /* Stack A */
-	break;
+          glPushMatrix(); /* Stack A */
+          glTranslated(pos[k][0], pos[k][1], 0);
+          glRotatef(30, 1, 0, 0);
+          glRotatef(45, 0, 1, 0);
+          glColor3f(1,1,1);
+          DrawBox_pq(pzero, 0, boxSize, 1);
+          glColor3f(1,0,0);
+          FOR_0(j, phyCon->sd[i].nContacts_1) {
+            const int ci = phyCon->sd[i].contactIndices_1[j];
+            glColor3f(1,0,0);
+            DrawBox_pq(rbn->corners[ ci ], 0, pointBoxSize, 0);
+          }
+          glPopMatrix(); /* Stack A */
+          break;
+        }
       }
     }
-  }
 }
 
 void RenderFootContactFixPosition
-(const pym_physics_thread_context_t *const phyCon) {
-  static const double pointBoxSize[3] = { 5e-2, 5e-2, 5e-2 };
-  int i, j, k;
-  FOR_0(i, phyCon->pymCfg->nBody) {
-    /* Access data from renderer-accessable area of phyCon */
-    const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-    const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
-    FOR_0(k, 4) {
-      if (strcmp(rbn->name, footParts[k]) == 0) {
-	glColor3f(1, 0, 0);
-	//printf("nContacts_2 = %d\n", phyCon->sd[i].nContacts_2);
-	assert(phyCon->sd[i].nContacts_2 >= 0);
-	FOR_0(j, phyCon->sd[i].nContacts_2) {
-	  DrawBox_pq(phyCon->sd[i].contactsFix_2[j], 0, pointBoxSize, 1);
-	}
+  (const pym_physics_thread_context_t *const phyCon) {
+    static const double pointBoxSize[3] = { 5e-2, 5e-2, 5e-2 };
+    int i, j, k;
+    FOR_0(i, phyCon->pymCfg->nBody) {
+      /* Access data from renderer-accessable area of phyCon */
+      const pym_rb_named_t *rbn = &phyCon->pymCfg->body[i].b;
+      const char *footParts[] = { "soleL", "soleR", "toeL", "toeR" };
+      FOR_0(k, 4) {
+        if (strcmp(rbn->name, footParts[k]) == 0) {
+          glColor3f(1, 0, 0);
+          //printf("nContacts_2 = %d\n", phyCon->sd[i].nContacts_2);
+          assert(phyCon->sd[i].nContacts_1 >= 0);
+          FOR_0(j, phyCon->sd[i].nContacts_1) {
+            DrawBox_pq(phyCon->sd[i].contactsFix_1[j], 0, pointBoxSize, 1);
+          }
+        }
       }
     }
-  }
 }
 
 void pym_sphere_to_cartesian(double *c, double r,
-			     double phi, double theta) {
-  c[0] = r*sin(theta)*sin(phi);
-  c[1] = -r*sin(theta)*cos(phi);
-  c[2] = r*cos(theta);
+  double phi, double theta) {
+    c[0] = r*sin(theta)*sin(phi);
+    c[1] = -r*sin(theta)*cos(phi);
+    c[2] = r*cos(theta);
 }
 
 static void pym_cross3(double *u, const double *const a,
-		       const double *const b) {
-  u[0] = a[1]*b[2] - a[2]*b[1];
-  u[1] = a[2]*b[0] - a[0]*b[2];
-  u[2] = a[0]*b[1] - a[1]*b[0];
+  const double *const b) {
+    u[0] = a[1]*b[2] - a[2]*b[1];
+    u[1] = a[2]*b[0] - a[0]*b[2];
+    u[2] = a[0]*b[1] - a[1]*b[0];
 }
 
-static void pym_up_dir_from_sphere(double *u,
-				   const double *const cam_car,
-				   double r, double phi, double theta) {
-  const double left[3] = { -cos(phi), -sin(phi), 0 };
-  const double look_dir[3] = { -cam_car[0]/r,
-			       -cam_car[1]/r,
-			       -cam_car[2]/r };
-  pym_cross3(u, look_dir, left);
+void pym_up_dir_from_sphere(double *u,
+  const double *const cam_car,
+  double r, double phi, double theta) {
+    const double left[3] = { -cos(phi), -sin(phi), 0 };
+    const double look_dir[3] = { -cam_car[0]/r,
+      -cam_car[1]/r,
+      -cam_car[2]/r };
+    pym_cross3(u, look_dir, left);
 }
 
 void PymLookUpLeft(double *look, double *up, double *left,
-		   double r, double phi, double theta) {
-  double cam_car[3];
-  pym_sphere_to_cartesian(cam_car, r, phi, theta);
-  left[0] = -cos(phi);
-  left[1] = -sin(phi);
-  left[2] = 0;
-  look[0] = -cam_car[0]/r;
-  look[1] = -cam_car[1]/r;
-  look[2] = -cam_car[2]/r;
-  pym_cross3(up, look, left);
+  double r, double phi, double theta) {
+    double cam_car[3];
+    pym_sphere_to_cartesian(cam_car, r, phi, theta);
+    left[0] = -cos(phi);
+    left[1] = -sin(phi);
+    left[2] = 0;
+    look[0] = -cam_car[0]/r;
+    look[1] = -cam_car[1]/r;
+    look[2] = -cam_car[2]/r;
+    pym_cross3(up, look, left);
 }
 
-static void pym_configure_light() {
+void pym_configure_light() {
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);
   const float cutoff = 90;
@@ -880,90 +903,171 @@ static void pym_configure_light() {
   glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spot_direction);
 }
 
-static void pym_draw_all(pym_physics_thread_context_t *phyCon,
-			 int forShadow,
-			 GLuint *m_vaoID) {
+static void render_fibers(const pym_config_t *const pymCfg) {
+  glPushAttrib(GL_LINE_BIT | GL_ENABLE_BIT);
+  glDisable(GL_LIGHTING);
+  int i;
+  const int nf = pymCfg->nFiber;
+  FOR_0(i, nf) {
+    const pym_mf_named_t *mfn = &pymCfg->fiber[i].b;
+    double W_org[4][4], W_ins[4][4];
+    const pym_rb_named_t *rbn_org = &pymCfg->body[mfn->org].b;
+    const pym_rb_named_t *rbn_ins = &pymCfg->body[mfn->ins].b;
+    double chi_org[6] = { rbn_org->p[0],
+      rbn_org->p[1],
+      rbn_org->p[2],
+      rbn_org->q[0],
+      rbn_org->q[1],
+      rbn_org->q[2] };
+    double chi_ins[6] = { rbn_ins->p[0],
+      rbn_ins->p[1],
+      rbn_ins->p[2],
+      rbn_ins->q[0],
+      rbn_ins->q[1],
+      rbn_ins->q[2] };
+    GetWFrom6Dof(W_org, chi_org);
+    GetWFrom6Dof(W_ins, chi_ins);
+    //mfn->fibb_org
+    double org[3], ins[3];
+    TransformPoint(org, W_org, mfn->fibb_org);
+    TransformPoint(ins, W_ins, mfn->fibb_ins);
+    glLineWidth(2.0);
+    if (mfn->mType == PMT_ACTUATED_MUSCLE) {
+      if (mfn->T * mfn->A < 0) {
+        glLineWidth(3.0);
+        glColor3f(1.0, 0, 0);
+      } else {
+        glColor3f(0.8, 0.6, 0.6);
+      }
+    } else {
+      glColor3f(0.5, 0.5, 0.5);
+    }
+    glBegin(GL_LINES);
+    glVertex3dv(org);
+    glVertex3dv(ins);
+    glEnd();
+  }
+  glPopAttrib();
+}
+
+static void pym_draw_all(pym_rs_t *rs, int forShadow, GLuint *m_vaoID) {
+  pym_physics_thread_context_t *phyCon = &rs->phyCon;
   glPushMatrix();
   if (!forShadow)
     DrawAxisOnWorldOrigin();
   pym_strict_checK_gl();
+
   if (glBindVertexArray)
-    DrawGround(PYM_CIRCLE_GROUND, m_vaoID);
+    DrawGround(PYM_TRANSPARENT_GRID, m_vaoID);
+
   pym_strict_checK_gl();
   //pym_draw_square_ground();
   pym_strict_checK_gl();
-  const int nb = phyCon->pymCfg->nBody;
+  pym_config_t *pymCfg = phyCon->pymCfg;
+  const int nb = pymCfg->nBody;
   int i;
   FOR_0(i, nb) {
     /* Access data from renderer-accessable area of phyCon */
-    const pym_rb_named_t *rbn = &phyCon->renBody[i].b;
-    const pym_rb_named_t *rbn2 = &phyCon->pymCfg->body[i].b;
+    const pym_rb_named_t *rbn = &phyCon->pymCfg->body[i].b;
     const double *const boxSize = rbn->boxSize;
     pym_strict_checK_gl();
-    DrawRb(rbn, boxSize, 0);
-    //printf("%lf,%lf,%lf\n", rbn->q[0],rbn->q[1],rbn->q[2]);
+    DrawRb(rbn, boxSize, rs->drawing_options[pym_do_wireframe] ? 1 : 0);
     pym_strict_checK_gl();
-    DrawRbRef(rbn2, boxSize, 1);
-    //DrawRbContacts(rbn);
+    DrawRbRef(rbn, boxSize, 1);
+    DrawRbContacts(rbn);
   }
-  if (phyCon->pymCfg->renderFibers) {
-    glDisable(GL_LIGHTING);
-    const int nf = phyCon->pymCfg->nFiber;
-    FOR_0(i, nf) {
-      const pym_mf_named_t *mfn = &phyCon->pymCfg->fiber[i].b;
-      double W_org[4][4], W_ins[4][4];
-      const pym_rb_named_t *rbn_org = &phyCon->renBody[mfn->org].b;
-      const pym_rb_named_t *rbn_ins = &phyCon->renBody[mfn->ins].b;
-      double chi_org[6] = { rbn_org->p[0],
-			    rbn_org->p[1],
-			    rbn_org->p[2],
-			    rbn_org->q[0],
-			    rbn_org->q[1],
-			    rbn_org->q[2] };
-      double chi_ins[6] = { rbn_ins->p[0],
-			    rbn_ins->p[1],
-			    rbn_ins->p[2],
-			    rbn_ins->q[0],
-			    rbn_ins->q[1],
-			    rbn_ins->q[2] };
-      GetWFrom6Dof(W_org, chi_org);
-      GetWFrom6Dof(W_ins, chi_ins);
-      //mfn->fibb_org
-      double org[3], ins[3];
-      TransformPoint(org, W_org, mfn->fibb_org);
-      TransformPoint(ins, W_ins, mfn->fibb_ins);
-      glLineWidth(2.0);
-      if (mfn->mType == PMT_ACTUATED_MUSCLE) {
-	if (mfn->T * mfn->A < 0) {
-	  glLineWidth(3.0);
-	  glColor3f(1.0, 0, 0);
-	} else {
-	  glColor3f(0.8, 0.6, 0.6);
-	}
-      
-      } else {
-	glColor3f(0.5, 0.5, 0.5);
-      }
-      glBegin(GL_LINES);
-      glVertex3dv(org);
-      glVertex3dv(ins);
-      glEnd();
-    }
-    glEnable(GL_LIGHTING);
+  if (pymCfg->renderFibers) {
+    render_fibers(pymCfg);
   }
   static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
   glColor3f(1,1,1);
   pym_strict_checK_gl();
   DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
   DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
+
+  const int nj = phyCon->pymCfg->nJoint;
+  for (int j = 0; j < nj; ++j) {
+    const int ajBodyAIdx = pymCfg->anchoredJoints[j].aIdx;
+    const int bjBodyAIdx = pymCfg->anchoredJoints[j].bIdx;
+    const int aancIdx     = pymCfg->anchoredJoints[j].aAnchorIdx;
+    const int bancIdx     = pymCfg->anchoredJoints[j].bAnchorIdx;
+    const pym_rb_named_t *ajBodyA = &pymCfg->body[ ajBodyAIdx ].b;
+    const pym_rb_named_t *ajBodyB = &pymCfg->body[ bjBodyAIdx ].b;
+    const char *aAncName = ajBodyA->jointAnchorNames[ aancIdx ];
+    const char *bAncName = ajBodyA->jointAnchorNames[ bancIdx ];
+    char aiden[128], biden[128];
+    ExtractAnchorIdentifier(aiden, aAncName);
+    ExtractAnchorIdentifier(biden, bAncName);
+      
+    //std::cout << "Joint anchor - " << aiden << " (" << ajBodyA->name << " == " << ajBodyB->name << ")" << std::endl;
+    assert(aancIdx < ajBodyA->nAnchor);
+    assert(bancIdx < ajBodyB->nAnchor);
+
+    const double *aanc = ajBodyA->jointAnchors[aancIdx];
+    const double *banc = ajBodyB->jointAnchors[bancIdx];
+    double achi[6] = { ajBodyA->p[0],
+      ajBodyA->p[1],
+      ajBodyA->p[2],
+      ajBodyA->q[0],
+      ajBodyA->q[1],
+      ajBodyA->q[2] };
+    double bchi[6] = { ajBodyB->p[0],
+      ajBodyB->p[1],
+      ajBodyB->p[2],
+      ajBodyB->q[0],
+      ajBodyB->q[1],
+      ajBodyB->q[2] };
+    double aW[4][4], bW[4][4];
+    GetWFrom6Dof(aW, achi);
+    GetWFrom6Dof(bW, bchi);
+    double aaj[3], baj[3];
+    TransformPoint(aaj, aW, aanc);
+    TransformPoint(baj, bW, banc);
+
+    glPushMatrix();
+    glTranslated(aaj[0], aaj[1], aaj[2]);
+    ArnRenderSphereGl(0.03);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslated(baj[0], baj[1], baj[2]);
+    ArnRenderSphereGl(0.03);
+    glPopMatrix();
+
+    glPushAttrib(GL_ENABLE_BIT);
+    glDisable(GL_LIGHTING);
+    glColor3f(1,0,0);
+    // Body A's anchored joint position line
+    glBegin(GL_LINES);
+    glVertex3dv(ajBodyA->p);
+    glVertex3dv(aaj);
+    glEnd();
+    // Body B's anchored joint position line
+    glBegin(GL_LINES);
+    glVertex3dv(ajBodyB->p);
+    glVertex3dv(baj);
+    glEnd();
+    glColor3f(0,1,0);
+    // A line connecting two anchored joints
+    glBegin(GL_LINES);
+    glVertex3dv(aaj);
+    glVertex3dv(baj);
+    glEnd();
+      
+    glPopAttrib();
+
+
+  }
+
+
   //printf("pymCfg address2 = %p\n", phyCon->pymCfg);
   if (strcmp(phyCon->pymCfg->trajName, "Walk1") == 0) {
     static const double s[3][3] = { { 1.557, 0.580, 0.210 },
-				    { 1.557, 0.580, 0.413 },
-				    { 1.557, 0.580, 0.630 } };	    
+    { 1.557, 0.580, 0.413 },
+    { 1.557, 0.580, 0.630 } };	    
     static const double p[3][3] = { { 0.973, 0.298, 0.104 },
-				    { 0.973, 0.891, 0.207 },	    
-				    { 0.973, 1.478, 0.316 } };
+    { 0.973, 0.891, 0.207 },	    
+    { 0.973, 1.478, 0.316 } };
     glColor3f(1,1,1);
     pym_strict_checK_gl();
     FOR_0(i, 3) {
@@ -980,7 +1084,7 @@ static int CreateGridPatternGroundTexture(void) {
   glBindTexture( GL_TEXTURE_2D, gndTex );
   glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE );
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-		   GL_LINEAR_MIPMAP_LINEAR );
+    GL_LINEAR_MIPMAP_LINEAR );
   // when texture area is large, bilinear filter the original
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 
@@ -1033,7 +1137,7 @@ static int CreateGridPatternGroundTexture(void) {
 
   // build our texture mipmaps
   gluBuild2DMipmaps( GL_TEXTURE_2D, 3, gndTexSize, gndTexSize,
-		     GL_RGB, GL_UNSIGNED_BYTE, data );
+    GL_RGB, GL_UNSIGNED_BYTE, data );
   glBindTexture(GL_TEXTURE_2D, 0);
   free(data);
   return gndTex;
@@ -1076,88 +1180,88 @@ static void RenderGraph(PRSGRAPH g, int slotid, pym_render_config_t *rc) {
 }
 
 static void RenderSupportPolygon
-(const pym_physics_thread_context_t *const phyCon,
- pym_render_config_t *rc) {
-  int i;
-  const int chInputLen = phyCon->pymCfg->chInputLen;
-  const int chOutputLen = phyCon->pymCfg->chOutputLen;
-  const int width = rc->vpw;
-  const int height = rc->vph;
-  if (chInputLen+1 < chOutputLen) {
-    printf("ERROR - chInputLen = %d, chOutputLen = %d\n",
-	   chInputLen, chOutputLen);
-    //abort();
-  }
-  if (chOutputLen) {
-    /* PAIR A */
-    glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
-    glPushMatrix(); /* PAIR B */
-
-    const double margin = 0.05;
-    /* size on normalized coordinates */
-    const double sizeW = 0.5, sizeH = 0.5;
-    double graphW, graphH;
-    double graphGapX, graphGapY;
-    if (width > height) {
-      graphGapX = margin*height/width;
-      graphGapY = margin;
-      graphW = sizeW*height/width;
-      graphH = sizeH;
-    } else {
-      graphGapX = margin;
-      graphGapY = margin*width/height;
-      graphW = sizeW;
-      graphH = sizeH*width/height;
+  (const pym_physics_thread_context_t *const phyCon,
+  pym_render_config_t *rc) {
+    int i;
+    const int chInputLen = phyCon->pymCfg->chInputLen;
+    const int chOutputLen = phyCon->pymCfg->chOutputLen;
+    const int width = rc->vpw;
+    const int height = rc->vph;
+    if (chInputLen+1 < chOutputLen) {
+      printf("ERROR - chInputLen = %d, chOutputLen = %d\n",
+        chInputLen, chOutputLen);
+      //abort();
     }
-    const int slotid = 0;
-    const double graphX = -1 + graphW/2 + graphGapX
-      + slotid*(graphW/2 + graphGapX);
-    const double graphY = 1 - graphGapY - graphH/2;
-    glTranslated(graphX, graphY, 0);
-    glScaled(graphW, graphH, 1);
+    if (chOutputLen) {
+      /* PAIR A */
+      glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
+      glPushMatrix(); /* PAIR B */
 
-    double chSumX = 0, chSumY = 0;
-    FOR_0(i, chOutputLen) {
-      chSumX += phyCon->pymCfg->chOutput[i].x;
-      chSumY += phyCon->pymCfg->chOutput[i].y;
+      const double margin = 0.05;
+      /* size on normalized coordinates */
+      const double sizeW = 0.5, sizeH = 0.5;
+      double graphW, graphH;
+      double graphGapX, graphGapY;
+      if (width > height) {
+        graphGapX = margin*height/width;
+        graphGapY = margin;
+        graphW = sizeW*height/width;
+        graphH = sizeH;
+      } else {
+        graphGapX = margin;
+        graphGapY = margin*width/height;
+        graphW = sizeW;
+        graphH = sizeH*width/height;
+      }
+      const int slotid = 0;
+      const double graphX = -1 + graphW/2 + graphGapX
+        + slotid*(graphW/2 + graphGapX);
+      const double graphY = 1 - graphGapY - graphH/2;
+      glTranslated(graphX, graphY, 0);
+      glScaled(graphW, graphH, 1);
+
+      double chSumX = 0, chSumY = 0;
+      FOR_0(i, chOutputLen) {
+        chSumX += phyCon->pymCfg->chOutput[i].x;
+        chSumY += phyCon->pymCfg->chOutput[i].y;
+      }
+      const double chMeanX = chSumX / chOutputLen;
+      const double chMeanY = chSumY / chOutputLen;
+      glColor3f(0,1,0);
+      glBegin(GL_LINE_LOOP);
+      FOR_0(i, chOutputLen) {
+        glVertex3d(phyCon->pymCfg->chOutput[i].x - chMeanX,
+          phyCon->pymCfg->chOutput[i].y - chMeanY, 0);
+      }
+      glEnd();
+
+      assert(chInputLen > 0);
+      glPointSize(3);
+      glColor3f(0,1,0);
+      glBegin(GL_POINTS);
+      FOR_0(i, chInputLen) {
+        glVertex3d(phyCon->pymCfg->chInput[i].x - chMeanX,
+          phyCon->pymCfg->chInput[i].y - chMeanY,
+          0);
+      }
+      glEnd();
+
+      glPointSize(5);
+      glColor3f(1,0,0);
+      glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
+        phyCon->pymCfg->bipCom[1] - chMeanY,
+        0);
+      glScaled(0.015,0.015,1);
+      glBegin(GL_LINE_LOOP);
+      glVertex3d(1,1,0);
+      glVertex3d(-1,1,0);
+      glVertex3d(-1,-1,0);
+      glVertex3d(1,-1,0);
+      glEnd();
+
+      glPopMatrix(); /* PAIR B */
+      glPopAttrib(); /* PAIR A */
     }
-    const double chMeanX = chSumX / chOutputLen;
-    const double chMeanY = chSumY / chOutputLen;
-    glColor3f(0,1,0);
-    glBegin(GL_LINE_LOOP);
-    FOR_0(i, chOutputLen) {
-      glVertex3d(phyCon->pymCfg->chOutput[i].x - chMeanX,
-        phyCon->pymCfg->chOutput[i].y - chMeanY, 0);
-    }
-    glEnd();
-
-    assert(chInputLen > 0);
-    glPointSize(3);
-    glColor3f(0,1,0);
-    glBegin(GL_POINTS);
-    FOR_0(i, chInputLen) {
-      glVertex3d(phyCon->pymCfg->chInput[i].x - chMeanX,
-		 phyCon->pymCfg->chInput[i].y - chMeanY,
-		 0);
-    }
-    glEnd();
-
-    glPointSize(5);
-    glColor3f(1,0,0);
-    glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
-		 phyCon->pymCfg->bipCom[1] - chMeanY,
-		 0);
-    glScaled(0.015,0.015,1);
-    glBegin(GL_LINE_LOOP);
-    glVertex3d(1,1,0);
-    glVertex3d(-1,1,0);
-    glVertex3d(-1,-1,0);
-    glVertex3d(1,-1,0);
-    glEnd();
-
-    glPopMatrix(); /* PAIR B */
-    glPopAttrib(); /* PAIR A */
-  }
 }
 
 void PymRsInitRender() {
@@ -1193,31 +1297,31 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   /* printf("cam_car = %lf %lf %lf\n", */
   /* 	 cam_car[0], cam_car[1], cam_car[2]); */
   pym_up_dir_from_sphere(up_dir, cam_car, rc->cam_r,
-			 rc->cam_phi, rc->cam_theta);
+    rc->cam_phi, rc->cam_theta);
   gluLookAt(rc->cam_cen[0]+cam_car[0],
-	    rc->cam_cen[1]+cam_car[1],
-	    rc->cam_cen[2]+cam_car[2],
-	    rc->cam_cen[0],
-	    rc->cam_cen[1],
-	    rc->cam_cen[2],
-	    up_dir[0],
-	    up_dir[1],
-	    up_dir[2]);
+    rc->cam_cen[1]+cam_car[1],
+    rc->cam_cen[2]+cam_car[2],
+    rc->cam_cen[0],
+    rc->cam_cen[1],
+    rc->cam_cen[2],
+    up_dir[0],
+    up_dir[1],
+    up_dir[2]);
 
   pym_configure_light();
   pym_strict_checK_gl();
 
-  pym_draw_all(&rs->phyCon, 0, m_vaoID);
+  pym_draw_all(rs, 0, m_vaoID);
   pym_strict_checK_gl();
 
   RenderFootContactFixPosition(&rs->phyCon);
 
   /* Head-up Display
-   * --------------------------
-   * Turn off shader and use fixed pipeline.
-   * Also make sure we have identities
-   * on projection and modelview matrix.
-   */
+  * --------------------------
+  * Turn off shader and use fixed pipeline.
+  * Also make sure we have identities
+  * on projection and modelview matrix.
+  */
   glDisable(GL_LIGHTING);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1226,9 +1330,9 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   glDisable(GL_DEPTH_TEST);
 
   RenderGraph(rs->phyCon.comZGraph, 0, rc);
-  //RenderGraph(rs->phyCon.comDevGraph, 1, rc);
-  //RenderGraph(rs->phyCon.actGraph, 2, rc);
-  //RenderGraph(rs->phyCon.ligGraph, 3, rc);
+  RenderGraph(rs->phyCon.comDevGraph, 1, rc);
+  RenderGraph(rs->phyCon.actGraph, 2, rc);
+  RenderGraph(rs->phyCon.ligGraph, 3, rc);
 
   pym_strict_checK_gl();
   RenderSupportPolygon(&rs->phyCon, rc);

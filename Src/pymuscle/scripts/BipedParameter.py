@@ -931,7 +931,7 @@ class BipedParameter:
     def buildBody(self, rotParam = 'QUAT_WFIRST'):
         body = []
         
-        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']],   self.getTrunkPos(), 50.   ],
+        l = [ ['trunk', [self['trunkWidth'], self['trunkLatWidth'], self['trunkLen']],   self.getTrunkPos(), 30.   ],
               ['head',  [self['headWidth'],  self['headLatWidth'],  self['headLen']],    self.getHeadPos(),   5.   ],
               ['uarm',  [self['uarmWidth'],  self['uarmLatWidth'],  self['uarmLen']],    self.getUarmPos(),   4.   ],
               ['larm',  [self['larmWidth'],  self['larmLatWidth'],  self['larmLen']],    self.getLarmPos(),   3.   ],
@@ -1021,15 +1021,15 @@ class BipedParameter:
     
     def buildFiber(self, availableBodyNames, noliga=False, noact=False):
         # Fiber constants for a ligament
-        KSE = 1      # Should not be 0
-        KPE = 1
+        KSE = 2      # Should not be 0
+        KPE = 0
         b   = 1         # Should not be 0
         T   = 0.
         A   = 0.
         fiber_liga   = self._buildFiber(availableBodyNames, self.getAllLigaments(), KSE, KPE, b, T, A, 'LIGAMENT')
         # Fiber constants for a muscle fiber
-        KSE = 1            # Should not be 0
-        KPE = 1
+        KSE = 2            # Should not be 0
+        KPE = 0
         b   = 1            # Should not be 0
         T   = 0.
         A   = 0.
