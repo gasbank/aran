@@ -6,7 +6,6 @@ struct pym_config_t;
 struct pym_rb_statedep_t;
 struct pym_rb_named_t;
 
-#define NUM_DOF          (3 + 3)
 #define MAX_CONTACTS     (8)
 #define MAX_JOINTANCHORS (10)
 
@@ -15,6 +14,7 @@ enum pym_rot_param_t {
     RP_EULER_XYZ,
     RP_EULER_ZXZ,
     RP_QUAT_WFIRST,
+    RP_QUAT_WLAST,
     RP_EXP
 };
 
@@ -79,6 +79,12 @@ PYMCORE_API int PymCheckRotParam(pym_config_t *pymCfg);
 PYMCORE_API std::ostream &operator << (std::ostream &s, const pym_rb_t &rb);
 PYMCORE_API std::ostream &pym_print_detailed_rb_state(std::ostream &s, const pym_rb_t &rb);
 
+typedef struct cholmod_triplet_struct cholmod_triplet;
+typedef struct cholmod_common_struct cholmod_common;
+
 void PymReparameterizeRotParam(pym_rb_named_t *rbn, const pym_config_t *pymCfg);
+void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
+void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
+
 
 #endif

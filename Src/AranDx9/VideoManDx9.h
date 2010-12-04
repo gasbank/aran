@@ -23,9 +23,9 @@ public:
 	virtual void									swapFrameBuffer();
 	virtual void									setupProjectionMatrix() const;
 	virtual void									setupViewMatrix() const;
-	HRESULT											RenderModel(ModelReader* pMR, const ArnMatrix* worldTransformMatrix = 0);
-	HRESULT											RenderModel1(ModelReader* pMR, const ArnMatrix* worldTransformMatrix = 0) const;
-	HRESULT											RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatrix = 0);
+	HRESULT											RenderModel(const ModelReader* pMR, const ArnMatrix* worldTransformMatrix = 0);
+	HRESULT											RenderModel1(const ModelReader* pMR, const ArnMatrix* worldTransformMatrix = 0) const;
+	HRESULT											RenderModel2(const ModelReader *pMR, const ArnMatrix* worldTransformMatrix = 0);
 	virtual void									setWorldViewProjection( const ArnMatrix& matWorld, const ArnMatrix& matView, const ArnMatrix& matProj );
 	HRESULT											InitWindow(TCHAR* szClassName, void* msgProc, int width, int height);
 	void											SetDrawingModelAtEditor(ModelReader* pMR);
@@ -35,8 +35,10 @@ public:
 	virtual void									SetDev(LPDIRECT3DDEVICE9 dev) { lpD3DDevice = dev; }
 	void											AttachInputMan(InputMan* inputMan);
 	InputMan*										GetInputMan();
+  HWND                        GetWindowHandle() const { return hWnd; }
 private:
 													VideoManDx9();
+public:
 	HRESULT											InitD3D(BOOL isMultithreaded = FALSE);
 	HRESULT											InitTestVertexBuffer();
 	HRESULT											InitBoxVertexBuffer();

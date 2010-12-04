@@ -67,7 +67,7 @@ public:
 	 * @internalonly
 	 */
 	//@{
-	virtual void							interconnect(ArnNode* sceneRoot) { ArnNode::interconnect(sceneRoot); }
+	virtual void							interconnect(ArnNode* sceneRoot);
 	//@}
 private:
 											ArnBone(void);

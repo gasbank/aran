@@ -1,8 +1,16 @@
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
 #include <stdexcept>
+#ifdef WIN32
+#include <memory>
+#else
 #include <tr1/memory>
+#endif
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
@@ -18,6 +26,7 @@
 #define foreach BOOST_FOREACH
 
 #include "Macros.h"
+#include "ArnCommonTypes.h"
 #include "ArnVec3.h"
 #include "ArnVec4.h"
 #include "ArnQuat.h"

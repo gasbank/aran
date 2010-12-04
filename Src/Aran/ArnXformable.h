@@ -161,7 +161,7 @@ public:
 	inline void									setIpoName(const char* ipoName);
 	void										setIpo(ArnIpo* val);
 	void										setIpo(const std::string& ipoName);
-	void										configureIpo();
+	//void										configureIpo();
 	inline void									resetAnimSeqTime();
 	inline bool									isAnimSeqEnded() const;
 	double										getAnimCtrlTime() const;

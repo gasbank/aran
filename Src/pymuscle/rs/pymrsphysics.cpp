@@ -85,7 +85,7 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
   pym_rb_named_t *rbnTrunk = 0;
   FOR_0(j, pymCfg->nBody) {
     pym_rb_named_t *rbn = &pymCfg->body[j].b;
-    if (strcmp(rbn->name, "trunk") == 0) {
+    if (strcmp(rbn->name, "upper_box") == 0) {
       rbnTrunk = rbn;
     }
   }

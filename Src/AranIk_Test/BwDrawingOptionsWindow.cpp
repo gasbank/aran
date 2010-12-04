@@ -8,7 +8,7 @@ BwDrawingOptionsWindow::BwDrawingOptionsWindow( int x, int y, int w, int h, cons
 , m_ac(ac)
 , m_openGlWindow(openGlWindow)
 {
-#define DO_REGISTER(n) add(#n, (int)m_ac.drawing_options[pym_do_ ## n])
+#define DO_REGISTER(n) add(#n, (int)m_ac.drawing_options[do_ ## n])
   // SHOULD HAVE THE SAME ORDER of pym_do_xxx
 	DO_REGISTER(grid);
 	DO_REGISTER(hud);
@@ -32,7 +32,7 @@ int BwDrawingOptionsWindow::handle( int eventType )
 {
 	if (eventType == FL_PUSH || eventType == FL_RELEASE || eventType == FL_KEYDOWN || eventType == FL_KEYUP)
 	{
-#define DO_REGISTER(n) m_ac.drawing_options[pym_do_ ## n] = checked(pym_do_ ## n) ? true : false
+#define DO_REGISTER(n) m_ac.drawing_options[do_ ## n] = checked(do_ ## n) ? true : false
     DO_REGISTER(grid);
     DO_REGISTER(hud);
     DO_REGISTER(joint);

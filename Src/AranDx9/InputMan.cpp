@@ -59,7 +59,7 @@ void InputMan::StopCharacterWalking()
 	this->pCharInterface->SetCharacterAnimationStateNext( CharacterInterface::CAS_LOITER );
 }
 
-HRESULT InputMan::Initialize( /*HINSTANCE hInst, HWND hwnd*/ )
+HRESULT InputMan::Initialize( HINSTANCE hInst, HWND hwnd )
 {
 	HRESULT hr = S_OK;
 	//ASSERTCHECK( this->lpDInput8 == 0 && this->lpDInputDevKeyboard == 0 );

@@ -14,8 +14,6 @@ PYMCORE_API void PymConvertRotParamInPlace(pym_config_t *pymCfg, pym_rot_param_t
 PYMCORE_API int PymDestoryConfig(pym_config_t *pymCfg);
 
 void PrintRigidBody(const pym_rb_t *rb);
-
-
-
+int pym_check_coincided_fibers(int *mf_indices, const pym_rb_statedep_t *sd_all, const pym_config_t *pymCfg);
 
 #endif

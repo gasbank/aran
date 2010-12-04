@@ -9,7 +9,6 @@ BwAppContext::BwAppContext()
   , activeCam(0)
   , activeLight(0)
   , frames(0)
-  , rb_history(MAX_SIMULATION_FRAMES)
 {
   massMap.resize(massMapResolution*2);
   for (int i = 0; i < massMapResolution*2; ++i) {

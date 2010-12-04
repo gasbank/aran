@@ -18,7 +18,7 @@ double Dot33(const double a[3], const double b[3]) {
   return Dot(3, a, b);
 }
 
-double Dot(const unsigned int n, const double *a, const double *b) {
+double Dot(const int n, const double *a, const double *b) {
   int i; double r = 0;
   for (i=0;i<n;++i) r+=a[i]*b[i];
   return r;
@@ -144,10 +144,10 @@ void QuatToEuler(double eul[3], double q[4])
 
 void Invert3x3Matrixf(float Minv[3][3], float M[3][3])
 {
-  double determinant =+M[0][0]*(M[1][1]*M[2][2]-M[2][1]*M[1][2])
+  float determinant =+M[0][0]*(M[1][1]*M[2][2]-M[2][1]*M[1][2])
     -M[0][1]*(M[1][0]*M[2][2]-M[1][2]*M[2][0])
     +M[0][2]*(M[1][0]*M[2][1]-M[1][1]*M[2][0]);
-  double invdet = 1./determinant;
+  float invdet = 1.0f/determinant;
   Minv[0][0] =  (M[1][1]*M[2][2]-M[2][1]*M[1][2])*invdet;
   Minv[1][0] = -(M[0][1]*M[2][2]-M[0][2]*M[2][1])*invdet;
   Minv[2][0] =  (M[0][1]*M[1][2]-M[0][2]*M[1][1])*invdet;
@@ -260,6 +260,26 @@ void TransformPoint(double pt[3], const double W[4][4], const double p[3]) {
   _TransformPoint(pt, W, p, 0);
 }
 
+void RotatePoint( double pt[3], const double R[3][3], const double p[3] )
+{
+  /*
+   *    /              \ /      \     /       \
+   *    |  W00 W01 W02 | |  p0  |     |  pt0  |
+   *    |  W10 W11 W12 | |  p1  |  =  |  pt1  |
+   *    |  W20 W21 W22 | |  p2  |     |  pt2  |
+   *    \              / \      /     \       /
+   */
+  int i, j;
+  FOR_0(i, 3) {
+    double val = 0;
+    FOR_0(j, 3) {
+      val += R[i][j]*p[j];
+    }
+    pt[i] = val;
+  }
+}
+
+
 void QuatToV(double v[3], const double q[4]) {
 	const double qv_mag = sqrt(q[1]*q[1] + q[2]*q[2] + q[3]*q[3]);
 	double scaleFactor;
@@ -270,4 +290,17 @@ void QuatToV(double v[3], const double q[4]) {
   if (qv_mag < THETA) scaleFactor = 1/(0.5-qv_mag*qv_mag/48);
   else scaleFactor = 2*acos(q[0])/qv_mag;
   for (i=0;i<3;++i) v[i] *= scaleFactor;
+}
+
+PYMCORE_API void GetWFrom7Dof( double W[4][4], const double chiexp[7] )
+{
+  double R[3][3];
+  int i,j;
+  RotationMatrixFromQuat(R, &chiexp[3]);
+  for (i=0;i<3;++i) {
+    for(j=0;j<3;++j) W[i][j] = R[i][j];
+    W[i][3] = chiexp[i];
+    W[3][i] = 0;
+  }
+  W[3][3] = 1.0;
 }

@@ -1,0 +1,437 @@
+
+\subsection{Contact model (LCP)}
+
+\begin{equation}
+\left[ \begin{array}{c}
+0 \\
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+=
+\left[ \begin{array}{cccc}
+\mathbf{M} & -\mathbf{n}   & -\mathbf{D}   & 0 \\
+\mathbf{n}^T        & 0    & 0    & 0 \\
+\mathbf{D}^T        & 0    & 0    & \mathbf{E} \\
+0          & \boldsymbol{\mu}  & -\mathbf{E}^T & 0
+\end{array}  \right]
+\left[ \begin{array}{c}
+v^{(l+1)} \\
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
++
+\left[ \begin{array}{c}
+-Mv^{(l)}-hk \\
+0 \\
+0 \\
+0
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right] ^T
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+= 0,\quad\quad
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
+\geq 0,\quad\quad
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+\geq 0
+\end{equation}
+
+\begin{equation}
+\left[ \begin{array}{c}
+\rho \\
+\sigma \\
+\zeta
+\end{array}  \right]
+=
+\left[ \begin{array}{ccc}
+\mathbf{n}^T \mathbf{M}^{-1} \mathbf{n}  &   \mathbf{n}^T \mathbf{M}^{-1} \mathbf{D}  & 0          \\
+\mathbf{D}^T \mathbf{M}^{-1} \mathbf{n}  &   \mathbf{D}^T \mathbf{M}^{-1} \mathbf{D}  & \mathbf{E} \\
+\boldsymbol{\mu}                         &   -\mathbf{E}^T & 0
+\end{array}  \right]
+\left[ \begin{array}{c}
+c_n \\
+\beta \\
+\lambda
+\end{array}  \right]
++
+\left[ \begin{array}{c}
+\mathbf{n}^T ( v^{(l)} + \mathbf{M}^{-1} hk ) \\
+\mathbf{D}^T ( v^{(l)} + \mathbf{M}^{-1} hk ) \\
+0
+\end{array}  \right]
+\end{equation}
+
+
+If we form a LCP by using a mass matrix and a Coriolis and centrifugal force vector
+derived in a generalized coordinate as well as a state and its time derivatives
+the solution will give us contact forces at the instant.
+
+
+
+\subsection{Whole biped model}
+
+By modeling the bones as rigid bodies and the bunch of muscles as several muscle
+fibers we can build the whole biped model. We have $n$ rigid bodies and
+$m$ muscle fibers on the biped. The state vector $Y$ can be defined:
+
+\begin{equation}
+Y = [ p_1, q_1, \dot{p}_1, \dot{q}_1, \cdots ,
+      p_n, q_n, \dot{p}_n, \dot{q}_n,
+      T_1, \cdots, T_m]
+\end{equation}
+where $p_i$ and $q_i$ represent linear and angular position of body $i$.
+Note that we omitted the transpose operator on vector quantities like $p$,
+$q$ and $Y$ for brevity. A time derivative of $Y$ can be easily
+calculated.
+
+\begin{equation}
+\dot{Y} = [ \dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1, \cdots ,
+            \dot{p}_n, \dot{q}_n, \ddot{p}_n, \ddot{q}_n,
+            \dot{T}_1, \cdots, \dot{T}_m]
+\end{equation}
+Our concern is mostly concentrated to the quantities like $\ddot{p}$,
+$\ddot{q}$ and $\dot{T}$ since the differential equations are formulated
+in these variables. The vector $\dot{Y}$ is mixture
+of the dynamic formula for rigid bodies and muscle fibers. We can separate
+the vector into two parts to help the further analysis and control like the
+following:
+
+\begin{align}
+\dot{Y} = {} & \quad[ \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, \cdots ,
+                \dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n,
+                0, \cdots, 0]\notag\\
+             & + [ 0, 0, \ddot{\bar{p}}_1, \ddot{\bar{q}}_1, \cdots ,
+                0, 0, \ddot{\bar{p}}_n, \ddot{\bar{q}}_n,
+                \dot{T}_1, \cdots, \dot{T}_m]\notag\\
+        = {} & \dot{Y}_R + \dot{Y}_Q\label{SeparatedYdot}
+\end{align}
+
+Since we separate the rigid body parts and muscle fiber parts, if we
+assume $\dot{Y}_Q$ equals to 0 we simply simulate the $n$ individual
+rigid bodies freely move around the space with rotations. If we develop
+this kind of separation process further, we get the equations:
+
+\begin{align}
+\dot{Y}_R = {} &  \quad[ (\dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1), 0_{4x}, (0, \cdots , 0)]\notag\\
+               & +[ 0_{4x}, (\dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2), 0_{4x}, (0, \cdots , 0)]\notag\\
+               & + \cdots\notag\\
+               & + [ 0_{4x}, (\dot{p}_n, \dot{q}_n, \ddot{\tilde{p}}_n, \ddot{\tilde{q}}_n), (0, \cdots , 0)]\notag\\
+          = {} & \sum_{i=1}^{n}{\dot{Y}_{R,i}}
+\end{align}
+
+\begin{align}
+\dot{Y}_Q = {} & \quad[ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}),
+                   0_{4x}, (0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}),
+                   0_{4x}, (\dot{T}_1, 0, \cdots, 0)]\notag\\
+               & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}),
+                     0_{4x}, (0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}),
+                     0_{4x}, (0, \dot{T}_2, 0, \cdots, 0)]\notag\\
+               & + \cdots\notag\\
+               & + [ 0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{org}, \ddot{\bar{q}}_{T,m}^{org}),
+                     0_{4x}, (0, 0, \ddot{\bar{p}}_{T,m}^{ins}, \ddot{\bar{q}}_{T,m}^{ins}),
+                     0_{4x}, (0, \cdots, 0, \dot{T}_m)]\notag\\
+          = {} & \sum_{i=1}^{m}{\dot{Y}_{Q,i}}
+\end{align}
+Here $0_{4x}$ denotes an arbitrary zero vector whose dimension is multiple of four.
+Parentheses are added just for clarify the structure.
+$\dot{Y}_{R,i}$ represents the first derivative of the state vector of the body $i$
+when there is no muscle fiber attached to it. $\dot{Y}_{Q,i}$ denotes the effects of
+the muscle fiber $i$ affecting the origin and insertion body. Specifically,
+$ \ddot{\bar{p}}_{T,i}^{org} $ and $ \ddot{\bar{q}}_{T,i}^{org} $ are the force and
+torque affecting the origin body. This kind of separation gives us a simplified
+way to analyze the whole system. For instance, if we set $\dot{Y}_{Q_i}$ to 0 then
+the effect of muscle fiber $i$ is entirely removed from the simulation.
+
+%\subsection{Muscle fiber actuation force}
+
+In \eqref{SeparatedYdot} we can see that the only way to affect the motion
+of rigid bodies is changing $\dot{Y}_Q$. More specifically we need to change
+$\dot{T}_i$ in $\dot{Y}_{Q,i}$. $\dot{T}$ is a linear function of the actuation force $A$
+from \eqref{Tension} if we assume that $T$ is fixed or given at some time instant.
+If we rewrite $\dot{T}$
+
+\begin{align}
+\dot{T} = {} &   \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T \right)
+               + \frac{k_{se}}{b}A\notag\\
+        = {} & \dot{T}^U + \dot{T}^A\label{TensionLinear}
+\end{align}
+then $\dot{Y}_{Q,i}$ can be expressed in terms of $A$.
+\begin{align}
+\dot{Y}_{Q,i} = {} & [ \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}),
+                       \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}),
+                       \cdots , (\cdots , \dot{T}_i, \cdots )]\notag\\
+              = {} & \quad[ \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}),
+                       \cdots , (0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}),
+                       \cdots , (\cdots , \dot{T}_i^U, \cdots )]\notag\\
+                   &+[ \cdots , (0, 0, 0, 0),
+                       \cdots , (0, 0, 0, 0),
+                       \cdots , (\cdots , \dot{T}_i^A, \cdots )]\notag\\
+              = {} & \dot{Y}_{Q,i}^U + \dot{Y}_{Q,i}^A\label{ActuationForceRevealed}
+\end{align}
+Because $\dot{Y}_{Q,i}^A$ depends on $A_i$ and $k_{se,i}$ and $b_i$ are constants
+we can control this value arbitrarily as long as $A_i$ is in the range of
+actuation force limit.
+The muscle fiber $i$ will show a passive behavior of we set $A_i$ to zero.
+
+
+
+\section{Muscle control algorithm}
+
+\subsection{Muscle fiber actuation force}
+
+\subsection{Gait phase classifier}
+
+Locomotion such as walking or running is performed by a periodic way.
+A gait cycle or stride contains eight functional patterns(FIGURE xx).
+\cite{perry} These patterns are called \emph{gait phases}. Each phase has its
+own features and objectives. For example, during mid-swing and terminal swing
+phase, one of primary muscle called \emph{biceps femoris} and \emph{semimembranosis} is
+activated to extend our swing leg forward.
+
+terminal stance phase one
+of the muscle  we will use this fact
+to our locomotion controller.
+
+Aha!
+Change this...
+fdsfsd
+Whoooooooooooa~
+
+
+If we substitute \eqref{SeparatedYdot} and \eqref{ActuationForceRevealed} into
+\eqref{DeltaY} the control structure of $\Delta Y$ is shown.
+
+\begin{equation}\label{DeltaYControl}
+\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1}
+            \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} + \dot{Y}_Q^{A(l)} \right)
+\end{equation}
+$\Delta Y$ can be rearranged to be affine in the control argument $u$ as follows:
+
+\begin{equation}
+\Delta Y(Y^{(l)}, u) = C(Y^{(l)}) + \mathbf{D}(Y^{(l)})u
+\end{equation}
+where
+\begin{equation}
+C(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \left( \dot{Y}_R^{(l)} + \dot{Y}_Q^{U(l)} \right),
+\end{equation}
+
+\begin{equation}
+\mathbf{D}(Y^{(l)}) = \mathbf{P}^{-1}(Y^{(l)}) \mathbf{G},
+\end{equation}
+
+\begin{equation}\label{DeltaYMatrix}
+\mathbf{P}(Y^{(l)}) = \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}},
+\end{equation}
+
+\begin{equation}
+\mathbf{G} = \left[ \zm{m, 2n_d n} , \text{diag}(k_{se,1}/b_1, \cdots, k_{se,m}/b_m) \right]^T,
+\end{equation}
+
+\begin{equation}
+u = [A_1, \cdots, A_m]^T.
+\end{equation}
+
+The controller is based on an optimization. Assume that we are in
+the time step $l$ with the state $Y^{(l)}$ and we want to determine $u$
+which leads the next time state $Y^{(l+1)}$ to $Y_{\text{desired}}$
+as close as possible while using minimal efforts to achieve that goal.
+The optimization problem for finding the solution vector $u^*$ can be stated as
+
+\begin{align}
+u^*= {} & \arg\min_{u} \| Y^{(l+1)}                            - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u} \notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + \Delta Y)                 - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| (Y^{(l)} + C + \mathbf{D}u) - Y_\text{desired} \|^2_{\mathbf{W}_Y} + \| u \|^2_{\mathbf{W}_u}\notag\\
+   = {} & \arg\min_{u} \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u}
+\end{align}
+where
+\begin{equation}
+E = Y^{(l)} - Y_\text{desired} + C .\notag
+\end{equation}
+
+The weighting between different objective terms is
+usually determined by diagonal semipositive definite matrices $\mathbf{W}_Y$ and $\mathbf{W}_u$.
+Note that $\mathbf{D}$ can be a rectangular (nonsquare) matrix depending on the number of rigid bodies and
+muscles. The equations for finding $u^*$ is as follows:
+\begin{align}
+\frac{\partial}{\partial u} \left( \| \mathbf{D}u + E \|^2_{\mathbf{W}_Y}  + \| u \|^2_{\mathbf{W}_u} \right) = {} & 0  \notag\\
+2\mathbf{D}^T\mathbf{W}_Y(\mathbf{D}u+E) + 2 \mathbf{W}_u u = {} & 0\notag\\
+(\mathbf{D}^T\mathbf{W}_Y\mathbf{D}+\mathbf{W}_u)u = {} & -\mathbf{D}^T\mathbf{W}_Y E
+\end{align}
+Here we define the gradient as a column vector.
+
+
+
+
+
+From \eqref{SeparatedYdot}, we can see that
+Jacobian also can be calculated in a separated manner.
+
+\begin{align}
+\frac{\partial f}{\partial Y}
+        & = \frac{\partial\dot{Y}}{\partial Y}\notag\\
+        & = \frac{\partial\dot{Y}_R}{\partial Y} + \frac{\partial\dot{Y}_Q}{\partial Y}\notag\\
+        & = \sum_{i=1}^{n}\frac{\partial\dot{Y}_{R,i}}{\partial Y} + \sum_{i=1}^{m}\frac{\partial\dot{Y}_{Q,i}}{\partial Y}
+\end{align}
+
+
+
+\subsection{A simple example}
+
+To explain the dynamics model in more specific manner, let us consider
+a concrete example consists of three rigid bodies $R_1$, $R_2$ and $R_3$
+and three muscle fibers $F_1$, $F_2$ and $F_3$. $R_1$ and $R_2$ are connected
+by both of $F_1$ and $F_2$ whereas $F_3$ connects $R_2$ and $R_3$. The
+origin and insertion of muscle fibers are described in Figure xx.
+
+A 45-dimension state vector $Y$ is
+
+\begin{align}
+Y = {} & [p_1^x, p_1^y, p_1^z, q_1^w, q_1^x, q_1^y, q_1^z, \dot{p}_1^x, \dot{p}_1^y, \dot{p}_1^z, \dot{q}_1^w, \dot{q}_1^x, \dot{q}_1^y, \dot{q}_1^z,\notag\\
+       &  p_2^x, p_2^y, p_2^z, q_2^w, q_2^x, q_2^y, q_2^z, \dot{p}_2^x, \dot{p}_2^y, \dot{p}_2^z, \dot{q}_2^w, \dot{q}_2^x, \dot{q}_2^y, \dot{q}_2^z,\notag\\
+       &  p_3^x, p_3^y, p_3^z, q_3^w, q_3^x, q_3^y, q_3^z, \dot{p}_3^x, \dot{p}_3^y, \dot{p}_3^z, \dot{q}_3^w, \dot{q}_3^x, \dot{q}_3^y, \dot{q}_3^z,\notag\\
+       & T_1, T_2, T_3]^T\label{StateVector}
+\end{align}
+where all variables are scalers. You may notice that we used quaternions
+to parameterize the rotation of rigid bodies. This allows us a freedom
+from the gimbal lock problem by sacrificing dimensional complexity. From
+now on, we will denote the three or four dimensional vectors is its shorthand
+form, i.e., $p_i=[p_i^x, p_i^y, p_i^z]^T$ and $q_i=[q_i^w, q_i^x, q_i^y, q_i^z]^T$.
+
+\begin{equation}\label{StateVectorDerivative}
+\dot{Y}  =  [\dot{p}_1, \dot{q}_1, \ddot{p}_1, \ddot{q}_1,
+               \dot{p}_2, \dot{q}_2, \ddot{p}_2, \ddot{q}_2,
+               \dot{p}_3, \dot{q}_3, \ddot{p}_3, \ddot{q}_3,
+               \dot{T}_1, \dot{T}_2, \dot{T}_3]
+\end{equation}
+Again we omit the transpose operators at the places where they needed
+unless the omission misleads our exposition.
+
+
+\begin{align}
+\dot{Y}_R = {} & \dot{Y}_{R,1} + \dot{Y}_{R,2} + \dot{Y}_{R,3}\\
+          = {} &  [   \dot{p}_1, \dot{q}_1, \ddot{\tilde{p}}_1, \ddot{\tilde{q}}_1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 ]\notag\\
+               & + [ 0, 0, 0, 0, \dot{p}_2, \dot{q}_2, \ddot{\tilde{p}}_2, \ddot{\tilde{q}}_2, 0, 0, 0, 0, 0, 0, 0 ]\notag\\
+               & + [ 0, 0, 0, 0, 0, 0, 0, 0, \dot{p}_3, \dot{q}_3, \ddot{\tilde{p}}_3, \ddot{\tilde{q}}_3, 0, 0, 0 ]\notag
+\end{align}
+
+
+\begin{align}
+\dot{Y}_Q = {} & \dot{Y}_{Q,1} + \dot{Y}_{Q,2} + \dot{Y}_{Q,3}\\
+          = {} &   [ 0, 0, \ddot{\bar{p}}_{T,1}^{org}, \ddot{\bar{q}}_{T,1}^{org}, 0, 0, \ddot{\bar{p}}_{T,1}^{ins}, \ddot{\bar{q}}_{T,1}^{ins}, 0, 0, 0, 0, \dot{T}_1, 0, 0 ]\notag\\
+               & + [ 0, 0, \ddot{\bar{p}}_{T,2}^{ins}, \ddot{\bar{q}}_{T,2}^{ins}, 0, 0, \ddot{\bar{p}}_{T,2}^{org}, \ddot{\bar{q}}_{T,2}^{org}, 0, 0, 0, 0, 0, \dot{T}_2, 0 ]\notag\\
+               & + [ 0, 0, \ddot{\bar{p}}_{T,3}^{ins}, \ddot{\bar{q}}_{T,3}^{ins}, 0, 0, 0, 0, 0, 0, \ddot{\bar{p}}_{T,3}^{org}, \ddot{\bar{q}}_{T,3}^{org}, 0, 0, \dot{T}_3 ]\notag
+\end{align}
+
+\begin{equation}
+\frac{\partial f}{\partial Y}
+         =  \frac{\partial\dot{Y}_{R,1}}{\partial Y} + \frac{\partial\dot{Y}_{R,2}}{\partial Y} + \frac{\partial\dot{Y}_{R,3}}{\partial Y}
+              + \frac{\partial\dot{Y}_{Q,1}}{\partial Y} + \frac{\partial\dot{Y}_{Q,2}}{\partial Y} + \frac{\partial\dot{Y}_{Q,3}}{\partial Y}
+\end{equation}
+
+
+\begin{equation}
+y_{i} = [p_i, q_i, \dot{p}_i, \dot{q}_i]
+\end{equation}
+
+\begin{equation}
+\dot{y}_{R,i} = [\dot{p}_i, \dot{q}_i, \ddot{\tilde{p}}_i, \ddot{\tilde{q}}_i]
+\end{equation}
+
+
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,1}}{\partial Y}=
+\left[ \begin{array}{cccc}
+\partial \dot{y}_{R,1} / \partial y_1 & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{14,14}                            & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{14,14}                            & \zm{14,14} & \zm{14,14} & \zm{14,3}\\
+\zm{3,14}                             & \zm{3,14}  & \zm{3,14}  & \zm{3,3}\\
+\end{array} \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,2}}{\partial Y}=
+\left[ \begin{array}{cccc}
+\zm{14,14} & \zm{14,14}                            & \zm{14,14} & \zm{14,3}\\
+\zm{14,14} & \partial \dot{y}_{R,2} / \partial y_2 & \zm{14,14} & \zm{14,3}\\
+\zm{14,14} & \zm{14,14}                            & \zm{14,14} & \zm{14,3}\\
+\zm{3,14}  & \zm{3,14}                             & \zm{3,14}  & \zm{3,3}\\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{R,3}}{\partial Y}=
+\left[ \begin{array}{cccc}
+\zm{14,14} & \zm{14,14} & \zm{14,14}                            & \zm{14,3}\\
+\zm{14,14} & \zm{14,14} & \zm{14,14}                            & \zm{14,3}\\
+\zm{14,14} & \zm{14,14} & \partial \dot{y}_{R,3} / \partial y_3 & \zm{14,3}\\
+\zm{3,14}  & \zm{3,14}  & \zm{3,14}                             & \zm{3,3}\\
+\end{array}  \right]
+\end{equation}
+
+
+\begin{equation}
+\dot{y}_{Q,i}^{org} = [0, 0, \ddot{\bar{p}}_{T,i}^{org}, \ddot{\bar{q}}_{T,i}^{org}]
+\end{equation}
+
+\begin{equation}
+\dot{y}_{Q,i}^{ins} = [0, 0, \ddot{\bar{p}}_{T,i}^{ins}, \ddot{\bar{q}}_{T,i}^{ins}]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,1}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,1}^{org} / \partial y_1 & \partial\dot{y}_{Q,1}^{org} / \partial y_2 & \zm{14,14} & \partial\dot{y}_{Q,1}^{org} / \partial T_1 & \zm{14,1} & \zm{14,1} \\
+\partial\dot{y}_{Q,1}^{ins} / \partial y_1 & \partial\dot{y}_{Q,1}^{ins} / \partial y_2 & \zm{14,14} & \partial\dot{y}_{Q,1}^{ins} / \partial T_1 & \zm{14,1} & \zm{14,1} \\
+\zm{14,14}                                 & \zm{14,14}                                 & \zm{14,14} & \zm{14,1}                                  & \zm{14,1} & \zm{14,1} \\
+\partial\dot{T}_1 / \partial y_1           & \partial\dot{T}_1 / \partial y_2           & \zm{1,14}  & \partial\dot{T}_1 / \partial T_1           & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}                                      & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}                                      & \zm{}     & \zm{} \\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,2}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,2}^{ins} / \partial y_1 & \partial\dot{y}_{Q,2}^{ins} / \partial y_2 & \zm{14,14} & \zm{14,1} & \partial\dot{y}_{Q,2}^{ins} / \partial T_2 & \zm{14,1} \\
+\partial\dot{y}_{Q,2}^{org} / \partial y_1 & \partial\dot{y}_{Q,2}^{org} / \partial y_2 & \zm{14,14} & \zm{14,1} & \partial\dot{y}_{Q,2}^{org} / \partial T_2 & \zm{14,1} \\
+\zm{14,14}                                 & \zm{14,14}                                 & \zm{14,14} & \zm{14,1} & \zm{14,1}                                  & \zm{14,1} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}     & \zm{}                                      & \zm{} \\
+\partial\dot{T}_2 / \partial y_1           & \partial\dot{T}_2 / \partial y_2           & \zm{1,14}  & \zm{}     & \partial\dot{T}_2 / \partial T_2           & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}                                  & \zm{1,14}  & \zm{}     & \zm{}                                      & \zm{} \\
+\end{array}  \right]
+\end{equation}
+
+\begin{equation}
+\frac{\partial\dot{Y}_{Q,3}}{\partial Y}=
+\left[ \begin{array}{cccccc}
+\partial\dot{y}_{Q,3}^{ins} / \partial y_1 & \zm{14,14} & \partial\dot{y}_{Q,3}^{ins} / \partial y_3 & \zm{14,1} & \zm{14,1} & \partial\dot{y}_{Q,3}^{ins} / \partial T_3  \\
+\zm{14,14}                                 & \zm{14,14} & \zm{14,14}                                 & \zm{14,1} & \zm{14,1} & \zm{14,1} \\
+\partial\dot{y}_{Q,3}^{org} / \partial y_1 & \zm{14,14} & \partial\dot{y}_{Q,3}^{org} / \partial y_3 & \zm{14,1} & \zm{14,1} & \partial\dot{y}_{Q,3}^{org} / \partial T_3  \\
+\zm{1,14}                                  & \zm{1,14}  & \zm{1,14}                                  & \zm{}     & \zm{}     & \zm{} \\
+\zm{1,14}                                  & \zm{1,14}  & \zm{1,14}                                  & \zm{}     & \zm{}     & \zm{} \\
+\partial\dot{T}_3 / \partial y_1           & \zm{1,14}  & \partial\dot{T}_3 / \partial y_3           & \zm{}     & \zm{}     & \partial\dot{T}_3 / \partial T_3 \\
+\end{array}  \right]
+\end{equation}
+
+

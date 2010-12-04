@@ -63,6 +63,10 @@ ArnSkeleton::configureIpos()
 			if (m_defaultAction == m_actionStrips[i])
 				defaultActionIdx = i;
 			animCtrl->RegisterAnimationSet(m_actionStrips[i]);
+
+      animCtrl->SetTrackAnimationSet(i, i);
+      animCtrl->SetTrackWeight(i, 1.0);
+      animCtrl->SetTrackSpeed(i, 1.0);
 		}
 		animCtrl->SetAction(defaultActionIdx);
 		setAnimCtrl(animCtrl);

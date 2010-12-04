@@ -12,7 +12,7 @@ public:
 
   int handle(int);
 private:
-  void update_debug_msg_stream(pym_debug_message_type_e pdmt, int cidx);
+  void update_debug_msg_stream(int pdmt, int cidx);
   BwAppContext &m_ac;
 };
 

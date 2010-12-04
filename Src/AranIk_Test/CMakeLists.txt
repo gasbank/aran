@@ -1,5 +1,4 @@
 LINK_DIRECTORIES(
-${CODEBASE}src/CHOLMOD/Debug
 )
 ADD_EXECUTABLE(AranIk_Test
 BwAppContext.cpp BwAppContext.h
@@ -10,8 +9,6 @@ BwPch.cpp BwPch.h
 BwPlaybackSlider.cpp BwPlaybackSlider.h
 BwTopWindow.cpp BwTopWindow.h
 SliderInput.cpp SliderInput.h
-BwDebugPrintOptionsWindow.cpp BwDebugPrintOptionsWindow.h
-BwRbTrackingOptionsWindow.cpp BwRbTrackingOptionsWindow.h
 )
 ADD_DEFINITIONS(
 -DTIXML_USE_STL
@@ -25,22 +22,11 @@ INCLUDE_DIRECTORIES(
 ../AranPhy
 ../AranIk
 ../AranGl
-../pymuscle/core
-../pymuscle/parser
-../pymuscle/optimizer
-../pymuscle/rs
-../pymuscle
-../Jarvis
 ${CODEBASE}freetype-2.3.9/include
 ${CODEBASE}opende/include
 ${CODEBASE}fltk-1.1.10
 ${CODEBASE}src/glew-1.5.7/include
-${CODEBASE}src/UFconfig
-${CODEBASE}src/UMFPACK/Include
-${CODEBASE}src/AMD/Include
-${CODEBASE}src/CHOLMOD/Include
 ${CODEBASE}src/libconfig-1.3.2
-${MOSEK_ROOT}6/tools/platform/win32x86/h
 )
 TARGET_LINK_LIBRARIES(AranIk_Test
 AranMath
@@ -56,10 +42,6 @@ fltkgld
 comctl32
 wsock32
 winmm
-pymcore
-pymoptimizer
-pymparser
-pymrs
 DevIL
 )
 ADD_MSVC_PRECOMPILED_HEADER(AranIk_Test BwPch.h BwPch.cpp)

@@ -12,7 +12,22 @@ enum ViewMode {
   VM_CAMERA
 };
 
-#include "pymdrawingoption.h"
+enum drawing_option {
+  do_unused,
+  do_grid, // should start from 1
+  do_hud,
+  do_joint,
+  do_endeffector,
+  do_joint_axis,
+  do_contact,
+  do_contact_force,
+  do_root_node,
+  do_wireframe,
+  do_reference,
+  do_fiber,
+  
+  do_count,
+};
 
 class	PlaybackSlider;
 class BwOpenGlWindow;
@@ -60,7 +75,7 @@ class BwAppContext : private Uncopyable
   bool					bPanningButtonDown;
   std::pair<int, int>			panningStartPoint;
   // Drawing options
-  bool drawing_options[pym_do_count];
+  bool drawing_options[do_count];
   bool					bSimulate;
   int				frames; // Current frame
   float					panningCenter[3];
@@ -70,8 +85,6 @@ class BwAppContext : private Uncopyable
   Fl_Button*				frameLabel;
   PlaybackSlider*			playbackSlider;
   std::vector<SimWorldState>		simWorldHistory;
-  // A handle for realtime simulator module
-  pym_rs_t *pymRs;
   Fl_Button *slider;
   SliderInput **cost_coeff_sliders;
   Fl_Light_Button *simulateButton;
@@ -80,6 +93,5 @@ class BwAppContext : private Uncopyable
   Fl_Browser *fiber_browser;
   Fl_Check_Browser *rb_tracking_options;
   static const int MAX_SIMULATION_FRAMES = 10000;
-  boost::circular_buffer< vector<pym_rb_t> > rb_history; /* 'pym_rb_t rb_history[MAX_SIMULATION_FRAMES][nb]' */
   char frameStr[128];
 };

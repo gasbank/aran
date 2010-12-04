@@ -1297,7 +1297,7 @@ size_t ModelReader::GetSkeletonNodeSize() const
 {
 	return this->skeletonNode.size();
 }
-SkeletonNode* ModelReader::GetSkeletonNodePointer(int index)
+const SkeletonNode* ModelReader::GetSkeletonNodePointer(int index) const
 {
 	// TODO: constness should be remained
 	return &(this->skeletonNode[index]);

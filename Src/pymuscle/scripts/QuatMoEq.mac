@@ -1,0 +1,143 @@
+/* 
+ * QuatMoEq.mac: Equations of motion using quaternion
+ * 
+ * Using the formula presented in
+ * Jain et al., Optimization-Based Interactive Motion Synthesis
+ *
+ * 2010 Geoyeob Kim
+ */
+
+load("MyMathFunc.mac");
+load("PrintClike.mac");
+
+/* Print calculation time for each command */
+showtime: true;
+optimprefix: _x;
+ratprint: false;
+
+X     : [p1   , p2   , p3   , qw   , qx   , qy   , qz   ];
+Xd    : [pd1  , pd2  , pd3  , qdw  , qdx  , qdy  , qdz  ];
+Xdd   : [pdd1 , pdd2 , pdd3 , qddw , qddx , qddy , qddz ];
+
+/* Rotation vector */
+q : [qw, qx, qy, qz]$
+/* Length(angle) of rotation vector */
+
+/* Rotation matrix */
+R : RotationMatrixFromQuaternion(qw,qx,qy,qz)$
+
+Wi : matrix([ R[1,1], R[1,2], R[1,3], p1 ],
+            [ R[2,1], R[2,2], R[2,3], p2 ],
+            [ R[3,1], R[3,2], R[3,3], p3 ],
+            [      0,      0,      0,  1 ] )$
+
+printMatDim(Wi);
+
+dWi : 0;
+for j:1 thru 7 do (
+    dWi : dWi + diff(Wi, X[j])*Xd[j]
+)$
+printMatDim(dWi);
+
+
+ddWi : 0;
+for j:1 thru 7 do (
+    tj : 0,
+    for k:1 thru 7 do (
+        tj : tj + diff(diff(Wi, X[k]), X[j]) * Xd[k]
+    ),
+    tj : tj * Xd[j],
+    tj : tj + diff(Wi, X[j]) * Xdd[j],
+    ddWi : ddWi + tj
+)$
+length(ddWi);
+length(ddWi[1]);
+
+Ixx;
+Iyy;
+Izz;
+Iww;
+
+
+Mi : matrix([Ixx, 0, 0, 0],
+            [0, Iyy, 0, 0],
+            [0, 0, Izz, 0],
+            [0, 0, 0, Iww])$
+length(Mi);
+length(Mi[1]);
+
+TOT : [0,0,0, 0,0,0,0]$
+for j:1 thru 7 do (
+    tot : diff(Wi, X[j]) . Mi . transpose(ddWi),
+    length(tot),
+    length(tot[1]),
+    TOT[j] : tot[1,1] + tot[2,2] + tot[3,3] + tot[4,4]
+)$
+
+
+TOT : ratsimp(TOT)$
+
+
+printMatDim(TOT); /* TOT is not a matrix. */
+
+Cqd_G : ev(TOT, [pdd1=0, pdd2=0, pdd3=0, qddw=0, qddx=0, qddy=0, qddz=0])$
+G     : ev(Cqd_G, [pd1=0, pd2=0, pd3=0, qdw=0, qdx=0, qdy=0, qdz=0])$
+Cqd   : Cqd_G - G$
+MXdd  : TOT - Cqd_G$
+
+
+M : coefmatrix([MXdd[1]=0, MXdd[2]=0, MXdd[3]=0, MXdd[4]=0, MXdd[5]=0, MXdd[6]=0, MXdd[7]=0], Xdd)$
+
+M   : ratsimp(M)$
+Cqd : ratsimp(Cqd)$
+
+ratsimp(M . Xdd + Cqd + G - TOT);
+
+
+Minv : M^^-1$
+
+acctest : Minv . (-Cqd)$
+
+
+M0    : matrix([0,0,0,0,0,0],
+               [0,0,0,0,0,0],
+               [0,0,0,0,0,0],
+               [0,0,0,0,0,0],
+               [0,0,0,0,0,0],
+               [0,0,0,0,0,0])$
+Cqd0  : [0,0,0,0,0,0]$
+for j:1 thru 6 do(
+	printf(true, "~d~%", j),
+	for k:1 thru 6 do(
+		printf(true, "~d~%", k),
+		printf(true, "M0...~%"),
+		M0[j,k] : taylor(M[j,k], th, 0, 3)
+	),
+	printf(true, "Cqd0...~%"),
+	Cqd0[j] : taylor(Cqd[j], th, 0, 3)
+)$
+
+
+
+OpenFile("QuatMoEq.py");
+WriteDirectToFile("from numpy import array, linalg, zeros~%");
+WriteDirectToFile("from math import sin, cos~%");
+WriteDirectToFile("from scipy import sparse~%");
+WriteDirectToFile("from MathUtil import cot~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("def MassMatrixAndCqdVectorQuat(p, q, pd, qd, I):~%");
+WriteDirectToFile("    p1, p2, p3 = p~%");
+WriteDirectToFile("    qw, qx, qy, qz = q~%");
+WriteDirectToFile("    Ixx, Iyy, Izz, Iww = I~%");
+WriteDirectToFile("~%");
+WriteDirectToFile("    M = array(zeros((7,7)))~%");
+WriteDirectToFile("    Cqd = array(zeros(7))~%");
+WriteDirectToFile("~%");
+WriteBlockToClike("M", optimize(M), [7,7]);
+WriteDirectToFile("    pd1, pd2, pd3 = pd~%");
+WriteDirectToFile("    qdw, qdx, qdy, qdz = qd~%");
+WriteBlockToClike("Cqd", optimize(Cqd), [7,1]);
+WriteDirectToFile("    return M, Cqd~%");
+WriteDirectToFile("~%");
+
+quit();

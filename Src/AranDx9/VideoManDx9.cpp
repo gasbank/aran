@@ -456,7 +456,7 @@ VideoManDx9::DrawAtEditor( BOOL isReady, BOOL isRunning )
 }
 
 HRESULT
-VideoManDx9::RenderModel(ModelReader* pMR, const ArnMatrix* worldTransformMatrix /* = 0 */)
+VideoManDx9::RenderModel(const ModelReader* pMR, const ArnMatrix* worldTransformMatrix /* = 0 */)
 {
 	if (!pMR || !pMR->IsInitialized())
 		return E_FAIL;
@@ -718,7 +718,7 @@ VideoManDx9::TurnModelLightOn(ModelReader *pMR, ArnMatrix* worldTransformMatrix)
 }
 
 HRESULT
-VideoManDx9::RenderModel1(ModelReader *pMR, const ArnMatrix* worldTransformMatrix) const
+VideoManDx9::RenderModel1(const ModelReader *pMR, const ArnMatrix* worldTransformMatrix) const
 {
 	//
 	// SHOULD BE CALLED BETWEEN BeginScene() & EndScene()
@@ -854,7 +854,7 @@ VideoManDx9::RenderModel1(ModelReader *pMR, const ArnMatrix* worldTransformMatri
 }
 
 HRESULT
-VideoManDx9::RenderModel2(ModelReader *pMR, const ArnMatrix* worldTransformMatrix)
+VideoManDx9::RenderModel2(const ModelReader *pMR, const ArnMatrix* worldTransformMatrix)
 {
 	if (pMR->GetExportVersion() != EV_ARN20)
 	{

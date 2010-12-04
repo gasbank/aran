@@ -26,6 +26,8 @@ enum optimization_cost_terms {
   oct_count
 };
 
+enum pym_rot_param_t;
+
 union pym_rb_t;
 union pym_mf_t;
 
@@ -69,6 +71,11 @@ struct pym_config_t {
   double joint_dislocation_threshold;
   bool joint_dislocation_enabled;
   bool real_muscle;
+  /* biped-wide rotation parameterization */
+  pym_rot_param_t rotparam;
+  int nrp; /* dimension of rotation parameterization (i.e. quaternion=4, exprot=3) */
+
+  int joint_constraints; // Fiber attached between joint anchor points if this value is not 0.
 };
 
 #endif // PYMCONFIG_H_INCLUDED

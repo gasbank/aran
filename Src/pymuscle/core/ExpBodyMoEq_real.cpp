@@ -16,12 +16,22 @@
 #define pd1 pd[0]
 #define pd2 pd[1]
 #define pd3 pd[2]
+// exprot
 #define v1  v [0]
 #define v2  v [1]
 #define v3  v [2]
 #define vd1 vd[0]
 #define vd2 vd[1]
 #define vd3 vd[2]
+// quat
+#define qw  q [0]
+#define qx  q [1]
+#define qy  q [2]
+#define qz  q [3]
+#define qdw qd[0]
+#define qdx qd[1]
+#define qdy qd[2]
+#define qdz qd[3]
 #define Ixx I[0]
 #define Iyy I[1]
 #define Izz I[2]
@@ -990,4 +1000,84 @@ void MassMatrixAndCqdVector(double M[6][6], double Cqd[6],
         return __MassMatrixAndCqdVector0(M, Cqd, p, v, th, pd, vd, I);
     else
         return __MassMatrixAndCqdVector(M, Cqd, p, v, th, pd, vd, I);
+}
+
+void MassMatrixAndCqdVectorQuat( double M[3+4][3+4], double Cqd[3+4], const double p[3], const double q[4], const double pd[3], const double qd[4], const double I[4] )
+{
+  memset(M, 0, sizeof(double)*7*7);
+  memset(Cqd, 0, sizeof(double)*7);
+
+  double _x1 = 4*Ixx;
+  double _x2 = 4*Iyy;
+  double _x3 = 4*Izz;
+  double _x4 = _x3+_x2+_x1;
+  double _x5 = pow(qw,2);
+  double _x6 = _x3+_x2;
+  double _x7 = pow(qx,2);
+  double _x8 = _x3+_x1;
+  double _x9 = pow(qy,2);
+  double _x10 = _x2+_x1;
+  double _x11 = pow(qz,2);
+  double _x12 = _x3-4*Iyy;
+  double _x13 = _x12*qy*qz+4*Ixx*qw*qx;
+  double _x14 = _x1-4*Izz;
+  double _x15 = _x14*qx*qz+4*Iyy*qw*qy;
+  double _x16 = _x2-4*Ixx;
+  double _x17 = 4*Izz*qw*qz+_x16*qx*qy;
+  double _x18 = _x16*qw*qz+4*Izz*qx*qy;
+  double _x19 = 4*Iyy*qx*qz+_x14*qw*qy;
+  double _x20 = 4*Ixx*qy*qz+_x12*qw*qx;
+  M[  0][  0] = Iww;
+  M[  1][  1] = Iww;
+  M[  2][  2] = Iww;
+  M[  3][  3] = _x10*_x11+_x8*_x9+_x6*_x7+_x4*_x5;
+  M[  3][  4] = _x13;
+  M[  3][  5] = _x15;
+  M[  3][  6] = _x17;
+  M[  4][  3] = _x13;
+  M[  4][  4] = _x8*_x11+_x10*_x9+_x4*_x7+_x6*_x5;
+  M[  4][  5] = _x18;
+  M[  4][  6] = _x19;
+  M[  5][  3] = _x15;
+  M[  5][  4] = _x18;
+  M[  5][  5] = _x6*_x11+_x4*_x9+_x10*_x7+_x8*_x5;
+  M[  5][  6] = _x20;
+  M[  6][  3] = _x17;
+  M[  6][  4] = _x19;
+  M[  6][  5] = _x20;
+  M[  6][  6] = _x4*_x11+_x6*_x9+_x8*_x7+_x10*_x5;
+
+  _x1 = 4*Ixx;
+  _x2 = 4*Iyy;
+  _x3 = 4*Izz;
+  _x4 = _x3+_x2+_x1;
+  _x5 = pow(qdw,2);
+  _x6 = -4*Iyy;
+  _x7 = -4*Izz;
+  _x8 = _x7+_x6+_x1;
+  _x9 = pow(qdx,2);
+  _x10 = -4*Ixx;
+  _x11 = _x7+_x2+_x10;
+  _x12 = pow(qdy,2);
+  _x13 = _x3+_x6+_x10;
+  _x14 = pow(qdz,2);
+  _x15 = 8*Iyy;
+  _x16 = 8*Izz;
+  _x17 = _x16+_x15;
+  _x18 = _x15-8*Izz;
+  _x19 = _x18*qdy*qdz+_x17*qdw*qdx;
+  _x20 = 8*Ixx;
+  double _x21 = _x16+_x20;
+  double _x22 = _x16-8*Ixx;
+  double _x23 = _x22*qdx*qdz+_x21*qdw*qdy;
+  double _x24 = _x20-8*Iyy;
+  double _x25 = _x15+_x20;
+  double _x26 = _x25*qdw*qdz+_x24*qdx*qdy;
+  double _x27 = _x24*qdw*qdz+_x25*qdx*qdy;
+  double _x28 = _x21*qdx*qdz+_x22*qdw*qdy;
+  double _x29 = _x17*qdy*qdz+_x18*qdw*qdx;
+  Cqd[  3] = _x26*qz+_x23*qy+_x19*qx+(_x13*_x14+_x11*_x12+_x8*_x9+_x4*_x5)*qw;
+  Cqd[  4] = _x28*qz+_x27*qy+(_x11*_x14+_x13*_x12+_x4*_x9+_x8*_x5)*qx+_x19*qw;
+  Cqd[  5] = _x29*qz+(_x8*_x14+_x4*_x12+_x13*_x9+_x11*_x5)*qy+_x27*qx+_x23*qw;
+  Cqd[  6] = (_x4*_x14+_x8*_x12+_x11*_x9+_x13*_x5)*qz+_x29*qy+_x28*qx+_x26*qw;
 }

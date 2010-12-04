@@ -344,7 +344,7 @@ static void pym_optimize_contact_force(pym_opt_t *pymOpt)
   int i, j, tauOffset;
   const int nb = pymOpt->pymCfg->nBody;
   const pym_rb_statedep_t *const sd = pymOpt->sd;
-  const int nd = 6;
+  const int nd = 3 + pymOpt->pymCfg->nrp;
   for (i = 0, tauOffset = 0; i < nb;
     tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++)
   {
@@ -456,7 +456,7 @@ static void pym_optimize_anchored_joint(pym_opt_t *pymOpt)
 
     /* [TUNE] Joint dislocation threashold */
     if (pymCfg->joint_dislocation_enabled) {
-      assert(pymCfg->joint_dislocation_threshold > 0);
+      assert(pymCfg->joint_dislocation_threshold >= 0);
       SET_RANGE( pymOpt, bod->Aci[7] + i, 0, pymCfg->joint_dislocation_threshold );
     }
   }
@@ -474,30 +474,13 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
     const char *fibName = pymCfg->fiber[j].b.name;
     /* Tension range constraint */
     i = Aci[1]+j;
-    //SET_NONNEGATIVE(pymOpt, i);
+    SET_NONNEGATIVE(pymOpt, i);
     //SET_RANGE(pymOpt, i, -15, 15);
     //        bkx[i] = MSK_BK_RA;
     //        blx[i] = -1000;
     //        bux[i] = +1000;
     /* Actuation force range constraint */
     i = Aci[2]+j;
-    if (mt == PMT_ACTUATED_MUSCLE) {
-      //SET_RANGE( pymOpt, i, -200*9.81, 200*9.81 );
-    }
-    else if (mt == PMT_LIGAMENT) {
-      if (strncmp(fibName + strlen(fibName)-4, "Cen", 3) == 0) {
-        //SET_RANGE(i, -1000, 1000);
-      } else {
-        /*
-        *  Muscle fiber nonnegative
-        */
-        //  SET_NONNEGATIVE(i);
-        //SET_RANGE(i, -1000, 1000);
-      }
-    }
-    else {
-      abort();
-    }
     /* Walk0 (loose) : -47~47 */
     /* Walk0 (correct) : -100~100 */
     /* Jump0 : -98~98, -140~90 */
@@ -695,10 +678,10 @@ static void pym_optimize_mosek_cone_contact_point
       * Walk0, Nav0 - including z-axis movement (0~3)
       * Exer0       - excluding z-axis movement (0~2)
       */
-      /*AppendConeRange(task,
+      AppendConeRange(task,
         tauOffset + sd[i].Aci[5] + j,
         tauOffset + sd[i].Aci[4]+4*j+0,
-        tauOffset + sd[i].Aci[4]+4*j+2);*/
+        tauOffset + sd[i].Aci[4]+4*j+2);
       /*
       * TODO [TUNE] CP Z-pos: eps >= |p_c_z|
       */
@@ -720,11 +703,13 @@ static void pym_optimize_mosek_cone_contact_force
   for (i = 0, tauOffset = 0; i < nb;
     tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++) {
       FOR_0(j, sd[i].nContacts_1) {
-        /* Friction cone constraints */
-        //AppendConeRange(task,
-        //  tauOffset + sd[i].Aci[6]+j,            // mu*c_n
-        //  tauOffset + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
-        //  tauOffset + sd[i].Aci[2]+5*j+3);
+        if (sd[i].contactTypes_1[j] == static_contact) {
+          /* Friction cone constraints */
+          AppendConeRange(task,
+            tauOffset + sd[i].Aci[6]+j,            // mu*c_n
+            tauOffset + sd[i].Aci[2]+5*j+0,        // c_tx ~ c_tz
+            tauOffset + sd[i].Aci[2]+5*j+3);
+        }
       }
   }
 }
@@ -739,10 +724,10 @@ static void pym_optimize_mosek_cone_anchored_joint
   const pym_config_t *const pymCfg = pymOpt->pymCfg;
   FOR_0(j, pymCfg->nJoint) {
     /* Anchored joint dislocation constraints */
-    //AppendConeRange(task,
-    //  Aci[7] + j,                      // epsilon_d
-    //  Aci[6] + 4*j,                    // dAx ~ dAz
-    //  Aci[6] + 4*j + 3);
+    AppendConeRange(task,
+      Aci[7] + j,                      // epsilon_d
+      Aci[6] + 4*j,                    // dAx ~ dAz
+      Aci[6] + 4*j + 3);
   }
 }
 
@@ -759,39 +744,41 @@ static void pym_optimize_mosek_cone_muscle
   * TODO [TUNE] Cone constraints for minimizing tension/actuation forces
   */
   const int nf = pymCfg->nFiber;
-  const static int MAX_FIBER_COUNT = 4096;
-  int csubLigaTen[MAX_FIBER_COUNT /* 1+nf */];  /* Ligament fibers tension epsilon */
-  int csubActTen[MAX_FIBER_COUNT /* 1+nf */];   /* Actuated fibers tension epsilon */
-  int csubLigaAct[MAX_FIBER_COUNT /* 1+nf */];  /* Ligament fibers actuation epsilon */
-  int csubActAct[MAX_FIBER_COUNT /* 1+nf */];   /* Actuated fibers actuation epsilon */
-  int nCsubLiga = 1; /* array dim of csubLiga[Ten/Act] */
-  int nCsubAct = 1;  /* array dim of csubAct[Ten/Act] */
-  /* cone constraint structure
-   * a >= || [b1...bn] ||
-   * csubLigaAct[0] = a
-   * csubLigaAct[1] = b1
-   *     ...
-   * csubLigaAct[n] = bn
-   */
-  csubLigaTen[0] = Aci[4];
-  csubLigaAct[0] = Aci[13];
-  csubActTen[0] = Aci[5];
-  csubActAct[0] = Aci[14];
-  FOR_0(j, nf) {
-    const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
-    if (mt == PMT_ACTUATED_MUSCLE) {
-      csubActTen[nCsubAct] = Aci[1] + j;
-      csubActAct[nCsubAct] = Aci[2] + j;
-      ++nCsubAct;
-    }
-    else if (mt == PMT_LIGAMENT) {
-      csubLigaTen[nCsubLiga] = Aci[1] + j;
-      csubLigaAct[nCsubLiga] = Aci[2] + j;
-      ++nCsubLiga;
-    }
-    else
-      abort();
-  }
+  
+  
+  //const static int MAX_FIBER_COUNT = 4096;
+  //int csubLigaTen[MAX_FIBER_COUNT /* 1+nf */];  /* Ligament fibers tension epsilon */
+  //int csubActTen[MAX_FIBER_COUNT /* 1+nf */];   /* Actuated fibers tension epsilon */
+  //int csubLigaAct[MAX_FIBER_COUNT /* 1+nf */];  /* Ligament fibers actuation epsilon */
+  //int csubActAct[MAX_FIBER_COUNT /* 1+nf */];   /* Actuated fibers actuation epsilon */
+  //int nCsubLiga = 1; /* array dim of csubLiga[Ten/Act] */
+  //int nCsubAct = 1;  /* array dim of csubAct[Ten/Act] */
+  ///* cone constraint structure
+  // * a >= || [b1...bn] ||
+  // * csubLigaAct[0] = a
+  // * csubLigaAct[1] = b1
+  // *     ...
+  // * csubLigaAct[n] = bn
+  // */
+  //csubLigaTen[0] = Aci[4];
+  //csubLigaAct[0] = Aci[13];
+  //csubActTen[0] = Aci[5];
+  //csubActAct[0] = Aci[14];
+  //FOR_0(j, nf) {
+  //  const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
+  //  if (mt == PMT_ACTUATED_MUSCLE) {
+  //    csubActTen[nCsubAct] = Aci[1] + j;
+  //    csubActAct[nCsubAct] = Aci[2] + j;
+  //    ++nCsubAct;
+  //  }
+  //  else if (mt == PMT_LIGAMENT) {
+  //    csubLigaTen[nCsubLiga] = Aci[1] + j;
+  //    csubLigaAct[nCsubLiga] = Aci[2] + j;
+  //    ++nCsubLiga;
+  //  }
+  //  else
+  //    abort();
+  //}
   ///* cones for ligament fibers (L^2 distance; Euclidean length) */
   //r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, nCsubLiga, csubLigaTen);
   //assert(r == MSK_RES_OK);
@@ -838,9 +825,9 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
   MSKtask_t task)
 {
   pym_optimize_mosek_cone_rb(pymOpt, task);
-  //pym_optimize_mosek_cone_contact_point(pymOpt, task);
-  //pym_optimize_mosek_cone_contact_force(pymOpt, task);
-  //pym_optimize_mosek_cone_anchored_joint(pymOpt, task);
+  pym_optimize_mosek_cone_contact_point(pymOpt, task);
+  pym_optimize_mosek_cone_contact_force(pymOpt, task);
+  pym_optimize_mosek_cone_anchored_joint(pymOpt, task);
   //pym_optimize_mosek_cone_biped(pymOpt, task);
   pym_optimize_mosek_cone_muscle(pymOpt, task);
 }
@@ -1199,7 +1186,7 @@ static void pym_copy_cp_and_cf(pym_config_t *pymCfg,
   pym_rb_statedep_t *sd,
   const double *const xx)
 {
-  const int nd = 6;
+  const int nd = 3 + pymCfg->nrp;
   const int nb = pymCfg->nBody;
   int j, k, tauOffset;
   for (j = 0, tauOffset = 0; j < nb;
@@ -1280,7 +1267,7 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
   const int nb = pymCfg->nBody;
   int j;
   FOR_0(j, nb) {
-    PymConstructRbStatedep(sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
+    PymConstructRbStatedep(sd, sd + j, pymCfg->body + j, dmstreams, pymCfg, cc);
   }
   pym_count_total_num_cp(pymCfg, sd);
   PymConstructSupportPolygon(pymCfg, sd);
@@ -1392,10 +1379,11 @@ void pym_exhaustive_solution_vector_info(const pym_opt_t &pymOpt)
     {"eps_ligact (ligament actuation epsilon)", 1, 1},
     {"eps_actact (actuated actuation epsilon)", 1, 1},
     {"eps_T (tension epsilon)", 1, 1},
-    {"eps_u (actuation epsilon)", 1, 1}
+    {"eps_u (actuation epsilon)", 1, 1},
+    {"f_TD (forces acting on degenerated muscles)", 1, 1}
   };
   BOOST_STATIC_ASSERT( 1+sizeof(block_slices)/sizeof(block_slices[0]) == sizeof(pymOpt.bod->Aci)/sizeof(pymOpt.bod->Aci[0]) );
-  static const int nd = 6;
+  const int nd = 3 + pymCfg->nrp;
   
   static const solution_vector_slice A_block_slices[] = {
     {"chi^(l+1) (next state)", nd, 1},

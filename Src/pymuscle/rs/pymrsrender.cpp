@@ -931,10 +931,10 @@ static void render_fibers(const pym_config_t *const pymCfg) {
     double org[3], ins[3];
     TransformPoint(org, W_org, mfn->fibb_org);
     TransformPoint(ins, W_ins, mfn->fibb_ins);
-    glLineWidth(2.0);
+    glLineWidth(6.0);
     if (mfn->mType == PMT_ACTUATED_MUSCLE) {
       if (mfn->T * mfn->A < 0) {
-        glLineWidth(3.0);
+        glLineWidth(8.0);
         glColor3f(1.0, 0, 0);
       } else {
         glColor3f(0.8, 0.6, 0.6);
@@ -982,8 +982,8 @@ static void pym_draw_all(pym_rs_t *rs, int forShadow, GLuint *m_vaoID) {
   static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
   glColor3f(1,1,1);
   pym_strict_checK_gl();
-  DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
-  DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
+  //DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
+  //DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
 
   const int nj = phyCon->pymCfg->nJoint;
   for (int j = 0; j < nj; ++j) {

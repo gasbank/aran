@@ -47,20 +47,19 @@ void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+3],
   }
 }
 
-void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd,
+void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
 		const pym_rb_t *rb, const pym_config_t *pymCfg,
 		cholmod_common *cc) {
   const pym_rb_named_t *rbn = &rb->b;
   /* We can calculate optimal estimate for the number of nonzero elements */
   size_t nzmax = 0;
-  const int nd = 6;              /* DOF of this body */
+  const int nd = 3 + pymCfg->nrp;              /* DOF of this body */
   const int np = sd->nContacts_1;/* # of contact points of this body */
   const int na = rbn->nAnchor;   /* # of joint anchor points of this body */
   const int nmi = rbn->nFiber;   /* # of muscle fibers connected to this body */
-
   //printf("   %s has %d fibers.\n", rbn->name, nmi);
 
-  nzmax += 3+9;       /* Subblock 01 : M/h^2 */
+  nzmax += 3+4*4;     /* Subblock 01 : M/h^2 */
   nzmax += nd*np;     /* Subblock 02 : (-1)^ce_{j in P} */
   nzmax += nd*nmi;    /* Subblock 03 : (-1)^ce_{j in M} */
   nzmax += nd*np;     /* Subblock 04 : -1 */
@@ -228,23 +227,27 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *sd,
   }
   /* Sub-block 22 */
   for (i=0;i<np;++i) {
-    const int conidx = sd->contactIndices_1[i];
-    const double cx0 = sd->contacts_0[conidx][0];
-    const double cx1 = sd->contacts_1[conidx][0];
-    double coeff = -pymCfg->mu * (cx1-cx0) / h;
-    //printf("dx_coeff = %lf\n", coeff);
-    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 10, 2, i, 5*i + 0, -1);
-    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 10, 2, i, 5*i + 4, coeff);
+    if (sd->contactTypes_1[i] == dynamic_contact) {
+      const int conidx = sd->contactIndices_1[i];
+      const double cx0 = sd->contacts_0[conidx][0];
+      const double cx1 = sd->contacts_1[conidx][0];
+      double coeff = -pymCfg->mu * (cx1-cx0) / h;
+      //printf("dx_coeff = %lf\n", coeff);
+      SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 10, 2, i, 5*i + 0, -1);
+      SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 10, 2, i, 5*i + 4, coeff);
+    }
   }
   /* Sub-block 23 */
   for (i=0;i<np;++i) {
-    const int conidx = sd->contactIndices_1[i];
-    const double cy0 = sd->contacts_0[conidx][1];
-    const double cy1 = sd->contacts_1[conidx][1];
-    double coeff = -pymCfg->mu * (cy1-cy0) / h;
-    //printf("dy_coeff = %lf\n", coeff);
-    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 11, 2, i, 5*i + 1, -1);
-    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 11, 2, i, 5*i + 4, coeff);
+    if (sd->contactTypes_1[i] == dynamic_contact) {
+      const int conidx = sd->contactIndices_1[i];
+      const double cy0 = sd->contacts_0[conidx][1];
+      const double cy1 = sd->contacts_1[conidx][1];
+      double coeff = -pymCfg->mu * (cy1-cy0) / h;
+      //printf("dy_coeff = %lf\n", coeff);
+      SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 11, 2, i, 5*i + 1, -1);
+      SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 11, 2, i, 5*i + 4, coeff);
+    }
   }
   *AMatrix = AMatrix_trip;
   // cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
@@ -255,7 +258,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
 	    cholmod_common *cc) {
   const pym_rb_named_t *rbn = &rb->b;
   /* We can calculate optimal estimate for the number of nonzero elements */
-  const int nd = 6;
+  const int nd = 3 + pymCfg->nrp;
   const int np = sd->nContacts_1;
   const int na = rbn->nAnchor;
   size_t etaDim = sd->Ari[sd->Asubrows];

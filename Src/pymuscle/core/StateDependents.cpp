@@ -9,25 +9,31 @@
 #include "PymuscleConfig.h"
 #include "dRdv_real.h"
 #include "Config.h"
-#include "CholmodMacro.h"
 #include "DebugPrintDef.h"
 #include "StateDependents.h"
+#include "CholmodMacro.h"
 #include "PymDebugMessageFlags.h"
 
 void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
-  const double chi[6], const double corner[3], const double normal[3], const double W[4][4], const double dRdv_tensor[3][4][4],
-  cholmod_common *cc) {
+  const double chi[7], const double corner[3], const double normal[3], const double W[4][4], const double dRdv_tensor[4][4][4],
+  pym_rot_param_t rp, cholmod_common *cc) {
+    int rpn = -1;
+    if (rp == RP_EXP) rpn = 3;
+    else if (rp == RP_QUAT_WFIRST) rpn = 4;
+    else assert(0);
+    const int nd = 3 + rpn;
     /*
     *
-    *        [   d   W                          d  W              ]
-    *  Z  =  [   -------- . corner    . . .    -------- . corner  ]
-    *        [   d chi_0                       d chi_5            ]
+    *        [   d   W                             d  W               ]
+    *  Z  =  [   -------- . corner    . . .    ------------ . corner  ]
+    *        [   d chi_0                       d chi_(nd-1)           ]
     *
     */
-    double r[3][3];
+    double r[4][3];
     int i, j;
-    for (i=0;i<3;++i) TransformPoint(r[i], dRdv_tensor[i], corner);
-    cholmod_triplet *Ztrip = cholmod_allocate_triplet(4, 6, 4*6, 0, CHOLMOD_REAL, cc); /* i, j, x, nnz */
+    for (i = 0; i < rpn; ++i)
+      TransformPoint(r[i], dRdv_tensor[i], corner);
+    cholmod_triplet *Ztrip = cholmod_allocate_triplet(4, nd, 4*nd, 0, CHOLMOD_REAL, cc); /* i, j, x, nnz */
     assert(Ztrip->nnz == 0);
     FOR_0(i, 3) SET_TRIPLET_RCV(Ztrip, i, i, 1.0);
     FOR_0(i, 3) { /* column index */
@@ -62,11 +68,11 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
 
     if (Q && normal) {
       /*
-      *          [                                        Z                                             ]^T
-      *          [                                                                                      ]
-      *   Q  =   [ [  d   W                                       d   W                             ]   ]
-      *          [ [ --------- . corner <dot> normal     . . .   --------- . corner <dot> normal    ]   ]
-      *          [ [  d chi_0                                     d chi_0                           ]   ]
+      *          [                                        Z                                                  ]^T
+      *          [                                                                                           ]
+      *   Q  =   [ [  d   W                                          d   W                               ]   ]
+      *          [ [ --------- . corner <dot> normal     . . .   -------------- . corner <dot> normal    ]   ]
+      *          [ [  d chi_0                                     d chi_(nd-1)                           ]   ]
       */
       cholmod_dense *qij_2nd_col_T_den = cholmod_allocate_dense(1, 6, 1, CHOLMOD_REAL, cc);
       ((double *)(qij_2nd_col_T_den->x))[0] = normal[0];
@@ -93,14 +99,14 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
 
 }
 
-int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
-  FILE *dmstreams[],
-  const pym_config_t *pymCfg, cholmod_common *cc)
+int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
+  const pym_rb_t *rb, FILE *dmstreams[], const pym_config_t *pymCfg, cholmod_common *cc)
 {
   const pym_rb_named_t *const rbn = &rb->b;
-  assert(rbn->rotParam == RP_EXP);
-  MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
-  Invert6x6MassMatrix(sd->Minv, sd->M);
+  if (rbn->rotParam == RP_EXP) {
+    MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
+    Invert6x6MassMatrix(sd->Minv, sd->M);
+  }
   double grav_force[3] = { 0, 0, -9.81 * rbn->m };
   double ZERO3[3] = {0,0,0};
   GeneralizedForce(sd->f_g, rbn->q, grav_force, ZERO3);
@@ -139,22 +145,11 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
   sd->nContacts_1 = 0;
   //sd->nContacts_2 = 0;
   for (j=0; j<8; ++j) {
-    double pcj_2_nocf_W[3], pcj_1_W[3], pcj_0_W[3], pcj_ref[3];
-    AffineTransformPoint(pcj_2_nocf_W, W_2_nocf, rbn->corners[j]);
+    double pcj_1_W[3], pcj_0_W[3], pcj_ref[3];
     AffineTransformPoint(pcj_1_W, sd->W_1, rbn->corners[j]);
     AffineTransformPoint(pcj_0_W, sd->W_0, rbn->corners[j]);
     AffineTransformPoint(pcj_ref, W_ref, rbn->corners[j]);
 
-    const double ctY = pcj_2_nocf_W[1];
-    const double theta = pymCfg->slant;
-    const double z = -ctY*tan(theta); /* ground level */
-    /*
-    * TODO [TUNE] Contact point level threshold
-    * Optimal value table
-    *    Walk0 -> 0.050
-    *    Nav0  -> 0.050
-    *    Exer0 -> 0.050 (unknown)
-    */
     memcpy(sd->contacts_0[j], pcj_0_W, sizeof(double)*3);
     memcpy(sd->contacts_1[j], pcj_1_W, sizeof(double)*3);
 
@@ -169,6 +164,11 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
     }
     if (pcj_1_W[2] <= groundLevel) {
       sd->contactIndices_1[ sd->nContacts_1 ] = j;
+      const double unit_sliding_distance = PymDist(2, pcj_1_W, pcj_0_W)/pymCfg->h;
+      if (unit_sliding_distance < 1e-2)
+        sd->contactTypes_1[ sd->nContacts_1 ] = static_contact;
+      else
+        sd->contactTypes_1[ sd->nContacts_1 ] = dynamic_contact;
       double *pcj_fix = sd->contactsFix_1[ sd->nContacts_1 ];
       pcj_fix[0] = sd->contacts_1[j][0];
       pcj_fix[1] = sd->contacts_1[j][1];
@@ -181,7 +181,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
         pcj_1_W[0], pcj_1_W[1], pcj_1_W[2]);
     }
   }
-  const int nd = NUM_DOF;
+
+  const int nd = 3 + pymCfg->nrp;
   const int np = sd->nContacts_1;
   const int na = rbn->nAnchor;
   const int nm = rbn->nFiber;
@@ -240,11 +241,11 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd, const pym_rb_t *rb,
     normal[1] = ny;
     normal[2] = nz;
     memcpy(sd->contactsNormal_1[i], normal, sizeof(double)*4);
-    ZVQ(&sd->Z[i], sd->V[i], &sd->Q[i], chi_1, pcj, normal, sd->W_1, sd->dWdchi_tensor, cc);
+    ZVQ(&sd->Z[i], sd->V[i], &sd->Q[i], chi_1, pcj, normal, sd->W_1, sd->dWdchi_tensor, rbn->rotParam, cc);
   }
   FOR_0(i, na) {
     const double *pcj = rbn->jointAnchors[i];
-    ZVQ(&sd->Za[i], sd->Va[i], 0, chi_1, pcj, 0, sd->W_1, sd->dWdchi_tensor, cc);
+    ZVQ(&sd->Za[i], sd->Va[i], 0, chi_1, pcj, 0, sd->W_1, sd->dWdchi_tensor, rbn->rotParam, cc);
   }
 
   return 0;

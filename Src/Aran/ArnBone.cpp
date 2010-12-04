@@ -224,3 +224,8 @@ ArnBone::computeWorldHeadTail(ArnVec3& head, ArnVec3& tail) const
 	head = headWorldMat.getColumnVec3(3);
 	tail = head + headWorldMat.getColumnVec3(1) * boneLength;
 }
+
+void ArnBone::interconnect( ArnNode* sceneRoot )
+{
+  ArnNode::interconnect(sceneRoot);
+}

@@ -92,7 +92,7 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
     return -1;
   }
   
-  PymConvertRotParamInPlace(pymCfg, RP_EXP);
+  PymConvertRotParamInPlace(pymCfg, pymCfg->rotparam);
   const char *t1 = strrchr(cmdopt->trajconf, '/') + 1;
   const char *t2 = strchr(t1, '.');
   size_t tlen = t2-t1;
@@ -160,6 +160,40 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
     printf("Info - # of joint anchors = %d\n", pymCfg->na);
     PymInitJointAnchors(pymCfg, dmstreams);
     PymConstructAnchoredJointList(pymCfg);
+
+    if (pymCfg->joint_constraints) {
+      printf("Fibers for joint constraints (joint muscles) are created automatically.\n");
+      for (int i = 0; i < pymCfg->nJoint; ++i) {
+        const int ai = pymCfg->anchoredJoints[i].aIdx;
+        const int bi = pymCfg->anchoredJoints[i].bIdx;
+        pym_rb_named_t *rbA = &pymCfg->body[ai].b;
+        pym_rb_named_t *rbB = &pymCfg->body[bi].b;
+        double *a_apos = pymCfg->body[ai].b.jointAnchors[ pymCfg->anchoredJoints[i].aAnchorIdx ];
+        double *b_apos = pymCfg->body[bi].b.jointAnchors[ pymCfg->anchoredJoints[i].bAnchorIdx ];
+
+        pym_mf_named_t *mf = &pymCfg->fiber [ pymCfg->nFiber ].b;
+        mf->A = 0;
+        mf->b = 1;
+        memcpy(mf->fibb_org, a_apos, sizeof(double)*3);
+        memcpy(mf->fibb_ins, b_apos, sizeof(double)*3);
+        mf->org = ai;
+        mf->ins = bi;
+        mf->kpe = 1;
+        mf->kse = 1;
+        mf->mType = PMT_JOINT_MUSCLE;
+        mf->T = 0;
+        mf->xrest = 1.0;
+        mf->xrest_lower = 0.0;
+        mf->xrest_upper = 10.0;
+        strcpy(mf->name, "joint muscle fiber");
+
+        rbA->fiber[ rbA->nFiber ] = pymCfg->nFiber;
+        rbB->fiber[ rbB->nFiber ] = pymCfg->nFiber;
+        ++rbA->nFiber;
+        ++rbB->nFiber;
+        ++pymCfg->nFiber;
+      }
+    }
   } else {
     /* No trajconf provided. */
     PymSetPymCfgChiRefToCurrentState(pymCfg);

@@ -153,8 +153,9 @@ ArnAnimationController::AdvanceTime( double dTime, void* callBack /*= 0*/ )
 	for (unsigned int i = 0; i < m_tracks.size(); ++i)
 	{
 		ARNTRACK_DESC& track = m_tracks[i];
-		if (!track.Enable)
+    if (!track.Enable)
 			continue;
+
 		//printf("%.3f\n", (float)(m_dTime - track.Position));
 		assert(track.ActionIdx < m_actionCount);
 		//float normalizedWeight = track.Weight / totalWeight;

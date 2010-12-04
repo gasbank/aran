@@ -38,10 +38,6 @@ int BwTopWindow::handle( int eventType )
         m_ac.playbackSlider->redraw();
         m_ac.frameLabel->redraw_label();
 
-        pym_config_t *pymCfg = &m_ac.pymRs->pymCfg;
-        memcpy(pymCfg->body, &m_ac.rb_history[m_ac.frames][0], sizeof(pym_rb_t)*pymCfg->nBody);
-        m_ac.glWindow->redraw();
-
         return 1;
       } else if (key == FL_Page_Down) {
         m_ac.frames = min(m_ac.frames+1, m_ac.playbackSlider->getAvailableFrames());
@@ -49,10 +45,6 @@ int BwTopWindow::handle( int eventType )
         sprintf(m_ac.frameStr, "%d", m_ac.frames);
         m_ac.playbackSlider->redraw();
         m_ac.frameLabel->redraw_label();
-
-        pym_config_t *pymCfg = &m_ac.pymRs->pymCfg;
-        memcpy(pymCfg->body, &m_ac.rb_history[m_ac.frames][0], sizeof(pym_rb_t)*pymCfg->nBody);
-        m_ac.glWindow->redraw();
 
         return 1;
       }

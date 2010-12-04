@@ -232,13 +232,13 @@ ArnXformable::printXformData() const
 	printf("    Local translation    ( %.3f, %.3f, %.3f)\n", m_localXform_Trans.x, m_localXform_Trans.y, m_localXform_Trans.z);
 }
 
-void
-ArnXformable::configureIpo()
-{
-	if (!m_ipo)
-		setIpo(getIpoName());
-	configureAnimCtrl();
-}
+//void
+//ArnXformable::configureIpo()
+//{
+//	if (!m_ipo)
+//		setIpo(getIpoName());
+//	configureAnimCtrl();
+//}
 
 void ArnXformable::addJointData( const ArnJointData& data )
 {

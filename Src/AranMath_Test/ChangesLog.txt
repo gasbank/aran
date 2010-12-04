@@ -1,6 +1,0 @@
-27 7월 2009
-   released version 1.0.0 of AranMathTest
-
-     Change log:
-        -Added: Test function added.
-

@@ -34,7 +34,7 @@ public:
 	InputMan(void);
 	~InputMan(void);
 
-	HRESULT Initialize( /*HINSTANCE hInst, HWND hwnd*/ );
+	HRESULT Initialize( HINSTANCE hInst, HWND hwnd );
 	HRESULT AcquireKeyboard();
 
 	void SetClicked(BOOL b) { this->isClicked = b; }

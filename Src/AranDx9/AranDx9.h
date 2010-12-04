@@ -16,3 +16,31 @@ ARANDX9_API D3DMATERIAL9*			ArnMaterialGetDxPtr(ArnMaterialData& amd);
 ARANDX9_API const D3DXMATRIX*		ArnMatrixGetConstDxPtr(const ArnMatrix& mat);
 ARANDX9_API D3DXMATRIX*				ArnMatrixGetDxPtr(ArnMatrix& mat);
 ARANDX9_API void					ArnInitializeRenderableObjectsDx9(ArnNode* node);
+
+inline void Convert(D3DXVECTOR3 &a, const ArnVec3 &b)
+{
+  a[0] = b[0];
+  a[1] = b[1];
+  a[2] = b[2];
+}
+
+inline void Convert(ArnMatrix &a, const D3DXMATRIX &b)
+{
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j)
+      a.m[i][j] = b.m[i][j];
+}
+
+inline void Convert(D3DXMATRIX &a, const ArnMatrix &b)
+{
+  for (int i = 0; i < 4; ++i)
+    for (int j = 0; j < 4; ++j)
+      a.m[i][j] = b.m[i][j];
+}
+
+inline D3DXMATRIX operator * (const D3DXMATRIX &a, const ArnMatrix &b)
+{
+  D3DXMATRIX b2;
+  Convert(b2, b);
+  return a * b2;
+}

@@ -9,6 +9,7 @@
  */
 #include "PymCorePch.h"
 #include "Config.h"
+#include "MathUtil.h"
 
 #define p1  p [0]
 #define p2  p [1]
@@ -520,4 +521,64 @@ void GeneralizedForce(double Q[6], const double v[3], const double Fr[3], const 
         return __GeneralizedForce0(Q, v, th, Fr, r);
     else
         return __GeneralizedForce(Q, v, th, Fr, r);
+}
+
+void dRdq( double dRdqw_s[3][3], double dRdqx_s[3][3], double dRdqy_s[3][3], double dRdqz_s[3][3], const double q[4] )
+{
+  const double &qw = q[0];
+  const double &qx = q[1];
+  const double &qy = q[2];
+  const double &qz = q[3];
+  const double dRdqw[3][3] = { 
+    {   0 ,    - 2 * qz   ,2 * qy  },
+    {  2 * qz ,    0    , - 2 * qx },
+    { - 2 * qy ,  2 * qx ,    0    }
+  };
+  const double dRdqx[3][3] = {
+    {  0   ,  2 * qy  ,  2 * qz  },
+    { 2 * qy , - 4 * qx , - 2 * qw },
+    { 2 * qz ,  2 * qw  , - 4 * qx }
+  };
+  const double dRdqy[3][3] = {
+    { - 4 * qy , 2 * qx ,  2 * qw  },
+    {  2  * qx  ,  0   ,  2 * qz  },
+    { - 2 * qw , 2 * qz , - 4 * qy }
+  };
+  const double dRdqz[3][3] = {
+    { - 4 * qz , - 2 * qw , 2 * qx },
+    {  2 * qw  , - 4 * qz , 2 * qy },
+    {  2 * qx  ,  2 * qy  ,  0   }
+  };
+  memcpy(dRdqw_s, dRdqw, sizeof(double)*3*3);
+  memcpy(dRdqx_s, dRdqw, sizeof(double)*3*3);
+  memcpy(dRdqy_s, dRdqw, sizeof(double)*3*3);
+  memcpy(dRdqz_s, dRdqw, sizeof(double)*3*3);
+}
+
+void GeneralizedForceQuat( double Q[3+4], const double q[4], const double Fr[3], const double r[3] )
+{
+  double dRdq_tensor[4][3][3];
+  dRdq(dRdq_tensor[0], dRdq_tensor[1], dRdq_tensor[2], dRdq_tensor[3], q);
+  double a[4][3];
+  RotatePoint(a[0], dRdq_tensor[0], r);
+  RotatePoint(a[1], dRdq_tensor[1], r);
+  RotatePoint(a[2], dRdq_tensor[2], r);
+  RotatePoint(a[3], dRdq_tensor[3], r);
+  Q[0] = Fr[0];
+  Q[1] = Fr[1];
+  Q[2] = Fr[2];
+  Q[3] = Dot33(a[0], Fr);
+  Q[4] = Dot33(a[1], Fr);
+  Q[5] = Dot33(a[2], Fr);
+  Q[6] = Dot33(a[3], Fr);
+}
+
+void RotationMatrixFromQuat( double R[3][3], const double q[4] )
+{
+  ArnQuat aq(q[1],q[2],q[3],q[0]);
+  ArnMatrix amat;
+  aq.getRotationMatrix(&amat);
+  for (int i = 0; i < 3; ++i)
+    for (int j = 0; j < 3; ++j)
+      R[i][j] = amat.m[i][j];
 }

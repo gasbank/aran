@@ -40,10 +40,10 @@ public:
 
 	DWORD							GetFVF() const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 	void*							GetVB() const { ARN_THROW_REMOVE_FUNCTION_ERROR }
-	void							AdvanceTime(float dt) { ARN_THROW_REMOVE_FUNCTION_ERROR }
+	void							AdvanceTime(float dt) const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 	ArnAnimationController*			GetAnimationController() const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 	void*							GetTexture(int referenceIndex) const { ARN_THROW_REMOVE_FUNCTION_ERROR }
-	void*							GetMeshPointer(int i) { ARN_THROW_REMOVE_FUNCTION_ERROR }
+	void*							GetMeshPointer(int i) const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 	void*							GetSkinnedMeshPointer(int i) const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 	const ArnMatrix*				GetAnimMatControlledByAC(int i) const { ARN_THROW_REMOVE_FUNCTION_ERROR }
 
@@ -56,7 +56,7 @@ public:
 
 	const ArnMatrix*				GetTransformationMatrixByBoneName( const char* boneName ) const;
 
-	SkeletonNode*					GetSkeletonNodePointer(int index);
+	const SkeletonNode*					GetSkeletonNodePointer(int index) const;
 	size_t							GetSkeletonNodeSize() const;
 
 
