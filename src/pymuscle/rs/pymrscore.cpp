@@ -221,36 +221,39 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
   return 0;
 }
 
-pym_physics_thread_context_t
-pym_init_phy_thread_ctx(pym_config_t *pymCfg,
+
+void pym_init_phy_thread_ctx(pym_physics_thread_context_t* cxt,
+  pym_config_t *pymCfg,
 			pym_cmdline_options_t *cmdopt,
 			pym_traj_t *pymTraj,
 			FILE *outputFile,
 			FILE *dmstreams[]) {
   pym_physics_thread_context_t phyCon;
-  phyCon.pymCfg             = pymCfg;
-  phyCon.cmdopt             = cmdopt;
-  phyCon.pymTraj            = pymTraj;
-  phyCon.outputFile         = outputFile;
-  phyCon.dmstreams          = dmstreams;
-  phyCon.totalPureOptTime   = 0;
-  phyCon.stop               = 0;
-  phyCon.trunkExternalForce[0] = 0;
-  phyCon.trunkExternalForce[1] = 0;
-  phyCon.trunkExternalForce[2] = 0;
-  phyCon.comZGraph          = PrsGraphNew("COM Z");
-  phyCon.comDevGraph        = PrsGraphNew("COM Z Dev.");
-  phyCon.actGraph		= PrsGraphNew("Act");
-  phyCon.ligGraph		= PrsGraphNew("Lig");
-  phyCon.sd			= (pym_rb_statedep_t *)malloc(sizeof(pym_rb_statedep_t) * pymCfg->nBody);
+  cxt->pymCfg             = pymCfg;
+  cxt->cmdopt             = cmdopt;
+  cxt->pymTraj            = pymTraj;
+  cxt->outputFile         = outputFile;
+  cxt->dmstreams          = dmstreams;
+  cxt->totalPureOptTime   = 0;
+  cxt->stop               = 0;
+  cxt->trunkExternalForce[0] = 0;
+  cxt->trunkExternalForce[1] = 0;
+  cxt->trunkExternalForce[2] = 0;
+  cxt->comZGraph          = PrsGraphNew("COM Z");
+  cxt->comDevGraph        = PrsGraphNew("COM Z Dev.");
+  cxt->exprotGraph.resize(pymCfg->nBody);
   for (int i = 0; i < pymCfg->nBody; ++i)
-    pym_init_statedep(phyCon.sd[i]);
-  return phyCon;
+    cxt->exprotGraph[i]   = PrsGraphNew("Body Rot");
+  cxt->actGraph		= PrsGraphNew("Act");
+  cxt->ligGraph		= PrsGraphNew("Lig");
+  cxt->sd			= (pym_rb_statedep_t *)malloc(sizeof(pym_rb_statedep_t) * pymCfg->nBody);
+  for (int i = 0; i < pymCfg->nBody; ++i)
+    pym_init_statedep(cxt->sd[i]);
 }
 
 pym_rs_t *PymRsInitContext(int argc, char *argv[]) {
   printf("Pymuscle realtime simulator      -- 2010 Geoyeob Kim\n");
-  pym_rs_t *rs = (pym_rs_t *)malloc(sizeof(pym_rs_t));
+  pym_rs_t *rs = new pym_rs_t;
   int ret = pym_init_global(argc, argv, &rs->pymCfg, &rs->pymTraj,
 			    &rs->cmdopt, &rs->outputFile, rs->dmstreams);
   if (ret) {
@@ -259,7 +262,7 @@ pym_rs_t *PymRsInitContext(int argc, char *argv[]) {
   }
   rs->drawing_options = 0;
   /* Initialize the physics thread context */
-  rs->phyCon = pym_init_phy_thread_ctx(&rs->pymCfg, &rs->cmdopt,
+  pym_init_phy_thread_ctx(&rs->phyCon, &rs->pymCfg, &rs->cmdopt,
 				       &rs->pymTraj,
 				       rs->outputFile, rs->dmstreams);
   /* comZGraph */
@@ -292,6 +295,14 @@ pym_rs_t *PymRsInitContext(int argc, char *argv[]) {
   PRSGRAPHDATA ligTenGd = PrsGraphDataNew(rs->pymCfg.nSimFrame);
   PrsGraphDataSetLineColor(ligTenGd, 0, 1, 0);
   PrsGraphAttach(rs->phyCon.ligGraph, PCG_LIG_TEN, ligTenGd);
+  /* exprotGraph */
+  for (std::vector<PRSGRAPH>::iterator i = rs->phyCon.exprotGraph.begin(); i != rs->phyCon.exprotGraph.end(); ++i) {
+    PrsGraphSetMaxY(*i, 2*M_PI);
+    PRSGRAPHDATA d = PrsGraphDataNew(rs->pymCfg.nSimFrame);
+    PrsGraphDataSetLineColor(d, 1, 0, 0);
+    PrsGraphAttach(*i, 0, d);
+  }
+  
   return rs;
 }
 
@@ -305,6 +316,9 @@ void PymRsDestroyContext(pym_rs_t *rs) {
   PrsGraphDelete(rs->phyCon.comDevGraph);
   PrsGraphDelete(rs->phyCon.actGraph);
   PrsGraphDelete(rs->phyCon.ligGraph);
+  for (std::vector<PRSGRAPH>::iterator i = rs->phyCon.exprotGraph.begin(); i != rs->phyCon.exprotGraph.end(); ++i) {
+    PrsGraphDelete(*i);
+  }
   free(rs->pymTraj.trajData);
   free(rs->phyCon.sd);
   if (rs->cmdopt.freeTrajStrings) {
@@ -314,5 +328,5 @@ void PymRsDestroyContext(pym_rs_t *rs) {
   if (rs->cmdopt.freeOutputStrings) {
     free(rs->cmdopt.output);
   }
-  free(rs);
+  delete rs;
 }

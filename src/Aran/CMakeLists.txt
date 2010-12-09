@@ -32,6 +32,7 @@ RenderLayer.cpp RenderLayer.h
 VideoMan.cpp VideoMan.h
 ArnJoint.cpp ArnJoint.h
 BwWin32Timer.cpp BwWin32Timer.h
+ArnPathManager.cpp ArnPathManager.h
 
 doxygen_main.h
 Singleton.h
@@ -50,10 +51,20 @@ TARGET_LINK_LIBRARIES(Aran
 AranMath
 DevIL
 optimized ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Release/zlib1.lib
-optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/Release_STL/tinyxmlSTL.lib
 debug ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Debug/zlib1.lib
-debug ${CODEBASE}tinyxml_2_5_3/tinyxml/Debug_STL/tinyxmlSTL.lib
 winmm
 )
+if (MSVC90)
+	TARGET_LINK_LIBRARIES(Aran
+	debug ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc9/Debug/tinyxml.lib
+	optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc9/Release/tinyxml.lib
+	)
+endif (MSVC90)
+if (MSVC10)
+	TARGET_LINK_LIBRARIES(Aran
+	debug ${CODEBASE}tinyxml_2_5_3/tinyxml/build/Debug/tinyxml.lib
+	optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/build/Release/tinyxml.lib
+	)
+endif (MSVC10)
 
 ADD_MSVC_PRECOMPILED_HEADER(Aran AranPCH.h AranPCH.cpp)

@@ -41,5 +41,6 @@
 #include "ArnViewportData.h"
 #include "ArnMath.h"
 #include "ArnTexture.h"
+#include "ArnPathManager.h"
 
 ARAN_API long ArnGetBuildCount();

@@ -52,6 +52,43 @@ void BwOpenGlWindow::resize( int x, int y, int w, int h )
   Fl_Gl_Window::resize(x, y, w, h);
 }
 
+void pym_sphere_to_cartesian(double *c, double r,
+  double phi, double theta) {
+    c[0] = r*sin(theta)*sin(phi);
+    c[1] = -r*sin(theta)*cos(phi);
+    c[2] = r*cos(theta);
+}
+
+static void pym_cross3(double *u, const double *const a,
+  const double *const b) {
+    u[0] = a[1]*b[2] - a[2]*b[1];
+    u[1] = a[2]*b[0] - a[0]*b[2];
+    u[2] = a[0]*b[1] - a[1]*b[0];
+}
+
+void pym_up_dir_from_sphere(double *u,
+  const double *const cam_car,
+  double r, double phi, double theta) {
+    const double left[3] = { -cos(phi), -sin(phi), 0 };
+    const double look_dir[3] = { -cam_car[0]/r,
+      -cam_car[1]/r,
+      -cam_car[2]/r };
+    pym_cross3(u, look_dir, left);
+}
+
+void PymLookUpLeft(double *look, double *up, double *left,
+  double r, double phi, double theta) {
+    double cam_car[3];
+    pym_sphere_to_cartesian(cam_car, r, phi, theta);
+    left[0] = -cos(phi);
+    left[1] = -sin(phi);
+    left[2] = 0;
+    look[0] = -cam_car[0]/r;
+    look[1] = -cam_car[1]/r;
+    look[2] = -cam_car[2]/r;
+    pym_cross3(up, look, left);
+}
+
 void BwOpenGlWindow::draw()
 {
   // the valid() property may be used to avoid reinitializing your
@@ -62,9 +99,36 @@ void BwOpenGlWindow::draw()
     glViewport(0, 0, w(), h());
   }
 
-  glEnable (GL_BLEND);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_COLOR_MATERIAL);
+  if (m_ac.activeCam) {
+    //m_cam_r = ArnVec3Length(m_ac.activeCam->getCameraData().pos);
+    m_cam_r = 5;
+    double rc_cam_r	 = m_cam_r;
+    double rc_cam_phi	 = m_cam_phi + m_cam_dphi;
+    double rc_cam_theta = m_cam_theta + m_cam_dtheta;
+    double rc_cam_cen[3];
+    rc_cam_cen[0] = m_cam_cen[0];
+    rc_cam_cen[1] = m_cam_cen[1];
+    rc_cam_cen[2] = m_cam_cen[2];
+    double cam_car[3];            /* Cartesian coordinate of cam */
+    double up_dir[3];
+    double right_dir[3];
+    double cam_car_nor[3];
+    pym_sphere_to_cartesian(cam_car, rc_cam_r, rc_cam_phi, rc_cam_theta);
+    /* printf("cam_car = %lf %lf %lf\n", */
+    /* 	 cam_car[0], cam_car[1], cam_car[2]); */
+    pym_up_dir_from_sphere(up_dir, cam_car, rc_cam_r,
+      rc_cam_phi, rc_cam_theta);
+    cam_car_nor[0] = cam_car[0] / m_cam_r;
+    cam_car_nor[1] = cam_car[1] / m_cam_r;
+    cam_car_nor[2] = cam_car[2] / m_cam_r;
+    pym_cross3(right_dir, up_dir, cam_car_nor);
+    ArnMatrix cam_mat(
+      right_dir[0], up_dir[0], cam_car_nor[0],   rc_cam_cen[0]+cam_car[0],
+      right_dir[1], up_dir[1], cam_car_nor[1],   rc_cam_cen[1]+cam_car[1],
+      right_dir[2], up_dir[2], cam_car_nor[2],   rc_cam_cen[2]+cam_car[2],
+      0, 0, 0, 1);
+    m_ac.activeCam->setLocalXform(cam_mat);
+  }
 
   RenderScene(m_ac);
 
@@ -547,40 +611,7 @@ static void
     }
   }
   glPopMatrix();
-
-  // Render shadow
-  // light vector. LIGHTZ is implicitly 1
-  /*
-  static const float LIGHTX = 1.0f;
-  static const float LIGHTY = 1.0f;
-  static const float SHADOW_INTENSITY = 0.65f;
-  static const float GROUND_R = 0.5f; 	// ground color for when there's no texture
-  static const float GROUND_G = 0.5f;
-  static const float GROUND_B = 0.5f;
-  glPushAttrib(GL_VIEWPORT_BIT | GL_COLOR_BUFFER_BIT | GL_ENABLE_BIT);
-  glDisable(GL_BLEND);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_TEXTURE_2D);
-  glColor3f(GROUND_R*SHADOW_INTENSITY, GROUND_G*SHADOW_INTENSITY, GROUND_B*SHADOW_INTENSITY);
-  glDepthRange(0, 0.9999);
-  GLfloat matrix[16];
-  for (int i = 0; i < 16; i++)
-  matrix[i] = 0;
-  matrix[ 0] = 1;
-  matrix[ 5] = 1;
-  matrix[ 8] = -LIGHTX;
-  matrix[ 9] = -LIGHTY;
-  matrix[15] = 1;
-  glPushMatrix();
-  glMultMatrixf(matrix);
-  if (ac.sgPtr)
-  {
-  ArnSceneGraphRenderGl(ac.sgPtr.get(), false);
-  }
-  glPopMatrix();
-  glPopAttrib();
-  */
-
+  
   // Render COM indicator and contact points of a biped.
   glPushAttrib(GL_DEPTH_BUFFER_BIT);
   glDisable(GL_DEPTH_TEST);
@@ -605,12 +636,13 @@ static void
           }
 
           if (ac.drawing_options[do_contact_force]) {
+            glPushAttrib(GL_ENABLE_BIT);
             glEnable(GL_COLOR_MATERIAL);
             glBegin(GL_LINES);
             glColor3f(1, 0, 0); glVertex3f(0, 0, 0);
             glColor3f(1, 0, 0); glVertex3f(contactForce.x, contactForce.y, contactForce.z);
             glEnd();
-            glDisable(GL_COLOR_MATERIAL);
+            glPopAttrib();
           }
 
           // TODO: Contact forces in the second direction. Should be zero.
@@ -624,16 +656,6 @@ static void
       glTranslatef(bipedComPos.x, bipedComPos.y, bipedComPos.z);
       ArnSetupBasicMaterialGl(&ArnConsts::ARNCOLOR_GREEN);
       ArnRenderSphereGl(0.025, 16, 16); // COM indicator
-      glEnable(GL_COLOR_MATERIAL);
-      //float netContactForceSize = ArnVec3Length(netContactForce);
-      /*
-      glBegin(GL_LINES);
-      glColor3f(0, 0, 1); glVertex3f(0, 0, 0);
-      glColor3f(0, 0, 1); glVertex3f(netContactForce.x, netContactForce.y, netContactForce.z);
-      glEnd();
-      */
-      glDisable(GL_COLOR_MATERIAL);
-      //printf("%.2f, %.2f, %.2f\n", netContactForce.x, netContactForce.y, netContactForce.z);
       glPopMatrix();
     }
     /*

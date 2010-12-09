@@ -1152,13 +1152,13 @@ static void RenderGraph(PRSGRAPH g, int slotid, pym_render_config_t *rc) {
   if (width > height) {
     graphGapX = margin*height/width;
     graphGapY = margin;
-    graphW = 0.5*height/width;
-    graphH = 0.5;
+    graphW = 0.12*height/width;
+    graphH = 0.3;
   } else {
     graphGapX = margin;
     graphGapY = margin*width/height;
-    graphW = 0.5;
-    graphH = 0.5*width/height;
+    graphW = 0.12;
+    graphH = 0.3*width/height;
   }
   const double graphX = -1 + graphGapX + slotid*(graphW + graphGapX);
   const double graphY = -1 + graphGapY;
@@ -1277,37 +1277,14 @@ void PymRsDestroyRender() {
   glDeleteTextures(1, &gndTex);
 }
 
+/*
+ * Precondition: Projection, modelview matrices are already set up.
+ */
 void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   pym_strict_checK_gl();
   if (glUseProgramObjectARB)
     glUseProgramObjectARB(0);
-  glViewport(rc->vpx, rc->vpy, rc->vpw, rc->vph);
-  glClearColor(0.3,0.3,0.3,1.0);
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //  glCullFace(GL_BACK);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluPerspective(45, 1, 0.01, 100);
-
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  double cam_car[3];            /* Cartesian coordinate of cam */
-  double up_dir[3];
-  pym_sphere_to_cartesian(cam_car, rc->cam_r, rc->cam_phi, rc->cam_theta);
-  /* printf("cam_car = %lf %lf %lf\n", */
-  /* 	 cam_car[0], cam_car[1], cam_car[2]); */
-  pym_up_dir_from_sphere(up_dir, cam_car, rc->cam_r,
-    rc->cam_phi, rc->cam_theta);
-  gluLookAt(rc->cam_cen[0]+cam_car[0],
-    rc->cam_cen[1]+cam_car[1],
-    rc->cam_cen[2]+cam_car[2],
-    rc->cam_cen[0],
-    rc->cam_cen[1],
-    rc->cam_cen[2],
-    up_dir[0],
-    up_dir[1],
-    up_dir[2]);
-
+  
   pym_configure_light();
   pym_strict_checK_gl();
 
@@ -1322,23 +1299,33 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   * Also make sure we have identities
   * on projection and modelview matrix.
   */
+  glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
   glDisable(GL_LIGHTING);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
   glDisable(GL_DEPTH_TEST);
-
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+  gluOrtho2D(-rc->vpw/2.0, rc->vpw/2.0, -rc->vph/2.0, rc->vph/2.0);
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+  
   RenderGraph(rs->phyCon.comZGraph, 0, rc);
   RenderGraph(rs->phyCon.comDevGraph, 1, rc);
   RenderGraph(rs->phyCon.actGraph, 2, rc);
   RenderGraph(rs->phyCon.ligGraph, 3, rc);
+  for (int i = 0; i < rs->pymCfg.nBody; ++i)
+    RenderGraph(rs->phyCon.exprotGraph[i], 4 + i, rc);
 
   pym_strict_checK_gl();
   RenderSupportPolygon(&rs->phyCon, rc);
   RenderFootContactStatus(&rs->phyCon);
   pym_strict_checK_gl();
 
-  glEnable(GL_DEPTH_TEST);
-}
+  glPopMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
 
+  glPopAttrib();
+}

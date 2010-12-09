@@ -23,12 +23,12 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
 		    FILE** _outputFile,
 		    FILE *dmstreams[]);
 
-pym_physics_thread_context_t
-pym_init_phy_thread_ctx(pym_config_t *pymCfg,
-			pym_cmdline_options_t *cmdopt,
-			pym_traj_t *pymTraj,
-			FILE *outputFile,
-			FILE *dmstreams[]);
+void pym_init_phy_thread_ctx(pym_physics_thread_context_t* cxt,
+  pym_config_t *pymCfg,
+  pym_cmdline_options_t *cmdopt,
+  pym_traj_t *pymTraj,
+  FILE *outputFile,
+  FILE *dmstreams[]);
 
 #ifdef __cplusplus
 extern "C" {

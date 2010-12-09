@@ -12,7 +12,7 @@
 #define M_PI (3.1415926535897932384626433832795029)
 #endif
 
-static const double SPRING_K = 5000.0; /* Ground spring constant (penalty method) */
+static const double SPRING_K = 2000.0; /* Ground spring constant (penalty method) */
 
 
 std::ostream &operator << (std::ostream &s, const pym_rb_t &rb) {

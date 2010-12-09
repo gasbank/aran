@@ -505,9 +505,12 @@ ArnSetupMaterialGl(const ArnMaterial* mtrl)
 	{
 		const ArnTexture* tex = mtrl->getFirstTexture();
 		const ArnRenderableObject* renderable = tex->getRenderableObject();
-		assert(renderable);
-		// 'Rendering texture' has meaning of 'binding texture'
-		renderable->render(false);
+		if (renderable) {
+		  // 'Rendering texture' has meaning of 'binding texture'
+		  renderable->render(false);
+    } else {
+      // We do not have the proper texture image in this case.
+    }
 	}
 	else
 	{
@@ -542,7 +545,9 @@ ArnSkeletonRenderGl( const ArnSkeleton* skel )
 static void
 InitializeArnTextureRenderableObjectGl( INOUT ArnTexture* tex )
 {
-	tex->attachChild( ArnTextureGl::createFrom(tex) );
+  ArnNode *gltex = ArnTextureGl::createFrom(tex);
+  if (gltex)
+	  tex->attachChild( gltex );
 }
 
 static void

@@ -470,11 +470,13 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
   const pym_biped_eqconst_t *const bod = pymOpt->bod;
   const int *const Aci = bod->Aci;
   FOR_0(j, nf) {
-    const pym_muscle_type_e mt = pymCfg->fiber[j].b.mType;
-    const char *fibName = pymCfg->fiber[j].b.name;
+    pym_mf_named_t *mf = &pymCfg->fiber[j].b;
+    const pym_muscle_type_e mt = mf->mType;
+    const char *fibName = mf->name;
     /* Tension range constraint */
     i = Aci[1]+j;
-    SET_NONNEGATIVE(pymOpt, i);
+    //SET_NONNEGATIVE(pymOpt, i);
+
     //SET_RANGE(pymOpt, i, -15, 15);
     //        bkx[i] = MSK_BK_RA;
     //        blx[i] = -1000;
@@ -492,6 +494,16 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
       pymCfg->fiber[j].b.xrest_upper );*/
     //SET_RANGE( pymOpt, i, 0.5, 0.6);
     SET_FIXED_ONE( pymOpt, i );
+
+    if (mt == PMT_JOINT_MUSCLE) {
+      double disloc_len_vel = (mf->disloc_len - mf->disloc_len0) / pymCfg->h;
+      double k = 2000;
+      double mass = pymCfg->body[mf->org].b.m;
+      printf("disloc_len_vel = %lf, TEN = %lf\n", disloc_len_vel, k * mf->disloc_len - 2*sqrt(mass*k)*disloc_len_vel);
+      SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len);
+      //SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len - 0.05*disloc_len_vel);
+      //SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len - 0);
+    }
   }
 }
 
@@ -646,10 +658,10 @@ static void pym_optimize_mosek_cone_rb(const pym_opt_t *const pymOpt,
         tauOffset + sd[i].Aci[8]);
       /* Previous state close cone constraints, i.e.,
       * epsilon_Delta >= || Delta_chi_{i,prv} || (6-DOF)      */
-      /*AppendConeRange(task,
+      AppendConeRange(task,
       tauOffset + sd[i].Aci[13],
       tauOffset + sd[i].Aci[12],
-      tauOffset + sd[i].Aci[13]);*/
+      tauOffset + sd[i].Aci[13]);
   }
   /* Rotation parameterization constraints */
   //for (i = 0, tauOffset = 0; i < nb;
@@ -1258,6 +1270,40 @@ static void pym_print_opt_fail_log()
     printf("Warning - /tmp/pyoptimize_log opening failure.\n");
 }
 
+void PymComputeBipedStatedep( pym_config_t * pymCfg, const pym_rb_statedep_t *const sd ) 
+{
+  static bool run_once = false;
+  const size_t nb = pymCfg->nBody;
+  const size_t nf = pymCfg->nFiber;
+  for (size_t j = 0; j < nf; ++j) {
+    const double *attPos1, *attPos2;
+    pym_mf_named_t *mf = &pymCfg->fiber[ j ].b;
+    double	pt1[3], pt2[3], direction[3];
+    AffineTransformPoint(pt1, sd[ mf->org ].W_1, mf->fibb_org);
+    AffineTransformPoint(pt2, sd[ mf->ins ].W_1, mf->fibb_ins);
+    for (size_t k = 0; k < 3; ++k)
+      direction[k] = pt2[k] - pt1[k];
+    double direction_original[3];
+    memcpy(direction_original, direction, sizeof(double)*3);
+    double	dirLen = PymNorm(3, direction);
+    
+    memcpy(mf->disloc_dir, direction, sizeof(double)*3);
+    mf->disloc_len0 = mf->disloc_len;
+    mf->disloc_len = dirLen;
+    
+    if (mf->disloc_len > DEGENERATE_THRESHOLD) {
+      NormalizeVector(3, mf->disloc_dir);
+    }
+  }
+  if (!run_once) {
+    for (size_t i = 0; i < nf; ++i) {
+      pym_mf_named_t *mf = &pymCfg->fiber[ i ].b;
+      mf->disloc_len0 = mf->disloc_len;
+    }
+    run_once = true;
+  }
+}
+
 int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
   pym_config_t *pymCfg, pym_rb_statedep_t *sd,
   FILE *dmstreams[],
@@ -1271,6 +1317,8 @@ int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
   }
   pym_count_total_num_cp(pymCfg, sd);
   PymConstructSupportPolygon(pymCfg, sd);
+
+  PymComputeBipedStatedep(pymCfg, sd);
 
   pym_biped_eqconst_t bipEq;
   PymConstructBipedEqConst(&bipEq, sd, pymCfg, cc);

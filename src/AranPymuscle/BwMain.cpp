@@ -11,6 +11,7 @@
 #include "ConvexHullCapi.h"
 #include "QuaternionEOM.h"
 #include "SliderInput.h"
+#include "ArnPathManager.h"
 
 namespace fs = boost::filesystem;
 
@@ -19,6 +20,8 @@ void idle_cb(void* ac);
 #if !HAVE_GL
 #error OpenGL in FLTK not enabled.
 #endif
+
+static int currentSimFrame = 0; // Current sim frame index (can be reset)
 
 struct SceneButtonsHolder
 {
@@ -499,25 +502,22 @@ InitializeRendererDependentOnce(BwAppContext& ac)
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
   glEnable(GL_NORMALIZE);
-  for (int lightId = 0; lightId < 8; ++lightId)
-    {
-      glDisable(GL_LIGHT0 + lightId);
-    }
+  for (int lightId = 0; lightId < GL_MAX_LIGHTS; ++lightId) {
+    glDisable(GL_LIGHT0 + lightId);
+  }
 
   /// OpenGL 확장 기능을 초기화합니다.
-  if (ArnInitGlExtFunctions() < 0)
-    {
-      std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
-      std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
-      std::cerr << "     Aborting..." << std::endl;
-      return -50;
-    }
+  if (ArnInitGlExtFunctions() < 0) {
+    std::cerr << " *** OpenGL extensions needed to run this program are not available." << std::endl;
+    std::cerr << "     Check whether you are in the remote control display or have a legacy graphics adapter." << std::endl;
+    std::cerr << "     Aborting..." << std::endl;
+    return -50;
+  }
 
   /// ARAN OpenGL 패키지를 초기화합니다.
-  if (ArnInitializeGl() < 0)
-    {
-      return -3;
-    }
+  if (ArnInitializeGl() < 0) {
+    return -3;
+  }
 
   /// Mass map 텍스처를 생성합니다.
   glGenTextures(1, &ac.massMapTex);
@@ -527,10 +527,9 @@ InitializeRendererDependentOnce(BwAppContext& ac)
   glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
   glBindTexture(GL_TEXTURE_2D, 0);
 
-  if (InitializeRendererDependentsFromSg(ac) < 0)
-    {
-      return -2;
-    }
+  if (InitializeRendererDependentsFromSg(ac) < 0) {
+    return -2;
+  }
 
   return 0;
 }
@@ -560,10 +559,10 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
   std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
   std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
   /// \c SceneList.txt 를 파싱합니다.
-  if (LoadSceneList(ac.sceneList) < 0) {
+  /*if (LoadSceneList(ac.sceneList) < 0) {
     std::cerr << " *** Init failed..." << std::endl;
     return -10;
-  }
+  }*/
   memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
   // Default viewport init
   ac.avd.X			 = 0;
@@ -653,7 +652,8 @@ void step(BwAppContext &ac)
   static double frameStartMs		= 0;
   static double frameDurationMs	= 0;
   static double frameEndMs		= 0;
-  static int simFrame = 0;
+  static int simFrame = 0; // Global sim frame index (no reset)
+  
   pym_config_t *pymCfg = &ac.pymRs->pymCfg;
   const int nb = pymCfg->nBody;
   if (!start_time)
@@ -690,7 +690,7 @@ void step(BwAppContext &ac)
     }
     pymCfg->joint_dislocation_threshold = ac.joint_dislocation_slider->value();
     pymCfg->joint_dislocation_enabled = ac.joint_dislocation_button->value();
-    frame_move_ret = PymRsFrameMove(ac.pymRs, simFrame, result_msg);
+    frame_move_ret = PymRsFrameMove(ac.pymRs, currentSimFrame, result_msg);
     if (frame_move_ret < 0) {
       ac.simulateButton->value(0);
       update_idle_cb_attachment(ac);
@@ -704,7 +704,7 @@ void step(BwAppContext &ac)
       /* Access data from renderer-accessible area of phyCon */
       const pym_rb_named_t *rbn = &pymCfg->body[i].b;
       FOR_0(j, rbn->nContacts_1) {
-        const double *conForce = rbn->contactsForce_2[j];
+        const double *conForce =rbn->contactsForce_2[j];
         FOR_0(k, 3) {
           totConForce[k] += conForce[k];
           COM[k] += rbn->q[k]*rbn->m;
@@ -751,6 +751,7 @@ void step(BwAppContext &ac)
 
     BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(ac.glWindow);
     ++simFrame;
+    ++currentSimFrame;
     if (frame_move_ret || simFrame >= pymCfg->nSimFrame) {
       //PymRsResetPhysics(appContext.pymRs);
       simFrame = 0;
@@ -860,6 +861,7 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
       }
     }
     PymRsResetPhysics(ac.pymRs);
+    currentSimFrame = 0;
     reconfigScene = true;
   } else if (done == MHR_STEP_SIMULATION) {
     step(ac);
@@ -1143,6 +1145,9 @@ int main3()
 
 int main(int argc, char **argv)
 {
+  static aran::core::PathManager pm;
+  pm.set_shader_dir("resources/shaders/");
+
   int ret = doMain(argc, argv);
   if (ret) {
     std::cout << "Error detected.\n";

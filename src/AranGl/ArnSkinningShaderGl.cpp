@@ -4,6 +4,7 @@
 #include "ArnBone.h"
 #include "ArnMesh.h"
 #include <sys/stat.h>
+#include "ArnPathManager.h"
 
 IMPLEMENT_SINGLETON(ArnSkinningShaderGl);
 
@@ -21,17 +22,19 @@ ArnSkinningShaderGl::~ArnSkinningShaderGl()
 
 unsigned char *readShaderFile( const char *fileName )
 {
-    FILE *file = fopen( fileName, "r" );
+  std::string full_file_name = aran::core::PathManager::getSingleton().get_shader_path() + fileName;
+    FILE *file = fopen( full_file_name.c_str(), "r" );
 
     if ( file == NULL )
     {
-        assert(!"Cannot open shader file!");
+        std::cout << "Cannot open shader file: " << full_file_name << std::endl;
+        abort();
         return 0;
     }
 
     struct stat fileStats;
 
-    if ( stat( fileName, &fileStats ) != 0 )
+    if ( stat( full_file_name.c_str(), &fileStats ) != 0 )
     {
         assert(!"Cannot get file stats for shader file!");
         return 0;
@@ -92,8 +95,9 @@ ArnSkinningShaderGl::initShader()
 
 	m_vertexShader = glCreateShaderObjectARB( GL_VERTEX_SHADER_ARB );
 
-	unsigned char *vertexShaderAssembly = readShaderFile( "shaders/ogl_glslang_skinning_nvidia.vert" );
-	//unsigned char *vertexShaderAssembly = readShaderFile( "shaders/ogl_glslang_skinning_ati.vert" );
+  // readShaderFile() uses ArnPath::shader_path!
+	unsigned char *vertexShaderAssembly = readShaderFile( "ogl_glslang_skinning_nvidia.vert" );
+	//unsigned char *vertexShaderAssembly = readShaderFile( "ogl_glslang_skinning_ati.vert" );
 	vertexShaderStrings[0] = (char*)vertexShaderAssembly;
 	glShaderSourceARB( m_vertexShader, 1, vertexShaderStrings, NULL );
 	glCompileShaderARB( m_vertexShader);

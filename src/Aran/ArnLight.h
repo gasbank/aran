@@ -5,7 +5,7 @@ struct NodeBase;
 struct NodeLight1;
 struct NodeLight2;
 
-class ArnLight : public ArnXformable
+class ARAN_API ArnLight : public ArnXformable
 {
 public:
 									~ArnLight(void);

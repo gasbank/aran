@@ -165,33 +165,6 @@ static void
 
     Node* selNode = ikSolver->getSelectedEndeffector();
     if (selNode) {
-      /*
-      static const double d = 0.1;
-      if (ac.bHoldingKeys[SDLK_UP])
-      {
-      selNode->setTargetDiff(0, 0, d);
-      }
-      if (ac.bHoldingKeys[SDLK_DOWN])
-      {
-      selNode->setTargetDiff(0, 0, -d);
-      }
-      if (ac.bHoldingKeys[SDLK_LEFT])
-      {
-      selNode->setTargetDiff(0, -d, 0);
-      }
-      if (ac.bHoldingKeys[SDLK_RIGHT])
-      {
-      selNode->setTargetDiff(0, d, 0);
-      }
-      if (ac.bHoldingKeys[SDLK_HOME])
-      {
-      selNode->setTargetDiff(d, 0, 0);
-      }
-      if (ac.bHoldingKeys[SDLK_END])
-      {
-      selNode->setTargetDiff(-d, 0, 0);
-      }
-      */
     }
   }
 
@@ -202,34 +175,7 @@ static void
 
   ArnVec3 cameraDiff(0, 0, 0);
   static const float cameraDiffAmount = 0.1f;
-  /*
-  if (ac.bHoldingKeys[SDLK_a] && !ac.bHoldingKeys[SDLK_d])
-  cameraDiff -= ac.activeCam->getRightVec() * cameraDiffAmount;
-  else if (!ac.bHoldingKeys[SDLK_a] && ac.bHoldingKeys[SDLK_d])
-  cameraDiff += ac.activeCam->getRightVec() * cameraDiffAmount;
-  if (ac.bHoldingKeys[SDLK_KP_MINUS] && !ac.bHoldingKeys[SDLK_KP_PLUS])
-  cameraDiff -= ac.activeCam->getUpVec() * cameraDiffAmount;
-  else if (!ac.bHoldingKeys[SDLK_KP_MINUS] && ac.bHoldingKeys[SDLK_KP_PLUS])
-  cameraDiff += ac.activeCam->getUpVec() * cameraDiffAmount;
 
-  if (ac.activeCam->isOrtho())
-  {
-  float orthoScaleDiff = 0;
-  if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
-  orthoScaleDiff += cameraDiffAmount;
-  else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
-  orthoScaleDiff -= cameraDiffAmount;
-
-  ac.activeCam->setOrthoScale(ac.activeCam->getOrthoScale() + orthoScaleDiff);
-  }
-  else
-  {
-  if (ac.bHoldingKeys[SDLK_s] && !ac.bHoldingKeys[SDLK_w])
-  cameraDiff -= ac.activeCam->getLookVec() * cameraDiffAmount;
-  else if (!ac.bHoldingKeys[SDLK_s] && ac.bHoldingKeys[SDLK_w])
-  cameraDiff += ac.activeCam->getLookVec() * cameraDiffAmount;
-  }
-  */
   if (ac.activeCam) {
     ac.activeCam->setLocalXform_Trans( ac.activeCam->getLocalXform_Trans() + cameraDiff );
     ac.activeCam->recalcLocalXform();
@@ -350,6 +296,11 @@ static int
   printf("\n");
 
   /// OpenGL 플래그를 설정합니다.
+  /// 이러한 전역 OpenGL 스테이트를 변경하는 것은 최대한 여기서
+  /// 초기화 단계에 한번만 하는 것으로 해야 합니다.
+  /// 일부분 코드에 대해서만 스테이트를 잠시 변경할 필요가 있을 때는
+  /// 반드시 glAttribPush/Pop() 함수를 이용하여
+  /// 전역 설정이 완전히 변경되는 경우가 없도록 해야 합니다.
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_TEXTURE_2D);
   glEnable(GL_LINE_SMOOTH);
@@ -371,6 +322,7 @@ static int
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
+  //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
   glEnable(GL_NORMALIZE);
   for (int lightId = 0; lightId < 8; ++lightId)
   {
@@ -748,6 +700,10 @@ int doMain(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
+  aran::core::PathManager pm;
+  pm.set_shader_dir("resources/shaders/");
+  pm.set_model_dir("resources/models/");
+
   int ret = doMain(argc, argv);
   if (ret) {
     std::cout << "Error detected.\n";

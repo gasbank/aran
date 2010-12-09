@@ -50,6 +50,13 @@ ArnTexture::interconnect( ArnNode* sceneRoot )
 {
 }
 
+void split_path(std::string &dir, std::string &filename, const std::string& path)
+{
+  const size_t found = path.find_last_of("/\\");
+  dir = path.substr(0,found);
+  filename = path.substr(found+1);
+}
+
 void
 ArnTexture::init()
 {
@@ -57,6 +64,16 @@ ArnTexture::init()
 	if (m_fileName.size() && m_rawData.size() == 0) // The path of a texture image is provided.
 	{
 		ArnTextureGetRawDataFromimageFile(m_rawData, &m_width, &m_height, &m_format, m_fileName.c_str());
+    if (m_format == ACF_UNKNOWN) {
+      // File not found? Try fallback image name
+      std::string dir, filename_only;
+      split_path(dir, filename_only, m_fileName);
+      printf("     Try fallback name : %s\n", filename_only.c_str());
+      ArnTextureGetRawDataFromimageFile(m_rawData, &m_width, &m_height, &m_format, filename_only.c_str());
+      if (m_format != ACF_UNKNOWN) {
+        printf("     Fallback texture image loading success.\n");
+      }
+    }
 	}
 	else if (m_fileName.size() == 0 && m_rawData.size() && m_width && m_height && m_format) // In-memory pointer to raw image data is provided.
 	{

@@ -176,10 +176,11 @@ public:
 	 * @brief local 변환 행렬에 관련한 정보를 출력 (디버그)
 	 */
 	void										printXformData() const;
+void										setLocalXform(const ArnMatrix& localXform);
 protected:
 												ArnXformable(NODE_DATA_TYPE ndt);
-	void										setLocalXform(const ArnMatrix& localXform);
-    void                                        setAnimLocalXform(const ArnMatrix& localXform);
+	
+  void                                        setAnimLocalXform(const ArnMatrix& localXform);
 	virtual void								update(double fTime, float fElapsedTime);
 	inline void									setAnimCtrl(ArnAnimationController* animCtrl);
 	void										configureAnimCtrl();

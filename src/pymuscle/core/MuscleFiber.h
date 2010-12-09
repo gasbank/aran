@@ -21,7 +21,15 @@ struct pym_mf_named_t {
   char name[128];
   pym_muscle_type_e mType;
   bool degenerated;
+
+  // State dependent quantities
+  double disloc_dir[3];
+  double disloc_len;
+  double disloc_len0;
+  const double *att_pos1;
 };
+
+#define DEGENERATE_THRESHOLD (1e-5)
 
 union pym_mf_t
 {

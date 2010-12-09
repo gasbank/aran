@@ -189,6 +189,11 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
   //PrsGraphPushBackTo(phyCon->ligGraph, PCG_LIG_ACT, fabs(totLigAct));
   //PrsGraphPushBackTo(phyCon->ligGraph, PCG_LIG_TEN, totLigTen);
 
+  for (int i = 0; i < pymCfg->nBody; ++i) {
+    double th = PymNorm(3, pymCfg->body[i].b.q);
+    PrsGraphPushBackTo(phyCon->exprotGraph[i], 0, th);
+  }
+
   /* Simulated biped COM position */
   memcpy(phyCon->bipCom,    pymCfg->bipCom,    sizeof(double)*3);
   /* Reference biped COM position (note that pymCfg, not phyCon!) */

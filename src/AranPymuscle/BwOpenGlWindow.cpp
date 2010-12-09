@@ -67,98 +67,94 @@ void BwOpenGlWindow::draw()
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_COLOR_MATERIAL);
 
-  // RenderScene(m_ac);
-  // if (m_ac.bDrawHud)
-  //   RenderHud(m_ac);
+  glClearColor(0.3,0.3,0.3,1.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  assert(m_ac.pymRs);
+  double cam_r = 10, cam_phi = 1.0, cam_dphi = 0;
+  double cam_theta = 1.0, cam_dtheta = 1.0;
+  pym_render_config_t rc;
+  rc.cam_r	 = m_cam_r;
+  rc.cam_phi	 = m_cam_phi + m_cam_dphi;
+  rc.cam_theta = m_cam_theta + m_cam_dtheta;
+  rc.vpx	 = 0;
+  rc.vpy	 = 0;
+  rc.vpw	 = w(); //min(w(), h());
+  rc.vph	 = h(); //min(h(), h());
+  rc.cam_cen[0] = m_cam_cen[0];
+  rc.cam_cen[1] = m_cam_cen[1];
+  rc.cam_cen[2] = m_cam_cen[2];
 
+  pym_configure_light();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(45, double(w()) / h(), 0.01, 100);
 
-  if (m_ac.pymRs) {
-    double cam_r = 10, cam_phi = 1.0, cam_dphi = 0;
-    double cam_theta = 1.0, cam_dtheta = 1.0;
-    pym_render_config_t rc;
-    rc.cam_r	 = m_cam_r;
-    rc.cam_phi	 = m_cam_phi + m_cam_dphi;
-    rc.cam_theta = m_cam_theta + m_cam_dtheta;
-    rc.vpx	 = 0;
-    rc.vpy	 = 0;
-    rc.vpw	 = min(w(), h());
-    rc.vph	 = min(h(), h());
-    rc.cam_cen[0] = m_cam_cen[0];
-    rc.cam_cen[1] = m_cam_cen[1];
-    rc.cam_cen[2] = m_cam_cen[2];
-    PymRsRender(m_ac.pymRs, &rc);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  double cam_car[3];            /* Cartesian coordinate of cam */
+  double up_dir[3];
+  pym_sphere_to_cartesian(cam_car, rc.cam_r, rc.cam_phi, rc.cam_theta);
+  /* printf("cam_car = %lf %lf %lf\n", */
+  /* 	 cam_car[0], cam_car[1], cam_car[2]); */
+  pym_up_dir_from_sphere(up_dir, cam_car, rc.cam_r,
+    rc.cam_phi, rc.cam_theta);
+  gluLookAt(rc.cam_cen[0]+cam_car[0],
+    rc.cam_cen[1]+cam_car[1],
+    rc.cam_cen[2]+cam_car[2],
+    rc.cam_cen[0],
+    rc.cam_cen[1],
+    rc.cam_cen[2],
+    up_dir[0],
+    up_dir[1],
+    up_dir[2]);
 
+  PymRsRender(m_ac.pymRs, &rc);
 
-    pym_configure_light();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(45, 1, 0.01, 100);
+  // Quaternion EOM test box
+  static AranMath::Quaternion q0(VectorR3(0,1,0),0.8);
+  static VectorR3 omega0(5, 5, 0);
+  q0.normalize();
+  m_omega = omega0;
+  const double h = 0.005;
+  AranMath::Quaternion q1;
+  VectorR3 omega1;
+  quaternion_eom_av_rk4(q1, omega1, q0, omega0, 0, h);
+  ArnQuat q1_new(q1.x, q1.y, q1.z, q1.w);
+  ArnMatrix q1mat;
+  q1_new.getRotationMatrix(&q1mat);
+  static const double regularBoxSize[3] = { 1, 1, 1 };
+  static const double ZERO[3] = {0,};
+  glPushMatrix();
+  {
+    glMultMatrixf((const GLfloat *)q1mat.m);
+    DrawBox_pq(ZERO, 0, regularBoxSize, 0);
+  }
+  q0 = q1;
+  omega0 = omega1;
+  glPopMatrix();
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    double cam_car[3];            /* Cartesian coordinate of cam */
-    double up_dir[3];
-    pym_sphere_to_cartesian(cam_car, rc.cam_r, rc.cam_phi, rc.cam_theta);
-    /* printf("cam_car = %lf %lf %lf\n", */
-    /* 	 cam_car[0], cam_car[1], cam_car[2]); */
-    pym_up_dir_from_sphere(up_dir, cam_car, rc.cam_r,
-      rc.cam_phi, rc.cam_theta);
-    gluLookAt(rc.cam_cen[0]+cam_car[0],
-      rc.cam_cen[1]+cam_car[1],
-      rc.cam_cen[2]+cam_car[2],
-      rc.cam_cen[0],
-      rc.cam_cen[1],
-      rc.cam_cen[2],
-      up_dir[0],
-      up_dir[1],
-      up_dir[2]);
-
-    // Quaternion EOM test box
-    static AranMath::Quaternion q0(VectorR3(0,1,0),0.8);
-    static VectorR3 omega0(5, 5, 0);
-    q0.normalize();
-    m_omega = omega0;
-    const double h = 0.005;
-    AranMath::Quaternion q1;
-    VectorR3 omega1;
-    quaternion_eom_av_rk4(q1, omega1, q0, omega0, 0, h);
-    ArnQuat q1_new(q1.x, q1.y, q1.z, q1.w);
-    ArnMatrix q1mat;
-    q1_new.getRotationMatrix(&q1mat);
-    static const double regularBoxSize[3] = { 1, 1, 1 };
-    static const double ZERO[3] = {0,};
-    glPushMatrix();
-    {
-      glMultMatrixf((const GLfloat *)q1mat.m);
-      DrawBox_pq(ZERO, 0, regularBoxSize, 0);
-    }
-    q0 = q1;
-    omega0 = omega1;
-    glPopMatrix();
-
-    if (m_screenshot_fbyf) {
-      /* Take a screenshot */
-      //Allocate memory for storing the image
-      GLvoid *imageData = malloc(rc.vpw*rc.vph*32);
-      //Copy the image to the array imageData
-      glReadPixels(0, 0, rc.vpw, rc.vph, GL_RGBA, GL_UNSIGNED_BYTE, imageData); 
-      ILuint ImageName; // The image name to return.
-      ilGenImages(1, &ImageName); // Grab a new image name.
-      //printf("%d\n", ImageName);
-      ilBindImage(ImageName);
-      ilTexImage(rc.vpw, rc.vph, 0, 4, IL_RGBA, IL_UNSIGNED_BYTE, imageData);
-      ilEnable(IL_FILE_OVERWRITE);
-      assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
-      char ssName[128];
-      std::string ssPath(getenv("WORKING"));
-      ssPath += "/pymss/%05d.png";
-      snprintf(ssName, 128, ssPath.c_str(), m_ac.pymRs->ssIdx);
-      ilSaveImage(ssName);
-      //printf("%s\n", ssName);
-      ilDeleteImages(1, &ImageName);
-      free(imageData);
-      ++m_ac.pymRs->ssIdx;
-    }
+  if (m_screenshot_fbyf) {
+    /* Take a screenshot */
+    //Allocate memory for storing the image
+    GLvoid *imageData = malloc(rc.vpw*rc.vph*32);
+    //Copy the image to the array imageData
+    glReadPixels(0, 0, rc.vpw, rc.vph, GL_RGBA, GL_UNSIGNED_BYTE, imageData); 
+    ILuint ImageName; // The image name to return.
+    ilGenImages(1, &ImageName); // Grab a new image name.
+    //printf("%d\n", ImageName);
+    ilBindImage(ImageName);
+    ilTexImage(rc.vpw, rc.vph, 0, 4, IL_RGBA, IL_UNSIGNED_BYTE, imageData);
+    ilEnable(IL_FILE_OVERWRITE);
+    assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
+    char ssName[128];
+    std::string ssPath(getenv("WORKING"));
+    ssPath += "/pymss/%05d.png";
+    snprintf(ssName, 128, ssPath.c_str(), m_ac.pymRs->ssIdx);
+    ilSaveImage(ssName);
+    //printf("%s\n", ssName);
+    ilDeleteImages(1, &ImageName);
+    free(imageData);
+    ++m_ac.pymRs->ssIdx;
   }
   /* Check for error conditions. */
   GLenum gl_error = glGetError();

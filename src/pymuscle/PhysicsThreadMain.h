@@ -31,6 +31,7 @@ struct pym_physics_thread_context_t {
   PRSGRAPH comDevGraph;    /* COM position deviation graph */
   PRSGRAPH actGraph;       /* Actuated muscle tension, actuation graph */
   PRSGRAPH ligGraph;       /* Ligament muscle tension, actuation graph */
+  std::vector<PRSGRAPH> exprotGraph; /* body rotation graph */
   //PRSGRAPH com_pos;
   pym_rb_statedep_t *sd;
 };

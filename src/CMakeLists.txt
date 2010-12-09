@@ -8,9 +8,16 @@ SET(MOSEK_ROOT $ENV{MOSEK_ROOT})
 SET(BOOST_ROOT $ENV{BOOST_ROOT})
 SET(CMAKE_OSX_ARCHITECTURES i386)
 SET(PYM_3RDPARTIES_ROOT "${CODEBASE}src/")
-SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WORKING} )
-SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKING} )
-SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${WORKING} )
+
+if (MSVC90)
+  SET(compiler_string /vc90)
+endif (MSVC90)
+if (MSVC10)
+  SET(compiler_string /vc10)
+endif (MSVC10)
+SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WORKING}/lib${compiler_string} )
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKING}/bin${compiler_string} )
+SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${WORKING}/lib${compiler_string} )
 
 MACRO(ADD_MSVC_PRECOMPILED_HEADER tgt hdr src)
 if (MSVC)
@@ -59,9 +66,23 @@ ADD_SUBDIRECTORY(pymuscle)
 #ADD_SUBDIRECTORY(TexturedQuadViewer)
 #ADD_SUBDIRECTORY(SceneViewer)
 
+#
+#   AranMath
+#      |
+#      |
+#      |
+#    Aran
+#      |
+#      +---------+-----------+----------+
+#      |         |           |          |
+#      |         |           |          |
+#    AranIk    AranDx9    AranGl      AranPhy
+#
 ADD_DEPENDENCIES(Aran AranMath)
-ADD_DEPENDENCIES(AranIk AranMath Aran)
+ADD_DEPENDENCIES(AranIk Aran)
+ADD_DEPENDENCIES(AranPhy Aran)
 ADD_DEPENDENCIES(AranDx9 AranMath Aran AranPhy AranIk)
 ADD_DEPENDENCIES(AranGl AranMath Aran AranPhy AranIk)
+
 ADD_DEPENDENCIES(AranIk_Test AranMath Aran AranPhy AranIk)
 ADD_DEPENDENCIES(AranPymuscle AranMath Aran AranPhy AranIk pymcore pymoptimizer pymrs pymparser)

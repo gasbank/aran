@@ -358,11 +358,12 @@ def createMeshData(doc, ob):
 	
 	# Linked materials
 	for mtrl in mesh.materials:
-		mtrlElm = doc.createElement('material')
-		mtrlElm.setAttribute('name', 'MTRL_' + mtrl.name)
-		#mtrlElm.setIdAttribute('name')
-		linkedMaterials.append(mtrl.name) # Remember actually used materials and export them only.
-		meshData.appendChild(mtrlElm)
+		if mtrl:
+			mtrlElm = doc.createElement('material')
+			mtrlElm.setAttribute('name', 'MTRL_' + mtrl.name)
+			#mtrlElm.setIdAttribute('name')
+			linkedMaterials.append(mtrl.name) # Remember actually used materials and export them only.
+			meshData.appendChild(mtrlElm)
 	
 	# Texture UV
 	if mesh.faceUV:
@@ -529,7 +530,11 @@ def ProcessSceneObject(doc, ob, processedObjects, sceneElm):
 	else:
 		print '[INFO] Object %s of type %s is not supported type; skipping...' % (ob.name, ob.type)
 		return
-	
+	if not parentElm:
+		print '[INFO] Parent is unexportable type but its child', ob.name, 'is valid.'
+		print '       Child will not be exported at all.'
+		return
+		
 	obj = doc.createElement('object')
 	obj.setAttribute('rtclass', rtclass)
 	obj.setAttribute('name', ob.name)
@@ -727,3 +732,5 @@ binFile.close()
 doc.unlink()
 
 print '[INFO] Export finished successfully. :)'
+print '[INFO]     XML =', '%s/%s.bin' % (modelpath, sce.name)
+print '[INFO]     BIN =', '%s/%s.bin' % (modelpath, sce.name)

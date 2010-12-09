@@ -12,6 +12,7 @@
 #include "ArnBinaryChunk.h"
 #include "ArnMath.h"
 #include "ArnTexture.h"
+#include "ArnPathManager.h"
 
 #ifdef WIN32
 #include <direct.h>
@@ -423,31 +424,36 @@ void ArnxCreateArnNodeFromChildObjects(ArnNode* parentNode, const TiXmlElement* 
 ArnSceneGraph*
 ArnSceneGraph::createFrom(const char* xmlFile)
 {
+  // File extension assertion
 	assert(xmlFile);
 	if (strlen(xmlFile) == 0)
 		return 0;
 	assert(strcmp(xmlFile + strlen(xmlFile) - 4, ".xml") == 0);
 	assert(gs_xmlInitialized);
 
-	// 경로명에 포함된 특정한 심볼을
-	// 찾아서 원래 값으로 찾아 바꾸기를 한다.
-	// 현재는 임시로 구현되어 있는 상태.
-	std::string xmlFileStr = xmlFile;
-    std::string working;
-    if (getenv("WORKING")) {
-        working = getenv("WORKING");
-        std::cout << "Working directory set from the environment variable WORKING.\n";
-    } else {
-        char *workingCstr = GetCurrentDir (0, 0);
-        working = workingCstr;
-        std::cout << "Working directory set from the function getcwd().\n";
-        free(workingCstr);
-    }
-	const std::string mp("{ModelPath}");
-	const std::string modelPath(working + "/models/");
-	if (xmlFileStr.find(mp) != -1)
-		xmlFileStr.replace(xmlFileStr.find(mp), mp.length(), modelPath);
-	xmlFile = xmlFileStr.c_str();
+	//// 경로명에 포함된 특정한 심볼을
+	//// 찾아서 원래 값으로 찾아 바꾸기를 한다.
+	//// 현재는 임시로 구현되어 있는 상태.
+	//std::string xmlFileStr = xmlFile;
+ // std::string working;
+ // if (getenv("WORKING")) {
+ //     working = getenv("WORKING");
+ //     std::cout << "Working directory set from the environment variable WORKING.\n";
+ // } else {
+ //     char *workingCstr = GetCurrentDir (0, 0);
+ //     working = workingCstr;
+ //     std::cout << "Working directory set from the function getcwd().\n";
+ //     free(workingCstr);
+ // }
+  //const std::string mp("{ModelPath}");
+  //const std::string modelPath(working + "/models/");
+  //if (xmlFileStr.find(mp) != -1)
+  //	xmlFileStr.replace(xmlFileStr.find(mp), mp.length(), modelPath);
+  //xmlFile = xmlFileStr.c_str();
+
+  std::string full_path = aran::core::PathManager::getSingleton().get_model_path() + xmlFile;
+  xmlFile = full_path.c_str();
+  // XML file loading
 	TiXmlDocument xmlDoc(xmlFile);
 	if (!xmlDoc.LoadFile())
 	{
