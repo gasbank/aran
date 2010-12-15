@@ -4,13 +4,16 @@
 struct pym_biped_eqconst_t {
     cholmod_sparse *bipMat;
     double *bipEta; /* dynamically allocated array */
-    int Ari[1+9]; /* dynamic array of size (1+Asubrows) */
-    int Aci[1+18]; /* dynamic array of size (1+Asubcols) */
+    int Ari[1+12]; /* dynamic array of size (1+Asubrows) */
+    int Aci[1+24]; /* dynamic array of size (1+Asubcols) */
 
     int *Airi; /* dynamic array of size (1+nb) */
     int *Aici; /* dynamic array of size (1+nb) */
 };
 
-PYMCORE_API void PymDestroyBipedEqconst(pym_biped_eqconst_t *bipEq, cholmod_common *cc);
+struct pym_config_t;
 
+PYMCORE_API void PymDestroyBipedEqconst(pym_biped_eqconst_t *bipEq, cholmod_common *cc);
+PYMCORE_API void pym_update_com( pym_config_t *pymCfg );
+PYMCORE_API void pym_reset_com0( pym_config_t *pymCfg );
 #endif

@@ -102,6 +102,7 @@ void ZVQ(cholmod_sparse **Z, double V[4], cholmod_sparse **Q,
 int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
   const pym_rb_t *rb, FILE *dmstreams[], const pym_config_t *pymCfg, cholmod_common *cc)
 {
+  const double h = pymCfg->h;
   const pym_rb_named_t *const rbn = &rb->b;
   if (rbn->rotParam == RP_EXP) {
     MassMatrixAndCqdVector(sd->M, sd->Cqd, rbn->p, rbn->q, rbn->pd, rbn->qd, rbn->Ixyzw);
@@ -120,18 +121,17 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     for (j=0;j<3;++j)
       for (k=0;k<3;++k)
         sd->dWdchi_tensor[i][j][k] = dRdvn[i][j][k];
-  const double chi_1[6] = {
+  const double chi_1[7] = {
     rbn->p[0],  rbn->p[1],  rbn->p[2],
-    rbn->q[0],  rbn->q[1],  rbn->q[2],
+    rbn->q[0],  rbn->q[1],  rbn->q[2], rbn->q[3]
   };
-  const double chi_0[6] = {
-    rbn->p0[0],  rbn->p0[1],  rbn->p0[2],
-    rbn->q0[0],  rbn->q0[1],  rbn->q0[2],
+  const double chi_0[7] = {
+    rbn->p[0] - h*rbn->pd[0],  rbn->p[1] - h*rbn->pd[1],  rbn->p[2] - h*rbn->pd[2],
+    rbn->q[0] - h*rbn->qd[0],  rbn->q[1] - h*rbn->qd[1],  rbn->q[2] - h*rbn->qd[2], rbn->q[3] - h*rbn->qd[3]
   };
   GetWFrom6Dof(sd->W_0, chi_0);
   GetWFrom6Dof(sd->W_1, chi_1);
   double chi_2_nocf[6];
-  const double h = pymCfg->h;
   for (i=0; i<6; ++i) {
     double Minv_h2_C_fg = 0;
     for (j=0; j<6; ++j) {
@@ -165,7 +165,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     if (pcj_1_W[2] <= groundLevel) {
       sd->contactIndices_1[ sd->nContacts_1 ] = j;
       const double unit_sliding_distance = PymDist(2, pcj_1_W, pcj_0_W)/pymCfg->h;
-      if (unit_sliding_distance < 1e-2)
+      if (unit_sliding_distance < 1e-4)
         sd->contactTypes_1[ sd->nContacts_1 ] = static_contact;
       else
         sd->contactTypes_1[ sd->nContacts_1 ] = dynamic_contact;
@@ -215,6 +215,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     1,           // 13:\epsilon_\Delta \chi prv
     np,          // 14:epsilon_cp_|z|
     np,          // 15:kappa_cp_|z| (penalty method nonnegativity compensation variable)
+    nd,          // 16:generalized gravitational force
   };
 
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubrowsizes) == sizeof(sd->Ari));

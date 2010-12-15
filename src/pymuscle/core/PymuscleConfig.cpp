@@ -13,6 +13,19 @@
 #include "PymuscleConfig.h"
 #include "PymPodUtil.h"
 
+
+
+void SET_TRIPLET_RCV_SUBBLOCK2(cholmod_triplet *choltrip, const int *const Ari, const int *const Aci, int _subr, int _subc, int _r, int _c, double _v)
+{
+  const int r = Ari[_subr] + _r;
+  const int c = Aci[_subc] + _c;
+
+  static int call_count = 0;
+  SET_TRIPLET_RCV(choltrip, r, c, _v);
+  ++call_count;
+  //std::cout << "call count = " << call_count << std::endl;
+}
+
 void PrintRigidBody(const pym_rb_t *rb) {
   int i; for (i=0; i<18; ++i) printf("%2d : %20lf\n", i, rb->a[i]);
 }
@@ -166,14 +179,6 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
     }
 
     bjb->nFiber = 0; /* will be set after loading muscle fiber sections of configuration file */
-    FOR_0(k, 3) {
-      bjb->p0[k] = bjb->p[k] - h*bjb->pd[k];
-      //assert(bjb->p[k] == bjb->p0[k]);
-    }
-    FOR_0(k, 4) {
-      bjb->q0[k] = bjb->q[k] - h*bjb->qd[k];
-      //assert(bjb->q[k] == bjb->q0[k]);
-    }
   }
   /*
   * Parse muscle fiber configurations
@@ -276,7 +281,6 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
       * to ensure they represent rotations.
       */
       NormalizeVector(4, body[j].b.q);
-      NormalizeVector(4, body[j].b.q0);
     }
   }
 
@@ -324,10 +328,7 @@ void PymConvertRotParamInPlace(pym_config_t *pymCfg, pym_rot_param_t targetRotPa
       QuatToV(v, pymCfg->body[i].b.q_simconf);
       memcpy(pymCfg->body[i].b.q_simconf, v, sizeof(double)*3);
       pymCfg->body[i].b.q_simconf[3] = DBL_MAX;	/* Should be ignored */
-      /* chi 0 rot */
-      QuatToV(v, pymCfg->body[i].b.q0);
-      memcpy(pymCfg->body[i].b.q0, v, sizeof(double)*3);
-      pymCfg->body[i].b.q0[3] = DBL_MAX;	/* Should be ignored */
+
       pymCfg->body[i].b.rotParam = RP_EXP;
       //printf("%s - %d\n", pymCfg->body[i].b.name, pymCfg->body[i].b.rotParam);
     } else {
@@ -355,7 +356,7 @@ int pym_check_coincided_fibers(int *mf_indices, const pym_rb_statedep_t *sd_all,
     double	dirLen = PymNorm(3, direction);
     double	gf[7] = {0,};
     if (dirLen <= 1e-5) {
-      printf("WARN - Both ends of fiber %s are coincided. This fiber will not have any effect.\n", mf->name);
+      //printf("WARN - Both ends of fiber %s are coincided. This fiber will not have any effect.\n", mf->name);
       mf_indices[mfsize] = i;
       ++mfsize;
     }
@@ -409,7 +410,7 @@ void GetR_i(cholmod_triplet **_R_i, const pym_rb_statedep_t *sd,
         else
           assert(!"Not the case");
       } else {
-        printf("WARN - Both ends of fiber %s are coincided. This fiber will not have any effect.\n", mf->name);
+        //printf("WARN - Both ends of fiber %s are coincided. This fiber will not have any effect.\n", mf->name);
       }
       FOR_0(k, nd)
         SET_TRIPLET_RCV(R_i, nd*j + k, fidx, gf[k]);
@@ -449,37 +450,46 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   const int						 nj = pymCfg->nJoint;
   cholmod_triplet			 *A_trip[128 /*nb*/];	/* should be deallocated here */
   const int						 nd = 3 + pymCfg->nrp;
-  int deg_mf_indices[1024]; // degenerated muscles (coincided muscles) indices
+  int deg_mf_indices[1024] = {0,}; // degenerated muscles (coincided muscles) indices
   const int ndf = pym_check_coincided_fibers(deg_mf_indices, sd, pymCfg);
   assert(ndf <= 1024);
-  int Asubrowsizes[ ]  = { 0,	/* be calculated later */
-    2*nd*nf,
-    nf,
-    4*nj,
-    nj,
-    3,
-    3,
-    3,
-    2*nd*ndf,
+  int Asubrowsizes[ ]  = { 0,	/*  0:  be calculated later */
+    (nd)*(2*nf),              /*  1:  */
+    nf,                       /*  2:  */
+    4*nj,                     /*  3:  */
+    nj,                       /*  4:  */
+    3,                        /*  5:  */
+    3,                        /*  6:  */
+    3,                        /*  7:  */
+    3,                        /*  8:  */
+    (nd)*(2*nj),              /*  9:  */
+    4*(nj),                   /* 10:  */
+    4,                        /* 11:  */
   };
-  int Asubcolsizes[ ]  = { 0,	/* be calculated later */
-    nf,                   /* muscle(lig+act) tension */
-    nf,                   /* muscle(lig+act) actuation */
-    nf,                   /* muscle(lig+act) rest length */
-    1,                    /* \epsilon_{ligten} */
-    1,                    /* \epsilon_{actten} */
-    4*nj,                 /* anchored joint dislocation vector */
-    nj,                   /* \epsilon_{d} */
-    3,                    /* p_com^{l+1} */
-    3,                    /* \Delta p_{com,ref} */
-    1,                    /* \epsilon_{com} */
-    3,                    /* \tau_{com} */
-    1,                    /* \epsilon_{tau,com} */
-    1,                    /* \epsilon_{ligact} */
-    1,                    /* \epsilon_{actact} */
-    nf,                   /* \epsilon_{T} */
-    nf,                   /* \epsilon_{u} */
-    2*4*ndf,              /* f_TC */
+  int Asubcolsizes[ ]  = { 0,	/*  0:   be calculated later */
+    nf,                   /* 1:  muscle(lig+act) tension */
+    nf,                   /* 2:  muscle(lig+act) actuation */
+    nf,                   /* 3:  muscle(lig+act) rest length */
+    1,                    /* 4:  \epsilon_{ligten} */
+    1,                    /* 5:  \epsilon_{actten} */
+    4*nj,                 /* 6:  anchored joint dislocation vector */
+    nj,                   /* 7:  \epsilon_{d} */
+    3,                    /* 8:  p_com^{l+1} */
+    3,                    /* 9:  \Delta p_{com,ref} */
+    1,                    /* 10: \epsilon_{com} */
+    3,                    /* 11: \tau_{com} */
+    1,                    /* 12: \epsilon_{tau,com} */
+    1,                    /* 13: \epsilon_{ligact} */
+    1,                    /* 14: \epsilon_{actact} */
+    nf,                   /* 15: \epsilon_{T} */
+    nf,                   /* 16: \epsilon_{u} */
+    3,                    /* 17: f_comfdev */
+    1,                    /* 18: eps_comfdev */
+    (4)*(2*nj),           /* 19: F_joint */
+    2*nj,                 /* 20: eps_Fjoint */
+    4,                    /* 21: E_Fjoint */
+    1,                    /* 22: eps_EFjointxy */
+    1,                    /* 23: eps_EFjointz  */
   };
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubrowsizes) == sizeof(bod->Ari));
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubcolsizes) == sizeof(bod->Aci));
@@ -531,6 +541,13 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   nzmax += 3;			/* sub-block 13 - -1 */
   nzmax += nd*nTotContacts;	/* sub-block 14 - G */
   nzmax += 3;			/* sub-block 15 - -1 */
+  nzmax += 3*nTotContacts; /* sub-block 16 */
+  nzmax += 3;       /* sub-block 17 */
+  nzmax += 2*nd*nj; /* sub-block 18 */
+  nzmax += nd*4*(2*nj); /* sub-block 19 */
+  nzmax += 4*(2*nj); /* sub-block 20 */
+  nzmax += 4*(2*nj); /* sub-block 21 */
+  nzmax += 4; /* sub-block 22 */
 
   //    printf("    BipA matrix constants (nb)      : %d\n", nb);
   //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -546,13 +563,19 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
     pymCfg->fiber[ deg_mf_indices[i] ].b.degenerated = true;
   }
 
+  double tot_mass = 0;
+  for (int i = 0; i < pymCfg->nBody; ++i) {
+    tot_mass += pymCfg->body[i].b.m;
+  }
+
+
   /* Sub-block 01 - A */
   int	AoffsetRow = 0, AoffsetCol = 0;
   FOR_0(i, nb) {
     FOR_0(j, A_trip[i]->nnz) {
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 0, 0,
-        AoffsetRow + ((int    *)(A_trip[i]->i))[j],
-        AoffsetCol + ((int    *)(A_trip[i]->j))[j],
+        Airi[i] + ((int    *)(A_trip[i]->i))[j],
+        Aici[i] + ((int    *)(A_trip[i]->j))[j],
         ((double *)(A_trip[i]->x))[j]);
     }
     AoffsetRow += A_trip[i]->nrow;
@@ -568,8 +591,15 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
     FOR_0(j, nfi) {
       const int fiber_gbl_idx = pymCfg->body[i].b.fiber[j];
       assert(fiber_gbl_idx < pymCfg->nFiber);
-      if (pymCfg->fiber[fiber_gbl_idx].b.degenerated)
+      if (pymCfg->fiber[fiber_gbl_idx].b.mType == PMT_JOINT_MUSCLE) {
+        // We cannot define 'muscle direction'.
+        // In this case, 'E' matrix would be just zero, which allows
+        // free force excertion on both ends.
+        // Additional constraints like 'T_orig + T_insertion == 0'
+        // should be added to optimization for bodies attached with
+        // degenerate muscle fibers.
         continue;
+      }
       FOR_0(k, nd) {
         SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 1, 0,
           EoffsetRow + nd*j + k,
@@ -615,11 +645,11 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
       assert(aJoint->aAnchorIdx >= 0 && aJoint->bAnchorIdx >= 0);
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 3, 0,
         4*i + l,
-        bod->Aici[ aJoint->aIdx ] + sd[ aJoint->aIdx ].Aci[10] + 4*aJoint->aAnchorIdx + l,
+        Aici[ aJoint->aIdx ] + sd[ aJoint->aIdx ].Aci[10] + 4*aJoint->aAnchorIdx + l,
         1);
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 3, 0,
         4*i + l,
-        bod->Aici[ aJoint->bIdx ] + sd[ aJoint->bIdx ].Aci[10] + 4*aJoint->bAnchorIdx + l,
+        Aici[ aJoint->bIdx ] + sd[ aJoint->bIdx ].Aci[10] + 4*aJoint->bAnchorIdx + l,
         -1);
     }
   }
@@ -650,48 +680,156 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   FOR_0(i, 3)
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 6, 9, i, i, -1);
 
+  ///* Sub-block 14 - G ---- UNUSED (not set) */
+  ///* Sub-block 15 - -1  ---- UNUSED (not set) */
 
-  ///* Sub-block 14 - G */
-  //FOR_0(i, nb) {
-  //  FOR_0(j, sd[i].nContacts_1) {
-  //    double	r[3];
-  //    FOR_0(l, 3) {
-  //      /* We are optimizing to find the next state
-  //      * based on the current state and data.
-  //      * If we inevitably need for data depends on the next state,
-  //      * approximation is used.
-  //      * In this case, we actually need for the next COM position,
-  //      * which is not availble for now. So we approximate
-  //      * next COM by using current COM with assumption of
-  //      * they are not so different.
-  //      * ('curBipCom' should have valid value.)
-  //      */
-  //      r[l] = sd[i].contactsFix_1[j][l] - pymCfg->curBipCom[l];
-  //    }
-  //    double	rx[3][3];
-  //    PymCrossToMat(rx, r);
-  //    const int basecol	  = bod->Aici[i] + sd[i].Aci[1] + nd*j;
-  //    /*
-  //    *   [  0   x   x  ]
-  //    *   [  x   0   x  ]
-  //    *   [  x   x   0  ]
-  //    */
-  //    const int indx[][2] = { {0, 1}, {0, 2},
-  //    {1, 0}, {1, 2},
-  //    {2, 0}, {2, 1} };
-  //    FOR_0(l, 6) {
-  //      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 7, 0,
-  //        indx[l][0], basecol + indx[l][1],
-  //        rx[ indx[l][0] ][ indx[l][1] ]);
-  //    }
-  //  }
-  //}
-  ///* Sub-block 15 - -1 */
-  //FOR_0(i, 3)
-  //  SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, 7, 11, i, i, -1);
+  ///*** Sub-block 16 - 
+  //h*h
+  //--- (f_c + f_g) - p_comfdev = -2*p_com^(l) + p_com^(l-1) + p_comref^(l+1)
+  // M
+  //*/
+  const double hh = pymCfg->h*pymCfg->h;
+  const double hhoverM = hh / tot_mass;
+  for (int i = 0; i < nb; ++i) {
+    pym_rb_named_t *rbn = &pymCfg->body[i].b;
+    for (int j = 0; j < sd[i].nContacts_1; ++j) {
+      for (int k = 0; k < 3; ++k) {
+        const int f_c_index = Aici[i] + sd[i].Aci[1] + nd*j + k;
+        SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 8, 0, k, f_c_index, hhoverM );
+      }
+    }
+    for (int j = 0; j < 3; ++j) {
+      const int f_g_index = Aici[i] + sd[i].Aci[16] + j;
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 8, 0, j, f_g_index, hhoverM );
+    }
+  }
 
+  /*** Sub-block 17 */
+  for (int i = 0; i < 3; ++i) {
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 8, 17, i, i, -1.0 );
+  }
+
+  /*** Sub-block 18 (similar to sub-block 2) */
+  int n_joint_force = 0;
+  for (int i = 0; i < nf; ++i) {
+    pym_mf_named_t *mfn = &pymCfg->fiber[ i ].b;
+    if (mfn->mType != PMT_JOINT_MUSCLE) {
+      continue;
+    }
+
+    int org_local_mf_idx = -1;
+    int ins_local_mf_idx = -1;
+    for (int j = 0; j < pymCfg->body[ mfn->org ].b.nFiber; ++j) {
+      if (i == pymCfg->body[mfn->org].b.fiber[j]) {
+        org_local_mf_idx = j;
+        break;
+      }
+    }
+    for (int j = 0; j < pymCfg->body[ mfn->ins ].b.nFiber; ++j) {
+      if (i == pymCfg->body[mfn->ins].b.fiber[j]) {
+        ins_local_mf_idx = j;
+        break;
+      }
+    }
+    assert(org_local_mf_idx >= 0 && ins_local_mf_idx >= 0);
+
+    /* origin body */
+    for (int j = 0; j < nd; ++j) {
+      const int r = nd*n_joint_force + j;
+      const int c = Aici[ mfn->org ] + sd[ mfn->org ].Aci[9] + nd*org_local_mf_idx + j;
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 9, 0, r, c, -1);
+    }
+    ++n_joint_force;
+    /* insertion body */
+    for (int j = 0; j < nd; ++j) {
+      const int r = nd*n_joint_force + j;
+      const int c = Aici[ mfn->ins ] + sd[ mfn->ins ].Aci[9] + nd*ins_local_mf_idx + j;
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 9, 0, r, c, -1);
+    }
+    ++n_joint_force;
+  }
+  assert(n_joint_force == 2*nj);
+
+  /*** Sub-block 19 */
+  n_joint_force = 0;
+  for (int i = 0; i < nf; ++i) {
+    pym_mf_named_t *mfn = &pymCfg->fiber[ i ].b;
+    if (mfn->mType != PMT_JOINT_MUSCLE) {
+      continue;
+    }
+
+    typedef std::pair<int, double*> BodyAtt; // body index and attached point
+    BodyAtt ba[2];
+    ba[0].first = mfn->org;
+    ba[0].second = mfn->fibb_org;
+    ba[1].first = mfn->ins;
+    ba[1].second = mfn->fibb_ins;
+
+    for (int kk = 0; kk < 2; ++kk) {
+      // joint muscle 'mfn' attached to 'org' at its origin anchor point.
+      pym_rb_named_t *org = &pymCfg->body[ ba[kk].first ].b;
+      double R2sub[3][3];
+      for (int j = 0; j < 3; ++j)
+        TransformPoint(R2sub[j], sd[ba[kk].first].dWdchi_tensor[j], ba[kk].second);
+      double R2[6][4] = {
+        { 1, 0, 0, 0 },
+        { 0, 1, 0, 0 },
+        { 0, 0, 1, 0 },
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 },
+        { 0, 0, 0, 0 }
+      };
+
+      for (int j = 0; j < 3; ++j) {
+        for (int k = 0; k < 3; ++k) {
+          R2[3 + j][k] = R2sub[j][k];
+        }
+        R2[3 + j][3] = 0;
+      }
+
+      /*for (int j = 0; j < 6; ++j) {
+        for (int k = 0; k < 4; ++k) {
+          printf("%lf ", R2[j][k]);
+        }
+        printf("\n");
+      }*/
+
+      assert(nd == 6);
+      for (int j = 0; j < nd; ++j) {
+        for (int k = 0; k < 4; ++k) {
+          const int r = nd*n_joint_force + j;
+          const int c = 4*n_joint_force + k;
+          assert(0 <= r && r < Ari[ Asubrows ]);
+          assert(0 <= c && c < Aci[ Asubcols ]);
+          SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 9, 19, r, c, R2[j][k]);
+        }
+      }
+      ++n_joint_force;
+    }
+  }
+  assert(n_joint_force == 2*nj);
+
+  /*** sub-block 20 */
+  /* a pair of joint muscle forces acting on the both ends of a joint should summed to 0 */
+  for (int i = 0; i < nj; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19, 4*i + j, 8*i + j    , 1.0);
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19, 4*i + j, 8*i + j + 4, 1.0);
+    }
+  }
+
+  /*** sub-block 21 */
+  for (int i = 0; i < 2*nj; ++i) {
+    for (int j = 0; j < 4; ++j) {
+      SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 11, 19, j, 4*i + j, 1.0);
+    }
+  }
+  /*** sub-block 22 */
+  for (int i = 0; i < 4; ++i)
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 11, 21, i, i, -1.0);
 
   /* Finish: convert AMatrix_trip to column compressed format */
+  assert(AMatrix_trip->nnz <= nzmax);
   bod->bipMat		    = cholmod_triplet_to_sparse(AMatrix_trip, AMatrix_trip->nnz, cc);
   cholmod_free_triplet(&AMatrix_trip, cc);	/* not needed anymore */
   assert(bod->bipMat);
@@ -714,17 +852,24 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
       bipEta[ Ari[2] + i ] = GetMuscleFiberS(i, sd, pymCfg);
     }
   }
-  /* Eta sub-block 04 - d_disloc */
-  FOR_0(i, nj) {
-    const char	*anchorName = pymCfg->pymJa[ pymCfg->anchoredJoints[i].aAnchorIdxGbl ].name;
-    char	 iden[128];
-    ExtractAnchorIdentifier(iden, anchorName);
-    //printf("Name: %s (%s)\n", anchorName, iden);
-  }
   /* Eta sub-block 06 - p_{com,ref} */
   double	refCom[3];
   PymCalculateRefCom(refCom, pymCfg);
   memcpy(bipEta + Ari[6], refCom, sizeof(double)*3);
+
+  /* Eta sub-block 08 - q */
+  double refcom[3] = {0,}; /* reference COM */
+  for (int i = 0; i < nb; ++i) {
+    for (int j = 0; j < 3; ++j) {
+      refcom[j] += pymCfg->body[i].b.m * pymCfg->body[i].b.chi_ref[j];
+    }
+  }
+  for (int i = 0; i < 3; ++i) {
+    refcom[i] /= tot_mass;
+  }
+  for (int i = 0; i < 3; ++i) {
+    bipEta[ Ari[8] + i ] = -2*pymCfg->bipCom[i] + pymCfg->bipCom0[i] + refcom[i];
+  }
 
   bod->bipEta = bipEta;
 

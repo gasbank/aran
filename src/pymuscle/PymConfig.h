@@ -22,6 +22,7 @@ enum optimization_cost_terms {
   oct_joint_dislocation,
   oct_uniform_tension_cost,
   oct_uniform_actuation_cost,
+  oct_com_force_deviation_cost,
 
   oct_count
 };
@@ -48,7 +49,8 @@ struct pym_config_t {
   pym_anchored_joint_t	 anchoredJoints[MAX_NUM_ANCHORED_JOINTS];
   double		 curBipCom[3];
   /* simulated biped COM position; is part of opt variable */
-  double		 bipCom[3];	
+  double		 bipCom0[3];
+  double		 bipCom[3];
   double		 bipRefCom[3];	/* reference biped COM position */
   /* Convex hull output points (thread-unsafe) */
   Point_C		 chInput[1000];

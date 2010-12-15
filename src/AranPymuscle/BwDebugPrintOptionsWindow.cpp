@@ -22,6 +22,7 @@ BwDebugPrintOptionsWindow::BwDebugPrintOptionsWindow( int x, int y, int w, int h
   PYMADD("Active corner pnt", PDMTE_FBYF_ACTIVE_CORNER_POINTS);
   PYMADD("Step result summary", PDMTE_FBYF_STEP_RESULT_SUMMARY);
   PYMADD("Solution vector", PDMTE_FBYF_SOLUTION_VECTOR);
+  PYMADD("COM force deviation", PDMTE_FBYF_COM_FORCE_DEVIATION_REPORT);
 #undef PYMADD
 }
 
@@ -39,6 +40,7 @@ int BwDebugPrintOptionsWindow::handle( int eventType )
     update_debug_msg_stream(PDMTE_FBYF_ACTIVE_CORNER_POINTS, 4);
     update_debug_msg_stream(PDMTE_FBYF_STEP_RESULT_SUMMARY, 5);
     update_debug_msg_stream(PDMTE_FBYF_SOLUTION_VECTOR, 6);
+    update_debug_msg_stream(PDMTE_FBYF_COM_FORCE_DEVIATION_REPORT, 7);
   }
   return Fl_Check_Browser::handle(eventType);
 }

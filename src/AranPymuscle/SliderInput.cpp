@@ -11,7 +11,7 @@ void SliderInput::Slider_CB2()
   } else {
     recurse = 1;
     char s[128];
-    sprintf(s, "%.4lf", slider->value());
+    sprintf(s, "%.8lf", slider->value());
     // fprintf(stderr, "SPRINTF(%d) -> '%s'\n", (int)slider->value(), s);
     input->value(s);    // pass slider's value to input
     recurse = 0;
@@ -38,7 +38,7 @@ void SliderInput::Input_CB2()
     // fprintf(stderr, "SCANF('%s') -> %d\n", input->value(), val);
     val = slider->clamp(val);
     char s[128];
-    sprintf(s, "%.4lf", val);
+    sprintf(s, "%.8lf", val);
     input->value(s);
     slider->value(val);         // pass input's value to slider
     recurse = 0;
@@ -53,7 +53,7 @@ void SliderInput::Input_CB( Fl_Widget *w, void *data )
 
 SliderInput::SliderInput( int x, int y, int w, int h, const char *l/*=0*/ ) : Fl_Group(x,y,w,h,l)
 {
-  int in_w = 80;
+  int in_w = 100;
   int in_h = h;
 
   input  = new SliderInputFloatPart(this, x, y, in_w, in_h);

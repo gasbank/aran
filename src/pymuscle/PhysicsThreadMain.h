@@ -22,17 +22,12 @@ struct pym_physics_thread_context_t {
   double totalPureOptTime;
   int stop;
   double trunkExternalForce[3];
-  /* renderer-accessable memory area */
-  //pym_rb_t *renBody;
-  //pym_mf_t *renFiber;
-  double   bipCom[3];
 
   PRSGRAPH comZGraph;      /* z-axis of COM position graph */
   PRSGRAPH comDevGraph;    /* COM position deviation graph */
   PRSGRAPH actGraph;       /* Actuated muscle tension, actuation graph */
   PRSGRAPH ligGraph;       /* Ligament muscle tension, actuation graph */
   std::vector<PRSGRAPH> exprotGraph; /* body rotation graph */
-  //PRSGRAPH com_pos;
   pym_rb_statedep_t *sd;
 };
 

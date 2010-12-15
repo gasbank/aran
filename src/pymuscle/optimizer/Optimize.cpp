@@ -21,8 +21,6 @@
   "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
 #define MAX_NBODY (1024)
 
-void pym_exhaustive_solution_vector_info(const pym_opt_t &pymOpt);
-
 static int DevStatCompare(const void * a, const void * b)
 {
   deviation_stat_entry *at = (deviation_stat_entry *)a;
@@ -211,6 +209,7 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt)
   const pym_config_t *const pymCfg = pymOpt->pymCfg;
   const int nb = pymCfg->nBody;
   const int nf = pymCfg->nFiber;
+  const int nj = pymCfg->nJoint;
   int tauOffset;
   for (i = 0, tauOffset = 0; i < nb;
     tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++)
@@ -251,7 +250,7 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt)
       /*
       * TODO [TUNE] 'eps' >= |p_c_z|
       */
-      c[j] = pymCfg->opt_cost_coeffs[oct_contact_point_zpos_epsilon];
+      //c[j] = pymCfg->opt_cost_coeffs[oct_contact_point_zpos_epsilon];
     }
     /*
     * TODO [TUNE] Reference following coefficient
@@ -299,16 +298,33 @@ static void pym_optimize_cost_function(pym_opt_t *pymOpt)
     const int idx = bod->Aci[7] + i;
     c[ idx ] = pymCfg->opt_cost_coeffs[oct_joint_dislocation];
   }
+
+  c[ Aci[18] ] = pymCfg->opt_cost_coeffs[oct_com_force_deviation_cost];
+
+  /* eps_Fjoint*/
+  for (int i = 0; i < 2*nj; ++i)
+    c[ Aci[20] + i ] = 0.0;
+  /* eps E_Fjoint */
+  c[ Aci[22] ] = 0;
+  c[ Aci[23] ] = 0;
 }
 
 static void pym_optimize_rb_com(pym_opt_t *pymOpt)
 {
   int i, j, tauOffset;
   const int nb = pymOpt->pymCfg->nBody;
+  const int nd = 3 + pymOpt->pymCfg->nrp;
   const pym_rb_statedep_t *const sd = pymOpt->sd;
   for (i = 0, tauOffset = 0; i < nb;
     tauOffset += sd[i].Aci[ sd[i].Asubcols ], i++)
   {
+    for (int j = 0; j < nd; ++j) {
+      SET_FIXED(pymOpt, tauOffset + sd[i].Aci[16] + j, sd[i].f_g[j]);
+    }
+
+    // Cannot make big change between frames!
+    SET_RANGE( pymOpt, tauOffset + sd[i].Aci[13], 0, 0.1);
+
     /* chi_2_z: Z-axis of COM for each body should be nonnegative */
     //SET_NONNEGATIVE( pymOpt, tauOffset + sd[i].Aci[0] + 2 );
 
@@ -337,6 +353,7 @@ static void pym_optimize_biped_com(pym_opt_t *pymOpt)
   /* COM norm deviation constraint variable */
 
   /* TODO: Constraints related to bod->Aci[10] */
+  //SET_RANGE(pymOpt, bod->Aci[10], 0, 0.1);
 }
 
 static void pym_optimize_contact_force(pym_opt_t *pymOpt)
@@ -398,13 +415,9 @@ static void pym_optimize_contact_point(pym_opt_t *pymOpt)
     int nfixpoint = 0;
     /* p_c_2_z: next step CP z-pos */
     FOR_0(j, sd[i].nContacts_1) {
-      /* TODO: Inclined ground */
-      const double ctY = sd[i].contactsFix_1[j][1];
-      const double theta = pymCfg->slant;
-      const double z = -ctY*tan(theta);
-      assert(z == 0); /* Only flat ground implemented. */
       /* [TUNE] Non-penetration constraint */
       //SET_LOWER_BOUND( pymOpt, tauOffset + sd[i].Aci[3] + 4*j + 2, z );
+      //SET_UPPER_BOUND( pymOpt, tauOffset + sd[i].Aci[3] + 4*j + 2, 0.01 );
     }
     /*
     * TODO [TUNE] Constraints for fixing contact points
@@ -466,6 +479,8 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
 {
   int i, j;
   const pym_config_t *pymCfg = pymOpt->pymCfg;
+  const int nd = 3 + pymCfg->nrp;
+  const int nb = pymCfg->nBody;
   const int nf = pymCfg->nFiber;
   const pym_biped_eqconst_t *const bod = pymOpt->bod;
   const int *const Aci = bod->Aci;
@@ -477,7 +492,7 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
     i = Aci[1]+j;
     //SET_NONNEGATIVE(pymOpt, i);
 
-    //SET_RANGE(pymOpt, i, -15, 15);
+    //SET_RANGE(pymOpt, i, -150, 150);
     //        bkx[i] = MSK_BK_RA;
     //        blx[i] = -1000;
     //        bux[i] = +1000;
@@ -499,11 +514,34 @@ static void pym_optimize_muscle(pym_opt_t *pymOpt)
       double disloc_len_vel = (mf->disloc_len - mf->disloc_len0) / pymCfg->h;
       double k = 2000;
       double mass = pymCfg->body[mf->org].b.m;
-      printf("disloc_len_vel = %lf, TEN = %lf\n", disloc_len_vel, k * mf->disloc_len - 2*sqrt(mass*k)*disloc_len_vel);
-      SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len);
+      //printf("disloc_len_vel = %lf, TEN = %lf\n", disloc_len_vel, k * mf->disloc_len - 2*sqrt(mass*k)*disloc_len_vel);
+      //SET_FIXED(pymOpt, Aci[1] + j, 0);
+      //SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len);
       //SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len - 0.05*disloc_len_vel);
       //SET_FIXED(pymOpt, Aci[1] + j, k * mf->disloc_len - 0);
     }
+  }
+
+  for (int i = 0; i < nb; ++i) {
+    pym_rb_named_t *rbn = &pymCfg->body[i].b;
+    for (int j = 0; j < rbn->nFiber; ++j) {
+      pym_mf_named_t *mfn = &pymCfg->fiber[ rbn->fiber[j] ].b;
+      if (mfn->degenerated) {
+        for (int k = 0; k < nd; ++k) {
+          SET_FIXED(pymOpt, pymOpt->bod->Aici[i] + pymOpt->sd[i].Aci[9] + nd*j + k, 0);
+        }
+      }
+    }
+  }
+
+  // F_joint is a force vector. Fix homogeneous part to 0.
+  for (int i = 0; i < 2*pymCfg->nJoint; ++i) {
+    SET_FIXED(pymOpt, Aci[19] + 4*i + 3, 0);
+  }
+
+  // Testing. No help force
+  for (int i = 0; i < 4; ++i) {
+    SET_FIXED(pymOpt, Aci[21] + i, 0);
   }
 }
 
@@ -756,6 +794,7 @@ static void pym_optimize_mosek_cone_muscle
   * TODO [TUNE] Cone constraints for minimizing tension/actuation forces
   */
   const int nf = pymCfg->nFiber;
+  const int nj = pymCfg->nJoint;
   
   
   //const static int MAX_FIBER_COUNT = 4096;
@@ -814,6 +853,16 @@ static void pym_optimize_mosek_cone_muscle
     r = MSK_appendcone(task, MSK_CT_QUAD, 0.0, 2, ab);
     assert(r == MSK_RES_OK);
   }
+
+  // Joint muscle minimization cone
+  /*for (int i = 0; i < 2*nj; ++i)
+    AppendConeRange(task, Aci[20] + i, Aci[19] + 4*i, Aci[19] + 4*(i+1));*/
+
+
+  // E_Fjoint_xy eps
+  AppendConeRange(task, Aci[22], Aci[21], Aci[21]+2);
+  // E_Fjoint_z eps
+  AppendConeRange(task, Aci[23], Aci[21]+2, Aci[21]+3);
 }
 
 static void pym_optimize_mosek_cone_biped(const pym_opt_t *const pymOpt,
@@ -826,11 +875,16 @@ static void pym_optimize_mosek_cone_biped(const pym_opt_t *const pymOpt,
     Aci[10],                      // epsilon_com
     Aci[9],                     // delta p_{com,ref} (z-axis only)
     Aci[10]);
-  /* Torque-about-COM constraint cone */
+  /* COM force deviation */
   AppendConeRange(task,
-    Aci[12], /* epsilon_{tau,com} */
-    Aci[11], /* Torque-about-COM (tau_com) */
-    Aci[12]);
+    Aci[18],                      // epsilon_com
+    Aci[17],                     // delta p_{com,ref} (z-axis only)
+    Aci[18]);
+  ///* Torque-about-COM constraint cone */
+  //AppendConeRange(task,
+  //  Aci[12], /* epsilon_{tau,com} */
+  //  Aci[11], /* Torque-about-COM (tau_com) */
+  //  Aci[12]);
 }
 
 static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
@@ -840,7 +894,7 @@ static void pym_optimize_mosek_cone(const pym_opt_t *const pymOpt,
   pym_optimize_mosek_cone_contact_point(pymOpt, task);
   pym_optimize_mosek_cone_contact_force(pymOpt, task);
   pym_optimize_mosek_cone_anchored_joint(pymOpt, task);
-  //pym_optimize_mosek_cone_biped(pymOpt, task);
+  pym_optimize_mosek_cone_biped(pymOpt, task);
   pym_optimize_mosek_cone_muscle(pymOpt, task);
 }
 
@@ -988,13 +1042,30 @@ void PymConstructSupportPolygon(pym_config_t *pymCfg,
   int i, j;
   const int nb = pymCfg->nBody;
   pymCfg->chInputLen = 0;
-  FOR_0(i, nb) {
+
+  for (int i = 0; i < nb; ++i) {
+    pym_rb_named_t *rbn = &pymCfg->body[i].b;
     pym_rb_statedep_t *sdi = sd + i;
-    FOR_0(j, sdi->nContacts_1) {
-      pymCfg->chInput[ pymCfg->chInputLen ].x = sdi->contacts_1[ sdi->contactIndices_1[j] ][0];
-      pymCfg->chInput[ pymCfg->chInputLen ].y = sdi->contacts_1[ sdi->contactIndices_1[j] ][1];
-      ++pymCfg->chInputLen;
+
+    for (int j = 0; j < 8; ++j) {
+      double pcj_1_W[3], pcj_0_W[3], pcj_ref[3];
+      AffineTransformPoint(pcj_1_W, sdi->W_1, rbn->corners[j]);
+      AffineTransformPoint(pcj_0_W, sdi->W_0, rbn->corners[j]);
+      
+      double groundLevel = 0.1;
+      if (pcj_1_W[2] <= groundLevel) {
+        pymCfg->chInput[ pymCfg->chInputLen ].x = pcj_1_W[0];
+        pymCfg->chInput[ pymCfg->chInputLen ].y = pcj_1_W[1];
+        ++pymCfg->chInputLen;
+      }
     }
+
+
+    //FOR_0(j, sdi->nContacts_1) {
+    //  pymCfg->chInput[ pymCfg->chInputLen ].x = sdi->contacts_1[ sdi->contactIndices_1[j] ][0];
+    //  pymCfg->chInput[ pymCfg->chInputLen ].y = sdi->contacts_1[ sdi->contactIndices_1[j] ][1];
+    //  ++pymCfg->chInputLen;
+    //}
   }
   assert(pymCfg->chInputLen < 1000);
   if (pymCfg->chInputLen > 0) {
@@ -1026,16 +1097,14 @@ static void pym_analyze_rb_deviation_stat(const pym_opt_t *const pymOpt,
   {
     const double *chi_2 = xx + tauOffset;
     const pym_rb_named_t *rbn = &pymCfg->body[j].b;
-    double chi_1[6], chi_0[6], chi_r[6], chi_v[6];
-    double chi_d[6];
+    double chi_1[3+4], chi_r[3+4], chi_v[3+4];
+    double chi_d[3+4];
     int k;
     memcpy(chi_1    , rbn->p,       sizeof(double)*3);
-    memcpy(chi_1 + 3, rbn->q,       sizeof(double)*3);
-    memcpy(chi_0    , rbn->p0,      sizeof(double)*3);
-    memcpy(chi_0 + 3, rbn->q0,      sizeof(double)*3);
-    memcpy(chi_r    , rbn->chi_ref, sizeof(double)*6);
+    memcpy(chi_1 + 3, rbn->q,       sizeof(double)*4);
+    memcpy(chi_r    , rbn->chi_ref, sizeof(double)*7);
     memcpy(chi_v    , rbn->pd,      sizeof(double)*3);
-    memcpy(chi_v + 3, rbn->qd,      sizeof(double)*3);
+    memcpy(chi_v + 3, rbn->qd,      sizeof(double)*4);
 
     FOR_0(k, 6) {
       chi_d[k] = chi_2[k] - chi_r[k];
@@ -1090,8 +1159,6 @@ static void pym_update_rb_and_biped_com
       /* Update the current state of rigid bodies */
       SetRigidBodyChi_1(pymCfg->body + j, chi_2, pymCfg);
   }
-  /* Update COM of biped. This is part of opt. var. */
-  memcpy(pymCfg->bipCom, xx + bipEq->Aci[8], sizeof(double)*3);
 }
 
 static void pym_update_muscle
@@ -1242,6 +1309,54 @@ static void pym_analyze_cp_slip(pym_config_t *pymCfg,
   }
 }
 
+void pym_check_muscle_fiber_force( pym_opt_t *pymOpt ) 
+{
+  const int nb = pymOpt->pymCfg->nBody;
+  const int nd = 3 + pymOpt->pymCfg->nrp;
+  double tot_muscle_force[3] = {0,};
+  double tot_joint_muscle_force[3] = {0,};
+  for (int i = 0; i < nb; ++i) {
+    pym_rb_named_t *rbn = &pymOpt->pymCfg->body[i].b;
+    for (int j = 0; j < rbn->nFiber; ++j) {
+      pym_mf_named_t *mfn = &pymOpt->pymCfg->fiber[ rbn->fiber[j] ].b;
+      assert(mfn->mType != PMT_UNKNOWN);
+      if (mfn->mType != PMT_JOINT_MUSCLE) {
+        for (int k = 0; k < 3; ++k) {
+          tot_muscle_force[k] += pymOpt->xx[ pymOpt->bod->Aici[i] + pymOpt->sd[i].Aci[ 9 ] + nd*j + k ];
+        }
+      } else {
+        //printf("rbn->name = %s\n", rbn->name);
+        for (int k = 0; k < 3; ++k) {
+          tot_joint_muscle_force[k] += pymOpt->xx[ pymOpt->bod->Aici[i] + pymOpt->sd[i].Aci[ 9 ] + nd*j + k ];
+          //printf("%lf\n", pymOpt->xx[ pymOpt->bod->Aici[i] + pymOpt->sd[i].Aci[ 9 ] + nd*j + k ]);
+        }
+        //printf("-----****-----\n");
+      }
+    }
+  }
+  
+  /*for (int i = pymOpt->bod->Aci[19]; i < pymOpt->bod->Aci[20]; ++i) {
+    if ((i - pymOpt->bod->Aci[19])%4 == 0)
+      printf("......!!.....\n");
+    printf("%lf\n", pymOpt->xx[i]);
+  }*/
+
+  const double nrm = PymNorm(3, tot_muscle_force);
+  const double joint_nrm = PymNorm(3, tot_joint_muscle_force);
+  if (pymOpt->_solsta == MSK_SOL_STA_OPTIMAL || pymOpt->_solsta == MSK_SOL_STA_NEAR_OPTIMAL) {
+    assert(-1e-8 <= nrm && nrm <= 1e-8);
+    assert(-1e-8 <= joint_nrm && joint_nrm <= 1e-8);
+  }
+}
+
+void pym_analyze_com_force_deviation_stat( pym_opt_t * pymOpt, pym_biped_eqconst_t * bipEq, FILE * dmstreams[] ) 
+{
+  fprintf(dmstreams[PDMTE_FBYF_COM_FORCE_DEVIATION_REPORT], "COM force deviation: %lf %lf %lf\n",
+    pymOpt->xx [ bipEq->Aci[17] + 0 ],
+    pymOpt->xx [ bipEq->Aci[17] + 1 ],
+    pymOpt->xx [ bipEq->Aci[17] + 2 ]);
+}
+
 static void pym_analyze_and_update(pym_config_t *pymCfg,
   pym_opt_t *pymOpt,
   FILE *outputFile,
@@ -1255,8 +1370,12 @@ static void pym_analyze_and_update(pym_config_t *pymCfg,
   pym_update_muscle(pymCfg, pymOpt, bipEq);
   pym_analyze_anchored_joint_stat(pymCfg, pymOpt, bipEq, dmstreams);
   pym_analyze_biped_com_deviation_stat(pymOpt, bipEq, dmstreams);
+  pym_analyze_com_force_deviation_stat(pymOpt, bipEq, dmstreams);
   pym_copy_cp_and_cf(pymCfg, sd, xx);
   pym_analyze_cp_slip(pymCfg, sd, xx);
+  //pym_exhaustive_solution_vector_info(*pymOpt); //test
+  pym_check_muscle_fiber_force(pymOpt);
+  pym_update_com( pymCfg );
 }
 
 static void pym_print_opt_fail_log()
@@ -1426,9 +1545,15 @@ void pym_exhaustive_solution_vector_info(const pym_opt_t &pymOpt)
     {"eps_tau_com (...)", 1, 1},
     {"eps_ligact (ligament actuation epsilon)", 1, 1},
     {"eps_actact (actuated actuation epsilon)", 1, 1},
-    {"eps_T (tension epsilon)", 1, 1},
-    {"eps_u (actuation epsilon)", 1, 1},
-    {"f_TD (forces acting on degenerated muscles)", 1, 1}
+    {"eps_T (tension epsilon)", 1, pymCfg->nFiber},
+    {"eps_u (actuation epsilon)", 1, pymCfg->nFiber},
+    {"f_comfdev (difference between desired COM force and current COM force)", 3, 1},
+    {"eps_comfdev (f_comfdev epsilon)", 1, 1},
+    {"F_joint (Free force acting on anchored joints)", 4, 2*pymCfg->nJoint},
+    {"eps_Fjoint (eps F_joint)", 1, 2*pymCfg->nJoint},
+    {"E_Fjoint (Sum of all F_joint forces)", 4, 1},
+    {"eps_EFjoint (eps E_Fjointxy)", 1, 1},
+    {"eps_EFjoint (eps E_Fjointz)", 1, 1},
   };
   BOOST_STATIC_ASSERT( 1+sizeof(block_slices)/sizeof(block_slices[0]) == sizeof(pymOpt.bod->Aci)/sizeof(pymOpt.bod->Aci[0]) );
   const int nd = 3 + pymCfg->nrp;
@@ -1449,7 +1574,8 @@ void pym_exhaustive_solution_vector_info(const pym_opt_t &pymOpt)
     {"delta chi_prv (difference between the prev state)", nd, 1},
     {"eps_delta_chi_prv ('delta chi_prv' epsilon)", 1, 1},
     {"eps_p_z (contact point Z epsilon)", 1, RB_NP},
-    {"kappa (normal force compensation)", 1, RB_NP}
+    {"kappa (normal force compensation)", 1, RB_NP},
+    {"f_g (generalized normal force)", nd, 1}
   };
   BOOST_STATIC_ASSERT( 1+sizeof(A_block_slices)/sizeof(A_block_slices[0]) == sizeof(pymOpt.sd[0].Aci)/sizeof(pymOpt.sd[0].Aci[0]) );
 

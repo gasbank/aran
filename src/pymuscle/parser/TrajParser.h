@@ -10,7 +10,8 @@ struct pym_traj_t {
   int corresMapIndex[MAX_CORRESMAP]; //[pymCfg->nBody];
   char corresMap[MAX_CORRESMAP][2][128];
   int nCorresMap;
-  double *trajData;
+  double *trajData; // reference trajectories for all bodies
+  double *comTrajData; // reference COM computed from trajData AND "mass distribution of biped"
 };
 
 struct pym_config_t;

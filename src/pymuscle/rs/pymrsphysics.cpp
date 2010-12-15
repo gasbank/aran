@@ -21,6 +21,7 @@
 #include "PhysicsThreadMain.h"
 #include "Optimize.h"
 #include "DebugPrintDef.h"
+#include "PymBiped.h"
 
 #include "pymrscore.h"
 #include "pymrsphysics.h"
@@ -56,21 +57,27 @@ int PymRsResetPhysics(pym_rs_t *rs) {
   pym_config_t			*pymCfg	= phyCon->pymCfg;
   //  pthread_mutex_lock(&main_mutex);
   printf("Resetting the physics states...\n");
-  if (phyCon->pymTraj->trajData)
+  if (phyCon->pymTraj->trajData) {
     PymSetInitialStateUsingTrajectory(pymCfg, phyCon->pymTraj);
-  else
+    pym_set_reference_frame(rs, 0);
+  } else {
     PymSetInitialStateUsingSimconf(pymCfg);
+  }
   //  pthread_mutex_unlock(&main_mutex);
   pymCfg->prevTotContacts = 0;
   pymCfg->curTotContacts = 0;
   int j;
+  FOR_0(j, pymCfg->nBody)
+    pymCfg->body[j].b.nContacts_1 = 0;
   FOR_0(j, pymCfg->nFiber)
     pymCfg->fiber[j].b.T = 0;
+
+  pym_update_com(pymCfg);
+  pym_reset_com0(pymCfg);
   return 0;
 }
 
 int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
-  /* Function argument 'i' is the current frame. */
   pym_physics_thread_context_t	*phyCon		= &rs->phyCon;
   pym_config_t			*pymCfg		= phyCon->pymCfg;
   pym_cmdline_options_t		*cmdopt		= phyCon->cmdopt;
@@ -85,7 +92,7 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
   pym_rb_named_t *rbnTrunk = 0;
   FOR_0(j, pymCfg->nBody) {
     pym_rb_named_t *rbn = &pymCfg->body[j].b;
-    if (strcmp(rbn->name, "upper_box") == 0) {
+    if (strcmp(rbn->name, "trunk") == 0) {
       rbnTrunk = rbn;
     }
   }
@@ -101,20 +108,6 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
     return -2;
   }
 
-  /* Set reference */
-  if (cmdopt->trajconf && trajData) {
-    FOR_0(j, pymCfg->nBody) {
-      const double *const ref =
-        trajData + (fidx+2)*nBlenderBody*6 + corresMapIndex[j]*6;
-      //printf("pymCfg address : %p\n", pymCfg);
-      //printf("%p -- ", &pymCfg->body[j].b.chi_ref[0]);
-      for (k = 0; k < 6; ++k) {
-        pymCfg->body[j].b.chi_ref[k] = ref[k];
-	      //printf("%e ", ref[k]);
-      }
-      //printf("\n");
-    }
-  }
   /* Compute current step simulated biped COM */
   /* Compute next step reference COM */
   double curSimCom[3] = {0,};
@@ -194,8 +187,6 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
     PrsGraphPushBackTo(phyCon->exprotGraph[i], 0, th);
   }
 
-  /* Simulated biped COM position */
-  memcpy(phyCon->bipCom,    pymCfg->bipCom,    sizeof(double)*3);
   /* Reference biped COM position (note that pymCfg, not phyCon!) */
   memcpy(pymCfg->bipRefCom, refCom, sizeof(double)*3);
 
@@ -220,4 +211,27 @@ int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg) {
   strcat(result_msg, step_result_summary);
   phyCon->totalPureOptTime += pureOptTime;
   return 0;
+}
+
+void pym_set_reference_frame( pym_rs_t *rs, int f )
+{
+  pym_physics_thread_context_t	*phyCon		= &rs->phyCon;
+  pym_config_t			*pymCfg		= phyCon->pymCfg;
+  pym_cmdline_options_t		*cmdopt		= phyCon->cmdopt;
+  const int			 nBlenderBody   = phyCon->pymTraj->nBlenderBody;
+  const int *const		 corresMapIndex = phyCon->pymTraj->corresMapIndex;
+  const double *const		 trajData       = phyCon->pymTraj->trajData;
+  const int nd = 6;
+  /* Set reference */
+  if (cmdopt->trajconf && trajData) {
+    for (int j = 0; j < pymCfg->nBody; ++j) {
+      const double *const ref =
+        trajData + (f+0)*nBlenderBody*nd + corresMapIndex[j]*nd;
+      for (int k = 0; k < 6; ++k) {
+        pymCfg->body[j].b.chi_ref[k] = ref[k];
+      }
+    }
+  } else {
+    assert(!"Reference frame data not prepared or loaded.");
+  }
 }

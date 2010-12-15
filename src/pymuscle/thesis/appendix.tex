@@ -3,7 +3,7 @@
 \usepackage{color}
 \usepackage{amsmath}
 \usepackage{graphicx}
-%\usepackage[margin=1.0cm]{geometry}
+\usepackage[margin=1.5cm]{geometry}
 \usepackage{pdflscape}
 \usepackage{hyperref}
 \usepackage{multirow}
@@ -20,39 +20,6 @@
 \begin{document}
 
 %%%%%%%%% TITLE
-\title{A Biomechanical Approach to Biped Dynamics}
-
-\author{Geoyeob Kim\\
-Computer Graphics Lab., KAIST
-}
-\date{2010}
-\maketitle
-
-\pagebreak
-
-\pagenumbering{roman}
-\setcounter{page}{1}
-\subsection*{Abstract}
-\addcontentsline{toc}{subsection}{Abstract}
-\pagebreak
-
-
-\addcontentsline{toc}{subsection}{Contents}
-\tableofcontents
-\pagebreak
-
-
-\addcontentsline{toc}{subsection}{List of figures}
-\listoffigures 	% to produce list of figures
-\pagebreak
-
-\addcontentsline{toc}{subsection}{List of tables}
-\listoftables
-\pagebreak
-
-\pagenumbering{arabic}
-\setcounter{page}{1}
-
 
 
 \section{Appendix}
@@ -842,46 +809,56 @@ c_2               & \equiv \mathbf{M}/h^2(2\chi^{(l)}-\chi^{(l-1)}) - C + f_g
 
 \begin{landscape}
 \subsection{Multiple rigid bodies connected with multiple fibers}
-\[Version 100\]
+\[Version 200\]
 The matrix-vector notation for equility constraints:
 \begin{equation}\notag
 \bordermatrix{
-                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}     &  \scriptstyle{8 : 3} &  \scriptstyle{9:3} & \scriptstyle{10:1}  &  \scriptstyle{11:3}  & \scriptstyle{12:1}  \cr
-\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
-\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
-\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                     \cr
-\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                        &                      &                    &                     &                      &                     \cr
-\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{1}                            &                      &                    &                     &                      &                     \cr
-\scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    &                     &                      &                     \cr
-\scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}       &                     &                      &                     \cr
-\scriptstyle{7 : 3 }                    & \mathbf{G}                   &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     & \mathbf{-1}          &
+                                        & \scriptstyle{0      }        &   \scriptstyle{1 : |\mathcal{M}|}           &  \scriptstyle{2 : |\mathcal{M}|}           & \scriptstyle{3 : |\mathcal{M}|}            &  \scriptstyle{4 : 1}    & \scriptstyle{5 : 1}    &  \scriptstyle{6:4| \mathcal{J} | }  &  \scriptstyle{7 : | \mathcal{J} |}     &  \scriptstyle{8 : 3} &  \scriptstyle{9:3} & \scriptstyle{10:1}  &  \scriptstyle{11:3}  & \scriptstyle{12:1} & \scriptstyle{13:1}& \scriptstyle{14:1}& \scriptstyle{15:|\mathcal{M}|}& \scriptstyle{16:|\mathcal{M}|}& \scriptstyle{17:3}& \scriptstyle{18:1} \cr
+\scriptstyle{0      }                   &\mathbf{A}                    &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{1 : 2n_d|\mathcal{M}|}     &\mathbf{E}                    &   \mathbf{R}                                &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{2 : |\mathcal{M}|}         &                              &   \mathbf{K}_{11}                           &  \mathbf{K}_{12}                           & \mathbf{K}_{13}                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{3 : 4| \mathcal{J} | }     &\mathbf{D}                    &                                             &                                            &                                            &                         &                        &  -\mathbf{1}                        &                                        &                      &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{4 : | \mathcal{J} | }      &                              &                                             &                                            &                                            &                         &                        &                                     &  \mathbf{0}                            &                      &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{5 : 3 }                    &  \mathbf{A}_\text{com}       &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{-1} M   &                    &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{6 : 3 }                    &                              &                                             &                                            &                                            &                         &                        &                                     &                                        &      \mathbf{1}      &  \mathbf{-1}       &                     &                      &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{7 : 3 }                    & \mathbf{G}                   &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     & \mathbf{-1}          &                    &                   &                   &                               &                               &                   &                    \cr
+\scriptstyle{8 : 3 }                    & \mathbf{E}_2                 &                                             &                                            &                                            &                         &                        &                                     &                                        &                      &                    &                     &                      &                    &                   &                   &                               &                               &\mathbf{-1}        &                    \cr
 }
-\left(\begin{array}{c}
-\tau                        \\
-T                           \\
-u                           \\
-x_r                         \\
-\epsilon_\text{lig}         \\
-\epsilon_\text{act}         \\
-d_A                         \\
-\epsilon_d                  \\
-p_\text{com}^{(l+1)}        \\
-\Delta p_{\text{com},ref}   \\
-\epsilon_{\text{com}}       \\
-\tau_{com}                  \\
-\epsilon_{\tau,com}
-\end{array}\right)
+\bordermatrix{
+                 &                             \cr
+\scriptstyle{ 0} & \tau                        \cr
+\scriptstyle{ 1} & T                           \cr
+\scriptstyle{ 2} & u                           \cr
+\scriptstyle{ 3} & x_r                         \cr
+\scriptstyle{ 4} & \epsilon_\text{ligten}      \cr
+\scriptstyle{ 5} & \epsilon_\text{actten}      \cr
+\scriptstyle{ 6} & d_A                         \cr
+\scriptstyle{ 7} & \epsilon_d                  \cr
+\scriptstyle{ 8} & p_\text{com}^{(l+1)}        \cr
+\scriptstyle{ 9} & \Delta p_{\text{com,ref}}   \cr
+\scriptstyle{10} & \epsilon_{\text{com}}       \cr
+\scriptstyle{11} & \tau_{com}                  \cr
+\scriptstyle{12} & \epsilon_{\tau,\text{com}}  \cr
+\scriptstyle{13} & \epsilon_\text{ligact}      \cr
+\scriptstyle{14} & \epsilon_\text{actact}      \cr
+\scriptstyle{15} & \epsilon_T                  \cr
+\scriptstyle{16} & \epsilon_u                  \cr
+\scriptstyle{17} & f_\text{comfdev}            \cr
+\scriptstyle{18} & \epsilon_\text{comfdev}     \cr
+}
 =
-\left( \begin{array}{c}
-\eta                        \\
-\vec{0}                     \\
-s                           \\
-\vec{0}                     \\
-d_\text{disloc}             \\
-\vec{0}                     \\
-p_{\text{com},ref}^{(l+1)}  \\
-\vec{0}
-\end{array}\right)
+\bordermatrix{
+                 &                             \cr
+\scriptstyle{ 0} & \eta                        \cr
+\scriptstyle{ 1} & \vec{0}                     \cr
+\scriptstyle{ 2} & s                           \cr
+\scriptstyle{ 3} & \vec{0}                     \cr
+\scriptstyle{ 4} & \vec{0}                     \cr
+\scriptstyle{ 5} & \vec{0}                     \cr
+\scriptstyle{ 6} & p_\text{com,ref}^{(l+1)}    \cr
+\scriptstyle{ 7} & \vec{0}                     \cr
+\scriptstyle{ 8} & q                           \cr
+}
 \end{equation}
 \begin{equation}\notag
 \tau \equiv (\tau_i)^\text{re}_{i \in \mathcal{B}}, \quad
@@ -925,64 +902,69 @@ x_{rl,j} \preceq x_{r,j} \preceq x_{ru,j} \quad \forall j\in \mathcal{M}
 \epsilon_{d,i} \geq \| d_{A,i} \| \quad \forall i \in \mathcal{J}
 \end{equation}
 
-\[Version 100\]
+\[Version 200\]
 \noindent The equility constraints $\mathbf{A}_i \tau_i = \eta_i \quad \forall i \in \mathcal{B}$ :
 
 Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \emph{i.e.} $\mathcal{P}(i)$, $\mathcal{M}(i)$ and $\mathcal{A}(i)$, respectively.
 \begin{equation}\notag
-\mathbf{A}_i \equiv
+\mathbf{A}_i \tau_i
+\equiv
 \bordermatrix{
-                                    &    \scriptstyle{0 : n_d}                      &              \scriptstyle{1 : n_d |\mathcal{P}|}          &        \scriptstyle{2 : 5 |\mathcal{P}|}       &  \scriptstyle{3 : 4 |\mathcal{P}|}   & \scriptstyle{4 : 4|\mathcal{P}|}    &   \scriptstyle{5 : |\mathcal{P}| }  & \scriptstyle{6 : |\mathcal{P}| }  & \scriptstyle{7 : n_d}  &   \scriptstyle{8 : 1 } & \scriptstyle{9 : n_d |\mathcal{M}| }             & \scriptstyle{10: 4 |\mathcal{A}| }    &  \scriptstyle{11:1}        & \scriptstyle{12:n_d}   & \scriptstyle{13:1}  \cr
-\scriptstyle{0:n_d}                 &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                &                                      &                                     &                                     &                                   &                        &                        & (-\mathbf{1})_{j \in \mathcal{M}}^\text{ce}      &                                       &                                       &                        &                      \cr
-\scriptstyle{1:n_d |\mathcal{P}|}   &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  &                                       &                                 &                        &                       \cr
-\scriptstyle{2:4 |\mathcal{P}|}     &                                               &                                                           &                                                &  \mathbf{1}                          &  -\mathbf{1}                        &                                     &                                   &                        &                        &                                                  &                                       &                          &                         &                        \cr
-\scriptstyle{3:  |\mathcal{P}|}     &                                               &                                                           &(\mathbf{C}_\mu)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     & -\mathbf{1}                       &                        &                        &                                                  &                                       &                                 &                        &                        \cr
-\scriptstyle{4: 4 |\mathcal{P}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                &  -\mathbf{1}                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                                &                        &                         \cr
-\scriptstyle{5: n_d}                &  \mathbf{1}                                   &                                                           &                                                &                                      &                                     &                                     &                                   & -\mathbf{1}            &                        &                                                  &                                       &                          &                        &                          \cr
-\scriptstyle{6: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_n)_{j \in \mathcal{P}}^\text{de}  &                                      &                                     &                                     &                                   &                        &                        &                                                  &                                       &                                &                         &                          \cr
-\scriptstyle{7: 4 |\mathcal{A}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{A}}^\text{re} &                                                           &                                                &                                      &                                     &                                     &                                   &                        &                        &                                                  &  -\mathbf{1}                          &                                &                         &                         \cr
-\scriptstyle{8: n_d}                &          \mathbf{1}                           &                                                         &                                             &                                     &                                        &                                     &                                 &                         &                          &                                              &                                          &                             &       -\mathbf{1}       &
+                                     &    \scriptstyle{0 : n_d}                      &              \scriptstyle{1 : n_d |\mathcal{P}|}          &        \scriptstyle{2 : 5 |\mathcal{P}|}               &  \scriptstyle{3 : 4 |\mathcal{P}|}                      & \scriptstyle{4 : 4|\mathcal{P}|}    &   \scriptstyle{5 : |\mathcal{P}| }  & \scriptstyle{6 : |\mathcal{P}| }  & \scriptstyle{7 : n_d}  &   \scriptstyle{8 : 1 } & \scriptstyle{9 : n_d |\mathcal{M}| }             & \scriptstyle{10: 4 |\mathcal{A}| }    &  \scriptstyle{11:1}        & \scriptstyle{12:n_d}   & \scriptstyle{13:1}   & \scriptstyle{14:|\mathcal{P}|}  & \scriptstyle{15:|\mathcal{P}|}   &  \scriptstyle{16:n_d}    \cr
+\scriptstyle{ 0:n_d}                 &  \mathbf{M}/h^2                               & (-\mathbf{1})_{j \in \mathcal{P}}^\text{ce}               &                                                        &                                                         &                                     &                                     &                                   &                        &                        & (-\mathbf{1})_{j \in \mathcal{M}}^\text{ce}      &                                       &                            &                        &                      &                                 &                                  &      \mathbf{-1}         \cr
+\scriptstyle{ 1:n_d |\mathcal{P}|}   &                                               &  -\mathbf{1}                                              &  (\mathbf{Q}_j)_{j \in \mathcal{P}}^\text{de}          &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 2:4 |\mathcal{P}|}     &                                               &                                                           &                                                        &  \mathbf{1}                                             &  -\mathbf{1}                        &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 3:  |\mathcal{P}|}     &                                               &                                                           &(\mathbf{C}_\mu)_{j \in \mathcal{P}}^\text{de}          &                                                         &                                     &                                     & -\mathbf{1}                       &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 4: 4 |\mathcal{P}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{P}}^\text{re} &                                                           &                                                        &  -\mathbf{1}                                            &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 5: n_d}                &  \mathbf{1}                                   &                                                           &                                                        &                                                         &                                     &                                     &                                   & -\mathbf{1}            &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 6: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_n)_{j \in \mathcal{P}}^\text{de}          &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 7: 4 |\mathcal{A}|}    &  (\mathbf{Z}_j)_{j \in \mathcal{A}}^\text{re} &                                                           &                                                        &                                                         &                                     &                                     &                                   &                        &                        &                                                  &  -\mathbf{1}                          &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{ 8: n_d}                &          \mathbf{1}                           &                                                           &                                                        &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &       -\mathbf{1}      &                      &                                 &                                  &                          \cr
+\scriptstyle{ 9: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_\text{ns})_{j \in \mathcal{P}}^\text{de}  & (\mathbf{C}_\text{ns2})_{j \in \mathcal{P}}^\text{de}   &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &   -\mathbf{1}                    &                          \cr
+\scriptstyle{10: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_\text{tfx})_{j \in \mathcal{P}}^\text{de} &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{11: |\mathcal{P}|}      &                                               &                                                           &  (\mathbf{C}_\text{tfy})_{j \in \mathcal{P}}^\text{de} &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+\scriptstyle{12: 3|\mathcal{D}|}     &                                               &                                                           &                                                        &                                                         &                                     &                                     &                                   &                        &                        &                                                  &                                       &                            &                        &                      &                                 &                                  &                          \cr
+}
+\bordermatrix {
+                 &                                     \cr
+\scriptstyle{0}  &   \chi^{(l+1)}_i                    \cr
+\scriptstyle{1}  &   f_{c,i}                           \cr
+\scriptstyle{2}  &   c_{c,i}                           \cr
+\scriptstyle{3}  &   \tilde{p}^{(l+1)}_{c,i}           \cr
+\scriptstyle{4}  &   \Delta \tilde{p}_{c,i}            \cr
+\scriptstyle{5}  &   \epsilon_{c,i}                    \cr
+\scriptstyle{6}  &   \mu c_{n,i}                       \cr
+\scriptstyle{7}  &   \Delta\chi_{i,\text{ref}}         \cr
+\scriptstyle{8}  &   \epsilon_{\Delta,i,\text{ref}}    \cr
+\scriptstyle{9}  &   f_{T,i}                           \cr
+\scriptstyle{10} &   \tilde{p}^{(l+1)}_{A,i}           \cr
+\scriptstyle{11} &   \epsilon_{\text{rot}}             \cr
+\scriptstyle{12} &   \Delta\chi_{i,\text{prv}}         \cr
+\scriptstyle{13} &   \epsilon_{\Delta,i,\text{prv}}    \cr
+\scriptstyle{14} &   \epsilon_{p,z}                    \cr
+\scriptstyle{15} &   \kappa_\text{compen}              \cr
+\scriptstyle{16} &   f_g                               \cr
 }
 \end{equation}
 
 \begin{equation}\notag
-\tau_i \equiv
-\bordermatrix {
-                &                                     \cr
-\scriptstyle{0} &  \chi^{(l+1)}_i                     \cr
-\scriptstyle{1} &   f_{c,i}                           \cr
-\scriptstyle{2} &   c_{c,i}                           \cr
-\scriptstyle{3} &   \tilde{p}^{(l+1)}_{c,i}           \cr
-\scriptstyle{4} &   \Delta \tilde{p}_{c,i}            \cr
-\scriptstyle{5} &   \epsilon_{c,i}                    \cr
-\scriptstyle{6} &   \mu c_{n,i}                    \cr
-\scriptstyle{7} &   \Delta\chi_{i,ref}                \cr
-\scriptstyle{8} &   \epsilon_{\Delta,i,ref}           \cr
-\scriptstyle{9} &   f_{T,i}                           \cr
-\scriptstyle{10}&   \tilde{p}^{(l+1)}_{A,i}           \cr
-\scriptstyle{11}&   \epsilon_{\text{rot}}             \cr
-\scriptstyle{12}&   \Delta\chi_{i,prv}               \cr
-\scriptstyle{13} &   \epsilon_{\Delta,i,prv}          \cr
-\scriptstyle{14} &   \epsilon_{p,z}          \cr
-\scriptstyle{15} &   \kappa_{compen}
-}
-, \quad
 \eta_i \equiv
 \bordermatrix {
-                &                                              \cr
-\scriptstyle{0} &   c_{2,i}                                    \cr
-\scriptstyle{1} &   0                                          \cr
-\scriptstyle{2} &   p_{cfix, i}^{(l)}                          \cr
-\scriptstyle{3} &   0                                          \cr
-\scriptstyle{4} &   (-V_{i,j})_{j \in \mathcal{P}}^\text{re}   \cr
-\scriptstyle{5} &   \chi^{(l)}_{i,ref}                         \cr
-\scriptstyle{6} &   0                                          \cr
-\scriptstyle{7} &   (-V_{i,j})_{j \in \mathcal{A}}^\text{re}      \cr
-\scriptstyle{8} &   \chi^{(l)}_{i} \cr
-\scriptstyle{9} &   ns \cr
-\scriptstyle{10} &  0 \cr
-\scriptstyle{11} &  0 \cr
+                 &                                              \cr
+\scriptstyle{0}  &   c_{2,i}                                    \cr
+\scriptstyle{1}  &   0                                          \cr
+\scriptstyle{2}  &   p_{cfix, i}^{(l)}                          \cr
+\scriptstyle{3}  &   0                                          \cr
+\scriptstyle{4}  &   (-V_{i,j})_{j \in \mathcal{P}}^\text{re}   \cr
+\scriptstyle{5}  &   \chi^{(l)}_{i,ref}                         \cr
+\scriptstyle{6}  &   0                                          \cr
+\scriptstyle{7}  &   (-V_{i,j})_{j \in \mathcal{A}}^\text{re}   \cr
+\scriptstyle{8}  &   \chi^{(l)}_{i}                             \cr
+\scriptstyle{9}  &   ns                                         \cr
+\scriptstyle{10} &  0                                           \cr
+\scriptstyle{11} &  0                                           \cr
+\scriptstyle{12} &  0                                           \cr
 }
 \end{equation}
 
@@ -991,13 +973,14 @@ Here $\mathcal{P}$, $\mathcal{M}$ and $\mathcal{A}$ are specific for body $i$,
 \centering
 \begin{tabular}{ c l }
 \hline
-Set              & Description                  \\
+Set              & Description                                                \\
 \hline
-$\mathcal{B}$    & rigid bodies                 \\
-$\mathcal{M}$    & muscle fibers                \\
-$\mathcal{A}$    & anchor points                \\
-$\mathcal{J}$    & anchored joints              \\
-$\mathcal{P}$    & contact points               \\
+$\mathcal{B}$    & rigid bodies                                               \\
+$\mathcal{M}$    & muscle fibers                                              \\
+$\mathcal{A}$    & anchor points                                              \\
+$\mathcal{J}$    & anchored joints                                            \\
+$\mathcal{P}$    & contact points                                             \\
+$\mathcal{D}$    & degenerated muscle fibers ($\mathcal{D} \in \mathcal{M}$)  \\
 \hline
 \end{tabular}
 \end{table}
@@ -1074,11 +1057,4 @@ c_{c,1} \\ \vdots \\ c_{c,|\mathcal{P}|} \\
 
 \end{landscape}
 
-
-\pagebreak
-
-
-\bibliographystyle{plain}
-\bibliography{muscle}
-\addcontentsline{toc}{section}{References}
 \end{document}

@@ -12,7 +12,7 @@
 #define M_PI (3.1415926535897932384626433832795029)
 #endif
 
-static const double SPRING_K = 2000.0; /* Ground spring constant (penalty method) */
+static const double SPRING_K = 100000.0; /* Ground spring constant (penalty method) */
 
 
 std::ostream &operator << (std::ostream &s, const pym_rb_t &rb) {
@@ -27,23 +27,26 @@ std::ostream &operator << (std::ostream &s, const pym_rb_t &rb) {
   return s;
 }
 
-void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+3],
+void SetRigidBodyChi_1(pym_rb_t *rb, const double Chi_1[3+4],
 		       const pym_config_t *const pymCfg) {
   pym_rb_named_t *rbn = &rb->b;
   assert(rbn->rotParam == RP_EXP);
   int i, j;
+  double p0[3], q0[4];
   FOR_0(i, 3) {
-    rbn->p0[i] = rbn->p[i];
+    p0[i] = rbn->p[i];
     rbn->p[i]  = Chi_1[i];
   }
-  FOR_0(i, 3) {
-    rbn->q0[i] = rbn->q[i];
+  FOR_0(i, 4) {
+    q0[i] = rbn->q[i];
     rbn->q[i]  = Chi_1[i+3];
   }
   /* update discrete velocity based on current and previous step */
   FOR_0(j, 3) {
-    rbn->pd[j] = (rbn->p[j] - rbn->p0[j]) / pymCfg->h;
-    rbn->qd[j] = (rbn->q[j] - rbn->q0[j]) / pymCfg->h;
+    rbn->pd[j] = (rbn->p[j] - p0[j]) / pymCfg->h;
+  }
+  FOR_0(j, 4) {
+    rbn->qd[j] = (rbn->q[j] - q0[j]) / pymCfg->h;
   }
 }
 
@@ -62,26 +65,27 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   nzmax += 3+4*4;     /* Subblock 01 : M/h^2 */
   nzmax += nd*np;     /* Subblock 02 : (-1)^ce_{j in P} */
   nzmax += nd*nmi;    /* Subblock 03 : (-1)^ce_{j in M} */
-  nzmax += nd*np;     /* Subblock 04 : -1 */
-  nzmax += (nd*5)*np; /* Subblock 05 : (Q_j)^de_{j in P} */
-  nzmax += 4*np;      /* Subblock 06 : 1 */
+  nzmax += nd;        /* Subblock 04 : (-1) */
+  nzmax += nd*np;     /* Subblock 05 : -1 */
+  nzmax += (nd*5)*np; /* Subblock 06 : (Q_j)^de_{j in P} */
   nzmax += 4*np;      /* Subblock 07 : 1 */
-  nzmax += np;        /* Subblock 08 : (c_1)^de_{j in P} */
-  nzmax += np;        /* Subblock 09 :-1 */
-  nzmax += (4*nd)*np; /* Subblock 10 : (Z_j)^re_{j in P} */
-  nzmax += 4*np;      /* Subblock 11 :-1 */
-  nzmax += nd;        /* Subblock 12 : 1 */
+  nzmax += 4*np;      /* Subblock 08 : 1 */
+  nzmax += np;        /* Subblock 09 : (c_1)^de_{j in P} */
+  nzmax += np;        /* Subblock 10 :-1 */
+  nzmax += (4*nd)*np; /* Subblock 11 : (Z_j)^re_{j in P} */
+  nzmax += 4*np;      /* Subblock 12 :-1 */
   nzmax += nd;        /* Subblock 13 : 1 */
-  nzmax += 3*np;      /* Subblock 14 : (C_n)^de_{j in P} */
-  nzmax += (4*nd)*na; /* Subblock 15 : (Z_j)^re_{j in A} */
-  nzmax += 4*na;      /* Subblock 16 :-1 */
-  nzmax += nd;        /* Subblock 17 : 1 */
-  nzmax += nd;        /* Subblock 18 :-1 */
-  nzmax += np;        /* Subblock 19 : (C_ns)^de_{j in P} */
-  nzmax += np;        /* Subblock 20 : (C_ns2)^de_{j in P} */
-  nzmax += np;        /* Subblock 21 : -1 */
-  nzmax += np;        /* Subblock 22 : (C_tfx)^de_{j in P} */
-  nzmax += np;        /* Subblock 23 : (C_tfy)^de_{j in P} */
+  nzmax += nd;        /* Subblock 14 : 1 */
+  nzmax += 3*np;      /* Subblock 15 : (C_n)^de_{j in P} */
+  nzmax += (4*nd)*na; /* Subblock 16 : (Z_j)^re_{j in A} */
+  nzmax += 4*na;      /* Subblock 17 :-1 */
+  nzmax += nd;        /* Subblock 18 : 1 */
+  nzmax += nd;        /* Subblock 19 :-1 */
+  nzmax += np;        /* Subblock 20 : (C_ns)^de_{j in P} */
+  nzmax += np;        /* Subblock 21 : (C_ns2)^de_{j in P} */
+  nzmax += np;        /* Subblock 22 : -1 */
+  nzmax += np;        /* Subblock 23 : (C_tfx)^de_{j in P} */
+  nzmax += np;        /* Subblock 24 : (C_tfy)^de_{j in P} */
   //    printf("    A matrix body name           : %s\n", rbn->name);
   //    printf("    A matrix constants (np)      : %d\n", np);
   //    printf("    A matrix constants (nmi)     : %d\n", nmi);
@@ -95,7 +99,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   int i, j;
   const double h = pymCfg->h;
   const double mu = pymCfg->mu;
-  /* Sub-block 01 */
+  /* Sub-block 01 : M/(h*h) */
   for (i=0;i<3;++i) {
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 0, i, i,
 			     sd->M[i][i] / (h*h));
@@ -104,16 +108,19 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
 			       sd->M[i+3][j+3] / (h*h));
     }
   }
-  /* Sub-block 02 */
+  /* Sub-block 02 : -1 */
   for (i=0;i<nd*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 1, i%nd, i, -1);
-  /* Sub-block 03 */
+  /* Sub-block 03 : -1 */
   for (i=0;i<nd*nmi;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 9, i%nd, i, -1);
-  /* Sub-block 04 */
+  /* Sub-block 04  : -1 */
+  for (i=0;i<nd;++i)
+    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 16, i, i, -1);
+  /* Sub-block 05 : -1 */
   for (i=0;i<nd*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 1, 1, i, i, -1);
-  /* Sub-block 05 */
+  /* Sub-block 06 : Q_j */
   FOR_0(j, np) {
     cholmod_sparse *Qj = sd->Q[j];
     cholmod_triplet *Qj_trip = cholmod_sparse_to_triplet(Qj, cc);
@@ -129,13 +136,13 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
     }
     cholmod_free_triplet(&Qj_trip, cc);
   }
-  /* Sub-block 06 */
+  /* Sub-block 07 : 1 */
   for (i=0;i<4*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 2, 3, i, i, 1);
-  /* Sub-block 07 */
+  /* Sub-block 08 : -1 */
   for (i=0;i<4*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 2, 4, i, i, -1);
-  /* Sub-block 08 */
+  /* Sub-block 09 : C_mu */
   /*
    *  ctx  cty  ctz ctw  cn
    * [ 0,   0,   0,  0,  mu ]
@@ -150,10 +157,10 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
 			     5*j  + 4,
 			     mu );
   }
-  /* Sub-block 09 */
+  /* Sub-block 10 : -1 */
   for (i=0;i<np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 3, 6, i, i, -1);
-  /* Sub-block 10 */
+  /* Sub-block 11 : Z_j */
   FOR_0(j, np) {
     cholmod_sparse *Zj = sd->Z[j];
     cholmod_triplet *Zj_trip = cholmod_sparse_to_triplet(Zj, cc);
@@ -165,16 +172,16 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
     }
     cholmod_free_triplet(&Zj_trip, cc);
   }
-  /* Sub-block 11 */
+  /* Sub-block 12 : -1 */
   for (i=0;i<4*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 4, 3, i, i, -1);
-  /* Sub-block 12 */
+  /* Sub-block 13 : 1 */
   for (i=0;i<nd;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 5, 0, i, i, 1);
-  /* Sub-block 13 */
+  /* Sub-block 14 : -1 */
   for (i=0;i<nd;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 5, 7, i, i, -1);
-  /* Sub-block 14 */
+  /* Sub-block 15 : C_n */
   for (i=0;i<np;++i) {
     const double nx = sd->contactsNormal_1[i][0];
     const double ny = sd->contactsNormal_1[i][1];
@@ -185,7 +192,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 6, 2, i, 5*i + 1, ny);
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 6, 2, i, 5*i + 2, nz);
   }
-  /* Sub-block 15 (similar to sub-block 10) */
+  /* Sub-block 16 (similar to sub-block 10) : Z_j */
   FOR_0(j, na) {
     cholmod_sparse *Zj = sd->Za[j];
     cholmod_triplet *Zj_trip = cholmod_sparse_to_triplet(Zj, cc);
@@ -197,16 +204,16 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
     }
     cholmod_free_triplet(&Zj_trip, cc);
   }
-  /* Sub-block 16 (similar to sub-block 11) */
+  /* Sub-block 17 (similar to sub-block 11) : -1 */
   for (i=0;i<4*na;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 7, 10, i, i, -1);
-  /* Sub-block 17 */
+  /* Sub-block 18 : 1 */
   for (i=0;i<nd;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 8, 0, i, i, 1);
-  /* Sub-block 18 */
+  /* Sub-block 19 : -1 */
   for (i=0;i<nd;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 8, 12, i, i, -1);
-  /* Sub-block 19 */
+  /* Sub-block 20 : C_ns */
   for (i=0;i<np;++i) {
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 9, 2, i, 5*i + 4, pymCfg->h);
   }
@@ -215,17 +222,17 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
     pym_rb_named_t *rbn2 = &pymCfg->body[j].b;
     bipTotMass += rbn2->m;
   }
-  /* Sub-block 20 */
+  /* Sub-block 21 : C_ns2 */
   for (i=0;i<np;++i) {
     const double pendep_coeff = pymCfg->h*SPRING_K + 2*sqrt(rbn->m/np * SPRING_K);
     //printf("pendep_coeff = %lf\n", pendep_coeff);
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 9, 3, i, 4*i + 2, pendep_coeff);
   }
-  /* Sub-block 21 */
+  /* Sub-block 22 : -1 */
   for (i=0;i<np;++i) {
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 9, 15, i, i, -1);
   }
-  /* Sub-block 22 */
+  /* Sub-block 23 : C_tfx */
   for (i=0;i<np;++i) {
     if (sd->contactTypes_1[i] == dynamic_contact) {
       const int conidx = sd->contactIndices_1[i];
@@ -237,7 +244,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
       SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 10, 2, i, 5*i + 4, coeff);
     }
   }
-  /* Sub-block 23 */
+  /* Sub-block 24 : C_tfy */
   for (i=0;i<np;++i) {
     if (sd->contactTypes_1[i] == dynamic_contact) {
       const int conidx = sd->contactIndices_1[i];
@@ -257,6 +264,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
 	    const pym_rb_t *rb, const pym_config_t *pymCfg,
 	    cholmod_common *cc) {
   const pym_rb_named_t *rbn = &rb->b;
+  const double h = pymCfg->h;
   /* We can calculate optimal estimate for the number of nonzero elements */
   const int nd = 3 + pymCfg->nrp;
   const int np = sd->nContacts_1;
@@ -266,13 +274,14 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
   double *eta = (double *)malloc(sizeof(double) * etaDim);
   memset(eta, 0, sizeof(double) * etaDim);
 
-  double chi_1[6], chi_0[6];
-  chi_1[0] = rbn->p[0]; chi_1[1] = rbn->p[1]; chi_1[2] = rbn->p[2];
-  chi_1[3] = rbn->q[0]; chi_1[4] = rbn->q[1]; chi_1[5] = rbn->q[2];
-  chi_0[0] = rbn->p0[0]; chi_0[1] = rbn->p0[1]; chi_0[2] = rbn->p0[2];
-  chi_0[3] = rbn->q0[0]; chi_0[4] = rbn->q0[1]; chi_0[5] = rbn->q0[2];
+  double chi_1[3+4], chi_0[3+4];
+  // chi_1: current frame
+  for (int i = 0; i < 3; ++i) chi_1[i] = rbn->p[i];
+  for (int i = 0; i < 4; ++i) chi_1[i + 3] = rbn->q[i];
+  // chi_0: previous frame
+  for (int i = 0; i < 3; ++i) chi_0[i] = rbn->p[i] - h*rbn->pd[i];
+  for (int i = 0; i < 3; ++i) chi_0[i + 3] = rbn->q[i] - h*rbn->qd[i];
 
-  const double h = pymCfg->h;
   int i, j;
 
   /* c_{2,i} */
@@ -281,7 +290,7 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
     FOR_0(j, nd) {
       M_q_q0 += (sd->M[i][j] * (2*chi_1[j] - chi_0[j]))/(h*h);
     }
-    eta[sd->Ari[0] + i] = M_q_q0 + (-sd->Cqd[i] + sd->f_g[i] + sd->f_ext[i]);
+    eta[sd->Ari[0] + i] = M_q_q0 + (-sd->Cqd[i] + /*sd->f_g[i] +*/ sd->f_ext[i]);
   }
   /* p^(l)_{cfix,i}   and   (-V_ij)re_{j \in P} */
   FOR_0(i, np) {
@@ -336,35 +345,6 @@ static inline double Norm3(const double *const v) {
   return sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 }
 
-void PymReparameterizeRotParam(pym_rb_named_t *rbn,
-			       const pym_config_t *pymCfg) {
-  double th_0 = Norm3(rbn->q0);
-  double th_1 = Norm3(rbn->q);
-  int k;
-  while (th_0 > 2*M_PI) {
-    printf("th_0 = %lf\n", th_0);
-    FOR_0(k, 3) rbn->q0[k] = rbn->q0[k]/th_0 * (th_0-2*M_PI);
-    th_0 -= 2*M_PI;
-  }
-  while (th_1 > 2*M_PI) {
-    printf("th_1 = %lf\n", th_1);
-    FOR_0(k, 3) rbn->q[k] = rbn->q[k]/th_1 * (th_1-2*M_PI);
-    th_1 -= 2*M_PI;
-  }
-  if (th_0 > M_PI && th_1 > M_PI) {
-    FOR_0(k, 3) {
-      rbn->q0[k] = (1-2*M_PI/th_0)*rbn->q0[k];
-      rbn->q[k]  = (1-2*M_PI/th_1)*rbn->q [k];
-      rbn->qd[k] = (rbn->q[k] - rbn->q0[k]) / pymCfg->h;
-    }
-    const double th_0new = Norm3(rbn->q0);
-    const double th_1new = Norm3(rbn->q);
-    printf("    NOTE: %s re-parameterized."
-	   "(th_0=%lf --> %lf, th_1=%lf --> %lf)\n",
-	   rbn->name, th_0, th_0new, th_1, th_1new);
-  }
-}
-
 bool check_near_2pi(double v, double how_near) {
   assert(v >= 0 && how_near >= 0);
   int n_2pi = (int)(v / (2*M_PI));
@@ -388,15 +368,10 @@ int PymCheckRotParam(pym_config_t *pymCfg) {
   const int nb = pymCfg->nBody;
   FOR_0(j, nb) {
     pym_rb_named_t *rbn = &pymCfg->body[j].b;
-    double th_0 = Norm3(rbn->q0);
     double th_1 = Norm3(rbn->q);
-
-    bool th_0_near = check_near_2pi(th_0, 1e-2);
     bool th_1_near = check_near_2pi(th_1, 1e-2);
-    if (th_0_near || th_1_near) {
+    if (th_1_near) {
       printf("Error - %s rotation parameterization failure:\n", rbn->name);
-      printf("        th_0 = %e (%e, %e, %e)\n",
-        th_0, rbn->q0[0], rbn->q0[1], rbn->q0[2]);
       printf("        th_1 = %e (%e, %e, %e)\n",
         th_1, rbn->q[0], rbn->q[1], rbn->q[2]);
       return -1;
@@ -410,9 +385,9 @@ std::ostream & pym_print_detailed_rb_state( std::ostream &s, const pym_rb_t &rb 
   const pym_rb_named_t &rbn = rb.b;
   s << rb << std::endl;
   if (rb.b.rotParam == RP_EXP) {
-    double th0 = PymNorm(3, rbn.q0);
-    s << rbn.name << " p0 [" << rbn.p0[0] << ", " << rbn.p0[1] << ", " << rbn.p0[2]
-    << "] / q0 [" << rbn.q0[0] << ", " << rbn.q0[1] << ", " << rbn.q0[2] << "] th0=" << th0 << " (RP_EXP)";
+    double th = PymNorm(3, rbn.q);
+    s << rbn.name << " p [" << rbn.p[0] << ", " << rbn.p[1] << ", " << rbn.p[2]
+    << "] / q [" << rbn.q[0] << ", " << rbn.q[1] << ", " << rbn.q[2] << "] th0=" << th << " (RP_EXP)";
   } else if (rb.b.rotParam == RP_QUAT_WFIRST) {
     assert(!"Not implemented yet.");
   }

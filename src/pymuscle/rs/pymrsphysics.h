@@ -8,6 +8,7 @@ extern "C" {
   PYMRS_API int PymRsDestroyPhysics(pym_rs_t *rs);
   PYMRS_API int PymRsResetPhysics(pym_rs_t *rs);
   PYMRS_API int PymRsFrameMove(pym_rs_t *rs, int fidx, char *result_msg);
+  PYMRS_API void pym_set_reference_frame(pym_rs_t *rs, int f);
 #ifdef __cplusplus
 }
 #endif

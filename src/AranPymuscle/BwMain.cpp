@@ -21,8 +21,6 @@ void idle_cb(void* ac);
 #error OpenGL in FLTK not enabled.
 #endif
 
-static int currentSimFrame = 0; // Current sim frame index (can be reset)
-
 struct SceneButtonsHolder
 {
   BwAppContext* ac;
@@ -38,18 +36,19 @@ struct cost_term {
 static cost_term cost_terms[oct_count] = {
   { oct_normal_force, "normal", 0, 0, 10 },
   { oct_contact_point_zpos, "contact z", 0, 0, 10 },
-  { oct_normal_force_nonneg_comp, "normal compen", 0, 10, 10 },
-  { oct_contact_point_movement, "contact movement", 0, 5, 10},
+  { oct_normal_force_nonneg_comp, "normal compen", 0, 100, 100 },
+  { oct_contact_point_movement, "contact movement", 0, 1, 100},
   { oct_contact_point_zpos_epsilon, "contact z epsilon", 0, 0, 10},
-  { oct_rb_reference_deviation, "reference dev.", 0, 10, 10},
-  { oct_rb_previous_deviation, "previous dev.", 0, 0, 10},
-  { oct_biped_com_deviation, "biped com dev.", 0, 0, 10},
+  { oct_rb_reference_deviation, "reference dev.", 0, 1, 10},
+  { oct_rb_previous_deviation, "previous dev.", 0, 0.1, 10},
+  { oct_biped_com_deviation, "biped com dev.", 0, 100, 500},
   { oct_torque_around_com, "torque com dev.", 0, 0, 10},
   { oct_ligament_actuation, "lig act", 0, 0, 10},
   { oct_actuated_muscle_actuation, "act act", 0, 0, 10},
   { oct_joint_dislocation, "joint dislocation", 0, 0, 10},
-  { oct_uniform_tension_cost, "tension", 0, 0, 10},
-  { oct_uniform_actuation_cost, "actuation", 0, 0, 1}
+  { oct_uniform_tension_cost, "tension", 0, 0, 1},
+  { oct_uniform_actuation_cost, "actuation", 0, 0, 1},
+  { oct_com_force_deviation_cost, "COM force dev", 0, 0, 500}
 };
 
 void dump_cb(Fl_Widget *o, void *ac_raw)
@@ -690,7 +689,11 @@ void step(BwAppContext &ac)
     }
     pymCfg->joint_dislocation_threshold = ac.joint_dislocation_slider->value();
     pymCfg->joint_dislocation_enabled = ac.joint_dislocation_button->value();
-    frame_move_ret = PymRsFrameMove(ac.pymRs, currentSimFrame, result_msg);
+
+    if (ac.pymRs->pymTraj.trajData)
+      pym_set_reference_frame(ac.pymRs, ac.currentSimFrame );
+    
+    frame_move_ret = PymRsFrameMove(ac.pymRs, ac.currentSimFrame, result_msg);
     if (frame_move_ret < 0) {
       ac.simulateButton->value(0);
       update_idle_cb_attachment(ac);
@@ -751,10 +754,11 @@ void step(BwAppContext &ac)
 
     BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(ac.glWindow);
     ++simFrame;
-    ++currentSimFrame;
+    ++ac.currentSimFrame;
     if (frame_move_ret || simFrame >= pymCfg->nSimFrame) {
       //PymRsResetPhysics(appContext.pymRs);
       simFrame = 0;
+      ac.currentSimFrame = 0;
     }
   }
   std::string sss(ss.str());
@@ -803,6 +807,7 @@ void real_muscle_cb(Fl_Widget *o, void *p)
   ac.pymRs->pymCfg.real_muscle = widget->value() == 1 ? true : false;
 }
 
+/* Velocity to 0, previous state is set to current state. */
 void set_vel_zero_cb(Fl_Widget *o, void *p)
 {
   Fl_Light_Button* widget = (Fl_Light_Button*)o;
@@ -812,18 +817,11 @@ void set_vel_zero_cb(Fl_Widget *o, void *p)
     ac.pymRs->pymCfg.body[i].b.pd[0] = 0;
     ac.pymRs->pymCfg.body[i].b.pd[1] = 0;
     ac.pymRs->pymCfg.body[i].b.pd[2] = 0;
-    ac.pymRs->pymCfg.body[i].b.p0[0] = ac.pymRs->pymCfg.body[i].b.p[0];
-    ac.pymRs->pymCfg.body[i].b.p0[1] = ac.pymRs->pymCfg.body[i].b.p[1];
-    ac.pymRs->pymCfg.body[i].b.p0[2] = ac.pymRs->pymCfg.body[i].b.p[2];
 
     ac.pymRs->pymCfg.body[i].b.qd[0] = 0;
     ac.pymRs->pymCfg.body[i].b.qd[1] = 0;
     ac.pymRs->pymCfg.body[i].b.qd[2] = 0;
     ac.pymRs->pymCfg.body[i].b.qd[3] = 0;
-    ac.pymRs->pymCfg.body[i].b.q0[0] = ac.pymRs->pymCfg.body[i].b.q[0];
-    ac.pymRs->pymCfg.body[i].b.q0[1] = ac.pymRs->pymCfg.body[i].b.q[1];
-    ac.pymRs->pymCfg.body[i].b.q0[2] = ac.pymRs->pymCfg.body[i].b.q[2];
-    ac.pymRs->pymCfg.body[i].b.q0[3] = ac.pymRs->pymCfg.body[i].b.q[3];
   }
 }
 
@@ -860,8 +858,8 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
         done = MHR_EXIT_APP;
       }
     }
+    ac.currentSimFrame = 0;
     PymRsResetPhysics(ac.pymRs);
-    currentSimFrame = 0;
     reconfigScene = true;
   } else if (done == MHR_STEP_SIMULATION) {
     step(ac);
@@ -981,11 +979,12 @@ int doMain(int argc, char **argv)
   Fl_Check_Button joint_dislocation_button(0, 75+20+40*oct_count, 200, 20, "Joint dislocation");
   joint_dislocation_button.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
   joint_dislocation_button.labelsize(12);
+  joint_dislocation_button.value(1);
 
   SliderInput joint_dislocation_si = SliderInput(0, 75+20+40*oct_count+20, 200, 20);
   joint_dislocation_si.type(FL_HOR_SLIDER);
   joint_dislocation_si.bounds(0.0, 1.0);
-  joint_dislocation_si.value(0.05);
+  joint_dislocation_si.value(0.00);
   ac.joint_dislocation_slider = &joint_dislocation_si;
   ac.joint_dislocation_button = &joint_dislocation_button;
 
@@ -995,6 +994,7 @@ int doMain(int argc, char **argv)
   Fl_Button set_vel_zero(0, 75+20+40*oct_count+20+100+40, 100, 30, "Set vel 0");
   set_vel_zero.callback(set_vel_zero_cb, &ac);
 
+  /*
   // Style table
   Fl_Text_Display::Style_Table_Entry stable[] = {
     // FONT COLOR      FONT FACE   FONT SIZE
@@ -1016,6 +1016,7 @@ int doMain(int argc, char **argv)
   // Style for text
   sbuff->text("AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\n"
     "AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\n");
+  */
 
   Fl_Browser *b = new Fl_Browser(500,75+110+110 + (topWindow.h()-90-110-110-200),500,200);
   int widths[] = { 100, 100, 100, 70, 70, 40, 40, 70, 70, 50, 0 };               // widths for each column

@@ -43,8 +43,6 @@ struct pym_rb_named_t {
     char pName[128];
     double Ixyzw[4];
     double corners[8][3];
-    double p0[3];
-    double q0[4];
     int nFiber; /* Number of muscle fibers attached to this body */
     int fiber[MAX_FIBER_PER_RB];
     double chi_ref[3+4];
@@ -82,7 +80,6 @@ PYMCORE_API std::ostream &pym_print_detailed_rb_state(std::ostream &s, const pym
 typedef struct cholmod_triplet_struct cholmod_triplet;
 typedef struct cholmod_common_struct cholmod_common;
 
-void PymReparameterizeRotParam(pym_rb_named_t *rbn, const pym_config_t *pymCfg);
 void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
 void GetEta(double **_eta, const pym_rb_statedep_t *sd, const pym_rb_t *rb, const pym_config_t *pymCfg, cholmod_common *cc);
 

@@ -66,6 +66,30 @@ void pym_init_debug_msg_streams(FILE *dmstreams[]) {
   pym_update_debug_msg_streams(dmflags, dmstreams);
 }
 
+void pym_compute_reference_com( const pym_config_t *const pymCfg, pym_traj_t * pymTraj ) 
+{
+  const int nd = 6;
+  double tot_mass = 0;
+  for (int j = 0; j < pymCfg->nBody; ++j) {
+    tot_mass += pymCfg->body[j].b.m;
+  }
+  pymTraj->comTrajData = new double[3*pymTraj->nBlenderFrame];
+  for (int i = 0; i < pymTraj->nBlenderFrame; ++i) {
+    double comref[3] = {0,};
+    for (int j = 0; j < pymCfg->nBody; ++j) {
+      const double *const ref =
+        pymTraj->trajData + (i+0)*pymTraj->nBlenderBody*nd + pymTraj->corresMapIndex[j]*nd;
+      for (int k = 0; k < 3; ++k) {
+        comref[k] += pymCfg->body[j].b.m * ref[k];
+      }
+    }
+    for (int j = 0; j < 3; ++j) {
+      comref[j] /= tot_mass;
+      pymTraj->comTrajData[3 * i + j] = comref[j];
+    }
+  }
+}
+
 int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
 		    pym_traj_t *pymTraj,
 		    pym_cmdline_options_t *cmdopt,
@@ -146,6 +170,8 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
       */
       assert(pymTraj->nBlenderFrame >= 3);
       PymSetInitialStateUsingTrajectory(pymCfg, pymTraj);
+
+      pym_compute_reference_com(pymCfg, pymTraj);
     }
     
     PymInferJointAnchorConfFileName(fnJaCfg, cmdopt->trajconf);

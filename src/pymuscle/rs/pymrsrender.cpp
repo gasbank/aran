@@ -966,24 +966,52 @@ static void pym_draw_all(pym_rs_t *rs, int forShadow, GLuint *m_vaoID) {
   pym_config_t *pymCfg = phyCon->pymCfg;
   const int nb = pymCfg->nBody;
   int i;
+  // Rendering position offset value of a twin biped for visual analysis.
+  const double twin_offset_x = -1.5;
   FOR_0(i, nb) {
     /* Access data from renderer-accessable area of phyCon */
     const pym_rb_named_t *rbn = &phyCon->pymCfg->body[i].b;
     const double *const boxSize = rbn->boxSize;
     pym_strict_checK_gl();
     DrawRb(rbn, boxSize, rs->drawing_options[pym_do_wireframe] ? 1 : 0);
+    
+    glPushMatrix();
+    glTranslated(twin_offset_x, 0, 0);
+    DrawRb(rbn, boxSize, 1);
+    glPopMatrix();
+
     pym_strict_checK_gl();
     DrawRbRef(rbn, boxSize, 1);
     DrawRbContacts(rbn);
   }
+  
   if (pymCfg->renderFibers) {
     render_fibers(pymCfg);
   }
-  static const double pointBoxSize[3] = { 1e-1, 1e-1, 1e-1 };
+  static const double pointBoxSize[3] = { 5e-2, 5e-2, 5e-2 };
   glColor3f(1,1,1);
   pym_strict_checK_gl();
-  //DrawBox_pq(phyCon->bipCom, 0, pointBoxSize, 0);
-  //DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
+  
+  glPushMatrix();
+  glTranslated(twin_offset_x, 0, 0);
+  glPushAttrib(GL_CURRENT_BIT);
+  glColor3f(0,1,0);
+  DrawBox_pq(pymCfg->bipCom, 0, pointBoxSize, 0);
+  glColor3f(1,0,0);
+  DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
+  const double *const		 trajData       = phyCon->pymTraj->trajData;
+  if (trajData) {
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < rs->pymTraj.nBlenderFrame; ++i) {
+      glVertex3dv(phyCon->pymTraj->comTrajData + 3*i);
+      /*printf("comref %lf %lf %lf\n", phyCon->pymTraj->comTrajData[3*i],
+        phyCon->pymTraj->comTrajData[3*i+1],
+        phyCon->pymTraj->comTrajData[3*i+2]);*/
+    }
+    glEnd();
+  }
+  glPopAttrib();
+  glPopMatrix();
 
   const int nj = phyCon->pymCfg->nJoint;
   for (int j = 0; j < nj; ++j) {
@@ -1305,12 +1333,12 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
-  gluOrtho2D(-rc->vpw/2.0, rc->vpw/2.0, -rc->vph/2.0, rc->vph/2.0);
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
   
   RenderGraph(rs->phyCon.comZGraph, 0, rc);
+  
   RenderGraph(rs->phyCon.comDevGraph, 1, rc);
   RenderGraph(rs->phyCon.actGraph, 2, rc);
   RenderGraph(rs->phyCon.ligGraph, 3, rc);

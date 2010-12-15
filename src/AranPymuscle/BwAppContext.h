@@ -82,4 +82,5 @@ class BwAppContext : private Uncopyable
   static const int MAX_SIMULATION_FRAMES = 10000;
   boost::circular_buffer< vector<pym_rb_t> > rb_history; /* 'pym_rb_t rb_history[MAX_SIMULATION_FRAMES][nb]' */
   char frameStr[128];
+  int currentSimFrame;
 };

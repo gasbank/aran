@@ -270,7 +270,7 @@ int BwOpenGlWindow::handle_keydown() {
   const int nb = m_ac.pymRs->pymCfg.nBody;
   FOR_0(j, nb) {
     pym_rb_named_t *rbn = &m_ac.pymRs->pymCfg.body[j].b;
-    if (strcmp(rbn->name, "upper_box") == 0) {
+    if (strcmp(rbn->name, "trunk") == 0) {
       rbnTrunk = rbn;
     }
   }
@@ -303,7 +303,7 @@ int BwOpenGlWindow::handle_keydown() {
   } else if (key == 'x') {
     int ti1 = rand()%360;
     int ti2 = rand()%35 + 55;
-    double r = 100;
+    double r = 1000;
     double phi = ti1/360.0*2*M_PI;
     double theta = ti2/360.0*2*M_PI;
     double car[3];
@@ -312,15 +312,15 @@ int BwOpenGlWindow::handle_keydown() {
       rbnTrunk->extForce[0] = -car[0];
       rbnTrunk->extForce[1] = -car[1];
       rbnTrunk->extForce[2] = -car[2];
-    }
-    printf("%lf, %lf\n", rbnTrunk->extForce[0], rbnTrunk->extForce[1]);
-    double tx = (rand()%100-50)/50.0;
-    double ty = (rand()%100-50)/50.0;
-    double tz = (rand()%100-50)/50.0;
-    if (rbnTrunk) {
-      rbnTrunk->extForcePos[0] = tx/3;
-      rbnTrunk->extForcePos[1] = ty/3;
-      rbnTrunk->extForcePos[2] = tz/3;
+      printf("%lf, %lf\n", rbnTrunk->extForce[0], rbnTrunk->extForce[1]);
+      double tx = (rand()%100-50)/50.0;
+      double ty = (rand()%100-50)/50.0;
+      double tz = (rand()%100-50)/50.0;
+      if (rbnTrunk) {
+        rbnTrunk->extForcePos[0] = tx/3;
+        rbnTrunk->extForcePos[1] = ty/3;
+        rbnTrunk->extForcePos[2] = tz/3;
+      }
     }
     return 1;
   }
