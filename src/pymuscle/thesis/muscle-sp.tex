@@ -1,136 +1,97 @@
-% -*- TeX:UTF-8 -*-
-%%
-%% KAIST 학위논문양식 LaTeX용 (ver 0.4) 예시
-%%
-%% @version 0.4
-%% @author  채승병 Chae,Seungbyung (mailto:chess@kaist.ac.kr)
-%% @date    2004. 11. 12.
-%%
-%% @requirement
-%% teTeX, fpTeX, teTeX 등의 LaTeX2e 배포판
-%% + 은광희 님의 HLaTeX 0.991 이상 버젼 또는 홍석호 님의 HPACK 1.0
-%% : 설치에 대한 자세한 정보는 http://www.ktug.or.kr을 참조바랍니다.
-%%
-%% @note
-%% 기존에 널리 쓰여오던 차재춘 님의 학위논문양식 클래스 파일의 형식을
-%% 따르지 않고 전면적으로 다시 작성하였습니다. 논문 정보 입력부분에서
-%% 과거 양식과 다른 부분이 많으니 아래 예시에 맞춰 바꿔주십시오.
-%% 버그 리포트는 http://gsa.kaist.ac.kr/thesis-form으로 보내주십시오.
-%%
-%% @acknowledgement
-%% 본 예시 논문은 물리학과 박사과정 김용현 님의 호의로 제공되었습니다.
-%%
-%% -------------------------------------------------------------------
-%% @information
-%% 이 예제 파일은 hangul-ucs를 사용합니다. UTF-8 입력 인코딩으로
-%% 작성되었습니다. hlatex의 hfont는 이용하지 않습니다. --2006/02/11
+% THIS IS SIGPROC-SP.TEX - VERSION 3.1
+% WORKS WITH V3.2SP OF ACM_PROC_ARTICLE-SP.CLS
+% APRIL 2009
+%
+% It is an example file showing how to use the 'acm_proc_article-sp.cls' V3.2SP
+% LaTeX2e document class file for Conference Proceedings submissions.
+% ----------------------------------------------------------------------------------------------------------------
+% This .tex file (and associated .cls V3.2SP) *DOES NOT* produce:
+%       1) The Permission Statement
+%       2) The Conference (location) Info information
+%       3) The Copyright Line with ACM data
+%       4) Page numbering
+% ---------------------------------------------------------------------------------------------------------------
+% It is an example which *does* use the .bib file (from which the .bbl file
+% is produced).
+% REMEMBER HOWEVER: After having produced the .bbl file,
+% and prior to final submission,
+% you need to 'insert'  your .bbl file into your source .tex file so as to provide
+% ONE 'self-contained' source file.
+%
+% Questions regarding SIGS should be sent to
+% Adrienne Griscti ---> griscti@acm.org
+%
+% Questions/suggestions regarding the guidelines, .tex and .cls files, etc. to
+% Gerald Murray ---> murray@hq.acm.org
+%
+% For tracking purposes - this is V3.1SP - APRIL 2009
 
-% @class kaist.cls
-% @options [default: doctor, korean, final]
-% - doctor: 박사과정 | master : 석사과정
-% - korean: 한글논문 | english: 영문논문
-% - final : 최종판   | draft  : 시험판
-% - pdfdoc : 선택하지 않으면 북마크와 colorlink를 만들지 않습니다.
-\documentclass[master,english,final]{kaist-ucs}
-
-% kaist.cls 에서는 기본으로 dhucs, ifpdf, graphicx 패키지가 로드됩니다.
-% 추가로 필요한 패키지가 있다면 주석을 풀고 적어넣으십시오,
-%\usepackage{...}
-\usepackage{color}
-\usepackage{amsmath}
-\usepackage{graphicx}
-\usepackage{pdflscape}
-\usepackage{hyperref}
+\documentclass{acm_proc_article-sp}
+%\usepackage{hyperref}
 \usepackage{multirow}
 
-% @command title 논문 제목
-% @options [default: (none)]
-% - korean: 한글제목 | english: 영문제목
-\title[korean] {이족 보행 동역학의\linebreak 생체 역학적인 접근방법}
-%\title[english]{Spectral-based Shape Correspondence \linebreak with Diffusion Geometry}
-\title[english]{A Biomechanical Approach to Biped Dynamics}
-
-% @note 표지에 출력되는 제목을 강제로 줄바꿈하려면 \linebreak 을 삽입.
-%       \\ 나 \newline 등을 사용하면 안됩니다. (아래는 예시)
-%\title[korean]{탄소 나노튜브의 물리적 특성에 대한\linebreak 이론 연구}
-%\title[english]{Theoretical study on physical properties of\linebreak
-%                carbon nanotubes}
-
-% @command author 저자 이름
-% @param   family_name, given_name 성, 이름을 구분해서 입력
-% @options [default: (none)]
-% - korean: 한글이름 | chinese: 한문이름 | english: 영문이름
-\author[korean] {김}{거 엽}
-\author[chinese]{金}{거 엽}
-\author[english]{Kim}{Geo Yeob}
-
-% @command advisor 지도교수 이름 (복수가능)
-% @usage   \advisor[options]{...한글이름...}{...영문이름...}{signed|nosign}
-% @options [default: major]
-% - major: 주 지도교수  | coopr: 공동 지도교수
-\advisor[major]{신 성 용}{Shin, Sung Yong}{signed}
-%\advisor[coopr]{홍 길 동}{Gil-Dong Hong}{nosign}
-
-% @command department 학과이름 - 아래 표에 따라 코드를 입력
-%
-% 물리 PH
-% 수리과학 MAS
-% 화학 CH
-% 생명과학 BS
-% 바이오및뇌공학 BiS
-% 의과학대학원 MSE
-% 의과학학제 BM
-% 기계공학 ME
-% 항공우주공학 AE
-% 건설 및 환경공학 CE
-% 산업디자인 ID
-% 생명화학공학 CBE
-% 신소재공학 MS
-% 원자력 및 양자 NQE
-% 자동차기술대학원 AT
-% 전기및전자공학 EE
-% 전산학 CS
-% 산업 및 시스템공학 IE
-% 반도체학제 STE
-% 소프트웨어 프로그램 SEP
-% 정보통신학제 TE
-% 고분자학학제 PSE
-% 과학기술학학제 STS
-% 나노과학기술학제 NT
-% 로봇공학학제 RE
-% 문화기술학제 CT
-% 환경·에너지공학학제 ENV
-% e-매뉴팩쳐링리더십학제 EML
-% 문화기술대학원 GCT
-% 경영공학 MT
-% 테크노경영 TM
-% 금융 FIN
-
-\department{CS}
-
-% @command studentid 학번
-\studentid{20084004}
-
-% @command referee 심사위원 (석사과정 3인, 박사과정 5인)
-\referee[1]{신 성 용}
-\referee[2]{조 성 호}
-\referee[3]{최 성 희}
-
-% @command approvaldate 지도교수논문승인일
-% @param   year,month,day 연,월,일 순으로 입력
-\approvaldate{2010}{12}{22}
-
-% @command refereedate 심사위원논문심사일
-% @param   year,month,day 연,월,일 순으로 입력
-\refereedate{2010}{12}{22}
-
-% @command gradyear 졸업년도
-\gradyear{2011}
-
-% 본문 시작
 \begin{document}
-%\begin{CJK*}[HL]{KS}{}
 
+\title{A Biomechanical Approach to Biped Dynamics}
+%
+% You need the command \numberofauthors to handle the 'placement
+% and alignment' of the authors beneath the title.
+%
+% For aesthetic reasons, we recommend 'three authors at a time'
+% i.e. three 'name/affiliation blocks' be placed beneath the title.
+%
+% NOTE: You are NOT restricted in how many 'rows' of
+% "name/affiliations" may appear. We just ask that you restrict
+% the number of 'columns' to three.
+%
+% Because of the available 'opening page real-estate'
+% we ask you to refrain from putting more than six authors
+% (two rows with three columns) beneath the article title.
+% More than six makes the first-page appear very cluttered indeed.
+%
+% Use the \alignauthor commands to handle the names
+% and affiliations for an 'aesthetic maximum' of six authors.
+% Add names, affiliations, addresses for
+% the seventh etc. author(s) as the argument for the
+% \additionalauthors command.
+% These 'additional authors' will be output/set for you
+% without further effort on your part as the last section in
+% the body of your article BEFORE References or any Appendices.
+
+\numberofauthors{1} %  in this sample file, there are a *total*
+% of EIGHT authors. SIX appear on the 'first-page' (for formatting
+% reasons) and the remaining two appear in the \additionalauthors section.
+%
+\author{
+% You can go ahead and credit any number of authors here,
+% e.g. one 'row of three' or two rows (consisting of one row of three
+% and a second row of one, two or three).
+%
+% The command \alignauthor (no curly braces needed) should
+% precede each author name, affiliation/snail-mail address and
+% e-mail address. Additionally, tag each line of
+% affiliation/address with \affaddr, and tag the
+% e-mail address with \email.
+%
+% 1st. author
+\alignauthor
+Geoyeob Kim\\
+       \affaddr{KAIST}\\
+       \affaddr{291 Daehak-ro, Yuseong-gu}
+       \affaddr{Daejeon, South Korea}\\
+       \email{gasbank@naver.com}
+}
+% There's nothing stopping you putting the seventh, eighth, etc.
+% author on the opening page (as the 'third row') but we ask,
+% for aesthetic reasons that you place these 'additional authors'
+% in the \additional authors block, viz.
+
+\date{16 December 2010}
+% Just remember to make sure that the TOTAL number of authors
+% is the number that will appear on the first page PLUS the
+% number that will appear in the \additionalauthors section.
+
+\maketitle
 \begin{abstract}
 Adopting physically-based dynamics model for synthesizing character animation is widely used.
 Since most concepts of dynamics and physical simulation came from robotics and mechanical engineering,
@@ -142,26 +103,20 @@ We present a new biped model based on the biomechanical idea that human movement
 by controlling muscle fibers attached to skeletal structures instead of actuated motors on joints.
 Also an optimization-based tracking control scheme for walking and balancing using our model is introduced.
 By changing muscle fiber parameters and constraints, various human motions are synthesized.
-
-%Relative joint angles between two bodies can be controlled using its motor attached to them,
-%however, the global orientation and position of the biped cannot be controlled since
-%they have no controllable elements exist.
 \end{abstract}
 
+% A category with the (minimum) three required fields
+\category{I.3.7}{Computer Graphics}{Three-Dimensional Graphics and Realism}[animation]
+%A category including the fourth, optional field follows...
+%\category{D.2.8}{Software Engineering}{Metrics}[complexity measures, performance measures]
 
-% 목차 (Table of Contents) 생성
-\tableofcontents
+\terms{Theory}
 
-% 표목차 (List of Tables) 생성
-\listoftables
 
-% 그림목차 (List of Figures) 생성
-\listoffigures
+\keywords{character animation, physical simulation, biomechanics}
+%\keywords{ACM proceedings, \LaTeX, text tagging} % NOT required for Proceedings
 
-% 위의 세 종류의 목차는 한꺼번에 다음 명령으로 생성할 수도 있습니다.
-%\makecontents
-
-\chapter{Introduction}
+\section{Introduction}
 Being an essential component for animations and video games,
 bipedal character animation techniques have drawn much attention from
 both academia and industry. Physically-simulated approaches have been
@@ -228,8 +183,7 @@ Although seemingly having succeeded for generating nice-looking motion,
 they can be enhanced by introducing biomechanical knowledge into both
 a dynamics model and an optimization scheme.
 
-
-\chapter{Related work}
+\section{Related work}
 Designing and controlling a physically simulated character is a long-standing
 challenge in robotics and computer graphics. A physically
 synthesized motion that actively responds to the environment is quite
@@ -318,8 +272,7 @@ way to make full use of passive energy.
 %springs. However rest lengths are not simply defined on real muscles.
 %[...]
 
-
-\chapter{Problem definition}
+\section{Problem definition}
 
 We model a character which consists of rigid bodies and virtual muscle fibers.
 With this biomechanical model we design a reference trajectory tracker.
@@ -345,7 +298,6 @@ The only way to change $\chi$ to a certain desired value is done by controlling 
 properly. If we denote a reference position and velocity from motion capture data
 as $\bar\chi$ and $\dot{\bar\chi}$, \eqref{MoEq} can be more elaborated
 to reveal its structure as a tracker:
-
 \begin{equation}\label{MoEq2}
 \mathbf{M}(\chi)\ddot\chi + C(\chi,\dot\chi ) = f_g(\chi) + f_c(\chi, \dot\chi, \tau ) + \tau (\chi, \dot\chi, \bar\chi, \dot{\bar\chi}).
 \end{equation}
@@ -364,14 +316,12 @@ time-varying variables need to be represented in a discrete domain.
 We discretize the time into samples with small intervals $h$. We define
 the velocity $\dot\chi^{(l)}$ and the acceleration $\ddot\chi^{(l)}$, at current
 time sample $l$, by backward and central finite differences, respectively.
-
 \begin{align}
 \dot\chi^{(l)}  \equiv {} & \frac{\chi^{(l)}-\chi^{(l-1)}}{h}\label{vel-dis}\\
 \ddot\chi^{(l)} \equiv {} & \frac{\chi^{(l+1)}-2\chi^{(l)}+\chi^{(l-1)}}{h^2}\label{acc-dis}
 \end{align}
 
-
-\chapter{Algorithm overview}
+\section{Algorithm}
 
 Given motion capture data for human locomotion, we classify the motion
 sequence automatically into respective phases. For each phase,
@@ -381,20 +331,17 @@ with respect to a corresponding phase.
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=0.75\textwidth]{overview}
+  \epsfig{file=overview.eps, width=3in}
   \caption{Algorithm overview diagram}
 \end{figure}
 
 
-\chapter{Dynamics algorithm}
-
-\section{Rigid body dynamics}
+\subsection{Rigid body dynamics}
 
 The concept of rigid body is commonly used in a physically-simulated
 character model.
 Our character model is a full four-limbed biped, which consists of 14 rigid bodies.
 The forward dynamics algorithm gives the following equation:
-
 \begin{equation}
 \ddot\chi =\mathbf{M}^{-1}(\chi) ( \tau - C(\chi,\dot\chi) ).
 \end{equation}
@@ -404,7 +351,6 @@ to indicate a discrete-time value of $Y$ at $l$-th time step $Y(t_l)$.
 We use an explicit Euler integration
 scheme using both $Y$ and the equations of motion to derive a complete
 forward dynamics formulation.
-
 \begin{equation}
 Y^{(l)} =
 \left[ {\begin{array}{cc}
@@ -412,21 +358,19 @@ Y^{(l)} =
  \dot\chi^{(l)}   \\
  \end{array} } \right]
 \end{equation}
-
-\begin{equation}
+\begin{align}
 f(Y^{(l)})=\dot{Y}^{(l)}
-=
+ &=
 \left[ {\begin{array}{cc}
  \dot\chi^{(l)}   \\
  \ddot\chi^{(l)}   \\
- \end{array} } \right]
- =
+ \end{array} } \right] \notag\\
+ &=
 \left[ {\begin{array}{cc}
  \dot\chi^{(l)}   \\
  \mathbf{M}^{-1}(\chi^{(l)}) ( \tau^{(l)} - C(\chi^{(l)},\dot\chi^{(l)}) )   \\
  \end{array} } \right]
-\end{equation}
-
+\end{align}
 \begin{equation}
 Y^{(l+1)}=Y^{(l)}+hf(Y^{(l)})
 \end{equation}
@@ -450,54 +394,26 @@ We assume that rigid bodies are independent to each other and thus we just build
 equations of motion which have $n$ rigid bodies floating around the
 space freely with 6-DOF.
 
-The equations of motion for a single rigid body is as follows:
-
-\begin{equation}
-\left[ {\begin{array}{cc}
- \bar{m}\mathbf{I}  &  0 \\
- 0            & \mathbf{H}  \\
- \end{array} } \right]
- \left[ {\begin{array}{c}
- a  \\
- \alpha              \\
- \end{array} } \right]
- +
- \left[ {\begin{array}{c}
- 0  \\
- \omega\times(\mathbf{H}\omega)   \\
- \end{array} } \right]
- =
- \left[ {\begin{array}{c}
- f  \\
- \tau   \\
- \end{array} } \right].
-\end{equation}
-
-This formulation is very easy to understand the structure of
-the physical system. It reveals the linear and angular quantities
-directly as well as the external forces and torques.
-
-
 \begin{table}[h!]
 \centering
-  \begin{tabular}{cllll}
-                                                             & Name      & Mass  & Dimension                & Inertia tensor           \\
-      \hline
-      \multirow{8}{*}{\includegraphics[width=0.85in]{biped}} & head      & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & trunk     & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & calf      & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & thigh     & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & foot      & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & toe       & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & upper arm & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
-                                                             & lower arm & 1.0   & $10 \times 10 \times 10$ & $10 \times 20 \times 30$ \\
+  \begin{tabular}{rrl}
+  Name      & Mass  & Dimension                \\
+  \hline
+  head      & 5.0   & $0.190 \times 0.220 \times 0.180$  \\
+  trunk     & 30.0  & $0.623 \times 0.507 \times 0.307$  \\
+  calf      & 3.0   & $0.073 \times 0.450 \times 0.073$  \\
+  thigh     & 4.0   & $0.142 \times 0.643 \times 0.142$  \\
+  sole      & 1.5   & $0.184 \times 0.210 \times 0.090$  \\
+  toe       & 1.5   & $0.184 \times 0.105 \times 0.090$  \\
+  upper arm & 4.0   & $0.100 \times 0.520 \times 0.100$  \\
+  lower arm & 4.0   & $0.090 \times 0.400 \times 0.090$  \\
   \hline
 \end{tabular}
 \caption{Biped configuration}
 \end{table}
 
 
-\section{Muscle fiber dynamics}
+\subsection{Muscle fiber dynamics}
 
 There are many variants of muscle fiber model used in biomechanical field range
 from a simple time-invariant spring model to a complicated time-varying model. \cite{25733}
@@ -508,7 +424,7 @@ a Hill type muscle model. \cite{hill}.
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=2.75in]{musclemodel}
+  \includegraphics[width=2.2in]{musclemodel}
   \caption{Hill type muscle model}
 \end{figure}
 
@@ -523,7 +439,6 @@ In the Hill type muscle model, we need four parameters for each:
 a serial spring constant $k_{se}$, a parallel spring constant $k_{pe}$, a viscosity $b$ and a rest length $x_{r}$.
 These parameters can be constants or variables depending on how muscle fibers modeled.
 A mathematical expression defining dynamics of the muscle fiber is a first-order ordinary differential equation:
-
 \begin{equation}\label{Tension}
 \dot{T} = \frac{k_{se}}{b} \left( k_{pe}(x-x_{r})+b\dot{x}-\left(1+\frac{k_{pe}}{k_{se}}\right)T+u   \right)
 \end{equation}
@@ -558,7 +473,7 @@ A muscle fibers has its \emph{antagonist}. The antagonist is a muscle whose acti
 We can choose specific muscle fibers to be used in the biped model based on agonists related to legs.
 Also we can inform the optimizer to reduce actuation force on a muscle fiber when its antagonist is actively actuated.
 
-\section{Soft joints}
+\subsection{Soft joints}
 
 Conventional biped models use reduced coordinates to represent a state.
 They use a 6-DOF value on the root of the biped for position and orientation.
@@ -580,16 +495,16 @@ With these kind of joints, the biped can take advantages of shock absorption mec
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=1.5in]{softjoint}
+  \includegraphics[width=1.0in]{softjoint}
   \caption{Structure of a soft joint}
 \end{figure}
 
 
-\section{Contact model}
+\subsection{Contact model}
 
 There are various kind of techniques to deal with the calculation of contact forces between rigid bodies.
 The existing algorithms can be divided into three categories: constraint-based, penalty-based and impulse-based approaches.
-In constraint-based methods, the contact forces are computed by solving an optimization problem such as linear complementarity problems (LCP).
+In constraint based methods, the contact forces are computed by solving an optimization problem such as linear complementarity problems (LCP).
 The contact forces are calculated most precisely using LCP.
 However, it is tricky to implement correctly and the solutions may not be found although they are exist or it is unsolvable in some cases \cite{StewartT00}.
 These shortcomings are improved in \cite{Anitescu}.
@@ -602,11 +517,6 @@ As long as the biped's poses are properly managed, our simulation configuration 
 Contact forces are crucial because the root position and orientation of the biped can be controlled only by that forces.
 Therefore physically conforming contact forces are important in the point of believable character animation.
 
-We use a penalty method which can be easily integrated in our optimization framework.
-The time-stepping method based on LCP is hard to combine with our quadratic programming (QP) formulation
-because there is a case that LCP is not transformed into QP, \emph{i.e.},
-a matrix involved in constraints is not a symmetric positive matrix.
-
 A penalty method is a way to calculate contact normal forces with allowing a certain amount of penetration.
 A temporary spring-damper element is created and attached where a contact is established.
 The spring-damper exerts a strong force to separate two penetrated bodies.
@@ -615,12 +525,11 @@ Typically, a critically-damped spring is used to make the separation time minima
 
 \begin{figure}[h!]
   \centering
-  \includegraphics[width=2.5in]{penalty}
+  \includegraphics[width=1.8in]{penalty}
   \caption{Normal force calculated from the penalty method}
 \end{figure}
 
 Normal force exerted at the penetrated corner point of the box is calculated as follows:
-
 \begin{equation}\label{penalty-normal}
 f_n = -k x_{pendep} - c \dot{x}_{pendep}
 \end{equation}
@@ -639,11 +548,9 @@ of \eqref{penalty-normal} to obey the constraint $f_n \geq 0$. During optimizati
 a minimal $\lambda$ to keep the constraint will be calculated
 when we set a very high cost on that variable. We can denote \eqref{penalty-normal} with
 discrete-time substitution that can be used as an equality constraint for the optimizer.
-
 \begin{equation}\label{penalty-normal-discretized}
 f_n = -k x_{pendep}^{(l+1)} - c \frac{x_{pendep}^{(l+1)} - x_{pendep}^{(l)}}{h} + \lambda
 \end{equation}
-
 Besides normal force, tangential contact force are needed to model friction.
 Coulomb friction model is widely used.
 There are two kinds of friction in this model: static friction and dynamic friction.
@@ -661,73 +568,28 @@ Contact force, that is sum of static friction and normal force, should lies on a
 which is called Coulomb's friction cone.
 It is allowed to choose any static friction force if the resulting contact force is
 inside on the cone. We have two equations to express conditions of the static friction force:
-
 \begin{equation}\label{static-friction}
 \mu_s |f_n| \geq |f_{ts}|, \quad f_{ts} \cdot \hat{f}_n = 0
 \end{equation}
 where $f_{ts}$ is static friction force and $\mu_s$ is a coefficient of static friction.
 Inner product equality implies that $f_{ts}$ should lies on the tangential space of contact point.
 
+\section{Putting it all together}
+By gathering all equality and inequality constraints introduced so far,
+we get the following optimization formulation.
 
-\chapter{Integration}
-
-In general, controlled physical simulations are done in two steps.
-First is to compute necessary forces or torques for control and
-second is to integrate them to get a next state.
-There are several integration techniques.
-The most easy and intuitive one is an explicit Euler integration.
-Most of rigid body systems can be simulated using an explicit Euler method
-as far as there is no stiff component exists. The explicit integration
-allows us a simple implementation and fast computation of a next state,
-however, it has the potential of instability when the time step is larger
-then a certain threshold. The threshold is mainly determined by a time
-constant of a given differential equation we need to integrate.
-In Euler method, next state is computed by the following equation:
-\begin{equation}
-Y^{(l+1)}=Y^{(l)} + hf(Y^{(l)}).
+minimize
+\begin{equation}\notag
+w_{ref} || \chi^{(l+1)} - \chi^{(l+1)}_{ref} || +
+w_{com} || p^{(l+1)}_{com} - p^{(l+1)}_{com,ref} || + w_u || u ||
 \end{equation}
-where $h$ is an integration time step.
-It is obvious that larger $h$ value will cause instability to the system.
-
-On the contrary, an implicit integration does not suffer from this kind of
-instability issue. The formula is like the following:
-\begin{equation}
-Y^{(l+1)}=Y^{(l)} + hf(Y^{(l+1)}).
-\end{equation}
-That is, we want to find the next state $Y^{(l+1)}$ where we
-reverse the time step by $-h$ from $Y^{(l+1)}$, we get to the current state
-$Y^{(l)}$. In most cases, $f$ is a nonlinear function of $Y$, so we need to
-linearize it to find closed form solution of $Y^{(l+1)}$. If we define a
-variable $\Delta Y = Y^{(l+1)}-Y^{(l)}$, it can be calculated using the
-following equation:
-
-\begin{equation}\label{DeltaY}
-\Delta Y = \left(  \frac{1}{h}\mathbf{1} - {\frac{\partial f}{\partial Y} \bigg|_{Y=Y^{(l)}}}\right)^{-1} f(Y^{(l)})
-\end{equation}
-where $\mathbf{1}$ is an identity matrix. We need an analytic form of
-Jacobian $\partial f / \partial Y$ to calculate $\Delta Y$.
-
-In our case, the time constant is dominated by muscle fibers because they consists
-of highly stiff springs \eqref{Tension}. Even if we use a small time step
-such as $h=0.01$, our system occasionally diverges slowly with the explicit Euler
-integration. Therefore, it is obvious that the implicit integration scheme is right one to choose.
-Unfortunately, it is not suitable for our simulation framework because
-the control part and the integration part is combined into a single linear equation in our case.
-Since $\Delta Y$ is not a linear function of $Y^{(l)}$, the implicit integration approach
-is hard to be combined into our framework. For a compromise, we employed the explicit Euler
-with very small time step.
-
-\chapter{Optimization}
-By gathering all constraints introduced so far, we get the following optimization formula.
-\begin{equation}
-\text{minimize} \quad w_{ref} || \chi^{(l+1)} - \chi^{(l+1)}_{ref} || + w_{com} || p^{(l+1)}_{com} - p^{(l+1)}_{com,ref} || + w_u || u ||
-\end{equation}
+subject to
 \begin{align}
-\text{subject to} & \quad \chi^{(l+1)} = \tilde{M}^{-1} (f_f + f_c + f_g + f_{ext} - \tilde{C})     &                      \\
-                  & \quad f_{f_i} = (A_i u_i + B_i x_i^* + C_i) \frac{b_i - a_i}{ || b_i - a_i || } & i \in \mathcal{M}    \\
-                  & \quad f_{c,i} = f_{n,i} + f_{tk, i}                                             & i \in \mathcal{P}_k  \\
-                  & \quad f_{c,i} = f_{n,i} + f_{ts, i}                                             & i \in \mathcal{P}_s  \\
-                  & \quad r_i \geq || Z_i \chi^{(l+1)} + V_i ||                                     & i \in \mathcal{J}
+\chi^{(l+1)} &= \tilde{M}^{-1} (f_f + f_c + f_g + f_{ext} - \tilde{C})          &                        \notag   \\
+f_{f_i}      &= (A_i u_i + B_i x_i^* + C_i) \frac{b_i - a_i}{ || b_i - a_i || } & i \in \mathcal{M}      \notag   \\
+f_{c,i}      &= f_{n,i} + f_{tk, i}                                             & i \in \mathcal{P}_k    \notag   \\
+f_{c,i}      &= f_{n,i} + f_{ts, i}                                             & i \in \mathcal{P}_s    \notag   \\
+r_i          &\geq || Z_i \chi^{(l+1)} + V_i ||                                 & i \in \mathcal{J}      \notag
 \end{align}
 The optimizer tries to find the solution, next state $\chi^{(l+1)}$, which is
 close to $\chi^{(l+1)}_{ref}$ provided from motion clip with minimal effort.
@@ -739,96 +601,105 @@ Solving the optimization problem is done for frame by frame.
 After next state $\chi^{(l+1)}$ is calculated, current state is updated to
 next state and the frame counter $l$ is increased by 1.
 
-\chapter{Results}
+Balancing the walking robot is very important.
+Technically speaking, if a ground-projected COM lies
+in biped's support polygon, the biped can manage to sustain
+its balance. If COM is not lied inside support polygon,
+bipeds will fall down no matter how hard they try not to
+fall down.
+Confining projected COM in support polygon
+using additional optimization constraints seem to be
+an intuitive way for solving this issue, but that kind
+of approach results in robot-like stiff motion.
 
-\chapter{Conclusion}
+We used a slightly modified version of support polygon
+to allow COM lies in outside of support polygon.
+The modified support polygon is defined as a convex hull of
+ground-projected corner points of sole and toe bodies.
+We set $p_{com,ref}^{(l+1)}$ to the center of the modified
+support polygon. And a constraint
+$r_{sp} \geq || p^{(l+1)}_{com} - p^{(l+1)}_{com,ref} ||$
+added to guarantee that COM is confined inside the modified
+support polygon where $r_{sp}$ is a distance between the
+center of modified support polygon and a point closest to
+the center on the boundary of that polygon.
 
+\section{Result}
+We used a commercial optimization solver MOSEK to solve
+the optimization problem.
+About 300 muscle fibers are selected and attached to
+rigid bodies composing the biped.
+The complexity of optimization problem is mainly
+dependent on the number of rigid bodies, muscle fibers, soft joints
+and contact points. Except contact points, every components
+constructing the biped is the same for the whole simulation process,
+optimization solving performance is slightly varied with respect
+to the number of contact points. In average, the solver takes
+about 0.1 second for each frame.
 
-%%
-%% 한글요약문 시작
-%%
-%% Note. 영문논문일 경우에만 필요하니 한글논문의 경우에는 작성하지 마십시오.
-%%
-\begin{summary}
+Various simulation frequency from 30 Hz to 1 kHz
+are tested. To achieve real-time performance,
+large time step is desired. Since we used
+a penalty-based contact force calculation, small
+time step is required to maintain simulation stability.
+We used ground spring constant $k=50000 N/m$ and
+in this case, 300 Hz is sufficient for a stable simulation.
 
-Korean summary
+There are a lot of parameters to tune. The most
+predominant factors are weights on the cost function.
+For instance, if we suppress actuation force by increasing $w_u$
+the biped will move limply. Weights should be taken with care since
+exceedingly large weights on a certain term will results in
+tendency to ignore remaining terms.
 
-\end{summary}
+Muscle fiber parameters can be varied to get various motions.
+For example, a high $k_{se}$ gives more robot-like movement while a low value
+gives human-like elastic motion. However, viscous damping constant
+$b$ does not play a significant role in making various motions.
 
-%%
-%% 참고문헌 시작
-%%
-\bibliographystyle{IEEETrans}
-\bibliography{muscle.bib}
+Employing soft joints instead of rigid joints makes a resilient
+feature on bipeds when external disturbance is applied.
+With rigid joints, external force acting on a segment of biped
+will affect every body segment because they are connected with
+one or more rigid joints. On the other hand, in our model,
+external force in a certain range on a body segment will only
+affect on that body by allowing a little dislocation on joints.
 
-%%
-%% 감사의 글 시작
-%%
+\section{Conclusions}
+In this paper, we introduced a simple but new concept to
+conventional biped model to synthesize character animation.
+Parameters regarding to soft joints and muscle fibers have
+not been used in previous biped models at all.
+By tweaking model parameters, we synthesized various human
+motions based on motion capture data. One of drawback of our
+model is that simulation complexity is increased
+mainly because each body segment is simulated as an individual
+rigid body with no rigid joints.
 
-\acknowledgement
+As future work, a more sophisticated balance strategy is
+considered. We want to automatically decide
+where a foot should be placed to maintain its balance
+when a very strong force is applied to the biped
+without any forewarning.
 
-Acknowledgement
+%
+% The following two commands are all you need in the
+% initial runs of your .tex file to
+% produce the bibliography for the citations in your paper.
+\bibliographystyle{abbrv}
+\bibliography{muscle}  % sigproc.bib is the name of the Bibliography in this case
+% You must have a proper ".bib" file
+%  and remember to run:
+% latex bibtex latex latex
+% to resolve all references
+%
+% ACM needs 'a single self-contained file'!
+%
+%APPENDICES are optional
+%\balancecolumns
+%\appendix
+%Appendix A
 
-
-%%
-%% 이력서 시작
-%%
-% @command curriculumvitae 이력서
-% @options [default: 클래스 옵션 korean|english ]
-% - korean : 한글이력서 | english : 영문이력서
-\curriculumvitae[korean]
-
-    % @environment personaldata 개인정보
-    % @command     name         이름
-    %              dateofbirth  생년월일
-    %              birthplace   출생지
-    %              domicile     본적지
-    %              address      주소지
-    %              email        E-mail 주소
-    % - 위 6개의 기본 필드 중에 이력서에 적고 싶은 정보를 입력
-    \begin{personaldata}
-        \name       {김 거 엽}
-        \dateofbirth{1985}{5}{6}
-        %\birthplace {서울 영등포구 영등포동 ...}
-        %\domicile   {대전 유성구 신성동 ...}
-        \address    {서울특별시 영등포구 여의도동 대교아파트 5동 1213호}
-        \email      {gasbank@naver.com}
-    \end{personaldata}
-
-    % @environment education 학력
-    % @options [default: (none)] - 수학기간을 입력
-    \begin{education}
-        \item[2001. 3.\ --\ 2004. 2.] 여의도고등학교
-        \item[2004. 3.\ --\ 2008. 8.] 연세대학교 전기전자공학부 (B.S.)
-        \item[2008. 9.\ --\ 2011. 2.] KAIST 전산학과 (M.S.)
-    \end{education}
-
-    % @environment career 경력
-    % @options [default: (none)] - 해당기간을 입력
-    %\begin{career}
-        %\item[1997. 3.\ --\ 1999. 2.] 한국과학기술원 전산학과 일반조교
-    %\end{career}
-
-    % @environment activity 학회활동
-    % @options [default: (none)] - 활동내용을 입력
-    %\begin{activity}
-        %\item J. Choi, \textbf{Yong-Hyun Kim}, K.J. Chang, and D. Tomanek,
-        %     \textit{Occurrence of itinerant ferromagnetism in C/BN superlattice
-        %     nanotubes}, 5th Asian Workshop on First-Principles Electronic
-        %     Structure Calculations, Seoul (Korea), October., 2002.
-    %\end{activity}
-
-    % @environment publication 연구업적
-    % @options [default: (none)] - 출판내용을 입력
-    %\begin{publication}
-        %\item \textbf{Yong-Hyun Kim}, J. Choi, K.J. Chang, and D. Tomanek,
-        %     \textit{Magnetic instability in partly opened C$_{60}$ isomers},
-        %     in preparation.
-    %\end{publication}
-
-
-
-%% 본문 끝
-
-%\end{CJK*}
+\balancecolumns
+% That's all folks!
 \end{document}
