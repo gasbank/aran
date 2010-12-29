@@ -46,6 +46,7 @@ struct pym_rb_named_t {
     int nFiber; /* Number of muscle fibers attached to this body */
     int fiber[MAX_FIBER_PER_RB];
     double chi_ref[3+4];
+    double chi_ref_temp[3+4];
     int nAnchor;
     char jointAnchorNames[MAX_JOINTANCHORS][128];
     double jointAnchors[MAX_JOINTANCHORS][4];

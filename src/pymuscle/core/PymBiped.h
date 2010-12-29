@@ -4,8 +4,8 @@
 struct pym_biped_eqconst_t {
     cholmod_sparse *bipMat;
     double *bipEta; /* dynamically allocated array */
-    int Ari[1+12]; /* dynamic array of size (1+Asubrows) */
-    int Aci[1+24]; /* dynamic array of size (1+Asubcols) */
+    int Ari[1+14]; /* dynamic array of size (1+Asubrows) */
+    int Aci[1+27]; /* dynamic array of size (1+Asubcols) */
 
     int *Airi; /* dynamic array of size (1+nb) */
     int *Aici; /* dynamic array of size (1+nb) */

@@ -36,20 +36,66 @@ struct cost_term {
 static cost_term cost_terms[oct_count] = {
   { oct_normal_force, "normal", 0, 0, 10 },
   { oct_contact_point_zpos, "contact z", 0, 0, 10 },
-  { oct_normal_force_nonneg_comp, "normal compen", 0, 100, 100 },
-  { oct_contact_point_movement, "contact movement", 0, 1, 100},
+  { oct_normal_force_nonneg_comp, "normal compen", 0, 0, 1e2 },
+  { oct_contact_point_movement, "contact movement", 0, 1e1, 1e2},
   { oct_contact_point_zpos_epsilon, "contact z epsilon", 0, 0, 10},
-  { oct_rb_reference_deviation, "reference dev.", 0, 1, 10},
-  { oct_rb_previous_deviation, "previous dev.", 0, 0.1, 10},
-  { oct_biped_com_deviation, "biped com dev.", 0, 100, 500},
+  { oct_rb_reference_deviation, "reference dev.", 0, 1, 1e2},
+  { oct_rb_previous_deviation, "previous dev.", 0, 0, 10},
+  { oct_biped_com_deviation, "biped com dev.", 0, 0, 100},
   { oct_torque_around_com, "torque com dev.", 0, 0, 10},
   { oct_ligament_actuation, "lig act", 0, 0, 10},
   { oct_actuated_muscle_actuation, "act act", 0, 0, 10},
   { oct_joint_dislocation, "joint dislocation", 0, 0, 10},
-  { oct_uniform_tension_cost, "tension", 0, 0, 1},
+  { oct_uniform_tension_cost, "tension", 0, 0, 1e-3},
   { oct_uniform_actuation_cost, "actuation", 0, 0, 1},
-  { oct_com_force_deviation_cost, "COM force dev", 0, 0, 500}
+  { oct_com_force_deviation_cost, "COM force dev", 0, 0, 500},
+  { oct_biped_eps_fjoint, "joint const force", 0, 0, 1e2},
+  { oct_rb_eps_freecom, "rb freecom force", 0, 5e-7, 1},
+  { oct_biped_eps_efjoint_xy, "joint f err xy", 0, 0, 1e2 },
+  { oct_biped_eps_efjoint_z, "joint f err z", 0, 0, 1e2 },
+  { oct_cornerpoint_eps_z, "cornerpoint z", 0, 1e-3, 1 },
+  { oct_biped_eps_sp_deviation, "SP dev.", 0, 0, 1e2 },
 };
+
+void pym_start_log_muscle_status(const pym_config_t *pymCfg)
+{
+  const int nf = pymCfg->nFiber;
+  std::ofstream fout("muscle_log.csv");
+  fout << "chi_d_norm_sum,act,";
+  for (int i = 0; i < nf; ++i) {
+    pym_mf_named_t *mfn = &pymCfg->fiber[i].b;
+    fout << mfn->name << " (T),";
+    fout << mfn->name << " (A),";
+    fout << mfn->name << " (r)";
+    if (i == nf-1) {
+      fout << std::endl;
+    } else {
+      fout << ",";
+    }
+  }
+}
+
+void pym_log_muscle_status(const pym_config_t *pymCfg)
+{
+  const int nf = pymCfg->nFiber;
+  std::ofstream fout("muscle_log.csv", std::ios_base::app);
+  fout << pymCfg->chi_d_norm_sum << ",";
+  double Asum = 0;
+  for (int i = 0; i < pymCfg->nFiber; ++i) {
+    if (pymCfg->fiber[i].b.mType == PMT_ACTUATED_MUSCLE)
+      Asum += fabs(pymCfg->fiber[i].b.A);
+  }
+  fout << Asum << ",";
+  for (int i = 0; i < nf; ++i) {
+    pym_mf_named_t *mfn = &pymCfg->fiber[i].b;
+    fout << mfn->T << "," << fabs(mfn->A) << "," << mfn->xrest;
+    if (i == nf-1) {
+      fout << std::endl;
+    } else {
+      fout << ",";
+    }
+  }
+}
 
 void dump_cb(Fl_Widget *o, void *ac_raw)
 {
@@ -192,12 +238,15 @@ GetActiveCamAndLight(ArnCamera*& activeCam, ArnLight*& activeLight,
 		     ArnSceneGraph* sg)
 {
   activeCam = sg->getFirstCamera();
-  assert(activeCam);
-  activeCam->recalcLocalXform();
-  activeCam->recalcAnimLocalXform();
-  //activeCam->printCameraOrientation();
+  if (activeCam) {
+    activeCam->recalcLocalXform();
+    activeCam->recalcAnimLocalXform();
+    //activeCam->printCameraOrientation();
+  }
   activeLight = reinterpret_cast<ArnLight*>(sg->findFirstNodeOfType(NDT_RT_LIGHT));
-  assert(activeLight);
+  if (activeLight) {
+
+  }
 }
 
 static int
@@ -471,13 +520,13 @@ InitializeRendererDependentOnce(BwAppContext& ac)
     printf("  OpenGL context is not availble yet. Aborting...\n");
     return -1234;
   }
-
+  assert(glGetError() == GL_NO_ERROR);
   printf( "Vendor     : %s\n", glGetString( GL_VENDOR ) );
   printf( "Renderer   : %s\n", glGetString( GL_RENDERER ) );
   printf( "Version    : %s\n", glGetString( GL_VERSION ) );
   //printf( "Extensions : %s\n", glGetString( GL_EXTENSIONS ) );
   printf("\n");
-
+  assert(glGetError() == GL_NO_ERROR);
   /// OpenGL 플래그를 설정합니다.
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_TEXTURE_2D);
@@ -486,8 +535,13 @@ InitializeRendererDependentOnce(BwAppContext& ac)
   glEnable(GL_CULL_FACE);
   glEnable(GL_BLEND);
   glEnable(GL_DEPTH_TEST);
-  // Enables Depth Testing
+  glEnable (GL_BLEND);
+  //glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glEnable(GL_COLOR_MATERIAL);
+
   glShadeModel(GL_SMOOTH);
+  //glShadeModel(GL_FLAT);
+
   // Enable Smooth Shading
   //glShadeModel(GL_FLAT);
   // Enable Smooth Shading
@@ -496,12 +550,18 @@ InitializeRendererDependentOnce(BwAppContext& ac)
   glDepthFunc(GL_LEQUAL);
   // The Type Of Depth Testing To Do
   // Really Nice Perspective Calculations
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+  glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
+  glEnable(GL_POLYGON_SMOOTH);
+  glEnable(GL_LINE_SMOOTH);
   glCullFace(GL_BACK);
   glFrontFace(GL_CCW);
   glEnable(GL_NORMALIZE);
-  for (int lightId = 0; lightId < GL_MAX_LIGHTS; ++lightId) {
+  glEnable(GL_COLOR_MATERIAL);
+
+  for (int lightId = 0; lightId < 8; ++lightId) {
     glDisable(GL_LIGHT0 + lightId);
   }
 
@@ -529,7 +589,6 @@ InitializeRendererDependentOnce(BwAppContext& ac)
   if (InitializeRendererDependentsFromSg(ac) < 0) {
     return -2;
   }
-
   return 0;
 }
 
@@ -557,11 +616,11 @@ InitializeRendererIndependentOnce(BwAppContext& ac)
   // Notice for 32-bit and 64-bit build: Do not confuse the size of pointers!
   std::cout << " INFO  Raw pointer    size = " << sizeof(ArnSceneGraph*) << std::endl;
   std::cout << " INFO  Shared pointer size = " << sizeof(ArnSceneGraphPtr) << std::endl;
-  /// \c SceneList.txt 를 파싱합니다.
-  /*if (LoadSceneList(ac.sceneList) < 0) {
-    std::cerr << " *** Init failed..." << std::endl;
+  /// SceneList.txt 를 파싱합니다.
+  if (LoadSceneList(ac.sceneList) < 0) {
+    std::cerr << " *** LoadSceneList failed..." << std::endl;
     return -10;
-  }*/
+  }
   memset(ac.bHoldingKeys, 0, sizeof(ac.bHoldingKeys));
   // Default viewport init
   ac.avd.X			 = 0;
@@ -647,14 +706,21 @@ void update_idle_cb_attachment(BwAppContext &ac)
 
 void step(BwAppContext &ac)
 {
-  static double start_time		= 0;
+  static double start_time		  = 0;
   static double frameStartMs		= 0;
   static double frameDurationMs	= 0;
-  static double frameEndMs		= 0;
-  static int simFrame = 0; // Global sim frame index (no reset)
+  static double frameEndMs		  = 0;
+  static int simFrame           = 0; // Global sim frame index (no reset)
   
-  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
-  const int nb = pymCfg->nBody;
+  const GeneralJointPtrSet& joints = ac.swPtr->getGeneralJointPtrSet();
+  foreach(const GeneralJointPtr &j, joints) {
+    //j->addTorque(AXIS_X, j->200);
+    //j->control_PD(AXIS_X, 0, 100, 100, 500);
+
+    j->setParamVelocity(AXIS_X, 0);
+    j->setParamFMax(AXIS_X, 5000);
+  }
+
   if (!start_time)
     start_time = ac.timer.getTicks();
   frameDurationMs = frameEndMs - frameStartMs;
@@ -667,8 +733,10 @@ void step(BwAppContext &ac)
   ac.glWindow->redraw();
   
   
-  if (ac.swPtr)
-    ac.swPtr->getSimWorldState(ac.simWorldHistory[ac.frames]);
+  if (ac.swPtr) {
+    if (ac.frames < ac.simWorldHistory.size())
+      ac.swPtr->getSimWorldState(ac.simWorldHistory[ac.frames]);
+  }
 
   std::stringstream ss;
   ss << setiosflags(ios::fixed) << setprecision(4);
@@ -676,6 +744,9 @@ void step(BwAppContext &ac)
   int frame_move_ret = 0;
   char result_msg[2048] = {0,};
   if (ac.pymRs) {
+    pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+    const int nb = pymCfg->nBody;
+
     //cout << pymCfg->body[0] << endl;
     //printf("FRAME %d\n", simFrame);
     pymCfg->curFrame = simFrame;
@@ -692,13 +763,15 @@ void step(BwAppContext &ac)
 
     if (ac.pymRs->pymTraj.trajData)
       pym_set_reference_frame(ac.pymRs, ac.currentSimFrame );
-    
+
     frame_move_ret = PymRsFrameMove(ac.pymRs, ac.currentSimFrame, result_msg);
     if (frame_move_ret < 0) {
       ac.simulateButton->value(0);
       update_idle_cb_attachment(ac);
     }
-    const int nb = ac.pymRs->phyCon.pymCfg->nBody;
+
+    pym_log_muscle_status(pymCfg);
+
     double totConForce[3] = {0,};
     double COM[3] = {0,};
     double totMass = 0;
@@ -742,46 +815,48 @@ void step(BwAppContext &ac)
       COM[k] /= totMass;
     }
     static vector<string> fiber_str_items;
-    ac.fiber_browser->clear();
+    //ac.fiber_browser->clear();
     for (int i = 0; i < pymCfg->nFiber; ++i) {
       pym_mf_named_t *mfi = &pymCfg->fiber[i].b;
       std::stringstream str_s;
       str_s << setiosflags(ios::fixed) << setprecision(6);
       str_s << mfi->name << "\t" << mfi->A << "\t" << mfi->T << "\t" << mfi->kse << "\t"
         << mfi->kpe << "\t" << mfi->b << "\t" << mfi->xrest;
-      ac.fiber_browser->add(str_s.str().c_str());
+      
+      //ac.fiber_browser->add(str_s.str().c_str());
+      ac.fiber_browser->replace(i+1, str_s.str().c_str()); // Item index in FL_Browser start from 1.
     }
 
     BwOpenGlWindow *gw = dynamic_cast<BwOpenGlWindow *>(ac.glWindow);
     ++simFrame;
     ++ac.currentSimFrame;
     if (frame_move_ret || simFrame >= pymCfg->nSimFrame) {
-      //PymRsResetPhysics(appContext.pymRs);
+      //PymRsResetPhysics(ac.pymRs);
       simFrame = 0;
       ac.currentSimFrame = 0;
     }
+    if (!frame_move_ret) {
+      if (ac.frames < BwAppContext::MAX_SIMULATION_FRAMES) {
+        ++ac.frames;
+        sprintf(ac.frameStr, "%d", ac.frames);
+        ac.frameLabel->redraw_label();
+
+        ac.playbackSlider->setAvailableFrames(ac.frames);
+        ac.playbackSlider->value(ac.frames);
+      }
+
+      static vector<pym_rb_t> body_states(pymCfg->nBody);
+      memcpy(&body_states[0], pymCfg->body, sizeof(pym_rb_t)*pymCfg->nBody);
+      ac.rb_history.erase_end( ac.rb_history.size() - ac.frames );
+      ac.rb_history.push_back(body_states);
+      //printf("rb_history.size() = %d\n", ac.rb_history.size());
+    }
   }
+  
   std::string sss(ss.str());
   static char slidersss[1024];
   strncpy(slidersss, sss.c_str(), 1024);
-  ac.slider->label(slidersss);
-
-  if (ac.pymRs && !frame_move_ret) {
-    if (ac.frames < BwAppContext::MAX_SIMULATION_FRAMES) {
-      ++ac.frames;
-      sprintf(ac.frameStr, "%d", ac.frames);
-      ac.frameLabel->redraw_label();
-
-      ac.playbackSlider->setAvailableFrames(ac.frames);
-      ac.playbackSlider->value(ac.frames);
-    }
-
-    static vector<pym_rb_t> body_states(pymCfg->nBody);
-    memcpy(&body_states[0], pymCfg->body, sizeof(pym_rb_t)*pymCfg->nBody);
-    ac.rb_history.erase_end( ac.rb_history.size() - ac.frames );
-    ac.rb_history.push_back(body_states);
-    //printf("rb_history.size() = %d\n", ac.rb_history.size());
-  }
+  ac.opt_summary->label(slidersss);
 }
 static const int aaa = 100;
 char bbb[aaa];
@@ -807,6 +882,62 @@ void real_muscle_cb(Fl_Widget *o, void *p)
   ac.pymRs->pymCfg.real_muscle = widget->value() == 1 ? true : false;
 }
 
+void freeze_pose_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  ac.pymRs->pymCfg.freeze_pose = widget->value() == 1 ? true : false;
+}
+
+void zero_cost_func_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  ac.pymRs->pymCfg.zero_cost_func = widget->value() == 1 ? true : false;
+}
+
+void render_hud_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  ac.pymRs->pymCfg.render_hud = widget->value() == 1 ? true : false;
+
+  ac.glWindow->redraw();
+}
+
+void toggle_screenshot_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  ac.glWindow->toggle_screenshot();
+}
+
+void temp_ref_mode_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  pymCfg->temp_ref_mode = widget->value() == 1 ? true : false;
+
+  if (pymCfg->temp_ref_mode) {
+    for (int j = 0; j < pymCfg->nBody; ++j) {
+      for (int k = 0; k < 6; ++k) {
+        if (k < 3)
+          pymCfg->body[j].b.chi_ref_temp[k] = pymCfg->body[j].b.p[k];
+        else
+          pymCfg->body[j].b.chi_ref_temp[k] = pymCfg->body[j].b.q[k-3];
+      }
+    }
+  }
+}
+
+void support_polygon_constraint_cb(Fl_Widget *o, void *p)
+{
+  Fl_Light_Button* widget = (Fl_Light_Button*)o;
+  BwAppContext& ac = *(BwAppContext*)p;
+  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+  pymCfg->support_polygon_constraint = widget->value() == 1 ? true : false;
+}
 /* Velocity to 0, previous state is set to current state. */
 void set_vel_zero_cb(Fl_Widget *o, void *p)
 {
@@ -859,7 +990,8 @@ void scene_buttons_cb(Fl_Widget* o, void* p)
       }
     }
     ac.currentSimFrame = 0;
-    PymRsResetPhysics(ac.pymRs);
+    if (ac.pymRs)
+      PymRsResetPhysics(ac.pymRs);
     reconfigScene = true;
   } else if (done == MHR_STEP_SIMULATION) {
     step(ac);
@@ -896,7 +1028,7 @@ int doMain(int argc, char **argv)
   BwOpenGlWindow openGlWindow(210, 75,
 			      topWindow.w()-20-400, topWindow.h()-290,
 			      0, ac);
-  //openGlWindow.mode(FL_RGB | FL_DOUBLE | FL_DEPTH);
+  //openGlWindow.mode(FL_RGB | FL_DOUBLE | FL_DEPTH | FL_MULTISAMPLE);
   topWindow.setShapeWindow(&openGlWindow);
   //sw.mode(FL_RGB);
   topWindow.resizable(&openGlWindow);
@@ -948,51 +1080,81 @@ int doMain(int argc, char **argv)
   Fl_Button print_rb0_btn(topWindow.w()-200, 740, 190, 25, "Print RB[0] State");
   print_rb0_btn.callback(print_rb0_cb, &ac);
   
-  Fl_Browser sceneList(10000+topWindow.w()-200, 75+110+100, 190, 100);
-  Fl_Browser sceneGraphList(10000+topWindow.w()-200, 75+110+110+100,
-			    190, topWindow.h()-90-110-110-200);
+  Fl_Browser sceneList(topWindow.w()-200, 740+25+10, 190, 100);
+  Fl_Browser sceneGraphList(topWindow.w()-200, 740+25+10+100+10, 190, 100);
   ac.sceneGraphList = &sceneGraphList;
   ac.glWindow = &openGlWindow;
-  Fl_Button omega_label(0, 75+110+110 + (topWindow.h()-90-110-110-200), 600, 300, "text info");
-  omega_label.box(FL_NO_BOX);
-  omega_label.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT | FL_ALIGN_TOP);
-  ac.slider = &omega_label;
+  const int y_opengl_overlay = 75+110+110 + (topWindow.h()-90-110-110-200);
+
+  Fl_Button opt_summary(600, y_opengl_overlay, 600, 300, "optimization result summary");
+  opt_summary.box(FL_NO_BOX);
+  opt_summary.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT | FL_ALIGN_TOP);
+  ac.opt_summary = &opt_summary;
 
   
   Fl_Button *cost_labels[oct_count];
   //Fl_Value_Slider *cost_coefficients[oct_count];
+  const int cost_slider_w = 220;
+  const int cost_slider_h = 20;
   SliderInput *cost_coeff_sliders[oct_count];
   for (int i = 0; i < oct_count; ++i) {
     assert(cost_terms[i].lo <= cost_terms[i].def && cost_terms[i].def <= cost_terms[i].hi);
-    cost_labels[i] = new Fl_Button(0, 75+40*i, 200, 20, cost_terms[i].label.c_str());
+    cost_labels[i] = new Fl_Button(0, 75+40*i, cost_slider_w, cost_slider_h, cost_terms[i].label.c_str());
     cost_labels[i]->align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
     cost_labels[i]->labelsize(12);
     cost_labels[i]->box(FL_NO_BOX);
 
-    cost_coeff_sliders[i] = new SliderInput(0, 75+40*i+20, 200, 20);
+    cost_coeff_sliders[i] = new SliderInput(0, 75+40*i+20, cost_slider_w, cost_slider_h);
     cost_coeff_sliders[i]->type(FL_HOR_SLIDER);
     cost_coeff_sliders[i]->bounds(cost_terms[i].lo, cost_terms[i].hi);
     cost_coeff_sliders[i]->value(cost_terms[i].def);
   }
   ac.cost_coeff_sliders = cost_coeff_sliders;
 
-  Fl_Check_Button joint_dislocation_button(0, 75+20+40*oct_count, 200, 20, "Joint dislocation");
+  Fl_Check_Button joint_dislocation_button(0, 75+20+40*oct_count, cost_slider_w, cost_slider_h, "Joint dislocation");
   joint_dislocation_button.align(FL_ALIGN_INSIDE | FL_ALIGN_LEFT);
   joint_dislocation_button.labelsize(12);
   joint_dislocation_button.value(1);
-
-  SliderInput joint_dislocation_si = SliderInput(0, 75+20+40*oct_count+20, 200, 20);
+  SliderInput joint_dislocation_si = SliderInput(0, 75+20+40*oct_count+20, cost_slider_w, cost_slider_h);
   joint_dislocation_si.type(FL_HOR_SLIDER);
   joint_dislocation_si.bounds(0.0, 1.0);
   joint_dislocation_si.value(0.00);
   ac.joint_dislocation_slider = &joint_dislocation_si;
   ac.joint_dislocation_button = &joint_dislocation_button;
 
-  Fl_Light_Button real_muscle(0, 75+20+40*oct_count+20+100, 100, 30, "Real muscle");
+  int button_y = y_opengl_overlay;
+  int button_h = 30;
+  int button_gap = 5;
+  int button_w = 130;
+  int button_x_offset = 250;
+  Fl_Light_Button real_muscle(button_x_offset, button_y, button_w, button_h, "Real muscle");
   real_muscle.callback(real_muscle_cb, &ac);
-
-  Fl_Button set_vel_zero(0, 75+20+40*oct_count+20+100+40, 100, 30, "Set vel 0");
+  button_y += button_h + button_gap;
+  Fl_Light_Button zero_cost_func(button_x_offset, button_y, button_w, button_h, "Zero cost func");
+  zero_cost_func.callback(zero_cost_func_cb, &ac);
+  button_y += button_h + button_gap;
+  Fl_Light_Button temp_ref_mode(button_x_offset, button_y, button_w, button_h, "Temp ref mode");
+  temp_ref_mode.callback(temp_ref_mode_cb, &ac);
+  button_y += button_h + button_gap;
+  Fl_Light_Button support_polygon_constraint(button_x_offset, button_y, button_w, button_h, "SP const");
+  support_polygon_constraint.callback(support_polygon_constraint_cb, &ac);
+  button_y += button_h + button_gap;
+  // reset y. Start new column
+  button_y = y_opengl_overlay;
+  Fl_Light_Button render_hud(button_x_offset + button_w + button_gap, button_y, button_w, button_h, "render HUD");
+  render_hud.value( ac.pymRs->pymCfg.render_hud ? 1 : 0 );
+  render_hud.callback(render_hud_cb, &ac);
+  button_y += button_h + button_gap;
+  Fl_Light_Button toggle_screenshot(button_x_offset + button_w + button_gap, button_y, button_w, button_h, "screenshot");
+  render_hud.value( ac.glWindow->get_screenshot() ? 1 : 0 );
+  toggle_screenshot.callback(toggle_screenshot_cb, &ac);
+  button_y += button_h + button_gap;
+  Fl_Button set_vel_zero(button_x_offset + button_w + button_gap, button_y, button_w, button_h, "Set vel 0");
   set_vel_zero.callback(set_vel_zero_cb, &ac);
+  button_y += button_h + button_gap;
+  Fl_Light_Button freeze_pose(button_x_offset + button_w + button_gap, button_y, button_w, button_h, "Freeze pose");
+  freeze_pose.callback(freeze_pose_cb, &ac);
+  button_y += button_h + button_gap;
 
   /*
   // Style table
@@ -1018,14 +1180,18 @@ int doMain(int argc, char **argv)
     "AAAAAAAAAA\nBBBBBBBBBB\nCCCCCCCCCC\nDDDDDDDDDD\n");
   */
 
-  Fl_Browser *b = new Fl_Browser(500,75+110+110 + (topWindow.h()-90-110-110-200),500,200);
+  Fl_Browser *fiber_browser = new Fl_Browser(1100, 75+110+110 + (topWindow.h()-90-110-110-200), 400, 200);
   int widths[] = { 100, 100, 100, 70, 70, 40, 40, 70, 70, 50, 0 };               // widths for each column
-  b->textsize(9);
-  b->column_widths(widths);
-  b->column_char('\t');                                                       // tabs as column delimiters
-  b->type(FL_MULTI_BROWSER);
-  ac.fiber_browser = b;
-
+  fiber_browser->textsize(9);
+  fiber_browser->column_widths(widths);
+  fiber_browser->column_char('\t');                                                       // tabs as column delimiters
+  fiber_browser->type(FL_NORMAL_BROWSER);
+  fiber_browser->format_char(0); // disables format char
+  if (ac.pymRs) {
+    for (int i = 0; i < ac.pymRs->pymCfg.nFiber; ++i)
+      fiber_browser->add("\t\t\t\t\t\t\t\t\t\t\t");
+  }
+  ac.fiber_browser = fiber_browser;
   
 
   topWindow.setSceneList(&sceneList);
@@ -1035,13 +1201,25 @@ int doMain(int argc, char **argv)
   openGlWindow.show();
   openGlWindow.make_current();
   openGlWindow.redraw_overlay();
+
+  assert(glGetError() == GL_NO_ERROR);
+
   GLenum err = glewInit();
   if (GLEW_OK != err) {
     printf("Error: glewInit() failed\n");
     return 1;
   }
+  
+  assert(glGetError() == GL_NO_ERROR);
+  
   InitializeRendererDependentOnce(ac);
+
+  assert(glGetError() == GL_NO_ERROR);
+
   UpdateSceneGraphList(ac);
+
+  assert(glGetError() == GL_NO_ERROR);
+
   // scene list available now
   foreach (const std::string& scene, ac.sceneList) {
     sceneList.add(scene.c_str());
@@ -1051,6 +1229,9 @@ int doMain(int argc, char **argv)
     PymRsInitRender();
     PymRsInitPhysics(ac.pymRs);
     PymRsResetPhysics(ac.pymRs);
+
+    pym_start_log_muscle_status(&ac.pymRs->pymCfg);
+
     ac.pymRs->drawing_options = ac.drawing_options;
     rbTrackingOptions.init_items();
     pym_config_t *pymCfg = &ac.pymRs->pymCfg;
@@ -1084,7 +1265,7 @@ int doMain(int argc, char **argv)
     }
     ac.pymRs->ssIdx = ssIdx + 1; /* Screenshot file name continues... */
   }
-
+  assert(glGetError() == GL_NO_ERROR);
   ret = Fl::run();
 
   if (ac.pymRs) {
@@ -1148,6 +1329,7 @@ int main(int argc, char **argv)
 {
   static aran::core::PathManager pm;
   pm.set_shader_dir("resources/shaders/");
+  pm.set_model_dir("resources/models/");
 
   int ret = doMain(argc, argv);
   if (ret) {

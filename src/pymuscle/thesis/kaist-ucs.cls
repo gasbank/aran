@@ -11,11 +11,15 @@
 %%    current distribution of TeXLive
 %%      + ko.TeX
 %%
-%% Karnes Kim, converted to ko.TeX version. 
+%% Karnes Kim, converted to ko.TeX version.
 %%    2008/10/21
 %%
 %% Seokwoo Choi, modified according to the 2008 thesis format
 %%    2008/12/29
+%%
+%% Jong Mun Lee, modified according to the 2010 thesis format
+%% 2010/11/25
+%% 본 수정은 대학원학생회와 교무팀의 지원으로 진행되었습니다.
 
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
 \ProvidesClass{kaist-ucs}%
@@ -48,6 +52,11 @@
 
 %% 10pt,a4paper,onecolumn,oneside 옵션으로 report 클래스 불러오기
 \LoadClass[10pt,a4paper,onecolumn,oneside]{report}
+
+
+%%들여쓰기
+\usepackage{indentfirst}
+\setlength\parindent{2.0em}
 
 \RequirePackage{ifthen}       % 추가 패키지 설정
 
@@ -97,14 +106,9 @@
     \else \fi }
 \AtEndDocument{}                             % \end{document}와 함께 실행
 
-%% 출력용지 여백 설정 - A4 출력을 기본으로 4 x 6배판 재단
-\setlength{\topmargin}     {4.6mm}
-\setlength{\headheight}    {10mm}
-\setlength{\headsep}       {10mm}
-\setlength{\oddsidemargin} {11.6mm}
-\setlength{\textheight}    {195mm}
-\setlength{\textwidth}     {140mm}
-\setlength{\footskip}      {12mm}
+%% 편집용지 설정
+\usepackage[left=25.4mm,right=25.4mm,top=30mm,bottom=25.4mm,a4paper]{geometry}
+
 
 %% 줄간격 설정
 %\renewcommand{\baselinestretch}{1.3}
@@ -122,6 +126,16 @@
 
 %% KAIST 공식 영문명칭
 \newcommand{\@kaist}{KAIST}
+
+%% pagestyle
+\def\ps@kaist{\let\@mkboth\@gobbletwo
+     \let\@oddhead\@empty
+     \def\@oddfoot{\reset@font\hfil--\ \thepage\ --
+     \hfil}%
+     \let\@evenhead\@empty\let\@evenfoot\@oddfoot
+}
+
+\pagestyle{kaist}
 
 %%
 %% 문서 정보 변수 정의
@@ -177,7 +191,7 @@
 }
 \@onlypreamble{\advisor}
 
-% @command department 
+% @command department
 %
 \newcommand{\@degreeCode}{}          % 학위 영문코드
 \newcommand{\@degreeName}{}          % 학위명
@@ -190,226 +204,233 @@
 \newcommand{\@affFullNameEngCover}{} % 학과/전공 영문이름(표지용)
 \newcommand{\@degreeField}{}
 \newcommand{\@degreePrefix}{\ifthenelse{\boolean{@isDoctor}}{D}{M}}
-\newcommand{\department}[1] {%
+\newcommand{\department}[2] {%
     \ifthenelse{\equal{#1}{PH}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{물리학과}
          \renewcommand{\@childDeptNameEng}{Department of Physics}
-         \renewcommand{\@degreeField}{science}} {}
+         \renewcommand{\@degreeField}{#2}} {}
     \ifthenelse{\equal{#1}{MAS}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{수리과학과}
          \renewcommand{\@childDeptNameEng}{Department of Mathematical Sciences}
-         \renewcommand{\@degreeField}{science}} {}
+         \renewcommand{\@degreeField}{#2}} {}
     \ifthenelse{\equal{#1}{CH}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{화학과}
          \renewcommand{\@childDeptNameEng}{Department of Chemistry}
-         \renewcommand{\@degreeField}{science}} {}
-% 나노과학과는 이름만 있고 아직 Abstract에 쓰는 약자가 없음        
-%    \ifthenelse{\equal{#1}{NT}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@childDeptNameKor}{나노과학기술학과}
-%         \renewcommand{\@childDeptNameEng}{Department of Nanoscience and Technology}
-%         \renewcommand{\@degreeField}{science}} {}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{NST}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{나노과학기술대학원}
+         \renewcommand{\@childDeptNameEng}{Graduate School of Nanoscience \& Technology}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{NT}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{나노과학기술 학제전공}
+         \renewcommand{\@childDeptNameEng}{Nano Science and Technology Program}
+         \renewcommand{\@degreeField}{#2}} {}
     \ifthenelse{\equal{#1}{BS}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{생명과학과}
          \renewcommand{\@childDeptNameEng}{Department of Biological Sciences}
-         \renewcommand{\@degreeField}{science}} {}
-    \ifthenelse{\equal{#1}{BiS}}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{BIS}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{바이오및뇌공학과}
          \renewcommand{\@childDeptNameEng}{Department of Bio and Brain Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}      	
     \ifthenelse{\equal{#1}{MSE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{의과학대학원}
          \renewcommand{\@childDeptNameEng}{Graduate School of Medical Science and Engineering}
-         \renewcommand{\@degreeField}{science}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}      	
     \ifthenelse{\equal{#1}{BM}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{의과학학제전공}
+         \renewcommand{\@childDeptNameKor}{의과학 학제전공}
          \renewcommand{\@childDeptNameEng}{Biomedical Science and Engineering Program}
-         \renewcommand{\@degreeField}{science}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{CE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{건설및환경공학과}
+         \renewcommand{\@childDeptNameEng}{Department of Civil and Environmental Engineering}
+         \renewcommand{\@degreeField}{#2}} {}          	
     \ifthenelse{\equal{#1}{ME}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@parentDeptNameKor}{기계항공시스템학부}
          \renewcommand{\@parentDeptNameEng}{School of Mechanical, Aerospace and Systems Engineering}
          \renewcommand{\@childDeptNameKor}{기계공학전공}
          \renewcommand{\@childDeptNameEng}{Division of Mechanical Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}
+         \renewcommand{\@degreeField}{#2}} {}
     \ifthenelse{\equal{#1}{AE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@parentDeptNameKor}{기계항공시스템학부}
          \renewcommand{\@parentDeptNameEng}{School of Mechanical, Aerospace and Systems Engineering}
          \renewcommand{\@childDeptNameKor}{항공우주공학전공}
          \renewcommand{\@childDeptNameEng}{Division of Aerospace Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}
-    \ifthenelse{\equal{#1}{CE}}
+         \renewcommand{\@degreeField}{#2}} {}	
+    \ifthenelse{\equal{#1}{OSE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{건설및환경공학과}
-         \renewcommand{\@childDeptNameEng}{Department of Civil and Environmental Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-    \ifthenelse{\equal{#1}{ID}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{산업디자인학과}
-         \renewcommand{\@childDeptNameEng}{Department of Industrial Design}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@parentDeptNameKor}{기계항공시스템학부}
+         \renewcommand{\@parentDeptNameEng}{School of Mechanical, Aerospace and Systems Engineering}
+         \renewcommand{\@childDeptNameKor}{해양시스템공학전공}
+         \renewcommand{\@childDeptNameEng}{Department of Ocean Systems Engineering}
+         \renewcommand{\@degreeField}{#2}} {}	  	
     \ifthenelse{\equal{#1}{CBE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{생명화학공학과}
          \renewcommand{\@childDeptNameEng}{Department of Chemical and Biomolecular Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}      	
     \ifthenelse{\equal{#1}{MS}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{신소재공학과}
          \renewcommand{\@childDeptNameEng}{Department of Materials Science and Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}      	
     \ifthenelse{\equal{#1}{NQE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{원자력및양자공학과}
+         \renewcommand{\@childDeptNameKor}{원자력 및 양자공학과}
          \renewcommand{\@childDeptNameEng}{Department of Nuclear and Quantum Engineering}
-         \renewcommand{\@degreeField}{engineering}} {} 	
-    \ifthenelse{\equal{#1}{AT}}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{EEW}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{자동차기술대학원}
-         \renewcommand{\@childDeptNameEng}{Graduate School of Automobile Technology}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-%    \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@childDeptNameKor}{해양시스템공학과}
-%         \renewcommand{\@childDeptNameEng}{Department of Ocean Systems Engineering}
-%         \renewcommand{\@degreeField}{engineering}} {}      	
-    \ifthenelse{\equal{#1}{EE}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@parentDeptNameKor}{전자전산학부}
-         \renewcommand{\@parentDeptNameEng}{School of Electrical Engineering and Computer Science}
-         \renewcommand{\@childDeptNameKor}{전기및전자공학전공}
-         \renewcommand{\@childDeptNameEng}{Division of Electrical Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}   
-    \ifthenelse{\equal{#1}{CS}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@parentDeptNameKor}{전자전산학부}
-         \renewcommand{\@parentDeptNameEng}{School of Electrical Engineering and Computer Science}
-         \renewcommand{\@childDeptNameKor}{전산학전공}
-         \renewcommand{\@childDeptNameEng}{Division of Computer Science}
-         \renewcommand{\@degreeField}{engineering}} {}         	
-    \ifthenelse{\equal{#1}{IE}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{산업및시스템공학과}
-         \renewcommand{\@childDeptNameEng}{Department of Industrial and Systems Engineering}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-%    \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@childDeptNameKor}{지적서비스공학과}
-%         \renewcommand{\@childDeptNameEng}{Department of Intelligent Service Engineering}
-%         \renewcommand{\@degreeField}{engineering}} {}      	
-    \ifthenelse{\equal{#1}{STE}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{반도체학제전공}
-         \renewcommand{\@childDeptNameEng}{Semiconductor Technology Educational Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-    \ifthenelse{\equal{#1}{SEP}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{소프트웨어대학원프로그램}
-         \renewcommand{\@childDeptNameEng}{Software Graduate Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{TE}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{정보통신공학학제전공}
-         \renewcommand{\@childDeptNameEng}{Telecommunication Engineering Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@childDeptNameKor}{EEWS 대학원}
+         \renewcommand{\@childDeptNameEng}{Graduate School of EEWS}
+         \renewcommand{\@degreeField}{#2}} {}
      \ifthenelse{\equal{#1}{PSE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{고분자학학제전공}
+         \renewcommand{\@childDeptNameKor}{고분자 학제전공}
          \renewcommand{\@childDeptNameEng}{Polymer Science and Engineering Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{STS}}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{SPE}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{과학기술학학제전공}
-         \renewcommand{\@childDeptNameEng}{Science, Technology and Society Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{NT}}
+         \renewcommand{\@childDeptNameKor}{우주탐사공학 학제전공}
+         \renewcommand{\@childDeptNameEng}{Space Exploration Engineering Program}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{ENY}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{나노과학기술학제전공}
-         \renewcommand{\@childDeptNameEng}{Nano Science and Technology Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{RE}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{로봇공학학제전공}
-         \renewcommand{\@childDeptNameEng}{The Robotics Program}	% 'The'
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{CT}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{문화기술학제전공}
-         \renewcommand{\@childDeptNameEng}{Culture Technology Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{ENV}}
-        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{환경·에너지공학학제전공}
+         \renewcommand{\@childDeptNameKor}{환경·에너지공학 학제전공}
          \renewcommand{\@childDeptNameEng}{Environmental and Energy Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{EML}}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{IT}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@childDeptNameKor}{e-매뉴팩쳐링리더십학제전공}
-         \renewcommand{\@childDeptNameEng}{e-Manufacturing Leadership Program}
-         \renewcommand{\@degreeField}{engineering}} {}      	
+         \renewcommand{\@parentDeptNameKor}{경영과학과}
+         \renewcommand{\@parentDeptNameEng}{Department of Management Science}
+         \renewcommand{\@childDeptNameKor}{경영과학과(IT경영학)}
+         \renewcommand{\@childDeptNameEng}{Department of Management Science (IT Business)}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{BAP}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@parentDeptNameKor}{경영과학과}
+         \renewcommand{\@parentDeptNameEng}{Department of Management Science}
+         \renewcommand{\@childDeptNameKor}{경영전문대학원프로그램}
+         \renewcommand{\@childDeptNameEng}{Master of Business Administration Program}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{ITP}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{글로벌IT기술대학원프로그램}
+         \renewcommand{\@childDeptNameEng}{Global Information \& Telecommunication Technology Program}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{ITM}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{기술경영전문대학원}
+         \renewcommand{\@childDeptNameEng}{Graduate School of Innovation \& Technology Management}
+         \renewcommand{\@degreeField}{#2}} {}
      \ifthenelse{\equal{#1}{GCT}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@childDeptNameKor}{문화기술대학원}
          \renewcommand{\@childDeptNameEng}{Graduate School of Culture Technology}
-         \renewcommand{\@degreeField}{engineering}} {}      	
-     \ifthenelse{\equal{#1}{MT}}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{STP}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@parentDeptNameKor}{테크노경영대학원}
-         \renewcommand{\@parentDeptNameEng}{Graduate School of Management}
-         \renewcommand{\@childDeptNameKor}{경영공학전공}
-         \renewcommand{\@childDeptNameEng}{Division of Management Engineering}
-         \renewcommand{\@degreeField}{business}} {}      	
+         \renewcommand{\@childDeptNameKor}{과학기술정책대학원}
+         \renewcommand{\@childDeptNameEng}{Graduate Program of Science and Technology Policy}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{CT}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{문화기술(CT) 학제전공}
+         \renewcommand{\@childDeptNameEng}{Culture Technology Program}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{EE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{전기 및 전자공학전공}
+         \renewcommand{\@childDeptNameEng}{Department of Electrical Engineering}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{STE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@parentDeptNameKor}{전기 및 전자공학전공}
+         \renewcommand{\@parentDeptNameEng}{Department of Electrical Engineering}
+         \renewcommand{\@childDeptNameKor}{반도체공학프로그램}
+         \renewcommand{\@childDeptNameEng}{KAIST Education Program for Semiconductor Industry}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{CS}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{전산학과}
+         \renewcommand{\@childDeptNameEng}{Department of Computer Science}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{ICE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{정보통신공학과}
+         \renewcommand{\@childDeptNameEng}{Department of Information and Communications Engineering}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{IE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{산업및시스템공학과}
+         \renewcommand{\@childDeptNameEng}{Department of Industrial \& Systems Engineering}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{KSE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{지식서비스공학과}
+         \renewcommand{\@childDeptNameEng}{Department of Knowledge Service Engineering}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{ID}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{산업디자인학과}
+         \renewcommand{\@childDeptNameEng}{Department of Industrial Design}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{RE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{로봇공학 학제전공}
+         \renewcommand{\@childDeptNameEng}{Robotics Program}	
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{STE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{반도체 학제전공}
+         \renewcommand{\@childDeptNameEng}{Semiconductor Technology Educational Program}
+         \renewcommand{\@degreeField}{#2}} {}
+    \ifthenelse{\equal{#1}{SEP}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@parentDeptNameKor}{소프트웨어대학원프로그램}
+         \renewcommand{\@parentDeptNameEng}{Software Graduate Program}
+         \renewcommand{\@childDeptNameKor}{소프트웨어공학프로그램}
+         \renewcommand{\@childDeptNameEng}{Software Engineering Program}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{TE}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{정보통신공학 학제전공}
+         \renewcommand{\@childDeptNameEng}{Telecommunication Engineering Program}
+         \renewcommand{\@degreeField}{#2}} {}
+     \ifthenelse{\equal{#1}{EML}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{e-매뉴팩쳐링리더십 학제전공}
+         \renewcommand{\@childDeptNameEng}{e-Manufacturing Leadership Program}
+         \renewcommand{\@degreeField}{#2}} {}
+      \ifthenelse{\equal{#1}{MT}}
+        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
+         \renewcommand{\@childDeptNameKor}{경영공학과}
+         \renewcommand{\@childDeptNameEng}{Department of Management Engineering}
+         \renewcommand{\@degreeField}{#2}} {}
      \ifthenelse{\equal{#1}{TM}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
          \renewcommand{\@parentDeptNameKor}{테크노경영대학원}
          \renewcommand{\@parentDeptNameEng}{Graduate School of Management}
          \renewcommand{\@childDeptNameKor}{테크노경영전공}
          \renewcommand{\@childDeptNameEng}{Techno-MBA Program}
-         \renewcommand{\@degreeField}{business}} {}      	
-%     \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@parentDeptNameKor}{테크노경영대학원}
-%         \renewcommand{\@parentDeptNameEng}{Graduate School of Management}
-%         \renewcommand{\@childDeptNameKor}{아이엠비에이전공}
-%         \renewcommand{\@childDeptNameEng}{IMBA Program}
-%         \renewcommand{\@degreeField}{business}} {}      	
-%     \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@parentDeptNameKor}{테크노경영대학원}
-%         \renewcommand{\@parentDeptNameEng}{Graduate School of Management}
-%         \renewcommand{\@childDeptNameKor}{이그제큐티브전공}
-%         \renewcommand{\@childDeptNameEng}{Executive-MBA Program}
-%         \renewcommand{\@degreeField}{business}} {}      	
+         \renewcommand{\@degreeField}{#2}} {}
      \ifthenelse{\equal{#1}{FIN}}
         {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-         \renewcommand{\@parentDeptNameKor}{금융전문대학원}
-         \renewcommand{\@parentDeptNameEng}{Graduate School of Finance}
-         \renewcommand{\@childDeptNameKor}{금융전공}
-         \renewcommand{\@childDeptNameEng}{Division of Finance}
-         \renewcommand{\@degreeField}{business}} {}      	
-%     \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@parentDeptNameKor}{정보미디어경영대학원}
-%         \renewcommand{\@parentDeptNameEng}{Graduate School of Information and Media Management}
-%         \renewcommand{\@childDeptNameKor}{경영정보전공}
-%         \renewcommand{\@childDeptNameEng}{Management Information Systems Program}
-%         \renewcommand{\@degreeField}{business}} {}      	
-%     \ifthenelse{\equal{#1}{}}
-%        {\renewcommand{\@degreeCode}{\@degreePrefix #1}
-%         \renewcommand{\@parentDeptNameKor}{정보미디어경영대학원}
-%         \renewcommand{\@parentDeptNameEng}{Graduate School of Information and Media Management}
-%         \renewcommand{\@childDeptNameKor}{텔레콤경영전공}
-%         \renewcommand{\@childDeptNameEng}{Telecommunications Management Program}
-%         \renewcommand{\@degreeField}{business}} {}      	
-         
+         \renewcommand{\@childDeptNameKor}{금융전문대학원}
+         \renewcommand{\@childDeptNameEng}{Graduate School of Finance and Accounting}
+         \renewcommand{\@degreeField}{#2}} {}
 
     \renewcommand{\@affFullNameKor}{%               % 학과/전공 한글이름
     	\ifthenelse{\equal{\@parentDeptNameKor}{}}
@@ -503,33 +524,39 @@
 \newcommand{\makefrontcover}{%
     \renewcommand{\baselinestretch}{1.3}%
     \thispagestyle{empty} \noindent%
-    \begin{minipage}[t][30mm][t]{\textwidth}
+    \begin{minipage}[b][20mm][b]{\textwidth}
         \begin{center}
             \Large
             \if@isDoctor
-                박 사 학 위 논 문\\ Doctoral Thesis
+                박사 학위논문\\ Ph. D. Dissertation
             \else
-                석 사 학 위 논 문\\ Master's Thesis
+                석사 학위논문\\ Master's Thesis
             \fi
         \end{center}
-    \end{minipage}\\[0mm]
-    \begin{minipage}[t][90mm][t]{\textwidth}
+    \end{minipage}\\[30mm]
+    \begin{minipage}[t][70mm][t]{\textwidth}
         \begin{center}
-            \huge  \@titleKor \\[15pt]
+            \fontsize{21pt}{21pt}\selectfont  \@titleKor \\[21pt]
             \Large \@titleEng
         \end{center}
-    \end{minipage}\\[0mm]
-    \begin{minipage}[t][40mm][b]{\textwidth}
+    \end{minipage}\\[30mm]
+    \begin{minipage}[c][55mm][c]{\textwidth}
         \begin{center}
             \Large
-            \@authorKorFN\ \@authorKorGN\   (\@authorChnFN\ \@authorChnGN\ \
-            \@authorEngFN, \@authorEngGN ) \\
+            \ifthenelse{\equal{\@authorKorFN}{}}
+            {\@authorEng\ (\@authorChn) \\}
+            {\@authorKor\   (\@authorChn\ \
+            \@authorEng) \\}
             \@affFullNameKor \\ \@affFullNameEngCover
         \end{center}
     \end{minipage}\\[0mm]
-    \begin{minipage}[t][30mm][b]{\textwidth}
+    \begin{minipage}[c][17mm][c]{\textwidth}
         \begin{center}
-            \Large \@kaist \\[10pt]
+            \Large \@kaist
+        \end{center}
+    \end{minipage}\\[0mm]
+    \begin{minipage}[c][17mm][c]{\textwidth}
+        \begin{center}
             \Large \@gradYear
         \end{center}
     \end{minipage}
@@ -542,10 +569,13 @@
 \renewcommand{\maketitle}{%
     \renewcommand{\baselinestretch}{1.3}%
     \thispagestyle{empty} \noindent
-    \vspace{30mm}\\[0mm]
-    \begin{center}
-        \huge \@titleKor \\[10mm] \@titleEng
-    \end{center}
+    \vspace{60mm}\\[0mm]
+    \begin{minipage}[t][70mm][t]{\textwidth}
+        \begin{center}
+            \fontsize{21pt}{21pt}\selectfont  \@titleKor \\[21pt]
+            \Large \@titleEng
+        \end{center}
+    \end{minipage}
     \newpage
 }
 
@@ -557,9 +587,13 @@
     \renewcommand{\baselinestretch}{1.3}
     \hyphenation{institute department division program} % word division 방지
     \thispagestyle{empty} \noindent
-    \begin{minipage}[t][85mm][t]{\textwidth}
+    \begin{minipage}[c][25mm][c]{\textwidth}
         \begin{center}
-            \huge \@titleEng \\ \vfill       % 학위논문 영문제목
+            \fontsize{21pt}{21pt}\selectfont \@titleEng \\ \vfill
+        \end{center}
+    \end{minipage}\\[0mm]
+    \begin{minipage}[c][17mm][c]{\textwidth}
+        \begin{center}
             \Large
             \begin{tabular}{lcl}             % 학위논문 지도교수 영문이름
                 \@ifundefined{@advisorCooprEng}
@@ -569,68 +603,84 @@
                     {Major Advisor & : & Professor\ \ \@advisorMajorEng \\
                      Co-Advisor & : & Professor\ \ \@advisorCooprEng}
             \end{tabular} \vfill
-            by \vfill
-            \@authorEngFN, \@authorEngGN \\  % 저자 영문이름
+        \end{center}
+    \end{minipage}\\[0mm]
+    \begin{minipage}[c][8mm][c]{\textwidth}
+        \begin{center}
+        \Large by \vfill
+        \end{center}
+    \end{minipage}\\[0mm]
+    \begin{minipage}[t][46mm][t]{\textwidth}
+        \Large
+        \begin{center}
+                    \@authorEngFN, \@authorEngGN \\  % 저자 영문이름
             \@affFullNameEngCover \\         % 학과/전공명 (표지용)
             \@kaist                          % 학교명 KAIST
         \end{center}
     \end{minipage}\\[0mm]
-    \parbox[t][10mm][t]{\textwidth}{\mbox{}}
-    \begin{minipage}[t][45mm][t]{\textwidth}
-        \Large \setlength{\parindent}{24pt} \indent
-        A \ifthenelse{\boolean{@isDoctor}}{thesis}{thesis} submitted to
-        the faculty of the \@kaist\ in partial fulfillment of the requirements
-        for the degree of \@degreeName in 
-        \ifthenelse{\equal{\@childDeptNameEng}{The Robotics Program}}
-        	{the Robotics Program}
-        	{the \@affFullNameEng}
+    \begin{minipage}[t][40mm][t]{\textwidth}
+    	\Large
+    	\hspace*{10mm}
+    	A thesis submitted to the faculty of \@kaist\
+    	in partial fulfillment of the requirements
+    	for the degree of \@degreeName in the \@affFullNameEng.
+    	The study was conducted in accordance with Code of Research Ethics\footnotemark[1].
     \end{minipage}\\[0mm]
     \mbox{} \hfill
-    \begin{minipage}[t][55mm][t]{.55\textwidth}
+    \begin{minipage}[t][75mm][t]{.55\textwidth}
+        \linespread{1.6}
         \Large \noindent
-        Daejeon, Korea \\
         \@approvalYear. \@approvalMonth. \@approvalDay. \\ % 제출승인일자
-        Approved by \\[24pt]
-        \makebox[.8\textwidth][r]{\hrulefill} \\
+        Approved by \\
         Professor \@advisorSigned \\          % 제출승인서에 서명한 교수이름
         % 단독 또는 주 지도교수가 서명하면 Major-,  부 지도교수가 서명하면 Co-
-        \@ifundefined{@advisorCooprEng}{Advisor}%
+        \@ifundefined{@advisorCooprEng}{[Advisor]}%
             {\ifthenelse{\equal{\@advisorSigned}{\@advisorMajorEng}}%
-                {Major Advisor}{Co-Advisor}}
+                {[Major Advisor]}{[Co-Advisor]}} \\[24pt]
+        \makebox[.8\textwidth][r]{\hrulefill}
     \end{minipage}
+    	\footnotetext[1]{\normalsize Declaration of Ethical Conduct in Research: I, as a graduate student of KAIST, hereby declare that I have not committed any acts that may damage the credibility of my research. These include, but are not limited to: falsification, thesis written by someone else, distortion of research findings or plagiarism. I affirm that my thesis contains honest conclusions based on my own careful research under the guidance of my thesis advisor.}
+
+
 
     % 학위논문 심사완료 검인서
     \newpage \thispagestyle{empty} \noindent
-    \begin{minipage}[t][70mm][t]{\textwidth}
+    \begin{minipage}[c][34mm][c]{\textwidth}
         \begin{center}
-            \vfill
-            \huge \@titleKor \\[8mm]             % 학위논문 한글제목
-            \LARGE \@authorKorFN\ \@authorKorGN  % 저자 한글이름
-            \vfill
+            \fontsize{21pt}{21pt}\selectfont \@titleKor \\          % 학위논문 한글제목
         \end{center}
     \end{minipage}\\[0mm]
-    \parbox[t][10mm][t]{\textwidth}{\mbox{}}       % 10mm 공백삽입
-    \begin{minipage}[t][20mm][t]{\textwidth}
-        \Large 위 논문은 한국과학기술원
-        \ifthenelse{\boolean{@isDoctor}}{박사}{석사}학위논문으로
-        학위논문심사\linebreak 위원회에서 심사 통과하였음.
+    \begin{minipage}[c][17mm][c]{\textwidth}
+        \begin{center}
+            \LARGE
+             \ifthenelse{\equal{\@authorKorFN}{}}
+             {\@authorEng}
+             {\@authorKor}  % 저자 한글이름
+        \end{center}
     \end{minipage}\\[0mm]
+    \begin{minipage}[c][30mm][c]{\textwidth}
+        	\begin{center}
+        		\Large 위 논문은 한국과학기술원
+        		\ifthenelse{\boolean{@isDoctor}}{박사}{석사}학위논문으로\linebreak
+        		학위논문심사위원회에서 심사 통과하였음.
+	\end{center}
+    \end{minipage}\\[28mm]
     \begin{minipage}[t][50mm][b]{\textwidth}
         \Large
         \begin{flushright}
-            \newcommand{\@nameWidth}{70pt}
-            \begin{tabular}{rll}                 % 심사위원명단
-                \multicolumn{3}{r}{\@refereeYear 년 \@refereeMonth 월 \@refereeDay 일}\mbox{\ }
+
+	\begin{tabular}{rcl}                 % 심사위원명단
+                \multicolumn{3}{r}{\@refereeYear 년 \@refereeMonth 월 \@refereeDay 일 \hspace*{15mm}}\mbox{\ }
                 \@ifundefined{@refereeChief}{}
-                    {\\[30pt] 심사위원장 & \ \makebox[\@nameWidth][s]{\@refereeChief}  & \ (인)}
+                    {\\[30pt] 심사위원장 & \ \makebox[\width][r]{\@refereeChief}  & \ (인) \hspace*{15mm}}
                 \@ifundefined{@refereeSecond}{}
-                    {\\[15pt] 심사위원   & \ \makebox[\@nameWidth][s]{\@refereeSecond} & \ (인)}
+                    {\\[15pt] 심사위원   & \ \makebox[\width][r]{\@refereeSecond} & \ (인) \hspace*{15mm}}
                 \@ifundefined{@refereeThird}{}
-                    {\\[15pt] 심사위원   & \ \makebox[\@nameWidth][s]{\@refereeThird}  & \ (인)}
+                    {\\[15pt] 심사위원   & \ \makebox[\width][r]{\@refereeThird}  & \ (인) \hspace*{15mm}}
                 \@ifundefined{@refereeFourth}{}
-                    {\\[15pt] 심사위원   & \ \makebox[\@nameWidth][s]{\@refereeFourth} & \ (인)}
+                    {\\[15pt] 심사위원   & \ \makebox[\width][r]{\@refereeFourth} & \ (인) \hspace*{15mm}}
                 \@ifundefined{@refereeFifth}{}
-                    {\\[15pt] 심사위원   & \ \makebox[\@nameWidth][s]{\@refereeFifth} & \ (인)}
+                    {\\[15pt] 심사위원   & \ \makebox[\width][r]{\@refereeFifth} & \ (인) \hspace*{15mm}}
             \end{tabular}
         \end{flushright}
     \end{minipage} \hfill \newpage
@@ -643,18 +693,20 @@
 \newcommand{\@lastPage}{\pageref{paperlastpagelabel}} % 총 페이지 수 계산용
 \renewenvironment{abstract}{%
     \pagenumbering{roman}                        % 로마자 페이지 시작
-    \pagestyle{plain}%
+    \thispagestyle{plain}%
     \newcommand{\@tempbreak}{}                   % \linebreak 명령 보관용
     \let\@tempbreak\linebreak
     \renewcommand{\linebreak}{\ }                % \linebreak -> 공백 대체
     \newlength{\@thesisinfowidth}
     \setlength{\@thesisinfowidth}{\textwidth}    % 논문정보박스 사이즈는
-    \addtolength{\@thesisinfowidth}{-22mm}       % 텍스트 폭보다 22mm 작게
+    \addtolength{\@thesisinfowidth}{-30mm}       % 텍스트 폭보다 30mm 작게
     \noindent
-    \parbox[t]{22mm}{\Large \textsf{\@degreeCode \\ \@studentID}}%
+    \parbox[t]{30mm}{\Large \textsf{\@degreeCode \\ \@studentID}}%
     \raisebox{3pt}{\begin{minipage}[t]{\@thesisinfowidth}
         \normalsize \sffamily
-        \@authorKorFN\ \@authorKorGN.           % 저자 한글이름
+        \ifthenelse{\equal{\@authorKorFN}{}}
+        {}
+        {\@authorKorFN\ \@authorKorGN.}           % 저자 한글이름
         \@authorEngFN,\ \@authorEngGN.           % 저자 영문이름
         \@titleEng. \@titleKor.                 % 학위논문 영문 및 한글제목
         \@affFullNameEng. \@gradYear.           % 학과/전공명, 졸업년도
@@ -666,10 +718,11 @@
         \ifthenelse{\boolean{@isKorean}}
             {}{Text in English.}               % 본문이 영어인 경우 명시
     \end{minipage}}\\[16pt]
-    \textbf{\large\abstractname} \\ \indent      % 초록명 -> Abstract
-    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{section}{\abstractname}% 초록을 목차(TOC)에 삽입
+    \begin{center} \textbf{ABSTRACT} \end{center}      % 초록명 -> Abstract
+    \hspace*{5mm}
+    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{content}{\abstractname}% 초록을 목차(TOC)에 삽입
 }{  \setcounter{pagemarker}{\value{page}}        % 마지막 페이지 번호를 저장
-    \addtocounter{pagemarker}{2}                 % 백색별지분을 고려
+    \addtocounter{pagemarker}{1}                 % 백색별지분을 고려
     \newpage \pagenumbering{arabic}              % 페이지 아라비아 수자 포맷
     \let\linebreak\@tempbreak                    % \linebreak 명령 복원
 }
@@ -717,9 +770,14 @@
 %%
 %% 감사의 글 및 이력서 생성
 %%
-\newcommand{\acknowledgement}{%                 % 감사의 글
-    \chapter*{감 사 의\ \ 글}
-    \pagestyle{empty}
+
+\newcommand{\acknowledgement}[1][default]{%     % 이력서
+    \newcommand{\@acklang}{#1}
+    \ifthenelse{\equal{#1}{default}}            % 아무 옵션을 설정하지 않으면
+        {\let\@acklang\@textlang}{}           % 논문 언어대로 이력서 언어설정
+    \ifthenelse{\equal{\@acklang}{\@korean}}
+        {\chapter*{감 사 의 글}}                 % korean  옵션일 경우
+        {\chapter*{감 사 의 글}}         % english 옵션일 경우
 }
 
 \newcommand{\curriculumvitae}[1][default]{%     % 이력서
@@ -728,8 +786,7 @@
         {\let\@ccvlang\@textlang}{}           % 논문 언어대로 이력서 언어설정
     \ifthenelse{\equal{\@ccvlang}{\@korean}}
         {\chapter*{이 력 서}}                 % korean  옵션일 경우
-        {\chapter*{Curriculum Vitae}}         % english 옵션일 경우
-    \pagestyle{empty}
+        {\chapter*{이 력 서}}         % english 옵션일 경우
 }
 
 %%
@@ -756,14 +813,14 @@
             \else
                 \def\@arg{[Date of Birth\hfill]}
                 \expandafter\item\@arg \@dateUSenglish{##1}{##2}{##3}
-            \fi}
+            \fi }
         \newcommand{\birthplace}[1]{%         % 출생지
             \ifx\@ccvlang\@korean
                 \def\@arg{[출\hfill생\hfill지]}
             \else
-                \def\@arg{[Birthplace\hfill]}
-            \fi
-            \expandafter\item\@arg ##1}
+               \def\@arg{[Birthplace\hfill]}
+           \fi
+           \expandafter\item\@arg ##1}
         \newcommand{\domicile}[1]{%           % 본적지
             \ifx\@ccvlang\@korean
                 \def\@arg{[본\hfill적\hfill지]}
@@ -784,9 +841,9 @@
             \else
                 \def\@arg{[E-mail\hfill]}
             \fi
-            \expandafter\item\@arg ##1}
-        % 이력서에 집어넣을 추가 필드가 필요하면 위를 참고하여 만들어 쓸 것.
-        % \newcommand{(필드명령)}[1]{%
+          \expandafter\item\@arg ##1}
+        %이력서에 집어넣을 추가 필드가 필요하면 위를 참고하여 만들어 쓸 것.
+        %\newcommand{(필드명령)}[1]{%
         %   \ifx\@ccvlang\@korean
         %       \def\@arg{[(한글필드명)]}
         %   \else
@@ -903,7 +960,7 @@
             \if@isKorean
                 \protect\numberline{제 \thechapter\ 장}#1
             \else
-                \protect\numberline{\thechapter}#1
+                \protect\numberline{Chapter \thechapter.}#1
             \fi
         }% <-- 목차에 나타나는 형식 - 변경사항
     \else
@@ -924,7 +981,7 @@
     {\centering \parindent\z@ \LARGE\bfseries
     \ifthenelse{\equal{\@textlang}{korean}}
         {제\hspace{1.4ex}\thechapter\hspace{1.4ex}장\hspace{2ex}}
-        {\thechapter.\hspace{1ex}}
+        {Chapter\hspace{1.4ex}\thechapter.\hspace{1ex}}
     #1\par}
     \vspace*{20\p@}
 }
@@ -945,6 +1002,7 @@
 %% \tableofcontents 재정의 - report 클래스로부터 복사하여 일부 수정
 %%
 \renewcommand\tableofcontents{%
+	\thispagestyle{plain}
     \if@twocolumn
         \@restonecoltrue\onecolumn
     \else
@@ -954,7 +1012,7 @@
         \@mkboth{\MakeUppercase\contentsname}{\MakeUppercase\contentsname}}%
     \pagenumbering{roman}                         % roman 페이지번호로 복원
     \setcounter{page}{\value{pagemarker}}         % pagemarker에 저장된 값으로
-    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{section}{\contentsname} % 목차(TOC)에 추가
+    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{content}{\contentsname} % 목차(TOC)에 추가
     \@starttoc{toc}%
     \if@restonecol\twocolumn\fi
     \newpage \setcounter{pagemarker}{\value{page}}% pagemarker에 다시 저장
@@ -965,6 +1023,7 @@
 %% \listoftables 재정의 - report 클래스로부터 복사하여 일부 수정
 %%
 \renewcommand\listoftables{%
+	\thispagestyle{plain}
     \if@twocolumn
         \@restonecoltrue\onecolumn
     \else
@@ -974,7 +1033,7 @@
     \@mkboth{\MakeUppercase\listtablename}{\MakeUppercase\listtablename}%
     \pagenumbering{roman}                         % roman 페이지번호로 복원
     \setcounter{page}{\value{pagemarker}}         % pagemarker에 저장된 값으로
-    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{section}{\listtablename}% 목차(TOC)에 추가
+    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{content}{\listtablename}% 목차(TOC)에 추가
     \@starttoc{lot}%
     \if@restonecol\twocolumn\fi
     \newpage \setcounter{pagemarker}{\value{page}}% pagemarker에 다시 저장
@@ -985,6 +1044,7 @@
 %% \listoffigures 재정의 - report 클래스로부터 복사하여 일부 수정
 %%
 \renewcommand\listoffigures{%
+	\thispagestyle{plain}
     \if@twocolumn
         \@restonecoltrue\onecolumn
     \else
@@ -994,7 +1054,7 @@
     \@mkboth{\MakeUppercase\listfigurename}{\MakeUppercase\listfigurename}%
     \pagenumbering{roman}                         % roman 페이지번호로 복원
     \setcounter{page}{\value{pagemarker}}         % pagemarker에 저장된 값으로
-    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{section}{\listfigurename}% 목차(TOC)에 추가
+    \if@PDFdoc\phantomsection\fi\addcontentsline{toc}{content}{\listfigurename}% 목차(TOC)에 추가
     \@starttoc{lof}%
     \if@restonecol\twocolumn\fi
     \newpage \setcounter{pagemarker}{\value{page}}% pagemarker에 다시 저장
@@ -1004,6 +1064,9 @@
 %%
 %% 목차에 나오는 형식 - report 클래스로부터 복사하여 일부 수정
 %%
+
+\newcommand{\l@content}{\large\bf\@dottedtocline{1}{0em}{0em}}
+
 \renewcommand*\l@chapter[2]{%
     \ifnum \c@tocdepth >\m@ne
         \addpenalty{-\@highpenalty}%
@@ -1011,7 +1074,7 @@
         \if@isKorean                     % <-- 변경 부분
             \setlength\@tempdima{5.0em} % korean  옵션일 때는 5.0em
         \else
-            \setlength\@tempdima{1.5em} % english 옵션일 때는 1.5em
+            \setlength\@tempdima{6.5em} % english 옵션일 때는 1.5em
         \fi
         \begingroup
             \parindent \z@ \rightskip \@pnumwidth
@@ -1023,6 +1086,7 @@
             \penalty\@highpenalty
         \endgroup
     \fi}
+
 
 \if@isKorean % 한글이면 각종 치수를 변경
     \renewcommand*\l@section{\@dottedtocline{1}{2.7em}{2.3em}}

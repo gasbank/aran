@@ -3,7 +3,7 @@
  * @author Geoyeob Kim
  * @date 2009
  *
- * AranPhy API 주 헤더 파일
+ * AranPhy API �??�더 ?�일
  */
 #pragma once
 
@@ -11,40 +11,40 @@ class GeneralBody;
 class ArnPlane;
 
 /*!
- * @brief 물리 라이브러리 초기화
- * @return 성공 시 0, 실패(재 초기화 포함) 시 음수
+ * @brief 물리 ?�이브러�?초기??
+ * @return ?�공 ??0, ?�패(??초기???�함) ???�수
  */
 ARANPHY_API int
 ArnInitializePhysics();
 
 /*!
- * @brief 물리 라이브러리 해제
- * @return 성공 시 0, 실패(미 초기화 후 호출 포함) 시 음수
- * @remarks 초기화가 되지 않은 상태에서 해제하는 경우 및 두 번 이상 해제하는 것도 실패로 간주
+ * @brief 물리 ?�이브러�??�제
+ * @return ?�공 ??0, ?�패(�?초기?????�출 ?�함) ???�수
+ * @remarks 초기?��? ?��? ?��? ?�태?�서 ?�제?�는 경우 �???�??�상 ?�제?�는 것도 ?�패�?간주
  */
 ARANPHY_API int
 ArnCleanupPhysics();
 
 /*!
- * @brief GeneralBody 와 ArnPlane 사이의 교차점 계산
+ * @brief GeneralBody ?� ArnPlane ?�이??교차??계산
  *
- * 다수의 교차점이 있을 수도 있으므로 교차점 리스트를 만들어 냅니다.
+ * ?�수??교차?�이 ?�을 ?�도 ?�으므�?교차??리스?��? 만들???�니??
  */
 ARANPHY_API void
 ArnGeneralBodyPlaneIntersection(
-	std::vector<ArnVec3>& points,		///< [out] 교차점
-	const GeneralBody& gb,			///< [in] 교차 테스트를 할 물리
-	const ArnPlane& plane			///< [in] 교차 테스트를 할 평면
+	std::vector<ArnVec3>& points,		///< [out] 교차??
+	const GeneralBody& gb,			///< [in] 교차 ?�스?��? ??물리
+	const ArnPlane& plane			///< [in] 교차 ?�스?��? ???�면
 );
 
 /*!
- * @brief GeneralBody 와 수직선(vertical line)과의 교차점 계산
+ * @brief GeneralBody ?� ?�직??vertical line)과의 교차??계산
  *
- * 다수의 교차점이 있을 수도 있으므로 교차점 리스트를 만들어 냅니다.
+ * ?�수??교차?�이 ?�을 ?�도 ?�으므�?교차??리스?��? 만들???�니??
  */
 ARANPHY_API void
-ArnGeneralBodyVerticalLineIntersection(std::vector<ArnVec3>& points,	///< [out] 교차점
-									const GeneralBody& gb,			///< [in] 교차 테스트를 할 물리
-									const float x,					///< [in] 수직선의 X 좌표
-									const float y					///< [in] 수직선의 Y 좌표
+ArnGeneralBodyVerticalLineIntersection(std::vector<ArnVec3>& points,	///< [out] 교차??
+									const GeneralBody& gb,			///< [in] 교차 ?�스?��? ??물리
+									const float x,					///< [in] ?�직?�의 X 좌표
+									const float y					///< [in] ?�직?�의 Y 좌표
 									);

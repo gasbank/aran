@@ -72,7 +72,7 @@ class BwAppContext : private Uncopyable
   std::vector<SimWorldState>		simWorldHistory;
   // A handle for realtime simulator module
   pym_rs_t *pymRs;
-  Fl_Button *slider;
+  Fl_Button *opt_summary;
   SliderInput **cost_coeff_sliders;
   Fl_Light_Button *simulateButton;
   SliderInput *joint_dislocation_slider;

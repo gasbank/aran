@@ -50,21 +50,40 @@ ADD_DEFINITIONS(
 TARGET_LINK_LIBRARIES(Aran
 AranMath
 DevIL
-optimized ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Release/zlib1.lib
-debug ${CODEBASE}zlib-1.2.3/projects/visualc6/Win32_DLL_Debug/zlib1.lib
 winmm
 )
+if (MSVC80)
+	TARGET_LINK_LIBRARIES(Aran
+	debug ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc8/Debug/tinyxml.lib
+	optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc8/Release/tinyxml.lib
+  debug ${CODEBASE}zlib-1.2.5/build_vc80/debug/zlibd.lib  
+  optimized ${CODEBASE}zlib-1.2.5/build_vc80/release/zlib.lib
+	)
+  INCLUDE_DIRECTORIES(
+  ${CODEBASE}zlib-1.2.5/build_vc80
+  )
+endif (MSVC80)
 if (MSVC90)
 	TARGET_LINK_LIBRARIES(Aran
 	debug ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc9/Debug/tinyxml.lib
 	optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/build_vc9/Release/tinyxml.lib
+  debug ${CODEBASE}zlib-1.2.5/build_vc90/debug/zlibd.lib  
+  optimized ${CODEBASE}zlib-1.2.5/build_vc90/release/zlib.lib
 	)
+  INCLUDE_DIRECTORIES(
+  ${CODEBASE}zlib-1.2.5/build_vc90
+  )
 endif (MSVC90)
 if (MSVC10)
 	TARGET_LINK_LIBRARIES(Aran
 	debug ${CODEBASE}tinyxml_2_5_3/tinyxml/build/Debug/tinyxml.lib
 	optimized ${CODEBASE}tinyxml_2_5_3/tinyxml/build/Release/tinyxml.lib
+  debug ${CODEBASE}zlib-1.2.5/build_vc10/debug/zlibd.lib  
+  optimized ${CODEBASE}zlib-1.2.5/build_vc10/release/zlib.lib
 	)
+  INCLUDE_DIRECTORIES(
+  ${CODEBASE}zlib-1.2.5/build_vc10
+  )
 endif (MSVC10)
 
 ADD_MSVC_PRECOMPILED_HEADER(Aran AranPCH.h AranPCH.cpp)

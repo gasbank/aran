@@ -141,6 +141,10 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
 
     bjb->rotParam = rp;
     config_setting_t *p    = config_setting_get_member(bConf, "p");    assert(p);    for (i=0;i<3;  ++i) bjb->p[i]       = csgfe(p, i);
+
+    // start from sky
+    bjb->p[2] += 1;
+    
     config_setting_t *q    = config_setting_get_member(bConf, "q");    assert(q);    for (i=0;i<nrp;++i) bjb->q[i]       = csgfe(q, i);
     config_setting_t *pd   = config_setting_get_member(bConf, "pd");   assert(pd);   for (i=0;i<3;  ++i) bjb->pd[i]      = csgfe(pd, i);
     config_setting_t *qd   = config_setting_get_member(bConf, "qd");   assert(qd);   for (i=0;i<nrp;++i) bjb->qd[i]      = csgfe(qd, i);
@@ -305,9 +309,12 @@ int PymConstructConfig(const char *fnConf, pym_config_t *pymCfg, FILE *verbosest
 
   pymCfg->chInputLen      = 0;
   pymCfg->chOutputLen     = 0;
+  pymCfg->chVInputLen      = 0;
+  pymCfg->chVOutputLen     = 0;
   pymCfg->prevTotContacts = 0;
   pymCfg->curTotContacts  = 0;
   pymCfg->renderFibers = 0;
+  pymCfg->use_relaxed_ch_as_constraint = true;
   return 0;
 #undef csgfe
 #undef BODY
@@ -450,6 +457,8 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   const int						 nj = pymCfg->nJoint;
   cholmod_triplet			 *A_trip[128 /*nb*/];	/* should be deallocated here */
   const int						 nd = 3 + pymCfg->nrp;
+  const int            ns_opt = PymMax(0, pymCfg->use_relaxed_ch_as_constraint ? (pymCfg->chVOutputLen-1) : (pymCfg->chOutputLen-1) );
+  const Point_C *const chOutput = pymCfg->use_relaxed_ch_as_constraint ? (pymCfg->chVOutput) : (pymCfg->chOutput);
   int deg_mf_indices[1024] = {0,}; // degenerated muscles (coincided muscles) indices
   const int ndf = pym_check_coincided_fibers(deg_mf_indices, sd, pymCfg);
   assert(ndf <= 1024);
@@ -465,6 +474,8 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
     (nd)*(2*nj),              /*  9:  */
     4*(nj),                   /* 10:  */
     4,                        /* 11:  */
+    ns_opt,                   /* 12:  */
+    2,                        /* 13:  */
   };
   int Asubcolsizes[ ]  = { 0,	/*  0:   be calculated later */
     nf,                   /* 1:  muscle(lig+act) tension */
@@ -490,6 +501,9 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
     4,                    /* 21: E_Fjoint */
     1,                    /* 22: eps_EFjointxy */
     1,                    /* 23: eps_EFjointz  */
+    ns_opt,                   /* 24: X_sp */
+    2,                    /* 25: \Delta p_{com,spcen} */
+    1,                    /* 26: \epsilon_{com,spcen} */
   };
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubrowsizes) == sizeof(bod->Ari));
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubcolsizes) == sizeof(bod->Aci));
@@ -548,6 +562,10 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   nzmax += 4*(2*nj); /* sub-block 20 */
   nzmax += 4*(2*nj); /* sub-block 21 */
   nzmax += 4; /* sub-block 22 */
+  nzmax += 2*ns_opt; /* sub-block 23 */
+  nzmax += ns_opt; /* sub-block 24 */
+  nzmax += 3; /* sub-block 25 */
+  nzmax += 3; /* sub-block 26 */
 
   //    printf("    BipA matrix constants (nb)      : %d\n", nb);
   //    printf("    BipA matrix constants (nf)      : %d\n", nf);
@@ -750,7 +768,7 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   }
   assert(n_joint_force == 2*nj);
 
-  /*** Sub-block 19 */
+  /*** Sub-block 19 : joint muscle tension */
   n_joint_force = 0;
   for (int i = 0; i < nf; ++i) {
     pym_mf_named_t *mfn = &pymCfg->fiber[ i ].b;
@@ -784,7 +802,6 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
         for (int k = 0; k < 3; ++k) {
           R2[3 + j][k] = R2sub[j][k];
         }
-        R2[3 + j][3] = 0;
       }
 
       /*for (int j = 0; j < 6; ++j) {
@@ -815,6 +832,8 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
     for (int j = 0; j < 4; ++j) {
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19, 4*i + j, 8*i + j    , 1.0);
       SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19, 4*i + j, 8*i + j + 4, 1.0);
+      //SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19,  j, 8*i + j    , 1.0);
+      //SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 10, 19,  j, 8*i + j + 4, 1.0);
     }
   }
 
@@ -827,6 +846,27 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   /*** sub-block 22 */
   for (int i = 0; i < 4; ++i)
     SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 11, 21, i, i, -1.0);
+
+  /*** sub-block 23 */
+  for (int i = 0; i < ns_opt; ++i) {
+    const double ax = chOutput[i+1].x - chOutput[i].x;
+    const double ay = chOutput[i+1].y - chOutput[i].y;
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 12, 8, i, 0, -ay);
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 12, 8, i, 1,  ax);
+  }
+  /*** sub-block 24 */
+  for (int i = 0; i < ns_opt; ++i) {
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 12, 24, i, i, -1);
+  }
+
+  /*** sub-block 25 */
+  for (int i = 0; i < 2; ++i) {
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 13, 8, i, i, 1);
+  }
+  /*** sub-block 26 */
+  for (int i = 0; i < 2; ++i) {
+    SET_TRIPLET_RCV_SUBBLOCK2(AMatrix_trip, Ari, Aci, 13, 25, i, i, 1);
+  }
 
   /* Finish: convert AMatrix_trip to column compressed format */
   assert(AMatrix_trip->nnz <= nzmax);
@@ -870,7 +910,32 @@ void PymConstructBipedEqConst(pym_biped_eqconst_t	*bod,
   for (int i = 0; i < 3; ++i) {
     bipEta[ Ari[8] + i ] = -2*pymCfg->bipCom[i] + pymCfg->bipCom0[i] + refcom[i];
   }
+  
+  /* Eta sub-block 12 - (h1-h0) X h0 */
+  for (int i = 0; i < ns_opt; ++i) {
+    double h0_x = chOutput[i  ].x;
+    double h1_x = chOutput[i+1].x;
+    double h0_y = chOutput[i  ].y;
+    double h1_y = chOutput[i+1].y;
+    bipEta[ Ari[12] + i ] = h1_x * h0_y - h1_y * h0_x;
+  }
 
+  double chSumX = 0, chSumY = 0;
+  double chMeanX = 0;
+  double chMeanY = 0;
+  if (ns_opt > 0) {
+    for (int i = 0; i < ns_opt; ++i) {
+      chSumX += chOutput[i].x;
+      chSumY += chOutput[i].y;
+    }
+    chMeanX = chSumX / ns_opt;
+    chMeanY = chSumY / ns_opt;
+
+    /* Eta sub-block 13 - p_{com,spcen} */
+    bipEta[ Ari[13] + 0 ] = chMeanX;
+    bipEta[ Ari[13] + 1 ] = chMeanY;
+  }
+  
   bod->bipEta = bipEta;
 
   FOR_0(i, nb) cholmod_free_triplet(&A_trip[i], cc);

@@ -489,22 +489,25 @@ void setTextureMatrix(void) {
 }
 
 void startXform(double W[4][4]) {
+  glPushAttrib(GL_TEXTURE_BIT);
   const GLdouble *const Wa = (const GLdouble *const)W;
   glPushMatrix();
   glMultTransposeMatrixd(Wa);
-
   glMatrixMode(GL_TEXTURE);
   glActiveTextureARB(GL_TEXTURE7);
   glPushMatrix();
   glMultTransposeMatrixd(Wa);
 }
 void endXform() {
+  glMatrixMode(GL_TEXTURE);
   glPopMatrix();
   glMatrixMode(GL_MODELVIEW);
   glPopMatrix();
+  glPopAttrib();
 }
 
 void startTranslate(float x, float y, float z) {
+  glPushAttrib(GL_TEXTURE_BIT);
   glPushMatrix();
   glTranslatef(x,y,z);
 
@@ -563,8 +566,9 @@ void DrawBox_chi(const double *chi,
     }
 
     if (glBindVertexArray) {
-      glBindVertexArray(m_vaoID[3]);      // select second VAO`
+      glBindVertexArray(m_vaoID[3]);      // select second VAO
       glDrawArrays(GL_QUADS, 0, 4*6);   // draw second object
+      glBindVertexArray(0);
     } else {
       static GLfloat vert4[] = { /* Face which has +X normals (x= 0.5) */
         0.5f,  0.5f,  0.5f,
@@ -614,9 +618,9 @@ void DrawBox_chi(const double *chi,
         }
         glEnd();
     }
-
     glPopAttrib();
     endXform();
+
 }
 
 void DrawBox_pq(const double *p, const double *q,
@@ -973,15 +977,27 @@ static void pym_draw_all(pym_rs_t *rs, int forShadow, GLuint *m_vaoID) {
     const pym_rb_named_t *rbn = &phyCon->pymCfg->body[i].b;
     const double *const boxSize = rbn->boxSize;
     pym_strict_checK_gl();
-    DrawRb(rbn, boxSize, rs->drawing_options[pym_do_wireframe] ? 1 : 0);
-    
+
+    if (strcmp(rbn->name, "uarmL") == 0 ||
+      strcmp(rbn->name, "uarmR") == 0 ||
+      strcmp(rbn->name, "larmL") == 0 ||
+      strcmp(rbn->name, "larmR") == 0 ||
+      strcmp(rbn->name, "head") == 0) {
+
+    } else {
+      DrawRb(rbn, boxSize, rs->drawing_options[pym_do_wireframe] ? 1 : 0);
+      DrawRbRef(rbn, boxSize, 1);
+    }
+
     glPushMatrix();
     glTranslated(twin_offset_x, 0, 0);
-    DrawRb(rbn, boxSize, 1);
+    //DrawRb(rbn, boxSize, 1);
+    //DrawRbRef(rbn, boxSize, 1);
     glPopMatrix();
 
     pym_strict_checK_gl();
-    DrawRbRef(rbn, boxSize, 1);
+    
+    
     DrawRbContacts(rbn);
   }
   
@@ -1000,10 +1016,12 @@ static void pym_draw_all(pym_rs_t *rs, int forShadow, GLuint *m_vaoID) {
   glColor3f(1,0,0);
   DrawBox_pq(phyCon->pymCfg->bipRefCom, 0, pointBoxSize, 0);
   const double *const		 trajData       = phyCon->pymTraj->trajData;
-  if (trajData) {
+  /* render COM of reference */
+  if (trajData && 0) {
     glBegin(GL_LINE_STRIP);
     for (int i = 0; i < rs->pymTraj.nBlenderFrame; ++i) {
       glVertex3dv(phyCon->pymTraj->comTrajData + 3*i);
+      
       /*printf("comref %lf %lf %lf\n", phyCon->pymTraj->comTrajData[3*i],
         phyCon->pymTraj->comTrajData[3*i+1],
         phyCon->pymTraj->comTrajData[3*i+2]);*/
@@ -1209,10 +1227,13 @@ static void RenderGraph(PRSGRAPH g, int slotid, pym_render_config_t *rc) {
 
 static void RenderSupportPolygon
   (const pym_physics_thread_context_t *const phyCon,
-  pym_render_config_t *rc) {
+  pym_render_config_t *rc,
+  const int chInputLen, const Point_C *const chInput,
+  const int chOutputLen, const Point_C *const chOutput, const double *const col) {
+
     int i;
-    const int chInputLen = phyCon->pymCfg->chInputLen;
-    const int chOutputLen = phyCon->pymCfg->chOutputLen;
+    //const int chInputLen = phyCon->pymCfg->chInputLen;
+    //const int chOutputLen = phyCon->pymCfg->chOutputLen;
     const int width = rc->vpw;
     const int height = rc->vph;
     if (chInputLen+1 < chOutputLen) {
@@ -1220,76 +1241,104 @@ static void RenderSupportPolygon
         chInputLen, chOutputLen);
       //abort();
     }
-    if (chOutputLen) {
-      /* PAIR A */
-      glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
-      glPushMatrix(); /* PAIR B */
+    /* PAIR A */
+    glPushAttrib(GL_LINE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
+    glPushMatrix(); /* PAIR B */
 
-      const double margin = 0.05;
-      /* size on normalized coordinates */
-      const double sizeW = 0.5, sizeH = 0.5;
-      double graphW, graphH;
-      double graphGapX, graphGapY;
-      if (width > height) {
-        graphGapX = margin*height/width;
-        graphGapY = margin;
-        graphW = sizeW*height/width;
-        graphH = sizeH;
-      } else {
-        graphGapX = margin;
-        graphGapY = margin*width/height;
-        graphW = sizeW;
-        graphH = sizeH*width/height;
-      }
-      const int slotid = 0;
-      const double graphX = -1 + graphW/2 + graphGapX
-        + slotid*(graphW/2 + graphGapX);
-      const double graphY = 1 - graphGapY - graphH/2;
-      glTranslated(graphX, graphY, 0);
-      glScaled(graphW, graphH, 1);
-
-      double chSumX = 0, chSumY = 0;
-      FOR_0(i, chOutputLen) {
-        chSumX += phyCon->pymCfg->chOutput[i].x;
-        chSumY += phyCon->pymCfg->chOutput[i].y;
-      }
-      const double chMeanX = chSumX / chOutputLen;
-      const double chMeanY = chSumY / chOutputLen;
-      glColor3f(0,1,0);
-      glBegin(GL_LINE_LOOP);
-      FOR_0(i, chOutputLen) {
-        glVertex3d(phyCon->pymCfg->chOutput[i].x - chMeanX,
-          phyCon->pymCfg->chOutput[i].y - chMeanY, 0);
-      }
-      glEnd();
-
-      assert(chInputLen > 0);
-      glPointSize(3);
-      glColor3f(0,1,0);
-      glBegin(GL_POINTS);
-      FOR_0(i, chInputLen) {
-        glVertex3d(phyCon->pymCfg->chInput[i].x - chMeanX,
-          phyCon->pymCfg->chInput[i].y - chMeanY,
-          0);
-      }
-      glEnd();
-
-      glPointSize(5);
-      glColor3f(1,0,0);
-      glTranslated(phyCon->pymCfg->bipCom[0] - chMeanX,
-        phyCon->pymCfg->bipCom[1] - chMeanY,
-        0);
-      glScaled(0.015,0.015,1);
-      glBegin(GL_LINE_LOOP);
-      glVertex3d(1,1,0);
-      glVertex3d(-1,1,0);
-      glVertex3d(-1,-1,0);
-      glVertex3d(1,-1,0);
-      glEnd();
-
-      glPopMatrix(); /* PAIR B */
-      glPopAttrib(); /* PAIR A */
+    const double margin = 0.05;
+    /* size on normalized coordinates */
+    const double sizeW = 0.5, sizeH = 0.5;
+    double graphW, graphH;
+    double graphGapX, graphGapY;
+    if (width > height) {
+      graphGapX = margin*height/width;
+      graphGapY = margin;
+      graphW = sizeW*height/width;
+      graphH = sizeH;
+    } else {
+      graphGapX = margin;
+      graphGapY = margin*width/height;
+      graphW = sizeW;
+      graphH = sizeH*width/height;
     }
+    const int slotid = 0;
+    const double graphX = -1 + graphW/2 + graphGapX
+      + slotid*(graphW/2 + graphGapX);
+    const double graphY = 1 - graphGapY - graphH/2;
+    glTranslated(graphX, graphY, 0);
+    glScaled(graphW, graphH, 1);
+
+    double chSumX = 0, chSumY = 0;
+    double chMeanX = 0;
+    double chMeanY = 0;
+    if (chOutputLen > 0) {
+      FOR_0(i, chOutputLen-1) {
+        chSumX += chOutput[i].x;
+        chSumY += chOutput[i].y;
+      }
+      chMeanX = chSumX / (chOutputLen-1);
+      chMeanY = chSumY / (chOutputLen-1);
+    } else if (chInputLen > 0) {
+      FOR_0(i, chInputLen) {
+        chSumX += chInput[i].x;
+        chSumY += chInput[i].y;
+      }
+      chMeanX = chSumX / chInputLen;
+      chMeanY = chSumY / chInputLen;
+    }
+    glColor3dv(col);
+    glPushMatrix(); // PUSH ABC
+    glBegin(GL_LINE_LOOP);
+    if (chOutputLen) {
+      FOR_0(i, chOutputLen) {
+        glVertex2d(chOutput[i].x, chOutput[i].y);
+      }
+    } else if (chInputLen) {
+      FOR_0(i, chInputLen) {
+        glVertex2d(chInput[i].x, chInput[i].y);
+      }
+      glVertex2d(chInput[0].x, chInput[0].y);
+    }
+    glEnd();
+
+    glPointSize(3);
+    glColor3dv(col);
+    glBegin(GL_POINTS);
+    FOR_0(i, chInputLen) {
+      glVertex2d(chInput[i].x, chInput[i].y);
+    }
+    glEnd();
+    glPopMatrix(); // POP ABC
+
+    glPushMatrix(); // PUSH KKK
+    glPointSize(5);
+    glColor3d(1, 0, 0);
+    glTranslated(phyCon->pymCfg->bipCom[0], phyCon->pymCfg->bipCom[1], 0);
+    glScaled(0.015,0.015,1);
+    glBegin(GL_LINE_LOOP);
+    glVertex3d(1,1,0);
+    glVertex3d(-1,1,0);
+    glVertex3d(-1,-1,0);
+    glVertex3d(1,-1,0);
+    glEnd();
+    glPopMatrix(); // POP KKK
+
+    glPushMatrix(); // PUSH KKK
+    glPointSize(5);
+    glColor3dv(col);
+    glTranslated(chMeanX, chMeanY, 0);
+    glScaled(0.025,0.025,1);
+    glBegin(GL_LINES);
+    glVertex2d(-1, 0);
+    glVertex2d(+1, 0);
+    glVertex2d(0, -1);
+    glVertex2d(0, +1);
+    glEnd();
+    glPopMatrix(); // POP KKK
+
+    glPopMatrix(); /* PAIR B */
+    glPopAttrib(); /* PAIR A */
+
 }
 
 void PymRsInitRender() {
@@ -1317,9 +1366,10 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   pym_strict_checK_gl();
 
   pym_draw_all(rs, 0, m_vaoID);
+
   pym_strict_checK_gl();
 
-  RenderFootContactFixPosition(&rs->phyCon);
+  //RenderFootContactFixPosition(&rs->phyCon);
 
   /* Head-up Display
   * --------------------------
@@ -1327,33 +1377,42 @@ void PymRsRender(pym_rs_t *rs, pym_render_config_t *rc) {
   * Also make sure we have identities
   * on projection and modelview matrix.
   */
-  glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_DEPTH_TEST);
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glLoadIdentity();
-  glMatrixMode(GL_MODELVIEW);
-  glPushMatrix();
-  glLoadIdentity();
-  
-  RenderGraph(rs->phyCon.comZGraph, 0, rc);
-  
-  RenderGraph(rs->phyCon.comDevGraph, 1, rc);
-  RenderGraph(rs->phyCon.actGraph, 2, rc);
-  RenderGraph(rs->phyCon.ligGraph, 3, rc);
-  for (int i = 0; i < rs->pymCfg.nBody; ++i)
-    RenderGraph(rs->phyCon.exprotGraph[i], 4 + i, rc);
+  if (rs->pymCfg.render_hud) {
+    glPushAttrib(GL_ENABLE_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    
+    RenderGraph(rs->phyCon.comZGraph, 0, rc);
+    RenderGraph(rs->phyCon.comDevGraph, 1, rc);
+    RenderGraph(rs->phyCon.actGraph, 2, rc);
+    RenderGraph(rs->phyCon.ligGraph, 3, rc);
+    for (int i = 0; i < rs->pymCfg.nBody; ++i)
+      RenderGraph(rs->phyCon.exprotGraph[i], 4 + i, rc);
 
-  pym_strict_checK_gl();
-  RenderSupportPolygon(&rs->phyCon, rc);
-  RenderFootContactStatus(&rs->phyCon);
-  pym_strict_checK_gl();
+    pym_strict_checK_gl();
+    static const double PHY_CP_COLOR[3] = { 0, 1, 0 };
+    static const double VIR_CP_COLOR[3] = { 0.8, 0.75, 0.2 };
+    RenderSupportPolygon(&rs->phyCon, rc,
+      rs->phyCon.pymCfg->chVInputLen, rs->phyCon.pymCfg->chVInput,
+      rs->phyCon.pymCfg->chVOutputLen, rs->phyCon.pymCfg->chVOutput, VIR_CP_COLOR);
+    RenderSupportPolygon(&rs->phyCon, rc,
+      rs->phyCon.pymCfg->chInputLen, rs->phyCon.pymCfg->chInput,
+      rs->phyCon.pymCfg->chOutputLen, rs->phyCon.pymCfg->chOutput, PHY_CP_COLOR);
+    
+    RenderFootContactStatus(&rs->phyCon);
+    pym_strict_checK_gl();
 
-  glPopMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
 
-  glPopAttrib();
+    glPopAttrib();
+  }
 }

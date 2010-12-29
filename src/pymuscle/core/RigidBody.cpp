@@ -12,7 +12,8 @@
 #define M_PI (3.1415926535897932384626433832795029)
 #endif
 
-static const double SPRING_K = 100000.0; /* Ground spring constant (penalty method) */
+static const double SPRING_K = 5000; /* Ground spring constant (penalty method) */
+static const double SPRING_C = 100;    /* Ground damping constant (penalty method) */
 
 
 std::ostream &operator << (std::ostream &s, const pym_rb_t &rb) {
@@ -66,6 +67,7 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   nzmax += nd*np;     /* Subblock 02 : (-1)^ce_{j in P} */
   nzmax += nd*nmi;    /* Subblock 03 : (-1)^ce_{j in M} */
   nzmax += nd;        /* Subblock 04 : (-1) */
+  nzmax += nd;        /* Subblock 04a: (-1) */
   nzmax += nd*np;     /* Subblock 05 : -1 */
   nzmax += (nd*5)*np; /* Subblock 06 : (Q_j)^de_{j in P} */
   nzmax += 4*np;      /* Subblock 07 : 1 */
@@ -86,6 +88,16 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   nzmax += np;        /* Subblock 22 : -1 */
   nzmax += np;        /* Subblock 23 : (C_tfx)^de_{j in P} */
   nzmax += np;        /* Subblock 24 : (C_tfy)^de_{j in P} */
+  nzmax += (4*nd)*MAX_CONTACTS;        /* Subblock 25 : (Z_j)^re_{j in Pll} */
+  nzmax += 4*MAX_CONTACTS;      /* Subblock 26 :-1 */
+  
+
+
+  double tot_mass = 0;
+  for (int j = 0; j < pymCfg->nBody; ++j) {
+    pym_rb_named_t *rbn2 = &pymCfg->body[j].b;
+    tot_mass += rbn2->m;
+  }
   //    printf("    A matrix body name           : %s\n", rbn->name);
   //    printf("    A matrix constants (np)      : %d\n", np);
   //    printf("    A matrix constants (nmi)     : %d\n", nmi);
@@ -117,6 +129,9 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   /* Sub-block 04  : -1 */
   for (i=0;i<nd;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 16, i, i, -1);
+  /* Sub-block 04a  : -1 */
+  for (i=0;i<nd;++i)
+    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 0, 19, i, i, -1);
   /* Sub-block 05 : -1 */
   for (i=0;i<nd*np;++i)
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 1, 1, i, i, -1);
@@ -217,14 +232,10 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
   for (i=0;i<np;++i) {
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 9, 2, i, 5*i + 4, pymCfg->h);
   }
-  double bipTotMass = 0;
-  for (j=0; j < pymCfg->nBody; ++j) {
-    pym_rb_named_t *rbn2 = &pymCfg->body[j].b;
-    bipTotMass += rbn2->m;
-  }
   /* Sub-block 21 : C_ns2 */
   for (i=0;i<np;++i) {
-    const double pendep_coeff = pymCfg->h*SPRING_K + 2*sqrt(rbn->m/np * SPRING_K);
+    //const double pendep_coeff = pymCfg->h*SPRING_K + 2*sqrt(rbn->m/np * SPRING_K);
+    const double pendep_coeff = pymCfg->h*SPRING_K + 2*SPRING_C;
     //printf("pendep_coeff = %lf\n", pendep_coeff);
     SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 9, 3, i, 4*i + 2, pendep_coeff);
   }
@@ -256,6 +267,21 @@ void GetAMatrix(cholmod_triplet **AMatrix, const pym_rb_statedep_t *const sd,
       SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 11, 2, i, 5*i + 4, coeff);
     }
   }
+  /* Sub-block 25 (similar to sub-block 10) : Z_j */
+  FOR_0(j, MAX_CONTACTS) {
+    cholmod_sparse *Zj = sd->Zall[j];
+    cholmod_triplet *Zj_trip = cholmod_sparse_to_triplet(Zj, cc);
+    FOR_0(i, Zj_trip->nnz) {
+      SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 13, 0,
+        4*j  + ((int *)(Zj_trip->i))[i],
+        0    + ((int *)(Zj_trip->j))[i],
+        ((double *)(Zj_trip->x))[i] );
+    }
+    cholmod_free_triplet(&Zj_trip, cc);
+  }
+  /* Sub-block 26 : -1 */
+  for (i=0;i<4*MAX_CONTACTS;++i)
+    SET_TRIPLET_RCV_SUBBLOCK(AMatrix_trip, sd, 13, 17, i, i, -1);
   *AMatrix = AMatrix_trip;
   // cholmod_print_triplet(AMatrix_trip, rbn->name, cc);
 }
@@ -280,7 +306,14 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
   for (int i = 0; i < 4; ++i) chi_1[i + 3] = rbn->q[i];
   // chi_0: previous frame
   for (int i = 0; i < 3; ++i) chi_0[i] = rbn->p[i] - h*rbn->pd[i];
-  for (int i = 0; i < 3; ++i) chi_0[i + 3] = rbn->q[i] - h*rbn->qd[i];
+  for (int i = 0; i < 4; ++i) chi_0[i + 3] = rbn->q[i] - h*rbn->qd[i];
+
+
+  double tot_mass = 0;
+  for (int j = 0; j < pymCfg->nBody; ++j) {
+    pym_rb_named_t *rbn2 = &pymCfg->body[j].b;
+    tot_mass += rbn2->m;
+  }
 
   int i, j;
 
@@ -334,8 +367,15 @@ void GetEta(double **_eta, const pym_rb_statedep_t *sd,
     const double pendep = sd->contacts_1[conidx][2]; // penetration depth at current time step
     //printf("pendep = %lf\n", pendep);
     assert(pendep <= 0);
-    double v = 2.0*sqrt(rbn->m/np * SPRING_K)*pendep;
+    //double v = 2.0*sqrt(rbn->m/np * SPRING_K)*pendep;
+    double v = 2.0*SPRING_C*pendep;
     eta[sd->Ari[9] + i] = v;
+  }
+  /* (-V_ij)re_{j \in Pall} */
+  FOR_0(i, MAX_CONTACTS) {
+    FOR_0(j, 4) {
+      eta[sd->Ari[13] + 4*i + j] = -sd->Vall[i][j];
+    }
   }
   *_eta = eta;
   //__PRINT_VECTOR(eta, etaDim);

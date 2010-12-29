@@ -165,7 +165,7 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     if (pcj_1_W[2] <= groundLevel) {
       sd->contactIndices_1[ sd->nContacts_1 ] = j;
       const double unit_sliding_distance = PymDist(2, pcj_1_W, pcj_0_W)/pymCfg->h;
-      if (unit_sliding_distance < 1e-4)
+      if (unit_sliding_distance < 1)
         sd->contactTypes_1[ sd->nContacts_1 ] = static_contact;
       else
         sd->contactTypes_1[ sd->nContacts_1 ] = dynamic_contact;
@@ -198,6 +198,8 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     np,         // 9:contact normal force deternimed by penalty term
     np,         //10:contact tangential force (x)
     np,         //11:contact tangential force (y)
+    0,          //12:unused?
+    4*MAX_CONTACTS // 13: next state <--> next corner point position relationship
   };
   const int Asubcolsizes[] = {nd,          // 0:chi^{(l+1)}
     nd*np,       // 1:f_c
@@ -216,6 +218,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     np,          // 14:epsilon_cp_|z|
     np,          // 15:kappa_cp_|z| (penalty method nonnegativity compensation variable)
     nd,          // 16:generalized gravitational force
+    4*MAX_CONTACTS, // 17: \tilde{p}_c^{(l+1)}_all
+    MAX_CONTACTS, // 18: epsilon_cpall_|z|
+    nd,           // 19: f_freecom
+    1,            // 20: e_freecom
   };
 
   BOOST_STATIC_ASSERT(sizeof(int) + sizeof(Asubrowsizes) == sizeof(sd->Ari));
@@ -248,7 +254,10 @@ int PymConstructRbStatedep(pym_rb_statedep_t *sd_all, pym_rb_statedep_t *sd,
     const double *pcj = rbn->jointAnchors[i];
     ZVQ(&sd->Za[i], sd->Va[i], 0, chi_1, pcj, 0, sd->W_1, sd->dWdchi_tensor, rbn->rotParam, cc);
   }
-
+  FOR_0(i, MAX_CONTACTS) {
+    const double *pcj = rbn->corners[i];
+    ZVQ(&sd->Zall[i], sd->Vall[i], 0, chi_1, pcj, 0, sd->W_1, sd->dWdchi_tensor, rbn->rotParam, cc);
+  }
   return 0;
 }
 
@@ -260,6 +269,9 @@ void PymDestroyRbStatedep(pym_rb_statedep_t *sd, pym_rb_named_t *rbn, cholmod_co
   }
   FOR_0(j, rbn->nAnchor) {
     cholmod_free_sparse(&sd->Za[j], cc);
+  }
+  FOR_0(j, MAX_CONTACTS) {
+    cholmod_free_sparse(&sd->Zall[j], cc);
   }
 }
 

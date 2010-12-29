@@ -678,7 +678,7 @@ workdir = os.getenv('WORKING')
 if workdir is None:
 	print 'ERROR - Environment variable WORKING is not set.'
 	raise Exception('ENVVAR error')
-modelpath = workdir + '/models'
+modelpath = workdir + 'resources/models'
 print 'Model export directory: %s' % modelpath
 xmlFile = open('%s/%s.xml' % (modelpath, sce.name), 'w')
 binFile = open('%s/%s.bin' % (modelpath, sce.name), 'wb')
@@ -732,5 +732,5 @@ binFile.close()
 doc.unlink()
 
 print '[INFO] Export finished successfully. :)'
-print '[INFO]     XML =', '%s/%s.bin' % (modelpath, sce.name)
+print '[INFO]     XML =', '%s/%s.xml' % (modelpath, sce.name)
 print '[INFO]     BIN =', '%s/%s.bin' % (modelpath, sce.name)

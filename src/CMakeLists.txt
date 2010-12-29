@@ -9,6 +9,9 @@ SET(BOOST_ROOT $ENV{BOOST_ROOT})
 SET(CMAKE_OSX_ARCHITECTURES i386)
 SET(PYM_3RDPARTIES_ROOT "${CODEBASE}src/")
 
+if (MSVC80)
+  SET(compiler_string /vc80)
+endif (MSVC80)
 if (MSVC90)
   SET(compiler_string /vc90)
 endif (MSVC90)
@@ -29,7 +32,7 @@ INCLUDE_DIRECTORIES(
 ${CODEBASE}tinyxml_2_5_3
 ${CODEBASE}opende/include
 ${CODEBASE}cml-1_0_1
-${CODEBASE}zlib-1.2.3
+${CODEBASE}zlib-1.2.5
 ${CODEBASE}DevIL-SDK-x86-1.7.8/include
 )
 LINK_DIRECTORIES(

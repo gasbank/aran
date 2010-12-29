@@ -13,6 +13,8 @@ class BwOpenGlWindow : public Fl_Gl_Window
   virtual void	resize(int,int,int,int);
   void setCamCen(double cx, double cy, double cz);
   const ArnVec3 &omega() const { return m_omega; }
+  void toggle_screenshot() { m_screenshot_fbyf = !m_screenshot_fbyf; }
+  bool get_screenshot() const { return m_screenshot_fbyf; }
  private:
   void		draw();
   void		handle_push();
@@ -30,13 +32,13 @@ class BwOpenGlWindow : public Fl_Gl_Window
   int		m_dragY;
   /* Mouse panning origin point */
   std::pair<int, int> mousePosition;
-  bool		m_drag;
   double	m_cam_r;
   double	m_cam_phi;
   double	m_cam_dphi;
   double	m_cam_theta;
   double	m_cam_dtheta;
-  double m_cam_cen[3];
+  double  m_cam_cen[3];
+  double  m_cam_dcen[3];
   bool m_screenshot_fbyf;
   ArnVec3 m_omega;
 };

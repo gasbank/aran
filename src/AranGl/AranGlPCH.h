@@ -45,6 +45,7 @@
 #include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/array.hpp>
+#include <boost/shared_ptr.hpp>
 #define foreach BOOST_FOREACH
 
 //

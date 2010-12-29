@@ -225,6 +225,11 @@ int pym_init_global(int argc, char *argv[], pym_config_t *pymCfg,
     PymSetPymCfgChiRefToCurrentState(pymCfg);
   }
   pymCfg->real_muscle = false;
+  pymCfg->zero_cost_func = false;
+  pymCfg->temp_ref_mode = false;
+  pymCfg->render_hud = true;
+  pymCfg->freeze_pose = false;
+  pymCfg->support_polygon_constraint = false;
   if (cmdopt->frame >= 0) {
     /* Total simulation frame set by user */
     pymCfg->nSimFrame = cmdopt->frame;

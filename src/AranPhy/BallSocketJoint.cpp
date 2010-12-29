@@ -88,8 +88,9 @@ BallSocketJoint::getAxis( int anum, dVector3 result ) const
 dReal
 BallSocketJoint::getAngle( int anum ) const
 {
-	if (anum == 1) return dJointGetUniversalAngle1(getId());
-	else if (anum == 2) return dJointGetUniversalAngle2(getId());
+	if (anum == 1) return dJointGetAMotorAngle(m_amotorId, 1);
+	else if (anum == 2) return dJointGetAMotorAngle(m_amotorId, 2);
+  else if (anum == 3) return dJointGetAMotorAngle(m_amotorId, 3);
 	else assert(!"Invalid axis number.");
 	return 0;
 }
@@ -97,8 +98,10 @@ BallSocketJoint::getAngle( int anum ) const
 dReal
 BallSocketJoint::getVelocity( int anum ) const
 {
-	if (anum == 1) return dJointGetUniversalAngle1Rate(getId());
-	else if (anum == 2) return dJointGetUniversalAngle2Rate(getId());
+  assert( dJointGetAMotorMode(m_amotorId) == dAMotorEuler );
+	if (anum == 1) return dJointGetAMotorAngleRate(m_amotorId, 1);
+	else if (anum == 2) return dJointGetAMotorAngleRate(m_amotorId, 2);
+  else if (anum == 2) return dJointGetAMotorAngleRate(m_amotorId, 3);
 	else assert(!"Invalid axis number.");
 	return 0;
 }
@@ -106,23 +109,25 @@ BallSocketJoint::getVelocity( int anum ) const
 void
 BallSocketJoint::controlAddTorque( int anum, double torque )
 {
-	if (anum == 1) dJointAddUniversalTorques(getId(), torque, 0);
-	else if (anum == 2) dJointAddUniversalTorques(getId(), 0, torque);
+	if (anum == 1) dJointAddAMotorTorques(m_amotorId, torque, 0, 0);
+	else if (anum == 2) dJointAddAMotorTorques(m_amotorId, 0, torque, 0);
+  else if (anum == 3) dJointAddAMotorTorques(m_amotorId, 0, 0, torque);
+  else assert(!"Invalid axis number.");
 }
 
 void
 BallSocketJoint::setParamVelocity( int anum, dReal v )
 {
-	if (anum == 1) dJointSetUniversalParam(getId(), dParamVel1, v);
-	else if (anum == 2) dJointSetUniversalParam(getId(), dParamVel2, v);
+	if (anum == 1) dJointSetAMotorParam(m_amotorId, dParamVel1, v);
+	else if (anum == 2) dJointSetAMotorParam(m_amotorId, dParamVel2, v);
 	else assert(!"Invalid axis number.");
 }
 
 void
 BallSocketJoint::setParamFMax( int anum, dReal v )
 {
-	if (anum == 1) dJointSetUniversalParam(getId(), dParamFMax1, v);
-	else if (anum == 2) dJointSetUniversalParam(getId(), dParamFMax2, v);
+	if (anum == 1) dJointSetAMotorParam(m_amotorId, dParamFMax1, v);
+	else if (anum == 2) dJointSetAMotorParam(m_amotorId, dParamFMax2, v);
 	else assert(!"Invalid axis number.");
 }
 

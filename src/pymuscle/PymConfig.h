@@ -23,6 +23,12 @@ enum optimization_cost_terms {
   oct_uniform_tension_cost,
   oct_uniform_actuation_cost,
   oct_com_force_deviation_cost,
+  oct_biped_eps_fjoint,
+  oct_rb_eps_freecom,
+  oct_biped_eps_efjoint_xy,
+  oct_biped_eps_efjoint_z,
+  oct_cornerpoint_eps_z,
+  oct_biped_eps_sp_deviation,
 
   oct_count
 };
@@ -53,11 +59,14 @@ struct pym_config_t {
   double		 bipCom[3];
   double		 bipRefCom[3];	/* reference biped COM position */
   /* Convex hull output points (thread-unsafe) */
-  Point_C		 chInput[1000];
-  int			 chInputLen;
-  Point_C		 chOutput[1001];
-  int			 chOutputLen;
-
+  bool use_relaxed_ch_as_constraint;
+  // Convex hull of (physical) contact points
+  Point_C	 chInput[1000], chOutput[1001];
+  int			 chInputLen, chOutputLen;
+  // Modified convex hull of virtual contact points
+  Point_C	 chVInput[1000], chVOutput[1001];
+  int			 chVInputLen, chVOutputLen;
+  double chi_d_norm_sum;
   ///* Convex hull output points (thread-safe) */
   //Point_C		 renChInput[100];
   //int			 renChInputLen;
@@ -73,6 +82,11 @@ struct pym_config_t {
   double joint_dislocation_threshold;
   bool joint_dislocation_enabled;
   bool real_muscle;
+  bool zero_cost_func;
+  bool temp_ref_mode;
+  bool render_hud;
+  bool freeze_pose;
+  bool support_polygon_constraint;
   /* biped-wide rotation parameterization */
   pym_rot_param_t rotparam;
   int nrp; /* dimension of rotation parameterization (i.e. quaternion=4, exprot=3) */

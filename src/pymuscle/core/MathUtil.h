@@ -11,6 +11,7 @@ PYMCORE_API void PymCrossToMat(double mat[3][3], const double v[3]);
 PYMCORE_API double PymDist(int dim, const double *const v1, const double *const v2);
 // Min of int types
 PYMCORE_API int PymMin(int a, int b);
+PYMCORE_API int PymMax(int a, int b);
 // Get n-Dim double vector norm squared
 PYMCORE_API double PymNormSq(int dim, const double *v);
 // Get n-Dim double vector norm

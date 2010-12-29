@@ -156,17 +156,14 @@ ArnConfigureLightGl(GLuint lightId, const ArnLight* light)
 			float a0 = 0.001f;
 			float a1 = 0.1f;
 			float a2 = 0.00001f;
-			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			{
-				//glLoadIdentity();
-				glLightfv(GL_LIGHT0 + lightId, GL_POSITION, pos.getRawData());
-				glLightfv(GL_LIGHT0 + lightId, GL_SPOT_DIRECTION, (const GLfloat*)&ArnConsts::ARNVEC4_ZERO);
-			}
-			glPopMatrix();
-			glLightfv(GL_LIGHT0 + lightId, GL_CONSTANT_ATTENUATION, &a0);
-			glLightfv(GL_LIGHT0 + lightId, GL_LINEAR_ATTENUATION, &a1);
-			glLightfv(GL_LIGHT0 + lightId, GL_QUADRATIC_ATTENUATION, &a2);
+      float cutoff = 180;
+      glLightfv(GL_LIGHT0 + lightId, GL_POSITION, pos.getRawData());
+      glLightfv(GL_LIGHT0 + lightId, GL_SPOT_DIRECTION, (const GLfloat*)&ArnConsts::ARNVEC4_ZERO);
+			glLightfv(GL_LIGHT0 + lightId, GL_SPOT_CUTOFF, &cutoff);
+			
+      //glLightfv(GL_LIGHT0 + lightId, GL_CONSTANT_ATTENUATION, &a0);
+			//glLightfv(GL_LIGHT0 + lightId, GL_LINEAR_ATTENUATION, &a1);
+			//glLightfv(GL_LIGHT0 + lightId, GL_QUADRATIC_ATTENUATION, &a2);
 
 			//pos.printFormatString();
 		}

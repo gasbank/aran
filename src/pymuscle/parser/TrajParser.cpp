@@ -114,16 +114,15 @@ int PymParseTrajectoryFile(pym_traj_t *pymTraj,
         aLineLen = strlen(aLine);
         assert(aLineLen > 0);
         cp = strdup(aLine);
-        qexp[0] = strtok(cp, delimiters);
-        qexp[1] = strtok(0, delimiters);
-        qexp[2] = strtok(0, delimiters);
-        qexp[3] = strtok(0, delimiters);
-        qexp[4] = strtok(0, delimiters);
-        qexp[5] = strtok(0, delimiters);
-
+        for (int k = 0; k < 6; ++k) {
+          qexp[k] = strtok(k?0:cp, delimiters);
+          assert(qexp[k]);
+        }
+        
         FOR_0(k, 6) {
           double parsed = strtod(qexp[k], 0);
-          //if (k == 2) parsed -= 0.02;
+           /* 07_01, 07_02 */ if (k == 2) parsed -= 0.07;
+          ///* walk0 */ if (k == 2) parsed -= 0.06;
           trajData[ i*nBody*6 + j*6 + k ] = parsed;
           //printf("  %e", parsed);
         }

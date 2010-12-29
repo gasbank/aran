@@ -69,7 +69,7 @@ SimWorld::createFrom( ArnSceneGraph* sg )
 				ArnPhyBoxPtr boxPtr;
 				if (mesh->getMass())
 				{
-					// Normal rigid bodies which have nonzero mass.
+					// Typical rigid bodies which have nonzero mass.
 					boxPtr.reset(ArnPhyBox::createFrom(0, mesh->getName(), mesh->getLocalXform_Trans(), size, mesh->getMass(), false));
 				}
 				else
@@ -195,11 +195,11 @@ NearCallback(void* data, dGeomID o1, dGeomID o2)
 		{
 			memset(&osc->contacts[i].surface, 0, sizeof(dSurfaceParameters));
 			osc->contacts[i].surface.mode = 0;
-			//osc->contacts[i].surface.mode = /*dContactSoftCFM |*/ dContactSoftERP;
+			osc->contacts[i].surface.mode = /*dContactSoftCFM |*/ dContactSoftERP;
 			//osc->contacts[i].surface.mode = 0;
 			//osc->contacts[i].surface.mu   = dInfinity;
 			//osc->contacts[i].surface.mu   = 70.0;
-			osc->contacts[i].surface.mu   = 1000.0;
+			osc->contacts[i].surface.mu   = 1.0;
 			//osc->contacts[i].surface.soft_erp = 0.0001;
 			//osc->contacts[i].surface.soft_cfm = 0;
 

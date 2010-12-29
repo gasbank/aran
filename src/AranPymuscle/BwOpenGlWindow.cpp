@@ -15,7 +15,6 @@ static void RenderHud(const BwAppContext& ac);
 BwOpenGlWindow::BwOpenGlWindow(int x, int y, int w, int h, const char *l, BwAppContext& ac)
   : Fl_Gl_Window(x, y, w, h, l)
   , m_ac(ac)
-  , m_drag(false)
   , m_cam_r(10.0)
   , m_cam_phi(0)
   , m_cam_dphi(0)
@@ -28,9 +27,12 @@ BwOpenGlWindow::BwOpenGlWindow(int x, int y, int w, int h, const char *l, BwAppC
   m_ac.windowHeight = h;
   m_ac.avd.Width    = m_ac.windowWidth;
   m_ac.avd.Height   = m_ac.windowHeight;
-  m_cam_cen[0] = 1;
-  m_cam_cen[1] = 1;
-  m_cam_cen[2] = 0;
+  m_cam_cen[0] = 3;
+  m_cam_cen[1] = 0;
+  m_cam_cen[2] = 1;
+  m_cam_dcen[0] = 0;
+  m_cam_dcen[1] = 0;
+  m_cam_dcen[2] = 0;
 }
 
 BwOpenGlWindow::~BwOpenGlWindow()
@@ -53,8 +55,15 @@ void BwOpenGlWindow::resize( int x, int y, int w, int h )
   Fl_Gl_Window::resize(x, y, w, h);
 }
 
+static void pym_cross3(double *u, const double *const a,
+  const double *const b) {
+    u[0] = a[1]*b[2] - a[2]*b[1];
+    u[1] = a[2]*b[0] - a[0]*b[2];
+    u[2] = a[0]*b[1] - a[1]*b[0];
+}
+
 void BwOpenGlWindow::draw()
-{
+{ 
   // the valid() property may be used to avoid reinitializing your
   // GL transformation for each redraw:
   if (!valid()) {
@@ -62,14 +71,55 @@ void BwOpenGlWindow::draw()
     glLoadIdentity();
     glViewport(0, 0, w(), h());
   }
-
-  glEnable (GL_BLEND);
-  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_COLOR_MATERIAL);
-
-  glClearColor(0.3,0.3,0.3,1.0);
+  glClearColor(0.8,0.8,0.8,1.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  assert(m_ac.pymRs);
+
+
+  if (m_ac.activeCam) {
+    m_cam_r = 5;
+
+    double cam_r = 10, cam_phi = 1.0, cam_dphi = 0;
+    double cam_theta = 1.0, cam_dtheta = 1.0;
+    pym_render_config_t rc;
+    rc.cam_r	 = m_cam_r;
+    rc.cam_phi	 = m_cam_phi + m_cam_dphi;
+    rc.cam_theta = m_cam_theta + m_cam_dtheta;
+    rc.vpx	 = 0;
+    rc.vpy	 = 0;
+    rc.vpw	 = w(); //min(w(), h());
+    rc.vph	 = h(); //min(h(), h());
+    for (int i = 0; i < 3; ++i)
+      rc.cam_cen[i] = m_cam_cen[i] + m_cam_dcen[i];
+
+    assert(glGetError() == GL_NO_ERROR);
+
+    double cam_car[3];            /* Cartesian coordinate of cam */
+    double up_dir[3];
+    pym_sphere_to_cartesian(cam_car, rc.cam_r, rc.cam_phi, rc.cam_theta);
+    //printf("cam_car = %lf %lf %lf\n", cam_car[0], cam_car[1], cam_car[2]);
+    pym_up_dir_from_sphere(up_dir, cam_car, rc.cam_r,
+      rc.cam_phi, rc.cam_theta);
+   
+
+    double right_dir[3];
+    double cam_car_nor[3];
+    /* printf("cam_car = %lf %lf %lf\n", */
+    /* 	 cam_car[0], cam_car[1], cam_car[2]); */
+   
+    cam_car_nor[0] = cam_car[0] / m_cam_r;
+    cam_car_nor[1] = cam_car[1] / m_cam_r;
+    cam_car_nor[2] = cam_car[2] / m_cam_r;
+    pym_cross3(right_dir, up_dir, cam_car_nor);
+    ArnMatrix cam_mat(
+      right_dir[0], up_dir[0], cam_car_nor[0],   rc.cam_cen[0]+cam_car[0],
+      right_dir[1], up_dir[1], cam_car_nor[1],   rc.cam_cen[1]+cam_car[1],
+      right_dir[2], up_dir[2], cam_car_nor[2],   rc.cam_cen[2]+cam_car[2],
+      0, 0, 0, 1);
+    m_ac.activeCam->setLocalXform(cam_mat);
+  }
+  
+  RenderScene(m_ac);
+
   double cam_r = 10, cam_phi = 1.0, cam_dphi = 0;
   double cam_theta = 1.0, cam_dtheta = 1.0;
   pym_render_config_t rc;
@@ -80,22 +130,24 @@ void BwOpenGlWindow::draw()
   rc.vpy	 = 0;
   rc.vpw	 = w(); //min(w(), h());
   rc.vph	 = h(); //min(h(), h());
-  rc.cam_cen[0] = m_cam_cen[0];
-  rc.cam_cen[1] = m_cam_cen[1];
-  rc.cam_cen[2] = m_cam_cen[2];
+  for (int i = 0; i < 3; ++i)
+    rc.cam_cen[i] = m_cam_cen[i] + m_cam_dcen[i];
+
+  assert(glGetError() == GL_NO_ERROR);
 
   pym_configure_light();
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  gluPerspective(45, double(w()) / h(), 0.01, 100);
+  gluPerspective(45, double(w()) / h(), 0.01, 1000);
+
+  assert(glGetError() == GL_NO_ERROR);
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   double cam_car[3];            /* Cartesian coordinate of cam */
   double up_dir[3];
   pym_sphere_to_cartesian(cam_car, rc.cam_r, rc.cam_phi, rc.cam_theta);
-  /* printf("cam_car = %lf %lf %lf\n", */
-  /* 	 cam_car[0], cam_car[1], cam_car[2]); */
+  //printf("cam_car = %lf %lf %lf\n", cam_car[0], cam_car[1], cam_car[2]);
   pym_up_dir_from_sphere(up_dir, cam_car, rc.cam_r,
     rc.cam_phi, rc.cam_theta);
   gluLookAt(rc.cam_cen[0]+cam_car[0],
@@ -108,7 +160,25 @@ void BwOpenGlWindow::draw()
     up_dir[1],
     up_dir[2]);
 
-  PymRsRender(m_ac.pymRs, &rc);
+  assert(glGetError() == GL_NO_ERROR);
+
+  // Draw the world coordinate system indicator
+  glPushAttrib(GL_ENABLE_BIT | GL_LINE_BIT);
+  glDisable(GL_LIGHTING);
+  glLineWidth(5.0);
+  glBegin(GL_LINES);
+  glColor3f(1, 0, 0); glVertex3f(0, 0, 0); glVertex3f(1, 0, 0); 
+  glColor3f(0, 1, 0); glVertex3f(0, 0, 0); glVertex3f(0, 1, 0);
+  glColor3f(0, 0, 1); glVertex3f(0, 0, 0); glVertex3f(0, 0, 1);
+  glEnd();
+  glPopAttrib();
+
+  
+  if (m_ac.pymRs) {
+    PymRsRender(m_ac.pymRs, &rc);
+  }
+
+  assert(glGetError() == GL_NO_ERROR);
 
   // Quaternion EOM test box
   static AranMath::Quaternion q0(VectorR3(0,1,0),0.8);
@@ -124,14 +194,20 @@ void BwOpenGlWindow::draw()
   q1_new.getRotationMatrix(&q1mat);
   static const double regularBoxSize[3] = { 1, 1, 1 };
   static const double ZERO[3] = {0,};
+
+  assert(glGetError() == GL_NO_ERROR);
   glPushMatrix();
   {
     glMultMatrixf((const GLfloat *)q1mat.m);
-    DrawBox_pq(ZERO, 0, regularBoxSize, 0);
+    //DrawBox_pq(ZERO, 0, regularBoxSize, 0);
   }
   q0 = q1;
   omega0 = omega1;
   glPopMatrix();
+
+
+
+  assert(glGetError() == GL_NO_ERROR);
 
   if (m_screenshot_fbyf) {
     /* Take a screenshot */
@@ -148,7 +224,7 @@ void BwOpenGlWindow::draw()
     assert(m_ac.pymRs->ssIdx >= 0 && m_ac.pymRs->ssIdx <= 99999);
     char ssName[128];
     std::string ssPath(getenv("WORKING"));
-    ssPath += "/pymss/%05d.png";
+    ssPath += "/pymss/%05d.jpg";
     snprintf(ssName, 128, ssPath.c_str(), m_ac.pymRs->ssIdx);
     ilSaveImage(ssName);
     //printf("%s\n", ssName);
@@ -156,11 +232,13 @@ void BwOpenGlWindow::draw()
     free(imageData);
     ++m_ac.pymRs->ssIdx;
   }
+
+  assert(glGetError() == GL_NO_ERROR);
+
   /* Check for error conditions. */
   GLenum gl_error = glGetError();
   if( gl_error != GL_NO_ERROR ) {
-    fprintf( stderr, "ARAN: OpenGL error: %s\n",
-	     gluErrorString(gl_error) );
+    std::cerr << "ARAN: OpenGL error: " << gluErrorString(gl_error) << std::endl;
     abort();
   }
 }
@@ -170,7 +248,6 @@ void BwOpenGlWindow::handle_push() {
   const int mouseY = Fl::event_y();
   m_dragX = mouseX;
   m_dragY = mouseY;
-  m_drag = true;
   SelectGraphicObject(m_ac,
 		      float(mouseX),
 		      float(m_ac.avd.Height - mouseY) // Note that Y-coord flipped.
@@ -199,19 +276,39 @@ void BwOpenGlWindow::handle_push() {
 }
 
 void BwOpenGlWindow::handle_release() {
-  m_drag	= false;
   m_cam_phi    += m_cam_dphi;
   m_cam_theta  += m_cam_dtheta;
   m_cam_dphi	= 0;
   m_cam_dtheta  = 0;
+  for (int i = 0; i < 3; ++i) {
+    m_cam_cen[i] += m_cam_dcen[i];
+    m_cam_dcen[i] = 0;
+  }
 }
 
 void BwOpenGlWindow::handle_drag() {
   const int dx	 = Fl::event_x() - m_dragX;
   const int dy	 = Fl::event_y() - m_dragY;
-  m_cam_dphi	 = -(double)dx/200;
-  m_cam_dtheta	 = -(double)dy/200;
-  redraw();
+  if (Fl::event_key() == FL_Button + FL_LEFT_MOUSE) {
+    // Left mouse button dragging - trackball rotating
+    m_cam_dphi	 = -(double)dx/200;
+    m_cam_dtheta	 = -(double)dy/200;
+    redraw();
+  } else if (Fl::event_key() == FL_Button + FL_RIGHT_MOUSE) {
+    // Right mouse button dragging - panning through XY plane
+    double look[3], up[3], left[3];
+    PymLookUpLeft(look, up, left, m_cam_r, m_cam_phi, m_cam_theta);
+    up[2] = 0;
+    const double upProjectedNorm = PymNorm(2, up);
+    double upProjected[2];
+    for (int k = 0; k < 2; ++k)
+      upProjected[k] = up[k] / upProjectedNorm;
+    const double pro = 0.01;
+    m_cam_dcen[0] = left[0]*pro*dx + upProjected[0]*pro*dy;
+    m_cam_dcen[1] = left[1]*pro*dx + upProjected[1]*pro*dy;
+    m_cam_dcen[2] = 0;
+    redraw();
+  }
 }
 
 void BwOpenGlWindow::handle_move() {
@@ -256,9 +353,9 @@ void BwOpenGlWindow::handle_mousewheel() {
 
 int BwOpenGlWindow::handle_keydown() {
   int key = Fl::event_key();
-  if (key == 65307) // ESC key
+  if (key == FL_Escape) // ESC key
     return 0;
-  if (key == 32) { // SPACE key
+  if (key == ' ') { // SPACE key
     if (!m_ac.bPanningButtonDown) {
       m_ac.bPanningButtonDown = true;
       m_ac.panningStartPoint = mousePosition;
@@ -303,7 +400,7 @@ int BwOpenGlWindow::handle_keydown() {
   } else if (key == 'x') {
     int ti1 = rand()%360;
     int ti2 = rand()%35 + 55;
-    double r = 1000;
+    double r = 3000;
     double phi = ti1/360.0*2*M_PI;
     double theta = ti2/360.0*2*M_PI;
     double car[3];
@@ -385,7 +482,7 @@ int BwOpenGlWindow::handle( int eventType )
     handle_drag();
     return 1;
   } else if (eventType == FL_ENTER) {
-    take_focus();
+    //take_focus();
     return 1;
   } else if (eventType == FL_FOCUS) {
     return 1;
@@ -588,8 +685,7 @@ static void RenderGrid(const BwAppContext& ac, const float gridCellSize, const i
 static void
 RenderScene(const BwAppContext& ac)
 {
-  glClearColor( 0.5, 0.5, 0.5, 1.0 );
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  // DO NOT CLEAR THE OPENGL FRAMEBUFFER HERE
 	
   // Set modelview and projection matrices here
   if (ac.viewMode == VM_CAMERA || ac.viewMode == VM_UNKNOWN) {
@@ -654,9 +750,9 @@ RenderScene(const BwAppContext& ac)
     ArnConfigureLightGl(0, ac.activeLight);
   }
 
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   //glBlendFunc(GL_ONE_MINUS_DST_ALPHA,GL_DST_ALPHA);
-  glBindTexture(GL_TEXTURE_2D, 0);
+  //glBindTexture(GL_TEXTURE_2D, 0);
 
   if (ac.drawing_options[pym_do_grid]) {
     const static float gridColor[3] = { 0.4f, 0.4f, 0.4f };
@@ -717,7 +813,7 @@ RenderScene(const BwAppContext& ac)
   */
 
   // Render COM indicator and contact points of a biped.
-  glPushAttrib(GL_DEPTH_BUFFER_BIT);
+  glPushAttrib(GL_DEPTH_BUFFER_BIT | GL_ENABLE_BIT); // Push Attrib A
   glDisable(GL_DEPTH_TEST);
   {
     if (ac.trunk) {
@@ -782,7 +878,7 @@ RenderScene(const BwAppContext& ac)
       }
     */
   }
-  glPopAttrib();
+  glPopAttrib();  // Pop Attrib A
 }
 
 static void

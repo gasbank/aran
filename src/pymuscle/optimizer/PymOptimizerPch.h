@@ -5,6 +5,7 @@
 #include "PymPch.h"
 #include <iostream>
 #include <string>
+#include <fstream>
 
 #include <cholmod.h>
 #include <umfpack.h>

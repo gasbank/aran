@@ -40,8 +40,8 @@ struct pym_rb_statedep_t {
 
   int Asubrows;
   int Asubcols;
-  int Ari[ 1 + 12 ]; /* 1 + # of sub row */
-  int Aci[ 1 + 17 ]; /* 1 + # of sub col */
+  int Ari[ 1 + 14 ]; /* 1 + # of sub row */
+  int Aci[ 1 + 21 ]; /* 1 + # of sub col */
   
   /*
     * Z and V : Coefficients for calculating next state based on current state
@@ -53,6 +53,9 @@ struct pym_rb_statedep_t {
 
   cholmod_sparse *Za [MAX_JOINTANCHORS];     /* A list of sparse 4x6 matrices (for joint anchors) */
   double          Va [MAX_JOINTANCHORS][4];  /* for joint anchors */
+
+  cholmod_sparse *Zall [MAX_CONTACTS];     /* A list of sparse 4x6 matrices (for corner points) */
+  double          Vall [MAX_CONTACTS][4];  /* for corner points */
 };
 
 PYMCORE_API void pym_init_statedep( pym_rb_statedep_t &sd );

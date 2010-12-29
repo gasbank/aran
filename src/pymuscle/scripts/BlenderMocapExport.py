@@ -16,9 +16,13 @@ import Blender.Mathutils
 from Blender.Mathutils import *
 #from xml.dom.minidom import *
 #import struct
-import MathUtil
 import numpy
 
+# MathUtil python routine:
+# This file is a part of pymuscle script files.
+# 'PYTHONPATH' environment variable should have
+# a path containing MathUtil.py.
+import MathUtil
 
 def XformFromIpoCurves(ipo, frame):
 	loc = [0, 0, 0]
@@ -89,9 +93,9 @@ def BuildInitialTransform(interestedArmature, interested):
 		boneDir = bone.tail['BONESPACE'] - bone.head['BONESPACE']
 		#print bone, boneDir, bone.tail['BONESPACE'], bone.head['BONESPACE']
 
-		print bone, 'roll', bone.roll
-		print bone, 'tail', bone.tail
-		print bone, 'head', bone.head
+		#print bone, 'roll', bone.roll
+		#print bone, 'tail', bone.tail
+		#print bone, 'head', bone.head
 
 		y = Vector(0,1,0)
 		rotAxis = y.cross(boneDir)
@@ -99,7 +103,7 @@ def BuildInitialTransform(interestedArmature, interested):
 		if rotAngle == 0:
 			q = Quaternion()
 		else:
-			print 'rotangle', rotAngle
+			#print 'rotangle', rotAngle
 			q = Quaternion(rotAxis, rotAngle)
 		
 		q0 = Quaternion(Vector(0,1,0), bone.roll['BONESPACE'])
@@ -158,13 +162,15 @@ if __name__ == '__main__':
 			self.trajName = trajName
 			self.nFrame   = nFrame
 	
-	TEST_SET = [ TestSet( 'Walk0',  300  ),
-	             TestSet( 'Nav0',  2000  ),
-	             TestSet( 'Exer0', 4500  ) ]
+	TEST_SET = [ TestSet( '07_01',  316  ),
+	             TestSet( '07_02',  329  ),
+	             TestSet( '07_03',  415  ),
+	             TestSet( '07_04',  450  ),
+	             TestSet( '07_05',  517  )   ]
 	#
 	# ==================== USER PARAMETERS ========================
 	# Select test set first.
-	ts = 2
+	ts = 0
 	assert ts < len(TEST_SET)
 	#
 	#
@@ -184,7 +190,7 @@ if __name__ == '__main__':
 	# If it is the same as 'mocapFps', the mocap trajectoriy
 	# is exactly copied. Otherwise, it is upsampled or downsampled
 	# as needed.
-	exportFps = 30
+	exportFps = 500
 	exportFrameTime = 1./exportFps
 	# The clock-time length of the export sequence
 	# can be calculated by the following equation.
@@ -312,7 +318,7 @@ if __name__ == '__main__':
 			
 			m = A*Xhead*PARENT
 
-			if ts in [0,1]:
+			if ts in [0,1,2,3,4]:
 				### MOTION TRAJECTORY CORRECTION ###
 				if bone.name == 'LeftAnkle':
 					cor = Quaternion(Vector(1,0,0),-15)
@@ -320,6 +326,7 @@ if __name__ == '__main__':
 				elif bone.name == 'RightAnkle':
 					cor = Quaternion(Vector(1,0,0),-19)
 					m = cor.toMatrix().resize4x4() * m
+
 			
 			# Move to middle of head and tail
 			T = Matrix()
@@ -328,7 +335,8 @@ if __name__ == '__main__':
 			m = T*m
 
 			
-			if ts in [0,1]:
+			
+			if ts in [0,1,2,3,4]:
 				### MOTION TRAJECTORY CORRECTION ###
 				if bone.name == 'LeftAnkle':
 					cor = Quaternion(Vector(0,1,0),30)
@@ -341,6 +349,7 @@ if __name__ == '__main__':
 					m = cor.toMatrix().resize4x4() * m
 					cor = Quaternion(Vector(0,1,0),5)
 					m = cor.toMatrix().resize4x4() * m
+					
 			
 			if rb:		
 				# rb.setMatrix(m) -- do not use this one.
@@ -412,7 +421,7 @@ if __name__ == '__main__':
 		# rigid bodies then remove the comment
 		# of the following line
 		
-		#Blender.Redraw()
+		Blender.Redraw()
 	
 	
 	# Final 'Redraw()' function on blender is crucial
@@ -442,8 +451,9 @@ if __name__ == '__main__':
 	else:
 		raise Exception, 'unknown rotation parameterization'
 	
-	homeDir = os.getenv("HOME")
-	fnBasePrefix        = homeDir + '/pymuscle/trajectories/' + TEST_SET[ts].trajName
+	homeDir = os.getenv("WORKING")
+	assert homeDir is not None
+	fnBasePrefix        = homeDir + '/trajectories/' + TEST_SET[ts].trajName
 	fnPrefix            = fnBasePrefix + '.traj_' + rotParam + '_'
 	fnRigidBodyConfig   = fnBasePrefix + '.traj.conf'
 	fnJointAnchorConfig = fnBasePrefix + '.jointanchor.conf'

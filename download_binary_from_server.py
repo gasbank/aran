@@ -64,12 +64,12 @@ def ftp_download_directory(ftp, dir_prefix, local_prefix):
 def print_usage(argv):
   print 'You should specify two arguments.'
   print 'USAGE'
-  print '  ', argv[0], '[vc90 | vc10] [debug | release]'
+  print '  ', argv[0], '[vc80 | vc90 | vc10] [debug | release]'
   print
   print 'i.e.,', argv[0], 'vc90 debug'
   print
 def main():
-  if len(sys.argv) != 3 or sys.argv[1] not in ['vc90', 'vc10'] or sys.argv[2] not in ['debug', 'release']:
+  if len(sys.argv) != 3 or sys.argv[1] not in ['vc80', 'vc90', 'vc10'] or sys.argv[2] not in ['debug', 'release']:
     print_usage(sys.argv)
     sys.exit(-2)
   vc_version = sys.argv[1]
@@ -79,7 +79,7 @@ def main():
   passphrase = 'gasbank_gmail.com'
   server_root = '/volume1/aran/'
   local_aran_root = './aran/'
-  local_build_root = './build/'
+  local_build_root = './build_%s/' % sys.argv[1]
   #---------------------------------------------
   print 'Please allow this program to use network resource if notified.'
   while True:

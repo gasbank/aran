@@ -74,6 +74,14 @@ int PymRsResetPhysics(pym_rs_t *rs) {
 
   pym_update_com(pymCfg);
   pym_reset_com0(pymCfg);
+
+  for(int j = 0; j < pymCfg->nBody; ++j) {
+    PymConstructRbStatedep(phyCon->sd, phyCon->sd + j, pymCfg->body + j, phyCon->dmstreams, pymCfg, &rs->cc);
+  }
+  PymConstructSupportPolygon(pymCfg, phyCon->sd);
+  for (int j = 0; j < pymCfg->nBody; ++j) {
+    PymDestroyRbStatedep(phyCon->sd + j, &pymCfg->body[j].b, &rs->cc);
+  }
   return 0;
 }
 
@@ -222,16 +230,25 @@ void pym_set_reference_frame( pym_rs_t *rs, int f )
   const int *const		 corresMapIndex = phyCon->pymTraj->corresMapIndex;
   const double *const		 trajData       = phyCon->pymTraj->trajData;
   const int nd = 6;
-  /* Set reference */
-  if (cmdopt->trajconf && trajData) {
+
+  if (pymCfg->temp_ref_mode) {
     for (int j = 0; j < pymCfg->nBody; ++j) {
-      const double *const ref =
-        trajData + (f+0)*nBlenderBody*nd + corresMapIndex[j]*nd;
       for (int k = 0; k < 6; ++k) {
-        pymCfg->body[j].b.chi_ref[k] = ref[k];
+        pymCfg->body[j].b.chi_ref[k] = pymCfg->body[j].b.chi_ref_temp[k];
       }
     }
   } else {
-    assert(!"Reference frame data not prepared or loaded.");
+    /* Set reference */
+    if (cmdopt->trajconf && trajData) {
+      for (int j = 0; j < pymCfg->nBody; ++j) {
+        const double *const ref =
+          trajData + (f+0)*nBlenderBody*nd + corresMapIndex[j]*nd;
+        for (int k = 0; k < 6; ++k) {
+          pymCfg->body[j].b.chi_ref[k] = ref[k];
+        }
+      }
+    } else {
+      assert(!"Reference frame data not prepared or loaded.");
+    }
   }
 }

@@ -1,16 +1,15 @@
 // Macros.h
-// 2007, 2008, 2009 Geoyeob Kim
+// 2007, 2008, 2009, 2010 Geoyeob Kim
 //
 // This file is shared between Aran and ModelExporter C++ Projects at VS2005 Solution.
 // Should have dependency on d3dx9.h but NOT have on any 3ds Max related headers
 // since Aran game engine itself must not rely on 3ds Max.
 //
+// Dec 25th, 2010: This file can be used in very wide range. Please avoid to define
+//                 short symbols such as 'V()'.
+
 #ifndef __ARAN_MACROS_H__
 #define __ARAN_MACROS_H__
-
-#ifndef V
-#define V(x)           { hr = (x); if( FAILED(hr) ) { DXTrace( __FILE__, (DWORD)__LINE__, hr, L#x, true ); } }
-#endif
 
 #define V_OKAY(x) { HRESULT __hr__; if(FAILED(__hr__ = (x))) throw std::runtime_error("V_OKAY() FAILED"); }
 #define V_VERIFY(x) { if (FAILED(x)) throw MyError(MEE_GENERAL_VERIFICATION_FAILED); }
@@ -262,9 +261,16 @@ template<typename T> void EpSafeReleaseAll( T& obj )
 #define E_FAIL (-1)
 #endif
 
-#define TYPEDEF_SHARED_PTR(type) \
-	class type; \
-        typedef std::tr1::shared_ptr < type > type##Ptr; \
-        typedef std::tr1::shared_ptr < const type > type##ConstPtr;
+#if _MSC_VER >= 1500
+	#define TYPEDEF_SHARED_PTR(type) \
+		class type; \
+			typedef std::tr1::shared_ptr < type > type##Ptr; \
+			typedef std::tr1::shared_ptr < const type > type##ConstPtr;
+#else
+	#define TYPEDEF_SHARED_PTR(type) \
+		class type; \
+		    typedef boost::shared_ptr < type > type##Ptr; \
+			typedef boost::shared_ptr < const type > type##ConstPtr;
+#endif
 
 #endif // #ifndef __ARAN_MACROS_H__

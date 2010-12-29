@@ -15,9 +15,10 @@ static void cb(Fl_Widget *o, void *p)
   ac.simulateButton->value(0);
   ac.bSimulate = false;
 
-  pym_config_t *pymCfg = &ac.pymRs->pymCfg;
-  memcpy(pymCfg->body, &ac.rb_history[ac.frames][0], sizeof(pym_rb_t)*pymCfg->nBody);
-  ac.glWindow->redraw();
+  if (ac.pymRs) {
+    pym_config_t *pymCfg = &ac.pymRs->pymCfg;
+    memcpy(pymCfg->body, &ac.rb_history[ac.frames][0], sizeof(pym_rb_t)*pymCfg->nBody);
+  }
 
 	if (!ac.bSimulate)
 	{
@@ -27,6 +28,8 @@ static void cb(Fl_Widget *o, void *p)
 			ac.glWindow->redraw();
 		}
 	}
+
+  ac.glWindow->redraw();
 }
 
 PlaybackSlider::PlaybackSlider( int x, int y, int w, int h, const char* c, BwAppContext& ac )

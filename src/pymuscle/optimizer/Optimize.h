@@ -6,13 +6,13 @@
 #ifndef __OPTIMIZE_H_
 #define __OPTIMIZE_H_
 
-typedef struct _deviation_stat_entry {
+struct deviation_stat_entry {
   double chi_d_norm;
   int bodyIdx;
-} deviation_stat_entry;
+};
 
 /* MOSEK dependent optimization data structure */
-typedef struct _pym_opt_t {
+struct pym_opt_t {
   /*** Inputs ***/
   /* lo <= Ax <= hi constraints */
   MSKboundkeye *bkc;
@@ -36,7 +36,7 @@ typedef struct _pym_opt_t {
   const pym_config_t *pymCfg;
   MSKenv_t *pEnv;
   cholmod_common *cc;
-} pym_opt_t;
+};
 
 
 PYMOPTIMIZER_API void PymInitializeMosek(MSKenv_t *env);
@@ -48,5 +48,6 @@ PYMOPTIMIZER_API int PymOptimizeFrameMove(double *pureOptTime, FILE *outputFile,
                          cholmod_common *cc, MSKenv_t env);
 void PymOptimize(pym_opt_t *pymOpt);
 void pym_exhaustive_solution_vector_info(const pym_opt_t &pymOpt);
-
+PYMOPTIMIZER_API void PymConstructSupportPolygon(pym_config_t *pymCfg,
+  pym_rb_statedep_t *sd);
 #endif
